@@ -281,6 +281,7 @@ markdown_extensions:
         this.project.pathFor([this.tmpDocsFolderRootDocsDir, relativePath]),
       );
       const assets = UtilsMd.getAssets(Helpers.readFile(asbFilePath));
+      // TODO @LAST add assets to watching list
       for (const asset of assets) {
         const absPath = this.project.pathFor(asset);
         const destLocation = this.project.pathFor([
@@ -293,6 +294,8 @@ markdown_extensions:
     //#endregion
 
     const { externalMdFiles } = await this.processExternalMdFiles();
+
+    //#region apply priority order
     const priorityOrder =
       (this.config.priorityOrder || []).length > 0
         ? this.config.priorityOrder
@@ -312,6 +315,7 @@ markdown_extensions:
       // Return prioritized files first, followed by the rest
       return [...prioritizedFiles, ...nonPrioritizedFiles];
     };
+    //#endregion
 
     const rootFiles = applyPriority([
       ...Helpers.filesFrom(this.project.location)
