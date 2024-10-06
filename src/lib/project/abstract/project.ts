@@ -4551,6 +4551,10 @@ ${config.frameworkName} start
   }
   //#endregion
 
+  get defaultOutFilesLaunchJson() {
+    return ['${workspaceFolder}/dist/**/*.js', '!**/node_modules/**'];
+  }
+
   //#region getters & methods / get out files for debugging
   /**
    * for debugging node_modules
@@ -4561,8 +4565,7 @@ ${config.frameworkName} start
     return !this.__isStandaloneProject
       ? void 0
       : [
-          '${workspaceFolder}/dist/**/*.js',
-          '!**/node_modules/**',
+          ...this.defaultOutFilesLaunchJson,
           ...Helpers.uniqArray(
             this.allIsomorphicPackagesFromMemory
               .map(packageName => {
