@@ -1,4 +1,5 @@
 import { CoreModels, _ } from 'tnp-core/src';
+import type { Project } from './project/abstract/project';
 
 export namespace Models {
   //#region taon test type
@@ -428,8 +429,6 @@ export namespace Models {
   }
   //#endregion
 
-
-
   //#region ps list info
   export interface PsListInfo {
     pid: number;
@@ -441,10 +440,16 @@ export namespace Models {
   }
   //#endregion
 
+  export interface CreateJsonSchemaOptions {
+    project: Project;
+    nameOfTypeOrInterface: string;
+    relativePathToTsFile: string;
+  }
+
   //#region DocsConfig
   export interface DocsConfig {
     /**
-     * override site name
+     * override site name (default is project name)
      */
     site_name: string;
     /**
@@ -461,6 +466,10 @@ export namespace Models {
      * [external assets not allowed... use externalDocs for that]
      */
     additionalAssets: string[];
+    /**
+     * include external docs
+     * inside this docs
+     */
     externalDocs: {
       mdfiles: {
         /**
@@ -484,11 +493,17 @@ export namespace Models {
       }[];
       projects: {
         /**
-         * path to project
-         * or array of paths (fallbacks pathes for the same projec)
-         * [in case of multiple projects -> you will be ask to choose one]
+         * default README.md file
          */
-        path: string;
+        entrypoint?: string;
+        /**
+         * name of project for docs linking
+         */
+        projectName: string;
+        /**
+         * override menu item name
+         */
+        overrideName?: string;
       }[];
     };
   }

@@ -1411,7 +1411,18 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
               // ],
               // '@typescript-eslint/explicit-function-return-type': 0,
               // 'no-void': 'error',
-              '@typescript-eslint/explicit-function-return-type': 'warn',
+              '@typescript-eslint/explicit-function-return-type': [
+                'warn',
+                {
+                  allowExpressions: true, // Allow function expressions (like anonymous functions) without return type
+                  allowTypedFunctionExpressions: true, // Allow functions in type declarations (like in interfaces)
+                  allowDirectConstAssertionInArrowFunctions: true, // Allow direct assertions
+                  allowHigherOrderFunctions: true, // Allow higher-order functions without explicit return type
+                  allowedNames: [], // List of getter names that are allowed to not have a return type
+                  enforceForGetters: true, // Enforce return type for getters
+                  enforceForSetters: false, // No need to enforce return type for setters (setters don't have return types)
+                },
+              ],
               '@typescript-eslint/typedef': [
                 'warn',
                 {
@@ -6204,6 +6215,7 @@ ${config.frameworkName} start
     //   )}" ...`,
     // );
     // Helpers.mesureExectionInMsSync('reoving env', () => {
+
     Helpers.removeFileIfExists(
       path.join(this.location, config.file.tnpEnvironment_json),
     );
@@ -6221,6 +6233,7 @@ ${config.frameworkName} start
     // });
     // Helpers.mesureExectionInMsSync('recreting config', async () => {
     this.recreateLintConfiguration();
+    await this.docs.init();
     // });
     // Helpers.mesureExectionInMsSync('saving json', async () => {
     // this.__saveLaunchJson(4000);
