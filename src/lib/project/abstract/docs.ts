@@ -56,6 +56,20 @@ export class Docs extends BaseDebounceCompilerForProject<
       this.project.pathFor(this.docsConfigSchema),
     );
     this.project.vsCodeHelpers.recreateJsonSchemaForDocs();
+
+    //#region link docs to global container
+    if (!Helpers.exists(path.dirname(this.docsConfigGlobalContainerAbsPath))) {
+      Helpers.mkdirp(path.dirname(this.docsConfigGlobalContainerAbsPath));
+    }
+    try {
+      fse.unlinkSync(this.docsConfigGlobalContainerAbsPath);
+    } catch (error) {}
+    Helpers.createSymLink(
+      this.project.pathFor(this.tmpDocsFolderRootDocsDirRelativePath),
+      this.docsConfigGlobalContainerAbsPath,
+    );
+    //#endregion
+
     //#endregion
   }
   //#endregion
@@ -178,7 +192,10 @@ export class Docs extends BaseDebounceCompilerForProject<
     );
 
     // Return prioritized files first, followed by the rest
-    return [...prioritizedFiles, ...nonPrioritizedFiles];
+    const omitFilesPatters = this.config.omitFilesPatters || [];
+    return [...prioritizedFiles, ...nonPrioritizedFiles].filter(
+      f => f.title && !omitFilesPatters.includes(f.title),
+    );
     //#endregion
   }
 
@@ -313,23 +330,12 @@ markdown_extensions:
   }
   //#endregion
 
-  //#region methods / action
-  async action({
-    changeOfFiles,
-    asyncEvent,
-  }: {
-    changeOfFiles: ChangeOfFile[];
-    asyncEvent: boolean;
-  }) {
+  //#region methods / recreate files in temp folder
+  private async recreateFilesInTempFolder(
+    files: string[],
+    asyncEvent: boolean,
+  ) {
     //#region @backendFunc
-    const files = changeOfFiles.map(f => f.fileAbsolutePath);
-    // console.log({ files });
-    // console.log('initalParams', this.initalParams);
-    if (!asyncEvent) {
-      //#region sync init
-      await this.init();
-      //#endregion
-    }
 
     //#region copy files
     for (const asbFilePath of files) {
@@ -395,34 +401,42 @@ markdown_extensions:
         relativePath: `${p.projectName}/${entryPoint}`,
       };
     });
-
     this.project.writeFile(
       [this.tmpDocsFolderRoot, 'mkdocs.yml'],
       this.mkdocsYmlContent([...rootFiles, ...projectsFiles]),
     );
 
+    //#endregion
+  }
+  //#endregion
+
+  //#region methods / action
+  async action({
+    changeOfFiles,
+    asyncEvent,
+  }: {
+    changeOfFiles: ChangeOfFile[];
+    asyncEvent: boolean;
+  }) {
+    //#region @backendFunc
+    const files = changeOfFiles.map(f => f.fileAbsolutePath);
+    // console.log({ files });
+    // console.log('initalParams', this.initalParams);
+    if (!asyncEvent) {
+      //#region sync init
+      await this.init();
+      //#endregion
+    }
+
+    await this.recreateFilesInTempFolder(files, asyncEvent);
+
     if (!asyncEvent) {
       await this.buildMkdocs({ watch: this.isWatchCompilation });
+      if (this.initalParams.docsOutFolder) {
+        const portForDocs = await this.project.assignFreePort(3950);
+        await UtilsHttp.startHttpServer(this.outDocsDistFolderAbs, portForDocs);
+      }
     }
-
-    //#region link docs to global container
-    if (!Helpers.exists(path.dirname(this.docsConfigGlobalContainerAbsPath))) {
-      Helpers.mkdirp(path.dirname(this.docsConfigGlobalContainerAbsPath));
-    }
-    try {
-      fse.unlinkSync(this.docsConfigGlobalContainerAbsPath);
-    } catch (error) {}
-    Helpers.createSymLink(
-      this.project.pathFor(this.tmpDocsFolderRootDocsDirRelativePath),
-      this.docsConfigGlobalContainerAbsPath,
-    );
-    //#endregion
-
-    if (!this.initalParams.docsOutFolder) {
-      const portForDocs = await this.project.assignFreePort(3950);
-      await UtilsHttp.startHttpServer(this.outDocsDistFolderAbs, portForDocs);
-    }
-
     //#endregion
   }
   //#endregion

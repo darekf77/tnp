@@ -97,4 +97,13 @@
           "description": "include external docs inside this docs"
         }
       },
-      
+      "required": [
+        "site_name",
+        "omitFilesPatters",
+        "additionalAssets",
+        "externalDocs"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
