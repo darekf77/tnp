@@ -122,9 +122,7 @@ export class TaonProjectsWorker extends BaseCliWorker {
 
   //#region methods / get controller for remote connection
   private taonProjectsController: TaonProjectsController | undefined;
-  protected async getControllerForRemoteConnection(): Promise<
-    BaseCliWorkerController<any>
-  > {
+  async getControllerForRemoteConnection() {
     if (this.taonProjectsController) {
       return this.taonProjectsController;
     }
