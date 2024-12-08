@@ -88,7 +88,6 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     public cliToolName: string,
   ) {
     super(classFn, cliToolName);
-    // console.log("global.frameworkName",global.frameworkName)
     if (!this.cliToolName) {
       Helpers.throw(`cliToolName is not provided`);
     }
