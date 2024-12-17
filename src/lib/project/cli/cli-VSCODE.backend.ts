@@ -199,16 +199,17 @@ export class $Vscode extends CommandLineFeature<{}, Project> {
         'editor.defaultFormatter': 'vscode.typescript-language-features',
       },
       'cSpell.userWords': [
-        'endregion',
-        "baseclass",
+        'end' + 'region',
+        'base' + 'class',
         'Taon',
         'websql',
         'typeorm',
         'matero',
         'Stder',
         'reinit',
-        "gitbash",
-        "Trys"
+        'gitbash',
+        'Trys',
+        'portfinder',
       ],
     };
     //#endregion

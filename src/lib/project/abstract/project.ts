@@ -299,6 +299,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     return Project.by(libraryType, version);
     //#endregion
   }
+  //#endregion
 }
 
 export class Project extends BaseProject<Project, CoreModels.LibType> {
@@ -4596,9 +4597,11 @@ ${config.frameworkName} start
   }
   //#endregion
 
+  //#region getters & methods / get default out files for debugging
   get defaultOutFilesLaunchJson() {
     return ['${workspaceFolder}/dist/**/*.js', '!**/node_modules/**'];
   }
+  //#endregion
 
   //#region getters & methods / get out files for debugging
   /**

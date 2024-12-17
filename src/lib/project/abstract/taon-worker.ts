@@ -84,7 +84,6 @@ const taonProjectsWorkerDatabaseLocation = crossPlatformPath([
 if (!Helpers.exists(path.dirname(taonProjectsWorkerDatabaseLocation))) {
   Helpers.mkdirp(path.dirname(taonProjectsWorkerDatabaseLocation));
 }
-// console.log('portsWorkerDatabaseLocation', portsWorkerDatabaseLocation);
 //#endregion
 
 var TaonProjectsContext = Taon.createContext(() => ({
@@ -163,10 +162,13 @@ export class TaonProjectsWorker extends BaseCliWorker {
   }
   //#endregion
 
+  //#region methods / header text
   protected async headerText(): Promise<string> {
     return 'Taon.dev';
   }
+  //#endregion
 
+  //#region methods / header
   protected async header(): Promise<void> {
     //#region @backendFunc
     // return super.header();
@@ -189,4 +191,5 @@ export class TaonProjectsWorker extends BaseCliWorker {
     });
     //#endregion
   }
+  //#endregion
 }
