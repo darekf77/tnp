@@ -1706,17 +1706,59 @@ ${this.project.children
   }
   //#endregion
 
+  //#region not for npm / kill zscaller
   killZs() {
     this.killZscaller();
   }
 
-  killZscaller() {
-    Helpers.run('sudo killall -9 Zscaler ZscalerTunnel ZscalerAppServices', {
-      // stdio that will let me pass password in child process
-      stdio: 'inherit',
-    }).sync();
+  startZs() {
+    this.startZscaller();
+  }
+
+  zsKill() {
+    this.killZscaller();
+  }
+
+  zsStart() {
+    this.startZscaller();
+  }
+
+  startZscaller() {
+    const commands = [
+      // `open -a /Applications/Zscaler/Zscaler.app --hide`,
+      `open -a /Applications/Zscaler/Zscaler.app`,
+      `sudo find /Library/LaunchDaemons -name '*zscaler*' -exec launchctl load {} \\;`,
+    ];
+    for (const cmd of commands) {
+      try {
+        Helpers.run(cmd, {
+          // stdio that will let me pass password in child process
+          stdio: 'inherit',
+        }).sync();
+      } catch (error) {}
+    }
+    Helpers.info(`Zscaller started`);
     this._exit();
   }
+
+  killZscaller() {
+    const commands = [
+      `find /Library/LaunchAgents -name '*zscaler*' -exec launchctl unload {} \\;`,
+      `sudo find /Library/LaunchDaemons -name '*zscaler*' -exec launchctl unload {} \\;`,
+      `sudo killall -9 Zscaler ZscalerTunnel ZscalerAppServices`,
+    ];
+    for (const cmd of commands) {
+      try {
+        Helpers.run(cmd, {
+          // stdio that will let me pass password in child process
+          stdio: 'inherit',
+        }).sync();
+      } catch (error) {}
+    }
+    Helpers.info(`Zscaller killed`);
+    this._exit();
+  }
+  //#endregion
 
   //#region not for npm / get trusted
   //#region @notForNpm
@@ -1823,7 +1865,10 @@ ${this.project.children
         project: this.project,
         relativePathToTsFile: fileToWatch,
       });
-      Helpers.writeFile(this.project.coreProject.pathFor(taonConfigSchemaJson), schema);
+      Helpers.writeFile(
+        this.project.coreProject.pathFor(taonConfigSchemaJson),
+        schema,
+      );
       Helpers.info(
         `TaonConfig schema updated ${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}`,
       );
