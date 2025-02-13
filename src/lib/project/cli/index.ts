@@ -9,7 +9,11 @@ import OPEN from './cli-OPEN.backend';
 import VSCODE from './cli-VSCODE.backend';
 import NEW from './cli-NEW.backend';
 import DOCS from './cli-DOCS.backend';
-import MIGRATION from './cli-MIGRATION.backend'
+import MIGRATION from './cli-MIGRATION.backend';
+/**
+ * @deprecated
+ */
+import LOCAL_RELESAE from './cli-LOCAL-RELEASE.backend';
 
 export default [
   GLOBAL,
@@ -23,6 +27,7 @@ export default [
   NEW,
   DOCS,
   MIGRATION,
+  LOCAL_RELESAE,
 ];
 
 //#endregion
