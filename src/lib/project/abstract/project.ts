@@ -593,6 +593,17 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   }
   //#endregion
 
+  //#region static / taon relative projects pathes
+  /**
+   * @deprecated
+   */
+  get tnpCurrentCoreContainer() {
+    return this.ins.From(
+      this.pathFor(`../taon/projects/container-${this.__frameworkVersion}`),
+    );
+  }
+  //#endregion
+
   //#region static / resolve core projects pathes
   private static resolveCoreProjectsPathes(
     version?: CoreModels.FrameworkVersion,
@@ -1045,6 +1056,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   }
   //#endregion
 
+  // TODO @LAST group this into obj
   projectInfoPort: number;
   backendPort: number;
   standaloneNormalAppPort: number;
@@ -1930,11 +1942,13 @@ trim_trailing_whitespace = false
   }
   //#endregion
 
+  //#region getters & methods / uses its own node_modules
   get usesItsOwnNodeModules() {
     //#region @backendFunc
     return this.__packageJson.usesItsOwnNodeModules;
     //#endregion
   }
+  //#endregion
 
   //#region getters & methods / is tnp
   /**
@@ -4188,14 +4202,15 @@ ${otherProjectNames
   //#region getters & methods / core container
   private get containerDataFromNodeModulesLink() {
     //#region @backendFunc
-    const realpathCCfromCurrentProj = fse.realpathSync(
-      this.__node_modules.path,
-    );
-    const pathCCfromCurrentProj = crossPlatformPath(
-      path.dirname(realpathCCfromCurrentProj),
-    );
+    const realpathCCfromCurrentProj =
+      fse.existsSync(this.__node_modules.path) &&
+      fse.realpathSync(this.__node_modules.path);
+    const pathCCfromCurrentProj =
+      realpathCCfromCurrentProj &&
+      crossPlatformPath(path.dirname(realpathCCfromCurrentProj));
 
-    const coreContainerFromNodeModules = this.ins.From(pathCCfromCurrentProj);
+    const coreContainerFromNodeModules: Project = (pathCCfromCurrentProj &&
+      this.ins.From(pathCCfromCurrentProj)) as Project;
 
     const isCoreContainer =
       coreContainerFromNodeModules?.__isCoreProject &&
@@ -4207,13 +4222,36 @@ ${otherProjectNames
     //#endregion
   }
 
+  get isLinkToNodeModulesDifferentThanCoreContainer() {
+    //#region @backendFunc
+    const { isCoreContainer, coreContainerFromNodeModules } =
+      this.containerDataFromNodeModulesLink;
+
+    return (
+      isCoreContainer &&
+      coreContainerFromNodeModules.location !==
+        Project.by('container', this.__frameworkVersion).location
+    );
+    //#endregion
+  }
+
+  /**
+   * Get automatic core container for project
+   * WHEN NODE_MODULES BELONG TO TNP -> it uses tnp core container
+   */
   get coreContainer(): Project {
     //#region @backendFunc
     // use core container from node_modules link first - if it is proper
-    const { isCoreContainer, coreContainerFromNodeModules } =
-      this.containerDataFromNodeModulesLink;
-    if (isCoreContainer) {
-      return coreContainerFromNodeModules;
+    if (
+      config.frameworkNames.productionFrameworkName.includes(
+        config.frameworkName,
+      )
+    ) {
+      const { isCoreContainer, coreContainerFromNodeModules } =
+        this.containerDataFromNodeModulesLink;
+      if (isCoreContainer) {
+        return coreContainerFromNodeModules;
+      }
     }
     const coreContainer = Project.by(
       'container',
@@ -4569,6 +4607,8 @@ ${config.frameworkName} start
     parent: ${this.parent?.name}
     grandpa: ${this.grandpa?.name}
     children: ${this.children.length}
+    core container location: ${this.coreContainer?.location}
+    core project location: ${this.coreProject?.location}
 
     isStandaloneProject: ${this.__isStandaloneProject}
     isCoreProject: ${this.__isCoreProject}

@@ -740,13 +740,21 @@ ${this.project.__isCoreProject ? '' : '/.vscode/launch.json'}
               path.join(defaultProjectProptotype.location, relativeFilePath),
             );
           } else if (defaultProjectProptotype.__frameworkVersionAtLeast('v2')) {
-            const core = Project.by(
-              defaultProjectProptotype.type,
-              defaultProjectProptotype.__frameworkVersionMinusOne,
-            );
-            from = crossPlatformPath(
-              path.join(core.location, relativeFilePath),
-            );
+            const notExistedTaonVersions = ['v17'];
+            if (
+              !notExistedTaonVersions.includes(
+                // non existed taon versions here
+                defaultProjectProptotype.__frameworkVersionMinusOne,
+              )
+            ) {
+              const core = Project.by(
+                defaultProjectProptotype.type,
+                defaultProjectProptotype.__frameworkVersionMinusOne,
+              );
+              from = crossPlatformPath(
+                path.join(core.location, relativeFilePath),
+              );
+            }
           }
         }
 

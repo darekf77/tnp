@@ -105,57 +105,95 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   //#endregion
 
   //#region getters / project to copy to
+  /**
+   * when building from scratch:
+   * taon - uses ~/.taon/taon/projects/container-vXX
+   * tnp - uses ../taon/projects/container-vXX
+   *
+   * but when tnp is in deep refactor I need to use taon to build tnp
+   * and force taon to recognize core container from node_modules link
+   * inside project (instead normally from taon.json[frameworkVersion] property)
+   */
   get projectToCopyTo() {
     const canCopyToNodeModules = this.buildOptions.outDir === 'dist';
-    let result = [];
+    let result: Project[] = [];
 
-    const node_modules_projs = [
+    const isTaonProdCli =
+      config.frameworkNames.productionFrameworkName.includes(
+        config.frameworkName,
+      );
+
+    //#region resolve all possible project for package distribution
+    let projectForNodeModulesPkgUpdate: Project[] = [
       ...(canCopyToNodeModules
         ? [
             ...(config.activeFramewrokVersions.length > 1
               ? [
-                  ...config.activeFramewrokVersions.map(v =>
-                    Project.by('container', v),
+                  ...config.activeFramewrokVersions.map(
+                    // this may be different then this.project.coreContainer
+                    v => Project.by('container', v),
                   ),
                 ]
-              : [this.project.coreContainer]),
+              : []),
+            ...[this.project.coreContainer],
           ]
         : []),
     ];
+    //#endregion
 
-    //#region fix when building project with core container from tnp
-    // add tnp project to copy
+    // QUICK_FIX
     if (
-      config.frameworkNames.productionFrameworkName.includes(
-        config.frameworkName,
-      )
+      isTaonProdCli &&
+      !!this.project.tnpCurrentCoreContainer &&
+      (this.project.isLinkToNodeModulesDifferentThanCoreContainer ||
+        this.project.name === 'tnp') // BIG QUICK FIX
     ) {
+      projectForNodeModulesPkgUpdate.push(this.project.tnpCurrentCoreContainer);
+      projectForNodeModulesPkgUpdate = projectForNodeModulesPkgUpdate.filter(
+        p => {
+          return (
+            p.location !==
+            Project.by('container', this.project.__frameworkVersion).location
+          );
+        },
+      );
+    }
+
+    if (isTaonProdCli && this.project.isLinkToNodeModulesDifferentThanCoreContainer) {
       try {
         const possibleTnpLocation = crossPlatformPath(
           path.dirname(
-            fse.realpathSync(this.project.ins.Tnp.pathFor('source')),
+            fse.realpathSync(
+              this.project.pathFor([
+                config.folder.node_modules,
+                'tnp',
+                'source',
+              ]),
+            ),
           ),
         );
-        // console.log({
-        //   'possibleTnpLocation': possibleTnpLocation,
-        // })
         const tnpProject = this.project.ins.From(possibleTnpLocation);
         if (tnpProject) {
-          node_modules_projs.push(tnpProject);
+          projectForNodeModulesPkgUpdate.push(tnpProject);
         }
       } catch (error) {}
     }
-    //#endregion
+
+    if (this.project.usesItsOwnNodeModules) {
+      projectForNodeModulesPkgUpdate.push(this.project);
+    }
 
     if (Array.isArray(this.copyto) && this.copyto.length > 0) {
       result = [
         this.localTempProj,
         ...this.copyto,
-        ...node_modules_projs,
+        ...projectForNodeModulesPkgUpdate,
       ] as Project[];
     } else {
-      result = [this.localTempProj, ...node_modules_projs];
-    } // @ts-ignore
+      result = [this.localTempProj, ...projectForNodeModulesPkgUpdate];
+    }
+
+    // @ts-ignore
     return Helpers.uniqArray<Project>(result, 'location');
   }
   //#endregion
