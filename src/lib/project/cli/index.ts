@@ -1,6 +1,7 @@
 //#region  @backend
 import GLOBAL from './cli-_GLOBAL_.backend';
 import BUILD from './cli-BUILD.backend';
+import LINK from './cli-LINK.backend';
 import INIT from './cli-INIT.backend';
 import START from './cli-START.backend';
 import BRANDING from './cli-BRANDING.backend';
@@ -18,6 +19,7 @@ import LOCAL_RELESAE from './cli-LOCAL-RELEASE.backend';
 export default [
   GLOBAL,
   BUILD,
+  LINK,
   INIT,
   START,
   RELEASE,
