@@ -89,6 +89,9 @@ npm link
 \`\`\`
 `,
     );
+    const proj = Project.ins.From(destBaseLatest);
+    proj.quickFixes.createDummyEmptyLibsReplacements(['electron']);
+
     //#endregion
   }
   //#endregion
@@ -116,7 +119,7 @@ class $LocalRelease extends BaseCommandLineFeature<ReleaseOptions, Project> {
   }
   //#endregion
   async cli() {
-    new BaseLocalRelease(this.project).startCLiRelease();
+    await new BaseLocalRelease(this.project).startCLiRelease();
     // await this.project.localRelease.startCLiRelease();
     Helpers.info(`Local release for CLI is done`);
     this._exit();

@@ -6278,7 +6278,7 @@ ${config.frameworkName} start
 
     this.quickFixes.missingAngularLibFiles();
     if (this.__isStandaloneProject || this.__isContainer) {
-      this.quickFixes.missingEmptyDummyLibs([]);
+      this.quickFixes.createDummyEmptyLibsReplacements([]);
     }
 
     Helpers.taskStarted(

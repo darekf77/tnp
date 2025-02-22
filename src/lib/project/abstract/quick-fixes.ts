@@ -20,7 +20,7 @@ import { Models } from '../../models';
 
 export class QuickFixes extends BaseQuickFixes<Project> {
   project: Project;
-  //#region update stanalone project before publishing
+  //#region update standalone project before publishing
   updateStanaloneProjectBeforePublishing(
     project: Project,
     realCurrentProj: Project,
@@ -264,7 +264,7 @@ Object.defineProperty(document.body.style, 'transform', {
   }
   //#endregion
 
-  //#region remove uncessesary files
+  //#region remove unnecessary files
   removeUncessesaryFiles() {
     const filesV1 = [
       'src/tsconfig.packages.json',
@@ -311,7 +311,7 @@ Object.defineProperty(document.body.style, 'transform', {
   }
   //#endregion
 
-  //#region add missing anular files
+  //#region add missing angular files
   public missingAngularLibFiles() {
     //#region @backendFunc
     Helpers.taskStarted(`[quick fixes] missing angular lib fles start`, true);
@@ -522,14 +522,8 @@ THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
   //#endregion
 
   //#region add missing empty libs
-  /**
-   * @deprecated
-   */
-  public missingEmptyDummyLibs(missingLibsNames: string[] = []) {
+  public createDummyEmptyLibsReplacements(missingLibsNames: string[] = []) {
     //#region @backendFunc
-    if (this.project.__isContainer) {
-      return;
-    }
     missingLibsNames.forEach(missingLibName => {
       const pathInProjectNodeModules = path.join(
         this.project.location,
@@ -537,11 +531,9 @@ THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
         missingLibName,
       );
       if (fse.existsSync(pathInProjectNodeModules)) {
-        if (this.project.__isStandaloneProject) {
-          Helpers.warn(
-            `Package "${missingLibName}" will replaced with empty package mock. ${this.project.genericName}`,
-          );
-        }
+        Helpers.warn(
+          `Package "${missingLibName}" will replaced with empty package mock. ${this.project.genericName}`,
+        );
       }
       // Helpers.remove(pathInProjectNodeModules);
       if (!fse.existsSync(pathInProjectNodeModules)) {
