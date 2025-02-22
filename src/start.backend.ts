@@ -1,5 +1,5 @@
 //#region imports
-import { Helpers } from 'tnp-core/src';
+import { chalk, Helpers, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { config } from 'tnp-config/src';
 import cliClassArr from './lib/project/cli/index';
@@ -40,7 +40,19 @@ export async function start(
     functionsOrClasses: BaseStartConfig.prepareArgs(cliClassArr),
     argsv,
     callbackNotRecognizedCommand: async options => {
-      await ProjectClass.ins.taonProjectsWorker.infoScreen();
+      Helpers.warn('Command has not been recognized. ');
+      if (
+        await UtilsTerminal.confirm({
+          message:
+            `Do you want to start ${chalk.bold(config.frameworkName)}` +
+            ` ${chalk.bold('cli menu')} to see what you can do in this project ?`,
+          defaultValue: true,
+        })
+      ) {
+        await ProjectClass.ins.taonProjectsWorker.infoScreen();
+      } else {
+        process.exit(0);
+      }
     },
     shortArgsReplaceConfig: {
       //#region short args replacement

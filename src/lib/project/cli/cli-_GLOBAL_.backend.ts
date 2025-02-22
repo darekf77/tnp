@@ -56,9 +56,8 @@ declare const ENV: any;
 
 export class $Global extends BaseGlobalCommandLine<{}, Project> {
   readonly ins: TaonProjectResolve;
-  public _() {
-    Helpers.error('Please select proper command.', false, true);
-    this._exit();
+  public async _() {
+    await this.ins.taonProjectsWorker.infoScreen();
   }
 
   //#region kill process on port
