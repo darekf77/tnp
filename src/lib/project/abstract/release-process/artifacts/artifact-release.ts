@@ -1,5 +1,6 @@
 import { CoreModels } from 'tnp-core/src';
 import type { Project } from '../../project';
+import { TaonModels } from '../../../../taon-models';
 
 /**
  * - create temp project for artifact release
@@ -9,7 +10,7 @@ import type { Project } from '../../project';
 export class ArtifactRelease {
   constructor(
     protected project: Project,
-    protected releaseProcessType: CoreModels.ReleaseProcessType,
+    protected releaseProcessType: TaonModels.ReleaseProcessType,
   ) {}
 
   async start() {}

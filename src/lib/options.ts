@@ -1,8 +1,10 @@
-import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
-import type { Project } from './project/abstract/project';
 import { config } from 'tnp-config/src';
-import { Models } from './models';
+import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
 import { CLASS } from 'typescript-class-helpers/src';
+
+import { Models } from './models';
+import type { Project } from './project/abstract/project';
+
 
 //#region build options lib or app
 class SystemTask<T> {
@@ -123,7 +125,12 @@ export class InitOptions extends BaseBuild<InitOptions> {
 //#region build options
 export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
   readonly outDir: 'dist';
-  readonly targetApp: 'pwa' | 'electron';
+  readonly targetApp: 'pwa' | 'electron' | 'vscode-ext';
+  /**
+   * use local repo for storing build files
+   * ./local_release/(cli-lib/vscode/electron/<..>)/<release build files>
+   */
+  useLocalRepoForStoringOutputFiles: boolean;
   get appBuild() {
     return this.buildType === 'app' || this.buildType === 'lib-app';
   }

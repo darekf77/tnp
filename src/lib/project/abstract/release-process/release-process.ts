@@ -5,6 +5,7 @@ import { Helpers, translate } from 'tnp-helpers/src';
 import { BaseReleaseProcess } from 'tnp-helpers/src';
 import { Project } from '../project';
 import { chalk, CoreModels, UtilsTerminal, _ } from 'tnp-core/src';
+import { TaonModels } from '../../../taon-models';
 //#endregion
 
 /**
@@ -12,7 +13,7 @@ import { chalk, CoreModels, UtilsTerminal, _ } from 'tnp-core/src';
  */
 export class ReleaseProcess extends BaseReleaseProcess<
   Project,
-  CoreModels.ReleaseProcessType
+  TaonModels.ReleaseProcessType
 > {
   //#region fields & getters
   project: Project;
@@ -25,7 +26,7 @@ export class ReleaseProcess extends BaseReleaseProcess<
    *  - keeps version for organization packages
    */
   protected readonly selectedProjects: Project[] = [this.project];
-  protected readonly releaseArtifactsTaon: CoreModels.ReleaseArtifactTaon[] =
+  protected readonly releaseArtifactsTaon: TaonModels.ReleaseArtifactTaon[] =
     [];
 
   get isLocalTaonArtifactRelease() {
@@ -36,7 +37,7 @@ export class ReleaseProcess extends BaseReleaseProcess<
   //#region constructor
   constructor(
     project: Project,
-    protected releaseProcessType: CoreModels.ReleaseProcessType,
+    protected releaseProcessType: TaonModels.ReleaseProcessType,
   ) {
     super(project);
   }
@@ -76,7 +77,7 @@ export class ReleaseProcess extends BaseReleaseProcess<
 
       const { actionResult } = await UtilsTerminal.selectActionAndExecute(
         {
-          ['manual' as CoreModels.ReleaseProcessType]: {
+          ['manual' as TaonModels.ReleaseProcessType]: {
             //#region manual
             name: `${this.getColoredTextItem('manual')} release`,
             action: async () => {
@@ -91,7 +92,7 @@ export class ReleaseProcess extends BaseReleaseProcess<
             },
             //#endregion
           },
-          ['cloud' as CoreModels.ReleaseProcessType]: {
+          ['cloud' as TaonModels.ReleaseProcessType]: {
             //#region cloud
             name: `${this.getColoredTextItem('cloud')} release`,
             action: async () => {
@@ -112,7 +113,7 @@ export class ReleaseProcess extends BaseReleaseProcess<
             },
             //#endregion
           },
-          ['local' as CoreModels.ReleaseProcessType]: {
+          ['local' as TaonModels.ReleaseProcessType]: {
             //#region local
             name: `${this.getColoredTextItem('local')} release`,
             action: async () => {
@@ -191,8 +192,8 @@ export class ReleaseProcess extends BaseReleaseProcess<
       console.info(this.getReleaseHeader());
       const choices = (
         this.releaseProcessType === 'local'
-          ? CoreModels.LocalReleaseArtifactTaonNamesArr
-          : CoreModels.ReleaseArtifactTaonNamesArr
+          ? TaonModels.LocalReleaseArtifactTaonNamesArr
+          : TaonModels.ReleaseArtifactTaonNamesArr
       ).reduce((acc, curr) => {
         return _.merge(acc, {
           [curr]: {
@@ -200,7 +201,7 @@ export class ReleaseProcess extends BaseReleaseProcess<
           },
         });
       }, {}) as {
-        [key in CoreModels.ReleaseArtifactTaon]: { name: string };
+        [key in TaonModels.ReleaseArtifactTaon]: { name: string };
       };
 
       const { selected } = await UtilsTerminal.multiselectActionAndExecute(
@@ -232,7 +233,7 @@ export class ReleaseProcess extends BaseReleaseProcess<
   //#region public methods / start release
   startRelease(
     options?: Partial<
-      BaseReleaseProcess<Project, CoreModels.ReleaseArtifactTaon>
+      BaseReleaseProcess<Project, TaonModels.ReleaseArtifactTaon>
     >,
   ): Promise<void> {
     // new ArtifactRelease(this.project);
@@ -300,7 +301,7 @@ export class ReleaseProcess extends BaseReleaseProcess<
 
   //#region private methods / get colored text item
   private getColoredTextItem(
-    releaseProcessType: CoreModels.ReleaseProcessType,
+    releaseProcessType: TaonModels.ReleaseProcessType,
   ) {
     //#region @backend
     if (releaseProcessType === 'manual') {

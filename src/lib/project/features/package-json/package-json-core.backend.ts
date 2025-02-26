@@ -145,6 +145,9 @@ export class PackageJsonCore {
     return Array.isArray(p) ? p : [];
   }
 
+  /**
+   * @deprecated REMOVE
+   */
   get targetProjects(): Omit<Models.TargetProject, 'path'>[] {
     const p = this.data.tnp && this.data.tnp.targetProjects;
     // console.log('asdasd',this.data.tnp.targetProjects)

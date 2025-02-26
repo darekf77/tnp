@@ -79,6 +79,7 @@ import { QuickFixes } from './quick-fixes';
 import { TaonProjectsWorker } from './taon-worker/taon.worker';
 import { MigrationHelper } from './migrations-helper';
 import type { ReleaseProcess } from './release-process';
+import { BaseArtifact } from './artifacts/base-artifact';
 //#endregion
 
 export class TaonProjectResolve extends BaseProjectResolver<Project> {
@@ -783,6 +784,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   private __npmRunNg: string = `npm-run ng`; // when there is not globl "ng" command -> npm-run ng.js works
   public angularFeBasenameManager: AngularFeBasenameManager;
 
+  public readonly artifact = BaseArtifact.for(this);
   public docs: Docs;
   public vsCodeHelpers: Vscode;
   public migrationHelper: MigrationHelper;
@@ -802,6 +804,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   public __filesTemplatesBuilder: FilesTemplatesBuilder;
   public __docsAppBuild: GithubPagesAppBuildConfig;
   public __assetsManager: AssetsManager;
+  /**
+   * @deprecated REMOVE
+   */
   public __targetProjects: TargetProject;
   public __branding: Branding;
   /**
@@ -1361,180 +1366,6 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   get lintFiles() {
     //#region @backendFunc
     const files = {
-      //#region .eslintrc.json
-      // https://github.com/angular-eslint/angular-eslint#notes-for-eslint-plugin-prettier-users
-      '.eslintrc.json': {
-        root: true,
-        ignorePatterns: ['projects/**/*'],
-        plugins: ['@typescript-eslint'],
-        overrides: [
-          {
-            files: ['*.ts'],
-            parserOptions: {
-              project: ['tsconfig.json'],
-              createDefaultProgram: true,
-            },
-            extends: [
-              'plugin:@angular-eslint/recommended',
-              'plugin:@angular-eslint/template/process-inline-templates',
-              'prettier',
-              // "plugin:prettier/recommended"
-            ],
-            rules: {
-              '@angular-eslint/component-class-suffix': [
-                'warn',
-                {
-                  suffixes: ['Page', 'Component'],
-                },
-              ],
-              '@angular-eslint/component-selector': [
-                'warn',
-                {
-                  type: 'element',
-                  prefix: 'app',
-                  style: 'kebab-case',
-                },
-              ],
-              '@angular-eslint/directive-selector': [
-                'warn',
-                {
-                  type: 'attribute',
-                  prefix: 'app',
-                  style: 'camelCase',
-                },
-              ],
-              '@typescript-eslint/member-ordering': 0,
-              // TO EXPENSIVE
-              // '@typescript-eslint/member-ordering': [
-              //   'warn',
-              //   {
-              //     default: [
-              //       'signature',
-              //       'call-signature',
-
-              //       'public-static-field',
-              //       'protected-static-field',
-              //       'private-static-field',
-              //       '#private-static-field',
-
-              //       'public-decorated-field',
-              //       'protected-decorated-field',
-              //       'private-decorated-field',
-
-              //       'public-instance-field',
-              //       'protected-instance-field',
-              //       'private-instance-field',
-              //       '#private-instance-field',
-
-              //       'public-abstract-field',
-              //       'protected-abstract-field',
-
-              //       'public-field',
-              //       'protected-field',
-              //       'private-field',
-              //       '#private-field',
-
-              //       'static-field',
-              //       'instance-field',
-              //       'abstract-field',
-
-              //       'decorated-field',
-
-              //       'field',
-
-              //       'static-initialization',
-
-              //       'public-constructor',
-              //       'protected-constructor',
-              //       'private-constructor',
-
-              //       'constructor',
-              //       'public-static-method',
-              //       'protected-static-method',
-              //       'private-static-method',
-              //       '#private-static-method',
-
-              //       'public-decorated-method',
-              //       'protected-decorated-method',
-              //       'private-decorated-method',
-
-              //       'public-instance-method',
-              //       'protected-instance-method',
-              //       'private-instance-method',
-              //       '#private-instance-method',
-
-              //       'public-abstract-method',
-              //       'protected-abstract-method',
-
-              //       'public-method',
-              //       'protected-method',
-              //       'private-method',
-              //       '#private-method',
-
-              //       'static-method',
-              //       'instance-method',
-              //       'abstract-method',
-
-              //       'decorated-method',
-
-              //       'method',
-              //     ],
-              //   },
-              // ],
-              // '@typescript-eslint/explicit-function-return-type': 0,
-              // 'no-void': 'error',
-              '@typescript-eslint/explicit-function-return-type': [
-                'warn',
-                {
-                  allowExpressions: true, // Allow function expressions (like anonymous functions) without return type
-                  allowTypedFunctionExpressions: true, // Allow functions in type declarations (like in interfaces)
-                  allowDirectConstAssertionInArrowFunctions: true, // Allow direct assertions
-                  allowHigherOrderFunctions: true, // Allow higher-order functions without explicit return type
-                  allowedNames: [], // List of getter names that are allowed to not have a return type
-                  enforceForGetters: true, // Enforce return type for getters
-                  enforceForSetters: false, // No need to enforce return type for setters (setters don't have return types)
-                },
-              ],
-              '@typescript-eslint/typedef': [
-                'warn',
-                {
-                  memberVariableDeclaration: true,
-                  parameter: true,
-                  propertyDeclaration: true,
-                },
-              ],
-              // "@typescript-eslint/naming-convention": [
-              //   "error",
-              //   {
-              //     "selector": "enumMember",
-              //     "format": null
-              //   },
-              //   {
-              //     "selector": "classProperty",
-              //     "format": ["camelCase", "PascalCase"]
-              //   }
-              // ],
-            },
-          },
-          // NOTE: WE ARE NOT APPLYING PRETTIER IN THIS OVERRIDE, ONLY @ANGULAR-ESLINT/TEMPLATE
-          {
-            files: ['*.html'],
-            extends: ['plugin:@angular-eslint/template/recommended'],
-            rules: {},
-          },
-          // NOTE: WE ARE NOT APPLYING @ANGULAR-ESLINT/TEMPLATE IN THIS OVERRIDE, ONLY PRETTIER
-          {
-            files: ['*.html'],
-            excludedFiles: ['*inline-template-*.component.html'],
-            extends: ['plugin:prettier/recommended'],
-            rules: {
-              // NOTE: WE ARE OVERRIDING THE DEFAULT CONFIG TO ALWAYS SET THE PARSER TO ANGULAR (SEE BELOW)
-              'prettier/prettier': ['error', { parser: 'angular' }],
-            },
-          },
-        ],
-      },
-      //#endregion
       '.prettierignore': `
 # This file is generated by taon.dev
 /build
@@ -2032,6 +1863,7 @@ trim_trailing_whitespace = false
       'index.js',
       'index.d.ts',
       'index.js.map',
+
       taonConfigSchemaJson,
     ];
 
@@ -2067,6 +1899,8 @@ trim_trailing_whitespace = false
             'webpack.backend-dist-build.js',
             'run.js',
             'run-org.js',
+            'update-vscode-package-json.js',
+            'eslint.config.js',
             ...this.__filesTemplates(),
           ])
           .concat(!this.__isStandaloneProject ? ['src/typings.d.ts'] : []);
@@ -4036,156 +3870,250 @@ ${otherProjectNames
   }
   //#endregion
 
+  //#region getters & methods / build vscide
+  private async __buildVscode(buildOptions: BuildOptions) {
+    //#region @backendFunc
+
+    // TODO @REMOVE
+    await this.init(
+      'local vscode release',
+      InitOptions.fromBuild(buildOptions),
+    );
+
+    const tmpVscodeProjPath = buildOptions.useLocalRepoForStoringOutputFiles
+      ? this.pathFor(`tmp-vscode-proj/local-release/${this.name}`)
+      : this.pathFor(`tmp-vscode-proj/development/${this.name}`);
+
+    const destExtensionJs = crossPlatformPath([
+      tmpVscodeProjPath,
+      'out/extension.js',
+    ]);
+
+    Helpers.writeJson(
+      crossPlatformPath([tmpVscodeProjPath, config.file.package_json]),
+      {
+        name: this.name,
+        version: this.version,
+        main: './out/extension.js',
+        categories: ['Other'],
+        activationEvents: ['*'],
+        displayName: `${this.name}-vscode-ext`,
+        publisher: 'taon-dev-local',
+        description: '',
+        engines: {
+          vscode: '^1.30.0',
+        },
+      },
+    );
+    const extProj = Project.ins.From(tmpVscodeProjPath);
+
+    Helpers.createSymLink(
+      this.pathFor(config.folder.dist),
+      crossPlatformPath([tmpVscodeProjPath, config.folder.dist]),
+    );
+
+    Helpers.createSymLink(
+      this.pathFor(config.folder.node_modules),
+      crossPlatformPath([tmpVscodeProjPath, config.folder.node_modules]),
+    );
+
+    const vcodePjUpdateFile = 'update-vscode-package-json.js';
+    Helpers.createSymLink(
+      this.pathFor(vcodePjUpdateFile),
+      crossPlatformPath([tmpVscodeProjPath, vcodePjUpdateFile]),
+    );
+
+    if (
+      !buildOptions.watch &&
+      !buildOptions.useLocalRepoForStoringOutputFiles
+    ) {
+      await Helpers.ncc(
+        crossPlatformPath([
+          tmpVscodeProjPath,
+          config.folder.dist,
+          'app.vscode.js',
+        ]),
+        destExtensionJs,
+        // () => {
+        // ({ copyToDestination, output }) => {
+        // TODO not needed for now
+        // const wasmfileSource = crossPlatformPath([
+        //   this.project.coreProject.location,
+        //   'app/src/assets/sql-wasm.wasm',
+        // ]);
+        // copyToDestination(wasmfileSource);
+        // return output;
+        // },
+      );
+    }
+
+    if (buildOptions.watch) {
+      extProj
+        .run(`node ${vcodePjUpdateFile} ${buildOptions.watch ? '--watch' : ''}`)
+        .async();
+    } else {
+      extProj.run(`node ${vcodePjUpdateFile}`).sync();
+    }
+
+    if (!buildOptions.watch && buildOptions.useLocalRepoForStoringOutputFiles) {
+      extProj.run(`taon-vsce package`).sync();
+    }
+
+    //#endregion
+  }
+  //#endregion
+
   //#region getters & methods / build
   private async __buildElectron(buildOptions: BuildOptions) {
     //#region @backendFunc
     const baseHrefElectron = '';
-    if (this.__isStandaloneProject) {
-      const elecProj = Project.ins.From(
-        this.pathFor([
-          `tmp-apps-for-${config.folder.dist}${
-            buildOptions.websql ? '-websql' : ''
-          }`,
-          this.name,
-        ]),
-      );
-      Helpers.info('Starting electron ...');
-
-      if (buildOptions.watch) {
-        elecProj
-          .run(
-            `npm-run  electron . --serve ${
-              buildOptions.websql ? '--websql' : ''
-            }`,
-          )
-          .async();
-      } else {
-        Helpers.info('Release build of electron app');
-        if (buildOptions.buildForRelease) {
-          if (!this.isInCiReleaseProject) {
-            await this.init(
-              'before building electron app init',
-              InitOptions.fromBuild(
-                buildOptions.clone({ baseHref: baseHrefElectron }),
-              ),
-            );
-            const tempGeneratedCiReleaseProject =
-              await this.__createTempCiReleaseProject(buildOptions);
-            await tempGeneratedCiReleaseProject.build(buildOptions);
-            return;
-          }
-
-          // if (!this.pathExists(`tmp-apps-for-dist/${this.name}/electron/compiled/app.electron.js`)) {
-          //   // await this.build(buildOptions.clone({
-          //   //   buildForRelease: false,
-          //   //   watch: false
-          //   // }))
-          // } else {
-
-          const elecProj = Project.ins.From(
-            this.pathFor([
-              `tmp-apps-for-dist${buildOptions.websql ? '-websql' : ''}`,
-              this.name,
-            ]),
-          );
-          // Helpers.createSymLink(this.__node_modules.path, elecProj.pathFor(`electron/${config.folder.node_modules}`));
-          // elecProj.run('code .').sync();
-          const wasmfileSource = crossPlatformPath([
-            Project.by('isomorphic-lib', this.__frameworkVersion).location,
-            'app/src/assets/sql-wasm.wasm',
-          ]);
-          const wasmfileDest = crossPlatformPath([
-            elecProj.location,
-            'electron',
-            'sql-wasm.wasm',
-          ]);
-          Helpers.copyFile(wasmfileSource, wasmfileDest);
-
-          Helpers.info('Building lib...');
-          await this.build(
-            buildOptions.clone({
-              buildType: 'lib',
-              targetApp: 'pwa',
-              watch: false,
-              baseHref: baseHrefElectron,
-              skipProjectProcess: true,
-              disableServiceWorker: true,
-              skipCopyManager: true,
-              buildAngularAppForElectron: true,
-              finishCallback: () => {},
-            }),
-          );
-          Helpers.info('Build lib done.. building now electron app...');
-
-          // Helpers.pressKeyAndContinue()
-          elecProj.run('npm-run ng build angular-electron').sync();
-          // await this.build(buildOptions.clone({
-          //   buildType: 'app',
-          //   targetApp: 'pwa',
-          //   watch: false,
-          //   baseHref: baseHrefElectron,
-          //   skipProjectProcess: true,
-          //   disableServiceWorker: true,
-          //   skipCopyManager: true,
-          //   buildAngularAppForElectron: true,
-          //   finishCallback: () => { }
-          // }));
-
-          const indexHtmlPath = elecProj.pathFor(['dist', 'index.html']);
-          // console.log({
-          //   indexHtmlPath
-          // })
-          Helpers.writeFile(
-            indexHtmlPath,
-            Helpers.readFile(indexHtmlPath)
-              .replace(`<base href="/">`, '<base href="./">')
-              .replace(`<base href="/">`, '<base href="./">')
-              .replace(/\/assets\//g, 'assets/'),
-          );
-          Helpers.replaceLinesInFile(indexHtmlPath, line => {
-            if (line.search(`rel="manifest"`) !== -1) {
-              return '';
-            }
-            return line;
-          });
-          // <base href="/">
-          const indexJSPath = crossPlatformPath([
-            elecProj.location,
-            'electron',
-            'index.js',
-          ]);
-          await Helpers.ncc(
-            crossPlatformPath([elecProj.location, 'electron', 'main.js']),
-            indexJSPath,
-          );
-          Helpers.writeFile(
-            indexJSPath,
-            UtilsQuickFixes.replaceSQLliteFaultyCode(
-              Helpers.readFile(indexJSPath),
-            )
-              .split('\n')
-              .map(line => line.replace(/\@removeStart.*\@removeEnd/g, ''))
-              .join('\n'),
-          );
-
-          // elecProj.run(`npm-run ncc build electron/main.js -o electron/bundled  --no-cache  --external electron `).sync();
-          // await Helpers.questionYesNo('Would you like to do check out?');
-          elecProj.run(`npm-run electron-builder build --publish=never`).sync();
-          this.openLocation(
-            this.__getElectronAppRelativePath({ websql: buildOptions.websql }),
-          );
-        } else {
-          // TODO
-        }
-      }
-      return;
-    } else {
+    if (!this.__isStandaloneProject) {
       Helpers.error(
         `Electron apps compilation only for standalone projects`,
         false,
         true,
       );
     }
+
+    const elecProj = Project.ins.From(
+      this.pathFor([
+        `tmp-apps-for-${config.folder.dist}${
+          buildOptions.websql ? '-websql' : ''
+        }`,
+        this.name,
+      ]),
+    );
+    Helpers.info('Starting electron ...');
+
+    if (buildOptions.watch) {
+      elecProj
+        .run(
+          `npm-run  electron . --serve ${
+            buildOptions.websql ? '--websql' : ''
+          }`,
+        )
+        .async();
+    } else {
+      Helpers.info('Release build of electron app');
+      if (buildOptions.buildForRelease) {
+        if (!this.isInCiReleaseProject) {
+          await this.init(
+            'before building electron app init',
+            InitOptions.fromBuild(
+              buildOptions.clone({ baseHref: baseHrefElectron }),
+            ),
+          );
+          const tempGeneratedCiReleaseProject =
+            await this.__createTempCiReleaseProject(buildOptions);
+          await tempGeneratedCiReleaseProject.build(buildOptions);
+          return;
+        }
+
+        // if (!this.pathExists(`tmp-apps-for-dist/${this.name}/electron/compiled/app.electron.js`)) {
+        //   // await this.build(buildOptions.clone({
+        //   //   buildForRelease: false,
+        //   //   watch: false
+        //   // }))
+        // } else {
+
+        const elecProj = Project.ins.From(
+          this.pathFor([
+            `tmp-apps-for-dist${buildOptions.websql ? '-websql' : ''}`,
+            this.name,
+          ]),
+        );
+        // Helpers.createSymLink(this.__node_modules.path, elecProj.pathFor(`electron/${config.folder.node_modules}`));
+        // elecProj.run('code .').sync();
+        const wasmfileSource = crossPlatformPath([
+          Project.by('isomorphic-lib', this.__frameworkVersion).location,
+          'app/src/assets/sql-wasm.wasm',
+        ]);
+        const wasmfileDest = crossPlatformPath([
+          elecProj.location,
+          'electron',
+          'sql-wasm.wasm',
+        ]);
+        Helpers.copyFile(wasmfileSource, wasmfileDest);
+
+        Helpers.info('Building lib...');
+        await this.build(
+          buildOptions.clone({
+            buildType: 'lib',
+            targetApp: 'pwa',
+            watch: false,
+            baseHref: baseHrefElectron,
+            skipProjectProcess: true,
+            disableServiceWorker: true,
+            skipCopyManager: true,
+            buildAngularAppForElectron: true,
+            finishCallback: () => {},
+          }),
+        );
+        Helpers.info('Build lib done.. building now electron app...');
+
+        // Helpers.pressKeyAndContinue()
+        elecProj.run('npm-run ng build angular-electron').sync();
+        // await this.build(buildOptions.clone({
+        //   buildType: 'app',
+        //   targetApp: 'pwa',
+        //   watch: false,
+        //   baseHref: baseHrefElectron,
+        //   skipProjectProcess: true,
+        //   disableServiceWorker: true,
+        //   skipCopyManager: true,
+        //   buildAngularAppForElectron: true,
+        //   finishCallback: () => { }
+        // }));
+
+        const indexHtmlPath = elecProj.pathFor(['dist', 'index.html']);
+        // console.log({
+        //   indexHtmlPath
+        // })
+        Helpers.writeFile(
+          indexHtmlPath,
+          Helpers.readFile(indexHtmlPath)
+            .replace(`<base href="/">`, '<base href="./">')
+            .replace(`<base href="/">`, '<base href="./">')
+            .replace(/\/assets\//g, 'assets/'),
+        );
+        Helpers.replaceLinesInFile(indexHtmlPath, line => {
+          if (line.search(`rel="manifest"`) !== -1) {
+            return '';
+          }
+          return line;
+        });
+        // <base href="/">
+        const indexJSPath = crossPlatformPath([
+          elecProj.location,
+          'electron',
+          'index.js',
+        ]);
+        await Helpers.ncc(
+          crossPlatformPath([elecProj.location, 'electron', 'main.js']),
+          indexJSPath,
+        );
+        Helpers.writeFile(
+          indexJSPath,
+          UtilsQuickFixes.replaceSQLliteFaultyCode(
+            Helpers.readFile(indexJSPath),
+          )
+            .split('\n')
+            .map(line => line.replace(/\@removeStart.*\@removeEnd/g, ''))
+            .join('\n'),
+        );
+
+        // elecProj.run(`npm-run ncc build electron/main.js -o electron/bundled  --no-cache  --external electron `).sync();
+        // await Helpers.questionYesNo('Would you like to do check out?');
+        elecProj.run(`npm-run electron-builder build --publish=never`).sync();
+        this.openLocation(
+          this.__getElectronAppRelativePath({ websql: buildOptions.websql }),
+        );
+      } else {
+        // TODO
+      }
+    }
+    return;
+
     buildOptions.finishCallback();
     //#endregion
   }
@@ -4278,6 +4206,14 @@ ${otherProjectNames
   //#region getters & methods / build
   async build(buildOptions?: BuildOptions) {
     //#region @backendFunc
+
+    //#region handle electron
+
+    if (buildOptions.targetApp === 'vscode-ext') {
+      await this.__buildVscode(buildOptions);
+      return;
+    }
+    //#endregion
 
     //#region handle electron
     if (buildOptions.targetApp === 'electron') {
@@ -6207,6 +6143,7 @@ ${config.frameworkName} start
   //#endregion
 
   //#region getters & methods / init file structure
+
   private async initFileStructure(initOptions?: InitOptions) {
     //#region @backendFunc
     initOptions = InitOptions.from(initOptions);
