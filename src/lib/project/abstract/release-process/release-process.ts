@@ -18,6 +18,8 @@ export class ReleaseProcess extends BaseReleaseProcess<
   //#region fields & getters
   project: Project;
 
+  releaseArtifactName: any; // TOOD @LAST
+
   /**
    * when standalone only one project is selected
    * when container multiple projects can be selected (all or some)
@@ -233,7 +235,7 @@ export class ReleaseProcess extends BaseReleaseProcess<
   //#region public methods / start release
   startRelease(
     options?: Partial<
-      BaseReleaseProcess<Project, TaonModels.ReleaseArtifactTaon>
+      BaseReleaseProcess<Project>
     >,
   ): Promise<void> {
     // new ArtifactRelease(this.project);
