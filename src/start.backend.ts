@@ -118,6 +118,8 @@ export async function start(
       mrev: 'migration:revert',
       mrevert: 'migration:revert',
       mctxs: 'migration:contexts',
+      // vscode
+      vsce: 'vscode:vsce',
       //#endregion
     },
   });

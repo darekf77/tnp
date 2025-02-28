@@ -35,6 +35,8 @@
     "**/webpack.backend-dist-build.js": true,
     "**/run.js": true,
     "**/run-org.js": true,
+    "**/update-vscode-package-json.js": true,
+    "**/eslint.config.js": true,
     "**/tsconfig.isomorphic.json.filetemplate": true,
     "**/tsconfig.isomorphic-flat-dist.json.filetemplate": true,
     "**/tsconfig.browser.json.filetemplate": true,
@@ -45,7 +47,6 @@
     "**/.npmignore": true,
     "**/.babelrc": true,
     "**/.npmrc": true,
-    "**/.eslintrc.json": true,
     "**/.prettierignore": true,
     "**/.prettierrc": true,
     "**/.editorconfig": true,
@@ -130,7 +131,6 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": false
   },
-  "eslint.migration.2_x": "off",
   "eslint.enable": true,
   "prettier.enable": true,
   "editor.suggest.snippetsPreventQuickSuggestions": false,
@@ -159,5 +159,6 @@
       ],
       "url": "./taon-config.schema.json"
     }
-  ]
+  ],
+  "eslint.migration.2_x": "off"
 }

@@ -1704,7 +1704,7 @@ ${this.project.children
       BuildOptions.from({
         ...this.params,
         buildType: 'app',
-        targetApp: 'electron',
+        targetApp: 'angular-electron-app',
         buildForRelease: true,
         finishCallback: () => this._exit(),
       }),
@@ -1718,7 +1718,7 @@ ${this.project.children
       BuildOptions.from({
         ...this.params,
         buildType: 'app',
-        targetApp: 'electron',
+        targetApp: 'angular-electron-app',
         watch: true,
       }),
     );

@@ -83,7 +83,7 @@ export class LibProjectVscodeExt extends BaseFeatureForProject<Project> {
       ),
     );
 
-    await tempProj.__libVscodext.createVscePackage(false);
+    await tempProj.__libVscodext.createVscePackage({ showInfo: false });
 
     Helpers.info(
       `Installing extension: ${vsixPackageName} ` +
@@ -93,13 +93,16 @@ export class LibProjectVscodeExt extends BaseFeatureForProject<Project> {
   }
 
   // methods / create vscode package
-  async createVscePackage(showInfo = true) {
+  async createVscePackage({
+    showInfo = true,
+    args = '',
+  }: { showInfo?: boolean; args?: string } = {}) {
     //
     const vsixPackageName = this.extensionVsixName;
     try {
       await Helpers.actionWrapper(
         () => {
-          this.project.run(`taon-vsce package`).sync();
+          this.project.run(`taon-vsce package ${args}`).sync();
         },
         `Building vsix package ` + chalk.bold(vsixPackageName) + `... `,
       );

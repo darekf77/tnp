@@ -9,6 +9,9 @@ import { Helpers } from 'tnp-helpers/src';
 import { Project } from '../abstract/project';
 import { Models } from '../../models';
 
+/**
+ * @deprecated REMOVE
+ */
 export class TargetProject extends BaseFeatureForProject<Project> {
   //#region @backend
 

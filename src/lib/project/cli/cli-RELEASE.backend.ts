@@ -255,7 +255,7 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
 
     const releaseOptions = ReleaseOptions.from({
       ...this.params,
-      releaseType: npmReleaseVersionType,
+      releaseVersionBumpType: npmReleaseVersionType,
       automaticRelease,
       skipProjectProcess: true,
       finishCallback: () => {
@@ -285,11 +285,11 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
       return false;
     }
     let newVersion;
-    if (releaseOptions.releaseType === 'major') {
+    if (releaseOptions.releaseVersionBumpType === 'major') {
       newVersion = project.__versionMajorPlusWithZeros;
-    } else if (releaseOptions.releaseType === 'minor') {
+    } else if (releaseOptions.releaseVersionBumpType === 'minor') {
       newVersion = project.__versionMinorPlusWithZeros;
-    } else if (releaseOptions.releaseType === 'patch') {
+    } else if (releaseOptions.releaseVersionBumpType === 'patch') {
       newVersion = project.__versionPatchedPlusOne;
     }
 
@@ -319,7 +319,7 @@ ${project.children
               ? '@' + c.name + `/(${c.children.map(l => l.name).join(',')})`
               : c.name
           }` +
-          `@${c.getVersionFor(releaseOptions.releaseType)}`,
+          `@${c.getVersionFor(releaseOptions.releaseVersionBumpType)}`,
       )
       .join(', ')}
     `);

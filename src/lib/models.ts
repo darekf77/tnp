@@ -285,6 +285,9 @@ export namespace Models {
      */
     usesItsOwnNodeModules?: boolean;
 
+    /**
+     * @deprecated REMOVE
+     */
     targetProjects: TargetProject[];
     /**
      * @deprecated
@@ -413,8 +416,14 @@ export namespace Models {
 
   //#endregion
 
-  //#region  build dir
+  //#region build dir
+  /**
+   * @deprecated
+   */
   export type BuildDir = 'dist';
+  /**
+   * @deprecated
+   */
   export type BuildDirBrowser = 'browser' | 'websql';
   //#endregion
 

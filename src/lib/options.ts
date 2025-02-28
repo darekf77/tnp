@@ -1,10 +1,75 @@
-import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
-import type { Project } from './project/abstract/project';
 import { config } from 'tnp-config/src';
-import { Models } from './models';
+import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
 import { CLASS } from 'typescript-class-helpers/src';
 
-//#region build options lib or app
+import { Models } from './models';
+import type { Project } from './project/abstract/project';
+
+//#region release artifact taon
+/**
+ * All possible release types for taon
+ * for MANUAL/CLOUD release
+ */
+export const ReleaseArtifactTaonNames = Object.freeze({
+  /**
+   * Angular frontend webapp (pwa) + nodejs backend inside docker
+   */
+  ANGULAR_NODE_APP: 'angular-node-app',
+  /**
+   * Angular + Electron app
+   */
+  ANGULAR_ELECTRON_APP: 'angular-electron-app',
+  /**
+   * Angular + Ionic
+   */
+  ANGULAR_MOBILE_APP: 'angular-mobile-app',
+  /**
+   * MkDocs documentation webapp (pwa) inside docker
+   */
+  MK_DOCS_DOCS_WEBAPP: 'mk-docs-docs-webapp',
+  /**
+   * Npm lib package and global cli tool
+   */
+  NPM_LIB_PKG_AND_CLI_TOOL: 'npm-lib-pkg-and-cli-tool',
+  /**
+   * Visual Studio Code extension
+   */
+  VSCODE_EXTENSION_PLUGIN: 'vscode-extension-plugin',
+});
+
+export type ReleaseArtifactTaon =
+  (typeof ReleaseArtifactTaonNames)[keyof typeof ReleaseArtifactTaonNames];
+
+export const ReleaseArtifactTaonNamesArr: ReleaseArtifactTaon[] = Object.values(
+  ReleaseArtifactTaonNames,
+);
+//#endregion
+
+//#region release type
+export const ReleaseTypeNames = Object.freeze({
+  /**
+   * Manual release (happen physically on local machine)
+   */
+  MANUAL: 'manual',
+  /**
+   * Releases artifact to local repository <project-location>/local_release/<artifact-name>/<release build files>
+   */
+  LOCAL: 'local',
+  /**
+   * Trigger cloud release (happen on cloud server)
+   * Cloud release actually start "Manual" release process on cloud server
+   */
+  CLOUD: 'cloud',
+});
+
+export type ReleaseType =
+  (typeof ReleaseTypeNames)[keyof typeof ReleaseTypeNames];
+
+export const ReleaseTypeNamesArr: ReleaseType[] =
+  Object.values(ReleaseTypeNames);
+//#endregion
+
+//#region system-task options
 class SystemTask<T> {
   protected constructor() {}
   finishCallback: () => any;
@@ -122,8 +187,16 @@ export class InitOptions extends BaseBuild<InitOptions> {
 
 //#region build options
 export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
-  readonly outDir: 'dist';
-  readonly targetApp: 'pwa' | 'electron';
+  /**
+   * TODO remove
+   */
+  readonly outDir: 'dist' = 'dist';
+  buildType: 'lib' | 'app' | 'lib-app';
+  targetApp: ReleaseArtifactTaon = 'angular-node-app';
+  /**
+   * null  - means it is development build
+   */
+  isForRelease: ReleaseType | null = null;
   get appBuild() {
     return this.buildType === 'app' || this.buildType === 'lib-app';
   }
@@ -140,13 +213,13 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
   private constructor() {
     super();
     this.outDir = 'dist';
-    this.targetApp = 'pwa';
+    this.targetApp = 'angular-node-app';
   }
   /**
    *
    */
   websql: boolean;
-  buildType: 'lib' | 'app' | 'lib-app';
+
   private _skipProjectProcess: boolean;
   /**
    * Skip project process for assigning automatic ports
@@ -203,16 +276,14 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
 //#endregion
 
 //#region release options
-/**
- * @deprecated
- */
+
 export class ReleaseOptions extends BuildOptionsLibOrApp<ReleaseOptions> {
   private constructor() {
     super();
-    this.releaseType = 'patch';
+    this.releaseVersionBumpType = 'patch';
     this.resolved = [];
   }
-  releaseType: CoreModels.ReleaseVersionType;
+  releaseVersionBumpType: CoreModels.ReleaseVersionType;
   shouldReleaseLibrary: boolean;
   /**
    * build action only for specyfic framework version of prohect

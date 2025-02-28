@@ -5,17 +5,22 @@ import { Helpers, translate } from 'tnp-helpers/src';
 import { BaseReleaseProcess } from 'tnp-helpers/src';
 import { Project } from '../project';
 import { chalk, CoreModels, UtilsTerminal, _ } from 'tnp-core/src';
+import {
+  ReleaseArtifactTaon,
+  ReleaseArtifactTaonNamesArr,
+  ReleaseOptions,
+  ReleaseType,
+} from '../../../options';
 //#endregion
 
 /**
  * manage standalone or container release process
  */
-export class ReleaseProcess extends BaseReleaseProcess<
-  Project,
-  CoreModels.ReleaseProcessType
-> {
+export class ReleaseProcess extends BaseReleaseProcess<Project> {
   //#region fields & getters
   project: Project;
+
+  releaseArtifactName: any; // TOOD @LAST
 
   /**
    * when standalone only one project is selected
@@ -25,19 +30,11 @@ export class ReleaseProcess extends BaseReleaseProcess<
    *  - keeps version for organization packages
    */
   protected readonly selectedProjects: Project[] = [this.project];
-  protected readonly releaseArtifactsTaon: CoreModels.ReleaseArtifactTaon[] =
-    [];
-
-  get isLocalTaonArtifactRelease() {
-    return this.releaseProcessType === 'local';
-  }
+  protected readonly releaseArtifactsTaon: ReleaseArtifactTaon[] = [];
   //#endregion
 
   //#region constructor
-  constructor(
-    project: Project,
-    protected releaseProcessType: CoreModels.ReleaseProcessType,
-  ) {
+  constructor(project: Project) {
     super(project);
   }
   //#endregion
@@ -76,22 +73,22 @@ export class ReleaseProcess extends BaseReleaseProcess<
 
       const { actionResult } = await UtilsTerminal.selectActionAndExecute(
         {
-          ['manual' as CoreModels.ReleaseProcessType]: {
+          ['manual' as ReleaseType]: {
             //#region manual
             name: `${this.getColoredTextItem('manual')} release`,
             action: async () => {
-              const { ReleaseProcessManual } = await import(
-                './release-process-manual'
-              );
-              const releaseProcess = new ReleaseProcessManual(
-                this.project,
-                'manual',
-              );
-              return await releaseProcess.displayArtifactsMenu();
+              // this.project.artifactsManager.release(ReleaseOptions.from({
+              //   releaseType: 'manual
+              // })})
+              // const releaseProcess = new ReleaseProcessManual(
+              //   this.project,
+              //   'manual',
+              // );
+              // return await releaseProcess.displayArtifactsMenu();
             },
             //#endregion
           },
-          ['cloud' as CoreModels.ReleaseProcessType]: {
+          ['cloud' as ReleaseType]: {
             //#region cloud
             name: `${this.getColoredTextItem('cloud')} release`,
             action: async () => {
@@ -112,18 +109,18 @@ export class ReleaseProcess extends BaseReleaseProcess<
             },
             //#endregion
           },
-          ['local' as CoreModels.ReleaseProcessType]: {
+          ['local' as ReleaseType]: {
             //#region local
             name: `${this.getColoredTextItem('local')} release`,
             action: async () => {
-              const { ReleaseProcessLocal } = await import(
-                './release-process-local'
-              );
-              const releaseProcess = new ReleaseProcessLocal(
-                this.project,
-                'local',
-              );
-              return await releaseProcess.displayArtifactsMenu();
+              // const { ReleaseProcessLocal } = await import(
+              //   './release-process-local'
+              // );
+              // const releaseProcess = new ReleaseProcessLocal(
+              //   this.project,
+              //   'local',
+              // );
+              // return await releaseProcess.displayArtifactsMenu();
             },
             //#endregion
           },
@@ -148,7 +145,7 @@ export class ReleaseProcess extends BaseReleaseProcess<
     //#region @backend
     while (true) {
       UtilsTerminal.clearConsole();
-      console.info(this.getReleaseHeader());
+      // console.info(this.getReleaseHeader()); TODO UNCOMMET
       const choices = this.project.children.map(c => {
         return {
           name: c.genericName,
@@ -188,19 +185,15 @@ export class ReleaseProcess extends BaseReleaseProcess<
     }
     while (true) {
       UtilsTerminal.clearConsole();
-      console.info(this.getReleaseHeader());
-      const choices = (
-        this.releaseProcessType === 'local'
-          ? CoreModels.LocalReleaseArtifactTaonNamesArr
-          : CoreModels.ReleaseArtifactTaonNamesArr
-      ).reduce((acc, curr) => {
+      // console.info(this.getReleaseHeader('')); // TODO UNCOMMET
+      const choices = ReleaseArtifactTaonNamesArr.reduce((acc, curr) => {
         return _.merge(acc, {
           [curr]: {
             name: `${_.upperFirst(_.startCase(curr))} release`,
           },
         });
       }, {}) as {
-        [key in CoreModels.ReleaseArtifactTaon]: { name: string };
+        [key in ReleaseArtifactTaon]: { name: string };
       };
 
       const { selected } = await UtilsTerminal.multiselectActionAndExecute(
@@ -230,15 +223,11 @@ export class ReleaseProcess extends BaseReleaseProcess<
   //#region public methods
 
   //#region public methods / start release
-  startRelease(
-    options?: Partial<
-      BaseReleaseProcess<Project, CoreModels.ReleaseArtifactTaon>
-    >,
-  ): Promise<void> {
-    // new ArtifactRelease(this.project);
-    throw new Error('Method not implemented.');
-    // TOOD @LAST
-  }
+  // startRelease(options?: Partial<BaseReleaseProcess<Project>>): Promise<void> {
+  //   // new ArtifactRelease(this.project);
+  //   throw new Error('Method not implemented.');
+  //   // TOOD @LAST
+  // }
   //#endregion
 
   //#endregion
@@ -248,15 +237,15 @@ export class ReleaseProcess extends BaseReleaseProcess<
   //#region private methods / release artifacts for each project
   async releaseArtifacts() {
     //#region @backend
-    for (const project of this.selectedProjects) {
-      for (const releaseArtifact of this.releaseArtifactsTaon) {
-        await this.startRelease({
-          project,
-          releaseArtifactName: releaseArtifact,
-        });
-      }
-    }
-    await this.pushContainerReleaseCommit();
+    // for (const project of this.selectedProjects) {
+    //   for (const releaseArtifact of this.releaseArtifactsTaon) {
+    //     await this.startRelease({
+    //       project,
+    //       releaseArtifactName: releaseArtifact,
+    //     });
+    //   }
+    // }
+    // await this.pushContainerReleaseCommit();
     //#endregion
   }
   //#endregion
@@ -274,35 +263,32 @@ export class ReleaseProcess extends BaseReleaseProcess<
   //#endregion
 
   //#region private methods / get release header
-  private getReleaseHeader(): string {
+  private getReleaseHeader(releaseProcessType: ReleaseType): string {
     if (this.project.__isContainer) {
       return (
         `
 
-          ${this.getColoredTextItem(this.releaseProcessType)}` +
+          ${this.getColoredTextItem(releaseProcessType)}` +
         ` release of ${this.selectedProjects.length} ` +
         `projects inside ${chalk.bold(this.project.genericName)}
 
           `
       );
-    } else {
-      return (
-        `
+    }
+    return (
+      `
 
-            ${this.getColoredTextItem(this.releaseProcessType)}` +
-        ` release of ${chalk.bold(this.project.genericName)}
+            ${this.getColoredTextItem(releaseProcessType)}` +
+      ` release of ${chalk.bold(this.project.genericName)}
 
             `
-      );
-    }
+    );
   }
   //#endregion
 
   //#region private methods / get colored text item
-  private getColoredTextItem(
-    releaseProcessType: CoreModels.ReleaseProcessType,
-  ) {
-    //#region @backend
+  private getColoredTextItem(releaseProcessType: ReleaseType): string {
+    //#region @backendFunc
     if (releaseProcessType === 'manual') {
       return _.upperFirst(chalk.bold.yellow('Manual'));
     }

@@ -115,15 +115,35 @@ class $LocalRelease extends BaseCommandLineFeature<ReleaseOptions, Project> {
     if (menuOption === 'cli') {
       await this.cli();
     }
+    if (menuOption === 'vscodeExt') {
+      await this.vscode();
+    }
     this._exit();
   }
   //#endregion
+
+  //#region vscode
+  async vscode() {
+    await this.project.build(
+      BuildOptions.from({
+        targetApp: 'vscode-extension-plugin',
+        isForRelease: 'local',
+      }),
+    );
+    Helpers.info(`Local release for VScode Extension is done`);
+    this._exit();
+  }
+  //#endregion
+
+  //#region cli
   async cli() {
     await new BaseLocalRelease(this.project).startCLiRelease();
     // await this.project.localRelease.startCLiRelease();
     Helpers.info(`Local release for CLI is done`);
     this._exit();
   }
+  //#endregion
+
   //#region local release menu
   public async _menu() {
     const currentVersion = this.project.npmHelpers.version;

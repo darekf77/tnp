@@ -9,7 +9,14 @@ import { config } from 'tnp-config/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { chalk } from 'tnp-core/src';
 
-export class $Vscode extends BaseCommandLineFeature<{}, Project> {
+export class $Vscode extends BaseCommandLineFeature<
+  {
+    o: string;
+    copyto?: string[];
+    copytoall?: boolean;
+  },
+  Project
+> {
   public async _() {
     // let lastAction: any;
     try {
@@ -94,6 +101,13 @@ export class $Vscode extends BaseCommandLineFeature<{}, Project> {
 
   _hidefilesfor(project: Project) {
     project.__recreate.vscode.settings.hideOrShowFilesInVscode(true);
+  }
+
+  async vsce() {
+    await this.project.__libVscodext.createVscePackage({
+      args: this.argsWithParams,
+    });
+    this._exit();
   }
 }
 
