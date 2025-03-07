@@ -1560,11 +1560,11 @@ ${this.project.children
   }
 
   async jsonSchemaTaonWatch() {
-    await this.project.init(
-      InitOptions.from({
-        purpose: 'initing before json schema docs watch',
-      }),
-    );
+    // await this.project.init(
+    //   InitOptions.from({
+    //     purpose: 'initing before json schema docs watch',
+    //   }),
+    // );
     if (this.project.name !== 'tnp') {
       Helpers.error(`This command is only for tnp project`, false, true);
     }
@@ -1573,12 +1573,16 @@ ${this.project.children
 
     const recreate = async () => {
       const schema = await this._createJsonSchemaFrom({
-        nameOfTypeOrInterface: 'Models.TaonConfig',
+        nameOfTypeOrInterface: 'Models.TaonJson',
         project: this.project,
         relativePathToTsFile: fileToWatch,
       });
       Helpers.writeFile(
         this.project.framework.coreProject.pathFor(taonConfigSchemaJson),
+        schema,
+      );
+      Helpers.writeFile(
+        this.project.pathFor(taonConfigSchemaJson),
         schema,
       );
       Helpers.info(

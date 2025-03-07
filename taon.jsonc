@@ -1,84 +1,31 @@
 {
   "resources": [],
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
-  "usesItsOwnNodeModules": true,
+  "usesItsOwnNodeModules": true, // TODO remove when all thing updated
 
-  "overrided": {
-    //#region dependencies only for tnp
-    "dependencies": {
-      // favicons generator! - has node gyp dep ->
-      // TOOD replace sharp with jimp to remove node-gyp
-      // or generate icons with jimp directly
-      "favicons": "~7.1.2",
-    },
-    //#endregion
-    "npmFixes": [],
-    //#region ignore deps pattern
-    "ignoreDepsPattern": [
-      "edit-table",
-      "bs4-breakpoint",
-      "base-model-wrap",
-      "http-socket-proxy-router",
-      "angular2-example-http-login",
-      "loading-info",
-      "ng2-preloader",
-      "ng2-accordions",
-      "ng2-button-loader",
-      "ng2-rest-swagger-generator",
-      "isomorphic-storage",
-      "rebird-https-letsencrypt",
-      "@iconify/icons-fa-solid",
-      "@iconify/icons-mdi",
-      "@iconify/react",
-    ],
-    //#endregion
-    "includeAsDev": [],
-
-    "linkedFolders": [],
-  },
-
-  //#region include only for tnp package
   "dependenciesNamesForNpmLib": [
-    // "tnp-helpers",
+    // "favicons": "~7.1.2", // favicons generator! - has node gyp dep
     "ora",
     "progress",
     "open",
     "magic-renamer",
     "isomorphic-region-loader",
-    // visual studio required
-    // "@parcel/watcher",
-    // "morphi",
   ],
-
-  //#endregion
-
   "smartContainerBuildTarget": "",
-
-  "linkedRepos": [],
-
-  //#region lib release options
   "cliLibReleaseOptions": {
     "cliBuildNoDts": false,
     "cliBuildObscure": false,
     "cliBuildUglify": false,
     "cliBuildIncludeNodeModules": true,
-    "ugly": false,
-    "nodts": false,
-    "obscure": false,
-    "includeNodeModules": false,
   },
-
-  //#endregion
-
   "type": "isomorphic-lib",
-
   "version": "v18",
+  "packageJsonOverride": {
+    "scripts": {
+      "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
+    },
 
-  "scripts": {
-    "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
+    "license": "MIT",
+    "private": false,
   },
-
-  "license": "MIT",
-  "private": false,
-  "packageJsonOverride": {}
 }

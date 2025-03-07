@@ -4,11 +4,13 @@ import { Helpers, _ } from 'tnp-core/src';
 import { BaseFeatureForProject, BasePackageJson } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
+import { Models } from '../../models';
+
 import type { Project } from './project';
 
 // @ts-ignore TODO weird inheritance problem
 export class TaonJson extends BaseFeatureForProject<Project> {
-  private readonly data?: CoreModels.TaonJson;
+  private readonly data?: Models.TaonJson;
 
   public readonly packageJsonOverride: BasePackageJson;
 
@@ -16,7 +18,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   //#region @backend
   constructor(
     public project: Project,
-    defaultValue?: Partial<CoreModels.TaonJson>,
+    defaultValue?: Partial<Models.TaonJson>,
   ) {
     super(project);
 
@@ -200,7 +202,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region lib/cli release options
-  get cliLibReleaseOptions(): CoreModels.CliLibReleaseOptions | undefined {
+  get cliLibReleaseOptions(): Models.CliLibReleaseOptions | undefined {
     return this.data?.cliLibReleaseOptions;
   }
   //#endregion
