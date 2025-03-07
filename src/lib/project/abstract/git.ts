@@ -1,27 +1,118 @@
-import { config } from 'tnp-config/src';
-import type { Project } from './project';
+//#region imports
 import { BaseGit, Helpers } from 'tnp-helpers/src';
-import { chalk, path } from 'tnp-core/src';
-interface LaunchConfiguration {
-  type: string;
-  outFiles?: string[];
-  // Add other properties as needed
-}
 
-interface LaunchJson {
-  configurations: LaunchConfiguration[];
-}
+import type { Project } from './project';
+//#endregion
 
+// @ts-ignore TODO weird inheritance problem
 export class Git extends BaseGit<Project> {
-  //#region getters & methods / before push action
+  //#region overridden is using action commit
+  /**
+   * @overload
+   */
+  isUsingActionCommit() {
+    return true;
+  }
+  //#endregion
+
+  //#region push to git repo
+  async pushToGitRepo(
+    realCurrentProj: Project,
+    newVersion?: string,
+    pushWithoutAsking = false,
+  ) {
+    //#region @backendFunc
+    const pushFun = async () => {
+      if (newVersion) {
+        const tagName = `v${newVersion}`;
+        const commitMessage = 'new version ' + newVersion;
+        try {
+          realCurrentProj
+            .run(`git tag -a ${tagName} ` + `-m "${commitMessage}"`, {
+              output: false,
+            })
+            .sync();
+        } catch (error) {
+          Helpers.error(`Not able to tag project`, false, true);
+        }
+        const lastCommitHash = realCurrentProj.git.lastCommitHash();
+        realCurrentProj.packageJson.setBuildHash(lastCommitHash);
+
+        realCurrentProj.git.__commitRelease(newVersion, `release: `);
+      } else {
+        realCurrentProj.git.__commitRelease();
+      }
+
+      Helpers.log('Pushing to git repository... ');
+      Helpers.log(`Git branch: ${realCurrentProj.git.currentBranchName}`);
+      await realCurrentProj.git.pushCurrentBranch({ askToRetry: true });
+      Helpers.info('Pushing to git repository done.');
+    };
+
+    if (pushWithoutAsking) {
+      await pushFun();
+    } else {
+      await Helpers.questionYesNo('Push changes to git repo ?', async () => {
+        await pushFun();
+      });
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region commit release
+  public __commitRelease(newVer?: string, message = 'new version') {
+    //#region @backendFunc
+    if (newVer) {
+      this.stageAllAndCommit(`${message} v${newVer}`);
+    } else {
+      this.stageAllAndCommit('relese update');
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region remove tag nad commit
+  /**
+   * @deprecated
+   */
+  __removeTagAndCommit(automaticRelease: boolean) {
+    //#region @backendFunc
+    // Helpers.error(`PLEASE RUN: `, true, true);
+    // if (!tagOnly) {
+    //   Helpers.error(`git reset --hard HEAD~1`, true, true);
+    // }
+    Helpers.error(`'release problem... `, automaticRelease, true);
+    // if (automaticRelease) {
+    //   Helpers.error('release problem...', false, true);
+    // }
+    //#endregion
+  }
+  //#endregion
+
+  //#region OVERRIDE
+
+  //#region OVERRIDE / use git branches when commting and pushing
+  useGitBranchesWhenCommitingAndPushing() {
+    return false;
+  }
+  //#endregion
+
+  //#region OVERRIDE / use git branches as metadata for commits
+  useGitBranchesAsMetadataForCommits() {
+    return false;
+  }
+  //#endregion
+
+  //#region OVERRIDE / before push action
   protected async _beforePushProcessAction(setOrigin: 'ssh' | 'http') {
     //#region @backendFunc
     await super._beforePushProcessAction(setOrigin);
 
     if (
       !this.project.git.originURL &&
-      this.project.__isContainerChild &&
-      !this.project.__isSmartContainerChild
+      this.project.framework.isContainerChild &&
+      !this.project.framework.isSmartContainerChild
     ) {
       this.project
         .run(
@@ -35,7 +126,7 @@ export class Git extends BaseGit<Project> {
 
     this.project.removeFolderByRelativePath('node_modules/husky');
 
-    // if (this.project.__isStandaloneProject) {
+    // if (this.project.framework.isStandaloneProject) {
     //   if (this.project.hasFile(`.vscode/launch.json`)) {
     //     const launchJson =
     //       this.project.readJson<LaunchJson>(`.vscode/launch.json`);
@@ -67,7 +158,7 @@ export class Git extends BaseGit<Project> {
     //           frameworkVersion === 'v1' ? '' : `-${frameworkVersion}`
     //         } in ${this.project.name}`,
     //       );
-    //       containerCoreForVersion.__packageJson.save(
+    //       containerCoreForVersion.packageJson.save(
     //         'Updating taon container',
     //       );
     //     } else {
@@ -78,18 +169,11 @@ export class Git extends BaseGit<Project> {
     //   });
     // }
 
-    if (this.project.__targetProjects.exists) {
-      Helpers.warn(`
-
-      Don't forget to push target projects for project ${chalk.bold(this.project.name)}
-
-      `);
-    }
     //#endregion
   }
   //#endregion
 
-  //#region getters & methods / before pull action
+  //#region OVERRIDE / before pull action
   protected async _beforePullProcessAction(setOrigin: 'ssh' | 'http') {
     //#region @backendFunc
     await super._beforePullProcessAction(setOrigin);
@@ -98,30 +182,27 @@ export class Git extends BaseGit<Project> {
   }
   //#endregion
 
-  //#region getters & methods / use git branches as metadata for commits
-  useGitBranchesAsMetadataForCommits() {
-    return false;
-  }
-  //#endregion
-
-  //#region getters & methods / automatically add all changes when pushing to git
+  //#region OVERRIDE / automatically add all changes when pushing to git
   automaticallyAddAllChangesWhenPushingToGit() {
     return (
-      this.project.__isContainer ||
-      this.project.__isStandaloneProject ||
-      this.project?.parent?.__isContainer
+      this.project.framework.isContainer ||
+      this.project.framework.isStandaloneProject ||
+      this.project?.parent?.framework.isContainer
     );
   }
   //#endregion
 
-  //#region getters & methods / use git branches when commting and pushing
-
-  useGitBranchesWhenCommitingAndPushing() {
-    return false;
-  }
-  //#endregion
-
+  //#region OVERRIDE / during push warn if project not on specyfic dev branch
   duringPushWarnIfProjectNotOnSpecyficDevBranch() {
     return 'master';
   }
+  //#endregion
+
+  //#region OVERRIDE / overridden get default develop Branch
+  getDefaultDevelopmentBranch() {
+    return 'master';
+  }
+  //#endregion
+
+  //#endregion
 }

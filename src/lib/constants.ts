@@ -1,11 +1,11 @@
 //#region imports
-//#region @backend
-import { os } from 'tnp-core/src';
-//#endregion
-import { _ } from 'tnp-core/src';
 import { config } from 'tnp-config/src';
-import type { Project } from './project/abstract/project';
+import { os } from 'tnp-core/src';
+import { _ } from 'tnp-core/src';
 import { crossPlatformPath, path, Utils } from 'tnp-core/src';
+
+import type { Project } from './project/abstract/project';
+
 //#endregion
 
 export const taonIgnore = '@taon' + '-' + 'ignore';
@@ -52,7 +52,7 @@ export const argsToClear = [
 ];
 
 export const folder_shared_folder_info = 'shared_folder_info.txt';
-export const taonConfigSchemaJson = 'taon-config.schema.json'
+export const taonConfigSchemaJson = 'taon-config.schema.json';
 
 export const TEMP_DOCS = 'tmp-documentation';
 
@@ -102,7 +102,7 @@ export class PortUtils {
   private max = 20;
 
   calculatePortForElectronDebugging(project: Project): number {
-    if (!project.__isIsomorphicLib) {
+    if (!project.framework.isStandaloneProject) {
       return;
     }
     return 9876 + this.n;
@@ -110,19 +110,20 @@ export class PortUtils {
 
   calculateServerPortFor(project: Project): number {
     //#region @backendFunc
-    if (project.__isContainer) {
+    if (project.framework.isContainer) {
       return;
     }
-    if (project.__isSmartContainerTarget) {
-      project = project.__smartContainerTargetParentContainer.children.find(
-        c => c.name === project.name,
-      );
+    if (project.framework.isSmartContainerTarget) {
+      project =
+        project.framework.smartContainerTargetParentContainer.children.find(
+          c => c.name === project.name,
+        );
     }
-    if (project.__isSmartContainerChild) {
+    if (project.framework.isSmartContainerChild) {
       const index = project.parent.children.indexOf(project);
       return this.calculateForContainerServer(index);
     }
-    if (project.__isStandaloneProject) {
+    if (project.framework.isStandaloneProject) {
       return this.calculateForStandaloneServer();
     }
     //#endregion
@@ -133,19 +134,20 @@ export class PortUtils {
     { websql }: { websql: boolean },
   ): number {
     //#region @backendFunc
-    if (project.__isContainer) {
+    if (project.framework.isContainer) {
       return;
     }
-    if (project.__isSmartContainerTarget) {
-      project = project.__smartContainerTargetParentContainer.children.find(
-        c => c.name === project.name,
-      );
+    if (project.framework.isSmartContainerTarget) {
+      project =
+        project.framework.smartContainerTargetParentContainer.children.find(
+          c => c.name === project.name,
+        );
     }
-    if (project.__isSmartContainerChild) {
+    if (project.framework.isSmartContainerChild) {
       const index = project.parent.children.indexOf(project);
       return this.calculateForContainerClient(index, { websql });
     }
-    if (project.__isStandaloneProject) {
+    if (project.framework.isStandaloneProject) {
       return this.calculateForStandaloneClient({ websql });
     }
     //#endregion
@@ -180,23 +182,24 @@ export class PortUtils {
   appHostTemplateFor(project: Project) {
     //#region @backendFunc
     const clientPorts =
-      project.__isStandaloneProject && !project.__isSmartContainerTarget
+      project.framework.isStandaloneProject &&
+      !project.framework.isSmartContainerTarget
         ? `
-export const CLIENT_DEV_NORMAL_APP_PORT = ${project.standaloneNormalAppPort};
-export const CLIENT_DEV_WEBSQL_APP_PORT = ${project.standaloneWebsqlAppPort};
+export const CLIENT_DEV_NORMAL_APP_PORT = ${project.artifactsManager.artifact.angularNodeApp.standaloneNormalAppPort};
+export const CLIENT_DEV_WEBSQL_APP_PORT = ${project.artifactsManager.artifact.angularNodeApp.standaloneWebsqlAppPort};
     `
         : '';
 
     return `
 // THIS FILE IS GENERATED - DO NOT MODIFY
 
-export const HOST_BACKEND_PORT = ${project.backendPort};
+export const HOST_BACKEND_PORT = ${project.artifactsManager.artifact.angularNodeApp.backendPort};
 ${clientPorts}
 
 // Check yout build info here http://localhost:${this.basePort}
 // BACKEND FOR NORMAL APP: http://localhost:${this.basePort}/helloworld
-// NORMAL APP: http://localhost:${project.standaloneNormalAppPort}
-// WEBSQL APP: http://localhost:${project.standaloneWebsqlAppPort}
+// NORMAL APP: http://localhost:${project.artifactsManager.artifact.angularNodeApp.standaloneNormalAppPort}
+// WEBSQL APP: http://localhost:${project.artifactsManager.artifact.angularNodeApp.standaloneWebsqlAppPort}
 
 // THIS FILE IS GENERATED - DO NOT MODIFY
 `.trim();

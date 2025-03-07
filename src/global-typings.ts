@@ -24,7 +24,6 @@ declare global {
        * You can turn if of with "-verbose" paramter
        */
       hideLog: boolean;
-      codePurposeBrowser: boolean;
       /**
        * This prevent circular dependency install in container
        * when showing deps in other projects

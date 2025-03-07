@@ -23,7 +23,7 @@ export async function start(
 
   // Helpers.log(`ins start, mode: "${mode}"`);
   const ProjectClass = (await import('./lib/project/abstract/project')).Project;
-  ProjectClass.initialCheck();
+  ProjectClass.ins.initialCheck();
 
   // console.log(argsv);
   if (
@@ -118,6 +118,8 @@ export async function start(
       mrev: 'migration:revert',
       mrevert: 'migration:revert',
       mctxs: 'migration:contexts',
+      // vscode
+      vsce: 'vscode:vsce',
       //#endregion
     },
   });

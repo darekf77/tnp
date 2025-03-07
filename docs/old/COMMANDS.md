@@ -82,7 +82,7 @@ tnp ar
 tnp minor:release
 tnp minor
 
-## major relase
+## major release
 tnp major:release
 tnp major
 

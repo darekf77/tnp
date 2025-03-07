@@ -6,7 +6,7 @@ export type TaonEnvType = 'dev' | 'prod' | 'test' | 'stage';
   className: 'TaonEnv',
 })
 export class TaonEnv extends Taon.Base.AbstractEntity {
-  static from(obj: { name: string; type: TaonEnvType }) {
+  static from(obj: { name: string; type: TaonEnvType }): TaonEnv {
     return new TaonEnv().clone(obj);
   }
 

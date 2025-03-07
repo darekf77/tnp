@@ -7,14 +7,11 @@
 // import { it } from 'mocha';
 // import { SpecWrap } from '../_helpers.spec';
 // import { config } from 'tnp-config/src';
-// import { Project } from '../../lib/project/abstract/project';
+// import type { Project } from '../../lib/project/abstract/project';
 // import { Helpers } from 'tnp-helpers/src';
-// import { ProjectIsomorphicLib } from '../../lib/project/abstract/project';
-// import { ProjectContainer } from '../../lib/project/abstract/project';
 // import { BuildOptions } from '../../lib/options';
 // import { PackageJSON } from '../../lib/project/features/package-json/package-json';
 // import { dummyfiles } from './copyto-manager-dummy-files';
-// import { ProjectUnknowNpm } from '../../lib/project/abstract/project';
 
 // //#endregion
 
@@ -83,7 +80,7 @@
 
 //           // expect(Helpers.exists(localCopyToProjPath)).to.be.true;
 
-//           // const copiedProjPath = mainProject.__node_modules.pathFor(dummyLibProjName)
+//           // const copiedProjPath = mainProject.nodeModules.pathFor(dummyLibProjName)
 
 //           // dummy1.copyManager.generateSourceCopyIn(copiedProjPath);
 //           expect(Helpers.exists(copiedProjPath)).to.be.true;
@@ -151,7 +148,7 @@
 //           } as any);
 
 //           const copiedProjPath =
-//             mainProject.__node_modules.pathFor(dummyLibProjName);
+//             mainProject.nodeModules.pathFor(dummyLibProjName);
 
 //           // dummy1.copyManager.generateSourceCopyIn(copiedProjPath);
 //           expect(Helpers.exists(copiedProjPath)).to.be.true;

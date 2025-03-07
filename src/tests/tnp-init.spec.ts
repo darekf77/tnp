@@ -5,7 +5,7 @@
 // import { _ } from 'tnp-core';
 
 // import { SpecWrap } from './_helpers.spec';
-// // import { NEW } from '../scripts/NEW-PROJECT_FILES_MODULES/NEW.backend';
+// // import { NEW } from '../scripts/NEW-PROJECT_FILES_MODULES/NEW';
 // // import { INIT } from '../scripts/PROJECTS-DEVELOPMENT/FILES_STRUCTURE';
 
 // const wrap = SpecWrap.create();

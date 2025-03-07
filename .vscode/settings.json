@@ -52,6 +52,9 @@
     "**/devDependencies.json": true,
     "**/package.json": true,
     "**/logo.svg": true,
+    ".firedev": true,
+    ".taon": true,
+    ".tnp": true,
     "**/*.filetemplate": true,
     "**/tsconfig.*": true,
     "**/tslint.*": true,
@@ -130,7 +133,6 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": false
   },
-  "eslint.migration.2_x": "off",
   "eslint.enable": true,
   "prettier.enable": true,
   "editor.suggest.snippetsPreventQuickSuggestions": false,
@@ -159,5 +161,6 @@
       ],
       "url": "./taon-config.schema.json"
     }
-  ]
+  ],
+  "eslint.migration.2_x": "off"
 }

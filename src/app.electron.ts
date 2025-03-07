@@ -1,16 +1,12 @@
+//#region @backend
+import { app, BrowserWindow, Menu, screen, Tray } from 'electron';
+import { path, fse } from 'tnp-core/src';
+
+import start from './app';
 import {
   CLIENT_DEV_NORMAL_APP_PORT,
   CLIENT_DEV_WEBSQL_APP_PORT,
 } from './app.hosts';
-import {
-  path,
-  //#region @backend
-  fse,
-  //#endregion
-} from 'tnp-core';
-//#region @backend
-import { app, BrowserWindow, Menu, screen, Tray } from 'electron';
-import start from './app';
 
 let win: BrowserWindow | null = null;
 const args = process.argv.slice(1);
@@ -71,7 +67,11 @@ function createWindow(): BrowserWindow {
       path.join(__dirname, '../src/assets/generated/pwa/favicon.ico'),
     );
     const contextMenu = Menu.buildFromTemplate([
-      { label: 'Exit Taon service', type: 'normal', click: () => process.exit(0) },
+      {
+        label: 'Exit Taon service',
+        type: 'normal',
+        click: () => process.exit(0),
+      },
       // { label: 'Item2', type: 'checkbox' },
       // { label: 'Item3', type: 'radio', checked: true },
       // { label: 'Item4', type: 'submenu',  submenu: [

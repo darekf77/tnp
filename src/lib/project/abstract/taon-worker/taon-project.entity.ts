@@ -1,13 +1,14 @@
 import { Taon } from 'taon/src';
 import { _, CoreModels } from 'tnp-core/src';
 
-//#region port entity
 @Taon.Entity({
   className: 'TaonProject',
   uniqueKeyProp: 'location',
 })
 export class TaonProject extends Taon.Base.Entity {
-  static from(opt: Omit<TaonProject, 'id' | 'version' | '_' | 'clone'>) {
+  static from(
+    opt: Omit<TaonProject, 'id' | 'version' | '_' | 'clone'>,
+  ): TaonProject {
     return _.merge(new TaonProject(), opt);
   }
 
@@ -39,4 +40,3 @@ export class TaonProject extends Taon.Base.Entity {
   isTemporary: boolean;
   //#endregion
 }
-//#endregion

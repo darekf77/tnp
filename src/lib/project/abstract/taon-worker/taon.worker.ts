@@ -1,11 +1,13 @@
 //#region @backend
+import { config } from 'tnp-config/src';
 import { fse, UtilsTerminal } from 'tnp-core/src';
 //#endregion
 import { BaseCliWorker, Helpers } from 'tnp-helpers/src';
-import { TaonProjectResolve } from '../project';
-import { TaonProjectsController } from './taon.controller';
+
+import type { TaonProjectResolve } from '../project-resolve';
+
 import { TaonProjectsContext } from './taon.context';
-import { config } from 'tnp-config/src';
+import { TaonProjectsController } from './taon.controller';
 
 export class TaonProjectsWorker extends BaseCliWorker {
   //#region constructor

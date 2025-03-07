@@ -5,9 +5,9 @@
 // import { _ } from 'tnp-core';
 
 // import { SpecWrap } from './_helpers.spec';
-// import { NEW, NEW_SITE } from '../scripts/NEW-PROJECT_FILES_MODULES/NEW.backend';
+// import { NEW, NEW_SITE } from '../scripts/NEW-PROJECT_FILES_MODULES/NEW';
 // import { INIT, CLEAR_ALL } from '../scripts/PROJECTS-DEVELOPMENT/FILES_STRUCTURE';
-// import { Project } from '../project';
+// import type { Project } from '../project';
 // import { Helpers } from 'tnp-helpers';
 
 // const BASELINE_WORKSPACE_PROJECT_NAME = 'test-1'

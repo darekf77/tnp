@@ -1,54 +1,17 @@
 import { CoreModels, _ } from 'tnp-core/src';
+import { PackageJson } from 'type-fest';
+
 import type { Project } from './project/abstract/project';
 
 export namespace Models {
-  //#region taon test type
+  // taon test type
   export type TestTypeTaon = 'mocha' | 'jest' | 'cypress';
   export const TestTypeTaonArr = ['mocha', 'jest', 'cypress'] as TestTypeTaon[];
-  //#endregion
 
-  //#region taon npm package type
+  // taon npm package type
   export type SaveAction = 'save' | 'show' | 'hide';
 
-  export type PackageJsonSaveOptions = {
-    action: SaveAction;
-    newDeps: any;
-    toOverride: any;
-    reasonToShowPackages: string;
-    reasonToHidePackages: string;
-  };
-
-  export interface NpmInstallOptions {
-    remove?: boolean;
-    npmPackages?: CoreModels.Package[];
-  }
-
-  export type NpmDependencyType =
-    | 'dependencies'
-    | 'devDependencies'
-    | 'peerDependencies'
-    | 'optionalDependencies'
-    | 'extensionDependencies'
-    | '_phantomChildren';
-
-  export type TnpNpmDependencyType = 'tnp_overrided_dependencies';
-
-  export const ArrNpmDependencyType: NpmDependencyType[] = [
-    'dependencies',
-    'devDependencies',
-    'peerDependencies',
-    'optionalDependencies',
-    ,
-    'extensionDependencies',
-    '_phantomChildren',
-  ];
-
-  export const ArrTnpNpmDependencyType: TnpNpmDependencyType[] = [
-    'tnp_overrided_dependencies',
-  ];
-  //#endregion
-
-  //#region taon fe app loader
+  // taon fe app loader
   export interface TaonLoaderConfig {
     name?: TaonLoaders;
     color?: string;
@@ -61,9 +24,8 @@ export namespace Models {
     | 'lds-grid'
     | 'lds-heart'
     | 'lds-ripple';
-  //#endregion
 
-  //#region env config
+  // env config
   export interface EnvConfigProject {
     baseUrl: string;
     host?: string; // generated
@@ -72,12 +34,10 @@ export namespace Models {
     type?: CoreModels.LibType; // checked
 
     port: number; // override type port
-    //#region @backend
+    // @backend
     $db?: any;
-    ommitAppBuild?: boolean;
     isWatchBuild?: boolean; // generated
     isWebsqlBuild?: boolean; // generated
-    //#endregion
   }
 
   export interface EnvConfig {
@@ -185,7 +145,7 @@ export namespace Models {
     currentProjectTsConfigPathes?: string;
     currentProjectTsConfigPathesForBrowser?: string;
     currentProjectType?: CoreModels.LibType;
-    packageJSON?: IPackageJSON;
+    packageJSON?: PackageJson;
 
     cloud?: {
       ports: {
@@ -204,9 +164,8 @@ export namespace Models {
       };
     };
   }
-  //#endregion
 
-  //#region site option
+  // site option
   export type NewSiteOptions = {
     type?: CoreModels.NewFactoryType;
     name?: string;
@@ -217,208 +176,10 @@ export namespace Models {
     alsoBasedOn?: string[];
     siteProjectMode?: 'strict' | 'dependency';
   };
-  //#endregion
 
-  //#region taon.json config @deprecated
-  /**
-   * @deprecated
-   */
-  export type TargetProject = {
-    path?: string;
-    origin: string;
-    branch: string;
-    links: string[];
-  };
+  // taon.json config @deprecated
 
-  /**
-   * use CoreModels.TaonJson
-   * @deprecated
-   */
-  export interface TnpIPackageJSONOverride extends CoreModels.TaonJson {
-    scripts?: { [script in string]: string };
-    description?: string;
-    license?: string;
-    /**
-     * if true => package is private
-     */
-    private?: boolean;
-    author?: string;
-    homepage?: string;
-    main?: string;
-    module?: string;
-    exports?: object;
-    name?: string;
-  }
-
-  export type TrustedType = {
-    [frameworkVersion in CoreModels.FrameworkVersion]: string | string[];
-  };
-
-  export type LinkedRepo = {
-    origin: string;
-    relativeFoldersLinks?: {
-      from: string;
-      to: string;
-    }[];
-  };
-
-  export interface TnpData extends TnpIPackageJSONOverride {
-    /**
-     * for type-orm fork
-     */
-    linkedRepos?: LinkedRepo[];
-
-    /**
-     * @deprecated
-     * worker plugins for cli
-     *
-     * workerPlugin: {
-     *  'tnp-db': '',
-     *  'tnp-db-autoupdate': '/up'
-     * }
-     */
-    workerPlugins?: { [pathOrName in string]: string };
-
-    /**
-     * let project use it own node_modules instead linking
-     * them from core container
-     */
-    usesItsOwnNodeModules?: boolean;
-
-    targetProjects: TargetProject[];
-    /**
-     * @deprecated
-     * framework available inside project/app
-     */
-    frameworks?: CoreModels.UIFramework[];
-
-    /**
-     * @deprecated
-     */
-    additionalNpmNames: boolean;
-    /**
-     * only for container
-     */
-    overrideCoreDeps?: boolean;
-    /**
-     * Easy way to skip browser compilation
-     * @deprecated
-     */
-    isCommandLineToolOnly?: boolean;
-    /**
-     * @deprecated
-     */
-    isGlobalSystemTool?: boolean;
-    /**
-     * Only for isomorphic lib
-     * @deprecated
-     * - if true => generate controllers.ts, entities.ts
-     */
-    useFramework: boolean;
-    /**
-     * Core and contant dependecies for all projects
-     */
-    core: {
-      dependencies: {
-        /**
-         * this dependenices are always included in some way
-         */
-        always?: string[];
-        /**
-         * this dependencies are only included as devDependencies
-         */
-        asDevDependencies?: string[];
-        trusted: TrustedType;
-        /**
-         * list of package to dedupe
-         */
-        dedupe: string[];
-
-        stubForBackend: string[];
-        /**
-         * Comon dependencies for all kinds of project types
-         */
-        common:
-          | DependenciesFromPackageJsonStyle
-          | { [groupAlias: string]: DependenciesFromPackageJsonStyle };
-        /**
-         * Dependencies only for specyfic project type
-         */
-        onlyFor: {
-          [libType: string]:
-            | DependenciesFromPackageJsonStyle
-            | { [groupAlias: string]: DependenciesFromPackageJsonStyle };
-        };
-      };
-    };
-
-    /**
-     * dependency site baselines
-     */
-    dependsOn: string[];
-    /**
-     * Static resurces for standalone project, that are
-     * going to be included in release dist
-     */
-    resources?: string[];
-    /**
-     * Allowed environment for poroject
-     */
-    allowedEnv?: CoreModels.EnvironmentName[];
-
-    /**
-     * Override automation generation
-     */
-    overrided: {
-      tsconfig?: Object;
-      dedupe?: string[];
-      ignoreDepsPattern?: string[];
-      includeOnly?: string[];
-      includeAsDev?: string[] | '*';
-      linkedFolders?: { from: string; to: string }[];
-      dependencies?: DependenciesFromPackageJsonStyle;
-    };
-  }
-  //#endregion
-
-  //#region package.json @deprecated
-  export type TaonConfig = TnpData & TnpIPackageJSONOverride;
-
-  /**
-   * @deprecated use CoreModels.TaonJson
-   */
-  export interface IPackageJSON
-    extends Omit<TnpIPackageJSONOverride, 'version'> {
-    name: string;
-    husky?: {
-      hooks: {
-        'pre-push': string;
-      };
-    };
-    version?: string;
-    bin?: any;
-    preferGlobal?: boolean;
-    lastBuildTagHash?: string;
-    engines?: { node: string; npm: string };
-    dependencies?: DependenciesFromPackageJsonStyle;
-    peerDependencies?: DependenciesFromPackageJsonStyle;
-    devDependencies?: DependenciesFromPackageJsonStyle;
-    tnp: TaonConfig;
-    taon: TaonConfig;
-  }
-  /**
-   * @deprecated
-   */
-  export type DependenciesFromPackageJsonStyle = { [name: string]: string };
-
-  //#endregion
-
-  //#region  build dir
-  export type BuildDir = 'dist';
-  export type BuildDirBrowser = 'browser' | 'websql';
-  //#endregion
-
-  //#region cli root args
+  // cli root args
   // TODO make it more visible
   export type RootArgsType = {
     tnpNonInteractive: boolean;
@@ -430,9 +191,8 @@ export namespace Models {
     findNearestProjectTypeWithGitRoot: CoreModels.LibType;
     cwd: string;
   };
-  //#endregion
 
-  //#region generate project copy
+  // generate project copy
   export interface GenerateProjectCopyOpt {
     override?: boolean;
     markAsGenerated?: boolean;
@@ -448,9 +208,8 @@ export namespace Models {
      */
     dereference?: boolean;
   }
-  //#endregion
 
-  //#region ps list info
+  // ps list info
   export interface PsListInfo {
     pid: number;
     ppid: number;
@@ -459,7 +218,6 @@ export namespace Models {
     name: string;
     cmd: string;
   }
-  //#endregion
 
   export interface CreateJsonSchemaOptions {
     project: Project;
@@ -467,7 +225,7 @@ export namespace Models {
     relativePathToTsFile: string;
   }
 
-  //#region DocsConfig
+  // DocsConfig
   export interface DocsConfig {
     /**
      * override site name (default is project name)
@@ -539,5 +297,4 @@ export namespace Models {
     customJsPath?: string;
     customCssPath?: string;
   }
-  //#endregion
 }

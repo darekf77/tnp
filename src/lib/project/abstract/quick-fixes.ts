@@ -1,6 +1,9 @@
 //#region imports
-//#region @backend
+import { config } from 'tnp-config/src';
 import { glob, fse, chalk } from 'tnp-core/src';
+import { path, _, crossPlatformPath } from 'tnp-core/src';
+import { UtilsTypescript } from 'tnp-helpers/src';
+import { Helpers, BaseQuickFixes } from 'tnp-helpers/src';
 import {
   createSourceFile,
   isClassDeclaration,
@@ -8,105 +11,18 @@ import {
   Node,
   forEachChild,
 } from 'typescript';
-//#endregion
-import { path, _, crossPlatformPath } from 'tnp-core/src';
-import { Project } from '../abstract/project';
-import { UtilsTypescript } from 'tnp-helpers/src';
-import { Helpers, BaseQuickFixes } from 'tnp-helpers/src';
-import { config } from 'tnp-config/src';
+
 import { folder_shared_folder_info, tempSourceFolder } from '../../constants';
-import { Models } from '../../models';
+import type { Project } from '../abstract/project';
 //#endregion
 
+// @ts-ignore TODO weird inheritance problem
 export class QuickFixes extends BaseQuickFixes<Project> {
+  // @ts-ignore TODO weird inheritance problem
   project: Project;
-  //#region update standalone project before publishing
-  updateStanaloneProjectBeforePublishing(
-    project: Project,
-    realCurrentProj: Project,
-    specyficProjectForBuild: Project,
-  ) {
-    //#region @backendFunc
-    if (project.__isStandaloneProject) {
-      const distForPublishPath = crossPlatformPath([
-        specyficProjectForBuild.location,
-        project.__getTempProjName('dist'),
-        config.folder.node_modules,
-        project.name,
-      ]);
-
-      Helpers.remove(`${distForPublishPath}/app*`); // QUICK_FIX
-      Helpers.remove(`${distForPublishPath}/tests*`); // QUICK_FIX
-      Helpers.remove(`${distForPublishPath}/src`, true); // QUICK_FIX
-      Helpers.writeFile(
-        crossPlatformPath([distForPublishPath, 'src.d.ts']),
-        `
-// THIS FILE IS GENERATED
-export * from './lib';
-// THIS FILE IS GENERATED
-// please use command: taon build:watch to see here links for your globally builded lib code files
-// THIS FILE IS GENERATED
-      `.trimStart(),
-      );
-
-      const pjPath = crossPlatformPath([
-        distForPublishPath,
-        config.file.package_json,
-      ]);
-
-      const pj = Helpers.readJson(pjPath) as Models.IPackageJSON;
-      if (realCurrentProj.name === 'tnp') {
-        pj.devDependencies = {};
-        pj.dependencies = {}; // tnp is not going to be use in any other project
-      } else {
-        pj.devDependencies = {};
-      }
-      Helpers.removeFileIfExists(pjPath);
-      Helpers.writeJson(pjPath, pj); // QUICK_FIX
-    }
-    //#endregion
-  }
-  //#endregion
-
-  //#region update container project before publishing
-  updateContainerProjectBeforePublishing(
-    project: Project,
-    realCurrentProj: Project,
-    specyficProjectForBuild: Project,
-  ) {
-    //#region @backendFunc
-    if (project.__isSmartContainer) {
-      const base = path.join(
-        specyficProjectForBuild.location,
-        specyficProjectForBuild.__getTempProjName('dist'),
-        config.folder.node_modules,
-        `@${realCurrentProj.name}`,
-      );
-
-      for (const child of realCurrentProj.children) {
-        const distReleaseForPublishPath = crossPlatformPath([base, child.name]);
-        // console.log({
-        //   distReleaseForPublishPath
-        // })
-        Helpers.remove(`${distReleaseForPublishPath}/src`, true); // QUICK_FIX
-        Helpers.writeFile(
-          crossPlatformPath([distReleaseForPublishPath, 'src.d.ts']),
-          `
-  // THIS FILE IS GENERATED
-  export * from './index';
-  // THIS FILE IS GENERATED
-  // please use command: taon build:watch to see here links for your globally builded lib code files
-  // THIS FILE IS GENERATED
-        `.trimStart(),
-        );
-      }
-    }
-    //#endregion
-  }
-  //#endregion
 
   //#region recreate temp source necessary files
-  recreateTempSourceNecessaryFiles(outDir: 'dist') {
+  recreateTempSourceNecessaryFiles(outDir: 'dist'): void {
     //#region @backendFunc
     if (this.project.typeIsNot('isomorphic-lib')) {
       return;
@@ -264,25 +180,21 @@ Object.defineProperty(document.body.style, 'transform', {
   }
   //#endregion
 
-  //#region remove unnecessary files
-  removeUncessesaryFiles() {
-    const filesV1 = [
-      'src/tsconfig.packages.json',
-      'src/tsconfig.spec.json',
-      'src/tsconfig.app.json',
-      '.angular-cli.json',
-    ];
-  }
-  //#endregion
-
-  //#region  remove tnp from itself
+  //#region remove tnp from itself
   /**
    * TODO QUICK FIX
    * something wrong when minifying cli
    */
-  public async removeTnpFromItself(actionwhenNotInNodeModules: () => {}) {
+  public async removeTnpFromItself(
+    actionwhenNotInNodeModules: () => {},
+  ): Promise<void> {
     //#region @backendFunc
-    if (!(this.project.name === 'tnp' && this.project.isInCiReleaseProject)) {
+    if (
+      !(
+        this.project.name === 'tnp' &&
+        this.project.releaseProcess.isInCiReleaseProject
+      )
+    ) {
       await Helpers.runSyncOrAsync({
         functionFn: actionwhenNotInNodeModules,
       });
@@ -311,19 +223,31 @@ Object.defineProperty(document.body.style, 'transform', {
   }
   //#endregion
 
+  //#region fix build dirs
+  __fixBuildDirs(outDir: 'dist'): void {
+    //#region @backendFunc
+    const p = path.join(this.project.location, outDir);
+    if (!Helpers.isFolder(p)) {
+      Helpers.remove(p);
+      Helpers.mkdirp(p);
+    }
+    //#endregion
+  }
+  //#endregion
+
   //#region add missing angular files
   public missingAngularLibFiles() {
     //#region @backendFunc
     Helpers.taskStarted(`[quick fixes] missing angular lib fles start`, true);
     if (
-      this.project.__frameworkVersionAtLeast('v3') &&
+      this.project.framework.frameworkVersionAtLeast('v3') &&
       this.project.typeIs('isomorphic-lib')
     ) {
       (() => {
         if (
-          (this.project.__isStandaloneProject &&
-            !this.project.__isSmartContainerTarget) ||
-          this.project.__isSmartContainerChild
+          (this.project.framework.isStandaloneProject &&
+            !this.project.framework.isSmartContainerTarget) ||
+          this.project.framework.isSmartContainerChild
         ) {
           const indexTs = crossPlatformPath(
             path.join(this.project.location, config.folder.src, 'lib/index.ts'),
@@ -353,7 +277,7 @@ Object.defineProperty(document.body.style, 'transform', {
           `
 THIS FILE IS GENERATED. THIS FILE IS GENERATED. THIS FILE IS GENERATED.
 
-Assets from this folder are being shipped with this npm package (${this.project.__npmPackageNameAndVersion})
+Assets from this folder are being shipped with this npm package (${this.project.framework.__npmPackageNameAndVersion})
 created from this project.
 
 THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
@@ -470,11 +394,12 @@ THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
   //#endregion
 
   //#region bad types in node modules
-  removeBadTypesInNodeModules() {
+  removeBadTypesInNodeModules(): void {
     //#region @backendFunc
     if (
-      this.project.__frameworkVersionAtLeast('v2') &&
-      (this.project.__isStandaloneProject || this.project.__isSmartContainer)
+      this.project.framework.frameworkVersionAtLeast('v2') &&
+      (this.project.framework.isStandaloneProject ||
+        this.project.framework.isSmartContainer)
     ) {
       [
         '@types/prosemirror-*',
@@ -488,7 +413,7 @@ THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
         '@types/eslint-scope',
         '@types/inquirer',
       ].forEach(name => {
-        Helpers.remove(path.join(this.project.__node_modules.path, name));
+        Helpers.remove(path.join(this.project.nodeModules.path, name));
       });
       const globalsDts = this.project.readFile(
         'node_modules/@types/node/globals.d.ts',
@@ -510,67 +435,15 @@ THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
         );
       }
     }
-    // if (this.project.isVscodeExtension) {
-    //   [
-
-    //   ].forEach(name => {
-    //     Helpers.removeFolderIfExists(path.join(this.project.node_modules.path, name));
-    //   });
-    // }
-    //#endregion
-  }
-  //#endregion
-
-  //#region add missing empty libs
-  public createDummyEmptyLibsReplacements(missingLibsNames: string[] = []) {
-    //#region @backendFunc
-    missingLibsNames.forEach(missingLibName => {
-      const pathInProjectNodeModules = path.join(
-        this.project.location,
-        config.folder.node_modules,
-        missingLibName,
-      );
-      if (fse.existsSync(pathInProjectNodeModules)) {
-        Helpers.warn(
-          `Package "${missingLibName}" will replaced with empty package mock. ${this.project.genericName}`,
-        );
-      }
-      // Helpers.remove(pathInProjectNodeModules);
-      if (!fse.existsSync(pathInProjectNodeModules)) {
-        Helpers.mkdirp(pathInProjectNodeModules);
-      }
-
-      Helpers.writeFile(
-        path.join(pathInProjectNodeModules, 'index.js'),
-        `
-Object.defineProperty(exports, '__esModule', { value: true });
-exports.default = {};
-`,
-      );
-      Helpers.writeFile(
-        path.join(pathInProjectNodeModules, 'index.d.ts'),
-        `
-declare const _default: {};
-export default _default;
-`,
-      );
-      Helpers.writeFile(
-        path.join(pathInProjectNodeModules, config.file.package_json),
-        {
-          name: missingLibName,
-          version: '0.0.0',
-        } as Models.IPackageJSON,
-      );
-    });
     //#endregion
   }
   //#endregion
 
   //#region add missing source folder
-  public addMissingSrcFolderToEachProject() {
+  public addMissingSrcFolderToEachProject(): void {
     //#region @backendFunc
     /// QUCIK_FIX make it more generic
-    if (this.project.__frameworkVersionEquals('v1')) {
+    if (this.project.framework.frameworkVersionEquals('v1')) {
       return;
     }
     Helpers.taskStarted(`[quick fixes] missing source folder start`, true);
@@ -578,8 +451,8 @@ export default _default;
       return;
     }
     if (
-      this.project.__isStandaloneProject &&
-      !this.project.__isSmartContainerTarget
+      this.project.framework.isStandaloneProject &&
+      !this.project.framework.isSmartContainerTarget
     ) {
       const srcFolder = path.join(this.project.location, config.folder.src);
 
@@ -646,17 +519,16 @@ export default _default;
   //#endregion
 
   //#region fix missing components/modules
-  fixAppTsFile() {
+  fixAppTsFile(): string {
     //#region @backendFunc
-
     if (
-      !this.project.__isStandaloneProject &&
-      !this.project.__isSmartContainerChild &&
-      !this.project.__isSmartContainer
+      !this.project.framework.isStandaloneProject &&
+      !this.project.framework.isSmartContainerChild &&
+      !this.project.framework.isSmartContainer
     ) {
       return;
     }
-    if (this.project.__isSmartContainer) {
+    if (this.project.framework.isSmartContainer) {
       for (const child of this.project.children) {
         child.quickFixes.fixAppTsFile();
       }

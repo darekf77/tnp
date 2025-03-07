@@ -1,17 +1,19 @@
 //#region imports
+import { CommonModule } from '@angular/common';
+import { NgModule, inject, Injectable } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { VERSION } from '@angular/core';
+import { Observable, map } from 'rxjs';
 import { Taon, BaseContext } from 'taon/src';
 import { Helpers } from 'tnp-core/src';
-import { Observable, map } from 'rxjs';
+
 import {
   HOST_BACKEND_PORT,
   CLIENT_DEV_WEBSQL_APP_PORT,
   CLIENT_DEV_NORMAL_APP_PORT,
 } from './app.hosts';
+
 //#region @browser
-import { NgModule, inject, Injectable } from '@angular/core';
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { VERSION } from '@angular/core';
 //#endregion
 //#endregion
 

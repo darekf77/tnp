@@ -1,10 +1,10 @@
 import { Taon } from 'taon/src';
 import { QueryRunner } from 'taon-typeorm/src';
+
 import {
   TaonEnv,
   TaonEnvType,
 } from '../lib/project/abstract/taon-worker/taon-env.entity';
-import { env } from 'process';
 
 @Taon.Migration({
   className: 'TaonProjectsContext_1737301724542_addingSampleData',

@@ -5,8 +5,8 @@
 // import { _ } from 'tnp-core';
 
 // import { SpecWrap } from './_helpers.spec';
-// import { NEW } from '../scripts/NEW-PROJECT_FILES_MODULES/NEW.backend';
-// import { $INSTALL as INSTALL } from '../scripts/DEPENDENCIES-MANAGEMENT/DEPS.backend';
+// import { NEW } from '../scripts/NEW-PROJECT_FILES_MODULES/NEW';
+// import { $INSTALL as INSTALL } from '../scripts/DEPENDENCIES-MANAGEMENT/DEPS';
 // import { Helpers } from 'tnp-helpers';
 
 // const wrap = SpecWrap.create();

@@ -1,10 +1,76 @@
-import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
-import type { Project } from './project/abstract/project';
 import { config } from 'tnp-config/src';
-import { Models } from './models';
+import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
 import { CLASS } from 'typescript-class-helpers/src';
 
-//#region build options lib or app
+import { Models } from './models';
+import type { Project } from './project/abstract/project';
+
+//#region release artifact taon
+/**
+ * All possible release types for taon
+ * for MANUAL/CLOUD release
+ */
+export const ReleaseArtifactTaonNames = Object.freeze({
+  /**
+   * Angular frontend webapp (pwa) + nodejs backend inside docker
+   */
+  ANGULAR_NODE_APP: 'angular-node-app',
+  /**
+   * Angular + Electron app
+   */
+  ELECTRON_APP: 'electron-app',
+  /**
+   * Angular + Ionic
+   */
+  MOBILE_APP: 'mobile-app',
+  /**
+   * Documentation (MkDocs + compodoc + storybook)
+   * webapp (pwa) inside docker
+   */
+  DOCS_DOCS_WEBAPP: 'docs-webapp',
+  /**
+   * Npm lib package and global cli tool
+   */
+  NPM_LIB_PKG_AND_CLI_TOOL: 'npm-lib-and-cli-tool',
+  /**
+   * Visual Studio Code extension/plugin
+   */
+  VSCODE_EXTENSION_PLUGIN: 'vscode-plugin',
+});
+
+export type ReleaseArtifactTaon =
+  (typeof ReleaseArtifactTaonNames)[keyof typeof ReleaseArtifactTaonNames];
+
+export const ReleaseArtifactTaonNamesArr: ReleaseArtifactTaon[] = Object.values(
+  ReleaseArtifactTaonNames,
+);
+//#endregion
+
+//#region release type
+export const ReleaseTypeNames = Object.freeze({
+  /**
+   * Manual release (happen physically on local machine)
+   */
+  MANUAL: 'manual',
+  /**
+   * Releases artifact to local repository <project-location>/local_release/<artifact-name>/<release build files>
+   */
+  LOCAL: 'local',
+  /**
+   * Trigger cloud release (happen on cloud server)
+   * Cloud release actually start "Manual" release process on cloud server
+   */
+  CLOUD: 'cloud',
+});
+
+export type ReleaseType =
+  (typeof ReleaseTypeNames)[keyof typeof ReleaseTypeNames];
+
+export const ReleaseTypeNamesArr: ReleaseType[] =
+  Object.values(ReleaseTypeNames);
+//#endregion
+
+//#region system-task options
 class SystemTask<T> {
   protected constructor() {}
   finishCallback: () => any;
@@ -16,6 +82,7 @@ class SystemTask<T> {
   }
   copyto?: string[];
   copytoall?: boolean;
+  purpose?: string;
 }
 
 export class BaseBuild<T> extends SystemTask<T> {
@@ -23,16 +90,11 @@ export class BaseBuild<T> extends SystemTask<T> {
    * watch build
    */
   watch: boolean;
-  /**
-   * build on remote server (user cannot interfere with console)
-   * without user interaction
-   */
-  ci: boolean;
 
   /**
    * base-href -> is a part of lib code build
    *
-   * overwite base href for app deployment.
+   * overwrite base href for app deployment.
    * Must be at least equal: '/'
    *
    * default: /
@@ -47,6 +109,7 @@ export class BaseBuild<T> extends SystemTask<T> {
     this._baseHref = crossPlatformPath(v);
   }
   private _baseHref: string;
+
   disableServiceWorker: boolean;
   buildAngularAppForElectron: boolean;
 }
@@ -56,6 +119,7 @@ class BuildOptionsLibOrApp<T> extends BaseBuild<T> {
   cliBuildUglify: boolean;
   cliBuildObscure: boolean;
   cliBuildIncludeNodeModules: boolean;
+
   /**
    * Enable all production optimalization for build
    * - minification
@@ -63,6 +127,7 @@ class BuildOptionsLibOrApp<T> extends BaseBuild<T> {
    * etc.
    */
   prod: boolean;
+  targetArtifact: ReleaseArtifactTaon = 'angular-node-app';
 }
 //#endregion
 
@@ -72,17 +137,20 @@ export class NewOptions extends SystemTask<NewOptions> {
 }
 //#endregion
 
+//#region clear options
+export class ClearOptions extends SystemTask<ClearOptions> {
+  recrusive?: boolean;
+}
+//#endregion
+
 //#region init options
 export class InitOptions extends BaseBuild<InitOptions> {
-  readonly alreadyInitedPorjects: Project[];
   private constructor() {
     super();
-    this.alreadyInitedPorjects = [];
   }
-  omitChildren: boolean;
-  initiator: Project;
+
   /**
-   * init only structre without deps
+   * init only structure without external deps
    */
   struct: boolean;
   websql: boolean;
@@ -105,6 +173,7 @@ export class InitOptions extends BaseBuild<InitOptions> {
       'prod',
       'disableServiceWorker',
       'buildAngularAppForElectron',
+      'purpose',
     ] as (keyof BuildOptions)[];
 
     for (const prop of propsToInit) {
@@ -115,15 +184,21 @@ export class InitOptions extends BaseBuild<InitOptions> {
 
     return initOptions;
   }
-
-  public fillBaseHrefFromFile(project: Project) {}
 }
 //#endregion
 
 //#region build options
 export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
-  readonly outDir: 'dist';
-  readonly targetApp: 'pwa' | 'electron';
+  /**
+   * TODO remove
+   */
+  readonly outDir: 'dist' = 'dist';
+  buildType: 'lib' | 'app' | 'docs' | 'lib-app';
+
+  /**
+   * null  - means it is development build
+   */
+  isForRelease: ReleaseType | null = null;
   get appBuild() {
     return this.buildType === 'app' || this.buildType === 'lib-app';
   }
@@ -133,20 +208,20 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
 
   get temporarySrcForReleaseCutCode() {
     //#region @backendFunc
-    return `tmp-cut-relase-src-${config.folder.dist}${this.websql ? '-websql' : ''}`;
+    return `tmp-cut-release-src-${config.folder.dist}${this.websql ? '-websql' : ''}`;
     //#endregion
   }
 
   private constructor() {
     super();
     this.outDir = 'dist';
-    this.targetApp = 'pwa';
+    this.targetArtifact = 'angular-node-app';
   }
   /**
    *
    */
   websql: boolean;
-  buildType: 'lib' | 'app' | 'lib-app';
+
   private _skipProjectProcess: boolean;
   /**
    * Skip project process for assigning automatic ports
@@ -203,19 +278,17 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
 //#endregion
 
 //#region release options
-/**
- * @deprecated
- */
+
 export class ReleaseOptions extends BuildOptionsLibOrApp<ReleaseOptions> {
   private constructor() {
     super();
-    this.releaseType = 'patch';
+    this.releaseVersionBumpType = 'patch';
     this.resolved = [];
   }
-  releaseType: CoreModels.ReleaseVersionType;
+  releaseVersionBumpType: CoreModels.ReleaseVersionType;
   shouldReleaseLibrary: boolean;
   /**
-   * build action only for specyfic framework version of prohect
+   * build action only for specific framework version of prohect
    */
   frameworkVersion: CoreModels.FrameworkVersion;
   /**

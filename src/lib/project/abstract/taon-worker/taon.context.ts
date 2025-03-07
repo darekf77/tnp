@@ -1,14 +1,16 @@
-//#region @backend
-import { os } from 'tnp-core/src';
-//#endregion
+//#region imports
 import { BaseContext, Taon } from 'taon/src';
-import { crossPlatformPath, Helpers, path } from 'tnp-core/src';
-import { TaonProjectsController } from './taon.controller';
-import { TaonProject } from './taon-project.entity';
-import { TaonBuild } from './taon-build.entity';
 import { config } from 'tnp-config/src';
-import { TaonEnv } from './taon-env.entity';
+import { os } from 'tnp-core/src';
+import { crossPlatformPath, Helpers, path } from 'tnp-core/src';
+
 import { MIGRATIONS_CLASSES_FOR_TaonProjectsContext } from '../../../../migrations';
+
+import { TaonBuild } from './taon-build.entity';
+import { TaonEnv } from './taon-env.entity';
+import { TaonProject } from './taon-project.entity';
+import { TaonProjectsController } from './taon.controller';
+//#endregion
 
 //#region @backend
 const taonProjectsWorkerDatabaseLocation = crossPlatformPath([
