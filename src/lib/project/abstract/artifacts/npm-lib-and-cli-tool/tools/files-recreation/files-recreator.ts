@@ -9,7 +9,8 @@ import { BaseFeatureForProject } from 'tnp-helpers/src';
 
 import {
   frameworkBuildFolders,
-  taonConfigSchemaJson,
+  taonConfigSchemaJsonStandalone,
+  taonConfigSchemaJsonContainer,
 } from '../../../../../../constants';
 import { InitOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
@@ -33,8 +34,8 @@ export class FilesRecreator extends BaseFeatureForProject<Project> {
       'index.js',
       'index.d.ts',
       'index.js.map',
-
-      taonConfigSchemaJson,
+      taonConfigSchemaJsonStandalone,
+      taonConfigSchemaJsonContainer,
     ];
 
     if (this.project.framework.isSmartContainer) {
@@ -543,7 +544,8 @@ export class FilesRecreator extends BaseFeatureForProject<Project> {
                     `**/${project.artifactsManager.artifact.docsWebapp.docs.docsConfigSchema}`
                   ] = true;
 
-                  s['files.exclude'][`**/${taonConfigSchemaJson}`] = true;
+                  s['files.exclude'][`**/${taonConfigSchemaJsonStandalone}`] = true;
+                  s['files.exclude'][`**/${taonConfigSchemaJsonContainer}`] = true;
 
                   Object.keys(project.linter.lintFiles).forEach(f => {
                     s['files.exclude'][`**/${f}`] = true;
@@ -670,7 +672,6 @@ ${frameworkBuildFolders
   .map(c => `/${c}`)
   .join('\n')}
 /${this.project.artifactsManager.artifact.docsWebapp.docs.docsConfigSchema}
-/${taonConfigSchemaJson}
 /**/*._auto-generated_.ts
 /**/BUILD-INFO.md
 ${this.project.framework.isStandaloneProject ? `/${config.folder.testsEnvironments}` : ''}

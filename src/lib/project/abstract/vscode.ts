@@ -1,9 +1,14 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { chalk, fse, json5, path } from 'tnp-core/src';
+import { chalk, fse, json5, path, _ } from 'tnp-core/src';
 import { BaseVscodeHelpers, Helpers } from 'tnp-helpers/src';
 
-import { DEBUG_WORD, PortUtils, taonConfigSchemaJson } from '../../constants';
+import {
+  DEBUG_WORD,
+  PortUtils,
+  taonConfigSchemaJsonStandalone,
+  taonConfigSchemaJsonContainer,
+} from '../../constants';
 import { Models } from '../../models';
 
 import type { Project } from './project';
@@ -14,6 +19,7 @@ import type { Project } from './project';
  * support for launch.json, settings.json etc
  */ // @ts-ignore TODO weird inheritance problem
 export class Vscode extends BaseVscodeHelpers<Project> {
+  project: Project;
   //#region recreate jsonc schema
   recreateJsonSchemas(): void {
     this.recreateJsonSchemaForDocs();
@@ -22,7 +28,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
   //#endregion
 
   //#region recreate jsonc schema for docs
-  private recreateJsonSchemaForDocs(): void {
+  public recreateJsonSchemaForDocs(): void {
     //#region @backendFunc
     const properSchema = {
       fileMatch: [
@@ -56,26 +62,47 @@ export class Vscode extends BaseVscodeHelpers<Project> {
   //#endregion
 
   //#region recreate jsonc schema for taon
-  private recreateJsonSchemaForTaon(): void {
+  public recreateJsonSchemaForTaon(): void {
     //#region @backendFunc
-    const properSchema = {
-      fileMatch: [`/${config.file.taon_jsonc}`],
-      url: `./${taonConfigSchemaJson}`,
-    };
-
     const currentSchemas: {
       fileMatch: string[];
       url: string;
     }[] =
       this.project.getValueFromJSONC(this.settingsJson, `['json.schemas']`) ||
       [];
-    const existedIndex = currentSchemas.findIndex(
-      x => x.url === properSchema.url,
-    );
-    if (existedIndex !== -1) {
-      currentSchemas[existedIndex] = properSchema;
-    } else {
-      currentSchemas.push(properSchema);
+
+    if (this.project.framework.isStandaloneProject) {
+      (() => {
+        const properSchema = {
+          fileMatch: [`/${config.file.taon_jsonc}`],
+          url: `./${taonConfigSchemaJsonStandalone}`,
+        };
+        const existedIndex = currentSchemas.findIndex(
+          x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
+        );
+        if (existedIndex !== -1) {
+          currentSchemas[existedIndex] = properSchema;
+        } else {
+          currentSchemas.push(properSchema);
+        }
+      })();
+    }
+
+    if (this.project.framework.isContainer) {
+      (() => {
+        const properSchema = {
+          fileMatch: [`/${config.file.taon_jsonc}`],
+          url: `./${taonConfigSchemaJsonContainer}`,
+        };
+        const existedIndex = currentSchemas.findIndex(
+          x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
+        );
+        if (existedIndex !== -1) {
+          currentSchemas[existedIndex] = properSchema;
+        } else {
+          currentSchemas.push(properSchema);
+        }
+      })();
     }
 
     this.project.setValueToJSONC(

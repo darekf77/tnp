@@ -81,7 +81,8 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    */
   get dependenciesNamesForNpmLib(): string[] {
     //#region @backendFunc
-    let res = this.data?.dependenciesNamesForNpmLib;
+    let res = (this.data as Models.TaonJsonStandalone)
+      ?.dependenciesNamesForNpmLib;
 
     if (!_.isArray(res)) {
       return this.data.overrided.includeOnly || [];
@@ -103,12 +104,13 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     },
   ): void {
     //#region @backendFunc
+    const data = this.data as Models.TaonJsonContainer;
     Helpers.info(
       `Setting type to project  ${this.project.genericName}: ${type}`,
     );
-    this.data.type = type;
+    data.type = type as any;
     if (options && _.isBoolean(options?.smart)) {
-      this.data.smart = options?.smart;
+      data.smart = options?.smart;
     }
     this.saveToDisk(`setting new type "${type}"`);
     //#endregion
@@ -128,10 +130,11 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
   //#region uses its own node_modules
   get isUsingOwnNodeModulesInsteadCoreContainer(): boolean {
+    const data = this.data as Models.TaonJsonStandalone;
     //#region @backendFunc
-    let res = this.data?.isUsingOwnNodeModulesInsteadCoreContainer;
+    let res = data?.isUsingOwnNodeModulesInsteadCoreContainer;
     if (!res) {
-      res = this.data?.usesItsOwnNodeModules;
+      res = data?.usesItsOwnNodeModules;
     }
     return !!res;
     //#endregion
@@ -141,7 +144,8 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   //#region is monorepo
   get isMonorepo(): boolean {
     //#region @backendFunc
-    return !!this.data?.monorepo;
+    const data = this.data as Models.TaonJsonContainer;
+    return !!data?.monorepo;
     //#endregion
   }
   //#endregion
@@ -160,7 +164,8 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    */
   get isSmart(): boolean {
     //#region @backendFunc
-    return !!this.data?.smart;
+    const data = this.data as Models.TaonJsonContainer;
+    return !!data?.smart;
     //#endregion
   }
   //#endregion
@@ -176,7 +181,8 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   //#region smart container build target
   get smartContainerBuildTarget(): string | undefined {
     //#region @backendFunc
-    return this.data?.smartContainerBuildTarget;
+    const data = this.data as Models.TaonJsonContainer;
+    return data?.smartContainerBuildTarget;
     //#endregion
   }
   //#endregion
@@ -184,7 +190,8 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   //#region set smart container build target
   setSmartContainerBuildTarget(target: string): void {
     //#region @backendFunc
-    this.data.smartContainerBuildTarget = target;
+    const data = this.data as Models.TaonJsonContainer;
+    data.smartContainerBuildTarget = target;
     this.saveToDisk('set smart container build target');
     //#endregion
   }
@@ -203,7 +210,8 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
   //#region lib/cli release options
   get cliLibReleaseOptions(): Models.CliLibReleaseOptions | undefined {
-    return this.data?.cliLibReleaseOptions;
+    const data = this.data as Models.TaonJsonStandalone;
+    return data?.cliLibReleaseOptions;
   }
   //#endregion
 
@@ -212,7 +220,8 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    * so I can release same npm lib with different name
    */
   get additionalNpmNames(): string[] {
-    return this.data?.additionalNpmNames || [];
+    const data = this.data as Models.TaonJsonStandalone;
+    return data?.additionalNpmNames || [];
   }
   //#endregion
 }

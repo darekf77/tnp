@@ -159,7 +159,7 @@
       "fileMatch": [
         "/taon.jsonc"
       ],
-      "url": "./taon-config.schema.json"
+      "url": "./taon-config-standalone.schema.json"
     }
   ],
   "eslint.migration.2_x": "off"

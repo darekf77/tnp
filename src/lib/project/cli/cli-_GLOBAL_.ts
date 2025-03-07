@@ -44,7 +44,10 @@ import {
 } from 'tnp-helpers/src';
 import { createGenerator, SchemaGenerator } from 'ts-json-schema-generator';
 
-import { taonConfigSchemaJson } from '../../constants';
+import {
+  taonConfigSchemaJsonContainer,
+  taonConfigSchemaJsonStandalone,
+} from '../../constants';
 import { Models } from '../../models';
 import { BuildOptions, InitOptions } from '../../options';
 import type { Project } from '../abstract/project';
@@ -1558,7 +1561,9 @@ ${this.project.children
       debouceRecreate();
     });
   }
+  //#endregion
 
+  //#region json schema taon watch
   async jsonSchemaTaonWatch() {
     // await this.project.init(
     //   InitOptions.from({
@@ -1572,19 +1577,47 @@ ${this.project.children
     const fileToWatch = this.project.pathFor(fileToWatchRelative);
 
     const recreate = async () => {
-      const schema = await this._createJsonSchemaFrom({
-        nameOfTypeOrInterface: 'Models.TaonJson',
-        project: this.project,
-        relativePathToTsFile: fileToWatch,
-      });
-      Helpers.writeFile(
-        this.project.framework.coreProject.pathFor(taonConfigSchemaJson),
-        schema,
-      );
-      Helpers.writeFile(
-        this.project.pathFor(taonConfigSchemaJson),
-        schema,
-      );
+      await (async () => {
+        const projectsOfInterest = [
+          this.project.framework.coreProject,
+          ...this.project.parent.children,
+        ];
+
+        const schema = await this._createJsonSchemaFrom({
+          nameOfTypeOrInterface: 'Models.TaonJsonStandalone',
+          project: this.project,
+          relativePathToTsFile: fileToWatch,
+        });
+        for (const proj of projectsOfInterest) {
+          proj.vsCodeHelpers.recreateJsonSchemaForTaon();
+          Helpers.writeFile(
+            proj.pathFor(taonConfigSchemaJsonStandalone),
+            schema,
+          );
+        }
+      })();
+
+      await (async () => {
+        const projectsOfInterest = [
+          this.project.parent,
+          this.project.parent.parent,
+          this.project.framework.coreContainer,
+        ];
+
+        const schema = await this._createJsonSchemaFrom({
+          nameOfTypeOrInterface: 'Models.TaonJsonContainer',
+          project: this.project,
+          relativePathToTsFile: fileToWatch,
+        });
+        for (const proj of projectsOfInterest) {
+          proj.vsCodeHelpers.recreateJsonSchemaForTaon();
+          Helpers.writeFile(
+            proj.pathFor(taonConfigSchemaJsonContainer),
+            schema,
+          );
+        }
+      })();
+
       Helpers.info(
         `TaonConfig schema updated ${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}`,
       );

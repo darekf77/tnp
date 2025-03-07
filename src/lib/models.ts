@@ -4,14 +4,12 @@ import { PackageJson } from 'type-fest';
 import type { Project } from './project/abstract/project';
 
 export namespace Models {
-  // taon test type
+  //#region taon test type
   export type TestTypeTaon = 'mocha' | 'jest' | 'cypress';
   export const TestTypeTaonArr = ['mocha', 'jest', 'cypress'] as TestTypeTaon[];
+  //#endregion
 
-  // taon npm package type
-  export type SaveAction = 'save' | 'show' | 'hide';
-
-  // taon fe app loader
+  //#region taon fe app loader
   export interface TaonLoaderConfig {
     name?: TaonLoaders;
     color?: string;
@@ -24,8 +22,9 @@ export namespace Models {
     | 'lds-grid'
     | 'lds-heart'
     | 'lds-ripple';
+  //#endregion
 
-  // env config
+  //#region env config project
   export interface EnvConfigProject {
     baseUrl: string;
     host?: string; // generated
@@ -39,7 +38,9 @@ export namespace Models {
     isWatchBuild?: boolean; // generated
     isWebsqlBuild?: boolean; // generated
   }
+  //#endregion
 
+  //#region env config
   export interface EnvConfig {
     /**
      * angular production mode
@@ -164,8 +165,9 @@ export namespace Models {
       };
     };
   }
+  //#endregion
 
-  // site option
+  //#region site option
   export type NewSiteOptions = {
     type?: CoreModels.NewFactoryType;
     name?: string;
@@ -176,10 +178,9 @@ export namespace Models {
     alsoBasedOn?: string[];
     siteProjectMode?: 'strict' | 'dependency';
   };
+  //#endregion
 
-  // taon.json config @deprecated
-
-  // cli root args
+  //#region cli root args
   // TODO make it more visible
   export type RootArgsType = {
     tnpNonInteractive: boolean;
@@ -191,8 +192,9 @@ export namespace Models {
     findNearestProjectTypeWithGitRoot: CoreModels.LibType;
     cwd: string;
   };
+  //#endregion
 
-  // generate project copy
+  //#region generate project copy
   export interface GenerateProjectCopyOpt {
     override?: boolean;
     markAsGenerated?: boolean;
@@ -208,8 +210,9 @@ export namespace Models {
      */
     dereference?: boolean;
   }
+  //#endregion
 
-  // ps list info
+  //#region ps list info
   export interface PsListInfo {
     pid: number;
     ppid: number;
@@ -218,15 +221,17 @@ export namespace Models {
     name: string;
     cmd: string;
   }
+  //#endregion
 
+  //#region create json schema options
   export interface CreateJsonSchemaOptions {
     project: Project;
     nameOfTypeOrInterface: string;
     relativePathToTsFile: string;
   }
+  //#endregion
 
-
-
+  //#region create json schema options
   export interface CliLibReleaseOptions {
     cliBuildObscure?: boolean;
     cliBuildUglify?: boolean;
@@ -235,11 +240,11 @@ export namespace Models {
     libBuildUglify?: boolean;
     libBuildObscure?: boolean;
   }
-
+  //#endregion
 
   // taon json
-  export interface TaonJson {
-    type: CoreModels.LibType;
+  export interface TaonJsonStandalone extends TaonJsonCommon {
+    type: 'isomorphic-lib';
     /**
      * Static resurces for standalone project, that are
      * going to be included in release dist
@@ -247,8 +252,10 @@ export namespace Models {
     resources?: string[];
 
     /**
-     * deps will be inlcude
-     * in npm lib as dependencies
+     * At beginning after node_modules installation taon is checking is
+     * packages are installed - if not it will throw error.
+     * Also.. this dependencies are going to be included in released npm lib
+     * as dependencies.
      */
     dependenciesNamesForNpmLib: string[];
 
@@ -257,24 +264,31 @@ export namespace Models {
      * with different name
      */
     additionalNpmNames?: string[];
-    /**
-     * version of taon framework for project
-     */
-    version?: CoreModels.FrameworkVersion;
-    /**
-     * Main project for smart container
-     * command "taon start" will start this project
-     */
-    smartContainerBuildTarget?: string;
+
     /**
      * Project is using own node_modules instead of core container
      */
     isUsingOwnNodeModulesInsteadCoreContainer?: boolean;
+
     /**
      * @deprecated
      * use isUsingOwnNodeModulesInsteadCoreContainer
      */
     usesItsOwnNodeModules?: boolean;
+
+    /**
+     * options what to do with cli tool
+     */
+    cliLibReleaseOptions: CliLibReleaseOptions;
+  }
+
+  export interface TaonJsonContainer extends TaonJsonCommon {
+    type: 'container';
+    /**
+     * Static resurces for site project, that are
+     * going to be included in release dist
+     */
+    resources?: string[];
     /**
      * Project is smart container
      * for organization npm project
@@ -285,9 +299,18 @@ export namespace Models {
      */
     monorepo?: boolean;
     /**
-     * options what to do with cli tool
+     * Main project for smart container
+     * command "taon start" will start this project
      */
-    cliLibReleaseOptions: CliLibReleaseOptions;
+    smartContainerBuildTarget?: string;
+  }
+
+  interface TaonJsonCommon {
+    /**
+     * version of taon framework for project
+     */
+    version?: CoreModels.FrameworkVersion;
+
     /**
      * project is template for other project
      */
@@ -305,7 +328,10 @@ export namespace Models {
     };
   }
 
-  // DocsConfig
+  export type TaonJson = TaonJsonCommon &
+    (TaonJsonStandalone | TaonJsonContainer);
+
+  //#region DocsConfig
   export interface DocsConfig {
     /**
      * override site name (default is project name)
@@ -377,4 +403,5 @@ export namespace Models {
     customJsPath?: string;
     customCssPath?: string;
   }
+  //#endregion
 }
