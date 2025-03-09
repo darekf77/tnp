@@ -1,3 +1,4 @@
+import { OVERRIDE_FROM_TNP } from 'tnp/src';
 import { config } from 'tnp-config/src';
 import { CoreModels, path } from 'tnp-core/src';
 import { Helpers, _ } from 'tnp-core/src';
@@ -12,7 +13,10 @@ import type { Project } from './project';
 export class TaonJson extends BaseFeatureForProject<Project> {
   private readonly data?: Models.TaonJson;
 
-  public readonly packageJsonOverride: BasePackageJson;
+  /**
+   * package.json override
+   */
+  public readonly packageJsonManager: BasePackageJson;
 
   //#region constructor
   //#region @backend
@@ -26,25 +30,54 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     if (!this.data && defaultValue) {
       this.data = _.cloneDeep(defaultValue as any);
     }
-    if (this.data) {
-      this.packageJsonOverride = new BasePackageJson({
-        jsonContent: this.data.packageJsonOverride || {},
-        reloadInMemoryCallback: data => {
+
+    this.packageJsonManager = new BasePackageJson({
+      jsonContent: this.data.packageJsonOverride || {},
+      reloadInMemoryCallback: data => {
+        if (this.data && this.packageJsonManager) {
           this.data.packageJsonOverride = data;
           this.saveToDisk();
-        },
-      });
-    }
+        }
+      },
+    });
   }
   //#endregion
   //#endregion
 
+  get exists(): boolean {
+    return Helpers.exists(this.project.pathFor(config.file.taon_jsonc));
+  }
+
   //#region save
-  private saveToDisk(purpose?: string): void {
+
+  public preservePropsFromPackageJson(): void {
+    const exitedPackageJson =
+      this.project.packageJson.getAllData() || ({} as PackageJson);
+    const packageJsonOverrideData =
+      this.packageJsonManager.getAllData() || ({} as PackageJson);
+
+    const lastBuildTagHash = this.packageJsonManager.getBuildHash();
+
+    for (const prop of OVERRIDE_FROM_TNP) {
+      if (
+        _.isUndefined(packageJsonOverrideData[prop]) &&
+        !_.isUndefined(exitedPackageJson[prop])
+      ) {
+        packageJsonOverrideData[prop] = exitedPackageJson[prop];
+      }
+    }
+
+    this.packageJsonManager.setAllData({
+      ...packageJsonOverrideData,
+      lastBuildTagHash,
+    });
+  }
+
+  public saveToDisk(purpose?: string): void {
     //#region @backend
     Helpers.log(`Saving taon.jsonc ${purpose ? `(${purpose})` : ''}`);
-
     this.project.writeJsonC(config.file.taon_jsonc, this.data);
+    this.project.packageJson.saveToDisk();
     //#endregion
   }
   //#endregion

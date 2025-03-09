@@ -1145,7 +1145,7 @@ ${this.project.children
           packageName,
           version: currentPackageVersion,
         });
-        this.project.taonJson.packageJsonOverride.updateDependency({
+        this.project.taonJson.packageJsonManager.updateDependency({
           packageName,
           version: currentPackageVersion,
         });
@@ -1268,7 +1268,7 @@ ${this.project.children
           packageName,
           version: `${prefix}${latestToUpdate}`,
         });
-        this.project.taonJson.packageJsonOverride.updateDependency({
+        this.project.taonJson.packageJsonManager.updateDependency({
           packageName,
           version: `${prefix}${latestToUpdate}`,
         });
@@ -1278,7 +1278,7 @@ ${this.project.children
           version: null,
         });
 
-        this.project.taonJson.packageJsonOverride.updateDependency({
+        this.project.taonJson.packageJsonManager.updateDependency({
           packageName,
           version: null,
         });
@@ -1299,7 +1299,7 @@ ${this.project.children
               version,
             });
 
-            await this.project.taonJson.packageJsonOverride.updateDependency({
+            await this.project.taonJson.packageJsonManager.updateDependency({
               packageName,
               version,
             });

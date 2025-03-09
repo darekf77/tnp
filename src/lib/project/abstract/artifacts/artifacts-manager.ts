@@ -1,7 +1,16 @@
 //#region imports
 import { BaseContext, Taon } from 'taon/src';
 import { config } from 'tnp-config/src';
-import { CoreModels, Helpers, _, chalk, dateformat, fse } from 'tnp-core/src';
+import {
+  CoreModels,
+  Helpers,
+  UtilsTerminal,
+  _,
+  chalk,
+  dateformat,
+  fse,
+  path,
+} from 'tnp-core/src';
 
 import {
   PortUtils,
@@ -94,13 +103,12 @@ export class ArtifactManager {
    * struct current project only
    * struct() <=> init() with struct flag
    */
-  async struct(options: InitOptions): Promise<void> {
-    await this.artifact.npmLibAndCliTool.structPartial(options);
-    await this.artifact.angularNodeApp.structPartial(options);
-    await this.artifact.electronApp.structPartial(options);
-    await this.artifact.mobileApp.structPartial(options);
-    await this.artifact.docsWebapp.structPartial(options);
-    await this.artifact.vscodeExtensionPLugin.structPartial(options);
+  async struct(initOptions: InitOptions): Promise<void> {
+    //#region @backendFunc
+    initOptions.purpose = 'only structure init';
+    initOptions.struct = true;
+    await this.init(initOptions);
+    //#endregion
   }
 
   /**
@@ -114,13 +122,68 @@ export class ArtifactManager {
   //#endregion
 
   //#region init
-  async init(options: InitOptions): Promise<void> {
-    await this.artifact.npmLibAndCliTool.initPartial(options);
-    await this.artifact.angularNodeApp.initPartial(options);
-    await this.artifact.electronApp.initPartial(options);
-    await this.artifact.mobileApp.initPartial(options);
-    await this.artifact.docsWebapp.initPartial(options);
-    await this.artifact.vscodeExtensionPLugin.initPartial(options);
+  async init(initOptions: InitOptions): Promise<void> {
+    //#region @backendFunc
+    // TODO QUICK_FIX change env to something else
+    Helpers.removeFileIfExists(
+      path.join(this.project.location, config.file.tnpEnvironment_json),
+    );
+
+    if (
+      (this.project.framework.isContainer ||
+        this.project.framework.isStandaloneProject) &&
+      this.project.framework.frameworkVersionLessThan('v18')
+    ) {
+      Helpers.warn(`
+
+        Project from this location is not supported
+
+        ${this.project.location}
+
+
+        `);
+      UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: 'Press any key to continue',
+      });
+      return;
+    }
+
+    this.project.taonJson.preservePropsFromPackageJson(); // TODO temporary remove
+    this.project.taonJson.saveToDisk('init');
+    await this.project.vsCodeHelpers.init();
+    await this.project.linter.init();
+
+    if (this.project.framework.isSmartContainer) {
+      const children = this.project.children;
+      for (let index = 0; index < children.length; index++) {
+        const child = children[index];
+        if (
+          child.framework.frameworkVersion !==
+          this.project.framework.frameworkVersion
+        ) {
+          await child.taonJson.setFrameworkVersion(
+            this.project.taonJson.frameworkVersion,
+          );
+        }
+      }
+    }
+
+    if (
+      this.project.framework.isStandaloneProject ||
+      this.project.framework.isSmartContainerChild
+    ) {
+      await this.project.artifactsManager.globalHelper.branding.apply(
+        !!initOptions.branding,
+      );
+    }
+
+    await this.artifact.npmLibAndCliTool.initPartial(initOptions);
+    await this.artifact.angularNodeApp.initPartial(initOptions);
+    await this.artifact.electronApp.initPartial(initOptions);
+    await this.artifact.mobileApp.initPartial(initOptions);
+    await this.artifact.docsWebapp.initPartial(initOptions);
+    await this.artifact.vscodeExtensionPLugin.initPartial(initOptions);
+    //#endregion
   }
 
   async initAllChildren(options: InitOptions): Promise<void> {

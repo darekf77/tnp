@@ -37,25 +37,15 @@ export abstract class BaseArtifact {
   get artifact() {
     return this.artifacts;
   }
-  
+
   protected readonly globalHelper: ArtifactsGlobalHelper;
   protected readonly NPM_RUN_NG_COMMAND: string = `npm-run ng`; // when there is not global "ng" command -> npm-run ng.js works
 
-  //#region  public abstract methods / struct
-  /**
-   * create all temp files and folders for proper inside projects structure
-   * but without any external dependencies
-   * (like npm install, or any other longer process)
-   * struct() <=> init() with struct flag
-   */
-  abstract structPartial(options: InitOptions): Promise<void>;
-  //#endregion
-
   //#region  public abstract methods / init
   /**
-   * everything that in struct()
-   * + install dependencies
-   * + any longer process that reaches for external resources
+   * + create all temp files and folders for proper inside projects structure
+   * + (when struct flag = false) start any longer process that reaches
+   *   for external resources like for example: npm install
    */
   abstract initPartial(options: InitOptions): Promise<void>;
   //#endregion

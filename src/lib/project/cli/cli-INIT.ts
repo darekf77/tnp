@@ -15,15 +15,19 @@ import type { Project } from '../abstract/project';
 
 // @ts-ignore TODO weird inheritance problem
 export class $Init extends BaseCommandLineFeature<InitOptions, Project> {
+  //#region prepare args
   protected async __initialize__() {
     await this.__askForWhenEmpty();
     this._tryResolveChildIfInsideArg();
     this.params = InitOptions.from(this.params);
   }
+  //#endregion
 
+  //#region init
   public async _() {
     await this.project.init(
       InitOptions.from({
+        ...this.params,
         purpose: 'cli init',
         finishCallback: () => {
           console.log('DONE!');
@@ -32,30 +36,20 @@ export class $Init extends BaseCommandLineFeature<InitOptions, Project> {
       }),
     );
   }
+  //#endregion
 
-  async clearInit() {
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.clearPartial();
-    await this.project.init(
-      InitOptions.from({
-        purpose: 'cli clear init',
-        finishCallback: () => {
-          console.log('DONE!');
-          this._exit();
-        },
-      }),
-    );
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode();
-  }
-
+  //#region struct
   async struct() {
     await this.project.init(
       InitOptions.from({
+        ...this.params,
         purpose: 'cli struct init',
         struct: true,
         finishCallback: () => this._exit(),
       }),
     );
   }
+  //#endregion
 
   async templatesBuilder() {
     await this.project.artifactsManager.artifact.npmLibAndCliTool.__filesTemplatesBuilder.rebuild();
@@ -65,6 +59,7 @@ export class $Init extends BaseCommandLineFeature<InitOptions, Project> {
   vscode() {
     this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode();
   }
+
   //#region ask when empty
   private async __askForWhenEmpty(): Promise<void> {
     if (

@@ -26,6 +26,22 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
   project: Project;
   public _nodeModulesType = NodeModules as any;
   public _packageJsonType = PackageJSON as any;
+  // @ts-ignore TODO weird inheritance problem
+  public readonly packageJson: PackageJSON;
+  // @ts-ignore TODO weird inheritance problem
+  public readonly nodeModules: NodeModules;
+
+  constructor(project: Project) {
+    super(project);
+    this.packageJson = new this._packageJsonType(
+      { cwd: project.location },
+      project,
+    );
+    this.nodeModules = new (this._nodeModulesType as typeof NodeModules)(
+      project,
+      this,
+    );
+  }
 
   //#region last npm version
   /**

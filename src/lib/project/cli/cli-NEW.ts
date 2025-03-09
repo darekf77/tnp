@@ -363,7 +363,7 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
     const taonJson = new TaonJson(this.project.ins.From(packageJson.cwd), {});
     taonJson.setType('isomorphic-lib');
     taonJson.setFrameworkVersion(version || config.defaultFrameworkVersion);
-    taonJson.packageJsonOverride.setIsPrivate(true);
+    taonJson.packageJsonManager.setIsPrivate(true);
 
     appProj = this.ins.From(appLocation) as Project;
     if (!hasAtLeastOneContainersFromArgs) {

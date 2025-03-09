@@ -12,17 +12,21 @@ import {
 } from '../../../../options';
 import { BaseArtifact } from '../__base__/base-artifact';
 
-
 export class ArtifactElectronApp extends BaseArtifact {
   async clearPartial(options: ClearOptions): Promise<void> {
     return void 0; // TODO implement
   }
-  async structPartial(options): Promise<void> {
-    return void 0; // TODO implement
-  }
 
   async initPartial(options: InitOptions) {
-    return void 0; // TODO implement
+    if (
+      this.project.framework.isStandaloneProject &&
+      this.project.releaseProcess.isInCiReleaseProject
+    ) {
+      this.project.packageJson.setMainProperty(
+        'dist/app.electron.js',
+        'update main for electron',
+      );
+    }
   }
 
   //#region build
@@ -89,8 +93,10 @@ export class ArtifactElectronApp extends BaseArtifact {
         // Helpers.createSymLink(this.nodeModules.path, elecProj.pathFor(`electron/${config.folder.node_modules}`));
         // elecProj.run('code .').sync();
         const wasmfileSource = crossPlatformPath([
-          this.project.ins.by('isomorphic-lib', this.project.framework.frameworkVersion)
-            .location,
+          this.project.ins.by(
+            'isomorphic-lib',
+            this.project.framework.frameworkVersion,
+          ).location,
           'app/src/assets/sql-wasm.wasm',
         ]);
         const wasmfileDest = crossPlatformPath([

@@ -162,7 +162,6 @@ export class Docs extends BaseDebounceCompilerForProject<
       this.project.pathFor(this.docsConfigSchema),
       { continueWhenExistedFolderDoesntExists: true },
     );
-    this.project.vsCodeHelpers.recreateJsonSchemas();
 
     this.linkDocsToGlobalContainer();
 
@@ -170,7 +169,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   }
   //#endregion
 
-  initizalize() {
+  initizalizeWatchers(): void {
     const timestampContainer = crossPlatformPath(
       path.dirname(this.docsGlobalTimestampForWatcherAbsPath),
     );

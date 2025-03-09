@@ -28,8 +28,11 @@ export class NodeModules extends BaseNodeModules {
     public project: Project,
     public npmHelpers: NpmHelpers,
   ) {
-    // @ts-ignore TODO weird inheritance problem
-    super(project.location, npmHelpers);
+    super(
+      project.location,
+      // @ts-ignore TODO weird inheritance problem
+      npmHelpers,
+    );
   }
 
   //#region reinstall

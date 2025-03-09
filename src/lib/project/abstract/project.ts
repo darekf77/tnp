@@ -113,14 +113,34 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#endregion
 
   //#region api / struct
-  async struct() {
-    // TODO
+  async struct(initOptions?: InitOptions): Promise<void> {
+    initOptions = InitOptions.from(initOptions);
+
+    if (this.framework.isStandaloneProject) {
+      await this.artifactsManager.struct(initOptions);
+    }
+    if (this.framework.isContainer) {
+      await this.artifactsManager.struct(initOptions);
+      await this.artifactsManager.structAllChildren(initOptions);
+    }
+
+    initOptions.finishCallback();
   }
   //#endregion
 
   //#region api / init
   async init(initOptions?: InitOptions): Promise<void> {
-    // TODO
+    initOptions = InitOptions.from(initOptions);
+
+    if (this.framework.isStandaloneProject) {
+      await this.artifactsManager.init(initOptions);
+    }
+    if (this.framework.isContainer) {
+      await this.artifactsManager.init(initOptions);
+      await this.artifactsManager.initAllChildren(initOptions);
+    }
+
+    initOptions.finishCallback();
   }
   //#endregion
 

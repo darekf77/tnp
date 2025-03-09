@@ -1,6 +1,7 @@
 //#region imports
 import { config } from 'tnp-config/src';
 import { chalk, fse, json5, path, _ } from 'tnp-core/src';
+import { Utils } from 'tnp-core/src';
 import { BaseVscodeHelpers, Helpers } from 'tnp-helpers/src';
 
 import {
@@ -10,6 +11,7 @@ import {
   taonConfigSchemaJsonContainer,
 } from '../../constants';
 import { Models } from '../../models';
+import { InitingPartialProcess } from '../../options';
 
 import type { Project } from './project';
 //#endregion
@@ -18,8 +20,19 @@ import type { Project } from './project';
  * Handle taon things related to vscode
  * support for launch.json, settings.json etc
  */ // @ts-ignore TODO weird inheritance problem
-export class Vscode extends BaseVscodeHelpers<Project> {
+export class Vscode // @ts-ignore TODO weird inheritance problem
+  extends BaseVscodeHelpers<Project>
+  implements InitingPartialProcess
+{
   project: Project;
+
+  async init(): Promise<void> {
+    this.recreateJsonSchemas();
+    this.project.vsCodeHelpers.recreateExtensions();
+    this.project.vsCodeHelpers.recreateWindowTitle();
+    this.project.vsCodeHelpers.__saveLaunchJson();
+  }
+
   //#region recreate jsonc schema
   recreateJsonSchemas(): void {
     this.recreateJsonSchemaForDocs();
@@ -64,7 +77,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
   //#region recreate jsonc schema for taon
   public recreateJsonSchemaForTaon(): void {
     //#region @backendFunc
-    const currentSchemas: {
+    let currentSchemas: {
       fileMatch: string[];
       url: string;
     }[] =
@@ -72,37 +85,37 @@ export class Vscode extends BaseVscodeHelpers<Project> {
       [];
 
     if (this.project.framework.isStandaloneProject) {
-      (() => {
-        const properSchema = {
-          fileMatch: [`/${config.file.taon_jsonc}`],
-          url: `./${taonConfigSchemaJsonStandalone}`,
-        };
-        const existedIndex = currentSchemas.findIndex(
-          x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
-        );
-        if (existedIndex !== -1) {
-          currentSchemas[existedIndex] = properSchema;
-        } else {
-          currentSchemas.push(properSchema);
-        }
-      })();
+      const properSchema = {
+        fileMatch: [`/${config.file.taon_jsonc}`],
+        url: `./${taonConfigSchemaJsonStandalone}`,
+      };
+
+      // TODO @LAST filter schemas
+      // currentSchemas = Utils.uniqArray(currentSchemas,'fileMatch');
+
+      const existedIndex = currentSchemas.findIndex(
+        x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
+      );
+      if (existedIndex !== -1) {
+        currentSchemas[existedIndex] = properSchema;
+      } else {
+        currentSchemas.push(properSchema);
+      }
     }
 
     if (this.project.framework.isContainer) {
-      (() => {
-        const properSchema = {
-          fileMatch: [`/${config.file.taon_jsonc}`],
-          url: `./${taonConfigSchemaJsonContainer}`,
-        };
-        const existedIndex = currentSchemas.findIndex(
-          x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
-        );
-        if (existedIndex !== -1) {
-          currentSchemas[existedIndex] = properSchema;
-        } else {
-          currentSchemas.push(properSchema);
-        }
-      })();
+      const properSchema = {
+        fileMatch: [`/${config.file.taon_jsonc}`],
+        url: `./${taonConfigSchemaJsonContainer}`,
+      };
+      const existedIndex = currentSchemas.findIndex(
+        x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
+      );
+      if (existedIndex !== -1) {
+        currentSchemas[existedIndex] = properSchema;
+      } else {
+        currentSchemas.push(properSchema);
+      }
     }
 
     this.project.setValueToJSONC(
@@ -115,7 +128,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
   //#endregion
 
   //#region save launch.json
-  public __saveLaunchJson(basePort: number = 4100) {
+  public __saveLaunchJson(basePort: number = 4100): void {
     //#region @backendFunc
     if (this.project.framework.isSmartContainer) {
       //#region container save

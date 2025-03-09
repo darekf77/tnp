@@ -13,17 +13,18 @@ export const taonIgnore = '@taon' + '-' + 'ignore';
 export const DEBUG_WORD = 'Debug/Start';
 
 export const OVERRIDE_FROM_TNP = [
-  'scripts',
+  'activationEvents',
+  'author',
+  'bugs',
+  'categories',
   'description',
+  'engines',
+  'homepage',
+  'keywords',
   'license',
   'private',
-  'author',
-  'homepage',
-  'main',
-  'engines',
-  'categories',
-  'keywords',
-  'activationEvents',
+  'repository',
+  'scripts',
 ];
 
 export const UNIT_TEST_TIMEOUT = 30000;

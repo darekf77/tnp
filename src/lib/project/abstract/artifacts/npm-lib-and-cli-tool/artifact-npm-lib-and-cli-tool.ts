@@ -1,4 +1,5 @@
 //#region imports
+import { BaseContext, Taon } from 'taon/src';
 import { config } from 'tnp-config/src';
 import {
   chalk,
@@ -29,6 +30,8 @@ import {
 } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact } from '../__base__/base-artifact';
+import { BuildProcess } from '../__base__/build-process/app/build-process/build-process';
+import { BuildProcessController } from '../__base__/build-process/app/build-process/build-process.controller';
 
 import { IncrementalBuildProcess } from './tools/build-isomorphic-lib/compilations/incremental-build-process';
 import { CopyManager } from './tools/copy-manager/copy-manager';
@@ -45,9 +48,7 @@ import { CypressTestRunner } from './tools/test-runner/cypress-test-runner';
 import { JestTestRunner } from './tools/test-runner/jest-test-runner';
 import { MochaTestRunner } from './tools/test-runner/mocha-test-runner';
 import { WebpackBackendCompilation } from './webpack-backend-compilation';
-import { BaseContext, Taon } from 'taon/src';
-import { BuildProcessController } from '../__base__/build-process/app/build-process/build-process.controller';
-import { BuildProcess } from '../__base__/build-process/app/build-process/build-process';
+
 //#endregion
 
 export class ArtifactNpmLibAndCliTool extends BaseArtifact {
@@ -93,96 +94,17 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
   //#endregion
   //#endregion
 
-  //#region struct
-  async structPartial(initOptions: InitOptions): Promise<void> {
-    //#region @backendFunc
-    initOptions = InitOptions.from(initOptions);
-    initOptions.purpose = 'only structure init';
-    initOptions.struct = true;
-    await this.initPartial(initOptions);
-    //#endregion
-  }
-  //#endregion
-
   //#region init
   async initPartial(initOptions: InitOptions): Promise<void> {
     //#region @backendFunc
-    initOptions = InitOptions.from(initOptions);
-    if (
-      this.project.framework.isContainer &&
-      this.project.framework.frameworkVersionLessThan('v18')
-    ) {
-      Helpers.warn(`Not initing ${this.project.genericName}`);
-      return;
-    }
-
-    Helpers.removeFileIfExists(
-      path.join(this.project.location, config.file.tnpEnvironment_json),
-    );
-    this.project.vsCodeHelpers.recreateExtensions();
-    this.project.vsCodeHelpers.recreateWindowTitle();
-    this.project.vsCodeHelpers.__saveLaunchJson();
-    // });
-
-    if (
-      this.project.framework.isStandaloneProject &&
-      this.project.releaseProcess.isInCiReleaseProject
-    ) {
-      this.project.packageJson.setMainProperty(
-        'dist/app.electron.js',
-        'update main for electron',
-      );
-    }
 
     const smartContainerTargetName =
       this.project.framework.smartContainerBuildTarget?.name;
-
-    Helpers.log(
-      `[init] adding project is not exists...done(${this.project.genericName})  `,
-    );
-
-    this.project.quickFixes.addMissingSrcFolderToEachProject();
-
-    if (this.project.framework.isSmartContainer) {
-      const children = this.project.children;
-      for (let index = 0; index < children.length; index++) {
-        const child = children[index];
-        if (
-          child.framework.frameworkVersion !==
-          this.project.framework.frameworkVersion
-        ) {
-          await child.taonJson.setFrameworkVersion(
-            this.project.taonJson.frameworkVersion,
-          );
-        }
-      }
-    }
-
-    if (
-      this.project.framework.isStandaloneProject ||
-      this.project.framework.isSmartContainerChild
-    ) {
-      await this.project.artifactsManager.globalHelper.branding.apply(
-        !!initOptions.branding,
-      );
-    }
-
-    this.project.quickFixes.missingAngularLibFiles();
-    if (
-      this.project.framework.isStandaloneProject ||
-      this.project.framework.isContainer
-    ) {
-      this.project.quickFixes.createDummyEmptyLibsReplacements([]);
-    }
 
     Helpers.taskStarted(
       `Initing project: ${chalk.bold(this.project.genericName)} ${
         initOptions.struct ? '(without packages install)' : ''
       } `,
-    );
-
-    Helpers.log(
-      `Push to alread inited ${this.project.genericName} from ${this.project.location} `,
     );
 
     await this.filesRecreator.recreateSimpleFiles(initOptions);
@@ -192,7 +114,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
       this.project.framework.isStandaloneProject ||
       this.project.framework.isSmartContainer
     ) {
-      await this.project.artifactsManager.globalHelper.env.init();
+      await this.project.artifactsManager.globalHelper.env.init(); // TODO .ev.
       this.__filesTemplatesBuilder.rebuild();
     }
 
@@ -200,13 +122,16 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
       await this.project.nodeModules.makeSureInstalled();
     }
 
-    this.project.npmHelpers.copyDepsFromCoreContainer(
-      `Show new deps for ${this.project.framework.frameworkVersion} `,
-    );
-
     this.project.quickFixes.addMissingSrcFolderToEachProject();
-
+    this.project.quickFixes.missingAngularLibFiles();
+    if (
+      this.project.framework.isStandaloneProject ||
+      this.project.framework.isContainer
+    ) {
+      this.project.quickFixes.createDummyEmptyLibsReplacements([]);
+    }
     this.project.quickFixes.removeBadTypesInNodeModules();
+
     if (this.project.framework.isStandaloneProject) {
       await this.project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
         {
@@ -232,11 +157,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
       `Init DONE for project: ${chalk.bold(this.project.genericName)} `,
     );
 
-    this.project.linter.recreateLintConfiguration();
-    await this.artifacts.docsWebapp.docs.init();
-
     await this.creteBuildInfoFile(initOptions);
-    this.project.quickFixes.fixAppTsFile();
 
     initOptions.finishCallback();
     //#endregion

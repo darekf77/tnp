@@ -1,9 +1,18 @@
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
+import { InitingPartialProcess } from '../../options';
+
 import type { Project } from './project';
 
 // @ts-ignore TODO weird inheritance problem
-export class Linter extends BaseFeatureForProject<Project> {
+export class Linter // @ts-ignore TODO weird inheritance problem
+  extends BaseFeatureForProject<Project>
+  implements InitingPartialProcess
+{
+  async init(): Promise<void> {
+    this.recreateLintConfiguration();
+  }
+
   //#region getters & methods / lint files
 
   get lintFiles(): Record<string, any> {
@@ -83,7 +92,7 @@ trim_trailing_whitespace = false
   //#endregion
 
   //#region getters & methods / recreate lint configuration
-  recreateLintConfiguration(): void {
+  protected recreateLintConfiguration(): void {
     //#region @backendFunc
     const files = this.lintFiles;
     const settingsToOverride = {

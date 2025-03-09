@@ -143,6 +143,17 @@ export class ClearOptions extends SystemTask<ClearOptions> {
 }
 //#endregion
 
+/**
+ * Class is as part of initing project structure process
+ */
+export interface InitingPartialProcess {
+  /**
+   * All initialization process from class
+   * gathered in one place
+   */
+  init(options: InitOptions): Promise<void>;
+}
+
 //#region init options
 export class InitOptions extends BaseBuild<InitOptions> {
   private constructor() {
