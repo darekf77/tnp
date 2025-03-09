@@ -11,8 +11,7 @@ import type { Project } from '../../../project';
 // @ts-ignore TODO weird inheritance problem
 export class AssetsFileListGenerator extends BaseFeatureForProject<Project> {
   //#region fields & getters
-  private targetProjectName: string;
-  private outFolder: 'dist';
+
   private websql: boolean;
   watchers: IncrementalWatcherInstance[] = [];
   readonly filename = 'assets-list.json';
@@ -20,30 +19,10 @@ export class AssetsFileListGenerator extends BaseFeatureForProject<Project> {
 
   get assetsFolder() {
     //#region @backendFunc
-    if (this.project.framework.isSmartContainer) {
-      // codete-ngrx-quick-start/main/src/assets/assets-for
-      // return crossPlatformPath([
-      //   this.project.location,
-      //   this.outFolder,
-      //   this.project.name,
-      //   this.targetProjectName,
-      //   config.folder.src,
-      //   config.folder.assets,
-      // ])
-      return crossPlatformPath([
-        this.project.location,
-        this.outFolder,
-        this.project.name,
-        this.targetProjectName,
-        `tmp-apps-for-${this.outFolder}${this.websql ? '-websql' : ''}`,
-        this.targetProjectName,
-        config.folder.src,
-        config.folder.assets,
-      ]);
-    }
+
     return crossPlatformPath([
       this.project.location,
-      `tmp-apps-for-${this.outFolder}${this.websql ? '-websql' : ''}`,
+      `tmp-apps-for-${config.folder.dist}${this.websql ? '-websql' : ''}`,
       this.project.name,
       config.folder.src,
       config.folder.assets,
@@ -59,10 +38,8 @@ export class AssetsFileListGenerator extends BaseFeatureForProject<Project> {
 
   //#endregion
 
-  async start(targetProjectName: string, outFolder: 'dist', websql: boolean) {
+  async start(websql: boolean) {
     //#region @backendFunc
-    this.targetProjectName = targetProjectName;
-    this.outFolder = outFolder;
     this.websql = websql;
     const files = Helpers.filesFrom(this.assetsFolder, true).filter(
       f => !this.shoudBeIgnore(f),
@@ -126,13 +103,10 @@ export class AssetsFileListGenerator extends BaseFeatureForProject<Project> {
     //#endregion
   };
 
-  async startAndWatch(
-    targetProjectName: string,
-    outFolder: 'dist',
-    websql?: boolean,
-  ) {
+  async startAndWatch(websql?: boolean) {
     //#region @backendFunc
-    await this.start(targetProjectName, outFolder, websql);
+
+    await this.start(websql);
     const srcPath = this.srcPath;
 
     const watcher = (

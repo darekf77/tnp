@@ -72,7 +72,7 @@ export abstract class LibProjectBase extends BaseFeatureForProject<Project> {
           version: newVersion,
         });
 
-        coreContainer.taonJson.packageJsonOverride.updateDependency({
+        coreContainer.taonJson.overridePackageJsonManager.updateDependency({
           packageName: packageName,
           version: newVersion,
         });

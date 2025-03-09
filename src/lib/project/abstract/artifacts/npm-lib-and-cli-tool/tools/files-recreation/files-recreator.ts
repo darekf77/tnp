@@ -38,14 +38,6 @@ export class FilesRecreator extends BaseFeatureForProject<Project> {
       taonConfigSchemaJsonContainer,
     ];
 
-    if (this.project.framework.isSmartContainer) {
-      return [
-        ...this.__filesTemplates(),
-        // 'tsconfig.json',
-        // ...this.vscodeFileTemplates,
-      ];
-    }
-
     if (this.project.framework.isContainer) {
       return [];
     }
@@ -101,19 +93,13 @@ export class FilesRecreator extends BaseFeatureForProject<Project> {
     if (this.project.typeIs('container')) {
       this.gitignore();
       this.handleProjectSpecyficFiles();
-      if (this.project.framework.isSmartContainer) {
-        Helpers.writeFile(
-          [this.project.location, 'angular.json'],
-          this.angularJsonContainer,
-        );
-      }
+
       return;
     }
 
     if (
       this.project.framework.frameworkVersionAtLeast('v3') &&
-      this.project.typeIs('isomorphic-lib') &&
-      !this.project?.parent?.framework.isSmartContainer
+      this.project.typeIs('isomorphic-lib')
     ) {
       await this.project.artifactsManager.artifact.npmLibAndCliTool.__insideStructure.recrate(
         initOptions,
@@ -544,8 +530,10 @@ export class FilesRecreator extends BaseFeatureForProject<Project> {
                     `**/${project.artifactsManager.artifact.docsWebapp.docs.docsConfigSchema}`
                   ] = true;
 
-                  s['files.exclude'][`**/${taonConfigSchemaJsonStandalone}`] = true;
-                  s['files.exclude'][`**/${taonConfigSchemaJsonContainer}`] = true;
+                  s['files.exclude'][`**/${taonConfigSchemaJsonStandalone}`] =
+                    true;
+                  s['files.exclude'][`**/${taonConfigSchemaJsonContainer}`] =
+                    true;
 
                   Object.keys(project.linter.lintFiles).forEach(f => {
                     s['files.exclude'][`**/${f}`] = true;
@@ -710,7 +698,6 @@ ${
 # =====================
 !taon.jsonc
 ${this.project.framework.isCoreProject ? '!*.filetemplate' : '*.filetemplate'}
-${this.project.framework.isSmartContainer ? '/angular.json' : ''}
 ${this.project.framework.isCoreProject ? '' : '/.vscode/launch.json'}
 /*.sqlite
 /*.rest
@@ -903,10 +890,6 @@ ${this.project.framework.isCoreProject ? '' : '/.vscode/launch.json'}
     //#region @backendFunc
     // TODO should be abstract
     let templates = [];
-
-    if (this.project.framework.isSmartContainer) {
-      templates = ['tsconfig.json.filetemplate', ...templates];
-    }
 
     if (this.project.typeIs('isomorphic-lib')) {
       templates = [

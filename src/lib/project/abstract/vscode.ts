@@ -1,6 +1,7 @@
 //#region imports
 import { config } from 'tnp-config/src';
 import { chalk, fse, json5, path, _ } from 'tnp-core/src';
+import { Utils } from 'tnp-core/src';
 import { BaseVscodeHelpers, Helpers } from 'tnp-helpers/src';
 
 import {
@@ -10,6 +11,7 @@ import {
   taonConfigSchemaJsonContainer,
 } from '../../constants';
 import { Models } from '../../models';
+import { InitingPartialProcess } from '../../options';
 
 import type { Project } from './project';
 //#endregion
@@ -18,8 +20,19 @@ import type { Project } from './project';
  * Handle taon things related to vscode
  * support for launch.json, settings.json etc
  */ // @ts-ignore TODO weird inheritance problem
-export class Vscode extends BaseVscodeHelpers<Project> {
+export class Vscode // @ts-ignore TODO weird inheritance problem
+  extends BaseVscodeHelpers<Project>
+  implements InitingPartialProcess
+{
   project: Project;
+
+  async init(): Promise<void> {
+    this.recreateJsonSchemas();
+    this.project.vsCodeHelpers.recreateExtensions();
+    this.project.vsCodeHelpers.recreateWindowTitle();
+    this.project.vsCodeHelpers.__saveLaunchJson();
+  }
+
   //#region recreate jsonc schema
   recreateJsonSchemas(): void {
     this.recreateJsonSchemaForDocs();
@@ -64,46 +77,61 @@ export class Vscode extends BaseVscodeHelpers<Project> {
   //#region recreate jsonc schema for taon
   public recreateJsonSchemaForTaon(): void {
     //#region @backendFunc
-    const currentSchemas: {
+    let currentSchemas: {
       fileMatch: string[];
       url: string;
     }[] =
       this.project.getValueFromJSONC(this.settingsJson, `['json.schemas']`) ||
       [];
 
+    const toDeleteIndex = currentSchemas
+      .filter(
+        (x, i) => x =>
+          (_.first(x.fileMatch) as string)?.startsWith(
+            `/${config.file.taon_jsonc}`,
+          ),
+      )
+      .map((_, i) => i);
+
+    for (const index of toDeleteIndex) {
+      currentSchemas.splice(index, 1);
+    }
+
     if (this.project.framework.isStandaloneProject) {
-      (() => {
-        const properSchema = {
-          fileMatch: [`/${config.file.taon_jsonc}`],
-          url: `./${taonConfigSchemaJsonStandalone}`,
-        };
-        const existedIndex = currentSchemas.findIndex(
-          x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
-        );
-        if (existedIndex !== -1) {
-          currentSchemas[existedIndex] = properSchema;
-        } else {
-          currentSchemas.push(properSchema);
-        }
-      })();
+      const properSchema = {
+        fileMatch: [`/${config.file.taon_jsonc}`],
+        url: `./${taonConfigSchemaJsonStandalone}`,
+      };
+
+      // TODO @LAST filter schemas
+      // currentSchemas = Utils.uniqArray(currentSchemas,'fileMatch');
+
+      const existedIndex = currentSchemas.findIndex(
+        x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
+      );
+      if (existedIndex !== -1) {
+        currentSchemas[existedIndex] = properSchema;
+      } else {
+        currentSchemas.push(properSchema);
+      }
     }
 
     if (this.project.framework.isContainer) {
-      (() => {
-        const properSchema = {
-          fileMatch: [`/${config.file.taon_jsonc}`],
-          url: `./${taonConfigSchemaJsonContainer}`,
-        };
-        const existedIndex = currentSchemas.findIndex(
-          x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
-        );
-        if (existedIndex !== -1) {
-          currentSchemas[existedIndex] = properSchema;
-        } else {
-          currentSchemas.push(properSchema);
-        }
-      })();
+      const properSchema = {
+        fileMatch: [`/${config.file.taon_jsonc}`],
+        url: `./${taonConfigSchemaJsonContainer}`,
+      };
+      const existedIndex = currentSchemas.findIndex(
+        x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
+      );
+      if (existedIndex !== -1) {
+        currentSchemas[existedIndex] = properSchema;
+      } else {
+        currentSchemas.push(properSchema);
+      }
     }
+
+    this.project.removeFile('taon-config.schema.json'); // QUICK_FIX
 
     this.project.setValueToJSONC(
       this.settingsJson,
@@ -115,59 +143,9 @@ export class Vscode extends BaseVscodeHelpers<Project> {
   //#endregion
 
   //#region save launch.json
-  public __saveLaunchJson(basePort: number = 4100) {
+  public __saveLaunchJson(basePort: number = 4100): void {
     //#region @backendFunc
-    if (this.project.framework.isSmartContainer) {
-      //#region container save
-      const container = this.project;
-      const configurations = container.children
-        .filter(f => {
-          return (
-            f.framework.frameworkVersionAtLeast('v3') &&
-            f.typeIs('isomorphic-lib')
-          );
-        })
-        .map((c, index) => {
-          const backendPort =
-            PortUtils.instance(basePort).calculateServerPortFor(c);
-
-          c.artifactsManager.artifact.angularNodeApp.writePortsToFile();
-          return {
-            type: 'node',
-            request: 'launch',
-            name: `${DEBUG_WORD} Server @${container.name}/${c.name}`,
-            cwd: '${workspaceFolder}' + `/dist/${container.name}/${c.name}`,
-            program:
-              '${workspaceFolder}' +
-              `/dist/${container.name}/${c.name}/run-org.js`,
-            args: [`--child=${c.name}`, `--port=${backendPort}`],
-            // "sourceMaps": true,
-            // "outFiles": [ // TODOD this is causing unbound breakpoing in thir party modules
-            //   "${workspaceFolder}" + ` / dist / ${ container.name } / ${ c.name } / dist/**/ *.js`
-            // ],
-            runtimeArgs: this.__vscodeLaunchRuntimeArgs,
-            presentation: {
-              group: 'workspaceServers',
-            },
-          };
-        });
-
-      const temlateSmartContine = {
-        version: '0.2.0',
-        configurations,
-        // "compounds": []
-      };
-
-      const launchJSOnFilePath = path.join(
-        container.location,
-        '.vscode/launch.json',
-      );
-      Helpers.writeFile(launchJSOnFilePath, temlateSmartContine);
-      //#endregion
-    } else if (
-      this.project.framework.isStandaloneProject &&
-      !this.project.framework.isSmartContainerTarget
-    ) {
+    if (this.project.framework.isStandaloneProject) {
       //#region standalone save
 
       let configurations = [];

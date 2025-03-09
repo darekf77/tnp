@@ -127,7 +127,7 @@ class BuildOptionsLibOrApp<T> extends BaseBuild<T> {
    * etc.
    */
   prod: boolean;
-  targetArtifact: ReleaseArtifactTaon = 'angular-node-app';
+  targetArtifact: ReleaseArtifactTaon = 'npm-lib-and-cli-tool';
 }
 //#endregion
 
@@ -142,6 +142,17 @@ export class ClearOptions extends SystemTask<ClearOptions> {
   recrusive?: boolean;
 }
 //#endregion
+
+/**
+ * Class is as part of initing project structure process
+ */
+export interface InitingPartialProcess {
+  /**
+   * All initialization process from class
+   * gathered in one place
+   */
+  init(options: InitOptions): Promise<void>;
+}
 
 //#region init options
 export class InitOptions extends BaseBuild<InitOptions> {
@@ -190,33 +201,15 @@ export class InitOptions extends BaseBuild<InitOptions> {
 //#region build options
 export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
   /**
-   * TODO remove
-   */
-  readonly outDir: 'dist' = 'dist';
-  buildType: 'lib' | 'app' | 'docs' | 'lib-app';
-
-  /**
    * null  - means it is development build
    */
   isForRelease: ReleaseType | null = null;
-  get appBuild() {
-    return this.buildType === 'app' || this.buildType === 'lib-app';
-  }
-  get libBuild() {
-    return this.buildType === 'lib' || this.buildType === 'lib-app';
-  }
-
-  get temporarySrcForReleaseCutCode() {
+  get temporarySrcForReleaseCutCode(): string {
     //#region @backendFunc
     return `tmp-cut-release-src-${config.folder.dist}${this.websql ? '-websql' : ''}`;
     //#endregion
   }
 
-  private constructor() {
-    super();
-    this.outDir = 'dist';
-    this.targetArtifact = 'angular-node-app';
-  }
   /**
    *
    */
@@ -247,11 +240,6 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
   buildForRelease: boolean;
 
   /**
-   * default: '<project-locaiton>/dist-app'
-   * default for github page: '<project-location>/docs'
-   */
-  appBuildLocation: string;
-  /**
    * Cut <@>notForNpm  tag from lib build
    */
   cutNpmPublishLibReleaseCode: boolean;
@@ -269,9 +257,7 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
    */
   smartContainerTargetName: string;
 
-  public static from(
-    options: Omit<Partial<BuildOptions>, 'appBuild' | 'serveApp'>,
-  ): BuildOptions {
+  public static from(options: Partial<BuildOptions>): BuildOptions {
     return instanceFrom(options, BuildOptions);
   }
 }

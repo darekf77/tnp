@@ -14,30 +14,18 @@ import type { Project } from '../../../project';
 export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
   public readonly rootBaseHref: string = '/';
   private get baseHrefForGhPages() {
-    return this.project.framework.isSmartContainerTarget
-      ? this.project.framework.smartContainerTargetParentContainer.name
-      : this.project.name;
+    return this.project.name;
   }
 
   private resolveBaseHrefForProj(overrideBaseHref: string) {
     //#region @backendFunc
     let baseHref = this.rootBaseHref;
-    const isSmartContainerTargetNonClient =
-      this.project.framework.isSmartContainerTargetNonClient;
 
     if (overrideBaseHref === '') {
-      if (isSmartContainerTargetNonClient) {
-        baseHref = `./-/${this.project.name}/`;
-      } else {
-        baseHref = overrideBaseHref;
-      }
+      baseHref = overrideBaseHref;
     } else {
       if (overrideBaseHref) {
-        if (isSmartContainerTargetNonClient) {
-          baseHref = `${overrideBaseHref}-/${this.project.name}/`;
-        } else {
-          baseHref = overrideBaseHref;
-        }
+        baseHref = overrideBaseHref;
       } else {
         if (this.project.releaseProcess.isInCiReleaseProject) {
           if (
@@ -46,9 +34,6 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
             baseHref = this.rootBaseHref;
           } else {
             baseHref = `/${this.baseHrefForGhPages}/`;
-            if (isSmartContainerTargetNonClient) {
-              baseHref = `/${this.baseHrefForGhPages}/-/${this.project.name}/`;
-            }
           }
         }
       }

@@ -1,4 +1,5 @@
 //#region imports
+import { BaseContext, Taon } from 'taon/src';
 import { config } from 'tnp-config/src';
 import {
   chalk,
@@ -29,6 +30,8 @@ import {
 } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact } from '../__base__/base-artifact';
+import { BuildProcess } from '../__base__/build-process/app/build-process/build-process';
+import { BuildProcessController } from '../__base__/build-process/app/build-process/build-process.controller';
 
 import { IncrementalBuildProcess } from './tools/build-isomorphic-lib/compilations/incremental-build-process';
 import { CopyManager } from './tools/copy-manager/copy-manager';
@@ -38,29 +41,23 @@ import {
 } from './tools/files-recreation';
 import { IndexAutogenProvider } from './tools/index-autogen-provider';
 import { InsideStructures } from './tools/inside-structures/inside-structures';
-import { LibProjectSmartContainer } from './tools/lib-project/lib-project-smart-container';
 import { LibProjectStandalone } from './tools/lib-project/lib-project-standalone';
-import { SingularBuild } from './tools/singular-build';
 import { CypressTestRunner } from './tools/test-runner/cypress-test-runner';
 import { JestTestRunner } from './tools/test-runner/jest-test-runner';
 import { MochaTestRunner } from './tools/test-runner/mocha-test-runner';
 import { WebpackBackendCompilation } from './webpack-backend-compilation';
-import { BaseContext, Taon } from 'taon/src';
-import { BuildProcessController } from '../__base__/build-process/app/build-process/build-process.controller';
-import { BuildProcess } from '../__base__/build-process/app/build-process/build-process';
+
 //#endregion
 
 export class ArtifactNpmLibAndCliTool extends BaseArtifact {
   //#region fields
   public __copyManager: CopyManager;
   public __libStandalone: LibProjectStandalone;
-  public __libSmartContainer: LibProjectSmartContainer;
 
   public __tests: MochaTestRunner;
   public __testsJest: JestTestRunner;
   public __testsCypress: CypressTestRunner;
 
-  public __singularBuild: SingularBuild;
   public __webpackBackendBuild: WebpackBackendCompilation;
   public indexAutogenProvider: IndexAutogenProvider;
 
@@ -76,13 +73,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
     super(project);
     this.__copyManager = CopyManager.for(project);
     this.__libStandalone = new LibProjectStandalone(project);
-    this.__libSmartContainer = new LibProjectSmartContainer(project);
 
     this.__tests = new MochaTestRunner(project);
     this.__testsJest = new JestTestRunner(project);
     this.__testsCypress = new CypressTestRunner(project);
 
-    this.__singularBuild = new SingularBuild(project);
     this.__webpackBackendBuild = new WebpackBackendCompilation(project);
     this.indexAutogenProvider = new IndexAutogenProvider(project);
 
@@ -93,87 +88,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
   //#endregion
   //#endregion
 
-  //#region struct
-  async structPartial(initOptions: InitOptions): Promise<void> {
-    //#region @backendFunc
-    initOptions = InitOptions.from(initOptions);
-    initOptions.purpose = 'only structure init';
-    initOptions.struct = true;
-    await this.initPartial(initOptions);
-    //#endregion
-  }
-  //#endregion
-
   //#region init
   async initPartial(initOptions: InitOptions): Promise<void> {
     //#region @backendFunc
-    initOptions = InitOptions.from(initOptions);
-    if (
-      this.project.framework.isContainer &&
-      this.project.framework.frameworkVersionLessThan('v18')
-    ) {
-      Helpers.warn(`Not initing ${this.project.genericName}`);
-      return;
-    }
-
-    Helpers.removeFileIfExists(
-      path.join(this.project.location, config.file.tnpEnvironment_json),
-    );
-    this.project.vsCodeHelpers.recreateExtensions();
-    this.project.vsCodeHelpers.recreateWindowTitle();
-    this.project.vsCodeHelpers.__saveLaunchJson();
-    // });
-
-    if (
-      this.project.framework.isStandaloneProject &&
-      this.project.releaseProcess.isInCiReleaseProject
-    ) {
-      this.project.packageJson.setMainProperty(
-        'dist/app.electron.js',
-        'update main for electron',
-      );
-    }
-
-    const smartContainerTargetName =
-      this.project.framework.smartContainerBuildTarget?.name;
-
-    Helpers.log(
-      `[init] adding project is not exists...done(${this.project.genericName})  `,
-    );
-
-    this.project.quickFixes.addMissingSrcFolderToEachProject();
-
-    if (this.project.framework.isSmartContainer) {
-      const children = this.project.children;
-      for (let index = 0; index < children.length; index++) {
-        const child = children[index];
-        if (
-          child.framework.frameworkVersion !==
-          this.project.framework.frameworkVersion
-        ) {
-          await child.taonJson.setFrameworkVersion(
-            this.project.taonJson.frameworkVersion,
-          );
-        }
-      }
-    }
-
-    if (
-      this.project.framework.isStandaloneProject ||
-      this.project.framework.isSmartContainerChild
-    ) {
-      await this.project.artifactsManager.globalHelper.branding.apply(
-        !!initOptions.branding,
-      );
-    }
-
-    this.project.quickFixes.missingAngularLibFiles();
-    if (
-      this.project.framework.isStandaloneProject ||
-      this.project.framework.isContainer
-    ) {
-      this.project.quickFixes.createDummyEmptyLibsReplacements([]);
-    }
 
     Helpers.taskStarted(
       `Initing project: ${chalk.bold(this.project.genericName)} ${
@@ -181,18 +98,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
       } `,
     );
 
-    Helpers.log(
-      `Push to alread inited ${this.project.genericName} from ${this.project.location} `,
-    );
-
     await this.filesRecreator.recreateSimpleFiles(initOptions);
     this.filesRecreator.vscode.settings.toogleHideOrShowDeps();
 
-    if (
-      this.project.framework.isStandaloneProject ||
-      this.project.framework.isSmartContainer
-    ) {
-      await this.project.artifactsManager.globalHelper.env.init();
+    if (this.project.framework.isStandaloneProject) {
+      await this.project.artifactsManager.globalHelper.env.init(); // TODO .ev.
       this.__filesTemplatesBuilder.rebuild();
     }
 
@@ -200,13 +110,16 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
       await this.project.nodeModules.makeSureInstalled();
     }
 
-    this.project.npmHelpers.copyDepsFromCoreContainer(
-      `Show new deps for ${this.project.framework.frameworkVersion} `,
-    );
-
     this.project.quickFixes.addMissingSrcFolderToEachProject();
-
+    this.project.quickFixes.missingAngularLibFiles();
+    if (
+      this.project.framework.isStandaloneProject ||
+      this.project.framework.isContainer
+    ) {
+      this.project.quickFixes.createDummyEmptyLibsReplacements([]);
+    }
     this.project.quickFixes.removeBadTypesInNodeModules();
+
     if (this.project.framework.isStandaloneProject) {
       await this.project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
         {
@@ -215,36 +128,446 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
       );
     }
 
-    if (this.project.framework.isSmartContainer) {
-      //#region handle smart container
-
-      await this.filesRecreator.recreateSimpleFiles(initOptions);
-
-      await this.__singularBuild.initSingularBuild(
-        initOptions,
-        smartContainerTargetName,
-      );
-
-      //#endregion
-    }
-
     Helpers.log(
       `Init DONE for project: ${chalk.bold(this.project.genericName)} `,
     );
 
-    this.project.linter.recreateLintConfiguration();
-    await this.artifacts.docsWebapp.docs.init();
-
     await this.creteBuildInfoFile(initOptions);
-    this.project.quickFixes.fixAppTsFile();
 
     initOptions.finishCallback();
     //#endregion
   }
   //#endregion
 
-  buildPartial(options: BuildOptions): Promise<void> {
-    return void 0; // TODO implement
+  async buildPartial(buildOptions: BuildOptions): Promise<void> {
+    //#region @backendFunc
+    Helpers.log(`[buildLib] called buildLib not implemented`);
+    if (this.project.framework.isStandaloneProject) {
+      return;
+    }
+
+    //#region preparing variables
+
+    //#region preparing variables & fixing things
+    const { watch, cutNpmPublishLibReleaseCode } = buildOptions;
+    const outDir = config.folder.dist;
+
+    this.project.quickFixes.__fixBuildDirs();
+
+    // Helpers.info(`[buildLib] start of building ${websql ? '[WEBSQL]' : ''}`);
+    Helpers.log(`[buildLib] start of building...`);
+    this.__copyEssentialFilesTo(this.project, [
+      crossPlatformPath([this.project.pathFor(outDir)]),
+    ]);
+
+    const {
+      cliBuildObscure,
+      cliBuildUglify,
+      cliBuildNoDts,
+      cliBuildIncludeNodeModules,
+    } = buildOptions;
+    const productionModeButIncludePackageJsonDeps =
+      (cliBuildObscure || cliBuildUglify) && !cliBuildIncludeNodeModules;
+
+    //#endregion
+
+    //#region preparing variables / incremental build
+
+    const incrementalBuildProcess = new IncrementalBuildProcess(
+      this.project,
+      buildOptions.clone({
+        websql: false,
+      }),
+    );
+
+    const incrementalBuildProcessWebsql = new IncrementalBuildProcess(
+      this.project,
+      buildOptions.clone({
+        websql: true,
+        genOnlyClientCode: true,
+      }),
+    );
+
+    const proxyProject =
+      this.project.artifactsManager.globalHelper.__getProxyNgProj(
+        buildOptions.clone({
+          websql: false,
+        }),
+        'lib',
+      );
+
+    const proxyProjectWebsql =
+      this.project.artifactsManager.globalHelper.__getProxyNgProj(
+        buildOptions.clone({
+          websql: true,
+        }),
+        'lib',
+      );
+
+    Helpers.log(`
+
+    proxy Proj = ${proxyProject?.location}
+    proxy Proj websql = ${proxyProjectWebsql?.location}
+
+    `);
+
+    //#endregion
+
+    //#region preparing variables / general
+
+    const sharedOptions = () => {
+      return {
+        // askToTryAgainOnError: true,
+        exitOnErrorCallback: async code => {
+          if (buildOptions.buildForRelease) {
+            throw 'Typescript compilation lib error';
+          } else {
+            Helpers.error(
+              `[${config.frameworkName}] Typescript compilation lib error (code=${code})`,
+              false,
+              true,
+            );
+          }
+        },
+        outputLineReplace: (line: string) => {
+          if (this.project.framework.isStandaloneProject) {
+            if (line.startsWith('WARNING: postcss-url')) {
+              return ' --- [taon] IGNORED WARN ---- ';
+            }
+
+            line = line.replace(`projects/${this.project.name}/src/`, `./src/`);
+
+            if (line.search(`/src/libs/`) !== -1) {
+              const [__, ___, ____, moduleName] = line.split('/');
+              // console.log({
+              //   moduleName,
+              //   standalone: 'inlib'
+              // })
+              return line.replace(
+                `/src/libs/${moduleName}/`,
+                `/${moduleName}/src/lib/`,
+              );
+            }
+
+            return line;
+          }
+          return line;
+        },
+      } as CoreModels.ExecuteOptions;
+    };
+    //#endregion
+
+    //#region prepare variables / command
+    // const command = `${loadNvm} && ${this.npmRunNg} build ${this.name} ${watch ? '--watch' : ''}`;
+    const commandForLibraryBuild = `${this.NPM_RUN_NG_COMMAND} build ${this.project.name} ${
+      watch ? '--watch' : ''
+    }`;
+    //#endregion
+
+    //#region prepare variables / angular info
+    const showInfoAngular = () => {
+      Helpers.info(
+        `Starting browser Angular/TypeScirpt build.... ${
+          buildOptions.websql ? '[WEBSQL]' : ''
+        }`,
+      );
+      Helpers.log(`
+
+      ANGULAR ${this.project.ins.Tnp?.packageJson.version} ${
+        buildOptions.watch ? 'WATCH ' : ''
+      } LIB BUILD STARTED... ${buildOptions.websql ? '[WEBSQL]' : ''}
+
+      `);
+
+      Helpers.log(` command: ${commandForLibraryBuild}`);
+    };
+    //#endregion
+
+    //#endregion
+
+    //#region save baseHref for lib build
+    buildOptions.baseHref = !_.isUndefined(buildOptions.baseHref)
+      ? buildOptions.baseHref
+      : this.artifact.angularNodeApp.angularFeBasenameManager.rootBaseHref;
+
+    const baseHrefLocProj = this.project;
+
+    baseHrefLocProj.writeFile(
+      tmpBaseHrefOverwriteRelPath,
+      buildOptions.baseHref,
+    );
+    //#endregion
+
+    if (
+      this.project.artifactsManager.artifact.npmLibAndCliTool
+        .indexAutogenProvider.generateIndexAutogenFile &&
+      this.project.framework.isStandaloneProject
+    ) {
+      await this.project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
+        {
+          watch: buildOptions.watch,
+        },
+      );
+    } else {
+      this.project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.writeIndexFile(
+        true,
+      );
+    }
+
+    if (buildOptions.watch) {
+      if (productionModeButIncludePackageJsonDeps) {
+        //#region webpack dist release build
+        console.log('Startomg build');
+        try {
+          await incrementalBuildProcess.startAndWatch(
+            `isomorphic compilation (only browser) `,
+          );
+        } catch (error) {
+          console.log('CATCH INCE normal');
+        }
+
+        try {
+          await incrementalBuildProcessWebsql.startAndWatch(
+            `isomorphic compilation (only browser) [WEBSQL]`,
+          );
+        } catch (error) {
+          console.log('CATCH INCE webcsal');
+        }
+
+        // Helpers.error(`Watch build not available for dist release build`, false, true);
+        // Helpers.info(`Starting watch dist release build for fast cli.. ${this.buildOptions.websql ? '[WEBSQL]' : ''}`);
+        Helpers.info(`Starting watch dist release build for fast cli.. `);
+
+        try {
+          await this.project.artifactsManager.artifact.npmLibAndCliTool.__webpackBackendBuild.run(
+            BuildOptions.from({
+              watch,
+            }),
+          );
+        } catch (er) {
+          Helpers.error(
+            `WATCH ${outDir.toUpperCase()} build failed`,
+            false,
+            true,
+          );
+        }
+        //#endregion
+      } else {
+        //#region watch backend compilation
+
+        await incrementalBuildProcess.startAndWatch(
+          'isomorphic compilation (watch mode)',
+        );
+        await incrementalBuildProcessWebsql.startAndWatch(
+          'isomorphic compilation (watch mode) [WEBSQL]',
+        );
+
+        if (this.project.framework.frameworkVersionAtLeast('v3')) {
+          // TOOD
+          showInfoAngular();
+
+          if (this.project.framework.isStandaloneProject) {
+            try {
+              await proxyProject.execute(commandForLibraryBuild, {
+                similarProcessKey: 'ng',
+                resolvePromiseMsg: {
+                  stdout: 'Compilation complete. Watching for file changes',
+                },
+                ...sharedOptions(),
+              });
+              await proxyProjectWebsql.execute(commandForLibraryBuild, {
+                similarProcessKey: 'ng',
+                resolvePromiseMsg: {
+                  stdout: 'Compilation complete. Watching for file changes',
+                },
+                ...sharedOptions(),
+              });
+            } catch (error) {
+              console.log(error);
+            }
+          }
+        }
+        //#endregion
+      }
+    } else {
+      //#region non watch build
+
+      if (cutNpmPublishLibReleaseCode) {
+        this.__cutReleaseCodeFromSrc(buildOptions);
+      }
+
+      if (productionModeButIncludePackageJsonDeps) {
+        //#region release production backend build for taon/tnp specific
+
+        await incrementalBuildProcess.start(
+          'isomorphic compilation (only browser) ',
+        );
+        await incrementalBuildProcessWebsql.start(
+          'isomorphic compilation (only browser) [WEBSQL] ',
+        );
+
+        //#region webpack build @deprecated
+        try {
+          await this.project.artifactsManager.artifact.npmLibAndCliTool.__webpackBackendBuild.run(
+            BuildOptions.from({
+              watch,
+            }),
+          );
+        } catch (er) {
+          Helpers.error(
+            `${outDir.toUpperCase()} (single file compilation) build failed`,
+            false,
+            true,
+          );
+        }
+        //#endregion
+
+        //#region build without dts in dist @deprecated
+        if (cliBuildNoDts) {
+          const baseDistGenWebpackDts = crossPlatformPath(
+            path.join(this.project.location, outDir, 'dist'),
+          );
+          Helpers.filesFrom(baseDistGenWebpackDts, true).forEach(absSource => {
+            const destDtsFile = path.join(
+              this.project.location,
+              outDir,
+              absSource.replace(`${baseDistGenWebpackDts}/`, ''),
+            );
+            Helpers.copyFile(absSource, destDtsFile);
+          });
+        }
+        //#endregion
+
+        Helpers.removeIfExists(
+          path.join(this.project.location, outDir, 'dist'),
+        );
+
+        //#region obscure & uglify
+        try {
+          if (cliBuildObscure || cliBuildUglify) {
+            this.__backendCompileToEs5();
+          }
+          if (cliBuildUglify) {
+            this.__backendUglifyCode(config.reservedArgumentsNamesUglify);
+          }
+          if (cliBuildObscure) {
+            this.__backendObscureCode(config.reservedArgumentsNamesUglify);
+          }
+        } catch (er) {
+          Helpers.error(
+            `${outDir.toUpperCase()} (cliBuildObscure || cliBuildUglify) process failed`,
+            false,
+            true,
+          );
+        }
+        //#endregion
+
+        //#region isomorphic compilation
+        try {
+          showInfoAngular();
+          await proxyProject.execute(commandForLibraryBuild, {
+            similarProcessKey: 'ng',
+            ...sharedOptions(),
+          });
+          await proxyProjectWebsql.execute(commandForLibraryBuild, {
+            similarProcessKey: 'ng',
+            ...sharedOptions(),
+          });
+        } catch (e) {
+          Helpers.log(e);
+          Helpers.error(
+            `
+          Command failed: ${commandForLibraryBuild}
+
+          Not able to build project: ${this.project.genericName}`,
+            false,
+            true,
+          );
+        }
+        //#endregion
+
+        //#endregion
+      } else {
+        //#region normal backend compilation
+
+        await incrementalBuildProcess.start('isomorphic compilation');
+        await incrementalBuildProcessWebsql.start('isomorphic compilation');
+
+        try {
+          showInfoAngular();
+          await proxyProject.execute(commandForLibraryBuild, {
+            similarProcessKey: 'ng',
+            ...sharedOptions(),
+          });
+          await proxyProjectWebsql.execute(commandForLibraryBuild, {
+            similarProcessKey: 'ng',
+            ...sharedOptions(),
+          });
+          this.__showMesageWhenBuildLibDoneForSmartContainer(buildOptions);
+        } catch (e) {
+          Helpers.log(e);
+          // TODO remove this error (it should not interrup release proces)
+          Helpers.error(
+            `
+          Command failed: ${commandForLibraryBuild}
+
+          Not able to build project: ${this.project.genericName}`,
+            false,
+            true,
+          );
+        }
+
+        //#endregion
+      }
+
+      if (cliBuildIncludeNodeModules) {
+        //#region build for including node_modules in compilation
+        const cliJsFile = 'cli.js';
+        this.project.quickFixes.removeTnpFromItself(async () => {
+          this.__backendIncludeNodeModulesInCompilation(
+            false, // cliBuildUglify,
+            cliJsFile,
+          );
+        });
+        //#endregion
+
+        //#region uglify
+        if (cliBuildUglify) {
+          this.__backendUglifyCode(
+            config.reservedArgumentsNamesUglify,
+            cliJsFile,
+          );
+        }
+        //#endregion
+
+        //#region normal build not obscured
+        if (!productionModeButIncludePackageJsonDeps) {
+          if (cliBuildObscure || cliBuildUglify) {
+            this.__backendCompileToEs5(cliJsFile);
+          }
+          if (cliBuildObscure) {
+            this.__backendObscureCode(
+              config.reservedArgumentsNamesUglify,
+              cliJsFile,
+            );
+          }
+        }
+        //#endregion
+      }
+
+      if (cliBuildNoDts) {
+        this.__backendRemoveDts();
+      }
+
+      if (cutNpmPublishLibReleaseCode) {
+        this.__restoreCuttedReleaseCodeFromSrc(buildOptions);
+      }
+      //#endregion
+    }
+
+    this.__showMesageWhenBuildLibDoneForSmartContainer(buildOptions);
+
+    //#endregion
   }
   releasePartial(options: ReleaseOptions): Promise<void> {
     return void 0; // TODO implement
@@ -302,10 +625,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
       );
     }
 
-    if (this.project.framework.isSmartContainerChild) {
-      Helpers.error(`Smart container not supported yet...`, false, true);
-    }
-
     // if (!global.tnpNonInteractive) {
     //   Helpers.clearConsole();
     // }
@@ -331,10 +650,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
 
     this.project.npmHelpers.copyDepsFromCoreContainer('Release');
 
-    if (
-      this.project.framework.isContainer &&
-      !this.project.framework.isSmartContainer
-    ) {
+    if (this.project.framework.isContainer) {
       //#region container release
 
       //#region resolve deps
@@ -357,8 +673,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
             )
           : true;
 
-        const shouldRelease =
-          !child.framework.isSmartContainerChild && versionIsOk;
+        const shouldRelease = versionIsOk;
 
         Helpers.log(`ACTUALL RELEASE ${child.name}: ${shouldRelease}
       lastBuildHash: ${lastBuildHash}
@@ -497,10 +812,7 @@ processing...
 
         `); // hash in package.json to check
 
-          if (
-            depForPush.typeIs('isomorphic-lib') &&
-            depForPush.framework.isSmartContainer
-          ) {
+          if (depForPush.typeIs('isomorphic-lib')) {
             try {
               await depForPush.init(
                 InitOptions.from({ purpose: 'release chain init' }),
@@ -666,13 +978,6 @@ processing...
         cutNpmPublishLibReleaseCode: true,
       });
 
-      if (this.project.framework.isSmartContainer) {
-        specificProjectForBuild.artifactsManager.artifact.npmLibAndCliTool.__libSmartContainer.preparePackage(
-          this.project,
-          newVersion,
-        );
-      }
-
       if (this.project.framework.isStandaloneProject) {
         specificProjectForBuild.artifactsManager.artifact.npmLibAndCliTool.__libStandalone.preparePackage(
           this.project,
@@ -692,17 +997,11 @@ processing...
           realCurrentProj,
           specificProjectForBuild,
         );
-      } else {
-        realCurrentProj.releaseProcess.updateContainerProjectBeforePublishing(
-          this.project,
-          realCurrentProj,
-          specificProjectForBuild,
-        );
       }
 
       let publish = true;
 
-      const readyToNpmPublishVersionPath = `${this.project.framework.__getTempProjName('dist')}/${
+      const readyToNpmPublishVersionPath = `${this.project.framework.__getTempProjName()}/${
         config.folder.node_modules
       }`;
       if (this.project.framework.isStandaloneProject) {
@@ -746,18 +1045,6 @@ processing...
       publish = await Helpers.questionYesNo(`Publish this package ?`);
 
       if (publish) {
-        if (this.project.framework.isSmartContainer) {
-          await specificProjectForBuild.artifactsManager.artifact.npmLibAndCliTool.__libSmartContainer.publish(
-            {
-              realCurrentProj,
-              rootPackageName: `@${this.project.name}`,
-              newVersion,
-              automaticRelease,
-              prod,
-            },
-          );
-        }
-
         if (this.project.framework.isStandaloneProject) {
           await specificProjectForBuild.artifactsManager.artifact.npmLibAndCliTool.__libStandalone.publish(
             {
@@ -781,26 +1068,6 @@ processing...
       await new Promise<void>(async (resolve, reject) => {
         if (this.project.framework.isStandaloneProject) {
           await this.project.artifactsManager.artifact.npmLibAndCliTool.__libStandalone.buildDocs(
-            prod,
-            realCurrentProj,
-            automaticReleaseDocs,
-            async () => {
-              try {
-                specificProjectForBuild = await this.__releaseBuildProcess({
-                  realCurrentProj,
-                  releaseOptions,
-                  cutNpmPublishLibReleaseCode: false,
-                });
-                resolve();
-              } catch (error) {
-                reject(error);
-              }
-            },
-          );
-        }
-
-        if (this.project.framework.isSmartContainer) {
-          await this.project.artifactsManager.artifact.npmLibAndCliTool.__libSmartContainer.buildDocs(
             prod,
             realCurrentProj,
             automaticReleaseDocs,
@@ -887,22 +1154,6 @@ processing...
 
 `);
     }
-    if (this.project.framework.isSmartContainer) {
-      const smartContainer = this.project;
-      const mainProjectName =
-        smartContainer.framework.smartContainerBuildTarget.name;
-      const otherProjectNames = smartContainer.children
-        .filter(c => c.name !== mainProjectName)
-        .map(p => p.name);
-      Helpers.info(`Before pushing you can acces projects here:
-
-- ${originPath}${defaultTestPort}/${smartContainer.name}
-${otherProjectNames
-  .map(c => `- ${originPath}${defaultTestPort}/${smartContainer.name}/-/${c}`)
-  .join('\n')}
-
-`);
-    }
 
     //#endregion
   }
@@ -977,12 +1228,7 @@ ${otherProjectNames
       fse.mkdirSync(releaseDistFolder);
     }
     []
-      .concat([
-        ...this.project.taonJson.resources,
-        ...(this.project.framework.isSmartContainerChild
-          ? [config.file._npmignore, config.file.taon_jsonc]
-          : [config.file._npmignore]),
-      ])
+      .concat([...this.project.taonJson.resources, ...[config.file._npmignore]])
       .forEach(res => {
         //  copy resource to org build and copy shared assets
         const file = path.join(this.project.location, res);
@@ -1013,443 +1259,6 @@ ${otherProjectNames
     Helpers.logInfo(
       `Resources copied to release folder: ${config.folder.dist}`,
     );
-    //#endregion
-  }
-  //#endregion
-
-  //#region getters & methods / build lib placeholder
-  public async __buildLib(buildOptions: BuildOptions) {
-    //#region @backendFunc
-    Helpers.log(`[buildLib] called buildLib not implemented`);
-    if (this.project.framework.isStandaloneProject) {
-      //#region preparing variables
-
-      //#region preparing variables & fixing things
-      const { outDir, watch, cutNpmPublishLibReleaseCode } = buildOptions;
-
-      this.project.quickFixes.__fixBuildDirs(outDir);
-
-      // Helpers.info(`[buildLib] start of building ${websql ? '[WEBSQL]' : ''}`);
-      Helpers.log(`[buildLib] start of building...`);
-      this.__copyEssentialFilesTo(
-        this.project,
-        [crossPlatformPath([this.project.pathFor(outDir)])],
-        outDir,
-      );
-
-      const {
-        cliBuildObscure,
-        cliBuildUglify,
-        cliBuildNoDts,
-        cliBuildIncludeNodeModules,
-      } = buildOptions;
-      const productionModeButIncludePackageJsonDeps =
-        (cliBuildObscure || cliBuildUglify) && !cliBuildIncludeNodeModules;
-
-      //#endregion
-
-      //#region preparing variables / incremental build
-
-      const incrementalBuildProcess = new IncrementalBuildProcess(
-        this.project,
-        buildOptions.clone({
-          websql: false,
-        }),
-      );
-
-      const incrementalBuildProcessWebsql = new IncrementalBuildProcess(
-        this.project,
-        buildOptions.clone({
-          websql: true,
-          genOnlyClientCode: true,
-        }),
-      );
-
-      const proxyProject =
-        this.project.artifactsManager.globalHelper.__getProxyNgProj(
-          buildOptions.clone({
-            websql: false,
-          }),
-          'lib',
-        );
-
-      const proxyProjectWebsql =
-        this.project.artifactsManager.globalHelper.__getProxyNgProj(
-          buildOptions.clone({
-            websql: true,
-          }),
-          'lib',
-        );
-
-      Helpers.log(`
-
-    proxy Proj = ${proxyProject?.location}
-    proxy Proj websql = ${proxyProjectWebsql?.location}
-
-    `);
-
-      //#endregion
-
-      //#region preparing variables / general
-      const isStandalone = !this.project.framework.isSmartContainer;
-
-      const sharedOptions = () => {
-        return {
-          // askToTryAgainOnError: true,
-          exitOnErrorCallback: async code => {
-            if (buildOptions.buildForRelease) {
-              throw 'Typescript compilation lib error';
-            } else {
-              Helpers.error(
-                `[${config.frameworkName}] Typescript compilation lib error (code=${code})`,
-                false,
-                true,
-              );
-            }
-          },
-          outputLineReplace: (line: string) => {
-            if (isStandalone) {
-              if (line.startsWith('WARNING: postcss-url')) {
-                return ' --- [taon] IGNORED WARN ---- ';
-              }
-
-              line = line.replace(
-                `projects/${this.project.name}/src/`,
-                `./src/`,
-              );
-
-              if (line.search(`/src/libs/`) !== -1) {
-                const [__, ___, ____, moduleName] = line.split('/');
-                // console.log({
-                //   moduleName,
-                //   standalone: 'inlib'
-                // })
-                return line.replace(
-                  `/src/libs/${moduleName}/`,
-                  `/${moduleName}/src/lib/`,
-                );
-              }
-
-              return line;
-            }
-            return line;
-          },
-        } as CoreModels.ExecuteOptions;
-      };
-      //#endregion
-
-      //#region prepare variables / command
-      // const command = `${loadNvm} && ${this.npmRunNg} build ${this.name} ${watch ? '--watch' : ''}`;
-      const commandForLibraryBuild = `${this.NPM_RUN_NG_COMMAND} build ${this.project.name} ${
-        watch ? '--watch' : ''
-      }`;
-      //#endregion
-
-      //#region prepare variables / angular info
-      const showInfoAngular = () => {
-        Helpers.info(
-          `Starting browser Angular/TypeScirpt build.... ${
-            buildOptions.websql ? '[WEBSQL]' : ''
-          }`,
-        );
-        Helpers.log(`
-
-      ANGULAR ${this.project.ins.Tnp?.packageJson.version} ${
-        buildOptions.watch ? 'WATCH ' : ''
-      } LIB BUILD STARTED... ${buildOptions.websql ? '[WEBSQL]' : ''}
-
-      `);
-
-        Helpers.log(` command: ${commandForLibraryBuild}`);
-      };
-      //#endregion
-
-      //#endregion
-
-      if (
-        this.project.artifactsManager.artifact.npmLibAndCliTool
-          .indexAutogenProvider.generateIndexAutogenFile &&
-        this.project.framework.isStandaloneProject
-      ) {
-        await this.project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
-          {
-            watch: buildOptions.watch,
-          },
-        );
-      } else {
-        this.project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.writeIndexFile(
-          true,
-        );
-      }
-
-      if (buildOptions.watch) {
-        if (productionModeButIncludePackageJsonDeps) {
-          //#region webpack dist release build
-          console.log('Startomg build');
-          try {
-            await incrementalBuildProcess.startAndWatch(
-              `isomorphic compilation (only browser) `,
-            );
-          } catch (error) {
-            console.log('CATCH INCE normal');
-          }
-
-          try {
-            await incrementalBuildProcessWebsql.startAndWatch(
-              `isomorphic compilation (only browser) [WEBSQL]`,
-            );
-          } catch (error) {
-            console.log('CATCH INCE webcsal');
-          }
-
-          // Helpers.error(`Watch build not available for dist release build`, false, true);
-          // Helpers.info(`Starting watch dist release build for fast cli.. ${this.buildOptions.websql ? '[WEBSQL]' : ''}`);
-          Helpers.info(`Starting watch dist release build for fast cli.. `);
-
-          try {
-            await this.project.artifactsManager.artifact.npmLibAndCliTool.__webpackBackendBuild.run(
-              BuildOptions.from({
-                buildType: 'lib',
-                outDir,
-                watch,
-              }),
-            );
-          } catch (er) {
-            Helpers.error(
-              `WATCH ${outDir.toUpperCase()} build failed`,
-              false,
-              true,
-            );
-          }
-          //#endregion
-        } else {
-          //#region watch backend compilation
-
-          await incrementalBuildProcess.startAndWatch(
-            'isomorphic compilation (watch mode)',
-          );
-          await incrementalBuildProcessWebsql.startAndWatch(
-            'isomorphic compilation (watch mode) [WEBSQL]',
-          );
-
-          if (this.project.framework.frameworkVersionAtLeast('v3')) {
-            // TOOD
-            showInfoAngular();
-
-            if (isStandalone || this.project.framework.isSmartContainerTarget) {
-              try {
-                await proxyProject.execute(commandForLibraryBuild, {
-                  similarProcessKey: 'ng',
-                  resolvePromiseMsg: {
-                    stdout: 'Compilation complete. Watching for file changes',
-                  },
-                  ...sharedOptions(),
-                });
-                await proxyProjectWebsql.execute(commandForLibraryBuild, {
-                  similarProcessKey: 'ng',
-                  resolvePromiseMsg: {
-                    stdout: 'Compilation complete. Watching for file changes',
-                  },
-                  ...sharedOptions(),
-                });
-              } catch (error) {
-                console.log(error);
-              }
-            }
-          }
-          //#endregion
-        }
-      } else {
-        //#region non watch build
-
-        if (cutNpmPublishLibReleaseCode) {
-          this.__cutReleaseCodeFromSrc(buildOptions);
-        }
-
-        if (productionModeButIncludePackageJsonDeps) {
-          //#region release production backend build for taon/tnp specific
-
-          await incrementalBuildProcess.start(
-            'isomorphic compilation (only browser) ',
-          );
-          await incrementalBuildProcessWebsql.start(
-            'isomorphic compilation (only browser) [WEBSQL] ',
-          );
-
-          //#region webpack build @deprecated
-          try {
-            await this.project.artifactsManager.artifact.npmLibAndCliTool.__webpackBackendBuild.run(
-              BuildOptions.from({
-                buildType: 'lib',
-                outDir,
-                watch,
-              }),
-            );
-          } catch (er) {
-            Helpers.error(
-              `${outDir.toUpperCase()} (single file compilation) build failed`,
-              false,
-              true,
-            );
-          }
-          //#endregion
-
-          //#region build without dts in dist @deprecated
-          if (cliBuildNoDts) {
-            const baseDistGenWebpackDts = crossPlatformPath(
-              path.join(this.project.location, outDir, 'dist'),
-            );
-            Helpers.filesFrom(baseDistGenWebpackDts, true).forEach(
-              absSource => {
-                const destDtsFile = path.join(
-                  this.project.location,
-                  outDir,
-                  absSource.replace(`${baseDistGenWebpackDts}/`, ''),
-                );
-                Helpers.copyFile(absSource, destDtsFile);
-              },
-            );
-          }
-          //#endregion
-
-          Helpers.removeIfExists(
-            path.join(this.project.location, outDir, 'dist'),
-          );
-
-          //#region obscure & uglify
-          try {
-            if (cliBuildObscure || cliBuildUglify) {
-              this.__backendCompileToEs5(outDir);
-            }
-            if (cliBuildUglify) {
-              this.__backendUglifyCode(
-                outDir,
-                config.reservedArgumentsNamesUglify,
-              );
-            }
-            if (cliBuildObscure) {
-              this.__backendObscureCode(
-                outDir,
-                config.reservedArgumentsNamesUglify,
-              );
-            }
-          } catch (er) {
-            Helpers.error(
-              `${outDir.toUpperCase()} (cliBuildObscure || cliBuildUglify) process failed`,
-              false,
-              true,
-            );
-          }
-          //#endregion
-
-          //#region isomorphic compilation
-          try {
-            showInfoAngular();
-            await proxyProject.execute(commandForLibraryBuild, {
-              similarProcessKey: 'ng',
-              ...sharedOptions(),
-            });
-            await proxyProjectWebsql.execute(commandForLibraryBuild, {
-              similarProcessKey: 'ng',
-              ...sharedOptions(),
-            });
-          } catch (e) {
-            Helpers.log(e);
-            Helpers.error(
-              `
-          Command failed: ${commandForLibraryBuild}
-
-          Not able to build project: ${this.project.genericName}`,
-              false,
-              true,
-            );
-          }
-          //#endregion
-
-          //#endregion
-        } else {
-          //#region normal backend compilation
-
-          await incrementalBuildProcess.start('isomorphic compilation');
-          await incrementalBuildProcessWebsql.start('isomorphic compilation');
-
-          try {
-            showInfoAngular();
-            await proxyProject.execute(commandForLibraryBuild, {
-              similarProcessKey: 'ng',
-              ...sharedOptions(),
-            });
-            await proxyProjectWebsql.execute(commandForLibraryBuild, {
-              similarProcessKey: 'ng',
-              ...sharedOptions(),
-            });
-            this.__showMesageWhenBuildLibDoneForSmartContainer(buildOptions);
-          } catch (e) {
-            Helpers.log(e);
-            // TODO remove this error (it should not interrup release proces)
-            Helpers.error(
-              `
-          Command failed: ${commandForLibraryBuild}
-
-          Not able to build project: ${this.project.genericName}`,
-              false,
-              true,
-            );
-          }
-
-          //#endregion
-        }
-
-        if (cliBuildIncludeNodeModules) {
-          //#region build for including node_modules in compilation
-          const cliJsFile = 'cli.js';
-          this.project.quickFixes.removeTnpFromItself(async () => {
-            this.__backendIncludeNodeModulesInCompilation(
-              outDir,
-              false, // cliBuildUglify,
-              cliJsFile,
-            );
-          });
-          //#endregion
-
-          //#region uglify
-          if (cliBuildUglify) {
-            this.__backendUglifyCode(
-              outDir,
-              config.reservedArgumentsNamesUglify,
-              cliJsFile,
-            );
-          }
-          //#endregion
-
-          //#region normal build not obscured
-          if (!productionModeButIncludePackageJsonDeps) {
-            if (cliBuildObscure || cliBuildUglify) {
-              this.__backendCompileToEs5(outDir, cliJsFile);
-            }
-            if (cliBuildObscure) {
-              this.__backendObscureCode(
-                outDir,
-                config.reservedArgumentsNamesUglify,
-                cliJsFile,
-              );
-            }
-          }
-          //#endregion
-        }
-
-        if (cliBuildNoDts) {
-          this.__backendRemoveDts(outDir);
-        }
-
-        if (cutNpmPublishLibReleaseCode) {
-          this.__restoreCuttedReleaseCodeFromSrc(buildOptions);
-        }
-        //#endregion
-      }
-
-      this.__showMesageWhenBuildLibDoneForSmartContainer(buildOptions);
-    }
     //#endregion
   }
   //#endregion
@@ -1489,14 +1298,13 @@ ${otherProjectNames
               this.project.location,
               config.folder.dist,
               this.project.name,
-              this.project.framework.smartContainerBuildTarget.name,
             ),
           ),
         ) as Project);
 
     await this.buildPartial(
       BuildOptions.from({
-        buildType: 'lib',
+        // buildType: 'lib',
         prod,
         cliBuildObscure,
         cliBuildIncludeNodeModules,
@@ -1513,7 +1321,7 @@ ${otherProjectNames
       crossPlatformPath([specificProjectForBuild.location, config.folder.dist]),
       crossPlatformPath([
         specificProjectForBuild.location,
-        specificProjectForBuild.framework.__getTempProjName('dist'),
+        specificProjectForBuild.framework.__getTempProjName(),
         config.folder.node_modules,
         realCurrentProj.name,
       ]),
@@ -1541,29 +1349,7 @@ ${otherProjectNames
           releaseDist,
         );
       }
-      this.__copyEssentialFilesTo(specificProjectForBuild, dists, 'dist');
-    } else if (realCurrentProj.framework.isSmartContainer) {
-      const rootPackageName = `@${this.project.name}`;
-      const base = path.join(
-        specificProjectForBuild.location,
-        specificProjectForBuild.framework.__getTempProjName('dist'),
-        config.folder.node_modules,
-        rootPackageName,
-      );
-      const childrenPackages = Helpers.foldersFrom(base).map(f =>
-        path.basename(f),
-      );
-      for (let index = 0; index < childrenPackages.length; index++) {
-        const childName = childrenPackages[index];
-        const child = this.project.ins.From([
-          realCurrentProj.location,
-          childName,
-        ]) as Project;
-        const releaseDistFolder = path.join(base, childName);
-        child.artifactsManager.artifact.npmLibAndCliTool.__packResourceInReleaseDistResources(
-          releaseDistFolder,
-        );
-      }
+      this.__copyEssentialFilesTo(specificProjectForBuild, dists);
     }
     //#endregion
 
@@ -1641,7 +1427,6 @@ ${otherProjectNames
     this: {},
     project: Project,
     destinations: string[],
-    outDir: 'dist',
   ) {
     //#region @backendFunc
     project.artifactsManager.artifact.npmLibAndCliTool.__copyWhenExist(
@@ -1685,7 +1470,7 @@ ${otherProjectNames
         destinations,
       );
       project.artifactsManager.artifact.npmLibAndCliTool.__copyWhenExist(
-        'package.json',
+        config.file.package_json,
         destinations.map(d => crossPlatformPath([d, config.folder.client])),
       );
     }
@@ -1742,12 +1527,10 @@ ${otherProjectNames
   /**
    * TODO not working
    */
-  protected __backendCompileToEs5(
-    outDir: 'dist',
-    mainCliJSFileName = 'index.js',
-  ) {
+  protected __backendCompileToEs5(mainCliJSFileName = 'index.js') {
     return;
     //#region @backend
+    const outDir = config.folder.dist as 'dist';
     if (!Helpers.exists(path.join(this.project.location, outDir, 'index.js'))) {
       Helpers.warn(
         `[compileToEs5] Nothing to compile to es5... no index.js in ${outDir}`,
@@ -1780,11 +1563,11 @@ ${otherProjectNames
 
   //#region getters & methods / compile/cliBuildUglify backend code
   private __backendUglifyCode(
-    outDir: 'dist',
     reservedNames: string[],
     mainCliJSFileName = 'index.js',
   ) {
     //#region @backendFunc
+    const outDir = config.folder.dist;
     if (
       !Helpers.exists(
         path.join(this.project.location, outDir, mainCliJSFileName),
@@ -1814,11 +1597,11 @@ ${otherProjectNames
 
   //#region getters & methods / compile/cliBuildObscure backend code
   private __backendObscureCode(
-    outDir: 'dist',
     reservedNames: string[],
     mainCliJSFileName = 'index.js',
   ) {
     //#region @backendFunc
+    const outDir = config.folder.dist;
     if (
       !Helpers.exists(
         path.join(this.project.location, config.folder.dist, mainCliJSFileName),
@@ -1853,12 +1636,11 @@ ${otherProjectNames
 
   //#region getters & methods / include node_modules in compilation
   private __backendIncludeNodeModulesInCompilation(
-    outDir: 'dist',
     cliBuildUglify: boolean,
     mainCliJSFileName: string = config.file.index_js,
   ) {
     //#region @backend
-
+    const outDir = config.folder.dist;
     // QUICK_FIX TODO ncc input change does not work (it takes always index.js)
     //#region QUICK_FIX
     const indexOrg = this.project.pathFor(`${outDir}/${config.file.index_js}`);
@@ -1953,8 +1735,9 @@ ${otherProjectNames
   /**
    * @deprecated
    */
-  private __backendRemoveDts(outDir: 'dist') {
+  private __backendRemoveDts() {
     //#region @backend
+    const outDir = config.folder.dist;
     Helpers.filesFrom([this.project.location, outDir, 'lib'], true)
       .filter(f => f.endsWith('.d.ts'))
       .forEach(f => Helpers.removeFileIfExists(f));
@@ -1981,13 +1764,7 @@ ${otherProjectNames
   async creteBuildInfoFile(initOptions: InitOptions): Promise<void> {
     //#region @backendFunc
     initOptions = InitOptions.from(initOptions);
-    if (this.project.framework.isSmartContainer) {
-      this.project.children.forEach(c =>
-        c.artifactsManager.artifact.npmLibAndCliTool.creteBuildInfoFile(
-          initOptions,
-        ),
-      );
-    } else if (this.project.framework.isStandaloneProject) {
+    if (this.project.framework.isStandaloneProject) {
       const dest = this.project.pathFor([
         config.folder.src,
         config.folder.lib,
@@ -2034,33 +1811,7 @@ export const BUILD_FRAMEWORK_CLI_NAME = '${config.frameworkName}';
     const withPort = '(with custom port - otherwise automatically selected)';
     const orIfWebsql = `or if you want to try websql mode:`;
 
-    if (this.project.framework.isSmartContainerTarget) {
-      const parent = this.project.framework.smartContainerTargetParentContainer;
-      const smartContainerTargetName =
-        buildOptions.smartContainerTargetName ||
-        this.project.framework.smartContainerBuildTarget?.name;
-
-      Helpers.taskDone(
-        `${chalk.underline(
-          `
-
-      ${buildLibDone}... for target project "` +
-            `${parent ? parent.name + '/' : ''}${smartContainerTargetName}"`,
-        )}`,
-      );
-
-      Helpers.success(`
-
-      ${ifapp}
-
-      ${chalk.bold(
-        config.frameworkName + bawOrbaLong + smartContainerTargetName,
-      )}
-      or
-      ${config.frameworkName} ${bawOrbaLongWebsql} ${smartContainerTargetName}
-
-            `);
-    } else if (this.project.framework.isStandaloneProject) {
+    if (this.project.framework.isStandaloneProject) {
       Helpers.taskDone(`${chalk.underline(`${buildLibDone}...`)}`);
       Helpers.success(`
 
@@ -2077,63 +1828,14 @@ export const BUILD_FRAMEWORK_CLI_NAME = '${config.frameworkName}';
 
   //#region getters & methods / build lib or app
   async buildLibOrApp(buildOptions: BuildOptions): Promise<void> {
+    // TODO @LAST split this method to smaller parts
     //#region @backendFunc
-
-    //#region handle vascode
-
-    if (buildOptions.targetArtifact === 'vscode-plugin') {
-      await this.artifact.vscodeExtensionPLugin.__buildVscode(buildOptions);
-      return;
-    }
-    //#endregion
-
-    //#region handle electron
-    if (buildOptions.targetArtifact === 'electron-app') {
-      await this.artifact.electronApp.buildPartial(buildOptions);
-      return;
-    }
-    //#endregion
-
-    //#region prevent empty taon node_modules
-    await this.project.nodeModules.makeSureInstalled();
-    //#endregion
-
-    //#region prevent not requested framework version
-    if (this.project.framework.frameworkVersionLessThan('v4')) {
-      Helpers.error(
-        `Please upgrade taon framework version to to at least v4
-
-      ${config.file.taon_jsonc} => version => should be at least 4
-
-      `,
-        false,
-        true,
-      );
-    }
-    //#endregion
 
     let libContextExists = false;
 
-    //#region set proper smart container target name
-    const smartContainerTargetName =
-      buildOptions.smartContainerTargetName ||
-      this.project.framework.smartContainerBuildTarget?.name;
-    //#endregion
-
-    if (buildOptions.libBuild) {
-      //#region save baseHref for lib build
-      buildOptions.baseHref = !_.isUndefined(buildOptions.baseHref)
-        ? buildOptions.baseHref
-        : this.artifact.angularNodeApp.angularFeBasenameManager.rootBaseHref;
-
-      const baseHrefLocProj = this.project;
-
-      baseHrefLocProj.writeFile(
-        tmpBaseHrefOverwriteRelPath + (smartContainerTargetName || ''),
-        buildOptions.baseHref,
-      );
-      //#endregion
-
+    //#region lib build
+    // if (buildOptions.libBuild)
+    {
       //#region create taon context for main lib code build ports assignations
       const projectInfoPort = await this.project.registerAndAssignPort(
         `project-build-info`,
@@ -2219,15 +1921,15 @@ export const BUILD_FRAMEWORK_CLI_NAME = '${config.frameworkName}';
       }
       //#endregion
     }
+    //#endregion
 
-    if (buildOptions.appBuild) {
+    //#region app build
+    // if (buildOptions.appBuild)
+    {
       // TODO is this ok baw is not initing ?
 
       //#region prevent empty baseHref for app build
-      if (
-        !_.isUndefined(buildOptions.baseHref) &&
-        buildOptions.buildType === 'app'
-      ) {
+      if (!_.isUndefined(buildOptions.baseHref)) {
         Helpers.error(
           `Build baseHref only can be specify when build lib code:
 
@@ -2244,9 +1946,7 @@ export const BUILD_FRAMEWORK_CLI_NAME = '${config.frameworkName}';
       const baseHrefLocProj = this;
 
       const fromFileBaseHref = Helpers.readFile(
-        baseHrefLocProj.project.pathFor(
-          tmpBaseHrefOverwriteRelPath + (smartContainerTargetName || ''),
-        ),
+        baseHrefLocProj.project.pathFor(tmpBaseHrefOverwriteRelPath),
       );
       buildOptions.baseHref = fromFileBaseHref;
       //#endregion
@@ -2306,6 +2006,7 @@ ${config.frameworkName} start
       }
       //#endregion
     }
+    //#endregion
 
     Helpers.logInfo(`
 
@@ -2325,21 +2026,16 @@ ${config.frameworkName} start
       // console.log('after build steps');
 
       const shouldGenerateAssetsList =
-        this.project.framework.isSmartContainer ||
-        (this.project.framework.isStandaloneProject &&
-          !this.project.framework.isSmartContainerTarget);
+        this.project.framework.isStandaloneProject;
+
       // console.log({ shouldGenerateAssetsList });
       if (shouldGenerateAssetsList) {
         if (buildOptions.watch) {
           await this.project.artifactsManager.artifact.angularNodeApp.__assetsFileListGenerator.startAndWatch(
-            this.project.framework.smartContainerBuildTarget?.name,
-            buildOptions.outDir,
             buildOptions.websql,
           );
         } else {
           await this.project.artifactsManager.artifact.angularNodeApp.__assetsFileListGenerator.start(
-            this.project.framework.smartContainerBuildTarget?.name,
-            buildOptions.outDir,
             buildOptions.websql,
           );
         }
@@ -2355,16 +2051,13 @@ ${config.frameworkName} start
         `[buildable-project] Build steps ended (project type: ${this.project.type}) ... `,
       );
 
-      if (
-        buildOptions.buildType == 'lib' ||
-        buildOptions.buildType == 'lib-app'
-      ) {
-        if (
-          (this.project.framework.isStandaloneProject &&
-            this.project.typeIs('isomorphic-lib')) ||
-          this.project.framework.isSmartContainer
-        ) {
-          // // console.log('after build steps')
+      //#region lib or app
+      // if (
+      //   buildOptions.buildType == 'lib' ||
+      //   buildOptions.buildType == 'lib-app'
+      // )
+      {
+        if (this.project.framework.isStandaloneProject) {
           this.artifact.npmLibAndCliTool.__copyManager.init(buildOptions);
           const taskName = 'copyto manger';
           if (buildOptions.watch) {
@@ -2378,16 +2071,19 @@ ${config.frameworkName} start
           }
         }
       }
+      //#endregion
     };
     //#endregion
 
     //#region start build
     const libBuildDone = async () => {
-      if (buildOptions.appBuild) {
-        await buildAssetsFile();
-      }
-      const shouldStartCopyToManager =
-        buildOptions.libBuild && !buildOptions.skipCopyManager;
+      //#region build assets file
+      // if (buildOptions.appBuild) {
+      await buildAssetsFile();
+      // }
+      //#endregion
+
+      const shouldStartCopyToManager = !buildOptions.skipCopyManager;
       // console.log('Should start copy to manager', { shouldStartCopyToManager });
       if (shouldStartCopyToManager) {
         await startCopyToManager();
@@ -2419,37 +2115,20 @@ ${config.frameworkName} start
   //#endregion
 
   //#region  build steps
+  /**
+   * TODO REMOVE THIS
+   */
   async __buildSteps(buildOptions?: BuildOptions, libBuildDone?: () => void) {
     //#region @backendFunc
 
-    if (this.project.framework.isSmartContainer) {
-      //#region use proxy project to build smart container
-      if (!fse.existsSync(this.project.location)) {
-        return;
-      }
-      let { smartContainerTargetName } = buildOptions;
-
-      let targetProj = this.project.artifactsManager.globalHelper.targetProjFor(
-        smartContainerTargetName ||
-          this.project.framework.smartContainerBuildTarget?.name,
-      );
-      // if (targetProj.isNotInitedProject) {
-      //   await targetProj.init('before taget before building smart container');
-      // }
-      await targetProj.artifactsManager.artifact.npmLibAndCliTool.__buildSteps(
-        buildOptions,
-        libBuildDone,
-      );
-      //#endregion
-    }
     if (this.project.framework.isStandaloneProject) {
-      if (buildOptions.libBuild) {
-        await this.artifact.npmLibAndCliTool.__buildLib(buildOptions);
-      }
+      // if (buildOptions.libBuild) {
+      await this.artifact.npmLibAndCliTool.buildPartial(buildOptions);
+      // }
       await Helpers.runSyncOrAsync({ functionFn: libBuildDone, context: this });
-      if (buildOptions.appBuild) {
-        await this.artifact.angularNodeApp.buildApp(buildOptions);
-      }
+      // if (buildOptions.appBuild) {
+      await this.artifact.angularNodeApp.buildApp(buildOptions);
+      // }
     }
     //#endregion
   }

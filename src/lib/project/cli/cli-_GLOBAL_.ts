@@ -309,9 +309,6 @@ export class $Global extends BaseGlobalCommandLine<{}, Project> {
     const addImportSrc = (proj: Project) => {
       const pacakges = [
         ...proj.packagesRecognition.allIsomorphicPackagesFromMemory,
-        ...(proj.framework.isSmartContainerChild
-          ? proj.parent.children.map(c => `@${proj.parent.name}/${c.name}`)
-          : []),
       ];
       // console.log(pacakges)
 
@@ -1145,7 +1142,7 @@ ${this.project.children
           packageName,
           version: currentPackageVersion,
         });
-        this.project.taonJson.packageJsonOverride.updateDependency({
+        this.project.taonJson.overridePackageJsonManager.updateDependency({
           packageName,
           version: currentPackageVersion,
         });
@@ -1268,7 +1265,7 @@ ${this.project.children
           packageName,
           version: `${prefix}${latestToUpdate}`,
         });
-        this.project.taonJson.packageJsonOverride.updateDependency({
+        this.project.taonJson.overridePackageJsonManager.updateDependency({
           packageName,
           version: `${prefix}${latestToUpdate}`,
         });
@@ -1278,7 +1275,7 @@ ${this.project.children
           version: null,
         });
 
-        this.project.taonJson.packageJsonOverride.updateDependency({
+        this.project.taonJson.overridePackageJsonManager.updateDependency({
           packageName,
           version: null,
         });
@@ -1299,10 +1296,12 @@ ${this.project.children
               version,
             });
 
-            await this.project.taonJson.packageJsonOverride.updateDependency({
-              packageName,
-              version,
-            });
+            await this.project.taonJson.overridePackageJsonManager.updateDependency(
+              {
+                packageName,
+                version,
+              },
+            );
 
             break;
           } else {
@@ -1708,7 +1707,6 @@ ${this.project.children
     await this.project.build(
       BuildOptions.from({
         ...this.params,
-        buildType: 'app',
         targetArtifact: 'electron-app',
         buildForRelease: true,
         finishCallback: () => this._exit(),
@@ -1722,7 +1720,6 @@ ${this.project.children
     await this.project.build(
       BuildOptions.from({
         ...this.params,
-        buildType: 'app',
         targetArtifact: 'electron-app',
         watch: true,
       }),

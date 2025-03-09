@@ -1,9 +1,18 @@
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
+import { InitingPartialProcess } from '../../options';
+
 import type { Project } from './project';
 
 // @ts-ignore TODO weird inheritance problem
-export class Linter extends BaseFeatureForProject<Project> {
+export class Linter // @ts-ignore TODO weird inheritance problem
+  extends BaseFeatureForProject<Project>
+  implements InitingPartialProcess
+{
+  async init(): Promise<void> {
+    this.recreateLintConfiguration();
+  }
+
   //#region getters & methods / lint files
 
   get lintFiles(): Record<string, any> {
@@ -83,7 +92,7 @@ trim_trailing_whitespace = false
   //#endregion
 
   //#region getters & methods / recreate lint configuration
-  recreateLintConfiguration(): void {
+  protected recreateLintConfiguration(): void {
     //#region @backendFunc
     const files = this.lintFiles;
     const settingsToOverride = {
@@ -136,9 +145,10 @@ trim_trailing_whitespace = false
     if (this.shouldNotEnableLintAndPrettier) {
       return;
     }
-    const allowToRecreateLintFiles =
-      this.project.typeIs('isomorphic-lib', 'container') &&
-      !this.project.framework.isSmartContainerChild;
+    const allowToRecreateLintFiles = this.project.typeIs(
+      'isomorphic-lib',
+      'container',
+    );
 
     // console.log({ allowToRecreateLintFiles });
     if (allowToRecreateLintFiles) {
@@ -166,11 +176,7 @@ trim_trailing_whitespace = false
 
   //#region getters & methods / should not enable lint and prettier
   get shouldNotEnableLintAndPrettier(): boolean {
-    return (
-      (this.project.framework.isContainer &&
-        !this.project.framework.isSmartContainer) ||
-      this.project.framework.isSmartContainerChild
-    );
+    return this.project.framework.isContainer;
   }
   //#endregion
 }

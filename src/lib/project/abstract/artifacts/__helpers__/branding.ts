@@ -23,11 +23,7 @@ export class Branding extends BaseFeatureForProject<Project> {
   private get path(): string {
     //#region @backendFunc
     let proj = this.project;
-    if (proj.framework.isSmartContainerTarget) {
-      proj = proj.framework.smartContainerTargetParentContainer.children.find(
-        c => c.name == proj.name,
-      );
-    }
+
     const dest = crossPlatformPath([proj.location, ...subPath]);
     return dest;
     //#endregion
@@ -106,15 +102,6 @@ export class Branding extends BaseFeatureForProject<Project> {
     }
 
     let pathIcons = `/${['assets', 'assets-for', proj.name, ...generatedPwa].join('/')}`;
-    if (
-      proj.framework.isSmartContainerChild ||
-      proj.framework.isSmartContainerTarget
-    ) {
-      const parent = proj.framework.isSmartContainerChild
-        ? proj.parent
-        : proj.framework.smartContainerTargetParentContainer;
-      pathIcons = `/${['assets', 'assets-for', parent.name + '--' + proj.name, ...generatedPwa].join('/')}`;
-    }
 
     const configuration = {
       path: pathIcons, // Path for overriding default icons path. `string`

@@ -104,10 +104,7 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
 
   //#region add remote to standalone
   private _addRemoteToStandalone(appProj: Project) {
-    if (
-      appProj.framework.isStandaloneProject &&
-      !appProj.framework.isSmartContainerChild
-    ) {
+    if (appProj.framework.isStandaloneProject) {
       const lastContainer = appProj.parent;
       const ADDRESS_GITHUB_SSH_PARENT = lastContainer?.git?.originURL;
       const newRemote = ADDRESS_GITHUB_SSH_PARENT?.replace(
@@ -205,7 +202,6 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
     let firstContainer: Project;
     let lastContainer: Project;
     let lastIsBrandNew = false;
-    let lastSmart = false;
 
     const grandpa = this.ins.From(cwd) as Project;
     const containers: Project[] = [
@@ -238,14 +234,9 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
           config.file.package_json,
         );
 
-        let smart = false;
         let monorepo = false;
         if (!Helpers.exists(packageJsonPath)) {
-          if (
-            isLastContainer &&
-            isBrandNew &&
-            (!parentContainer || !parentContainer.framework.isSmartContainer)
-          ) {
+          if (isLastContainer && isBrandNew && !parentContainer) {
             const displayNameForLastContainerBeforeApp =
               hasAtLeastOneContainersFromArgs
                 ? chalk.italic(
@@ -275,9 +266,6 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
 
              `);
 
-            smart = await Helpers.questionYesNo(
-              `Do you want container ${displayNameForLastContainerBeforeApp} to be 'smart' container ?`,
-            );
             monorepo = await Helpers.questionYesNo(
               `Do you want container ${displayNameForLastContainerBeforeApp} be monorepo ?`,
             );
@@ -301,9 +289,6 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
             },
           } as PackageJson);
         }
-        if (isLastContainer && smart) {
-          lastSmart = true;
-        }
 
         currentContainer = this.ins.From(currentContainerPath) as Project;
         containers.push(currentContainer);
@@ -315,12 +300,7 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
         }
         parentContainer = currentContainer;
 
-        if (
-          isLastContainer &&
-          smart &&
-          isBrandNew &&
-          (!parentContainer || !parentContainer.framework.isSmartContainer)
-        ) {
+        if (isLastContainer && isBrandNew && !parentContainer) {
           try {
             currentContainer.run('git init').sync();
           } catch (error) {
@@ -363,7 +343,7 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
     const taonJson = new TaonJson(this.project.ins.From(packageJson.cwd), {});
     taonJson.setType('isomorphic-lib');
     taonJson.setFrameworkVersion(version || config.defaultFrameworkVersion);
-    taonJson.packageJsonOverride.setIsPrivate(true);
+    taonJson.overridePackageJsonManager.setIsPrivate(true);
 
     appProj = this.ins.From(appLocation) as Project;
     if (!hasAtLeastOneContainersFromArgs) {
@@ -390,8 +370,8 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
     //   appProj,
     // });
 
-    if (lastContainer && lastSmart) {
-      lastContainer.nodeModules.setToSmartContainer();
+    if (lastContainer) {
+      lastContainer.taonJson.setType('container');
     }
 
     await appProj.init(
@@ -400,23 +380,11 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
       }),
     );
 
-    if (lastContainer?.framework.isSmartContainer) {
-      appProj.artifactsManager.globalHelper.__removeStandaloneSources();
-    } else {
-      appProj.artifactsManager.globalHelper.__replaceSourceForStandalone();
-    }
+    appProj.artifactsManager.globalHelper.__replaceSourceForStandalone();
 
     if (lastContainer) {
       lastContainer.linkedProjects.addLinkedProject(lastProjectFromArgName);
     }
-
-    // if (lastContainer && lastContainer.isContainer && lastContainer.location !== grandpa.location) {
-    //   await lastContainer.filesStructure.init(lastContainer.isSmartContainer ? appProj.name : '');
-    // }
-
-    // if (grandpa && (grandpa.isContainer || grandpa.isStandaloneProject)) {
-    //   await grandpa.filesStructure.init(grandpa.isSmartContainer ? appProj.name : '')
-    // }
 
     appProj.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode(
       true,
@@ -446,46 +414,14 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
     const { appProj, containers, lastContainer, lastIsBrandNew } =
       await this._initContainersAndApps(cwd, nameFromArgs, version);
 
-    if (
-      !lastContainer?.taonJson.smartContainerBuildTarget &&
-      lastContainer?.children.length > 0
-    ) {
-      if (appProj.framework.isSmartContainerChild) {
-        lastContainer.taonJson.setSmartContainerBuildTarget(
-          _.first(lastContainer.children.filter(c => c.name !== appProj.name))
-            ?.name,
-        );
-      }
-    }
-
-    if (appProj.framework.isSmartContainerChild) {
-      // QUICK_FIX
-      appProj.writeFile(
-        'src/lib/my-organization-proj.ts',
-        `
- export function myOrgProj${new Date().getTime()}() {
-   console.log('hello my organization project')
- }
-
-       `,
-      );
-
-      Helpers.writeFile(
-        [appProj.location, 'README.md'],
-        `#  @${appProj.parent.name}/${appProj.name}
-
-       I am child of smart container.
-       `,
-      );
-    } else {
-      Helpers.writeFile(
-        [appProj.location, 'README.md'],
-        `#  ${appProj.name}
+    Helpers.writeFile(
+      [appProj.location, 'README.md'],
+      `#  ${appProj.name}
 
        I am standalone project.
        `,
-      );
-    }
+    );
+
     if (lastIsBrandNew) {
       lastContainer.writeFile(
         'README.md',
@@ -499,21 +435,13 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
 
     for (let index = 0; index < containers.length; index++) {
       const container = containers[index];
-      if (container.framework.isSmartContainer) {
-        await container.init(
-          InitOptions.from({
-            purpose: 'initing new smart container',
-          }),
-        );
-        container.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.initVscode();
-      } else {
-        await container.init(
-          InitOptions.from({
-            purpose: 'initing new container',
-          }),
-        );
-        container.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.initVscode();
-      }
+
+      await container.init(
+        InitOptions.from({
+          purpose: 'initing new container',
+        }),
+      );
+      container.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.initVscode();
     }
 
     Helpers.info(`DONE CREATING ${nameFromArgs}`);

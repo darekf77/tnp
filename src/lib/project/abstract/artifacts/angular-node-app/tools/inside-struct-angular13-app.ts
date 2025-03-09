@@ -82,26 +82,10 @@ export class InsideStructAngular13App extends BaseInsideStruct {
           [
             opt => {
               const standalonePath = `tmp-src-app-${config.folder.dist}${this.websql ? '-websql' : ''}`;
-              if (this.project.framework.isSmartContainerTarget) {
-                const targetProj =
-                  this.project.framework.smartContainerTargetParentContainer
-                    .framework.smartContainerBuildTarget;
-                if (targetProj.name !== this.project.name) {
-                  return `../${targetProj.name}/${standalonePath}/-/${this.project.name}`;
-                }
-              }
               return standalonePath;
             },
             opt => {
               const standalonePath = `app/src/app/${this.project.name}`;
-              if (this.project.framework.isSmartContainerTarget) {
-                const targetProj =
-                  this.project.framework.smartContainerTargetParentContainer
-                    .framework.smartContainerBuildTarget;
-                if (targetProj.name !== this.project.name) {
-                  return `${standalonePath}/app`;
-                }
-              }
               return standalonePath;
             },
           ],
@@ -111,26 +95,10 @@ export class InsideStructAngular13App extends BaseInsideStruct {
           [
             opt => {
               const standalonePath = `tmp-src-${config.folder.dist}${this.websql ? '-websql' : ''}`;
-              if (this.project.framework.isSmartContainerTarget) {
-                const targetProj =
-                  this.project.framework.smartContainerTargetParentContainer
-                    .framework.smartContainerBuildTarget;
-                if (targetProj.name !== this.project.name) {
-                  // console.log(`assets  ${targetProj.name} vs ${client?.name}`)
-                  return `../${targetProj.name}/${standalonePath}/assets`;
-                }
-              }
+
               return '';
             },
             opt => {
-              if (this.project.framework.isSmartContainerTarget) {
-                const targetProj =
-                  this.project.framework.smartContainerTargetParentContainer
-                    .framework.smartContainerBuildTarget;
-                if (targetProj.name !== this.project.name) {
-                  return `app/src/assets`;
-                }
-              }
               return '';
             },
           ],
@@ -139,25 +107,9 @@ export class InsideStructAngular13App extends BaseInsideStruct {
           //#region link not containter target clients - whole dist
           [
             opt => {
-              if (this.project.framework.isSmartContainerTarget) {
-                const targetProj =
-                  this.project.framework.smartContainerTargetParentContainer
-                    .framework.smartContainerBuildTarget;
-                if (targetProj.name !== this.project.name) {
-                  return `../${targetProj.name}/${config.folder.dist}`;
-                }
-              }
               return '';
             },
             opt => {
-              if (this.project.framework.isSmartContainerTarget) {
-                const targetProj =
-                  this.project.framework.smartContainerTargetParentContainer
-                    .framework.smartContainerBuildTarget;
-                if (targetProj.name !== this.project.name) {
-                  return `${config.folder.dist}/compiled`;
-                }
-              }
               return '';
             },
           ],
@@ -503,15 +455,6 @@ ${appComponentFile}
 
           //#region link assets
           (() => {
-            if (this.project.framework.isSmartContainerTarget) {
-              const targetProj =
-                this.project.framework.smartContainerTargetParentContainer
-                  .framework.smartContainerBuildTarget;
-              if (targetProj.name !== this.project.name) {
-                return;
-              }
-            }
-
             const assetsSource = crossPlatformPath(
               path.join(
                 project.location,
@@ -538,10 +481,6 @@ ${appComponentFile}
 
           //#region electron
           (() => {
-            if (this.project.framework.isSmartContainerTarget) {
-              return;
-            }
-
             const electronBackend = crossPlatformPath(
               path.join(project.location, replacement(config.folder.dist)),
             );
@@ -698,11 +637,7 @@ ${appComponentFile}
             ) {
               manifestJson.start_url = `https://${this.project.artifactsManager.globalHelper.env.config.domain}/`;
             } else {
-              const smartContainerOrStandalone = this.project.framework
-                .isSmartContainerTarget
-                ? this.project.framework.smartContainerTargetParentContainer
-                : this.project;
-              manifestJson.start_url = `/${smartContainerOrStandalone.name}/`; // perfect for github.io OR when subdomain myproject.com/docs/
+              manifestJson.start_url = `/${this.project.name}/`; // perfect for github.io OR when subdomain myproject.com/docs/
             }
 
             Helpers.writeJson(manifestJsonPath, manifestJson);
@@ -776,12 +711,7 @@ ${appComponentFile}
             );
 
             const parent = this.project.ins.From(parentPath) as Project;
-            if (
-              parent &&
-              parent.framework.isSmartContainer &&
-              libs.length > 0 &&
-              content.compilerOptions
-            ) {
+            if (parent && libs.length > 0 && content.compilerOptions) {
               // console.log('tsconfigJSON', tsconfigJSONpath, content)
               // console.log('libsPathes', libsPathes)
               // console.log(`libs`, libs)

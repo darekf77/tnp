@@ -9,23 +9,16 @@ export class ArtifactDocsWebapp extends BaseArtifact {
 
   constructor(protected readonly project: Project) {
     super(project);
+    this.docs = new Docs(this.project);
   }
 
   async clearPartial(options: ClearOptions): Promise<void> {
     return void 0; // TODO implement
   }
 
-  async structPartial(options): Promise<void> {
-    if (!this.docs) {
-      this.docs = new Docs(this.project);
-      await this.docs.initizalize();
-    }
-
-    return void 0; // TODO implement
-  }
-
   async initPartial(options) {
-    return void 0; // TODO implement
+    await this.docs.initizalizeWatchers();
+    await this.docs.init();
   }
 
   async buildPartial(options) {

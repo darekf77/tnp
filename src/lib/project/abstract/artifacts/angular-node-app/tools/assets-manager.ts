@@ -9,8 +9,9 @@ const assetsFor = `${config.folder.assets}-for`;
 
 // @ts-ignore TODO weird inheritance problem
 export class AssetsManager extends BaseFeatureForProject<Project> {
-  copyExternalAssets(outDir: 'dist', websql: boolean) {
+  copyExternalAssets(websql: boolean) {
     //#region @backendFunc
+
     this.project.packagesRecognition.allIsomorphicPackagesFromMemory
       .filter(f => !f.startsWith('@'))
       .map(pkgName => {
@@ -26,7 +27,7 @@ export class AssetsManager extends BaseFeatureForProject<Project> {
           const destinations = [
             crossPlatformPath([
               this.project.location,
-              `tmp-src-${outDir}${websql ? '-websql' : ''}`,
+              `tmp-src-${config.folder.dist}${websql ? '-websql' : ''}`,
               config.folder.assets,
               assetsFor,
               path.basename(pkgName),
@@ -35,7 +36,7 @@ export class AssetsManager extends BaseFeatureForProject<Project> {
 
             crossPlatformPath([
               this.project.location,
-              `tmp-src-app-${outDir}${websql ? '-websql' : ''}`,
+              `tmp-src-app-${config.folder.dist}${websql ? '-websql' : ''}`,
               config.folder.assets,
               assetsFor,
               path.basename(pkgName),
@@ -44,7 +45,7 @@ export class AssetsManager extends BaseFeatureForProject<Project> {
 
             crossPlatformPath([
               this.project.location,
-              `tmp-source-${outDir}${websql ? '-websql' : ''}`,
+              `tmp-source-${config.folder.dist}${websql ? '-websql' : ''}`,
               config.folder.assets,
               assetsFor,
               path.basename(pkgName),
@@ -78,7 +79,7 @@ export class AssetsManager extends BaseFeatureForProject<Project> {
             const destinations = [
               crossPlatformPath([
                 this.project.location,
-                `tmp-src-${outDir}${websql ? '-websql' : ''}`,
+                `tmp-src-${config.folder.dist}${websql ? '-websql' : ''}`,
                 config.folder.assets,
                 assetsFor,
                 `${orgPackageRootName}--${path.basename(orgPkgName)}`,
@@ -87,7 +88,7 @@ export class AssetsManager extends BaseFeatureForProject<Project> {
 
               crossPlatformPath([
                 this.project.location,
-                `tmp-src-app-${outDir}${websql ? '-websql' : ''}`,
+                `tmp-src-app-${config.folder.dist}${websql ? '-websql' : ''}`,
                 config.folder.assets,
                 assetsFor,
                 `${orgPackageRootName}--${path.basename(orgPkgName)}`,
@@ -96,7 +97,7 @@ export class AssetsManager extends BaseFeatureForProject<Project> {
 
               crossPlatformPath([
                 this.project.location,
-                `tmp-source-${outDir}${websql ? '-websql' : ''}`,
+                `tmp-source-${config.folder.dist}${websql ? '-websql' : ''}`,
                 config.folder.assets,
                 assetsFor,
                 `${orgPackageRootName}--${path.basename(orgPkgName)}`,

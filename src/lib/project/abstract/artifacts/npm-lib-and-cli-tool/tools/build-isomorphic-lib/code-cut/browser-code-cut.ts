@@ -104,8 +104,8 @@ export class BrowserCodeCut {
     );
     this.absFileSourcePathBrowserOrWebsqlAPPONLY =
       this.absFileSourcePathBrowserOrWebsql.replace(
-        `tmp-src-${buildOptions.outDir}${buildOptions.websql ? '-websql' : ''}`,
-        `tmp-src-app-${buildOptions.outDir}${
+        `tmp-src-${config.folder.dist}${buildOptions.websql ? '-websql' : ''}`,
+        `tmp-src-app-${config.folder.dist}${
           buildOptions.websql ? '-websql' : ''
         }`,
       ); // for slighted modifed app release dist
@@ -873,11 +873,7 @@ export class BrowserCodeCut {
         this.project,
       ).output;
 
-      if (
-        (this.project.framework.isStandaloneProject ||
-          this.project.framework.isSmartContainer) &&
-        !this.isWebsqlMode
-      ) {
+      if (this.project.framework.isStandaloneProject && !this.isWebsqlMode) {
         const regionsToRemove = [TAGS.BROWSER, TAGS.WEBSQL_ONLY];
 
         const orgContentBackend = this.rawContentBackend;
@@ -890,25 +886,7 @@ export class BrowserCodeCut {
       }
     }
 
-    if (this.project.framework.isSmartContainerTarget) {
-      const parent = this.project.framework.smartContainerTargetParentContainer;
-      parent.children
-        .filter(f => f.typeIs('isomorphic-lib'))
-        .map(c => {
-          if (true) {
-            const from = `${c.name}/src/assets/`;
-            const to = `${TO_REMOVE_TAG}assets/assets-for/${parent.name + '--' + c.name}/`;
-            this.rawContentForBrowser = this.rawContentForBrowser.replace(
-              new RegExp(Helpers.escapeStringForRegEx(`/${from}`), 'g'),
-              to,
-            );
-            this.rawContentForBrowser = this.rawContentForBrowser.replace(
-              new RegExp(Helpers.escapeStringForRegEx(from), 'g'),
-              to,
-            );
-          }
-        });
-    } else if (this.project.framework.isStandaloneProject) {
+    if (this.project.framework.isStandaloneProject) {
       [this.project]
         .filter(f => f.typeIs('isomorphic-lib'))
         .forEach(c => {
@@ -1015,37 +993,7 @@ export class BrowserCodeCut {
       }[];
     };
 
-    if (this.project.framework.isSmartContainerTarget) {
-      const parent = this.project.framework.smartContainerTargetParentContainer;
-      parent.children
-        .filter(f => f.typeIs('isomorphic-lib'))
-        .forEach(c => {
-          const relative = parent.name + '--' + c.name;
-          const cases = toReplaceFn(relative);
-          for (let index = 0; index < cases.length; index++) {
-            const { to, from, makeSureSlashAtBegin } = cases[index];
-            if (makeSureSlashAtBegin) {
-              this.rawContentForAPPONLYBrowser =
-                this.rawContentForAPPONLYBrowser.replace(
-                  new RegExp(Helpers.escapeStringForRegEx(`/${from}`), 'g'),
-                  `/${to}`,
-                );
-
-              this.rawContentForAPPONLYBrowser =
-                this.rawContentForAPPONLYBrowser.replace(
-                  new RegExp(Helpers.escapeStringForRegEx(from), 'g'),
-                  `/${to}`,
-                );
-            } else {
-              this.rawContentForAPPONLYBrowser =
-                this.rawContentForAPPONLYBrowser.replace(
-                  new RegExp(Helpers.escapeStringForRegEx(from), 'g'),
-                  to,
-                );
-            }
-          }
-        });
-    } else if (this.project.framework.isStandaloneProject) {
+    if (this.project.framework.isStandaloneProject) {
       [this.project]
         .filter(f => f.typeIs('isomorphic-lib'))
         .forEach(c => {
@@ -1121,37 +1069,15 @@ export class BrowserCodeCut {
         return;
       }
 
-      if (this.project.framework.isSmartContainerTarget) {
-        const contentSmartTarget =
-          isEmptyModuleBackendFile && isTsFile
-            ? `
-        export function dummy${new Date().getTime()}() { }
-        export default function dummyDefault${new Date().getTime()}() { }
-        `
-            : this.changeOrganizationBackendFileContentBeforeSave(
-                this.rawContentBackend,
-                absoluteBackendDestFilePath,
-              );
-        fse.writeFileSync(
-          absoluteBackendDestFilePath,
-          contentSmartTarget,
-          'utf8',
-        );
-      } else {
-        const contentStandalone =
-          isEmptyModuleBackendFile && isTsFile
-            ? `export function dummy${new Date().getTime()}() { }`
-            : this.changeStandaloneBackendFileContentBeforeSave(
-                this.rawContentBackend,
-                absoluteBackendDestFilePath,
-              );
+      const contentStandalone =
+        isEmptyModuleBackendFile && isTsFile
+          ? `export function dummy${new Date().getTime()}() { }`
+          : this.changeStandaloneBackendFileContentBeforeSave(
+              this.rawContentBackend,
+              absoluteBackendDestFilePath,
+            );
 
-        fse.writeFileSync(
-          absoluteBackendDestFilePath,
-          contentStandalone,
-          'utf8',
-        );
-      }
+      fse.writeFileSync(absoluteBackendDestFilePath, contentStandalone, 'utf8');
     }
     //#endregion
   }
@@ -1169,7 +1095,6 @@ export class BrowserCodeCut {
     }
 
     if (
-      this.project.framework.isSmartContainerTarget ||
       !(
         this.relativePath.startsWith('app.ts') ||
         this.relativePath.startsWith('app/')
@@ -1326,16 +1251,12 @@ import { < My Stuff > } from '${this.project.name}/src';`,
 
     let result = res.join('\n') + endOfFile;
 
-    if (this.project.framework.isSmartContainerTarget) {
-      // TODO check this
-      // result = this.changeOrganizationBackendFileContentBeforeSave(result, absFilePath, true);
-    } else {
-      result = this.changeStandaloneBackendFileContentBeforeSave(
-        result,
-        absFilePath,
-        true,
-      );
-    }
+    result = this.changeStandaloneBackendFileContentBeforeSave(
+      result,
+      absFilePath,
+      true,
+    );
+
     return result;
     //#endregion
   }
@@ -1460,9 +1381,7 @@ import { < My Stuff > } from '${this.project.name}/src';`,
   //#region private / methods & getters / repalce accesets path
   private replaceAssetsPath(absDestinationPath: string) {
     //#region @backendFunc
-    const isAsset =
-      !this.project.framework.isSmartContainerTarget &&
-      this.relativePath.startsWith(`${config.folder.assets}/`);
+    const isAsset = this.relativePath.startsWith(`${config.folder.assets}/`);
 
     // isAsset && console.log('isAsset', absDestinationPath);
     return isAsset

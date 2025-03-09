@@ -111,8 +111,7 @@ export class Git extends BaseGit<Project> {
 
     if (
       !this.project.git.originURL &&
-      this.project.framework.isContainerChild &&
-      !this.project.framework.isSmartContainerChild
+      this.project.framework.isContainerChild
     ) {
       this.project
         .run(

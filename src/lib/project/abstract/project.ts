@@ -3,7 +3,6 @@ import { config } from 'tnp-config/src';
 import { fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
-
 import { Helpers, BaseProject } from 'tnp-helpers/src';
 
 import {
@@ -113,20 +112,52 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#endregion
 
   //#region api / struct
-  async struct() {
-    // TODO
+  async struct(initOptions?: InitOptions): Promise<void> {
+    initOptions = InitOptions.from(initOptions);
+
+    if (this.framework.isStandaloneProject) {
+      await this.artifactsManager.struct(initOptions);
+    }
+    if (this.framework.isContainer) {
+      await this.artifactsManager.struct(initOptions);
+      await this.artifactsManager.structAllChildren(initOptions);
+    }
+
+    initOptions.finishCallback();
   }
   //#endregion
 
   //#region api / init
   async init(initOptions?: InitOptions): Promise<void> {
-    // TODO
+    initOptions = InitOptions.from(initOptions);
+
+    if (this.framework.isStandaloneProject) {
+      await this.artifactsManager.init(initOptions);
+    }
+    if (this.framework.isContainer) {
+      await this.artifactsManager.init(initOptions);
+      await this.artifactsManager.initAllChildren(initOptions);
+    }
+
+    initOptions.finishCallback();
   }
   //#endregion
 
   //#region api / build
   async build(buildOptions?: BuildOptions) {
-    // TODO
+    buildOptions = BuildOptions.from(buildOptions);
+
+    if (this.framework.isStandaloneProject) {
+      await this.artifactsManager.build(buildOptions);
+    }
+    if (this.framework.isContainer) {
+      await this.artifactsManager.build(buildOptions);
+      await this.artifactsManager.buildAllChildren(buildOptions);
+    }
+
+    if (!buildOptions.watch) {
+      buildOptions.finishCallback();
+    }
   }
   //#endregion
 
@@ -159,48 +190,6 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   }
   //#endregion
 
-  //#region generic name
-  /**
-   * @overload
-   */
-  public get genericName(): string {
-    //#region @backendFunc
-    if (this.typeIs('unknown')) {
-      return;
-    }
-    if (!_.isNil(this.cache['genericName'])) {
-      this.cache['genericName'];
-    }
-
-    let result = [];
-    if (this.framework.isSmartContainerTarget) {
-      // result = [
-      //   this.smartContainerTargetParentContainer.name,
-      //   this.name,
-      // ]
-      result = result.concat(
-        this.framework.smartContainerTargetParentContainer.parentsNames,
-      );
-    } else {
-      result = result.concat(this.parentsNames);
-    }
-
-    if (this.framework.isSmartContainerTarget) {
-      result.push(this.framework.smartContainerTargetParentContainer.name);
-    }
-    result.push(this.name);
-    const res = result
-      .filter(f => !!f)
-      .join('/')
-      .trim();
-    if (_.isNil(this.cache['genericName'])) {
-      this.cache['genericName'] = res;
-    }
-    return this.cache['genericName'];
-    //#endregion
-  }
-  //#endregion
-
   //#region name
   /**
    * @overload
@@ -225,6 +214,18 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#region info
   async info(): Promise<void> {
     //#region @backendFunc
+    const children = (this.children || [])
+      .map(c => '- ' + c.genericName)
+      .join('\n');
+
+    const linkedProjects = (this.linkedProjects.linkedProjects || [])
+      .map(c => '- ' + c.relativeClonePath)
+      .join('\n');
+
+    const gitChildren = (this.git.gitChildren || [])
+      .map(c => '- ' + c.genericName)
+      .join('\n');
+
     console.info(`
 
     name: ${this.name}
@@ -243,10 +244,6 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     isStandaloneProject: ${this.framework.isStandaloneProject}
     isCoreProject: ${this.framework.isCoreProject}
     isContainer: ${this.framework.isContainer}
-    isSmartContainer: ${this.framework.isSmartContainer}
-    isSmartContainerChild: ${this.framework.isSmartContainerChild}
-    isSmartContainerTarget: ${this.framework.isSmartContainerTarget}
-    isSmartContainerTargetNonClient: ${this.framework.isSmartContainerTargetNonClient}
     should dedupe packages ${this.nodeModules.shouldDedupePackages}
 
     genericName: ${this.genericName}
@@ -262,21 +259,17 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     location: ${this.location}
 
-`);
-    //       + `
-    //     children (${this.children?.length || 0}):
-    // ${(this.children || []).map(c => '- ' + c.packageJson.name).join('\n')}
+    children (${(this.children || []).length}):
+${children}
 
-    //     linked porject prefix: "${this.linkedProjectsPrefix || ''}"
+    linked projects (${(this.linkedProjects.linkedProjects || []).length}):
+${linkedProjects}
 
-    //     linked projects from json (${this.linkedProjects?.length || 0}):
-    // ${(this.linkedProjects || []).map(c => '- ' + c.relativeClonePath).join('\n')}
+    git children (${(this.git.gitChildren || []).length}):
+${gitChildren}
 
-    //     linked projects detected (${this.detectedLinkedProjects?.length || 0}):
-    // ${(this.detectedLinkedProjects || []).map(c => '- ' + c.relativeClonePath).join('\n')}
+    `);
 
-    //     `
-    // }
     //#endregion
   }
   //#endregion
@@ -296,35 +289,29 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
    */
   get children(): Project[] {
     //#region @backendFunc
-    if (this.pathExists('taon.json')) {
-      const taonChildren = Helpers.foldersFrom(this.location)
-        .filter(
-          f =>
-            !f.startsWith('.') &&
-            ![config.folder.node_modules].includes(path.basename(f)),
-        )
-        .map(f => Project.ins.From(f) as Project)
+    if (this.pathExists(config.file.taon_jsonc)) {
+      const folders = Helpers.foldersFrom(this.location).filter(
+        f =>
+          crossPlatformPath(f) !== crossPlatformPath(this.location) &&
+          !path.basename(f).startsWith('.') &&
+          !path.basename(f).startsWith('__') &&
+          !path.basename(f).startsWith(config.folder.dist) &&
+          !path.basename(f).startsWith(config.folder.src) &&
+          !path.basename(f).startsWith(config.folder.bin) &&
+          !path.basename(f).startsWith(config.folder.docs) &&
+          !path.basename(f).startsWith('tmp') &&
+          ![config.folder.node_modules].includes(path.basename(f)),
+      );
+      // console.log({ folders });
+      const taonChildren = folders
+        .map(f => this.ins.From(f) as Project)
         .filter(f => !!f);
       // console.log({
       //   taonChildren: taonChildren.map(c => c.location)
       // })
       return taonChildren;
     }
-
-    /**
-     * TODO QUICK_FIX
-     */
-    if (this.framework.isTnp && !global.globalSystemToolMode) {
-      return [];
-    }
-    if (this.typeIs('unknown')) {
-      return [];
-    }
-    const all = this.getAllChildren();
-    // console.log({
-    //   all: all.map(c => c.location)
-    // })
-    return all;
+    return [];
     //#endregion
   }
   //#endregion

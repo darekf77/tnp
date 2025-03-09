@@ -1,9 +1,10 @@
 import { config } from 'tnp-config/src';
 import { chalk, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
-import { EXPORT_TEMPLATE } from '../../../../templates';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
+
 import { BuildOptions } from '../../../../options';
+import { EXPORT_TEMPLATE } from '../../../../templates';
 import { Project } from '../../project';
 
 export interface WebpackBackendCompilationOpt {
@@ -17,21 +18,22 @@ export interface WebpackBackendCompilationOpt {
 
 // @ts-ignore TODO weird inheritance problem
 export class WebpackBackendCompilation extends BaseFeatureForProject<Project> {
-  async run(options: BuildOptions) {
+  async run(buildOptions: BuildOptions) {
     //#region @backendFunc
-    const { outDir, watch, appBuild } = options;
+
+    const outDir = config.folder.dist;
     const webpackGlob = await this.project.framework.global('webpack');
 
     const webpackCommand =
       `node ${webpackGlob} --version && node ${webpackGlob} ` +
       `--config webpack.backend-dist-build.js ${
-        watch ? '--watch' : ''
+        buildOptions.watch ? '--watch' : ''
       } --env.outDir=${outDir} `;
 
     const showInfoWebpack = () => {
       Helpers.info(`
 
-        WEBPACK ${watch ? 'WATCH ' : ''} BACKEND BUILD started...
+        WEBPACK ${buildOptions.watch ? 'WATCH ' : ''} BACKEND BUILD started...
 
         `);
       Helpers.info(` command: ${webpackCommand}`);
@@ -45,7 +47,7 @@ export class WebpackBackendCompilation extends BaseFeatureForProject<Project> {
 
     try {
       showInfoWebpack();
-      if (watch) {
+      if (buildOptions.watch) {
         await this.project.execute(webpackCommand, {
           similarProcessKey: 'tsc',
           biggerBuffer: true,
@@ -65,7 +67,7 @@ export class WebpackBackendCompilation extends BaseFeatureForProject<Project> {
         `
 
       Webpack build fail...
-  outdir: ${chalk(outDir)}, build type: ${chalk(appBuild ? 'app' : 'lib')}
+  outdir: ${chalk(outDir)}, target artifact: ${buildOptions.targetArtifact}
 
 `,
         false,

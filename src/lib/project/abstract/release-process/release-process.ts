@@ -341,8 +341,7 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
   //#region getters & methods / get release ci project parent path
   get __releaseCiProjectParentPath() {
     return this.isInCiReleaseProject &&
-      (this.project.framework.isStandaloneProject ||
-        this.project.framework.isSmartContainer)
+      this.project.framework.isStandaloneProject
       ? path.resolve(
           path.join(
             this.project.location,
@@ -366,7 +365,7 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
     if (project.framework.isStandaloneProject) {
       const distForPublishPath = crossPlatformPath([
         specificProjectForBuild.location,
-        project.framework.__getTempProjName('dist'),
+        project.framework.__getTempProjName(),
         config.folder.node_modules,
         project.name,
       ]);
@@ -399,43 +398,6 @@ export * from './lib';
       }
       Helpers.removeFileIfExists(pjPath);
       Helpers.writeJson(pjPath, pj); // QUICK_FIX
-    }
-    //#endregion
-  }
-  //#endregion
-
-  //#region update container project before publishing
-  updateContainerProjectBeforePublishing(
-    project: Project,
-    realCurrentProj: Project,
-    specificProjectForBuild: Project,
-  ) {
-    //#region @backendFunc
-    if (project.framework.isSmartContainer) {
-      const base = path.join(
-        specificProjectForBuild.location,
-        specificProjectForBuild.framework.__getTempProjName('dist'),
-        config.folder.node_modules,
-        `@${realCurrentProj.name}`,
-      );
-
-      for (const child of realCurrentProj.children) {
-        const distReleaseForPublishPath = crossPlatformPath([base, child.name]);
-        // console.log({
-        //   distReleaseForPublishPath
-        // })
-        Helpers.remove(`${distReleaseForPublishPath}/src`, true); // QUICK_FIX
-        Helpers.writeFile(
-          crossPlatformPath([distReleaseForPublishPath, 'src.d.ts']),
-          `
-  // THIS FILE IS GENERATED
-  export * from './index';
-  // THIS FILE IS GENERATED
-  // please use command: taon build:watch to see here links for your globally builded lib code files
-  // THIS FILE IS GENERATED
-        `.trimStart(),
-        );
-      }
     }
     //#endregion
   }

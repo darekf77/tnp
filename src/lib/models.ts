@@ -100,8 +100,6 @@ export namespace Models {
     notForNpm?: boolean;
     isCoreProject?: boolean; // generated
     isStandaloneProject?: boolean; // generated
-    isSmartContainer?: boolean; // generated
-    isSmartContainerTargetProject?: boolean; // generated
     name?: CoreModels.EnvironmentName; // generated
     frameworks?: CoreModels.UIFramework[];
     /**
@@ -260,8 +258,17 @@ export namespace Models {
     dependenciesNamesForNpmLib: string[];
 
     /**
+     * At beginning after node_modules installation taon is checking is
+     * packages are installed - if not it will throw error.
+     * Also.. this peerDependencies are going to be included in released npm lib
+     * as peerDependencies.
+     */
+    peerDependenciesNamesForNpmLib: string[];
+
+    /**
      * so I can release same npm lib
      * with different name
+     * @deprecated does not make sense
      */
     additionalNpmNames?: string[];
 
@@ -289,20 +296,11 @@ export namespace Models {
      * going to be included in release dist
      */
     resources?: string[];
-    /**
-     * Project is smart container
-     * for organization npm project
-     */
-    smart?: boolean;
+
     /**
      * Project is monorepo
      */
     monorepo?: boolean;
-    /**
-     * Main project for smart container
-     * command "taon start" will start this project
-     */
-    smartContainerBuildTarget?: string;
   }
 
   interface TaonJsonCommon {

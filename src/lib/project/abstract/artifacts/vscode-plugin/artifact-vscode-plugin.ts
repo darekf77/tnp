@@ -22,10 +22,6 @@ import type { Project } from '../../project';
 import { BaseArtifact } from '../__base__/base-artifact';
 
 export class ArtifactVscodePlugin extends BaseArtifact {
-  async structPartial(options): Promise<void> {
-    return void 0; // TODO implement
-  }
-
   async initPartial(options) {
     return void 0; // TODO implement
   }
@@ -99,7 +95,7 @@ export class ArtifactVscodePlugin extends BaseArtifact {
 
     if (
       !buildOptions.watch &&
-      buildOptions.targetArtifact !==  'npm-lib-and-cli-tool' // TODO
+      buildOptions.targetArtifact !== 'npm-lib-and-cli-tool' // TODO
     ) {
       await Helpers.ncc(
         crossPlatformPath([

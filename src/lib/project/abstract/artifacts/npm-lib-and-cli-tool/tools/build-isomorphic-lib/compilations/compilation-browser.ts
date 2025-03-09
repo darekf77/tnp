@@ -137,39 +137,8 @@ export class BrowserCompilation extends BackendCompilation {
       return absFilePath.replace(`${filesBase}/`, '');
     });
 
-    //#region copy core asset files
-    if (!this.project.framework.isSmartContainerTarget) {
-      const corepro = this.cwdProject.ins.by(
-        'isomorphic-lib',
-        this.project.framework.frameworkVersion,
-      ) as Project;
-      const coreAssetsPath = corepro.pathFor('app/src/assets');
-      const filesToCopy = Helpers.filesFrom(coreAssetsPath, true);
-      for (let index = 0; index < filesToCopy.length; index++) {
-        const fileAbsPath = crossPlatformPath(filesToCopy[index]);
-        const relativeFilePath = fileAbsPath.replace(`${coreAssetsPath}/`, '');
-        const destAbsPath = crossPlatformPath([
-          this.absPathTmpSrcDistFolder,
-          config.folder.assets,
-          relativeFilePath,
-        ]);
-        Helpers.copyFile(fileAbsPath, destAbsPath);
-        // if (relativeFilePath.startsWith(`${config.folder.shared}/`)) {
-        //   const arr = [
-        //     crossPlatformPath([this.cwd, config.folder.dist]),
-        //   ];
-        //   for (let index = 0; index < arr.length; index++) {
-        //     const absPathDest = crossPlatformPath([arr[index], config.folder.assets, relativeFilePath]);
-        //     Helpers.copyFile(fileAbsPath, absPathDest);
-        //   }
-        // }
-      }
-    }
-    //#endregion
-
     this.codecut.files(relativePathesToProcess);
     this.project.artifactsManager.artifact.angularNodeApp.__assetsManager.copyExternalAssets(
-      this.buildOptions?.outDir,
       this.buildOptions?.websql,
     );
     // process.exit(0)

@@ -8,7 +8,7 @@ export class SourceMappingUrl {
 
   static fixContent(
     absFilePath: string,
-    projectWithBuild: Project,
+    project: Project,
     // content?: string
   ) {
     //#region @backendFunc
@@ -22,7 +22,7 @@ export class SourceMappingUrl {
     }
     return new SourceMappingUrl(
       absFilePath,
-      projectWithBuild,
+      project,
       // , content
     ).process();
     //#endregion
@@ -36,7 +36,7 @@ export class SourceMappingUrl {
   //#region @backend
   private constructor(
     private absFilePath: string,
-    private projectWithBuild: Project,
+    private project: Project,
     // private passedContent?: string
   ) {
     // console.log(`Fixging ${absFilePath}`, 1)
@@ -58,7 +58,7 @@ export class SourceMappingUrl {
   process(): string {
     //#region @backendFunc
     if (this.mappingLineIndex !== -1) {
-      if (this.projectWithBuild.releaseProcess.isInCiReleaseProject) {
+      if (this.project.releaseProcess.isInCiReleaseProject) {
         // TODO links on windows sucks d
         this.contentLines[this.mappingLineIndex] =
           `${SourceMappingUrl.SOURCEMAPDES}${path.basename(this.absFilePath)}.map`;

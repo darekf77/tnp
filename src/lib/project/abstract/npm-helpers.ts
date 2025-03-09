@@ -26,6 +26,22 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
   project: Project;
   public _nodeModulesType = NodeModules as any;
   public _packageJsonType = PackageJSON as any;
+  // @ts-ignore TODO weird inheritance problem
+  public readonly packageJson: PackageJSON;
+  // @ts-ignore TODO weird inheritance problem
+  public readonly nodeModules: NodeModules;
+
+  constructor(project: Project) {
+    super(project);
+    this.packageJson = new this._packageJsonType(
+      { cwd: project.location },
+      project,
+    );
+    this.nodeModules = new (this._nodeModulesType as typeof NodeModules)(
+      project,
+      this,
+    );
+  }
 
   //#region last npm version
   /**
@@ -33,41 +49,18 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
    */
   get lastNpmVersion(): string | undefined {
     //#region @backendFunc
-    const lastVer = 'last npm version(s): ';
-    if (this.project.framework.isSmartContainer) {
-      return (
-        lastVer +
-        this.project.children
-          .map(c => {
-            let lastVer = void 0 as string;
-            try {
-              const ver = Helpers.run(
-                `npm show @${this.project.name}/${c.name} version`,
-                { output: false },
-              )
-                .sync()
-                .toString();
-              if (ver) {
-                lastVer = ver.trim();
-              }
-            } catch (error) {}
-            return `${this.project.name}/${c.name}=${lastVer}`;
-          })
-          .join(', ')
-      );
-    } else {
-      let lastVer = void 0 as string;
-      try {
-        const ver = this.project
-          .run(`npm show ${this.project.name} version`, { output: false })
-          .sync()
-          .toString();
-        if (ver) {
-          lastVer = ver.trim();
-        }
-      } catch (error) {}
-      return lastVer + lastVer;
-    }
+
+    let lastVer = void 0 as string;
+    try {
+      const ver = this.project
+        .run(`npm show ${this.project.name} version`, { output: false })
+        .sync()
+        .toString();
+      if (ver) {
+        lastVer = ver.trim();
+      }
+    } catch (error) {}
+    return lastVer;
     //#endregion
   }
   //#endregion
@@ -75,9 +68,6 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
   //#region check if ready for npm
   public checkProjectReadyForNpmRelease(): void {
     //#region @backendFunc
-    if (this.project.framework.isSmartContainer) {
-      return;
-    }
 
     if (this.project.framework.isStandaloneProject) {
       return;
@@ -105,14 +95,6 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
       this.project.framework.frameworkVersionAtLeast('v2')
     ) {
       return false;
-    }
-
-    if (this.project.framework.isSmartContainer) {
-      return true;
-    }
-
-    if (this.project.framework.isSmartContainerChild) {
-      return true;
     }
 
     if (this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {

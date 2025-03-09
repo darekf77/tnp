@@ -37,25 +37,15 @@ export abstract class BaseArtifact {
   get artifact() {
     return this.artifacts;
   }
-  
+
   protected readonly globalHelper: ArtifactsGlobalHelper;
   protected readonly NPM_RUN_NG_COMMAND: string = `npm-run ng`; // when there is not global "ng" command -> npm-run ng.js works
 
-  //#region  public abstract methods / struct
-  /**
-   * create all temp files and folders for proper inside projects structure
-   * but without any external dependencies
-   * (like npm install, or any other longer process)
-   * struct() <=> init() with struct flag
-   */
-  abstract structPartial(options: InitOptions): Promise<void>;
-  //#endregion
-
   //#region  public abstract methods / init
   /**
-   * everything that in struct()
-   * + install dependencies
-   * + any longer process that reaches for external resources
+   * + create all temp files and folders for proper inside projects structure
+   * + (when struct flag = false) start any longer process that reaches
+   *   for external resources like for example: npm install
    */
   abstract initPartial(options: InitOptions): Promise<void>;
   //#endregion
@@ -127,10 +117,7 @@ export abstract class BaseArtifact {
 
     this.project.npmHelpers.checkProjectReadyForNpmRelease();
 
-    if (
-      this.project.framework.isStandaloneProject ||
-      this.project.framework.isSmartContainer
-    ) {
+    if (this.project.framework.isStandaloneProject) {
       Helpers.removeFolderIfExists(
         this.project.pathFor(config.folder.tmpDistRelease),
       );
@@ -161,7 +148,6 @@ export abstract class BaseArtifact {
           useTempLocation: true, // TODO not needed
           forceCopyPackageJSON: true, // TODO not needed
           dereference: true,
-          regenerateProjectChilds: this.project.framework.isSmartContainer,
         },
       );
 
@@ -173,17 +159,6 @@ export abstract class BaseArtifact {
         this.project.artifactsManager.globalHelper.env.copyTo(
           absolutePathReleaseProject,
         );
-      }
-
-      if (this.project.framework.isSmartContainer) {
-        const children = this.project.children;
-        for (let index = 0; index < children.length; index++) {
-          const child = children[index] as Project;
-          await child.artifactsManager.globalHelper.env.init();
-          child.artifactsManager.globalHelper.env.copyTo(
-            crossPlatformPath([absolutePathReleaseProject, child.name]),
-          );
-        }
       }
 
       const generatedProject = this.project.ins.From(

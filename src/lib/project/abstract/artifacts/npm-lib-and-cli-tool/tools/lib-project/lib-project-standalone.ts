@@ -176,7 +176,6 @@ export class LibProjectStandalone extends LibProjectBase {
 
         await this.project.build(
           BuildOptions.from({
-            buildType: 'app',
             prod: appBuildOptions.docsAppInProdMode,
             websql: appBuildOptions.websql,
           }),
@@ -236,7 +235,7 @@ export class LibProjectStandalone extends LibProjectBase {
 
     const existedReleaseDist = crossPlatformPath([
       this.project.location,
-      this.project.framework.__getTempProjName('dist'),
+      this.project.framework.__getTempProjName(),
       config.folder.node_modules,
       realCurrentProj.name,
     ]);

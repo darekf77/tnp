@@ -32,7 +32,7 @@ export class IncrementalBuildProcess {
     );
 
     //#region init variables
-    const outFolder = buildOptions.outDir;
+    const outFolder = config.folder.dist as any;
     const location = config.folder.src;
 
     Helpers.log(

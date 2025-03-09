@@ -145,47 +145,11 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
 
     // TODO detecting changes for children when start container
 
-    if (project.framework.isSmartContainer) {
-      Helpers.info(`Pacakges available for new version release:
+    const message = `Proceed with release of new version: ${newVersion} ?`;
+    return releaseOptions.automaticRelease
+      ? true
+      : await Helpers.questionYesNo(message);
 
-${project.children
-  .map(c => ` - @${project.name}/${c.name} v${newVersion}`)
-  .join('\n')}
-`);
-      const message = 'Proceed with lib release ?';
-
-      return await Helpers.questionYesNo(message);
-    }
-
-    if (project.framework.isContainer && !project.framework.isSmartContainer) {
-      Helpers.info(`Pacakges available for new version release:
-
-    ${(releaseOptions.resolved || [])
-      .map(
-        (c, index) =>
-          `(${index + 1}) ` +
-          `${
-            c.framework.isSmartContainer
-              ? '@' + c.name + `/(${c.children.map(l => l.name).join(',')})`
-              : c.name
-          }` +
-          `@${c.packageJson.getVersionFor(releaseOptions.releaseVersionBumpType)}`,
-      )
-      .join(', ')}
-    `);
-      const message = `Proceed ${
-        releaseOptions.automaticRelease ? '(automatic)' : ''
-      } release of packages from ${project.genericName} ?`;
-      if (!(await Helpers.questionYesNo(message))) {
-        this._exit();
-      }
-      return true;
-    } else {
-      const message = `Proceed with release of new version: ${newVersion} ?`;
-      return releaseOptions.automaticRelease
-        ? true
-        : await Helpers.questionYesNo(message);
-    }
     //#endregion
   }
   //#endregion
