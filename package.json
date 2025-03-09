@@ -1,4 +1,31 @@
 {
+  "tnp": {
+    "resources": [],
+    "isUsingOwnNodeModulesInsteadCoreContainer": true,
+    "usesItsOwnNodeModules": true,
+    "dependenciesNamesForNpmLib": [
+      "ora",
+      "progress",
+      "open",
+      "magic-renamer",
+      "isomorphic-region-loader"
+    ],
+    "cliLibReleaseOptions": {
+      "cliBuildNoDts": false,
+      "cliBuildObscure": false,
+      "cliBuildUglify": false,
+      "cliBuildIncludeNodeModules": true
+    },
+    "type": "isomorphic-lib",
+    "version": "v18",
+    "packageJsonOverride": {
+      "scripts": {
+        "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link"
+      },
+      "license": "MIT",
+      "private": false
+    }
+  },
   "dependencies": {
     "@angular-builders/custom-webpack": "~18.0.0",
     "@angular-devkit/build-angular": "~18.1.4",
