@@ -42,12 +42,14 @@ export class ArtifactManager {
       const pathName = `./${key}/artifact-${key}`;
       const className = `Artifact${_.upperFirst(_.camelCase(key))}`;
       // console.log({ pathName, className });
-      artifactProcess[key] = new (require(pathName)[className])(project);
+      artifactProcess[_.camelCase(key)] = new (require(pathName)[className])(
+        project,
+      );
     }
     const globalHelper = new ArtifactsGlobalHelper(project);
     const manager = new ArtifactManager(artifactProcess, project, globalHelper);
     for (const key of Object.keys(artifactProcess)) {
-      const instance = artifactProcess[key] as BaseArtifact;
+      const instance = artifactProcess[_.camelCase(key)] as BaseArtifact;
       // @ts-expect-error
       instance.artifacts = artifactProcess;
       // @ts-expect-error
