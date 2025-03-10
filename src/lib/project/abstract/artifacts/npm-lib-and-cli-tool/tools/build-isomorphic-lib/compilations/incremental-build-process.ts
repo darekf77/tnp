@@ -146,6 +146,24 @@ export class IncrementalBuildProcess {
     //#endregion
   }
 
+  async runTask(options: {
+    taskName: string;
+    watch?: boolean;
+    afterInitCallBack?: () => void;
+  }): Promise<void> {
+    //#region @backendFunc
+    const { taskName, watch, afterInitCallBack } = options;
+    if (watch) {
+      await this.startAndWatch(taskName, {
+        afterInitCallBack,
+        taskName,
+      });
+    } else {
+      await this.start(taskName, afterInitCallBack);
+    }
+    //#endregion
+  }
+
   async start(taskName?: string, afterInitCallBack?: () => void) {
     //#region @backendFunc
     if (this.project.framework.isStandaloneProject) {

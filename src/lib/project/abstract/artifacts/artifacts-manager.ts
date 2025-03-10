@@ -46,15 +46,20 @@ import { ArtifactsGlobalHelper } from './__helpers__/artifacts-helpers';
 export class ArtifactManager {
   static for(project: Project): ArtifactManager {
     //#region @backendFunc
-    const artifactProcess = {} as IArtifactProcessObj;
-    for (const key of ReleaseArtifactTaonNamesArr) {
-      const pathName = `./${key}/artifact-${key}`;
-      const className = `Artifact${_.upperFirst(_.camelCase(key))}`;
-      // console.log({ pathName, className });
-      artifactProcess[_.camelCase(key)] = new (require(pathName)[className])(
+    const artifactProcess = {
+      angularNodeApp:
+        new (require('./angular-node-app').ArtifactAngularNodeApp)(project),
+      npmLibAndCliTool:
+        new (require('./npm-lib-and-cli-tool').ArtifactNpmLibAndCliTool)(
+          project,
+        ),
+      electronApp: new (require('./electron-app').ArtifactElectronApp)(project),
+      mobileApp: new (require('./mobile-app').ArtifactMobileApp)(project),
+      docsWebapp: new (require('./docs-webapp').ArtifactDocsWebapp)(project),
+      vscodePlugin: new (require('./vscode-plugin').ArtifactVscodePlugin)(
         project,
-      );
-    }
+      ),
+    } as IArtifactProcessObj;
     const globalHelper = new ArtifactsGlobalHelper(project);
     const manager = new ArtifactManager(artifactProcess, project, globalHelper);
     for (const key of Object.keys(artifactProcess)) {
@@ -88,7 +93,7 @@ export class ArtifactManager {
     await this.artifact.electronApp.clearPartial(options);
     await this.artifact.mobileApp.clearPartial(options);
     await this.artifact.docsWebapp.clearPartial(options);
-    await this.artifact.vscodeExtensionPLugin.clearPartial(options);
+    await this.artifact.vscodePlugin.clearPartial(options);
   }
 
   async clearAllChildren(options: ClearOptions): Promise<void> {
@@ -165,7 +170,7 @@ export class ArtifactManager {
     await this.artifact.electronApp.initPartial(initOptions);
     await this.artifact.mobileApp.initPartial(initOptions);
     await this.artifact.docsWebapp.initPartial(initOptions);
-    await this.artifact.vscodeExtensionPLugin.initPartial(initOptions);
+    await this.artifact.vscodePlugin.initPartial(initOptions);
     //#endregion
   }
 
@@ -197,7 +202,7 @@ export class ArtifactManager {
     await this.artifact.electronApp.buildPartial(buildOptions);
     await this.artifact.mobileApp.buildPartial(buildOptions);
     await this.artifact.docsWebapp.buildPartial(buildOptions);
-    await this.artifact.vscodeExtensionPLugin.buildPartial(buildOptions);
+    await this.artifact.vscodePlugin.buildPartial(buildOptions);
   }
 
   async buildAllChildren(options: BuildOptions): Promise<void> {
@@ -214,7 +219,7 @@ export class ArtifactManager {
     await this.artifact.electronApp.releasePartial(options);
     await this.artifact.mobileApp.releasePartial(options);
     await this.artifact.docsWebapp.releasePartial(options);
-    await this.artifact.vscodeExtensionPLugin.releasePartial(options);
+    await this.artifact.vscodePlugin.releasePartial(options);
   }
 
   async releaseAllChildren(options: ReleaseOptions): Promise<void> {

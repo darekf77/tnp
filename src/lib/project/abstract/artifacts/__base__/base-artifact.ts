@@ -7,6 +7,7 @@ import { Helpers } from 'tnp-helpers/src';
 import {
   BuildOptions,
   InitOptions,
+  ReleaseArtifactTaon,
   ReleaseArtifactTaonNames,
   ReleaseArtifactTaonNamesArr,
   ReleaseOptions,
@@ -27,11 +28,14 @@ export type IArtifactProcessObj = {
   electronApp: ArtifactElectronApp;
   mobileApp: ArtifactMobileApp;
   docsWebapp: ArtifactDocsWebapp;
-  vscodeExtensionPLugin: ArtifactVscodePlugin;
+  vscodePlugin: ArtifactVscodePlugin;
 };
 
 export abstract class BaseArtifact {
-  constructor(protected readonly project: Project) {}
+  constructor(
+    protected readonly project: Project,
+    protected readonly currentArtifactName: ReleaseArtifactTaon,
+  ) {}
   protected readonly artifacts: IArtifactProcessObj;
 
   get artifact() {
@@ -184,7 +188,7 @@ export abstract class BaseArtifact {
         config.folder._vscode,
       );
       Helpers.removeFolderIfExists(vscodeFolder);
-      await generatedProject.artifactsManager.artifact.npmLibAndCliTool.__insideStructure.recrate(
+      await generatedProject.artifactsManager.artifact.npmLibAndCliTool.insideStructureLib.init(
         InitOptions.fromBuild(buildOptions),
       );
       return generatedProject;

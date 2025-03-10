@@ -295,9 +295,9 @@ npm link
       ),
     );
 
-    await tempProj.artifactsManager.artifact.vscodeExtensionPLugin.createVscePackage(
-      { showInfo: false },
-    );
+    await tempProj.artifactsManager.artifact.vscodePlugin.createVscePackage({
+      showInfo: false,
+    });
 
     Helpers.info(
       `Installing extension: ${vsixPackageName} ` +

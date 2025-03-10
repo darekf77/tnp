@@ -35,7 +35,7 @@ export const ReleaseArtifactTaonNames = Object.freeze({
   /**
    * Visual Studio Code extension/plugin
    */
-  VSCODE_EXTENSION_PLUGIN: 'vscode-plugin',
+  VSCODE_PLUGIN: 'vscode-plugin',
 });
 
 export type ReleaseArtifactTaon =
@@ -83,6 +83,7 @@ class SystemTask<T> {
   copyto?: string[];
   copytoall?: boolean;
   purpose?: string;
+  targetArtifact: ReleaseArtifactTaon = 'npm-lib-and-cli-tool';
 }
 
 export class BaseBuild<T> extends SystemTask<T> {
@@ -127,7 +128,6 @@ class BuildOptionsLibOrApp<T> extends BaseBuild<T> {
    * etc.
    */
   prod: boolean;
-  targetArtifact: ReleaseArtifactTaon = 'npm-lib-and-cli-tool';
 }
 //#endregion
 

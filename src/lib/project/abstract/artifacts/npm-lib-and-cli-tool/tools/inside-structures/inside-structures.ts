@@ -4,7 +4,7 @@ import { crossPlatformPath, path, _, CoreModels } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
-import { InitOptions } from '../../../../../../options';
+import { InitingPartialProcess, InitOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
 import type { InsideStructAngular13App } from '../../../angular-node-app/tools/inside-struct-angular13-app';
 import type { InsideStructAngular13Lib } from '../inside-struct-angular13-lib';
@@ -13,59 +13,33 @@ import { InsideStructureData } from './inside-struct';
 import { BaseInsideStruct } from './structs/base-inside-struct';
 //#endregion
 
+const clearUnexistedLinks = (pathToClear: string) => {
+  pathToClear = crossPlatformPath(pathToClear) || '';
+  const orgPath = pathToClear;
+  const splited = pathToClear.split('/');
+  let previous: string;
+  do {
+    splited.pop();
+    var pathDir = splited.join('/');
+    if (pathDir === previous) {
+      return orgPath;
+    }
+    if (Helpers.isUnexistedLink(pathDir)) {
+      Helpers.removeFileIfExists(pathDir);
+      return orgPath;
+    }
+    previous = pathDir;
+  } while (!!pathDir);
+  return orgPath;
+};
+
 // @ts-ignore TODO weird inheritance problem
-export class InsideStructures extends BaseFeatureForProject<Project> {
-  //#region field & getters
-  private insideStructAngular13AppNormal: InsideStructAngular13App;
-  private insideStructAngular13LibNormal: InsideStructAngular13Lib;
-  private insideStructAngular13AppWebsql: InsideStructAngular13App;
-  private insideStructAngular13LibWebsql: InsideStructAngular13Lib;
-
-  //#endregion
-
-  constructor(project: Project) {
-    super(project);
-  }
-
-  //#region api
-
-  //#region api / recreate
-  public async recrate(initOptions: InitOptions) {
+export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
+  async process(
+    structs: BaseInsideStruct[],
+    initOptions: InitOptions,
+  ): Promise<void> {
     //#region @backendFunc
-    initOptions = InitOptions.from(initOptions);
-
-    const { InsideStructAngular13App: InsideStructAngular13AppClass } =
-      await import(
-        '../../../angular-node-app/tools/inside-struct-angular13-app'
-      );
-
-    const { InsideStructAngular13Lib: InsideStructAngular13LibClass } =
-      await import('../inside-struct-angular13-lib');
-
-    this.insideStructAngular13AppNormal = new InsideStructAngular13AppClass(
-      this.project,
-      initOptions.clone({ websql: false }),
-    );
-    this.insideStructAngular13LibNormal = new InsideStructAngular13LibClass(
-      this.project,
-      initOptions.clone({ websql: false }),
-    );
-    this.insideStructAngular13AppWebsql = new InsideStructAngular13AppClass(
-      this.project,
-      initOptions.clone({ websql: true }),
-    );
-    this.insideStructAngular13LibWebsql = new InsideStructAngular13LibClass(
-      this.project,
-      initOptions.clone({ websql: true }),
-    );
-
-    const structs: BaseInsideStruct[] = [
-      this.insideStructAngular13AppNormal,
-      this.insideStructAngular13LibNormal,
-      this.insideStructAngular13AppWebsql,
-      this.insideStructAngular13LibWebsql,
-    ];
-
     for (let index = 0; index < structs.length; index++) {
       const insideStruct = structs[index];
 
@@ -172,27 +146,77 @@ export class InsideStructures extends BaseFeatureForProject<Project> {
     }
     //#endregion
   }
-  //#endregion
+}
 
+export class InsideStructuresApp
+  extends InsideStructuresProcess
+  implements InitingPartialProcess
+{
+  private insideStructAngular13AppNormal: InsideStructAngular13App;
+  private insideStructAngular13AppWebsql: InsideStructAngular13App;
+
+  //#region api / recreate
+  public async init(initOptions: InitOptions): Promise<void> {
+    //#region @backendFunc
+    initOptions = InitOptions.from(initOptions);
+
+    const { InsideStructAngular13App: InsideStructAngular13AppClass } =
+      await import(
+        '../../../angular-node-app/tools/inside-struct-angular13-app'
+      );
+
+    this.insideStructAngular13AppNormal = new InsideStructAngular13AppClass(
+      this.project,
+      initOptions.clone({ websql: false }),
+    );
+    this.insideStructAngular13AppWebsql = new InsideStructAngular13AppClass(
+      this.project,
+      initOptions.clone({ websql: true }),
+    );
+
+    const structs: BaseInsideStruct[] = [
+      this.insideStructAngular13AppNormal,
+      this.insideStructAngular13AppWebsql,
+    ];
+
+    await this.process(structs, initOptions);
+    //#endregion
+  }
   //#endregion
 }
 
-function clearUnexistedLinks(pathToClear: string) {
-  pathToClear = crossPlatformPath(pathToClear) || '';
-  const orgPath = pathToClear;
-  const splited = pathToClear.split('/');
-  let previous: string;
-  do {
-    splited.pop();
-    var pathDir = splited.join('/');
-    if (pathDir === previous) {
-      return orgPath;
-    }
-    if (Helpers.isUnexistedLink(pathDir)) {
-      Helpers.removeFileIfExists(pathDir);
-      return orgPath;
-    }
-    previous = pathDir;
-  } while (!!pathDir);
-  return orgPath;
+// @ts-ignore TODO weird inheritance problem
+export class InsideStructuresLib
+  extends InsideStructuresProcess
+  implements InitingPartialProcess
+{
+  private insideStructAngular13LibNormal: InsideStructAngular13Lib;
+  private insideStructAngular13LibWebsql: InsideStructAngular13Lib;
+
+  //#region api / recreate
+  public async init(initOptions: InitOptions): Promise<void> {
+    //#region @backendFunc
+    initOptions = InitOptions.from(initOptions);
+
+    const { InsideStructAngular13Lib: InsideStructAngular13LibClass } =
+      await import('../inside-struct-angular13-lib');
+
+    this.insideStructAngular13LibNormal = new InsideStructAngular13LibClass(
+      this.project,
+      initOptions.clone({ websql: false }),
+    );
+
+    this.insideStructAngular13LibWebsql = new InsideStructAngular13LibClass(
+      this.project,
+      initOptions.clone({ websql: true }),
+    );
+
+    const structs: BaseInsideStruct[] = [
+      this.insideStructAngular13LibNormal,
+      this.insideStructAngular13LibWebsql,
+    ];
+    await this.process(structs, initOptions);
+    //#endregion
+  }
+  //#endregion
 }

@@ -1,5 +1,4 @@
 //#region imports
-import { BaseContext, Taon } from 'taon/src';
 import { config } from 'tnp-config/src';
 import {
   chalk,
@@ -18,9 +17,7 @@ import { PackageJson } from 'type-fest';
 import {
   DEFAULT_PORT,
   MESSAGES,
-  PortUtils,
   tmpBaseHrefOverwriteRelPath,
-  tmpBuildPort,
 } from '../../../../constants';
 import {
   BuildOptions,
@@ -30,8 +27,6 @@ import {
 } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact } from '../__base__/base-artifact';
-import { BuildProcess } from '../__base__/build-process/app/build-process/build-process';
-import { BuildProcessController } from '../__base__/build-process/app/build-process/build-process.controller';
 
 import { IncrementalBuildProcess } from './tools/build-isomorphic-lib/compilations/incremental-build-process';
 import { CopyManager } from './tools/copy-manager/copy-manager';
@@ -40,51 +35,48 @@ import {
   FilesTemplatesBuilder,
 } from './tools/files-recreation';
 import { IndexAutogenProvider } from './tools/index-autogen-provider';
-import { InsideStructures } from './tools/inside-structures/inside-structures';
+import { InsideStructuresLib } from './tools/inside-structures/inside-structures';
 import { LibProjectStandalone } from './tools/lib-project/lib-project-standalone';
 import { CypressTestRunner } from './tools/test-runner/cypress-test-runner';
 import { JestTestRunner } from './tools/test-runner/jest-test-runner';
 import { MochaTestRunner } from './tools/test-runner/mocha-test-runner';
-import { WebpackBackendCompilation } from './webpack-backend-compilation';
-import { In } from 'taon-typeorm/src';
 
 //#endregion
 
 export class ArtifactNpmLibAndCliTool extends BaseArtifact {
   //#region fields
-  public copyNpmDistLibManager: CopyManager;
-  public __libStandalone: LibProjectStandalone;
 
-  public __tests: MochaTestRunner;
-  public __testsJest: JestTestRunner;
-  public __testsCypress: CypressTestRunner;
+  public readonly __libStandalone: LibProjectStandalone;
 
-  public __webpackBackendBuild: WebpackBackendCompilation;
-  public indexAutogenProvider: IndexAutogenProvider;
+  public readonly __tests: MochaTestRunner;
+  public readonly __testsJest: JestTestRunner;
+  public readonly __testsCypress: CypressTestRunner;
 
-  public __filesTemplatesBuilder: FilesTemplatesBuilder;
-  public filesRecreator: FilesRecreator;
-  public __insideStructure: InsideStructures;
+  public readonly filesRecreator: FilesRecreator;
+
+  public readonly copyNpmDistLibManager: CopyManager;
+  public readonly insideStructureLib: InsideStructuresLib;
+  protected readonly indexAutogenProvider: IndexAutogenProvider;
+  public readonly filesTemplatesBuilder: FilesTemplatesBuilder;
 
   //#endregion
 
   //#region constructor
   //#region @backend
   constructor(project: Project) {
-    super(project);
-    this.copyNpmDistLibManager = CopyManager.for(project);
+    super(project, 'npm-lib-and-cli-tool');
+
     this.__libStandalone = new LibProjectStandalone(project);
 
     this.__tests = new MochaTestRunner(project);
     this.__testsJest = new JestTestRunner(project);
     this.__testsCypress = new CypressTestRunner(project);
 
-    this.__webpackBackendBuild = new WebpackBackendCompilation(project);
+    this.copyNpmDistLibManager = CopyManager.for(project);
     this.indexAutogenProvider = new IndexAutogenProvider(project);
-
-    this.__filesTemplatesBuilder = new FilesTemplatesBuilder(project);
+    this.filesTemplatesBuilder = new FilesTemplatesBuilder(project);
     this.filesRecreator = new FilesRecreator(project);
-    this.__insideStructure = new InsideStructures(project);
+    this.insideStructureLib = new InsideStructuresLib(project);
   }
   //#endregion
   //#endregion
@@ -99,12 +91,17 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
       } `,
     );
 
-    await this.filesRecreator.recreateSimpleFiles(initOptions);
+    await this.filesRecreator.init();
+
     this.filesRecreator.vscode.settings.toogleHideOrShowDeps();
 
     if (this.project.framework.isStandaloneProject) {
+      await this.insideStructureLib.init(initOptions);
+    }
+
+    if (this.project.framework.isStandaloneProject) {
       await this.project.artifactsManager.globalHelper.env.init(); // TODO .ev.
-      this.__filesTemplatesBuilder.rebuild();
+      this.filesTemplatesBuilder.rebuild();
     }
 
     if (!initOptions.struct) {
@@ -135,7 +132,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
 
     await this.creteBuildInfoFile(initOptions);
 
-    //#region index._autogen_.ts
     if (
       this.indexAutogenProvider.generateIndexAutogenFile &&
       this.project.framework.isStandaloneProject
@@ -146,7 +142,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
     } else {
       this.indexAutogenProvider.writeIndexFile(true);
     }
-    //#endregion
 
     //#endregion
   }
@@ -154,28 +149,19 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
 
   async buildPartial(buildOptions: BuildOptions): Promise<void> {
     //#region @backendFunc
+    if (!this.project.framework.isStandaloneProject) {
+      return;
+    }
 
     await this.initPartial(InitOptions.fromBuild(buildOptions));
-
-    const { watch, cutNpmPublishLibReleaseCode } = buildOptions;
-    const outDir = config.folder.dist;
 
     this.project.quickFixes.__fixBuildDirs();
 
     // Helpers.info(`[buildLib] start of building ${websql ? '[WEBSQL]' : ''}`);
     Helpers.log(`[buildLib] start of building...`);
-    this.__copyEssentialFilesTo(this.project, [
-      crossPlatformPath([this.project.pathFor(outDir)]),
+    this.copyEssentialFilesTo(this.project, [
+      crossPlatformPath([this.project.pathFor(config.folder.dist)]),
     ]);
-
-    const {
-      cliBuildObscure,
-      cliBuildUglify,
-      cliBuildNoDts,
-      cliBuildIncludeNodeModules,
-    } = buildOptions;
-    const productionModeButIncludePackageJsonDeps =
-      (cliBuildObscure || cliBuildUglify) && !cliBuildIncludeNodeModules;
 
     const incrementalBuildProcess = new IncrementalBuildProcess(
       this.project,
@@ -217,7 +203,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
 
     // const command = `${loadNvm} && ${this.npmRunNg} build ${this.name} ${watch ? '--watch' : ''}`;
     const commandForLibraryBuild = `${this.NPM_RUN_NG_COMMAND} build ${this.project.name} ${
-      watch ? '--watch' : ''
+      buildOptions.watch ? '--watch' : ''
     }`;
 
     const showInfoAngular = () => {
@@ -241,12 +227,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
       ? buildOptions.baseHref
       : this.artifact.angularNodeApp.angularFeBasenameManager.rootBaseHref;
 
-    const baseHrefLocProj = this.project;
-
-    baseHrefLocProj.writeFile(
-      tmpBaseHrefOverwriteRelPath,
-      buildOptions.baseHref,
-    );
+    this.project.writeFile(tmpBaseHrefOverwriteRelPath, buildOptions.baseHref);
 
     Helpers.logInfo(`
 
@@ -258,209 +239,58 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
 
       `);
 
+    if (!buildOptions.watch && buildOptions.cutNpmPublishLibReleaseCode) {
+      this.__cutReleaseCodeFromSrc(buildOptions);
+    }
+
+    await incrementalBuildProcess.runTask({
+      taskName: 'isomorphic compilation',
+      watch: buildOptions.watch,
+    });
+    await incrementalBuildProcessWebsql.runTask({
+      taskName: 'isomorphic compilation [WEBSQL]',
+      watch: buildOptions.watch,
+    });
+    showInfoAngular();
+
+    const runNgBuild = async () => {
+      await proxyProject.execute(commandForLibraryBuild, {
+        similarProcessKey: 'ng',
+        resolvePromiseMsg: {
+          stdout: buildOptions.watch
+            ? 'Compilation complete. Watching for file changes'
+            : undefined,
+        },
+        ...this.sharedOptions(buildOptions),
+      });
+      await proxyProjectWebsql.execute(commandForLibraryBuild, {
+        similarProcessKey: 'ng',
+        resolvePromiseMsg: {
+          stdout: buildOptions.watch
+            ? 'Compilation complete. Watching for file changes'
+            : undefined,
+        },
+        ...this.sharedOptions(buildOptions),
+      });
+    };
+
     if (buildOptions.watch) {
-      if (productionModeButIncludePackageJsonDeps) {
-        //#region webpack dist release build
-        console.log('Startomg build');
-        try {
-          await incrementalBuildProcess.startAndWatch(
-            `isomorphic compilation (only browser) `,
-          );
-        } catch (error) {
-          console.log('CATCH INCE normal');
-        }
-
-        try {
-          await incrementalBuildProcessWebsql.startAndWatch(
-            `isomorphic compilation (only browser) [WEBSQL]`,
-          );
-        } catch (error) {
-          console.log('CATCH INCE webcsal');
-        }
-
-        // Helpers.error(`Watch build not available for dist release build`, false, true);
-        // Helpers.info(`Starting watch dist release build for fast cli.. ${this.buildOptions.websql ? '[WEBSQL]' : ''}`);
-        Helpers.info(`Starting watch dist release build for fast cli.. `);
-
-        try {
-          await this.project.artifactsManager.artifact.npmLibAndCliTool.__webpackBackendBuild.run(
-            BuildOptions.from({
-              watch,
-            }),
-          );
-        } catch (er) {
-          Helpers.error(
-            `WATCH ${outDir.toUpperCase()} build failed`,
-            false,
-            true,
-          );
-        }
-        //#endregion
-      } else {
-        await incrementalBuildProcess.startAndWatch(
-          'isomorphic compilation (watch mode)',
-        );
-        await incrementalBuildProcessWebsql.startAndWatch(
-          'isomorphic compilation (watch mode) [WEBSQL]',
-        );
-
-        if (this.project.framework.frameworkVersionAtLeast('v3')) {
-          // TOOD
-          showInfoAngular();
-
-          if (this.project.framework.isStandaloneProject) {
-            try {
-              await proxyProject.execute(commandForLibraryBuild, {
-                similarProcessKey: 'ng',
-                resolvePromiseMsg: {
-                  stdout: 'Compilation complete. Watching for file changes',
-                },
-                ...this.sharedOptions(buildOptions),
-              });
-              await proxyProjectWebsql.execute(commandForLibraryBuild, {
-                similarProcessKey: 'ng',
-                resolvePromiseMsg: {
-                  stdout: 'Compilation complete. Watching for file changes',
-                },
-                ...this.sharedOptions(buildOptions),
-              });
-            } catch (error) {
-              console.log(error);
-            }
-          }
-        }
-      }
+      await runNgBuild();
     } else {
-      if (cutNpmPublishLibReleaseCode) {
-        this.__cutReleaseCodeFromSrc(buildOptions);
-      }
+      try {
+        await runNgBuild();
+      } catch (e) {
+        console.error(e);
 
-      if (productionModeButIncludePackageJsonDeps) {
-        //#region release production backend build for taon/tnp specific
-
-        await incrementalBuildProcess.start(
-          'isomorphic compilation (only browser) ',
-        );
-        await incrementalBuildProcessWebsql.start(
-          'isomorphic compilation (only browser) [WEBSQL] ',
-        );
-
-        //#region webpack build @deprecated
-        try {
-          await this.project.artifactsManager.artifact.npmLibAndCliTool.__webpackBackendBuild.run(
-            BuildOptions.from({
-              watch,
-            }),
-          );
-        } catch (er) {
-          Helpers.error(
-            `${outDir.toUpperCase()} (single file compilation) build failed`,
-            false,
-            true,
-          );
-        }
-        //#endregion
-
-        //#region build without dts in dist @deprecated
-        if (cliBuildNoDts) {
-          const baseDistGenWebpackDts = crossPlatformPath(
-            path.join(this.project.location, outDir, 'dist'),
-          );
-          Helpers.filesFrom(baseDistGenWebpackDts, true).forEach(absSource => {
-            const destDtsFile = path.join(
-              this.project.location,
-              outDir,
-              absSource.replace(`${baseDistGenWebpackDts}/`, ''),
-            );
-            Helpers.copyFile(absSource, destDtsFile);
-          });
-        }
-        //#endregion
-
-        Helpers.removeIfExists(
-          path.join(this.project.location, outDir, 'dist'),
-        );
-
-        //#region obscure & uglify
-        try {
-          if (cliBuildObscure || cliBuildUglify) {
-            this.__backendCompileToEs5();
-          }
-          if (cliBuildUglify) {
-            this.__backendUglifyCode(config.reservedArgumentsNamesUglify);
-          }
-          if (cliBuildObscure) {
-            this.__backendObscureCode(config.reservedArgumentsNamesUglify);
-          }
-        } catch (er) {
-          Helpers.error(
-            `${outDir.toUpperCase()} (cliBuildObscure || cliBuildUglify) process failed`,
-            false,
-            true,
-          );
-        }
-        //#endregion
-
-        //#region isomorphic compilation
-        try {
-          showInfoAngular();
-          await proxyProject.execute(commandForLibraryBuild, {
-            similarProcessKey: 'ng',
-            ...this.sharedOptions(buildOptions),
-          });
-          await proxyProjectWebsql.execute(commandForLibraryBuild, {
-            similarProcessKey: 'ng',
-            ...this.sharedOptions(buildOptions),
-          });
-        } catch (e) {
-          Helpers.log(e);
-          Helpers.error(
-            `
+        Helpers.throw(
+          `
           Command failed: ${commandForLibraryBuild}
 
           Not able to build project: ${this.project.genericName}`,
-            false,
-            true,
-          );
-        }
-        //#endregion
-
-        //#endregion
-      } else {
-        //#region normal backend compilation
-
-        await incrementalBuildProcess.start('isomorphic compilation');
-        await incrementalBuildProcessWebsql.start('isomorphic compilation');
-
-        try {
-          showInfoAngular();
-          await proxyProject.execute(commandForLibraryBuild, {
-            similarProcessKey: 'ng',
-            ...this.sharedOptions(buildOptions),
-          });
-          await proxyProjectWebsql.execute(commandForLibraryBuild, {
-            similarProcessKey: 'ng',
-            ...this.sharedOptions(buildOptions),
-          });
-          this.__showMesageWhenBuildLibDoneForSmartContainer(buildOptions);
-        } catch (e) {
-          Helpers.log(e);
-          // TODO remove this error (it should not interrup release proces)
-          Helpers.error(
-            `
-          Command failed: ${commandForLibraryBuild}
-
-          Not able to build project: ${this.project.genericName}`,
-            false,
-            true,
-          );
-        }
-
-        //#endregion
+        );
       }
 
-      if (cliBuildIncludeNodeModules) {
-        //#region build for including node_modules in compilation
+      if (buildOptions.cliBuildIncludeNodeModules) {
         const cliJsFile = 'cli.js';
         this.project.quickFixes.removeTnpFromItself(async () => {
           this.__backendIncludeNodeModulesInCompilation(
@@ -468,71 +298,45 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
             cliJsFile,
           );
         });
-        //#endregion
-
-        //#region uglify
-        if (cliBuildUglify) {
-          this.__backendUglifyCode(
-            config.reservedArgumentsNamesUglify,
-            cliJsFile,
-          );
-        }
-        //#endregion
-
-        //#region normal build not obscured
-        if (!productionModeButIncludePackageJsonDeps) {
-          if (cliBuildObscure || cliBuildUglify) {
-            this.__backendCompileToEs5(cliJsFile);
-          }
-          if (cliBuildObscure) {
-            this.__backendObscureCode(
-              config.reservedArgumentsNamesUglify,
-              cliJsFile,
-            );
-          }
-        }
-        //#endregion
       }
 
-      if (cliBuildNoDts) {
+      if (buildOptions.cliBuildNoDts) {
         this.__backendRemoveDts();
-      }
-
-      if (cutNpmPublishLibReleaseCode) {
-        this.__restoreCuttedReleaseCodeFromSrc(buildOptions);
       }
     }
 
-    this.__showMesageWhenBuildLibDoneForSmartContainer(buildOptions);
+    if (buildOptions.cutNpmPublishLibReleaseCode) {
+      this.__restoreCuttedReleaseCodeFromSrc(buildOptions);
+    }
 
-    if (this.project.framework.isStandaloneProject) {
+    if (!buildOptions.skipCopyManager) {
       this.copyNpmDistLibManager.init(buildOptions);
-      const taskName = 'copyto manger';
       await this.copyNpmDistLibManager.runTask({
-        taskName,
+        taskName: 'copyto manger',
         watch: buildOptions.watch,
       });
     }
 
-    !buildOptions.skipCopyManager &&
-      Helpers.info(
-        buildOptions.watch
-          ? `
+    this.showMesageWhenBuildLibDone(buildOptions);
+
+    Helpers.info(
+      buildOptions.watch
+        ? `
      [${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}]
      Files watcher started.. ${buildOptions.websql ? '[WEBSQL]' : ''}
    `
-          : `
+        : `
      [${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}]
      End of Building ${this.project.genericName} ${buildOptions.websql ? '[WEBSQL]' : ''}
 
    `,
-      );
+    );
 
     //#endregion
   }
 
   async releasePartial(releaseOptions: ReleaseOptions): Promise<void> {
-    await this.buildPartial(BuildOptions.fromBRelease(releaseOptions));
+    // await this.buildPartial(BuildOptions.fromBRelease(releaseOptions));
     // TODO
   }
   clearPartial(options?: ClearOptions): Promise<void> {
@@ -1355,7 +1159,7 @@ processing...
           releaseDist,
         );
       }
-      this.__copyEssentialFilesTo(specificProjectForBuild, dists);
+      this.copyEssentialFilesTo(specificProjectForBuild, dists);
     }
     //#endregion
 
@@ -1429,53 +1233,53 @@ processing...
   //#endregion
 
   //#region getters & methods / copy essential files
-  private __copyEssentialFilesTo(
+  private copyEssentialFilesTo(
     this: {},
     project: Project,
     destinations: string[],
-  ) {
+  ): void {
     //#region @backendFunc
-    project.artifactsManager.artifact.npmLibAndCliTool.__copyWhenExist(
+    project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
       'bin',
       destinations,
     );
-    project.artifactsManager.artifact.npmLibAndCliTool.__linkWhenExist(
+    project.artifactsManager.artifact.npmLibAndCliTool.linkWhenExist(
       config.file.package_json,
       destinations,
     );
-    project.artifactsManager.artifact.npmLibAndCliTool.__copyWhenExist(
+    project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
       config.file.taon_jsonc,
       destinations,
     );
-    project.artifactsManager.artifact.npmLibAndCliTool.__copyWhenExist(
+    project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
       '.npmrc',
       destinations,
     );
-    project.artifactsManager.artifact.npmLibAndCliTool.__copyWhenExist(
+    project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
       '.npmignore',
       destinations,
     );
-    project.artifactsManager.artifact.npmLibAndCliTool.__copyWhenExist(
+    project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
       '.gitignore',
       destinations,
     );
     if (project.typeIs('isomorphic-lib')) {
-      project.artifactsManager.artifact.npmLibAndCliTool.__copyWhenExist(
+      project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
         config.file.tnpEnvironment_json,
         destinations,
       );
     }
 
     if (project.releaseProcess.isInCiReleaseProject) {
-      project.artifactsManager.artifact.npmLibAndCliTool.__copyWhenExist(
+      project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
         config.file.package_json,
         destinations,
       );
-      project.artifactsManager.artifact.npmLibAndCliTool.__linkWhenExist(
+      project.artifactsManager.artifact.npmLibAndCliTool.linkWhenExist(
         config.folder.node_modules,
         destinations,
       );
-      project.artifactsManager.artifact.npmLibAndCliTool.__copyWhenExist(
+      project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
         config.file.package_json,
         destinations.map(d => crossPlatformPath([d, config.folder.client])),
       );
@@ -1485,7 +1289,7 @@ processing...
   //#endregion
 
   //#region getters & methods / copy when exists
-  public __copyWhenExist(relativePath: string, destinations: string[]) {
+  public copyWhenExist(relativePath: string, destinations: string[]) {
     //#region @backendFunc
     const absPath = crossPlatformPath([this.project.location, relativePath]);
 
@@ -1510,7 +1314,7 @@ processing...
   //#endregion
 
   //#region getters & methods / link when exists
-  public __linkWhenExist(relativePath: string, destinations: string[]) {
+  private linkWhenExist(relativePath: string, destinations: string[]): void {
     //#region @backendFunc
     let absPath = path.join(this.project.location, relativePath);
 
@@ -1779,9 +1583,7 @@ export const BUILD_FRAMEWORK_CLI_NAME = '${config.frameworkName}';
   //#endregion
 
   //#region getters & methods / show message when build lib done for smart container
-  public __showMesageWhenBuildLibDoneForSmartContainer(
-    buildOptions: BuildOptions,
-  ): void {
+  protected showMesageWhenBuildLibDone(buildOptions: BuildOptions): void {
     //#region @backend
     if (this.project.releaseProcess.isInCiReleaseProject) {
       Helpers.logInfo('Lib build part done...  ');
@@ -1791,11 +1593,6 @@ export const BUILD_FRAMEWORK_CLI_NAME = '${config.frameworkName}';
     const ifapp =
       'if you want to start app build -> please run in other terminal command:';
 
-    const ngserveCommand = `${
-      buildOptions.watch ? '--port 4201 # or whatever port' : '#'
-    } to run angular ${
-      buildOptions.watch ? 'ng serve' : 'ng build (for application - not lib)'
-    }.`;
     // const bawOrba = buildOptions.watch ? 'baw' : 'ba';
     const bawOrbaLong = buildOptions.watch
       ? ' build:app:watch '
@@ -1803,12 +1600,9 @@ export const BUILD_FRAMEWORK_CLI_NAME = '${config.frameworkName}';
     const bawOrbaLongWebsql = buildOptions.watch
       ? 'build:app:watch --websql'
       : 'build:app --websql';
-    const withPort = '(with custom port - otherwise automatically selected)';
-    const orIfWebsql = `or if you want to try websql mode:`;
 
-    if (this.project.framework.isStandaloneProject) {
-      Helpers.taskDone(`${chalk.underline(`${buildLibDone}...`)}`);
-      Helpers.success(`
+    Helpers.taskDone(`${chalk.underline(`${buildLibDone}...`)}`);
+    Helpers.success(`
 
       ${ifapp}
 
@@ -1816,7 +1610,7 @@ export const BUILD_FRAMEWORK_CLI_NAME = '${config.frameworkName}';
       or
       ${config.frameworkName} ${bawOrbaLongWebsql}
       `);
-    }
+
     //#endregion
   }
   //#endregion

@@ -12,15 +12,29 @@ import {
   taonConfigSchemaJsonStandalone,
   taonConfigSchemaJsonContainer,
 } from '../../../../../../constants';
-import { InitOptions } from '../../../../../../options';
+import { InitOptions, InitingPartialProcess } from '../../../../../../options';
 import type { Project } from '../../../../project';
 //#endregion
 
 export type RecreateFile = { where: string; from: string };
 
 // @ts-ignore TODO weird inheritance problem
-export class FilesRecreator extends BaseFeatureForProject<Project> {
+export class FilesRecreator // @ts-ignore TODO weird inheritance problem
+  extends BaseFeatureForProject<Project>
+  implements InitingPartialProcess
+{
   project: Project;
+
+  //#region recreate simple files
+  public async init(): Promise<void> {
+    //#region @backendFunc
+    this.handleProjectSpecyficFiles();
+
+    this.gitignore();
+    this.npmignore();
+    //#endregion
+  }
+  //#endregion
 
   //#region getters & methods / project specify files
   /**
@@ -28,7 +42,7 @@ export class FilesRecreator extends BaseFeatureForProject<Project> {
    * core project each time struct method is called
    * @returns list of relative paths
    */
-  __projectSpecyficFiles() {
+  projectSpecyficFiles() {
     //#region @backendFunc
     let files = [
       'index.js',
@@ -82,36 +96,6 @@ export class FilesRecreator extends BaseFeatureForProject<Project> {
       'ngsw-config.json.filetemplate',
     ];
     return [...files, ...files.map(f => f.replace('.filetemplate', ''))];
-    //#endregion
-  }
-  //#endregion
-
-  //#region recreate simple files
-  public async recreateSimpleFiles(initOptions: InitOptions) {
-    //#region @backendFunc
-    Helpers.log(`recreation init of ${chalk.bold(this.project.genericName)}`);
-    if (this.project.typeIs('container')) {
-      this.gitignore();
-      this.handleProjectSpecyficFiles();
-
-      return;
-    }
-
-    if (
-      this.project.framework.frameworkVersionAtLeast('v3') &&
-      this.project.typeIs('isomorphic-lib')
-    ) {
-      await this.project.artifactsManager.artifact.npmLibAndCliTool.__insideStructure.recrate(
-        initOptions,
-      );
-    }
-
-    this.handleProjectSpecyficFiles();
-    this.commonFiles();
-
-    this.gitignore();
-    this.npmignore();
-    Helpers.log('recreation end');
     //#endregion
   }
   //#endregion
@@ -312,7 +296,7 @@ export class FilesRecreator extends BaseFeatureForProject<Project> {
             // core files of projects types
             self.project.framework.isCoreProject
               ? []
-              : self.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.__projectSpecyficFiles(),
+              : self.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.projectSpecyficFiles(),
           )
           .concat(
             // core files of projects types
@@ -325,7 +309,7 @@ export class FilesRecreator extends BaseFeatureForProject<Project> {
           .concat(
             !self.project.framework.isStandaloneProject &&
               !self.project.framework.isCoreProject
-              ? self.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.__projectSpecyficFiles()
+              ? self.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.projectSpecyficFiles()
               : [],
           )
           .concat(['projects/tmp*'])
@@ -754,7 +738,7 @@ ${this.project.framework.isCoreProject ? '' : '/.vscode/launch.json'}
       }
     } else if (defaultProjectProptotype) {
       const projectSpecyficFiles =
-        this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.__projectSpecyficFiles();
+        this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.projectSpecyficFiles();
       // console.log({
       //   projectSpecyficFiles,
       //   project: this.project.genericName
@@ -834,28 +818,8 @@ ${this.project.framework.isCoreProject ? '' : '/.vscode/launch.json'}
       ...this.__filesTemplates().map(f =>
         f.replace(`.${config.filesExtensions.filetemplate}`, ''),
       ),
-      ...this.__projectSpecyficFiles(),
+      ...this.projectSpecyficFiles(),
     ];
-    //#endregion
-  }
-  //#endregion
-
-  //#region common files
-  commonFiles() {
-    //#region @backendFunc
-    const coreContainer = this.project.framework.coreContainer;
-
-    const files = [];
-    files
-      .map(file => {
-        return {
-          from: path.join(coreContainer.location, file),
-          where: path.join(this.project.location, file),
-        };
-      })
-      .forEach(file => {
-        Helpers.copyFile(file.from, file.where);
-      });
     //#endregion
   }
   //#endregion

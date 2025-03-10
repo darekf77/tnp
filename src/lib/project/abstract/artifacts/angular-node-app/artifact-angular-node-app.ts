@@ -1,4 +1,5 @@
 //#region imports
+import { BaseContext, Taon } from 'taon/src';
 import { config } from 'tnp-config/src';
 import { crossPlatformPath, path, _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
@@ -24,21 +25,24 @@ import {
 } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact } from '../__base__/base-artifact';
+import { BuildProcess } from '../__base__/build-process/app/build-process/build-process';
+import { BuildProcessController } from '../__base__/build-process/app/build-process/build-process.controller';
+import { InsideStructuresApp } from '../npm-lib-and-cli-tool/tools/inside-structures/inside-structures';
 
 import { AssetsFileListGenerator } from './tools/assets-list-file-generator';
 import { AssetsManager } from './tools/assets-manager';
 import { AngularFeBasenameManager } from './tools/basename-manager';
 import { GithubPagesAppBuildConfig } from './tools/docs-app-build-config';
 import { MigrationHelper } from './tools/migrations-helper';
-import { BaseContext, Taon } from 'taon/src';
-import { BuildProcessController } from '../__base__/build-process/app/build-process/build-process.controller';
-import { BuildProcess } from '../__base__/build-process/app/build-process/build-process';
+
 //#endregion
 
 export class ArtifactAngularNodeApp extends BaseArtifact {
   //#region fields
   public readonly migrationHelper: MigrationHelper;
   public readonly angularFeBasenameManager: AngularFeBasenameManager;
+
+  public readonly insideStructureApp: InsideStructuresApp;
   public readonly __assetsFileListGenerator: AssetsFileListGenerator;
   public readonly __docsAppBuild: GithubPagesAppBuildConfig;
   public readonly __assetsManager: AssetsManager;
@@ -51,9 +55,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact {
 
   //#region constructor
   constructor(readonly project: Project) {
-    super(project);
+    super(project, 'angular-node-app');
     this.migrationHelper = new MigrationHelper(project);
     this.angularFeBasenameManager = new AngularFeBasenameManager(project);
+    this.insideStructureApp = new InsideStructuresApp(project);
     this.__assetsFileListGenerator = new AssetsFileListGenerator(project);
     this.__docsAppBuild = new GithubPagesAppBuildConfig(project);
     this.__assetsManager = new AssetsManager(project);
@@ -61,6 +66,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact {
   //#endregion
 
   async initPartial(initOptions: InitOptions): Promise<void> {
+    await this.insideStructureApp.init(initOptions);
     this.fixAppTsFile();
     this.buildAssetsFile(initOptions);
   }
@@ -87,7 +93,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact {
       this.project.pathFor(tmpBaseHrefOverwriteRelPath),
     );
     buildOptions.baseHref = fromFileBaseHref;
-
 
     //#endregion
 

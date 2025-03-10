@@ -57,7 +57,7 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
       Helpers.info('Building project...');
       await this.project.build(BuildOptions.from({ watch: false }));
     }
-    await this.project.artifactsManager.artifact.vscodeExtensionPLugin.installLocally(
+    await this.project.artifactsManager.artifact.vscodePlugin.installLocally(
       this.params,
     );
     this._exit();

@@ -8,7 +8,7 @@ export class ArtifactDocsWebapp extends BaseArtifact {
   public docs: Docs;
 
   constructor(protected readonly project: Project) {
-    super(project);
+    super(project, 'docs-webapp');
     this.docs = new Docs(this.project);
   }
 

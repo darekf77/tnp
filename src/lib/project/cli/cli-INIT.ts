@@ -52,7 +52,7 @@ export class $Init extends BaseCommandLineFeature<InitOptions, Project> {
   //#endregion
 
   async templatesBuilder() {
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.__filesTemplatesBuilder.rebuild();
+    await this.project.artifactsManager.artifact.npmLibAndCliTool.filesTemplatesBuilder.rebuild();
     this._exit();
   }
 
