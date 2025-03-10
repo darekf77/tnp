@@ -2,13 +2,13 @@ import { OVERRIDE_FROM_TNP } from 'tnp/src';
 import { config } from 'tnp-config/src';
 import { CoreModels, path } from 'tnp-core/src';
 import { Helpers, _ } from 'tnp-core/src';
+import { Utils } from 'tnp-core/src';
 import { BaseFeatureForProject, BasePackageJson } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
 import { Models } from '../../models';
 
 import type { Project } from './project';
-import { Utils } from 'tnp-core/src';
 
 // @ts-ignore TODO weird inheritance problem
 export class TaonJson extends BaseFeatureForProject<Project> {
@@ -226,6 +226,15 @@ export class TaonJson extends BaseFeatureForProject<Project> {
       res = data?.usesItsOwnNodeModules;
     }
     return !!res;
+    //#endregion
+  }
+  //#endregion
+
+  //#region uses its own node_modules
+  get shouldGenerateAutogenIndexFile(): boolean {
+    const data = this.data as Models.TaonJsonStandalone;
+    //#region @backendFunc
+    return !!data?.shouldGenerateAutogenIndexFile;
     //#endregion
   }
   //#endregion

@@ -285,7 +285,10 @@ export class Framework extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region getters & methods / name, names / get temp project name
-  __getTempProjName() {
+  /**
+   * project stores node_modules with compiles npm lib
+   */
+  getTempProjectNameForCopyTo(): string {
     //#region @backendFunc
     const tempProjName = `tmp-local-copyto-proj-${config.folder.dist}`;
     return tempProjName;
@@ -304,6 +307,7 @@ export class Framework extends BaseFeatureForProject<Project> {
       !this.isStandaloneProject && this.project.parentBasename.startsWith('@')
         ? this.project.parentBasename
         : '';
+
     if (parentBasename) {
       return crossPlatformPath([
         this.project.parentBasename,
@@ -311,6 +315,15 @@ export class Framework extends BaseFeatureForProject<Project> {
       ]);
     }
     return this.project.name;
+    //#endregion
+  }
+
+  get allNpmPackagesNames(): string[] {
+    //#region @backendFunc
+    return [
+      this.project.framework.universalPackageName,
+      ...this.project.taonJson.additionalNpmNames,
+    ];
     //#endregion
   }
   //#endregion

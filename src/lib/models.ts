@@ -287,6 +287,12 @@ export namespace Models {
      * options what to do with cli tool
      */
     cliLibReleaseOptions: CliLibReleaseOptions;
+
+    /**
+     * generate src/lib/index._auto-generated_.ts with
+     * all exports from lib ts files
+     */
+    shouldGenerateAutogenIndexFile: boolean;
   }
 
   export interface TaonJsonContainer extends TaonJsonCommon {

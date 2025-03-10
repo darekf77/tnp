@@ -139,7 +139,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       await this.artifactsManager.initAllChildren(initOptions);
     }
 
-    initOptions.finishCallback();
+    if (!initOptions.watch) {
+      initOptions.finishCallback();
+    }
   }
   //#endregion
 
@@ -161,6 +163,22 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   }
   //#endregion
 
+  //#region api / release
+  public async release(releaseOptions: ReleaseOptions): Promise<void> {
+    releaseOptions = ReleaseOptions.from(releaseOptions);
+
+    if (this.framework.isStandaloneProject) {
+      await this.artifactsManager.release(releaseOptions);
+    }
+    if (this.framework.isContainer) {
+      await this.artifactsManager.releaseAllChildren(releaseOptions);
+      await this.artifactsManager.release(releaseOptions);
+    }
+
+    releaseOptions.finishCallback();
+  }
+  //#endregion
+
   //#region api / lint
   async lint(lintOptions?: any) {
     // TODO
@@ -171,10 +189,6 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   public async clear(options: ClearOptions) {
     // TODO
   }
-  //#endregion
-
-  //#region api / release
-  public async release(releaseOptions: ReleaseOptions) {}
   //#endregion
 
   //#region taon relative projects paths

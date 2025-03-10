@@ -142,7 +142,7 @@ export abstract class BaseArtifact {
 
       Helpers.removeFolderIfExists(absolutePathReleaseProject);
       Helpers.mkdirp(absolutePathReleaseProject);
-      this.project.artifactsManager.artifact.npmLibAndCliTool.__copyManager.generateSourceCopyIn(
+      this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.generateSourceCopyIn(
         absolutePathReleaseProject,
         {
           useTempLocation: true, // TODO not needed

@@ -10,10 +10,16 @@ import {
   forEachChild,
 } from 'typescript';
 
-import { DEFAULT_PORT, PortUtils } from '../../../../constants';
+import {
+  DEFAULT_PORT,
+  PortUtils,
+  tmpBaseHrefOverwriteRelPath,
+  tmpBuildPort,
+} from '../../../../constants';
 import {
   BuildOptions,
   ClearOptions,
+  InitOptions,
   ReleaseOptions,
 } from '../../../../options';
 import type { Project } from '../../project';
@@ -24,6 +30,9 @@ import { AssetsManager } from './tools/assets-manager';
 import { AngularFeBasenameManager } from './tools/basename-manager';
 import { GithubPagesAppBuildConfig } from './tools/docs-app-build-config';
 import { MigrationHelper } from './tools/migrations-helper';
+import { BaseContext, Taon } from 'taon/src';
+import { BuildProcessController } from '../__base__/build-process/app/build-process/build-process.controller';
+import { BuildProcess } from '../__base__/build-process/app/build-process/build-process';
 //#endregion
 
 export class ArtifactAngularNodeApp extends BaseArtifact {
@@ -51,12 +60,36 @@ export class ArtifactAngularNodeApp extends BaseArtifact {
   }
   //#endregion
 
-  async initPartial(options): Promise<void> {
+  async initPartial(initOptions: InitOptions): Promise<void> {
     this.fixAppTsFile();
+    this.buildAssetsFile(initOptions);
   }
 
   async buildPartial(buildOptions: BuildOptions): Promise<void> {
     //#region @backendFunc
+
+    //#region prevent empty baseHref for app build
+    if (!_.isUndefined(buildOptions.baseHref)) {
+      Helpers.error(
+        `Build baseHref only can be specify when build lib code:
+
+      try commands:
+      ${config.frameworkName} start --base-href ${buildOptions.baseHref} # it will do lib and app code build
+      ${config.frameworkName} build:watch --base-href ${buildOptions.baseHref} # it will do lib code build
+
+      `,
+        false,
+        true,
+      );
+    }
+
+    const fromFileBaseHref = Helpers.readFile(
+      this.project.pathFor(tmpBaseHrefOverwriteRelPath),
+    );
+    buildOptions.baseHref = fromFileBaseHref;
+
+
+    //#endregion
 
     //#region prepare variables
 
@@ -156,7 +189,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact {
     }
     //#endregion
 
-    const angularTempProj = this.globalHelper.__getProxyNgProj(buildOptions);
+    const angularTempProj = this.globalHelper.getProxyNgProj(buildOptions);
 
     //#region prepare variables / angular info
     const showInfoAngular = () => {
@@ -236,8 +269,28 @@ export class ArtifactAngularNodeApp extends BaseArtifact {
     return void 0; // TODO implement
   }
 
+  //#region build assets file
+  /**
+   * Build assets file for app in app build mode
+   */
+  async buildAssetsFile(initOptions: InitOptions): Promise<void> {
+    // console.log('after build steps');
+
+    const shouldGenerateAssetsList = this.project.framework.isStandaloneProject;
+
+    // console.log({ shouldGenerateAssetsList });
+    if (shouldGenerateAssetsList) {
+      if (initOptions.watch) {
+        await this.__assetsFileListGenerator.startAndWatch(initOptions.websql);
+      } else {
+        await this.__assetsFileListGenerator.start(initOptions.websql);
+      }
+    }
+  }
+  //#endregion
+
   //#region fix missing components/modules
-  fixAppTsFile(): string {
+  protected fixAppTsFile(): string {
     //#region @backendFunc
     if (!this.project.framework.isStandaloneProject) {
       return;

@@ -171,27 +171,8 @@ export class InitOptions extends BaseBuild<InitOptions> {
     return instanceFrom(options, InitOptions);
   }
 
-  public static fromBuild(options: BuildOptions): InitOptions {
-    const initOptions = InitOptions.from({});
-
-    const propsToInit = [
-      'baseHref',
-      'watch',
-      'websql',
-      'smartContainerTargetName',
-      'ci',
-      'targetApp',
-      'prod',
-      'disableServiceWorker',
-      'buildAngularAppForElectron',
-      'purpose',
-    ] as (keyof BuildOptions)[];
-
-    for (const prop of propsToInit) {
-      if (!_.isUndefined(options[prop])) {
-        initOptions[prop] = options[prop];
-      }
-    }
+  public static fromBuild(buildOptions: BuildOptions): InitOptions {
+    const initOptions = InitOptions.from(buildOptions as any);
 
     return initOptions;
   }
@@ -214,19 +195,6 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
    *
    */
   websql: boolean;
-
-  private _skipProjectProcess: boolean;
-  /**
-   * Skip project process for assigning automatic ports
-   */
-  get skipProjectProcess() {
-    //#region @backendFunc
-    return this._skipProjectProcess;
-    //#endregion
-  }
-  set skipProjectProcess(value) {
-    this._skipProjectProcess = value;
-  }
 
   /**
    * override port number for app build
@@ -260,6 +228,12 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
   public static from(options: Partial<BuildOptions>): BuildOptions {
     return instanceFrom(options, BuildOptions);
   }
+
+  public static fromBRelease(releaseOptions: ReleaseOptions): BuildOptions {
+    const buildOptions = BuildOptions.from(releaseOptions as any);
+
+    return buildOptions;
+  }
 }
 //#endregion
 
@@ -289,7 +263,7 @@ export class ReleaseOptions extends BuildOptionsLibOrApp<ReleaseOptions> {
    * end release on project
    */
   end?: string;
-  skipProjectProcess: boolean;
+
   /**
    * Projects to release in container
    */

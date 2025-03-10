@@ -63,7 +63,7 @@ export class ArtifactsGlobalHelper {
   //#endregion
 
   //#region get proxy ng projects
-  __getProxyNgProj(
+  getProxyNgProj(
     buildOptions: BuildOptions,
     type: 'app' | 'lib' = 'app',
   ): Project {

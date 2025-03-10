@@ -365,7 +365,7 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
     if (project.framework.isStandaloneProject) {
       const distForPublishPath = crossPlatformPath([
         specificProjectForBuild.location,
-        project.framework.__getTempProjName(),
+        project.framework.getTempProjectNameForCopyTo(),
         config.folder.node_modules,
         project.name,
       ]);

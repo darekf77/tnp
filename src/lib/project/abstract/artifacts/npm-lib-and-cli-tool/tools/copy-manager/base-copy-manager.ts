@@ -99,7 +99,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   //#region getters / temp project name
   get tempProjName() {
     //#region @backendFunc
-    const tempProjName = this.project.framework.__getTempProjName();
+    const tempProjName = this.project.framework.getTempProjectNameForCopyTo();
     return tempProjName;
     //#endregion
   }
@@ -344,7 +344,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 
       childs.forEach(c => {
         // console.log('GENERATING CHILD ' + c.genericName)
-        c.artifactsManager.artifact.npmLibAndCliTool.__copyManager.generateSourceCopyIn(
+        c.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.generateSourceCopyIn(
           crossPlatformPath(path.join(destinationLocation, c.name)),
           options,
         );

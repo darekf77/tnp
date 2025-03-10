@@ -106,7 +106,6 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
       ...this.params,
       releaseVersionBumpType: npmReleaseVersionType,
       automaticRelease,
-      skipProjectProcess: true,
       finishCallback: () => {
         this._exit();
       },
