@@ -97,9 +97,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
 
     if (this.project.framework.isStandaloneProject) {
       await this.insideStructureLib.init(initOptions);
-    }
-
-    if (this.project.framework.isStandaloneProject) {
       await this.project.artifactsManager.globalHelper.env.init(); // TODO .ev.
       this.filesTemplatesBuilder.rebuild();
     }
@@ -108,15 +105,15 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
       await this.project.nodeModules.makeSureInstalled();
     }
 
-    this.project.quickFixes.addMissingSrcFolderToEachProject();
-    this.project.quickFixes.missingAngularLibFiles();
-    if (
-      this.project.framework.isStandaloneProject ||
-      this.project.framework.isContainer
-    ) {
-      this.project.quickFixes.createDummyEmptyLibsReplacements([]);
+    if (this.project.framework.isStandaloneProject) {
+      this.project.quickFixes.addMissingSrcFolderToEachProject();
+      this.project.quickFixes.missingAngularLibFiles();
     }
-    this.project.quickFixes.removeBadTypesInNodeModules();
+
+    if (this.project.framework.isContainerCoreProject) {
+      this.project.quickFixes.createDummyEmptyLibsReplacements([]); // TODO
+      this.project.quickFixes.removeBadTypesInNodeModules();
+    }
 
     if (this.project.framework.isStandaloneProject) {
       await this.project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
@@ -124,24 +121,19 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
           watch: initOptions.watch,
         },
       );
+      await this.creteBuildInfoFile(initOptions);
+      if (this.indexAutogenProvider.generateIndexAutogenFile) {
+        await this.indexAutogenProvider.runTask({
+          watch: initOptions.watch,
+        });
+      } else {
+        this.indexAutogenProvider.writeIndexFile(true);
+      }
     }
 
     Helpers.log(
       `Init DONE for project: ${chalk.bold(this.project.genericName)} `,
     );
-
-    await this.creteBuildInfoFile(initOptions);
-
-    if (
-      this.indexAutogenProvider.generateIndexAutogenFile &&
-      this.project.framework.isStandaloneProject
-    ) {
-      await this.indexAutogenProvider.runTask({
-        watch: initOptions.watch,
-      });
-    } else {
-      this.indexAutogenProvider.writeIndexFile(true);
-    }
 
     //#endregion
   }
@@ -155,7 +147,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
 
     await this.initPartial(InitOptions.fromBuild(buildOptions));
 
-    this.project.quickFixes.__fixBuildDirs();
+    this.project.quickFixes.makeSureDistFolderExists();
 
     // Helpers.info(`[buildLib] start of building ${websql ? '[WEBSQL]' : ''}`);
     Helpers.log(`[buildLib] start of building...`);
@@ -392,6 +384,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
   ): Promise<void> {
     // TODO @LAST move to artifact
     //#region @backendFunc
+
+
 
     //#region prepare params
     if (releaseOptions.automaticRelease) {
@@ -1235,53 +1229,53 @@ processing...
   //#region getters & methods / copy essential files
   private copyEssentialFilesTo(
     this: {},
-    project: Project,
-    destinations: string[],
+    fromProject: Project,
+    toDestinations: string[],
   ): void {
     //#region @backendFunc
-    project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
+    fromProject.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
       'bin',
-      destinations,
+      toDestinations,
     );
-    project.artifactsManager.artifact.npmLibAndCliTool.linkWhenExist(
+    fromProject.artifactsManager.artifact.npmLibAndCliTool.linkWhenExist(
       config.file.package_json,
-      destinations,
+      toDestinations,
     );
-    project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
+    fromProject.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
       config.file.taon_jsonc,
-      destinations,
+      toDestinations,
     );
-    project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
+    fromProject.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
       '.npmrc',
-      destinations,
+      toDestinations,
     );
-    project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
+    fromProject.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
       '.npmignore',
-      destinations,
+      toDestinations,
     );
-    project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
+    fromProject.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
       '.gitignore',
-      destinations,
+      toDestinations,
     );
-    if (project.typeIs('isomorphic-lib')) {
-      project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
+    if (fromProject.typeIs('isomorphic-lib')) {
+      fromProject.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
         config.file.tnpEnvironment_json,
-        destinations,
+        toDestinations,
       );
     }
 
-    if (project.releaseProcess.isInCiReleaseProject) {
-      project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
+    if (fromProject.releaseProcess.isInCiReleaseProject) {
+      fromProject.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
         config.file.package_json,
-        destinations,
+        toDestinations,
       );
-      project.artifactsManager.artifact.npmLibAndCliTool.linkWhenExist(
+      fromProject.artifactsManager.artifact.npmLibAndCliTool.linkWhenExist(
         config.folder.node_modules,
-        destinations,
+        toDestinations,
       );
-      project.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
+      fromProject.artifactsManager.artifact.npmLibAndCliTool.copyWhenExist(
         config.file.package_json,
-        destinations.map(d => crossPlatformPath([d, config.folder.client])),
+        toDestinations.map(d => crossPlatformPath([d, config.folder.client])),
       );
     }
     //#endregion

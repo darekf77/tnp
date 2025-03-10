@@ -217,7 +217,7 @@ Object.defineProperty(document.body.style, 'transform', {
   //#endregion
 
   //#region fix build dirs
-  __fixBuildDirs(): void {
+  makeSureDistFolderExists(): void {
     //#region @backendFunc
     const p = crossPlatformPath([this.project.location, config.folder.dist]);
     if (!Helpers.isFolder(p)) {
@@ -229,7 +229,7 @@ Object.defineProperty(document.body.style, 'transform', {
   //#endregion
 
   //#region add missing angular files
-  public missingAngularLibFiles() {
+  public missingAngularLibFiles(): void {
     //#region @backendFunc
     Helpers.taskStarted(`[quick fixes] missing angular lib fles start`, true);
     if (

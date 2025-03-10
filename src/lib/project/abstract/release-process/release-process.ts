@@ -55,7 +55,7 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
       UtilsTerminal.clearConsole();
       //#region info
       console.info(`
-        ${chalk.bold.yellow('Manual release')} => for everything whats Taon supports (npm, docker, git, etc)
+        ${chalk.bold.yellow('Manual release')} => for everything whats Taon supports
         - everything is done here manually, you have to provide options
         - from here you can save release options for ${chalk.bold.green('Taon Cloud')} release
 
@@ -64,8 +64,7 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
         - use local Taon Cloud or login to remote Taon Cloud
 
         ${chalk.bold.gray('Local release')} => use current git repo for storing release data
-        - for cli tools, electron apps, vscode extensions
-          ( if you need a backup them inside your git repository )
+        - for anything that you want to backup inside your git repository
 
         `);
       //#endregion
@@ -87,8 +86,13 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
         {
           ['manual' as ReleaseType]: {
             //#region manual
-            name: `${this.getColoredTextItem('manual')} release`,
+            name: `${this.getColoredTextItem('manual')} AAA release`,
             action: async () => {
+              //TODO
+              await UtilsTerminal.pressAnyKeyToContinueAsync({
+                message: 'NOT IMPLEMENTED YET.. Press any key to go back...',
+              });
+              return;
               // this.project.artifactsManager.release(ReleaseOptions.from({
               //   releaseType: 'manual
               // })})
@@ -314,7 +318,7 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
     const absolutePathReleaseProject = this.project.pathFor([
       config.folder.tmpDistRelease,
       config.folder.dist,
-      'project',
+      config.folder.project,
       this.project.name,
     ]);
     return absolutePathReleaseProject;
@@ -355,8 +359,8 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
   }
   //#endregion
 
-  //#region update standalone project before publishing
   updateStanaloneProjectBeforePublishing(
+    this: {},
     project: Project,
     realCurrentProj: Project,
     specificProjectForBuild: Project,
@@ -401,7 +405,6 @@ export * from './lib';
     }
     //#endregion
   }
-  //#endregion
 
   //#region is in release dist
   public get isInCiReleaseProject(): boolean {

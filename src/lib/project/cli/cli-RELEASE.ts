@@ -12,36 +12,16 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
   //#region __initialize__
   __initialize__() {
     //#region resolve smart containter
-    let resolved = [];
-    if (this.project.framework.isContainer) {
-      resolved = Helpers.cliTool.resolveItemsFromArgsBegin<Project>(
-        this.args,
-        a => {
-          return this.project.ins.From(path.join(this.project.location, a));
-        },
-      )?.allResolved;
 
-      const otherDeps = this.project.children.filter(c => {
-        return !resolved.includes(c);
-      });
-
-      resolved = this.project.ins // @ts-ignore
-        .sortGroupOfProject<Project>(
-          [...resolved, ...otherDeps],
-          proj => proj.taonJson.dependenciesNamesForNpmLib,
-          proj => proj.name,
-        )
-        .filter(d => d.name !== this.project.name);
-    }
-    this.params = ReleaseOptions.from({ ...this.params, resolved });
+    this.params = ReleaseOptions.from({ ...this.params });
     //#endregion
   }
   //#endregion
 
   //#region _
   public async _() {
-    // await this.project.releaseProcess.displayReleaseProcessMenu();
-    await this.patch();
+    await this.project.releaseProcess.displayReleaseProcessMenu();
+    // await this.patch();
     this._exit();
   }
   //#endregion

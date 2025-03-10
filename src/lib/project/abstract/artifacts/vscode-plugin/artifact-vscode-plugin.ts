@@ -22,6 +22,10 @@ import type { Project } from '../../project';
 import { BaseArtifact } from '../__base__/base-artifact';
 
 export class ArtifactVscodePlugin extends BaseArtifact {
+  constructor(project: Project) {
+    super(project, 'vscode-plugin');
+  }
+
   async initPartial(options) {
     return void 0; // TODO implement
   }
@@ -93,10 +97,7 @@ export class ArtifactVscodePlugin extends BaseArtifact {
       crossPlatformPath([tmpVscodeProjPath, vcodePjUpdateFile]),
     );
 
-    if (
-      !buildOptions.watch &&
-      buildOptions.targetArtifact !== 'npm-lib-and-cli-tool' // TODO
-    ) {
+    if (!buildOptions.watch) {
       await Helpers.ncc(
         crossPlatformPath([
           tmpVscodeProjPath,

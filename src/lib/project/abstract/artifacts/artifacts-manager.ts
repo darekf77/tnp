@@ -165,11 +165,11 @@ export class ArtifactManager {
       );
     }
 
+    await this.artifact.docsWebapp.initPartial(initOptions);
     await this.artifact.npmLibAndCliTool.initPartial(initOptions);
     await this.artifact.angularNodeApp.initPartial(initOptions);
     await this.artifact.electronApp.initPartial(initOptions);
     await this.artifact.mobileApp.initPartial(initOptions);
-    await this.artifact.docsWebapp.initPartial(initOptions);
     await this.artifact.vscodePlugin.initPartial(initOptions);
     //#endregion
   }
@@ -197,11 +197,11 @@ export class ArtifactManager {
     }
     //#endregion
 
+    await this.artifact.docsWebapp.buildPartial(buildOptions);
     await this.artifact.npmLibAndCliTool.buildPartial(buildOptions);
     await this.artifact.angularNodeApp.buildPartial(buildOptions);
     await this.artifact.electronApp.buildPartial(buildOptions);
     await this.artifact.mobileApp.buildPartial(buildOptions);
-    await this.artifact.docsWebapp.buildPartial(buildOptions);
     await this.artifact.vscodePlugin.buildPartial(buildOptions);
   }
 
@@ -214,15 +214,37 @@ export class ArtifactManager {
 
   //#region release
   async release(options: ReleaseOptions): Promise<void> {
+    await this.artifact.docsWebapp.releasePartial(options);
     await this.artifact.npmLibAndCliTool.releasePartial(options);
     await this.artifact.angularNodeApp.releasePartial(options);
     await this.artifact.electronApp.releasePartial(options);
     await this.artifact.mobileApp.releasePartial(options);
-    await this.artifact.docsWebapp.releasePartial(options);
     await this.artifact.vscodePlugin.releasePartial(options);
   }
 
   async releaseAllChildren(options: ReleaseOptions): Promise<void> {
+    // let resolved = [];
+    // if (this.project.framework.isContainer) {
+    //   resolved = Helpers.cliTool.resolveItemsFromArgsBegin<Project>(
+    //     this.args,
+    //     a => {
+    //       return this.project.ins.From(path.join(this.project.location, a));
+    //     },
+    //   )?.allResolved;
+
+    //   const otherDeps = this.project.children.filter(c => {
+    //     return !resolved.includes(c);
+    //   });
+
+    //   resolved = this.project.ins // @ts-ignore
+    //     .sortGroupOfProject<Project>(
+    //       [...resolved, ...otherDeps],
+    //       proj => proj.taonJson.dependenciesNamesForNpmLib,
+    //       proj => proj.name,
+    //     )
+    //     .filter(d => d.name !== this.project.name);
+    // }
+
     for (const child of this.project.children) {
       await child.artifactsManager.release(options);
     }
@@ -234,97 +256,79 @@ export class ArtifactManager {
     processName: keyof ArtifactManager,
   ) {
     //#region @backendFunc
-    const projectInfoPort = await this.project.registerAndAssignPort(
-      `project-build-info`,
-      {
-        startFrom: 4100,
-      },
-    );
-
-    this.project.artifactsManager.artifact.angularNodeApp.__setProjectInfoPort(
-      projectInfoPort,
-    );
-    this.project.artifactsManager.artifact.angularNodeApp.backendPort =
-      PortUtils.instance(
-        this.project.artifactsManager.artifact.angularNodeApp.projectInfoPort,
-      ).calculateServerPortFor(this.project);
-
-    Helpers.writeFile(
-      this.project.pathFor(tmpBuildPort),
-      projectInfoPort?.toString(),
-    );
-
-    const hostForBuild = `http://localhost:${projectInfoPort}`;
-
-    console.info(`
-
-
-
-      You can check info about build in ${chalk.bold(hostForBuild)}
-
-
-
-            `);
-
-    Helpers.taskStarted(`starting project service... ${hostForBuild}`);
-
-    // TODO @LAST create global task server
-    const ProjectBuildContext = Taon.createContext(() => ({
-      contextName: 'ProjectBuildContext',
-      host: hostForBuild,
-      contexts: { BaseContext },
-      controllers: { BuildProcessController },
-      entities: { BuildProcess },
-      skipWritingServerRoutes: true,
-      logs: false,
-      database: {
-        autoSave: false, // skip creationg db file
-      },
-    }));
-    await ProjectBuildContext.initialize();
-    const buildProcessController: BuildProcessController =
-      ProjectBuildContext.getClassInstance(BuildProcessController);
-
-    await buildProcessController.initializeServer(this.project);
-
-    this.project.vsCodeHelpers.__saveLaunchJson(projectInfoPort);
-
-    Helpers.taskDone('project service started');
+    // const projectInfoPort = await this.project.registerAndAssignPort(
+    //   `project-build-info`,
+    //   {
+    //     startFrom: 4100,
+    //   },
+    // );
+    // this.project.artifactsManager.artifact.angularNodeApp.__setProjectInfoPort(
+    //   projectInfoPort,
+    // );
+    // this.project.artifactsManager.artifact.angularNodeApp.backendPort =
+    //   PortUtils.instance(
+    //     this.project.artifactsManager.artifact.angularNodeApp.projectInfoPort,
+    //   ).calculateServerPortFor(this.project);
+    // Helpers.writeFile(
+    //   this.project.pathFor(tmpBuildPort),
+    //   projectInfoPort?.toString(),
+    // );
+    // const hostForBuild = `http://localhost:${projectInfoPort}`;
+    // console.info(`
+    //   You can check info about build in ${chalk.bold(hostForBuild)}
+    //         `);
+    // Helpers.taskStarted(`starting project service... ${hostForBuild}`);
+    // // TODO @LAST create global task server
+    // const ProjectBuildContext = Taon.createContext(() => ({
+    //   contextName: 'ProjectBuildContext',
+    //   host: hostForBuild,
+    //   contexts: { BaseContext },
+    //   controllers: { BuildProcessController },
+    //   entities: { BuildProcess },
+    //   skipWritingServerRoutes: true,
+    //   logs: false,
+    //   database: {
+    //     autoSave: false, // skip creationg db file
+    //   },
+    // }));
+    // await ProjectBuildContext.initialize();
+    // const buildProcessController: BuildProcessController =
+    //   ProjectBuildContext.getClassInstance(BuildProcessController);
+    // await buildProcessController.initializeServer(this.project);
+    // this.project.vsCodeHelpers.__saveLaunchJson(projectInfoPort);
+    // Helpers.taskDone('project service started');
     //#endregion
   }
 
   async getInforServerController() {
     //#region @backendFunc
-    const projectInfoPortFromFile = Number(
-      Helpers.readFile(this.project.pathFor(tmpBuildPort)),
-    );
-    console.log({
-      projectInfoPortFromFile,
-    });
-    this.project.artifactsManager.artifact.angularNodeApp.__setProjectInfoPort(
-      projectInfoPortFromFile,
-    );
-
-    const hostForAppWorker = `http://localhost:${projectInfoPortFromFile}`;
-    // console.log({ hostForAppWorker })
-
-    const ProjectBuildContext = Taon.createContext(() => ({
-      contextName: 'ProjectBuildContext',
-      remoteHost: hostForAppWorker,
-      contexts: { BaseContext },
-      controllers: { BuildProcessController },
-      entities: { BuildProcess },
-      skipWritingServerRoutes: true,
-      logs: false,
-      database: {
-        autoSave: false, // probably not needed here
-      },
-    }));
-    await ProjectBuildContext.initialize();
-    const buildProcessController: BuildProcessController =
-      ProjectBuildContext.getClassInstance(BuildProcessController);
-
-    await buildProcessController.initializeClientToRemoteServer(this.project);
+    // const projectInfoPortFromFile = Number(
+    //   Helpers.readFile(this.project.pathFor(tmpBuildPort)),
+    // );
+    // console.log({
+    //   projectInfoPortFromFile,
+    // });
+    // this.project.artifactsManager.artifact.angularNodeApp.__setProjectInfoPort(
+    //   projectInfoPortFromFile,
+    // );
+    // const hostForAppWorker = `http://localhost:${projectInfoPortFromFile}`;
+    // // console.log({ hostForAppWorker })
+    // const ProjectBuildContext = Taon.createContext(() => ({
+    //   contextName: 'ProjectBuildContext',
+    //   remoteHost: hostForAppWorker,
+    //   contexts: { BaseContext },
+    //   controllers: { BuildProcessController },
+    //   entities: { BuildProcess },
+    //   skipWritingServerRoutes: true,
+    //   logs: false,
+    //   database: {
+    //     autoSave: false, // probably not needed here
+    //   },
+    // }));
+    // await ProjectBuildContext.initialize();
+    // const buildProcessController: BuildProcessController =
+    //   ProjectBuildContext.getClassInstance(BuildProcessController);
+    // await buildProcessController.initializeClientToRemoteServer(this.project);
     //#endregion
   }
 }

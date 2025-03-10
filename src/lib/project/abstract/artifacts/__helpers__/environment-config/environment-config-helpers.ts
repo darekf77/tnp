@@ -135,45 +135,9 @@ export const saveConfigWorkspace = (
   projectConfig.currentProjectLocation = project.location;
   projectConfig.isStandaloneProject = project.framework.isStandaloneProject;
 
-  let libs = Helpers.linksToFoldersFrom(
-    path.join(project.location, config.folder.src, 'libs'),
-  );
-
   const customRootDir = 'customRootDir';
 
-  if (libs.length > 0) {
-    const parentPath = path.join(project.location, '../../..');
-
-    const parent = project.ins.From(parentPath);
-    if (parent) {
-      const generatedPathes =
-        `"paths": ` +
-        JSON.stringify(
-          libs.reduce((a, b) => {
-            const pathRelative = b
-              .replace(parent.location, '')
-              .split('/')
-              .slice(4)
-              .join('/');
-            return _.merge(a, {
-              [`@${parent.name}/${path.basename(b)}`]: [`./${pathRelative}`],
-              [`@${parent.name}/${path.basename(b)}/*`]: [
-                `./${pathRelative}/*`,
-              ],
-            });
-          }, {}),
-        );
-      projectConfig['pathesTsconfig'] = generatedPathes;
-      projectConfig['pathesTsconfigSourceDist'] = generatedPathes.replace(
-        /\/src/g,
-        '/tmp-source-dist',
-      );
-
-      // workspaceConfig['exclusion'] = `exclude:[]`;
-    } else {
-      Helpers.warn(`[env config] parent not found by path ${parentPath}`);
-    }
-  } else if (project.framework.isStandaloneProject) {
+  if (project.framework.isStandaloneProject) {
     projectConfig['pathesTsconfig'] =
       `"paths": ` +
       JSON.stringify({
@@ -181,8 +145,6 @@ export const saveConfigWorkspace = (
         [`${project.name}/*`]: ['./src/lib/*'],
       });
   }
-
-  projectConfig['pathesTsconfig'] = `"paths": ` + JSON.stringify({});
 
   if (
     projectConfig['pathesTsconfig'] &&
@@ -193,12 +155,7 @@ export const saveConfigWorkspace = (
 
   projectConfig[customRootDir] = `"rootDir": "./src",`;
 
-  let currentLibProjectSourceFolder: 'src';
-
-  if (project.typeIs('isomorphic-lib')) {
-    currentLibProjectSourceFolder = 'src';
-  }
-  projectConfig.currentLibProjectSourceFolder = currentLibProjectSourceFolder;
+  projectConfig.currentLibProjectSourceFolder = 'src';
 
   const tmpEnvironmentPath = path.join(
     project.location,

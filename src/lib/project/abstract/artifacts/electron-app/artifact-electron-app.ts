@@ -10,9 +10,14 @@ import {
   ReleaseArtifactTaonNamesArr,
   ReleaseOptions,
 } from '../../../../options';
+import type { Project } from '../../project';
 import { BaseArtifact } from '../__base__/base-artifact';
 
 export class ArtifactElectronApp extends BaseArtifact {
+  constructor(project: Project) {
+    super(project, 'electron-app');
+  }
+
   async clearPartial(options: ClearOptions): Promise<void> {
     return void 0; // TODO implement
   }

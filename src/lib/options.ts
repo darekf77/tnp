@@ -83,7 +83,7 @@ class SystemTask<T> {
   copyto?: string[];
   copytoall?: boolean;
   purpose?: string;
-  targetArtifact: ReleaseArtifactTaon = 'npm-lib-and-cli-tool';
+  targetArtifact: ReleaseArtifactTaon;
 }
 
 export class BaseBuild<T> extends SystemTask<T> {
@@ -143,6 +143,7 @@ export class ClearOptions extends SystemTask<ClearOptions> {
 }
 //#endregion
 
+//#region initing partial process
 /**
  * Class is as part of initing project structure process
  */
@@ -153,6 +154,7 @@ export interface InitingPartialProcess {
    */
   init(options: InitOptions): Promise<void>;
 }
+//#endregion
 
 //#region init options
 export class InitOptions extends BaseBuild<InitOptions> {
