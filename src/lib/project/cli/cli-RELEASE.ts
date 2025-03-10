@@ -77,7 +77,7 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
   // TODO move this to release process separate class
   private async _startLibCliReleaseProcess(
     npmReleaseVersionType: CoreModels.ReleaseVersionType = 'patch',
-    automaticRelease: boolean = false,
+    autoReleaseUsingConfig: boolean = false,
   ) {
     Helpers.clearConsole();
     // const taonReleaseVersionType = await this.chooseTaonReleaseVersionType();
@@ -85,7 +85,7 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
     const releaseOptions = ReleaseOptions.from({
       ...this.params,
       releaseVersionBumpType: npmReleaseVersionType,
-      automaticRelease,
+      autoReleaseUsingConfig,
       finishCallback: () => {
         this._exit();
       },
@@ -94,10 +94,8 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
       this.args.find(
         k => k.startsWith('v') && Number(k.replace('v', '')) >= 3,
       ) || '';
-    releaseOptions.shouldReleaseLibrary = await this.shouldReleaseLibMessage(
-      releaseOptions,
-      this.project,
-    );
+
+    await this.shouldReleaseLibMessage(releaseOptions, this.project);
     await this.project.release(releaseOptions);
     this._exit();
   }
@@ -109,7 +107,7 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
     project: Project,
   ) {
     //#region @backendFunc
-    if (releaseOptions.automaticReleaseDocs) {
+    if (releaseOptions.autoReleaseUsingConfigDocs) {
       return false;
     }
     let newVersion;
@@ -125,7 +123,7 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
     // TODO detecting changes for children when start container
 
     const message = `Proceed with release of new version: ${newVersion} ?`;
-    return releaseOptions.automaticRelease
+    return releaseOptions.autoReleaseUsingConfig
       ? true
       : await Helpers.questionYesNo(message);
 

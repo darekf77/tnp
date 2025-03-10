@@ -10,7 +10,7 @@ export abstract class LibProjectBase extends BaseFeatureForProject<Project> {
   abstract buildDocs(
     prod: boolean,
     realCurrentProj: Project,
-    automaticReleaseDocs: boolean,
+    autoReleaseUsingConfigDocs: boolean,
     libBuildCallback: (websql: boolean, prod: boolean) => any,
   ): Promise<boolean>;
   //#endregion
@@ -19,7 +19,7 @@ export abstract class LibProjectBase extends BaseFeatureForProject<Project> {
   abstract publish(options: {
     realCurrentProj: Project;
     newVersion: string;
-    automaticRelease: boolean;
+    autoReleaseUsingConfig: boolean;
     prod: boolean;
     rootPackageName?: string;
   }): Promise<any>;

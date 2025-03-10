@@ -1,10 +1,12 @@
 //#region imports
+import axios from 'axios';
+import { config } from 'tnp-config/src';
 import { chalk, Helpers, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
-import { config } from 'tnp-config/src';
-import cliClassArr from './lib/project/cli/index';
 import { BaseStartConfig } from 'tnp-helpers/src';
-import axios from 'axios';
+
+import cliClassArr from './lib/project/cli/index';
+
 //#endregion
 
 //#region constants
@@ -18,7 +20,7 @@ export async function start(
   argsv: string[],
   frameworkName: 'tnp' | 'taon' = 'tnp',
   mode: 'dist' | 'npm' = 'dist',
-) {
+): Promise<void> {
   config.frameworkName = frameworkName;
 
   // Helpers.log(`ins start, mode: "${mode}"`);

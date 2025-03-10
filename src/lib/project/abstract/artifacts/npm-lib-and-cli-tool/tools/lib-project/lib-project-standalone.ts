@@ -107,7 +107,7 @@ export class LibProjectStandalone extends LibProjectBase {
   async buildDocs(
     prod: boolean,
     realCurrentProj: Project,
-    automaticReleaseDocs: boolean,
+    autoReleaseUsingConfigDocs: boolean,
     libBuildCallback: (websql: boolean, prod: boolean) => any,
   ): Promise<boolean> {
     //#region @backendFunc
@@ -121,7 +121,7 @@ export class LibProjectStandalone extends LibProjectBase {
       `Do you wanna build /docs folder app for preview`,
       async () => {
         //#region questions
-        if (automaticReleaseDocs) {
+        if (autoReleaseUsingConfigDocs) {
           appBuildOptions = {
             docsAppInProdMode:
               realCurrentProj.artifactsManager.artifact.angularNodeApp
@@ -132,7 +132,7 @@ export class LibProjectStandalone extends LibProjectBase {
           };
         }
 
-        if (!automaticReleaseDocs) {
+        if (!autoReleaseUsingConfigDocs) {
           await Helpers.questionYesNo(
             `Do you want build in production mode`,
             () => {
@@ -227,11 +227,11 @@ export class LibProjectStandalone extends LibProjectBase {
   async publish(options: {
     realCurrentProj: Project;
     newVersion: string;
-    automaticRelease: boolean;
+    autoReleaseUsingConfig: boolean;
     prod: boolean;
   }) {
     //#region @backendFunc
-    const { realCurrentProj, newVersion, automaticRelease, prod } = options;
+    const { realCurrentProj, newVersion, autoReleaseUsingConfig, prod } = options;
 
     const existedReleaseDist = crossPlatformPath([
       this.project.location,
@@ -259,7 +259,7 @@ export class LibProjectStandalone extends LibProjectBase {
             output: true,
           }).sync();
         } catch (e) {
-          this.project.git.__removeTagAndCommit(automaticRelease);
+          this.project.git.__removeTagAndCommit(autoReleaseUsingConfig);
         }
 
         // release additional packages names

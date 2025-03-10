@@ -76,14 +76,14 @@ export class Git extends BaseGit<Project> {
   /**
    * @deprecated
    */
-  __removeTagAndCommit(automaticRelease: boolean) {
+  __removeTagAndCommit(autoReleaseUsingConfig: boolean) {
     //#region @backendFunc
     // Helpers.error(`PLEASE RUN: `, true, true);
     // if (!tagOnly) {
     //   Helpers.error(`git reset --hard HEAD~1`, true, true);
     // }
-    Helpers.error(`'release problem... `, automaticRelease, true);
-    // if (automaticRelease) {
+    Helpers.error(`'release problem... `, autoReleaseUsingConfig, true);
+    // if (autoReleaseUsingConfig) {
     //   Helpers.error('release problem...', false, true);
     // }
     //#endregion

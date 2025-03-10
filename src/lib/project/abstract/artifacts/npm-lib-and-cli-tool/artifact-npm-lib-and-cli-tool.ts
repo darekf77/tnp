@@ -385,10 +385,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
     // TODO @LAST move to artifact
     //#region @backendFunc
 
-
-
     //#region prepare params
-    if (releaseOptions.automaticRelease) {
+    if (releaseOptions.autoReleaseUsingConfig) {
       global.tnpNonInteractive = true;
     }
     if (this.project.taonJson.cliLibReleaseOptions.cliBuildObscure) {
@@ -404,14 +402,15 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
       releaseOptions.cliBuildIncludeNodeModules = true;
     }
 
-    const automaticReleaseDocs = !!releaseOptions.automaticReleaseDocs;
-    if (automaticReleaseDocs) {
+    const autoReleaseUsingConfigDocs =
+      !!releaseOptions.autoReleaseUsingConfigDocs;
+    if (autoReleaseUsingConfigDocs) {
       global.tnpNonInteractive = true;
     }
 
     if (
-      !releaseOptions.automaticRelease &&
-      automaticReleaseDocs &&
+      !releaseOptions.autoReleaseUsingConfig &&
+      autoReleaseUsingConfigDocs &&
       !this.artifacts.angularNodeApp.__docsAppBuild.configExists
     ) {
       Helpers.error(
@@ -435,21 +434,21 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact {
     //#endregion
 
     //#region resolve ishould release library
-    if (releaseOptions.shouldReleaseLibrary) {
-      if (releaseOptions.releaseVersionBumpType === 'major') {
-        const newVersion =
-          this.project.packageJson
-            .versionWithMajorPlusOneAndMinorZeroAndPatchZero;
-        this.project.packageJson.setVersion(newVersion);
-      } else if (releaseOptions.releaseVersionBumpType === 'minor') {
-        const newVersion =
-          this.project.packageJson.versionWithMinorPlusOneAndPatchZero;
-        this.project.packageJson.setVersion(newVersion);
-      } else if (releaseOptions.releaseVersionBumpType === 'patch') {
-        const newVersion = this.project.packageJson.versionWithPatchPlusOne;
-        this.project.packageJson.setVersion(newVersion);
-      }
+
+    if (releaseOptions.releaseVersionBumpType === 'major') {
+      const newVersion =
+        this.project.packageJson
+          .versionWithMajorPlusOneAndMinorZeroAndPatchZero;
+      this.project.packageJson.setVersion(newVersion);
+    } else if (releaseOptions.releaseVersionBumpType === 'minor') {
+      const newVersion =
+        this.project.packageJson.versionWithMinorPlusOneAndPatchZero;
+      this.project.packageJson.setVersion(newVersion);
+    } else if (releaseOptions.releaseVersionBumpType === 'patch') {
+      const newVersion = this.project.packageJson.versionWithPatchPlusOne;
+      this.project.packageJson.setVersion(newVersion);
     }
+
     //#endregion
 
     this.project.npmHelpers.copyDepsFromCoreContainer('Release');
@@ -733,12 +732,6 @@ processing...
   //#region release lib process
   private async releaseLibProcess(releaseOptions: ReleaseOptions) {
     //#region @backendFunc
-    const {
-      prod = false,
-      shouldReleaseLibrary,
-      automaticReleaseDocs,
-      automaticRelease,
-    } = releaseOptions;
 
     if (!this.project.releaseProcess.isInCiReleaseProject) {
       const tempGeneratedCiReleaseProject =
@@ -749,7 +742,9 @@ processing...
       return;
     }
 
-    Helpers.log(`automaticRelease=${automaticRelease}`);
+    Helpers.log(
+      `autoReleaseUsingConfig=${releaseOptions.autoReleaseUsingConfig}`,
+    );
     Helpers.log(`global.tnpNonInteractive=${global.tnpNonInteractive}`);
 
     const realCurrentProj =
@@ -757,7 +752,7 @@ processing...
 
     let specificProjectForBuild: Project;
 
-    if (shouldReleaseLibrary && !automaticReleaseDocs) {
+    if (!releaseOptions.autoReleaseUsingConfigDocs) {
       //#region publish lib process
       var newVersion = realCurrentProj.packageJson.version;
 
@@ -853,8 +848,8 @@ processing...
             {
               realCurrentProj,
               newVersion,
-              automaticRelease,
-              prod,
+              autoReleaseUsingConfig: releaseOptions.autoReleaseUsingConfig,
+              prod: releaseOptions.prod,
             },
           );
         }
@@ -866,14 +861,17 @@ processing...
     }
 
     //#region build docs
-    if (!global.tnpNonInteractive || automaticReleaseDocs) {
+    if (
+      !global.tnpNonInteractive ||
+      releaseOptions.autoReleaseUsingConfigDocs
+    ) {
       // Helpers.clearConsole();
       await new Promise<void>(async (resolve, reject) => {
         if (this.project.framework.isStandaloneProject) {
           await this.project.artifactsManager.artifact.npmLibAndCliTool.__libStandalone.buildDocs(
-            prod,
+            releaseOptions.prod,
             realCurrentProj,
-            automaticReleaseDocs,
+            releaseOptions.autoReleaseUsingConfigDocs,
             async () => {
               try {
                 specificProjectForBuild = await this.__releaseBuildProcess({
@@ -897,7 +895,7 @@ processing...
     //#region push code to repo
     const docsCwd = realCurrentProj.pathFor('docs');
 
-    if (!automaticReleaseDocs && Helpers.exists(docsCwd)) {
+    if (!releaseOptions.autoReleaseUsingConfigDocs && Helpers.exists(docsCwd)) {
       await this.project.artifactsManager.artifact.npmLibAndCliTool.__displayInfoBeforePublish(
         realCurrentProj,
         DEFAULT_PORT.DIST_SERVER_DOCS,
@@ -907,9 +905,9 @@ processing...
     await this.project.git.pushToGitRepo(
       realCurrentProj,
       newVersion,
-      automaticReleaseDocs,
+      releaseOptions.autoReleaseUsingConfigDocs,
     );
-    if (!automaticReleaseDocs && Helpers.exists(docsCwd)) {
+    if (!releaseOptions.autoReleaseUsingConfigDocs && Helpers.exists(docsCwd)) {
       await Helpers.killProcessByPort(DEFAULT_PORT.DIST_SERVER_DOCS);
     }
     //#endregion

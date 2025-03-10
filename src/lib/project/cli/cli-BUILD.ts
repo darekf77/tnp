@@ -78,22 +78,7 @@ class $Build extends BaseCommandLineFeature<BuildOptions, Project> {
     );
   }
 
-  compiledPathes() {
-    console.log(
-      this.project.nodeModules.compiledProjectFilesAndFolders.join('\n'),
-    );
-    this._exit();
-  }
-
   async start() {
-    const { smartContainerTargetName } = this.params;
-
-    // console.log('smartContainerTargetName', smartContainerTargetName);
-    // console.log(
-    //   'this.project?.smartContainerBuildTarget?.name',
-    //   this.project?.smartContainerBuildTarget?.name,
-    // );
-
     await this.project.build(
       BuildOptions.from({
         ...this.params,

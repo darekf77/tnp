@@ -1,28 +1,16 @@
 //#region imports
-import { BaseContext, Taon } from 'taon/src';
 import { config } from 'tnp-config/src';
 import {
-  CoreModels,
   Helpers,
   UtilsTerminal,
   _,
-  chalk,
-  dateformat,
-  fse,
   path,
 } from 'tnp-core/src';
 
 import {
-  PortUtils,
-  tmpBaseHrefOverwriteRelPath,
-  tmpBuildPort,
-} from '../../../constants';
-import {
   BuildOptions,
   ClearOptions,
   InitOptions,
-  ReleaseArtifactTaonNames,
-  ReleaseArtifactTaonNamesArr,
   ReleaseOptions,
 } from '../../../options';
 import type { Project } from '../project';
@@ -31,11 +19,8 @@ import type {
   BaseArtifact,
   IArtifactProcessObj,
 } from './__base__/base-artifact';
-import {
-  BuildProcess,
-  BuildProcessController,
-} from './__base__/build-process/app/build-process';
 import { ArtifactsGlobalHelper } from './__helpers__/artifacts-helpers';
+import { BuildProcessManager } from './build-process-maanger';
 //#endregion
 
 /**
@@ -197,12 +182,33 @@ export class ArtifactManager {
     }
     //#endregion
 
-    await this.artifact.docsWebapp.buildPartial(buildOptions);
-    await this.artifact.npmLibAndCliTool.buildPartial(buildOptions);
-    await this.artifact.angularNodeApp.buildPartial(buildOptions);
-    await this.artifact.electronApp.buildPartial(buildOptions);
-    await this.artifact.mobileApp.buildPartial(buildOptions);
-    await this.artifact.vscodePlugin.buildPartial(buildOptions);
+    if (buildOptions.watch) {
+      const processManager = new BuildProcessManager();
+      processManager.init({
+        title: 'What do you want to build?',
+        commands: [
+          {
+            name: 'TSC',
+            cmd: 'node -e "setInterval(() => console.log(\'TSC: Hello from tsc -w\'), 1000)"',
+          },
+          {
+            name: 'NG1',
+            cmd: 'node -e "setInterval(() => console.log(\'NG1: Hello from ng --watch\'), 1200)"',
+          },
+          {
+            name: 'NG2',
+            cmd: 'node -e "setInterval(() => console.log(\'NG2: Hello from ng --watch\'), 1500)"',
+          },
+        ],
+      });
+    } else {
+      await this.artifact.docsWebapp.buildPartial(buildOptions);
+      await this.artifact.npmLibAndCliTool.buildPartial(buildOptions);
+      await this.artifact.angularNodeApp.buildPartial(buildOptions);
+      await this.artifact.electronApp.buildPartial(buildOptions);
+      await this.artifact.mobileApp.buildPartial(buildOptions);
+      await this.artifact.vscodePlugin.buildPartial(buildOptions);
+    }
   }
 
   async buildAllChildren(options: BuildOptions): Promise<void> {

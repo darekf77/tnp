@@ -248,11 +248,8 @@ export class ReleaseOptions extends BuildOptionsLibOrApp<ReleaseOptions> {
     this.resolved = [];
   }
   releaseVersionBumpType: CoreModels.ReleaseVersionType;
-  shouldReleaseLibrary: boolean;
-  /**
-   * build action only for specific framework version of prohect
-   */
-  frameworkVersion: CoreModels.FrameworkVersion;
+
+
   /**
    * start release on project
    */
@@ -273,11 +270,11 @@ export class ReleaseOptions extends BuildOptionsLibOrApp<ReleaseOptions> {
   /**
    * quick automatic release of lib
    */
-  automaticRelease: boolean;
+  autoReleaseUsingConfig: boolean;
   /**
    * quick automatic release of docs app(s)
    */
-  automaticReleaseDocs: boolean;
+  autoReleaseUsingConfigDocs: boolean;
   /**
    * @deprecated
    */
@@ -286,7 +283,6 @@ export class ReleaseOptions extends BuildOptionsLibOrApp<ReleaseOptions> {
    * release only trusted projects for specific container framework version
    */
   trusted: boolean;
-  releaseTarget: 'lib' | 'app' | 'lib-app';
   public static from(options: Partial<ReleaseOptions>): ReleaseOptions {
     return instanceFrom(options, ReleaseOptions);
   }
