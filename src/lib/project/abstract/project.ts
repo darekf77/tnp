@@ -170,9 +170,13 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     releaseOptions = ReleaseOptions.from(releaseOptions);
 
     if (this.framework.isStandaloneProject) {
+      await this.git.resolveActionCommits();
       await this.artifactsManager.release(releaseOptions);
     }
     if (this.framework.isContainer) {
+      for (const child of this.children) {
+        await child.git.resolveActionCommits();
+      }
       await this.artifactsManager.releaseAllChildren(releaseOptions);
       await this.artifactsManager.release(releaseOptions);
     }

@@ -386,29 +386,39 @@ export class ArtifactManager {
       !releaseOptions.targetArtifact ||
       releaseOptions.targetArtifact === 'angular-node-app'
     ) {
-      await this.artifact.npmLibAndCliTool.buildPartial(BuildOptions.fromRelease(releaseOptions));
+      await this.artifact.npmLibAndCliTool.buildPartial(
+        BuildOptions.fromRelease(releaseOptions),
+      );
       await this.artifact.angularNodeApp.releasePartial(releaseOptions);
     }
     if (
       !releaseOptions.targetArtifact ||
       releaseOptions.targetArtifact === 'electron-app'
     ) {
-      await this.artifact.npmLibAndCliTool.buildPartial(BuildOptions.fromRelease(releaseOptions));
-      await this.artifact.angularNodeApp.buildPartial(BuildOptions.fromRelease(releaseOptions));
+      await this.artifact.npmLibAndCliTool.buildPartial(
+        BuildOptions.fromRelease(releaseOptions),
+      );
+      await this.artifact.angularNodeApp.buildPartial(
+        BuildOptions.fromRelease(releaseOptions),
+      );
       await this.artifact.electronApp.releasePartial(releaseOptions);
     }
     if (
       !releaseOptions.targetArtifact ||
       releaseOptions.targetArtifact === 'mobile-app'
     ) {
-      await this.artifact.npmLibAndCliTool.buildPartial(BuildOptions.fromRelease(releaseOptions));
+      await this.artifact.npmLibAndCliTool.buildPartial(
+        BuildOptions.fromRelease(releaseOptions),
+      );
       await this.artifact.mobileApp.releasePartial(releaseOptions);
     }
     if (
       !releaseOptions.targetArtifact ||
       releaseOptions.targetArtifact === 'vscode-plugin'
     ) {
-      await this.artifact.npmLibAndCliTool.buildPartial(BuildOptions.fromRelease(releaseOptions));
+      await this.artifact.npmLibAndCliTool.buildPartial(
+        BuildOptions.fromRelease(releaseOptions),
+      );
       await this.artifact.vscodePlugin.releasePartial(releaseOptions);
     }
   }
@@ -442,6 +452,7 @@ export class ArtifactManager {
   }
   //#endregion
 
+  //#region DEPRECATED
   private async wrappWithProcessInfo(
     fn: () => Promise<void>,
     processName: keyof ArtifactManager,
@@ -522,4 +533,5 @@ export class ArtifactManager {
     // await buildProcessController.initializeClientToRemoteServer(this.project);
     //#endregion
   }
+  //#endregion
 }

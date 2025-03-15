@@ -352,14 +352,22 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     );
     //#endregion
   }
+  //#endregion
 
   async releasePartial(releaseOptions: ReleaseOptions): Promise<{
     releaseProjPath: string;
     releaseType: ReleaseType;
   }> {
-    // await this.buildPartial(BuildOptions.fromRelease(releaseOptions));
-    // TODO
-    return void 0;
+    let releaseProjPath: string;
+    let releaseType: ReleaseType;
+    const {
+      npmLibraryInNodeModulesAbsPath,
+      distOutBackendPath,
+      distOutBrowserPath,
+      distOutWebsqlPath,
+    } = await this.buildPartial(BuildOptions.fromRelease(releaseOptions));
+
+    return { releaseProjPath, releaseType };
   }
   clearPartial(options?: ClearOptions): Promise<void> {
     return void 0; // TODO implement
