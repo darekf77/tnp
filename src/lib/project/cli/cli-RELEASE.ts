@@ -78,27 +78,6 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
 
   //#region old release functions
 
-  //#region install:locally
-  async installLocally() {
-    if (
-      !this.project.hasFolder('out') ||
-      Helpers.filesFrom(this.project.pathFor('out'), true).length === 0
-    ) {
-      Helpers.info('Building project...');
-      await this.project.build(BuildOptions.from({ watch: false }));
-    }
-    await this.project.artifactsManager.artifact.vscodePlugin.installLocally(
-      this.params,
-    );
-    this._exit();
-  }
-
-  async clearInstallLocally() {
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.clearPartial();
-    await this.installLocally();
-  }
-  //#endregion
-
   //#region automatic release
   async auto() {
     await this._startLibCliReleaseProcess('patch', true);

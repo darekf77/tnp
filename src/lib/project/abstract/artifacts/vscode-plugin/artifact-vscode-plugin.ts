@@ -119,10 +119,75 @@ export class ArtifactVscodePlugin extends BaseArtifact<
         this.vcodeProjectUpdatePackageJsonFilename,
       ]),
     );
+
+    //#region recreate app.vscode.js
+    const relativeAppVscodeJsPath = crossPlatformPath('src/app.vscode.ts');
+    if (!this.project.hasFile(relativeAppVscodeJsPath)) {
+      this.project.writeFile(
+        relativeAppVscodeJsPath,
+        `import { Utils } from 'tnp-core/src';
+import { CommandType, executeCommand } from 'tnp-helpers/src';
+import type { ExtensionContext } from 'vscode';
+
+const group = '${_.startCase(this.project.name)} CLI essentials';
+
+export const commands: CommandType[] = (
+  [
+    {
+      title: 'hello world',
+    },
+    {
+      title: 'hey!',
+    },
+  ] as CommandType[]
+).map(c => {
+  if (!c.command) {
+    c.command = \`extension.\${Utils.camelize(c.title)}\`;
+  }
+  if (!c.group) {
+    c.group = group;
+  }
+  return c;
+});
+
+export function activate(context: ExtensionContext) {
+  for (let index = 0; index < commands.length; index++) {
+    const {
+      title = '',
+      command = '',
+      exec = '',
+      options,
+      isDefaultBuildCommand,
+    } = commands[index];
+    const sub = executeCommand(
+      title,
+      command,
+      exec,
+      options,
+      isDefaultBuildCommand,
+      context,
+    );
+    if (sub) {
+      context.subscriptions.push(sub);
+    }
+  }
+}
+
+export function deactivate() {}
+
+export default { commands };
+
+
+        `,
+      );
+    }
+    //#endregion
+
     //#endregion
   }
   //#endregion
 
+  //#region build partial
   async buildPartial(buildOptions: BuildOptions): Promise<{
     vscodeVsixOutPath: string;
   }> {
@@ -172,7 +237,9 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     return { vscodeVsixOutPath };
     //#endregion
   }
+  //#endregion
 
+  //#region release partial
   async releasePartial(releaseOptions: ReleaseOptions): Promise<{
     releaseProjPath: string;
     releaseType: ReleaseType;
@@ -201,9 +268,13 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     return { releaseProjPath, releaseType };
     //#endregion
   }
+  //#endregion
 
   //#region methods / install locally
-  async installLocally(releaseOptions?: ReleaseOptions) {
+  /**
+   * TODO move this to local release
+   */
+  private async installLocally(releaseOptions?: ReleaseOptions) {
     //#region @backendFunc
     const vsixPackageName = this.extensionVsixName.replace(
       config.frameworkNames.productionFrameworkName,

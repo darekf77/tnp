@@ -356,7 +356,7 @@ Starting backend TypeScript build....
 
 
 
-    ${chalk.bold('YOU CAN ATTACH YOUR BACKEND/NODEJS CODE DEBUGGER NOW')}
+    ${chalk.bold('YOU CAN ATTACH YOUR CODE DEBUGGER NOW')}
 
 
 
