@@ -7,9 +7,11 @@ import { Helpers } from 'tnp-helpers/src';
 import {
   BuildOptions,
   InitOptions,
+  ReleaseArtifactTaon,
   ReleaseArtifactTaonNames,
   ReleaseArtifactTaonNamesArr,
   ReleaseOptions,
+  ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
 import type { ArtifactsGlobalHelper } from '../__helpers__/artifacts-helpers';
@@ -27,35 +29,29 @@ export type IArtifactProcessObj = {
   electronApp: ArtifactElectronApp;
   mobileApp: ArtifactMobileApp;
   docsWebapp: ArtifactDocsWebapp;
-  vscodeExtensionPLugin: ArtifactVscodePlugin;
+  vscodePlugin: ArtifactVscodePlugin;
 };
 
-export abstract class BaseArtifact {
-  constructor(protected readonly project: Project) {}
+export abstract class BaseArtifact<
+  BUILD_OUTPUT extends {},
+  RELEASE_OUTPUT extends {
+    releaseProjPath: string;
+    releaseType: ReleaseType;
+  },
+> {
+  constructor(
+    protected readonly project: Project,
+    protected readonly currentArtifactName: ReleaseArtifactTaon,
+  ) {}
   protected readonly artifacts: IArtifactProcessObj;
-
-  get artifact() {
-    return this.artifacts;
-  }
-  
   protected readonly globalHelper: ArtifactsGlobalHelper;
   protected readonly NPM_RUN_NG_COMMAND: string = `npm-run ng`; // when there is not global "ng" command -> npm-run ng.js works
 
-  //#region  public abstract methods / struct
-  /**
-   * create all temp files and folders for proper inside projects structure
-   * but without any external dependencies
-   * (like npm install, or any other longer process)
-   * struct() <=> init() with struct flag
-   */
-  abstract structPartial(options: InitOptions): Promise<void>;
-  //#endregion
-
   //#region  public abstract methods / init
   /**
-   * everything that in struct()
-   * + install dependencies
-   * + any longer process that reaches for external resources
+   * + create all temp files and folders for proper inside projects structure
+   * + (when struct flag = false) start any longer process that reaches
+   *   for external resources like for example: npm install
    */
   abstract initPartial(options: InitOptions): Promise<void>;
   //#endregion
@@ -65,7 +61,7 @@ export abstract class BaseArtifact {
    * everything that in init()
    * + build project
    */
-  abstract buildPartial(options: BuildOptions): Promise<void>;
+  abstract buildPartial(options: BuildOptions): Promise<BUILD_OUTPUT>;
   //#endregion
 
   //#region  public abstract methods / release
@@ -73,7 +69,7 @@ export abstract class BaseArtifact {
    * everything that in build()
    * + release project (publish to npm, deploy to cloud/server etc.)
    */
-  abstract releasePartial(options: ReleaseOptions): Promise<void>;
+  abstract releasePartial(options: ReleaseOptions): Promise<RELEASE_OUTPUT>;
   //#endregion
 
   //#region  public abstract methods / clear
@@ -82,16 +78,6 @@ export abstract class BaseArtifact {
    * + release project (publish to npm, deploy to cloud/server etc.)
    */
   abstract clearPartial(options: ReleaseOptions): Promise<void>;
-  //#endregion
-
-  //#region getters & methods / recreate release project
-  protected async recreateReleaseProject(
-    buildOptions: BuildOptions,
-    soft = false,
-  ) {
-    this.project.remove(config.folder.tmpDistRelease);
-    await this.__createTempCiReleaseProject(buildOptions);
-  }
   //#endregion
 
   //#region getters & methods / all resources
@@ -113,107 +99,6 @@ export abstract class BaseArtifact {
       ...this.project.taonJson.resources,
     ];
     return res;
-    //#endregion
-  }
-  //#endregion
-
-  //#region getters & methods / create temp project
-  protected async __createTempCiReleaseProject(
-    buildOptions: BuildOptions,
-  ): Promise<Project> {
-    //#region @backendFunc
-    const absolutePathReleaseProject =
-      this.project.releaseProcess.__releaseCiProjectPath;
-
-    this.project.npmHelpers.checkProjectReadyForNpmRelease();
-
-    if (
-      this.project.framework.isStandaloneProject ||
-      this.project.framework.isSmartContainer
-    ) {
-      Helpers.removeFolderIfExists(
-        this.project.pathFor(config.folder.tmpDistRelease),
-      );
-
-      const browserFolder = path.join(
-        this.project.location,
-        config.folder.browser,
-      );
-
-      if (!Helpers.exists(browserFolder)) {
-        Helpers.remove(browserFolder);
-      }
-
-      const websqlFolder = path.join(
-        this.project.location,
-        config.folder.websql,
-      );
-
-      if (!Helpers.exists(websqlFolder)) {
-        Helpers.remove(websqlFolder);
-      }
-
-      Helpers.removeFolderIfExists(absolutePathReleaseProject);
-      Helpers.mkdirp(absolutePathReleaseProject);
-      this.project.artifactsManager.artifact.npmLibAndCliTool.__copyManager.generateSourceCopyIn(
-        absolutePathReleaseProject,
-        {
-          useTempLocation: true, // TODO not needed
-          forceCopyPackageJSON: true, // TODO not needed
-          dereference: true,
-          regenerateProjectChilds: this.project.framework.isSmartContainer,
-        },
-      );
-
-      this.project.packageJson.linkTo(absolutePathReleaseProject);
-      this.project.taonJson.linkTo(absolutePathReleaseProject);
-
-      if (this.project.framework.isStandaloneProject) {
-        await this.project.artifactsManager.globalHelper.env.init();
-        this.project.artifactsManager.globalHelper.env.copyTo(
-          absolutePathReleaseProject,
-        );
-      }
-
-      if (this.project.framework.isSmartContainer) {
-        const children = this.project.children;
-        for (let index = 0; index < children.length; index++) {
-          const child = children[index] as Project;
-          await child.artifactsManager.globalHelper.env.init();
-          child.artifactsManager.globalHelper.env.copyTo(
-            crossPlatformPath([absolutePathReleaseProject, child.name]),
-          );
-        }
-      }
-
-      const generatedProject = this.project.ins.From(
-        absolutePathReleaseProject,
-      ) as Project;
-      this.__allResources.forEach(relPathResource => {
-        const source = path.join(this.project.location, relPathResource);
-        const dest = path.join(absolutePathReleaseProject, relPathResource);
-        if (Helpers.exists(source)) {
-          if (Helpers.isFolder(source)) {
-            Helpers.copy(source, dest, { recursive: true });
-          } else {
-            Helpers.copyFile(source, dest);
-          }
-        }
-      });
-
-      // this.linkedRepos.linkToProject(generatedProject as Project)
-      this.project.nodeModules.linkToProject(generatedProject as any);
-
-      const vscodeFolder = path.join(
-        generatedProject.location,
-        config.folder._vscode,
-      );
-      Helpers.removeFolderIfExists(vscodeFolder);
-      await generatedProject.artifactsManager.artifact.npmLibAndCliTool.__insideStructure.recrate(
-        InitOptions.fromBuild(buildOptions),
-      );
-      return generatedProject;
-    }
     //#endregion
   }
   //#endregion

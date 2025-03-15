@@ -1,6 +1,7 @@
 //#region imports
 import { config } from 'tnp-config/src';
 import { chalk, fse, json5, path, _ } from 'tnp-core/src';
+import { Utils } from 'tnp-core/src';
 import { BaseVscodeHelpers, Helpers } from 'tnp-helpers/src';
 
 import {
@@ -10,6 +11,7 @@ import {
   taonConfigSchemaJsonContainer,
 } from '../../constants';
 import { Models } from '../../models';
+import { InitingPartialProcess } from '../../options';
 
 import type { Project } from './project';
 //#endregion
@@ -18,8 +20,20 @@ import type { Project } from './project';
  * Handle taon things related to vscode
  * support for launch.json, settings.json etc
  */ // @ts-ignore TODO weird inheritance problem
-export class Vscode extends BaseVscodeHelpers<Project> {
+export class Vscode // @ts-ignore TODO weird inheritance problem
+  extends BaseVscodeHelpers<Project>
+  implements InitingPartialProcess
+{
   project: Project;
+
+  async init(): Promise<void> {
+    this.recreateJsonSchemas();
+    this.project.vsCodeHelpers.recreateExtensions();
+    this.project.vsCodeHelpers.recreateWindowTitle();
+    this.project.vsCodeHelpers.saveLaunchJson();
+    this.project.vsCodeHelpers.saveTasksJson();
+  }
+
   //#region recreate jsonc schema
   recreateJsonSchemas(): void {
     this.recreateJsonSchemaForDocs();
@@ -64,46 +78,63 @@ export class Vscode extends BaseVscodeHelpers<Project> {
   //#region recreate jsonc schema for taon
   public recreateJsonSchemaForTaon(): void {
     //#region @backendFunc
-    const currentSchemas: {
+    let currentSchemas: {
       fileMatch: string[];
       url: string;
     }[] =
       this.project.getValueFromJSONC(this.settingsJson, `['json.schemas']`) ||
       [];
 
+    const toDeleteIndex = currentSchemas
+      .filter(
+        (x, i) => x =>
+          (_.first(x.fileMatch) as string)?.startsWith(
+            `/${config.file.taon_jsonc}`,
+          ),
+      )
+      .map((_, i) => i);
+
+    for (const index of toDeleteIndex) {
+      currentSchemas.splice(index, 1);
+    }
+
     if (this.project.framework.isStandaloneProject) {
-      (() => {
-        const properSchema = {
-          fileMatch: [`/${config.file.taon_jsonc}`],
-          url: `./${taonConfigSchemaJsonStandalone}`,
-        };
-        const existedIndex = currentSchemas.findIndex(
-          x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
-        );
-        if (existedIndex !== -1) {
-          currentSchemas[existedIndex] = properSchema;
-        } else {
-          currentSchemas.push(properSchema);
-        }
-      })();
+      const properSchema = {
+        fileMatch: [`/${config.file.taon_jsonc}`],
+        url: `./${taonConfigSchemaJsonStandalone}`,
+      };
+
+      // TODO @LAST filter schemas
+      // currentSchemas = Utils.uniqArray(currentSchemas,'fileMatch');
+
+      const existedIndex = currentSchemas.findIndex(
+        x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
+      );
+      if (existedIndex !== -1) {
+        currentSchemas[existedIndex] = properSchema;
+      } else {
+        currentSchemas.push(properSchema);
+      }
+      this.project.removeFile(taonConfigSchemaJsonContainer);
     }
 
     if (this.project.framework.isContainer) {
-      (() => {
-        const properSchema = {
-          fileMatch: [`/${config.file.taon_jsonc}`],
-          url: `./${taonConfigSchemaJsonContainer}`,
-        };
-        const existedIndex = currentSchemas.findIndex(
-          x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
-        );
-        if (existedIndex !== -1) {
-          currentSchemas[existedIndex] = properSchema;
-        } else {
-          currentSchemas.push(properSchema);
-        }
-      })();
+      const properSchema = {
+        fileMatch: [`/${config.file.taon_jsonc}`],
+        url: `./${taonConfigSchemaJsonContainer}`,
+      };
+      const existedIndex = currentSchemas.findIndex(
+        x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
+      );
+      if (existedIndex !== -1) {
+        currentSchemas[existedIndex] = properSchema;
+      } else {
+        currentSchemas.push(properSchema);
+      }
+      this.project.removeFile(taonConfigSchemaJsonStandalone);
     }
+
+    this.project.removeFile('taon-config.schema.json'); // QUICK_FIX
 
     this.project.setValueToJSONC(
       this.settingsJson,
@@ -114,246 +145,234 @@ export class Vscode extends BaseVscodeHelpers<Project> {
   }
   //#endregion
 
-  //#region save launch.json
-  public __saveLaunchJson(basePort: number = 4100) {
-    //#region @backendFunc
-    if (this.project.framework.isSmartContainer) {
-      //#region container save
-      const container = this.project;
-      const configurations = container.children
-        .filter(f => {
-          return (
-            f.framework.frameworkVersionAtLeast('v3') &&
-            f.typeIs('isomorphic-lib')
-          );
-        })
-        .map((c, index) => {
-          const backendPort =
-            PortUtils.instance(basePort).calculateServerPortFor(c);
+  get vscodeTempProjFolderName() {
+    return `tmp-vscode-proj`;
+  }
 
-          c.artifactsManager.artifact.angularNodeApp.writePortsToFile();
-          return {
-            type: 'node',
-            request: 'launch',
-            name: `${DEBUG_WORD} Server @${container.name}/${c.name}`,
-            cwd: '${workspaceFolder}' + `/dist/${container.name}/${c.name}`,
-            program:
-              '${workspaceFolder}' +
-              `/dist/${container.name}/${c.name}/run-org.js`,
-            args: [`--child=${c.name}`, `--port=${backendPort}`],
-            // "sourceMaps": true,
-            // "outFiles": [ // TODOD this is causing unbound breakpoing in thir party modules
-            //   "${workspaceFolder}" + ` / dist / ${ container.name } / ${ c.name } / dist/**/ *.js`
-            // ],
-            runtimeArgs: this.__vscodeLaunchRuntimeArgs,
-            presentation: {
-              group: 'workspaceServers',
+  private get vscodePluginDevPreLaunchTask() {
+    //#region vscode update package.json
+    return {
+      label: 'Update package.json vscode metadata',
+      type: 'shell',
+      command:
+        `cd ${this.project.artifactsManager.artifact.vscodePlugin
+          .getTmpVscodeProjPath()
+          .replace(this.project.location + '/', '')}` +
+        ` && node --no-deprecation ${
+          this.project.artifactsManager.artifact.vscodePlugin
+            .vcodeProjectUpdatePackageJsonFilename
+        } ` +
+        `${this.project.artifactsManager.artifact.vscodePlugin.appVscodeJsName.replace(
+          '.js',
+          '',
+        )}`,
+      presentation: {
+        reveal: 'always',
+        panel: 'shared',
+      },
+      problemMatcher: [
+        {
+          owner: 'custom',
+          pattern: [
+            {
+              regexp: '^(.*)$',
+              file: 1,
+              line: 1,
+              column: 1,
+              message: 1,
             },
-          };
-        });
-
-      const temlateSmartContine = {
-        version: '0.2.0',
-        configurations,
-        // "compounds": []
-      };
-
-      const launchJSOnFilePath = path.join(
-        container.location,
-        '.vscode/launch.json',
-      );
-      Helpers.writeFile(launchJSOnFilePath, temlateSmartContine);
-      //#endregion
-    } else if (
-      this.project.framework.isStandaloneProject &&
-      !this.project.framework.isSmartContainerTarget
-    ) {
-      //#region standalone save
-
-      let configurations = [];
-      let compounds: { name: string; configurations: any[] }[] = [];
-
-      //#region template attach process
-      const temlateAttachProcess = {
-        type: 'node',
-        request: 'attach',
-        name: 'Attach to global cli tool',
-        port: 9229,
-        skipFiles: ['<node_internals>/**'],
-        // "outFiles": ["${workspaceFolder}/dist/**/*.js"] // not wokring for copy manager
-      };
-      //#endregion
-
-      //#region tempalte start normal nodejs server
-      const templateForServer = (
-        serverChild: Project,
-        clientProject: Project,
-        workspaceLevel: boolean,
-      ) => {
-        const backendPort =
-          PortUtils.instance(basePort).calculateServerPortFor(serverChild);
-        clientProject.artifactsManager.artifact.angularNodeApp.writePortsToFile();
-        const startServerTemplate = {
-          type: 'node',
-          request: 'launch',
-          name: `${DEBUG_WORD} Server`,
-          program: '${workspaceFolder}/run.js',
-          cwd: void 0,
-          args: [`port=${backendPort}`],
-          outFiles: this.outFilesArgs,
-          // "outFiles": ["${workspaceFolder}/dist/**/*.js"], becouse of this debugging inside node_moudles
-          // with compy manager created moduels does not work..
-          runtimeArgs: this.__vscodeLaunchRuntimeArgs,
-        };
-        if (serverChild.name !== clientProject.name) {
-          let cwd = '${workspaceFolder}' + `/../ ${serverChild.name}`;
-          if (workspaceLevel) {
-            cwd = '${workspaceFolder}' + `/${serverChild.name}`;
-          }
-          startServerTemplate.program = cwd + '/run.js';
-          startServerTemplate.cwd = cwd;
-        }
-        if (
-          serverChild.location === clientProject.location &&
-          serverChild.framework.isStandaloneProject
-        ) {
-          // startServerTemplate.name = `${startServerTemplate.name} Standalone`
-        } else {
-          startServerTemplate.name = `${startServerTemplate.name} '${serverChild.name}' for '${clientProject.name}'`;
-        }
-        startServerTemplate.args.push(
-          `--ENVoverride=${encodeURIComponent(
-            JSON.stringify(
-              {
-                clientProjectName: clientProject.name,
-              } as Models.EnvConfig,
-              null,
-              4,
-            ),
-          )} `,
-        );
-        return startServerTemplate;
-      };
-      //#endregion
-
-      //#region tempalte start nodemon nodejs server
-      // const startNodemonServer = () => {
-      //   const result = {
-      //     'type': 'node',
-      //     'request': 'launch',
-      //     'remoteRoot': '${workspaceRoot}',
-      //     'localRoot': '${workspaceRoot}',
-      //     'name': 'Launch Nodemon server',
-      //     'runtimeExecutable': 'nodemon',
-      //     'program': '${workspaceFolder}/run.js',
-      //     'restart': true,
-      //     'sourceMaps': true,
-      //     'console': 'internalConsole',
-      //     'internalConsoleOptions': 'neverOpen',
-      //     runtimeArgs: this.__vscodeLaunchRuntimeArgs
-      //   };
-      //   return result;
-      // }
-      //#endregion
-
-      //#region  tempalte start ng serve
-
-      // /**
-      //  * @deprecated
-      //  */
-      // const startNgServeTemplate = (servePort: number, workspaceChild: Project, workspaceLevel: boolean) => {
-      //   const result = {
-      //     'name': 'Debugger with ng serve',
-      //     'type': 'chrome',
-      //     'request': 'launch',
-      //     cwd: void 0,
-      //     // "userDataDir": false,
-      //     'preLaunchTask': 'Ng Serve',
-      //     'postDebugTask': 'terminateall',
-      //     'sourceMaps': true,
-      //     // "url": `http://localhost:${!isNaN(servePort) ? servePort : 4200}/#`,
-      //     'webRoot': '${workspaceFolder}',
-      //     'sourceMapPathOverrides': {
-      //       'webpack:/*': '${webRoot}/*',
-      //       '/./*': '${webRoot}/*',
-      //       '/tmp-src/*': '${webRoot}/*',
-      //       '/*': '*',
-      //       '/./~/*': '${webRoot}/node_modules/*'
-      //     }
-      //   }
-      //   if (workspaceChild) {
-      //     result.cwd = '${workspaceFolder}' + `/${workspaceChild.name}`;
-      //     result.webRoot = '${workspaceFolder}' + `/${workspaceChild.name}`;
-      //     result.name = `${result.name} for ${workspaceChild.name}`
-      //   }
-      //   if (workspaceLevel) {
-      //     result.preLaunchTask = `${result.preLaunchTask} for ${workspaceChild.name}`;
-      //   }
-      //   return result;
-      // };
-      //#endregion
-
-      //#region electron
-      const startElectronServeTemplate = (remoteDebugElectronPort: number) => {
-        return {
-          name: `${DEBUG_WORD} Electron`,
-          type: 'node',
-          request: 'launch',
-          protocol: 'inspector',
-          cwd: '${workspaceFolder}',
-          runtimeExecutable: '${workspaceFolder}/node_modules/.bin/electron',
-          trace: 'verbose',
-          runtimeArgs: [
-            '--serve',
-            '.',
-            `--remote-debugging-port=${remoteDebugElectronPort}`, // 9876
           ],
-          windows: {
-            runtimeExecutable:
-              '${workspaceFolder}/node_modules/.bin/electron.cmd',
+          background: {
+            activeOnStart: true,
+            beginsPattern: 'Update package.json vscode plugin metadata...',
+            endsPattern: 'Done update package.json',
           },
-        };
-      };
-      //#endregion
+        },
+      ],
+      group: {
+        kind: 'build',
+        isDefault: true,
+      },
+    };
+  }
 
-      //#region handle standalone or worksapce child
-      if (this.project.typeIs('isomorphic-lib')) {
-        configurations = [
-          // startNodemonServer()
-        ];
-        if (this.project.framework.isStandaloneProject) {
-          configurations.push(
-            templateForServer(this.project, this.project, false),
-          );
-          // configurations.push(startNgServeTemplate(9000, void 0, false));
-          configurations.push(
-            startElectronServeTemplate(
-              PortUtils.instance(basePort).calculatePortForElectronDebugging(
-                this.project,
-              ),
-            ),
-          );
-          compounds.push({
-            name: `${DEBUG_WORD} (Server + Electron)`,
-            configurations: [...configurations.map(c => c.name)],
-          });
-          configurations.push(temlateAttachProcess);
-        }
-      }
-      //#endregion
+  public saveTasksJson(): void {
+    //#region @backendFunc
 
-      const launchJSOnFilePath = path.join(
-        this.project.location,
-        '.vscode/launch.json',
-      );
+    //#endregion
 
-      Helpers.writeJson(launchJSOnFilePath, {
-        version: '0.2.0',
-        configurations,
-        compounds,
-      });
-      //#endregion
+    this.project.writeJson('.vscode/tasks.json', {
+      version: '2.0.0',
+      tasks: [this.vscodePluginDevPreLaunchTask],
+    });
+    //#endregion
+  }
+
+  //#region save launch.json
+  public saveLaunchJson(basePort: number = 4100): void {
+    //#region @backendFunc
+    if (!this.project.framework.isStandaloneProject) {
+      return;
     }
+    //#region standalone save
+
+    let configurations = [];
+    let compounds: { name: string; configurations: any[] }[] = [];
+
+    //#region template vscode config
+    const vscodeProjDevPath =
+      `${this.vscodeTempProjFolderName}` + `/development/${this.project.name}`;
+    const templatesVscodeExConfig = [
+      {
+        name: 'Debug/Start Vscode Plugin',
+        type: 'extensionHost',
+        request: 'launch',
+        runtimeExecutable: '${execPath}',
+        "sourceMaps": true,
+        "resolveSourceMapLocations": [
+          "${workspaceFolder}/**",
+          "!**/node_modules/**"
+        ],
+        args: [
+          `--extensionDevelopmentPath=\${workspaceFolder}/${vscodeProjDevPath}`,
+        ],
+
+        outFiles: [`\${workspaceFolder}/${vscodeProjDevPath}/out/**/*.js`],
+        preLaunchTask: this.vscodePluginDevPreLaunchTask.label,
+      },
+      // {
+      //   name: 'Extension Tests',
+      //   type: 'extensionHost',
+      //   request: 'launch',
+      //   runtimeExecutable: '${execPath}',
+      //   args: [
+      //     '--extensionDevelopmentPath=${workspaceFolder}',
+      //     '--extensionTestsPath=${workspaceFolder}/out/test',
+      //   ],
+      //   outFiles: ['${workspaceFolder}/out/test/**/*.js'],
+      //   preLaunchTask: 'npm: watch',
+      // },
+    ];
+    //#endregion
+
+    //#region template attach process
+    const templateAttachProcess = {
+      type: 'node',
+      request: 'attach',
+      name: 'Attach to global cli tool',
+      port: 9229,
+      skipFiles: ['<node_internals>/**'],
+      // "outFiles": ["${workspaceFolder}/dist/**/*.js"] // not wokring for copy manager
+    };
+    //#endregion
+
+    //#region tempalte start normal nodejs server
+    const templateForServer = (
+      serverChild: Project,
+      clientProject: Project,
+      workspaceLevel: boolean,
+    ) => {
+      const backendPort =
+        PortUtils.instance(basePort).calculateServerPortFor(serverChild);
+      clientProject.artifactsManager.artifact.angularNodeApp.writePortsToFile();
+      const startServerTemplate = {
+        type: 'node',
+        request: 'launch',
+        name: `${DEBUG_WORD} Server`,
+        program: '${workspaceFolder}/run.js',
+        cwd: void 0,
+        args: [`port=${backendPort}`],
+        outFiles: this.outFilesArgs,
+        // "outFiles": ["${workspaceFolder}/dist/**/*.js"], becouse of this debugging inside node_moudles
+        // with compy manager created moduels does not work..
+        runtimeArgs: this.__vscodeLaunchRuntimeArgs,
+      };
+      if (serverChild.name !== clientProject.name) {
+        let cwd = '${workspaceFolder}' + `/../ ${serverChild.name}`;
+        if (workspaceLevel) {
+          cwd = '${workspaceFolder}' + `/${serverChild.name}`;
+        }
+        startServerTemplate.program = cwd + '/run.js';
+        startServerTemplate.cwd = cwd;
+      }
+      if (
+        serverChild.location === clientProject.location &&
+        serverChild.framework.isStandaloneProject
+      ) {
+        // startServerTemplate.name = `${startServerTemplate.name} Standalone`
+      } else {
+        startServerTemplate.name = `${startServerTemplate.name} '${serverChild.name}' for '${clientProject.name}'`;
+      }
+      startServerTemplate.args.push(
+        `--ENVoverride=${encodeURIComponent(
+          JSON.stringify(
+            {
+              clientProjectName: clientProject.name,
+            } as Models.EnvConfig,
+            null,
+            4,
+          ),
+        )} `,
+      );
+      return startServerTemplate;
+    };
+    //#endregion
+
+    //#region electron
+    const startElectronServeTemplate = (remoteDebugElectronPort: number) => {
+      return {
+        name: `${DEBUG_WORD} Electron`,
+        type: 'node',
+        request: 'launch',
+        protocol: 'inspector',
+        cwd: '${workspaceFolder}',
+        runtimeExecutable: '${workspaceFolder}/node_modules/.bin/electron',
+        trace: 'verbose',
+        runtimeArgs: [
+          '--serve',
+          '.',
+          `--remote-debugging-port=${remoteDebugElectronPort}`, // 9876
+        ],
+        windows: {
+          runtimeExecutable:
+            '${workspaceFolder}/node_modules/.bin/electron.cmd',
+        },
+      };
+    };
+    //#endregion
+
+    //#region handle standalone or worksapce child
+
+    configurations = [
+      // startNodemonServer()
+    ];
+
+    configurations.push(templateForServer(this.project, this.project, false));
+    // configurations.push(startNgServeTemplate(9000, void 0, false));
+    configurations.push(
+      startElectronServeTemplate(
+        PortUtils.instance(basePort).calculatePortForElectronDebugging(
+          this.project,
+        ),
+      ),
+    );
+    compounds.push({
+      name: `${DEBUG_WORD} (Server + Electron)`,
+      configurations: [...configurations.map(c => c.name)],
+    });
+    configurations.push(templateAttachProcess);
+
+    configurations.push(...templatesVscodeExConfig);
+
+    //#endregion
+
+    this.project.writeJson('.vscode/launch.json', {
+      version: '0.2.0',
+      configurations,
+      compounds,
+    });
+    //#endregion
+
     //#endregion
   }
   //#endregion
@@ -485,9 +504,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
   get __vscodeFileTemplates() {
     //#region @backendFunc
     if (this.project.framework.frameworkVersionAtLeast('v2')) {
-      return [
-        // '.vscode/tasks.json.filetemplate',
-      ];
+      return [];
     }
     return [];
     //#endregion

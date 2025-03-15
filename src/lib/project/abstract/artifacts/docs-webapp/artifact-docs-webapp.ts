@@ -1,38 +1,49 @@
-import { ClearOptions, ReleaseOptions } from '../../../../options';
+import {
+  BuildOptions,
+  ClearOptions,
+  InitOptions,
+  ReleaseOptions,
+  ReleaseType,
+} from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact } from '../__base__/base-artifact';
 
 import { Docs } from './docs';
 
-export class ArtifactDocsWebapp extends BaseArtifact {
+export class ArtifactDocsWebapp extends BaseArtifact<
+  {
+    docsWebappDistOutPath: string;
+  },
+  {
+    releaseProjPath: string;
+    releaseType: ReleaseType;
+  }
+> {
   public docs: Docs;
 
   constructor(protected readonly project: Project) {
-    super(project);
+    super(project, 'docs-webapp');
+    this.docs = new Docs(this.project);
   }
 
-  async clearPartial(options: ClearOptions): Promise<void> {
+  async clearPartial(clearOptions: ClearOptions): Promise<void> {
     return void 0; // TODO implement
   }
 
-  async structPartial(options): Promise<void> {
-    if (!this.docs) {
-      this.docs = new Docs(this.project);
-      await this.docs.initizalize();
-    }
+  async initPartial(initOptions: InitOptions): Promise<void> {
+    await this.docs.initizalizeWatchers();
+    await this.docs.init();
+  }
 
+  async buildPartial(
+    buildOptions: BuildOptions,
+  ): Promise<{ docsWebappDistOutPath: string }> {
     return void 0; // TODO implement
   }
 
-  async initPartial(options) {
-    return void 0; // TODO implement
-  }
-
-  async buildPartial(options) {
-    return void 0; // TODO implement
-  }
-
-  async releasePartial(options) {
+  async releasePartial(
+    releaseOptions: ReleaseOptions,
+  ): Promise<{ releaseProjPath: string; releaseType: ReleaseType }> {
     return void 0; // TODO implement
   }
 }

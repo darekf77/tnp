@@ -13,30 +13,17 @@ export function resolveBrowserPathToAssetFrom(
 ) {
   //#region @backendFunc
   let resultBrowserPath = '';
-  if (projectTargetOrStandalone.framework.isSmartContainerTarget) {
-    // `tmp-src-${outFolder}${websql ? '-websql' : ''}/assets/assets-for/${project.name + '--' + project.parent.name}/`
-    const relatievPath = absolutePath.replace(
-      `${projectTargetOrStandalone?.framework.smartContainerTargetParentContainer.location}/`,
-      '',
-    );
-    const smartContainerTargetChild = _.first(relatievPath.split('/'));
-    resultBrowserPath = `/${relatievPath.split('/').slice(1).join('/')}`;
-    resultBrowserPath = resultBrowserPath.replace(
-      `/${config.folder.src}/${config.folder.assets}/`,
-      `/${config.folder.assets}/${config.folder.assets}-for/${projectTargetOrStandalone.framework.smartContainerTargetParentContainer.name + '--' + smartContainerTargetChild}/`,
-    );
-  } else {
-    // `tmp-src-${outFolder}${websql ? '-websql' : ''}/assets/assets-for/${project.name}/`
-    const relatievPath = absolutePath.replace(
-      `${crossPlatformPath(projectTargetOrStandalone.location)}/`,
-      '',
-    );
-    resultBrowserPath = `/${relatievPath}`;
-    resultBrowserPath = resultBrowserPath.replace(
-      `/${config.folder.src}/${config.folder.assets}/`,
-      `/${config.folder.assets}/${config.folder.assets}-for/${projectTargetOrStandalone.name}/`,
-    );
-  }
+
+  // `tmp-src-${outFolder}${websql ? '-websql' : ''}/assets/assets-for/${project.name}/`
+  const relatievPath = absolutePath.replace(
+    `${crossPlatformPath(projectTargetOrStandalone.location)}/`,
+    '',
+  );
+  resultBrowserPath = `/${relatievPath}`;
+  resultBrowserPath = resultBrowserPath.replace(
+    `/${config.folder.src}/${config.folder.assets}/`,
+    `/${config.folder.assets}/${config.folder.assets}-for/${projectTargetOrStandalone.name}/`,
+  );
 
   return resultBrowserPath;
   //#endregion
@@ -58,28 +45,15 @@ export function resolvePathToAsset(
   let absPathToAsset = '';
   let browserPath = '';
 
-  if (project.framework.isSmartContainerTarget) {
-    // stratego for smart container target project
-    absPathToAsset = crossPlatformPath([
-      project.framework.smartContainerTargetParentContainer.location,
+  // stratego for normal standalone project
+  absPathToAsset = crossPlatformPath([project.location, loaderRelativePath]);
+  if (!Helpers.exists(absPathToAsset)) {
+    absPathToAsset = absPathToAsset.replace(
+      `${project.name}/${loaderRelativePath}`,
       loaderRelativePath,
-    ]);
-    if (!Helpers.exists(absPathToAsset)) {
-      absPathToAsset = absPathToAsset.replace(
-        loaderRelativePath,
-        `${project.name}/${loaderRelativePath}`,
-      );
-    }
-  } else {
-    // stratego for normal standalone project
-    absPathToAsset = crossPlatformPath([project.location, loaderRelativePath]);
-    if (!Helpers.exists(absPathToAsset)) {
-      absPathToAsset = absPathToAsset.replace(
-        `${project.name}/${loaderRelativePath}`,
-        loaderRelativePath,
-      );
-    }
+    );
   }
+
   browserPath = resolveBrowserPathToAssetFrom(project, absPathToAsset);
 
   return browserPath;
@@ -88,55 +62,20 @@ export function resolvePathToAsset(
 
 export function recreateIndex(project: Project) {
   //#region @backendFunc
-  (() => {
-    const indexInSrcFile = crossPlatformPath(
-      path.join(project.location, config.folder.src, config.file.index_ts),
-    );
 
-    if (project.framework.isSmartContainerTarget) {
-      const container = project.framework.smartContainerTargetParentContainer;
-      if (!Helpers.exists(indexInSrcFile)) {
-        const exportsContainer = container.children
-          .filter(
-            c =>
-              c.typeIs('isomorphic-lib') &&
-              c.framework.frameworkVersionAtLeast('v3'),
-          )
-          .map(c => {
-            return `export * from './libs/${c.name}';`;
-          })
-          .join('\n');
-        Helpers.writeFile(
-          indexInSrcFile,
-          `
-${exportsContainer}
-        `,
-        );
-      }
-    } else {
-      if (!Helpers.exists(indexInSrcFile)) {
-        Helpers.writeFile(indexInSrcFile, EXPORT_TEMPLATE('lib'));
-      }
-    }
-  })();
+  const indexInSrcFile = crossPlatformPath(
+    path.join(project.location, config.folder.src, config.file.index_ts),
+  );
+
+  if (!Helpers.exists(indexInSrcFile)) {
+    Helpers.writeFile(indexInSrcFile, EXPORT_TEMPLATE('lib'));
+  }
   //#endregion
 }
 
 export function recreateApp(project: Project) {
   //#region @backendFunc
   //#region when app.ts or app is not available is not
-  // console.log('TRYING ', project.location)
-
-  if (project.framework.isSmartContainerTarget) {
-    project =
-      project.framework.smartContainerTargetParentContainer?.children.find(
-        c => c.name === project.name,
-      );
-    if (!project) {
-      return;
-    }
-  }
-  // console.log('RECREAT TO ', project.location)
 
   const appFile = crossPlatformPath(
     path.join(project.location, config.folder.src, 'app.ts'),

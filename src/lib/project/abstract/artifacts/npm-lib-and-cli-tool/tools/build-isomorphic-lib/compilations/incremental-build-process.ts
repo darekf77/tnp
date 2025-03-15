@@ -32,7 +32,7 @@ export class IncrementalBuildProcess {
     );
 
     //#region init variables
-    const outFolder = buildOptions.outDir;
+    const outFolder = config.folder.dist as any;
     const location = config.folder.src;
 
     Helpers.log(
@@ -96,7 +96,7 @@ export class IncrementalBuildProcess {
         this.buildOptions.websql,
       );
 
-      if (this.project.releaseProcess.isInCiReleaseProject) {
+      if (this.buildOptions.releaseType) {
         browserOutFolder = crossPlatformPath(
           path.join(outFolder, browserOutFolder),
         );
@@ -143,6 +143,24 @@ export class IncrementalBuildProcess {
     Helpers.createSymLink(targetOut, outDistPath, {
       continueWhenExistedFolderDoesntExists: true,
     });
+    //#endregion
+  }
+
+  async runTask(options: {
+    taskName: string;
+    watch?: boolean;
+    afterInitCallBack?: () => void;
+  }): Promise<void> {
+    //#region @backendFunc
+    const { taskName, watch, afterInitCallBack } = options;
+    if (watch) {
+      await this.startAndWatch(taskName, {
+        afterInitCallBack,
+        taskName,
+      });
+    } else {
+      await this.start(taskName, afterInitCallBack);
+    }
     //#endregion
   }
 

@@ -27,7 +27,7 @@ export class LibProjectStandalone extends LibProjectBase {
 
   //#region  fix package.json
 
-  fixPackageJson(realCurrentProj: Project) {
+  fixPackageJson() {
     //#region @backendFunc
     // [
     //   // config.folder.browser, /// TODO FIX for typescript
@@ -82,7 +82,7 @@ export class LibProjectStandalone extends LibProjectBase {
         );
         // QUICK FIX include only
         const dependenciesNamesForNpmLib =
-          realCurrentProj.taonJson.dependenciesNamesForNpmLib || [];
+          this.project.taonJson.dependenciesNamesForNpmLib || [];
 
         const dependencies =
           Helpers.readJson(packageJsonInDistReleasePath, {}).dependencies || {};
@@ -106,14 +106,13 @@ export class LibProjectStandalone extends LibProjectBase {
   //#region build docs
   async buildDocs(
     prod: boolean,
-    realCurrentProj: Project,
-    automaticReleaseDocs: boolean,
+    autoReleaseUsingConfigDocs: boolean,
     libBuildCallback: (websql: boolean, prod: boolean) => any,
   ): Promise<boolean> {
     //#region @backendFunc
 
     //#region resovle variables
-    const mainProjectName = realCurrentProj.name;
+    const mainProjectName = this.project.name;
     let appBuildOptions = { docsAppInProdMode: prod, websql: false };
     //#endregion
 
@@ -121,18 +120,18 @@ export class LibProjectStandalone extends LibProjectBase {
       `Do you wanna build /docs folder app for preview`,
       async () => {
         //#region questions
-        if (automaticReleaseDocs) {
+        if (autoReleaseUsingConfigDocs) {
           appBuildOptions = {
             docsAppInProdMode:
-              realCurrentProj.artifactsManager.artifact.angularNodeApp
+              this.project.artifactsManager.artifact.angularNodeApp
                 .__docsAppBuild.config.prod,
             websql:
-              realCurrentProj.artifactsManager.artifact.angularNodeApp
+              this.project.artifactsManager.artifact.angularNodeApp
                 .__docsAppBuild.config.websql,
           };
         }
 
-        if (!automaticReleaseDocs) {
+        if (!autoReleaseUsingConfigDocs) {
           await Helpers.questionYesNo(
             `Do you want build in production mode`,
             () => {
@@ -161,7 +160,7 @@ export class LibProjectStandalone extends LibProjectBase {
           projName: mainProjectName,
         };
 
-        realCurrentProj.artifactsManager.artifact.angularNodeApp.__docsAppBuild.save(
+        this.project.artifactsManager.artifact.angularNodeApp.__docsAppBuild.save(
           cfg,
         );
 
@@ -176,35 +175,34 @@ export class LibProjectStandalone extends LibProjectBase {
 
         await this.project.build(
           BuildOptions.from({
-            buildType: 'app',
             prod: appBuildOptions.docsAppInProdMode,
             websql: appBuildOptions.websql,
           }),
         );
 
-        realCurrentProj.git.revertFileChanges('docs/CNAME');
+        this.project.git.revertFileChanges('docs/CNAME');
 
-        const tempDocs = realCurrentProj.pathFor(TEMP_DOCS);
-        const docsIndocs = realCurrentProj.pathFor('docs/documentation');
+        const tempDocs = this.project.pathFor(TEMP_DOCS);
+        const docsIndocs = this.project.pathFor('docs/documentation');
         if (Helpers.exists(tempDocs)) {
           Helpers.copy(tempDocs, docsIndocs);
         }
 
         const assetsListPathSourceMain = crossPlatformPath([
-          realCurrentProj.location,
-          `tmp-dist-release/${config.folder.dist}/project/${realCurrentProj.name}`,
+          this.project.location,
+          `tmp-dist-release/${config.folder.dist}/project/${this.project.name}`,
           `tmp-apps-for-${config.folder.dist}${appBuildOptions.websql ? '-websql' : ''}`,
-          realCurrentProj.name,
+          this.project.name,
           config.folder.src,
           config.folder.assets,
-          realCurrentProj.artifactsManager.artifact.angularNodeApp
+          this.project.artifactsManager.artifact.angularNodeApp
             .__assetsFileListGenerator.filename,
         ]);
         const assetsListPathDestMain = crossPlatformPath([
-          realCurrentProj.location,
+          this.project.location,
           config.folder.docs,
           config.folder.assets,
-          realCurrentProj.artifactsManager.artifact.angularNodeApp
+          this.project.artifactsManager.artifact.angularNodeApp
             .__assetsFileListGenerator.filename,
         ]);
         // console.log({
@@ -226,19 +224,18 @@ export class LibProjectStandalone extends LibProjectBase {
 
   //#region publish
   async publish(options: {
-    realCurrentProj: Project;
     newVersion: string;
-    automaticRelease: boolean;
+    autoReleaseUsingConfig: boolean;
     prod: boolean;
   }) {
     //#region @backendFunc
-    const { realCurrentProj, newVersion, automaticRelease, prod } = options;
+    const { newVersion, autoReleaseUsingConfig, prod } = options;
 
     const existedReleaseDist = crossPlatformPath([
       this.project.location,
-      this.project.framework.__getTempProjName('dist'),
+      this.project.framework.getTempProjectNameForCopyTo(),
       config.folder.node_modules,
-      realCurrentProj.name,
+      this.project.name,
     ]);
     Helpers.info(`Publish cwd: ${existedReleaseDist}`);
     await Helpers.questionYesNo(
@@ -260,7 +257,7 @@ export class LibProjectStandalone extends LibProjectBase {
             output: true,
           }).sync();
         } catch (e) {
-          this.project.git.__removeTagAndCommit(automaticRelease);
+          this.project.git.__removeTagAndCommit(autoReleaseUsingConfig);
         }
 
         // release additional packages names
@@ -309,7 +306,7 @@ export class LibProjectStandalone extends LibProjectBase {
           }
         }
 
-        await this.updateTnpAndCoreContainers(realCurrentProj, newVersion);
+        await this.updateTnpAndCoreContainers(newVersion);
       },
     );
     //#endregion

@@ -1,8 +1,6 @@
 {
-  "resources": [],
-  "isUsingOwnNodeModulesInsteadCoreContainer": true,
-  "usesItsOwnNodeModules": true, // TODO remove when all thing updated
-
+  "type": "isomorphic-lib",
+  "version": "v18",
   "dependenciesNamesForNpmLib": [
     // "favicons": "~7.1.2", // favicons generator! - has node gyp dep
     "ora",
@@ -11,20 +9,23 @@
     "magic-renamer",
     "isomorphic-region-loader",
   ],
+
   "cliLibReleaseOptions": {
+    "cliBuildIncludeNodeModules": true,
     "cliBuildNoDts": false,
     "cliBuildObscure": false,
     "cliBuildUglify": false,
-    "cliBuildIncludeNodeModules": true,
   },
-  "type": "isomorphic-lib",
-  "version": "v18",
+  "isUsingOwnNodeModulesInsteadCoreContainer": true,
+  "resources": [],
+  // TODO remove when all things updated
+  "usesItsOwnNodeModules": true,
   "packageJsonOverride": {
+    "license": "MIT",
+
+    "private": false,
     "scripts": {
       "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     },
-
-    "license": "MIT",
-    "private": false,
   },
 }

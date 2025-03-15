@@ -1,10 +1,12 @@
 //#region imports
+import axios from 'axios';
+import { config } from 'tnp-config/src';
 import { chalk, Helpers, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
-import { config } from 'tnp-config/src';
-import cliClassArr from './lib/project/cli/index';
 import { BaseStartConfig } from 'tnp-helpers/src';
-import axios from 'axios';
+
+import cliClassArr from './lib/project/cli/index';
+
 //#endregion
 
 //#region constants
@@ -18,7 +20,7 @@ export async function start(
   argsv: string[],
   frameworkName: 'tnp' | 'taon' = 'tnp',
   mode: 'dist' | 'npm' = 'dist',
-) {
+): Promise<void> {
   config.frameworkName = frameworkName;
 
   // Helpers.log(`ins start, mode: "${mode}"`);
@@ -63,12 +65,20 @@ export async function start(
       app: 'build:app:watch', // should be console menu
       ba: 'build:app',
       b: 'build',
+      bl: 'build:lib',
+      bvscode: 'build:vscode',
       d: 'docs',
       dw: 'docs:watch',
       cb: 'build:clean:build',
       cbuild: 'build:clean:build',
       baw: 'build:app:watch',
       bw: 'build:watch',
+      bwl: 'build:watchLib',
+      bwa: 'build:watchApp',
+      bwaw: 'build:watchAppWebsql',
+      bwvscode: 'build:watchVscode',
+      bwe: 'build:watchElectron',
+      bwew: 'build:watchElectronWebsql',
       cbw: 'build:clean:watch',
       cbuildwwatch: 'build:clean:watch',
       c: 'clear',
@@ -79,7 +89,12 @@ export async function start(
       mkdocs: 'build:mkdocs',
       ew: 'electron:watch',
       r: 'release',
-      lr: 'local:release',
+      rl: 'release:local',
+      rlnpm: 'release:localCliLib',
+      rlelectron: 'release:localElectron',
+      rlvscode: 'release:localVscode',
+      rc: 'release:cloud',
+      rm: 'release:manual',
       rmajor: 'release:major',
       rminor: 'release:minor',
       'r:major': 'release:major',

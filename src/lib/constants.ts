@@ -13,21 +13,27 @@ export const taonIgnore = '@taon' + '-' + 'ignore';
 export const DEBUG_WORD = 'Debug/Start';
 
 export const OVERRIDE_FROM_TNP = [
-  'scripts',
+  'activationEvents',
+  'author',
+  'bugs',
+  'categories',
   'description',
+  'engines',
+  'homepage',
+  'keywords',
   'license',
   'private',
-  'author',
-  'homepage',
-  'main',
-  'engines',
-  'categories',
-  'keywords',
-  'activationEvents',
+  'repository',
+  'scripts',
 ];
 
 export const UNIT_TEST_TIMEOUT = 30000;
 export const INTEGRATION_TEST_TIMEOUT = 30000;
+
+export const COMPILATION_COMPLETE_LIB_NG_BUILD =
+  'Compilation complete. Watching for file changes';
+
+export const COMPILATION_COMPLETE_APP_NG_SERVE = 'Compiled successfully';
 
 export let taonRepoPathUserInUserDir: string =
   //#region @backend
@@ -52,8 +58,10 @@ export const argsToClear = [
 ];
 
 export const folder_shared_folder_info = 'shared_folder_info.txt';
-export const taonConfigSchemaJsonStandalone = 'taon-config-standalone.schema.json';
-export const taonConfigSchemaJsonContainer = 'taon-config-container.schema.json';
+export const taonConfigSchemaJsonStandalone =
+  'taon-config-standalone.schema.json';
+export const taonConfigSchemaJsonContainer =
+  'taon-config-container.schema.json';
 
 export const TEMP_DOCS = 'tmp-documentation';
 
@@ -114,16 +122,7 @@ export class PortUtils {
     if (project.framework.isContainer) {
       return;
     }
-    if (project.framework.isSmartContainerTarget) {
-      project =
-        project.framework.smartContainerTargetParentContainer.children.find(
-          c => c.name === project.name,
-        );
-    }
-    if (project.framework.isSmartContainerChild) {
-      const index = project.parent.children.indexOf(project);
-      return this.calculateForContainerServer(index);
-    }
+
     if (project.framework.isStandaloneProject) {
       return this.calculateForStandaloneServer();
     }
@@ -138,16 +137,7 @@ export class PortUtils {
     if (project.framework.isContainer) {
       return;
     }
-    if (project.framework.isSmartContainerTarget) {
-      project =
-        project.framework.smartContainerTargetParentContainer.children.find(
-          c => c.name === project.name,
-        );
-    }
-    if (project.framework.isSmartContainerChild) {
-      const index = project.parent.children.indexOf(project);
-      return this.calculateForContainerClient(index, { websql });
-    }
+
     if (project.framework.isStandaloneProject) {
       return this.calculateForStandaloneClient({ websql });
     }
@@ -182,14 +172,12 @@ export class PortUtils {
 
   appHostTemplateFor(project: Project) {
     //#region @backendFunc
-    const clientPorts =
-      project.framework.isStandaloneProject &&
-      !project.framework.isSmartContainerTarget
-        ? `
+    const clientPorts = project.framework.isStandaloneProject
+      ? `
 export const CLIENT_DEV_NORMAL_APP_PORT = ${project.artifactsManager.artifact.angularNodeApp.standaloneNormalAppPort};
 export const CLIENT_DEV_WEBSQL_APP_PORT = ${project.artifactsManager.artifact.angularNodeApp.standaloneWebsqlAppPort};
     `
-        : '';
+      : '';
 
     return `
 // THIS FILE IS GENERATED - DO NOT MODIFY

@@ -9,17 +9,15 @@ export abstract class LibProjectBase extends BaseFeatureForProject<Project> {
   //#region build docs
   abstract buildDocs(
     prod: boolean,
-    realCurrentProj: Project,
-    automaticReleaseDocs: boolean,
+    autoReleaseUsingConfigDocs: boolean,
     libBuildCallback: (websql: boolean, prod: boolean) => any,
   ): Promise<boolean>;
   //#endregion
 
   //#region publish
   abstract publish(options: {
-    realCurrentProj: Project;
     newVersion: string;
-    automaticRelease: boolean;
+    autoReleaseUsingConfig: boolean;
     prod: boolean;
     rootPackageName?: string;
   }): Promise<any>;
@@ -30,15 +28,12 @@ export abstract class LibProjectBase extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region update core/special projects/container
-  async updateTnpAndCoreContainers(
-    realCurrentProj: Project,
-    newVersion: string,
-  ): Promise<void> {
+  async updateTnpAndCoreContainers(newVersion: string): Promise<void> {
     //#region @backendFunc
 
     const allVersions = Helpers.uniqArray([
       ...config.activeFramewrokVersions,
-      realCurrentProj.framework.frameworkVersion,
+      this.project.framework.frameworkVersion,
     ]);
 
     const coreContainters = [
@@ -51,7 +46,7 @@ export abstract class LibProjectBase extends BaseFeatureForProject<Project> {
     const tnpProj = this.project.ins.Tnp;
     const updateLocalTaonProjectWithOwnNodeModules =
       config.frameworkName === 'tnp' &&
-      realCurrentProj.name !== 'tnp' &&
+      this.project.name !== 'tnp' &&
       allVersions.includes(tnpProj.framework.frameworkVersion);
 
     const projectForCodeUpdate = [
@@ -63,16 +58,14 @@ export abstract class LibProjectBase extends BaseFeatureForProject<Project> {
       // console.log(
       //   `[updateTnpAndCoreContainers] Updating ${coreContainer.genericName}...`,
       // );
-      for (const packageName of realCurrentProj.framework
+      for (const packageName of this.project.framework
         .packageNamesFromProject) {
-
-
         coreContainer.packageJson.updateDependency({
           packageName: packageName,
           version: newVersion,
         });
 
-        coreContainer.taonJson.packageJsonOverride.updateDependency({
+        coreContainer.taonJson.overridePackageJsonManager.updateDependency({
           packageName: packageName,
           version: newVersion,
         });
@@ -80,7 +73,7 @@ export abstract class LibProjectBase extends BaseFeatureForProject<Project> {
     }
 
     for (const projToUpdate of projectForCodeUpdate) {
-      await projToUpdate.nodeModules.updateFromReleaseDist(realCurrentProj);
+      await projToUpdate.nodeModules.updateFromReleaseDist(this.project);
       Helpers.taskDone(
         'Done updating core container: ' + projToUpdate.genericName,
       );

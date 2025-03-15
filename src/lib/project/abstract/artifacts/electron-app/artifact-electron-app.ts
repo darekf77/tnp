@@ -9,25 +9,49 @@ import {
   ReleaseArtifactTaonNames,
   ReleaseArtifactTaonNamesArr,
   ReleaseOptions,
+  ReleaseType,
 } from '../../../../options';
+import type { Project } from '../../project';
 import { BaseArtifact } from '../__base__/base-artifact';
 
+export class ArtifactElectronApp extends BaseArtifact<
+  {
+    electronDistOutAppPath: string;
+    electronDistOutAppPathWebsql: string;
+  },
+  {
+    releaseProjPath: string;
+    releaseType: ReleaseType;
+  }
+> {
+  constructor(project: Project) {
+    super(project, 'electron-app');
+  }
 
-export class ArtifactElectronApp extends BaseArtifact {
   async clearPartial(options: ClearOptions): Promise<void> {
     return void 0; // TODO implement
   }
-  async structPartial(options): Promise<void> {
-    return void 0; // TODO implement
-  }
 
-  async initPartial(options: InitOptions) {
-    return void 0; // TODO implement
+  async initPartial(initOptions: InitOptions) {
+    if (this.project.framework.isStandaloneProject && initOptions.releaseType) {
+      this.project.packageJson.setMainProperty(
+        'dist/app.electron.js',
+        'update main for electron',
+      );
+    }
   }
 
   //#region build
-  async buildPartial(buildOptions: BuildOptions) {
+  async buildPartial(buildOptions: BuildOptions): Promise<{
+    electronDistOutAppPath: string;
+    electronDistOutAppPathWebsql: string;
+  }> {
     //#region @backendFunc
+
+    if (buildOptions.watch) {
+      await this.project.tryKillAllElectronInstances(); // TODO QUICK_FIX
+    }
+
     const baseHrefElectron = '';
     if (!this.project.framework.isStandaloneProject) {
       Helpers.error(
@@ -57,8 +81,8 @@ export class ArtifactElectronApp extends BaseArtifact {
         .async();
     } else {
       Helpers.info('Release build of electron app');
-      if (buildOptions.buildForRelease) {
-        if (!this.project.releaseProcess.isInCiReleaseProject) {
+      if (buildOptions.releaseType) {
+        if (!buildOptions.releaseType) {
           await this.initPartial(
             InitOptions.fromBuild(
               buildOptions.clone({
@@ -67,9 +91,9 @@ export class ArtifactElectronApp extends BaseArtifact {
               }),
             ),
           );
-          const tempGeneratedCiReleaseProject =
-            await this.__createTempCiReleaseProject(buildOptions);
-          await tempGeneratedCiReleaseProject.build(buildOptions);
+          // const tempGeneratedCiReleaseProject =
+          //   await this.__createTempCiReleaseProject(buildOptions);
+          // await tempGeneratedCiReleaseProject.build(buildOptions);
           return;
         }
 
@@ -89,8 +113,10 @@ export class ArtifactElectronApp extends BaseArtifact {
         // Helpers.createSymLink(this.nodeModules.path, elecProj.pathFor(`electron/${config.folder.node_modules}`));
         // elecProj.run('code .').sync();
         const wasmfileSource = crossPlatformPath([
-          this.project.ins.by('isomorphic-lib', this.project.framework.frameworkVersion)
-            .location,
+          this.project.ins.by(
+            'isomorphic-lib',
+            this.project.framework.frameworkVersion,
+          ).location,
           'app/src/assets/sql-wasm.wasm',
         ]);
         const wasmfileDest = crossPlatformPath([
@@ -103,11 +129,9 @@ export class ArtifactElectronApp extends BaseArtifact {
         Helpers.info('Building lib...');
         await this.buildPartial(
           buildOptions.clone({
-            buildType: 'lib',
             targetArtifact: 'angular-node-app',
             watch: false,
             baseHref: baseHrefElectron,
-            skipProjectProcess: true,
             disableServiceWorker: true,
             skipCopyManager: true,
             buildAngularAppForElectron: true,
@@ -123,7 +147,6 @@ export class ArtifactElectronApp extends BaseArtifact {
         //   targetApp: 'pwa',
         //   watch: false,
         //   baseHref: baseHrefElectron,
-        //   skipProjectProcess: true,
         //   disableServiceWorker: true,
         //   skipCopyManager: true,
         //   buildAngularAppForElectron: true,
@@ -178,10 +201,9 @@ export class ArtifactElectronApp extends BaseArtifact {
       } else {
         // TODO
       }
+      buildOptions.finishCallback && buildOptions.finishCallback();
     }
-    return;
 
-    buildOptions.finishCallback();
     //#endregion
   }
   //#endregion

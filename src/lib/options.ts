@@ -5,6 +5,23 @@ import { CLASS } from 'typescript-class-helpers/src';
 import { Models } from './models';
 import type { Project } from './project/abstract/project';
 
+//#region helpers / instance from
+const instanceFrom = (
+  options: Partial<InitOptions | BuildOptions | ReleaseOptions>,
+  classFn: Function,
+) => {
+  const orgFinishCallback = options?.finishCallback;
+  options = (options ? options : {}) as any;
+  const res = _.merge(new (classFn as any)(), _.cloneDeep(options));
+  if (orgFinishCallback) {
+    res.finishCallback = orgFinishCallback;
+  } else {
+    res.finishCallback = () => {};
+  }
+  return res;
+};
+//#endregion
+
 //#region release artifact taon
 /**
  * All possible release types for taon
@@ -35,7 +52,7 @@ export const ReleaseArtifactTaonNames = Object.freeze({
   /**
    * Visual Studio Code extension/plugin
    */
-  VSCODE_EXTENSION_PLUGIN: 'vscode-plugin',
+  VSCODE_PLUGIN: 'vscode-plugin',
 });
 
 export type ReleaseArtifactTaon =
@@ -83,6 +100,11 @@ class SystemTask<T> {
   copyto?: string[];
   copytoall?: boolean;
   purpose?: string;
+  targetArtifact: ReleaseArtifactTaon;
+  /**
+   * null  - means it is development build
+   */
+  releaseType: ReleaseType | null = null;
 }
 
 export class BaseBuild<T> extends SystemTask<T> {
@@ -127,7 +149,6 @@ class BuildOptionsLibOrApp<T> extends BaseBuild<T> {
    * etc.
    */
   prod: boolean;
-  targetArtifact: ReleaseArtifactTaon = 'angular-node-app';
 }
 //#endregion
 
@@ -140,6 +161,19 @@ export class NewOptions extends SystemTask<NewOptions> {
 //#region clear options
 export class ClearOptions extends SystemTask<ClearOptions> {
   recrusive?: boolean;
+}
+//#endregion
+
+//#region initing partial process
+/**
+ * Class is as part of initing project structure process
+ */
+export interface InitingPartialProcess {
+  /**
+   * All initialization process from class
+   * gathered in one place
+   */
+  init(options: InitOptions): Promise<void>;
 }
 //#endregion
 
@@ -160,27 +194,8 @@ export class InitOptions extends BaseBuild<InitOptions> {
     return instanceFrom(options, InitOptions);
   }
 
-  public static fromBuild(options: BuildOptions): InitOptions {
-    const initOptions = InitOptions.from({});
-
-    const propsToInit = [
-      'baseHref',
-      'watch',
-      'websql',
-      'smartContainerTargetName',
-      'ci',
-      'targetApp',
-      'prod',
-      'disableServiceWorker',
-      'buildAngularAppForElectron',
-      'purpose',
-    ] as (keyof BuildOptions)[];
-
-    for (const prop of propsToInit) {
-      if (!_.isUndefined(options[prop])) {
-        initOptions[prop] = options[prop];
-      }
-    }
+  public static fromBuild(buildOptions: BuildOptions): InitOptions {
+    const initOptions = InitOptions.from(buildOptions as any);
 
     return initOptions;
   }
@@ -189,51 +204,21 @@ export class InitOptions extends BaseBuild<InitOptions> {
 
 //#region build options
 export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
-  /**
-   * TODO remove
-   */
-  readonly outDir: 'dist' = 'dist';
-  buildType: 'lib' | 'app' | 'docs' | 'lib-app';
-
-  /**
-   * null  - means it is development build
-   */
-  isForRelease: ReleaseType | null = null;
-  get appBuild() {
-    return this.buildType === 'app' || this.buildType === 'lib-app';
-  }
-  get libBuild() {
-    return this.buildType === 'lib' || this.buildType === 'lib-app';
-  }
-
-  get temporarySrcForReleaseCutCode() {
+  get temporarySrcForReleaseCutCode(): string {
     //#region @backendFunc
     return `tmp-cut-release-src-${config.folder.dist}${this.websql ? '-websql' : ''}`;
     //#endregion
   }
 
-  private constructor() {
-    super();
-    this.outDir = 'dist';
-    this.targetArtifact = 'angular-node-app';
+  get outDirApp(): string {
+    let outDirApp = `${config.folder.dist}-app${this.websql ? '-websql' : ''}`;
+    return outDirApp;
   }
+
   /**
    *
    */
   websql: boolean;
-
-  private _skipProjectProcess: boolean;
-  /**
-   * Skip project process for assigning automatic ports
-   */
-  get skipProjectProcess() {
-    //#region @backendFunc
-    return this._skipProjectProcess;
-    //#endregion
-  }
-  set skipProjectProcess(value) {
-    this._skipProjectProcess = value;
-  }
 
   /**
    * override port number for app build
@@ -241,16 +226,6 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
   port: number;
 
   skipCopyManager: boolean;
-  /**
-   * build executed druring lib release
-   */
-  buildForRelease: boolean;
-
-  /**
-   * default: '<project-locaiton>/dist-app'
-   * default for github page: '<project-location>/docs'
-   */
-  appBuildLocation: string;
   /**
    * Cut <@>notForNpm  tag from lib build
    */
@@ -269,10 +244,14 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
    */
   smartContainerTargetName: string;
 
-  public static from(
-    options: Omit<Partial<BuildOptions>, 'appBuild' | 'serveApp'>,
-  ): BuildOptions {
+  public static from(options: Partial<BuildOptions>): BuildOptions {
     return instanceFrom(options, BuildOptions);
+  }
+
+  public static fromRelease(releaseOptions: ReleaseOptions): BuildOptions {
+    const buildOptions = BuildOptions.from(releaseOptions as any);
+
+    return buildOptions;
   }
 }
 //#endregion
@@ -282,15 +261,9 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
 export class ReleaseOptions extends BuildOptionsLibOrApp<ReleaseOptions> {
   private constructor() {
     super();
-    this.releaseVersionBumpType = 'patch';
-    this.resolved = [];
   }
-  releaseVersionBumpType: CoreModels.ReleaseVersionType;
-  shouldReleaseLibrary: boolean;
-  /**
-   * build action only for specific framework version of prohect
-   */
-  frameworkVersion: CoreModels.FrameworkVersion;
+  releaseVersionBumpType: CoreModels.ReleaseVersionType = 'patch';
+
   /**
    * start release on project
    */
@@ -303,19 +276,15 @@ export class ReleaseOptions extends BuildOptionsLibOrApp<ReleaseOptions> {
    * end release on project
    */
   end?: string;
-  skipProjectProcess: boolean;
-  /**
-   * Projects to release in container
-   */
-  resolved: Project[];
+
   /**
    * quick automatic release of lib
    */
-  automaticRelease: boolean;
+  autoReleaseUsingConfig: boolean;
   /**
    * quick automatic release of docs app(s)
    */
-  automaticReleaseDocs: boolean;
+  autoReleaseUsingConfigDocs: boolean;
   /**
    * @deprecated
    */
@@ -324,27 +293,9 @@ export class ReleaseOptions extends BuildOptionsLibOrApp<ReleaseOptions> {
    * release only trusted projects for specific container framework version
    */
   trusted: boolean;
-  releaseTarget: 'lib' | 'app' | 'lib-app';
   public static from(options: Partial<ReleaseOptions>): ReleaseOptions {
     return instanceFrom(options, ReleaseOptions);
   }
 }
 
-//#endregion
-
-//#region helpers / instance from
-function instanceFrom(
-  options: Partial<InitOptions | BuildOptions | ReleaseOptions>,
-  classFn: Function,
-) {
-  const orgFinishCallback = options?.finishCallback;
-  options = (options ? options : {}) as any;
-  const res = _.merge(new (classFn as any)(), _.cloneDeep(options));
-  if (orgFinishCallback) {
-    res.finishCallback = orgFinishCallback;
-  } else {
-    res.finishCallback = () => {};
-  }
-  return res;
-}
 //#endregion

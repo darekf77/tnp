@@ -2,7 +2,7 @@ import { config, PREFIXES } from 'tnp-config/src';
 import { crossPlatformPath, glob, path, _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { BuildOptions } from '../../../../../../options';
+import { BuildOptions, ReleaseArtifactTaon } from '../../../../../../options';
 import type { Project } from '../../../../project';
 
 import { CopyManager } from './copy-manager';
@@ -49,7 +49,7 @@ export class CopyManagerStandalone extends CopyManager {
 
     for (let index = 0; index < files.length; index++) {
       const fileAbsPath = files[index];
-      SourceMappingUrl.fixContent(fileAbsPath, this.projectWithBuild);
+      SourceMappingUrl.fixContent(fileAbsPath, buildOptions);
     }
     this.dtsFixer = TypescriptDtsFixer.for(this.isomorphicPackages);
 
@@ -137,7 +137,7 @@ export class CopyManagerStandalone extends CopyManager {
   get monitoredOutDir(): string {
     //#region @backendFunc
     const monitorDir: string = crossPlatformPath(
-      path.join(this.project.location, this.buildOptions.outDir),
+      path.join(this.project.location, config.folder.dist),
     );
     return monitorDir;
     //#endregion
@@ -216,8 +216,8 @@ export class CopyManagerStandalone extends CopyManager {
     }
 
     let toReplaceString2 = isBrowser
-      ? `../tmp-libs-for-${this.buildOptions.outDir}/${this.project.name}/projects/${this.project.name}/${config.folder.src}`
-      : `../tmp-source-${this.buildOptions.outDir}`;
+      ? `../tmp-libs-for-${config.folder.dist}/${this.project.name}/projects/${this.project.name}/${config.folder.src}`
+      : `../tmp-source-${config.folder.dist}`;
 
     let toReplaceString1 = `"${toReplaceString2}`;
 
@@ -258,6 +258,7 @@ export class CopyManagerStandalone extends CopyManager {
     content: string,
     isBrowser: boolean,
     absFilePath: string,
+    releaseType?: ReleaseArtifactTaon,
   ) {
     //#region @backendFunc
     /**
@@ -271,11 +272,11 @@ export class CopyManagerStandalone extends CopyManager {
       const json = JSON.parse(content);
       if (json) {
         json.sources = (json.sources || []).map((p: string) => {
-          if (this.project.releaseProcess.isInCiReleaseProject) {
+          if (releaseType) {
             return '';
           }
 
-          const localProjFolderName = `tmp-local-copyto-proj-${this.buildOptions.outDir}/${config.folder.node_modules}/${this.rootPackageName}`;
+          const localProjFolderName = `tmp-local-copyto-proj-${config.folder.dist}/${config.folder.node_modules}/${this.rootPackageName}`;
           let dirnameAbs = crossPlatformPath(path.dirname(absFilePath));
           if (dirnameAbs.includes(localProjFolderName)) {
             dirnameAbs = dirnameAbs.replace(
@@ -717,7 +718,7 @@ export * from './source';
       path.normalize(
         path.join(
           this.project.location,
-          this.buildOptions.outDir,
+          config.folder.dist,
           specificFileRelativePath,
         ),
       ),
@@ -727,8 +728,8 @@ export * from './source';
     // and do not allow
     if (destinationFilePath.endsWith('d.ts')) {
       const newAbsOrgFilePathInDist = absOrgFilePathInDist.replace(
-        `/${this.buildOptions.outDir}/${specificFileRelativePath}`,
-        `/${this.buildOptions.outDir}-nocutsrc/${specificFileRelativePath}`,
+        `/${config.folder.dist}/${specificFileRelativePath}`,
+        `/${config.folder.dist}-nocutsrc/${specificFileRelativePath}`,
       );
       if (!Helpers.exists(newAbsOrgFilePathInDist)) {
         Helpers.log(
@@ -975,7 +976,7 @@ export * from './source';
     //#region @backendFunc
     const base = crossPlatformPath([
       this.project.location,
-      `${this.buildOptions.outDir}-nocutsrc`,
+      `${config.folder.dist}-nocutsrc`,
     ]);
 
     const filesToUpdate = Helpers.filesFrom(base, true)

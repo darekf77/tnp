@@ -1,6 +1,8 @@
+import { OVERRIDE_FROM_TNP } from 'tnp/src';
 import { config } from 'tnp-config/src';
 import { CoreModels, path } from 'tnp-core/src';
 import { Helpers, _ } from 'tnp-core/src';
+import { Utils } from 'tnp-core/src';
 import { BaseFeatureForProject, BasePackageJson } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
@@ -12,7 +14,10 @@ import type { Project } from './project';
 export class TaonJson extends BaseFeatureForProject<Project> {
   private readonly data?: Models.TaonJson;
 
-  public readonly packageJsonOverride: BasePackageJson;
+  /**
+   * package.json override
+   */
+  public readonly overridePackageJsonManager: BasePackageJson;
 
   //#region constructor
   //#region @backend
@@ -26,25 +31,119 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     if (!this.data && defaultValue) {
       this.data = _.cloneDeep(defaultValue as any);
     }
-    if (this.data) {
-      this.packageJsonOverride = new BasePackageJson({
-        jsonContent: this.data.packageJsonOverride || {},
-        reloadInMemoryCallback: data => {
+
+    this.overridePackageJsonManager = new BasePackageJson({
+      jsonContent: this.data.packageJsonOverride || {},
+      reloadInMemoryCallback: data => {
+        if (this.data && this.overridePackageJsonManager) {
           this.data.packageJsonOverride = data;
           this.saveToDisk();
-        },
-      });
-    }
+        }
+      },
+    });
   }
   //#endregion
   //#endregion
 
+  get exists(): boolean {
+    return Helpers.exists(this.project.pathFor(config.file.taon_jsonc));
+  }
+
   //#region save
-  private saveToDisk(purpose?: string): void {
+
+  public preserveOldTaonProps(): void {
+    if (
+      this.project.framework.isContainer &&
+      this.project.framework.isCoreProject
+    ) {
+      return;
+    }
+    const data = this.data as Models.TaonJsonStandalone;
+    if (data.overrided?.includeOnly && !data.dependenciesNamesForNpmLib) {
+      data.dependenciesNamesForNpmLib = _.cloneDeep(data.overrided.includeOnly);
+      delete data.overrided.includeOnly;
+    }
+    if (this.project.framework.isStandaloneProject) {
+      const dataToClean = this.data as Models.TaonJsonContainer;
+      delete dataToClean.monorepo;
+      delete dataToClean['smart'];
+      delete dataToClean['smartContainerBuildTarget'];
+    }
+
+    for (const prop of [
+      ...OVERRIDE_FROM_TNP,
+      'overrided',
+      'required',
+      'requiredServers',
+      'main',
+      'useFramework',
+      'isGenerated',
+      'workerPlugins',
+      'smartContainerTarget',
+      'libReleaseOptions',
+      'linkedRepos',
+    ]) {
+      delete data[prop];
+    }
+
+    this.saveToDisk('preserve old taon props');
+  }
+
+  public preservePropsFromPackageJson(): void {
+    if (
+      this.project.framework.isContainer &&
+      this.project.framework.isCoreProject
+    ) {
+      return;
+    }
+    const exitedPackageJson =
+      this.project.packageJson.getAllData() || ({} as PackageJson);
+
+    const packageJsonOverrideData =
+      this.overridePackageJsonManager.getAllData() || ({} as PackageJson);
+
+    const lastBuildTagHash = this.overridePackageJsonManager.getBuildHash();
+
+    for (const prop of OVERRIDE_FROM_TNP) {
+      if (
+        _.isUndefined(packageJsonOverrideData[prop]) &&
+        !_.isUndefined(exitedPackageJson[prop])
+      ) {
+        packageJsonOverrideData[prop] = exitedPackageJson[prop];
+      }
+    }
+
+    this.overridePackageJsonManager.setAllData({
+      ...packageJsonOverrideData,
+      lastBuildTagHash,
+    });
+  }
+
+  public saveToDisk(purpose?: string): void {
     //#region @backend
     Helpers.log(`Saving taon.jsonc ${purpose ? `(${purpose})` : ''}`);
+    if (this.isCoreProject && this.project.framework.isContainer) {
+      this.project.writeJsonC(config.file.taon_jsonc, this.data);
+    } else {
+      const sorted = Utils.sortKeys(_.cloneDeep(this.data)) as typeof this.data;
+      const packageJsonOverride = sorted.packageJsonOverride;
+      delete sorted.packageJsonOverride;
+      const showFirst = ['type', 'version', 'dependenciesNamesForNpmLib'];
+      for (const key of showFirst) {
+        delete sorted[key];
+      }
+      const destinationObject = {
+        ...showFirst.reduce((acc, key) => {
+          acc[key] = this.data[key];
+          return acc;
+        }, {}),
+        ...sorted,
+        packageJsonOverride,
+      };
+      this.project.writeJsonC(config.file.taon_jsonc, destinationObject);
+    }
 
-    this.project.writeJsonC(config.file.taon_jsonc, this.data);
+    this.project.packageJson.saveToDisk();
     //#endregion
   }
   //#endregion
@@ -94,24 +193,14 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region set new version
-  setType(
-    type: CoreModels.LibType,
-    options?: {
-      /**
-       * smart container for organization npm project
-       */
-      smart?: boolean;
-    },
-  ): void {
+  setType(type: CoreModels.LibType): void {
     //#region @backendFunc
     const data = this.data as Models.TaonJsonContainer;
     Helpers.info(
       `Setting type to project  ${this.project.genericName}: ${type}`,
     );
     data.type = type as any;
-    if (options && _.isBoolean(options?.smart)) {
-      data.smart = options?.smart;
-    }
+
     this.saveToDisk(`setting new type "${type}"`);
     //#endregion
   }
@@ -141,6 +230,15 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region uses its own node_modules
+  get shouldGenerateAutogenIndexFile(): boolean {
+    const data = this.data as Models.TaonJsonStandalone;
+    //#region @backendFunc
+    return !!data?.shouldGenerateAutogenIndexFile;
+    //#endregion
+  }
+  //#endregion
+
   //#region is monorepo
   get isMonorepo(): boolean {
     //#region @backendFunc
@@ -158,41 +256,10 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region is smart container
-  /**
-   * is smart container for organization npm project
-   */
-  get isSmart(): boolean {
-    //#region @backendFunc
-    const data = this.data as Models.TaonJsonContainer;
-    return !!data?.smart;
-    //#endregion
-  }
-  //#endregion
-
   //#region framework version
   get frameworkVersion(): CoreModels.FrameworkVersion | undefined {
     //#region @backendFunc
     return this.data?.version;
-    //#endregion
-  }
-  //#endregion
-
-  //#region smart container build target
-  get smartContainerBuildTarget(): string | undefined {
-    //#region @backendFunc
-    const data = this.data as Models.TaonJsonContainer;
-    return data?.smartContainerBuildTarget;
-    //#endregion
-  }
-  //#endregion
-
-  //#region set smart container build target
-  setSmartContainerBuildTarget(target: string): void {
-    //#region @backendFunc
-    const data = this.data as Models.TaonJsonContainer;
-    data.smartContainerBuildTarget = target;
-    this.saveToDisk('set smart container build target');
     //#endregion
   }
   //#endregion

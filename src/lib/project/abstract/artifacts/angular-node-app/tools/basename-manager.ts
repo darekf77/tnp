@@ -1,6 +1,6 @@
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
-import { InitOptions } from '../../../../../options';
+import { InitOptions, ReleaseArtifactTaon } from '../../../../../options';
 import type { Project } from '../../../project';
 
 /**
@@ -14,41 +14,26 @@ import type { Project } from '../../../project';
 export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
   public readonly rootBaseHref: string = '/';
   private get baseHrefForGhPages() {
-    return this.project.framework.isSmartContainerTarget
-      ? this.project.framework.smartContainerTargetParentContainer.name
-      : this.project.name;
+    return this.project.name;
   }
 
-  private resolveBaseHrefForProj(overrideBaseHref: string) {
+  private resolveBaseHrefForProj(overrideBaseHref: string, releaseType?: ReleaseArtifactTaon) {
     //#region @backendFunc
     let baseHref = this.rootBaseHref;
-    const isSmartContainerTargetNonClient =
-      this.project.framework.isSmartContainerTargetNonClient;
 
     if (overrideBaseHref === '') {
-      if (isSmartContainerTargetNonClient) {
-        baseHref = `./-/${this.project.name}/`;
-      } else {
-        baseHref = overrideBaseHref;
-      }
+      baseHref = overrideBaseHref;
     } else {
       if (overrideBaseHref) {
-        if (isSmartContainerTargetNonClient) {
-          baseHref = `${overrideBaseHref}-/${this.project.name}/`;
-        } else {
-          baseHref = overrideBaseHref;
-        }
+        baseHref = overrideBaseHref;
       } else {
-        if (this.project.releaseProcess.isInCiReleaseProject) {
+        if (releaseType) {
           if (
             this.project.artifactsManager.globalHelper.env.config?.useDomain
           ) {
             baseHref = this.rootBaseHref;
           } else {
             baseHref = `/${this.baseHrefForGhPages}/`;
-            if (isSmartContainerTargetNonClient) {
-              baseHref = `/${this.baseHrefForGhPages}/-/${this.project.name}/`;
-            }
           }
         }
       }

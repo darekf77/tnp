@@ -4,7 +4,12 @@ import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { Models } from '../../models';
-import { BuildOptions, ReleaseOptions } from '../../options';
+import {
+  BuildOptions,
+  ReleaseArtifactTaon,
+  ReleaseOptions,
+  ReleaseType,
+} from '../../options';
 import type { Project } from '../abstract/project';
 
 // @ts-ignore TODO weird inheritance problem
@@ -12,39 +17,64 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
   //#region __initialize__
   __initialize__() {
     //#region resolve smart containter
-    let resolved = [];
-    if (this.project.framework.isContainer) {
-      resolved = Helpers.cliTool.resolveItemsFromArgsBegin<Project>(
-        this.args,
-        a => {
-          return this.project.ins.From(path.join(this.project.location, a));
-        },
-      )?.allResolved;
 
-      const otherDeps = this.project.children.filter(c => {
-        return !resolved.includes(c);
-      });
-
-      resolved = this.project.ins // @ts-ignore
-        .sortGroupOfProject<Project>(
-          [...resolved, ...otherDeps],
-          proj => proj.taonJson.dependenciesNamesForNpmLib,
-          proj => proj.name,
-        )
-        .filter(d => d.name !== this.project.name);
-    }
-    this.params = ReleaseOptions.from({ ...this.params, resolved });
+    this.params = ReleaseOptions.from({ ...this.params });
     //#endregion
   }
   //#endregion
 
   //#region _
   public async _() {
-    // await this.project.releaseProcess.displayReleaseProcessMenu();
-    await this.patch();
+    await this.project.releaseProcess.displayReleaseProcessMenu();
+    // await this.patch();
     this._exit();
   }
   //#endregion
+  async _releaseProcess(
+    releaseType: ReleaseType,
+    artifact?: ReleaseArtifactTaon,
+  ): Promise<void> {
+    const selectedProjects =
+      await this.project.releaseProcess.displayProjectsSelectionMenu();
+    const selectedArtifacts = artifact
+      ? [artifact]
+      : await this.project.releaseProcess.displaySelectArtifactsMenu(
+          releaseType,
+          selectedProjects,
+        );
+    await this.project.releaseProcess.releaseArtifacts(
+      releaseType,
+      selectedArtifacts,
+      selectedProjects,
+    );
+    this._exit();
+  }
+
+  //#region local
+  async local(): Promise<void> {
+    await this._releaseProcess('local');
+  }
+
+  async localNpm(): Promise<void> {
+    await this._releaseProcess('local', 'npm-lib-and-cli-tool');
+  }
+
+  async localVscode(): Promise<void> {
+    await this._releaseProcess('local', 'vscode-plugin');
+  }
+
+  async localElectron(): Promise<void> {
+    await this._releaseProcess('local', 'electron-app');
+  }
+  //#endregion
+
+  async cloud(): Promise<void> {
+    await this._releaseProcess('cloud');
+  }
+
+  async manual(): Promise<void> {
+    await this._releaseProcess('manual');
+  }
 
   //#region old release functions
 
@@ -57,7 +87,7 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
       Helpers.info('Building project...');
       await this.project.build(BuildOptions.from({ watch: false }));
     }
-    await this.project.artifactsManager.artifact.vscodeExtensionPLugin.installLocally(
+    await this.project.artifactsManager.artifact.vscodePlugin.installLocally(
       this.params,
     );
     this._exit();
@@ -97,7 +127,7 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
   // TODO move this to release process separate class
   private async _startLibCliReleaseProcess(
     npmReleaseVersionType: CoreModels.ReleaseVersionType = 'patch',
-    automaticRelease: boolean = false,
+    autoReleaseUsingConfig: boolean = false,
   ) {
     Helpers.clearConsole();
     // const taonReleaseVersionType = await this.chooseTaonReleaseVersionType();
@@ -105,8 +135,7 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
     const releaseOptions = ReleaseOptions.from({
       ...this.params,
       releaseVersionBumpType: npmReleaseVersionType,
-      automaticRelease,
-      skipProjectProcess: true,
+      autoReleaseUsingConfig,
       finishCallback: () => {
         this._exit();
       },
@@ -115,10 +144,8 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
       this.args.find(
         k => k.startsWith('v') && Number(k.replace('v', '')) >= 3,
       ) || '';
-    releaseOptions.shouldReleaseLibrary = await this.shouldReleaseLibMessage(
-      releaseOptions,
-      this.project,
-    );
+
+    await this.shouldReleaseLibMessage(releaseOptions, this.project);
     await this.project.release(releaseOptions);
     this._exit();
   }
@@ -130,7 +157,7 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
     project: Project,
   ) {
     //#region @backendFunc
-    if (releaseOptions.automaticReleaseDocs) {
+    if (releaseOptions.autoReleaseUsingConfigDocs) {
       return false;
     }
     let newVersion;
@@ -145,47 +172,11 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
 
     // TODO detecting changes for children when start container
 
-    if (project.framework.isSmartContainer) {
-      Helpers.info(`Pacakges available for new version release:
+    const message = `Proceed with release of new version: ${newVersion} ?`;
+    return releaseOptions.autoReleaseUsingConfig
+      ? true
+      : await Helpers.questionYesNo(message);
 
-${project.children
-  .map(c => ` - @${project.name}/${c.name} v${newVersion}`)
-  .join('\n')}
-`);
-      const message = 'Proceed with lib release ?';
-
-      return await Helpers.questionYesNo(message);
-    }
-
-    if (project.framework.isContainer && !project.framework.isSmartContainer) {
-      Helpers.info(`Pacakges available for new version release:
-
-    ${(releaseOptions.resolved || [])
-      .map(
-        (c, index) =>
-          `(${index + 1}) ` +
-          `${
-            c.framework.isSmartContainer
-              ? '@' + c.name + `/(${c.children.map(l => l.name).join(',')})`
-              : c.name
-          }` +
-          `@${c.packageJson.getVersionFor(releaseOptions.releaseVersionBumpType)}`,
-      )
-      .join(', ')}
-    `);
-      const message = `Proceed ${
-        releaseOptions.automaticRelease ? '(automatic)' : ''
-      } release of packages from ${project.genericName} ?`;
-      if (!(await Helpers.questionYesNo(message))) {
-        this._exit();
-      }
-      return true;
-    } else {
-      const message = `Proceed with release of new version: ${newVersion} ?`;
-      return releaseOptions.automaticRelease
-        ? true
-        : await Helpers.questionYesNo(message);
-    }
     //#endregion
   }
   //#endregion

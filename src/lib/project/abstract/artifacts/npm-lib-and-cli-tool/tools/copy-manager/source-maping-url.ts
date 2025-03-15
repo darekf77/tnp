@@ -1,6 +1,7 @@
 import { crossPlatformPath, path, _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
+import { BuildOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
 
 export class SourceMappingUrl {
@@ -8,7 +9,7 @@ export class SourceMappingUrl {
 
   static fixContent(
     absFilePath: string,
-    projectWithBuild: Project,
+    buildOptions: BuildOptions,
     // content?: string
   ) {
     //#region @backendFunc
@@ -22,9 +23,8 @@ export class SourceMappingUrl {
     }
     return new SourceMappingUrl(
       absFilePath,
-      projectWithBuild,
       // , content
-    ).process();
+    ).process(buildOptions);
     //#endregion
   }
 
@@ -36,7 +36,6 @@ export class SourceMappingUrl {
   //#region @backend
   private constructor(
     private absFilePath: string,
-    private projectWithBuild: Project,
     // private passedContent?: string
   ) {
     // console.log(`Fixging ${absFilePath}`, 1)
@@ -55,10 +54,10 @@ export class SourceMappingUrl {
   //#endregion
   //#endregion
 
-  process(): string {
+  process(buildOptions: BuildOptions): string {
     //#region @backendFunc
     if (this.mappingLineIndex !== -1) {
-      if (this.projectWithBuild.releaseProcess.isInCiReleaseProject) {
+      if (buildOptions.releaseType) {
         // TODO links on windows sucks d
         this.contentLines[this.mappingLineIndex] =
           `${SourceMappingUrl.SOURCEMAPDES}${path.basename(this.absFilePath)}.map`;

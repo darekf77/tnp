@@ -16,7 +16,7 @@ import {
 } from './environment-config-helpers';
 //#endregion
 
- // @ts-ignore TODO weird inheritance problem
+// @ts-ignore TODO weird inheritance problem
 export class EnvironmentConfig extends BaseFeatureForProject<Project> {
   //#region methods & getters / copy to
   copyTo(destination: string) {

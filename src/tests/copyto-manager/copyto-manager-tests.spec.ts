@@ -66,7 +66,7 @@
 
 //           const outDir = 'dist';
 
-//           dummy1.__copyManager.init(
+//           dummy1.copyNpmDistLibManager.init(
 //             BuildOptions.fromJson({
 //               copyto: [mainProject],
 //               args: '',
@@ -75,8 +75,8 @@
 //             } as any),
 //           );
 
-//           // const localCopyToProjPath = dummy1.__copyManager.localTempProjPath(outDir)
-//           // await dummy1.__copyManager.syncAction([]);
+//           // const localCopyToProjPath = dummy1.copyNpmDistLibManager.localTempProjPath(outDir)
+//           // await dummy1.copyNpmDistLibManager.syncAction([]);
 
 //           // expect(Helpers.exists(localCopyToProjPath)).to.be.true;
 
@@ -127,7 +127,7 @@
 //           // dummy1.run(`${config.frameworkName} bd --copyto ../${mainProjName}`).sync();
 //           // dummy1.run(`${config.frameworkName} bd`).sync();
 
-//           dummy1.__copyManager.init(
+//           dummy1.copyNpmDistLibManager.init(
 //             BuildOptions.fromJson({
 //               copyto: [mainProject],
 //               args: '',
@@ -136,14 +136,14 @@
 //             } as any),
 //           );
 
-//           await dummy1.__copyManager.syncAction();
+//           await dummy1.copyNpmDistLibManager.syncAction();
 
 //           dummy1.writeFile(
 //             relativeFileForChange,
 //             dummyfiles.file_dist_lib_index_js_async_change(),
 //           );
 
-//           await dummy1.__copyManager.asyncAction({
+//           await dummy1.copyNpmDistLibManager.asyncAction({
 //             fileAbsolutePath: dummy1.pathFor(relativeFileForChange),
 //           } as any);
 
@@ -244,7 +244,7 @@
 
 //           const outDir = 'dist';
 
-//           dummyContainer.__copyManager.init(
+//           dummyContainer.copyNpmDistLibManager.init(
 //             BuildOptions.fromJson({
 //               copyto: [mainProject],
 //               args: '',
@@ -253,8 +253,8 @@
 //             } as any),
 //           );
 
-//           // const localCopyToProjPath = dummyContainer.__copyManager.localTempProjPath;
-//           // await dummyContainer.__copyManager.syncAction();
+//           // const localCopyToProjPath = dummyContainer.copyNpmDistLibManager.localTempProjPath;
+//           // await dummyContainer.copyNpmDistLibManager.syncAction();
 
 //           // expect(Helpers.exists(localCopyToProjPath)).to.be.true;
 

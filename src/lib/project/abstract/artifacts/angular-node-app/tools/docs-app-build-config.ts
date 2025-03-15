@@ -63,18 +63,11 @@ export class GithubPagesAppBuildConfig extends BaseFeatureForProject<Project> {
     if (this.project.framework.isStandaloneProject) {
       cfg.projName = this.project.name;
     }
-    if (this.project.framework.isSmartContainer) {
-      cfg.projName = this.project.framework.smartContainerBuildTarget.name;
-    }
 
     cfg.build = !!cfg.build;
     cfg.prod = !!cfg.prod;
     cfg.websql = !!cfg.websql;
     cfg.children = cfg.children || [];
-    if (this.project.framework.isSmartContainer) {
-      const children = this.project.children.map(c => c.name);
-      cfg.children = cfg.children.filter(c => children.includes(c.projName));
-    }
 
     for (let index = 0; index < cfg.children.length; index++) {
       cfg.children[index] = this.fix(cfg.children[index]);

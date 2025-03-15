@@ -309,9 +309,6 @@ export class $Global extends BaseGlobalCommandLine<{}, Project> {
     const addImportSrc = (proj: Project) => {
       const pacakges = [
         ...proj.packagesRecognition.allIsomorphicPackagesFromMemory,
-        ...(proj.framework.isSmartContainerChild
-          ? proj.parent.children.map(c => `@${proj.parent.name}/${c.name}`)
-          : []),
       ];
       // console.log(pacakges)
 
@@ -561,55 +558,6 @@ export class $Global extends BaseGlobalCommandLine<{}, Project> {
   //#region reinstall
   async reinstallCore() {
     await this.project.framework.coreContainer?.nodeModules.reinstall();
-    this._exit();
-  }
-
-  async REINSTALL(): Promise<void> {
-    // await Helpers.killAllNodeExceptCurrentProcess();
-    const proj = this.project;
-
-    if (proj.framework.isContainer) {
-      if (proj.framework.isContainerCoreProject) {
-        Helpers.taskStarted(
-          `Removing old node_modules for core container ${proj.framework.frameworkVersion}`,
-        );
-        proj.nodeModules.remove();
-        Helpers.taskDone(
-          `Removed old node_modules for core container ${proj.framework.frameworkVersion}`,
-        );
-        await proj.nodeModules.makeSureInstalled();
-        Helpers.info(`Reinstal done for core container`);
-      } else {
-        // smart container or normal container
-        const children = proj.children.filter(
-          c =>
-            c.framework.frameworkVersionAtLeast('v3') &&
-            c.typeIs('isomorphic-lib') &&
-            c.npmHelpers.useLinkAsNodeModules,
-        );
-        for (let index = 0; index < children.length; index++) {
-          const c = children[index];
-          Helpers.info(`Recreating node_module for ${c.genericName}`);
-          c.nodeModules.remove();
-          await c.init(
-            InitOptions.from({ purpose: 'initing after reinstall' }),
-          );
-        }
-      }
-    } else if (proj.framework.isStandaloneProject) {
-      proj.nodeModules.remove();
-      await proj.nodeModules.makeSureInstalled();
-      // Helpers.info(`Reinstal done for core standalone project`);
-    } else {
-      Helpers.error(
-        `[${config.frameworkName}] This project does not support reinsall.
-    location: ${proj?.location}
-    `,
-        false,
-        false,
-      );
-    }
-
     this._exit();
   }
   //#endregion
@@ -1145,7 +1093,7 @@ ${this.project.children
           packageName,
           version: currentPackageVersion,
         });
-        this.project.taonJson.packageJsonOverride.updateDependency({
+        this.project.taonJson.overridePackageJsonManager.updateDependency({
           packageName,
           version: currentPackageVersion,
         });
@@ -1268,7 +1216,7 @@ ${this.project.children
           packageName,
           version: `${prefix}${latestToUpdate}`,
         });
-        this.project.taonJson.packageJsonOverride.updateDependency({
+        this.project.taonJson.overridePackageJsonManager.updateDependency({
           packageName,
           version: `${prefix}${latestToUpdate}`,
         });
@@ -1278,7 +1226,7 @@ ${this.project.children
           version: null,
         });
 
-        this.project.taonJson.packageJsonOverride.updateDependency({
+        this.project.taonJson.overridePackageJsonManager.updateDependency({
           packageName,
           version: null,
         });
@@ -1299,10 +1247,12 @@ ${this.project.children
               version,
             });
 
-            await this.project.taonJson.packageJsonOverride.updateDependency({
-              packageName,
-              version,
-            });
+            await this.project.taonJson.overridePackageJsonManager.updateDependency(
+              {
+                packageName,
+                version,
+              },
+            );
 
             break;
           } else {
@@ -1699,34 +1649,6 @@ ${this.project.children
       },
     });
     this._exit();
-  }
-  //#endregion
-
-  //#region electron build
-  public async electronBuild() {
-    await this.project.tryKillAllElectronInstances();
-    await this.project.build(
-      BuildOptions.from({
-        ...this.params,
-        buildType: 'app',
-        targetArtifact: 'electron-app',
-        buildForRelease: true,
-        finishCallback: () => this._exit(),
-      }),
-    );
-    this._exit();
-  }
-
-  async electronWatchBuild() {
-    await this.project.tryKillAllElectronInstances();
-    await this.project.build(
-      BuildOptions.from({
-        ...this.params,
-        buildType: 'app',
-        targetArtifact: 'electron-app',
-        watch: true,
-      }),
-    );
   }
   //#endregion
 }

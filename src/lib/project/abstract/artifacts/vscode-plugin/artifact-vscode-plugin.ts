@@ -13,62 +13,81 @@ import { DEFAULT_PORT } from '../../../../constants';
 import { Models } from '../../../../models';
 import {
   BuildOptions,
+  ClearOptions,
   InitOptions,
   ReleaseArtifactTaonNames,
   ReleaseArtifactTaonNamesArr,
   ReleaseOptions,
+  ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact } from '../__base__/base-artifact';
 
-export class ArtifactVscodePlugin extends BaseArtifact {
-  async structPartial(options): Promise<void> {
-    return void 0; // TODO implement
+export class ArtifactVscodePlugin extends BaseArtifact<
+  {
+    vscodeVsixOutPath: string;
+  },
+  {
+    releaseProjPath: string;
+    releaseType: ReleaseType;
+  }
+> {
+  constructor(project: Project) {
+    super(project, 'vscode-plugin');
   }
 
-  async initPartial(options) {
+  public readonly appVscodeJsName = 'app.vscode.js';
+
+  //#region private methods / get tmp vscode proj path (for any build)
+  public getTmpVscodeProjPath(releaseType?: ReleaseType): string {
+    const tmpVscodeProjPath = this.project.pathFor(
+      `${this.project.vsCodeHelpers.vscodeTempProjFolderName}/${
+        releaseType ? 'release' + releaseType : 'development'
+      }/${this.project.name}`,
+    );
+    return tmpVscodeProjPath;
+  }
+  //#endregion
+
+  //#region private methods / get dest extension js
+  private getDestExtensionJs(releaseType: ReleaseType): string {
+    const tmpVscodeProjPath = this.getTmpVscodeProjPath(releaseType);
+    const res = crossPlatformPath([tmpVscodeProjPath, 'out/extension.js']);
+    return res;
+  }
+  //#endregion
+
+  //#region private methods / get vcode project update package json filename
+  public get vcodeProjectUpdatePackageJsonFilename(): string {
+    return 'update-vscode-package-json.js';
+  }
+  //#endregion
+
+  //#region private methods / extension vsix name
+  private get extensionVsixName(): string {
+    return `${this.project.name}-${this.project.packageJson.version}.vsix`;
+  }
+  //#endregion
+
+  //#region clear partial
+  async clearPartial(clearOption: ClearOptions) {
     return void 0; // TODO implement
   }
+  //#endregion
 
-  async buildPartial(options) {
-    return void 0; // TODO implement
-  }
-
-  async releasePartial(options) {
-    return void 0; // TODO implement
-  }
-
-  async clearPartial(options) {
-    return void 0; // TODO implement
-  }
-
-  //#region getters & methods / build vscide
-  public async __buildVscode(buildOptions: BuildOptions) {
+  //#region init partial
+  async initPartial(initOptions: InitOptions): Promise<void> {
     //#region @backendFunc
-
-    // TODO @REMOVE
-    await this.initPartial(InitOptions.fromBuild(buildOptions));
-
-    const tmpVscodeProjPath =
-      buildOptions.isForRelease === 'local'
-        ? this.project.pathFor(
-            `tmp-vscode-proj/local-release/${this.project.name}`,
-          )
-        : this.project.pathFor(
-            `tmp-vscode-proj/development/${this.project.name}`,
-          );
-
-    const destExtensionJs = crossPlatformPath([
-      tmpVscodeProjPath,
-      'out/extension.js',
-    ]);
+    const tmpVscodeProjPath = this.getTmpVscodeProjPath(
+      initOptions.releaseType,
+    );
 
     Helpers.writeJson(
       crossPlatformPath([tmpVscodeProjPath, config.file.package_json]),
       {
         name: this.project.name,
         version: this.project.packageJson.version,
-        main: './out/extension.js',
+        main: `./out/${initOptions.releaseType ? 'extension.js' : 'app.vscode.js'}`,
         categories: ['Other'],
         activationEvents: ['*'],
         displayName: `${this.project.name}-vscode-ext`,
@@ -79,11 +98,13 @@ export class ArtifactVscodePlugin extends BaseArtifact {
         },
       },
     );
-    const extProj = this.project.ins.From(tmpVscodeProjPath);
 
     Helpers.createSymLink(
       this.project.pathFor(config.folder.dist),
-      crossPlatformPath([tmpVscodeProjPath, config.folder.dist]),
+      crossPlatformPath([
+        tmpVscodeProjPath,
+        initOptions.releaseType ? config.folder.dist : config.folder.out,
+      ]),
     );
 
     Helpers.createSymLink(
@@ -91,143 +112,95 @@ export class ArtifactVscodePlugin extends BaseArtifact {
       crossPlatformPath([tmpVscodeProjPath, config.folder.node_modules]),
     );
 
-    const vcodePjUpdateFile = 'update-vscode-package-json.js';
     Helpers.createSymLink(
-      this.project.pathFor(vcodePjUpdateFile),
-      crossPlatformPath([tmpVscodeProjPath, vcodePjUpdateFile]),
+      this.project.pathFor(this.vcodeProjectUpdatePackageJsonFilename),
+      crossPlatformPath([
+        tmpVscodeProjPath,
+        this.vcodeProjectUpdatePackageJsonFilename,
+      ]),
     );
+    //#endregion
+  }
+  //#endregion
 
-    if (
-      !buildOptions.watch &&
-      buildOptions.targetArtifact !==  'npm-lib-and-cli-tool' // TODO
-    ) {
-      await Helpers.ncc(
-        crossPlatformPath([
-          tmpVscodeProjPath,
-          config.folder.dist,
-          'app.vscode.js',
-        ]),
-        destExtensionJs,
-        // () => {
-        // ({ copyToDestination, output }) => {
-        // TODO not needed for now
-        // const wasmfileSource = crossPlatformPath([
-        //   this.project.coreProject.location,
-        //   'app/src/assets/sql-wasm.wasm',
-        // ]);
-        // copyToDestination(wasmfileSource);
-        // return output;
-        // },
-      );
-    }
+  async buildPartial(buildOptions: BuildOptions): Promise<{
+    vscodeVsixOutPath: string;
+  }> {
+    //#region @backendFunc
+
+    await this.initPartial(InitOptions.fromBuild(buildOptions));
+    const tmpVscodeProjPath = this.getTmpVscodeProjPath(
+      buildOptions.releaseType,
+    );
+    const extProj = this.project.ins.From(tmpVscodeProjPath);
+    const vscodeVsixOutPath: string = extProj.pathFor(this.extensionVsixName);
+    const destExtensionJs = this.getDestExtensionJs(buildOptions.releaseType);
 
     if (buildOptions.watch) {
-      extProj
-        .run(`node ${vcodePjUpdateFile} ${buildOptions.watch ? '--watch' : ''}`)
-        .async();
+      // NOTHING TO DO HERE
+      // extProj
+      //   .run(
+      //     `node ${this.vcodeProjectUpdatePackageJsonFilename} ` +
+      //       ` ${!buildOptions.releaseType ? 'app.vscode' : ''} ` +
+      //       ` ${buildOptions.watch ? '--watch' : ''}`,
+      //   )
+      //   .async();
     } else {
-      extProj.run(`node ${vcodePjUpdateFile}`).sync();
+      if (buildOptions.releaseType) {
+        await Helpers.ncc(
+          crossPlatformPath([
+            tmpVscodeProjPath,
+            config.folder.dist,
+            'app.vscode.js',
+          ]),
+          destExtensionJs,
+        );
+      }
+
+      extProj
+        .run(
+          `node ${this.vcodeProjectUpdatePackageJsonFilename} ` +
+            `${!buildOptions.releaseType ? 'app.vscode' : ''} `,
+        )
+        .sync();
     }
 
-    if (!buildOptions.watch && buildOptions.isForRelease === 'local') {
+    if (!buildOptions.watch && buildOptions.releaseType) {
       extProj.run(`taon-vsce package`).sync();
     }
 
+    return { vscodeVsixOutPath };
     //#endregion
   }
-  //#endregion
 
-  //#region methods / compilation process
-  async compilationProcess() {
+  async releasePartial(releaseOptions: ReleaseOptions): Promise<{
+    releaseProjPath: string;
+    releaseType: ReleaseType;
+  }> {
     //#region @backendFunc
-    //#region resolve pathes
-    const destBaseLatest = this.project.pathFor(
-      `${config.folder.local_release}/cli/${this.project.nameForCli}-latest`,
+    let releaseProjPath: string;
+    let releaseType: ReleaseType = releaseOptions.releaseType;
+    const { vscodeVsixOutPath } = await this.buildPartial(
+      BuildOptions.fromRelease(releaseOptions),
     );
-    const destBase = destBaseLatest;
-    // const destBase = this.project.pathFor(
-    //   `${config.folder.local_release}/cli/${this.project.nameForCli}-v${this.project.version}`,
-    // );
-    const destTmpBaseOldVersions = this.project.pathFor(
-      `${config.folder.local_release}/cli/tmp-old-versions/` +
-        `${this.project.nameForCli}-v${this.project.packageJson.version}-${new Date().getTime()}`,
-    );
-    const destCli = crossPlatformPath([
-      destBase,
-      config.folder.dist,
-      config.file.cli_js,
-    ]);
-    const destPackageJson = crossPlatformPath([
-      destBase,
-      config.file.package_json,
-    ]);
-    const destREADMEmd = crossPlatformPath([destBase, config.file.README_MD]);
-    //#endregion
-    if (Helpers.exists(destBase)) {
-      Helpers.copy(destBase, destTmpBaseOldVersions);
-      Helpers.remove(destBase);
+
+    if (releaseOptions.releaseType === 'local') {
+      Helpers.copyFile(
+        vscodeVsixOutPath,
+        this.project.pathFor(
+          `${config.folder.local_release}/${releaseOptions.targetArtifact}/${this.extensionVsixName}`,
+        ),
+      );
     }
-    await Helpers.ncc(
-      crossPlatformPath([
-        this.project.location,
-        config.folder.dist,
-        config.file.cli_js,
-      ]),
-      destCli,
-      // () => {
-      // ({ copyToDestination, output }) => {
-      // TODO not needed for now
-      // const wasmfileSource = crossPlatformPath([
-      //   this.project.coreProject.location,
-      //   'app/src/assets/sql-wasm.wasm',
-      // ]);
-      // copyToDestination(wasmfileSource);
-      // return output;
-      // },
-    );
-    this.project.copy(['bin']).to(destBase);
-    const destStartJS = crossPlatformPath([destBase, 'bin/start.js']);
-    Helpers.writeFile(
-      destStartJS,
-      `console.log('<<< USING BUNDLED CLI >>>');` +
-        `\n${Helpers.readFile(destStartJS)}`,
-    );
-    Helpers.writeJson(destPackageJson, {
-      name: `${this.project.name.replace('-cli', '')}`,
-      version: this.project.packageJson.version,
-      bin: this.project.packageJson.bin,
-    });
-    Helpers.writeFile(
-      destREADMEmd,
-      `# ${this.project.name} CLI\n\n
-## Installation as global tool
-\`\`\`bash
-npm link
-\`\`\`
-`,
-    );
-    const proj = this.project.ins.From(destBaseLatest);
-    proj.quickFixes.createDummyEmptyLibsReplacements(['electron']);
-
+    if (releaseOptions.releaseType === 'manual') {
+      // TODO release to microsoft store or serve with place to put assets
+    }
+    if (releaseOptions.releaseType === 'cloud') {
+      // TODO trigger cloud release (it will actually be manual on remote server)
+    }
+    return { releaseProjPath, releaseType };
     //#endregion
   }
-  //#endregion
-
-  //#region methods / startCLiRelease
-  async startCLiRelease() {
-    await this.project.init();
-    //#region @backendFunc
-    await this.project.packageJson.bumpPatchVersion();
-    await this.compilationProcess();
-    //#endregion
-  }
-  //#endregion
-
-  //#region methods / extension vsix name
-  public get extensionVsixName() {
-    return `${this.project.name}-${this.project.packageJson.version}.vsix`;
-  }
-  //#endregion
 
   //#region methods / install locally
   async installLocally(releaseOptions?: ReleaseOptions) {
@@ -299,9 +272,9 @@ npm link
       ),
     );
 
-    await tempProj.artifactsManager.artifact.vscodeExtensionPLugin.createVscePackage(
-      { showInfo: false },
-    );
+    await tempProj.artifactsManager.artifact.vscodePlugin.createVscePackage({
+      showInfo: false,
+    });
 
     Helpers.info(
       `Installing extension: ${vsixPackageName} ` +

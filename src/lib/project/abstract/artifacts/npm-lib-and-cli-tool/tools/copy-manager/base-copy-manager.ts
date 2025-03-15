@@ -99,9 +99,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   //#region getters / temp project name
   get tempProjName() {
     //#region @backendFunc
-    const tempProjName = this.project.framework.__getTempProjName(
-      this.buildOptions.outDir,
-    );
+    const tempProjName = this.project.framework.getTempProjectNameForCopyTo();
     return tempProjName;
     //#endregion
   }
@@ -128,7 +126,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
    */
   get projectToCopyTo() {
     //#region @backendFunc
-    const canCopyToNodeModules = this.buildOptions.outDir === 'dist';
+
     let result: Project[] = [];
 
     const isTaonProdCli =
@@ -138,19 +136,15 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 
     //#region resolve all possible project for package distribution
     let projectForNodeModulesPkgUpdate: Project[] = [
-      ...(canCopyToNodeModules
+      ...(config.activeFramewrokVersions.length > 1
         ? [
-            ...(config.activeFramewrokVersions.length > 1
-              ? [
-                  ...config.activeFramewrokVersions.map(
-                    // this may be different then this.project.coreContainer
-                    v => this.project.ins.by('container', v),
-                  ),
-                ]
-              : []),
-            ...[this.project.framework.coreContainer],
+            ...config.activeFramewrokVersions.map(
+              // this may be different then this.project.coreContainer
+              v => this.project.ins.by('container', v),
+            ),
           ]
         : []),
+      ...[this.project.framework.coreContainer],
     ];
     //#endregion
 
@@ -216,14 +210,6 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     //#endregion
   }
   //#endregion
-
-  get projectWithBuild() {
-    //#region @backendFunc
-    return this.project.framework.isStandaloneProject
-      ? this.project
-      : this.project.framework.smartContainerBuildTarget;
-    //#endregion
-  }
 
   //#region getters / isomorphic pacakges
   get isomorphicPackages() {
@@ -347,17 +333,8 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
       );
 
       if (options.regenerateOnlyCoreProjects) {
-        if (
-          this.project.framework.isCoreProject ||
-          this.project.framework.isSmartContainer
-        ) {
-          if (this.project.framework.isSmartContainer) {
-            childs = this.project.children.filter(
-              c =>
-                c.typeIs('isomorphic-lib') &&
-                c.framework.frameworkVersionAtLeast('v3'),
-            );
-          } else if (this.project.framework.isContainer) {
+        if (this.project.framework.isCoreProject) {
+          if (this.project.framework.isContainer) {
             childs = this.project.children.filter(c => c.name === 'workspace');
           }
         } else {
@@ -367,28 +344,11 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 
       childs.forEach(c => {
         // console.log('GENERATING CHILD ' + c.genericName)
-        c.artifactsManager.artifact.npmLibAndCliTool.__copyManager.generateSourceCopyIn(
+        c.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.generateSourceCopyIn(
           crossPlatformPath(path.join(destinationLocation, c.name)),
           options,
         );
       });
-      if (this.project.framework.isSmartContainer) {
-        childs.forEach(c => {
-          let generatedVer = this.project.ins.From(
-            crossPlatformPath(path.join(destinationLocation, c.name)),
-          ) as Project;
-
-          generatedVer.taonJson.setType('isomorphic-lib');
-          generatedVer.taonJson.setFrameworkVersion(
-            this.project.framework.frameworkVersion,
-          );
-
-          this.project.ins.unload(generatedVer);
-          generatedVer = this.project.ins.From(
-            crossPlatformPath(path.join(destinationLocation, c.name)),
-          );
-        });
-      }
     }
     //#endregion
 
@@ -440,9 +400,9 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     }
 
     // console.log('async event '+ absoluteFilePath)
-    SourceMappingUrl.fixContent(absoluteFilePath, this.projectWithBuild);
+    SourceMappingUrl.fixContent(absoluteFilePath, this.buildOptions);
 
-    const outDir = this.buildOptions.outDir;
+    const outDir = config.folder.dist;
     let specificFileRelativePath: string;
     let absoluteAssetFilePath: string;
     if (absoluteFilePath.startsWith(this.monitoredOutDir)) {
@@ -489,7 +449,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     }
 
     // files: string[]
-    const outDir = this.buildOptions.outDir;
+    const outDir = config.folder.dist;
 
     const projectToCopyTo = this.projectToCopyTo;
     // (${proj.location}/${config.folder.node_modules}/${this.rootPackageName})

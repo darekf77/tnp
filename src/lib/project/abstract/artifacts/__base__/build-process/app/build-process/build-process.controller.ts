@@ -109,10 +109,7 @@ export class BuildProcessController extends Taon.Base.CrudController<any> {
     }
     let port =
       this.project.artifactsManager.artifact.angularNodeApp.projectInfoPort;
-    if (!port && this.project.framework.isSmartContainerTarget) {
-      return this.project.framework.smartContainerTargetParentContainer
-        .artifactsManager.artifact.angularNodeApp.projectInfoPort;
-    }
+
     return port;
     //#endregion
   }

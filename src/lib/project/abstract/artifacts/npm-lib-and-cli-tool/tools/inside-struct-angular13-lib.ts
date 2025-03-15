@@ -2,6 +2,7 @@
 import { config } from 'tnp-config/src';
 import { crossPlatformPath, path, _ } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
+import { PackageJson } from 'type-fest';
 
 import { Models } from '../../../../../models';
 import { InitOptions } from '../../../../../options';
@@ -13,7 +14,6 @@ import {
   recreateApp,
   recreateIndex,
 } from './inside-structures/structs/inside-struct-helpers';
-import { PackageJson } from 'type-fest';
 
 //#endregion
 
@@ -178,106 +178,12 @@ export class InsideStructAngular13Lib extends BaseInsideStruct {
             }
             //#endregion
 
-            if (this.project.framework.isSmartContainerTarget) {
-              //#region fixing tsconfig pathes
-              const parent =
-                this.project.framework.smartContainerTargetParentContainer;
-              const otherChildren = parent.children.filter(
-                c => c.name !== this.project.name,
-              );
-              // console.log({
-              //   otherChildren: otherChildren.map(c => c.location)
-              // })
-              const base = this.project.name;
-              if (tsconfigJson) {
-                tsconfigJson.compilerOptions.paths = otherChildren.reduce(
-                  (a, b) => {
-                    return _.merge(a, {
-                      [`@${parent.name}/${b.name}/${this.websql ? config.folder.websql : config.folder.browser}`]:
-                        [`./projects/${base}/src/libs/${b.name}`],
-                      [`@${parent.name}/${b.name}/${this.websql ? config.folder.websql : config.folder.browser}/*`]:
-                        [`./projects/${base}/src/libs/${b.name}/*`],
-                    });
-                  },
-                  {},
-                );
-
-                tsconfigJson.compilerOptions.paths[
-                  `@${parent.name}/${this.project.name}/${this.websql ? config.folder.websql : config.folder.browser}`
-                ] = [`./projects/${base}/src/lib`];
-                tsconfigJson.compilerOptions.paths[
-                  `@${parent.name}/${this.project.name}/${this.websql ? config.folder.websql : config.folder.browser}/*`
-                ] = [`./projects/${base}/src/lib/*`];
-              }
-              //#endregion
-
-              if (otherChildren.length > 0) {
-                publicApiFile = `
-export * from './lib';
-${otherChildren
-  .map(c => {
-    return `export * from './libs/${c.name}';`;
-  })
-  .join('\n')}
-`.trimLeft();
-              } else {
-                publicApiFile = `
-export * from './lib';
-`.trimLeft();
-              }
-
-              (() => {
-                const assetDummySourceForLib = path.join(
-                  this.project.location,
-                  `tmp-src-${config.folder.dist}${this.websql ? '-websql' : ''}`,
-                  config.folder.assets,
-                );
-
-                const assetDummyDestForLib = path.join(
-                  this.project.location,
-                  replacement(tmpProjectsStandalone),
-                  `projects/${this.project.name}/src/${config.folder.assets}`,
-                );
-
-                Helpers.remove(assetDummyDestForLib);
-                Helpers.createSymLink(
-                  assetDummySourceForLib,
-                  assetDummyDestForLib,
-                  { continueWhenExistedFolderDoesntExists: true },
-                );
-              })();
-
-              for (let index = 0; index < otherChildren.length; index++) {
-                const child = otherChildren[index];
-
-                //#region replace browser cut code in destination lib
-                const sourceChild = path.join(
-                  this.project.location,
-                  `tmp-src-${config.folder.dist}${this.websql ? '-websql' : ''}`,
-                  'libs',
-                  child.name,
-                );
-
-                const destChild = path.join(
-                  this.project.location,
-                  replacement(tmpProjectsStandalone),
-                  `projects/${this.project.name}/src/libs/${child.name}`,
-                );
-
-                Helpers.remove(destChild);
-                Helpers.createSymLink(sourceChild, destChild, {
-                  continueWhenExistedFolderDoesntExists: true,
-                });
-                //#endregion
-              }
-            } else {
-              if (tsconfigJson) {
-                tsconfigJson.compilerOptions.paths = void 0;
-              }
-              publicApiFile = `
-export * from './lib';
-`.trimLeft();
+            if (tsconfigJson) {
+              tsconfigJson.compilerOptions.paths = void 0;
             }
+            publicApiFile = `
+export * from './lib';
+`.trimLeft();
 
             if (tsconfigJson) {
               Helpers.writeJson(sourceTsconfig, tsconfigJson);

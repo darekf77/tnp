@@ -16,18 +16,19 @@ export class Git extends BaseGit<Project> {
   //#endregion
 
   //#region push to git repo
-  async pushToGitRepo(
-    realCurrentProj: Project,
-    newVersion?: string,
-    pushWithoutAsking = false,
-  ) {
+  /**
+   *
+   * @param newVersion
+   * @param pushWithoutAsking
+   */
+  async tagAndPushToGitRepo(newVersion: string, pushWithoutAsking = false):Promise<void> {
     //#region @backendFunc
     const pushFun = async () => {
       if (newVersion) {
         const tagName = `v${newVersion}`;
         const commitMessage = 'new version ' + newVersion;
         try {
-          realCurrentProj
+          this.project
             .run(`git tag -a ${tagName} ` + `-m "${commitMessage}"`, {
               output: false,
             })
@@ -35,17 +36,17 @@ export class Git extends BaseGit<Project> {
         } catch (error) {
           Helpers.error(`Not able to tag project`, false, true);
         }
-        const lastCommitHash = realCurrentProj.git.lastCommitHash();
-        realCurrentProj.packageJson.setBuildHash(lastCommitHash);
+        const lastCommitHash = this.project.git.lastCommitHash();
+        this.project.packageJson.setBuildHash(lastCommitHash);
 
-        realCurrentProj.git.__commitRelease(newVersion, `release: `);
+        this.project.git.__commitRelease(newVersion, `release: `);
       } else {
-        realCurrentProj.git.__commitRelease();
+        this.project.git.__commitRelease();
       }
 
       Helpers.log('Pushing to git repository... ');
-      Helpers.log(`Git branch: ${realCurrentProj.git.currentBranchName}`);
-      await realCurrentProj.git.pushCurrentBranch({ askToRetry: true });
+      Helpers.log(`Git branch: ${this.project.git.currentBranchName}`);
+      await this.project.git.pushCurrentBranch({ askToRetry: true });
       Helpers.info('Pushing to git repository done.');
     };
 
@@ -76,14 +77,14 @@ export class Git extends BaseGit<Project> {
   /**
    * @deprecated
    */
-  __removeTagAndCommit(automaticRelease: boolean) {
+  __removeTagAndCommit(autoReleaseUsingConfig: boolean) {
     //#region @backendFunc
     // Helpers.error(`PLEASE RUN: `, true, true);
     // if (!tagOnly) {
     //   Helpers.error(`git reset --hard HEAD~1`, true, true);
     // }
-    Helpers.error(`'release problem... `, automaticRelease, true);
-    // if (automaticRelease) {
+    Helpers.error(`'release problem... `, autoReleaseUsingConfig, true);
+    // if (autoReleaseUsingConfig) {
     //   Helpers.error('release problem...', false, true);
     // }
     //#endregion
@@ -111,8 +112,7 @@ export class Git extends BaseGit<Project> {
 
     if (
       !this.project.git.originURL &&
-      this.project.framework.isContainerChild &&
-      !this.project.framework.isSmartContainerChild
+      this.project.framework.isContainerChild
     ) {
       this.project
         .run(

@@ -134,101 +134,16 @@ export const saveConfigWorkspace = (
   projectConfig.currentFrameworkVersion = project.ins.Tnp.packageJson.version;
   projectConfig.currentProjectLocation = project.location;
   projectConfig.isStandaloneProject = project.framework.isStandaloneProject;
-  projectConfig.isSmartContainer = project.framework.isSmartContainer;
-  projectConfig.isSmartContainerTargetProject =
-    project.framework.isSmartContainerTarget;
 
-  let libs = Helpers.linksToFoldersFrom(
-    path.join(project.location, config.folder.src, 'libs'),
-  );
-  const isSmartWorkspaceChild = project.framework.isSmartContainerChild;
-  if (isSmartWorkspaceChild) {
-    libs = project.parent.children
-      .filter(f => {
-        return (
-          f.framework.frameworkVersionAtLeast('v3') &&
-          f.typeIs('isomorphic-lib')
-        );
-      })
-      .map(f => {
-        return path.join(f.location);
-      });
-  }
   const customRootDir = 'customRootDir';
 
-  if (libs.length > 0) {
-    const parentPath = project.framework.isSmartContainerChild
-      ? project.parent.location
-      : path.join(project.location, '../../..');
-    const parent = project.ins.From(parentPath);
-    if (parent) {
-      const generatedPathes =
-        `"paths": ` +
-        JSON.stringify(
-          libs.reduce((a, b) => {
-            if (isSmartWorkspaceChild) {
-              const pathRelative = path.join(
-                path.basename(b),
-                config.folder.src,
-                'lib',
-              );
-              return _.merge(a, {
-                [`@${parent.name} /${path.basename(b)}`]: [
-                  `../${pathRelative}`,
-                ],
-                [`@${parent.name}/${path.basename(b)}/*`]: [
-                  `../${pathRelative}/*`,
-                ],
-              });
-            } else {
-              const pathRelative = b
-                .replace(parent.location, '')
-                .split('/')
-                .slice(4)
-                .join('/');
-              return _.merge(a, {
-                [`@${parent.name}/${path.basename(b)}`]: [`./${pathRelative}`],
-                [`@${parent.name}/${path.basename(b)}/*`]: [
-                  `./${pathRelative}/*`,
-                ],
-              });
-            }
-          }, {}),
-        );
-      projectConfig['pathesTsconfig'] = generatedPathes;
-      projectConfig['pathesTsconfigSourceDist'] = generatedPathes.replace(
-        /\/src/g,
-        '/tmp-source-dist',
-      );
-
-      // workspaceConfig['exclusion'] = `exclude:[]`;
-    } else {
-      Helpers.warn(`[env config] parent not found by path ${parentPath}`);
-    }
-  } else if (
-    project.framework.isStandaloneProject &&
-    !project.framework.smartContainerBuildTarget
-  ) {
+  if (project.framework.isStandaloneProject) {
     projectConfig['pathesTsconfig'] =
       `"paths": ` +
       JSON.stringify({
         [`${project.name}`]: ['./src/lib'],
         [`${project.name}/*`]: ['./src/lib/*'],
       });
-  } else if (project.framework.isSmartContainer) {
-    projectConfig['pathesTsconfig'] =
-      `"paths": ` +
-      JSON.stringify(
-        project.children.reduce((a, child) => {
-          return _.merge(a, {
-            // [`@${project.name}/${child.name}`]: [`${child.name}/src/lib/index.ts`],
-            [`@${project.name}/${child.name}`]: [`${child.name}/src/lib`],
-            [`@${project.name}/${child.name}/*`]: [`${child.name}/src/lib/*`],
-          });
-        }, {}),
-      );
-  } else {
-    projectConfig['pathesTsconfig'] = `"paths": ` + JSON.stringify({});
   }
 
   if (
@@ -238,25 +153,9 @@ export const saveConfigWorkspace = (
     projectConfig['pathesTsconfig'] = `${projectConfig['pathesTsconfig']},`;
   }
 
-  if (project.framework.isSmartContainerChild) {
-    projectConfig[customRootDir] = `"rootDir": "../",`;
-  } else if (project.framework.isSmartContainer) {
-    projectConfig[customRootDir] = `"rootDir": ".",`;
-    projectConfig['includeForContainer'] = project.children
-      .map(c => {
-        return `"${c.name}/**/*"`;
-      })
-      .join(',');
-  } else {
-    projectConfig[customRootDir] = `"rootDir": "./src",`;
-  }
+  projectConfig[customRootDir] = `"rootDir": "./src",`;
 
-  let currentLibProjectSourceFolder: 'src';
-
-  if (project.typeIs('isomorphic-lib')) {
-    currentLibProjectSourceFolder = 'src';
-  }
-  projectConfig.currentLibProjectSourceFolder = currentLibProjectSourceFolder;
+  projectConfig.currentLibProjectSourceFolder = 'src';
 
   const tmpEnvironmentPath = path.join(
     project.location,
@@ -267,10 +166,7 @@ export const saveConfigWorkspace = (
     'tmp-environment-for-browser.json',
   );
 
-  if (
-    project.framework.isStandaloneProject ||
-    project.framework.isSmartContainer
-  ) {
+  if (project.framework.isStandaloneProject) {
     Helpers.writeJson(tmpEnvironmentPath, projectConfig);
     const clonedConfig = _.cloneDeep(projectConfig);
     // console.log(JSON.stringify(clonedConfig))

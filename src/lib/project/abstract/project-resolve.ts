@@ -45,9 +45,12 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     if (!fse.existsSync(location)) {
       return void 0;
     }
+
     const taonJson = Helpers.readJsonC([location, config.file.taon_jsonc]);
-    if (!_.isObject(taonJson)) {
-      return void 0;
+    if (!_.isObject(taonJson) || !taonJson.type) {
+      return Helpers.exists([location, config.file.package_json])
+        ? 'unknown-npm-project'
+        : 'unknown';
     }
     const type = taonJson.type;
     return type;
@@ -100,6 +103,8 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     }
 
     let type = this.typeFrom(location);
+
+    // console.log(`type ${type} for location ${location}`);
 
     let resultProject: Project;
     if (type === 'isomorphic-lib') {

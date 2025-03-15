@@ -31,13 +31,13 @@ export class BackendCompilation extends IncCompiler.Base {
   }
 
   get cwd() {
-     //#region @backendFunc
+    //#region @backendFunc
     return this.cwdProject.location;
     //#endregion
   }
 
   public get absPathTmpSrcDistFolder() {
-     //#region @backendFunc
+    //#region @backendFunc
     if (_.isString(this.srcFolder) && _.isString(this.cwd)) {
       return crossPlatformPath(path.join(this.cwd, this.srcFolder));
     }
@@ -80,7 +80,7 @@ export class BackendCompilation extends IncCompiler.Base {
 
   //#region methods / sync action
   async syncAction(filesPathes: string[]) {
-     //#region @backendFunc
+    //#region @backendFunc
     const outDistPath = crossPlatformPath(path.join(this.cwd, this.outFolder));
     // Helpers.System.Operations.tryRemoveDir(outDistPath)
     if (!fse.existsSync(outDistPath)) {
@@ -202,22 +202,11 @@ export class BackendCompilation extends IncCompiler.Base {
   ) {
     //#region @backendFunc
     let { commandJs, commandMaps, cwd, project, outDir, watch } = options;
-    const smartContainerChildrenNames =
-      project.framework.smartContainerTargetParentContainer?.children.map(
-        c => c.name,
-      ) || [];
 
     // console.log({ childrenNames });
 
-    const smartContainerTarget =
-      project.framework.smartContainerBuildTarget?.name;
-
-    const isStandalone =
-      !project.framework.isSmartContainerTarget &&
-      !project.framework.isSmartContainerChild;
-    const parent = !isStandalone
-      ? project.parent || project.framework.smartContainerTargetParentContainer
-      : void 0;
+    const isStandalone = project.framework.isStandaloneProject;
+    const parent = project.parent;
 
     Helpers.info(`
 
@@ -227,20 +216,10 @@ Starting backend TypeScript build....
     const additionalReplace = (line: string) => {
       const [tmpSource, dashOrFile, childName] = line.split('/');
       // console.log({ tmpSource, dashOrFile, childName });
-      if (
-        tmpSource === 'tmp-source-dist' &&
-        dashOrFile === '-' &&
-        smartContainerChildrenNames.includes(childName)
-      ) {
+      if (tmpSource === 'tmp-source-dist' && dashOrFile === '-') {
         return line.replace(
           `tmp-source-dist/-/${childName}/`,
           `${childName}/src/`,
-        );
-      }
-      if (tmpSource === 'tmp-source-dist' && dashOrFile.startsWith('app.')) {
-        return line.replace(
-          `tmp-source-dist/${dashOrFile}`,
-          `${smartContainerTarget}/src/${dashOrFile}`,
         );
       }
 
@@ -281,7 +260,7 @@ Starting backend TypeScript build....
     await Helpers.execute(commandJs, cwd, {
       similarProcessKey: 'tsc',
       exitOnErrorCallback: async code => {
-        if (buildOptions.buildForRelease) {
+        if (buildOptions.releaseType) {
           throw 'Typescript compilation (backend)';
         } else {
           Helpers.error(

@@ -28,8 +28,11 @@ export class NodeModules extends BaseNodeModules {
     public project: Project,
     public npmHelpers: NpmHelpers,
   ) {
-    // @ts-ignore TODO weird inheritance problem
-    super(project.location, npmHelpers);
+    super(
+      project.location,
+      // @ts-ignore TODO weird inheritance problem
+      npmHelpers,
+    );
   }
 
   //#region reinstall
@@ -42,7 +45,6 @@ export class NodeModules extends BaseNodeModules {
     //#region @backendFunc
     if (
       this.project.framework.isContainer &&
-      !this.project.framework.isSmartContainer &&
       !this.project.framework.isContainerCoreProject
     ) {
       Helpers.log(`No need for package installation in normal container`);
@@ -206,6 +208,12 @@ export class NodeModules extends BaseNodeModules {
 
   //#region should dedupe packages
   get shouldDedupePackages(): boolean {
+    if (
+      this.project.framework.isContainer &&
+      !this.project.framework.isCoreProject
+    ) {
+      return false;
+    }
     return (
       !this.project.npmHelpers.useLinkAsNodeModules &&
       !this.project.nodeModules.isLink
@@ -221,39 +229,7 @@ export class NodeModules extends BaseNodeModules {
   public get compiledProjectFilesAndFolders(): string[] {
     //#region @backendFunc
     const jsDtsMapsArr = ['.js', '.js.map', '.d.ts'];
-    if (this.project.framework.isSmartContainer) {
-      return this.project.children.reduce(
-        (a, c) =>
-          a
-            .concat(
-              c.nodeModules.compiledProjectFilesAndFolders.map(
-                a => `${c.name}/${a}`,
-              ),
-            )
-            .concat(
-              Helpers.foldersFrom(c.pathFor(['src/lib']), {
-                recursive: false,
-              }).map(aaa =>
-                crossPlatformPath(`${c.name}/${path.basename(aaa)}`),
-              ),
-            )
-            .concat(
-              jsDtsMapsArr.reduce((a, b) => {
-                return a.concat([
-                  ...Helpers.filesFrom(c.pathFor(['src/lib']))
-                    .map(aaa =>
-                      crossPlatformPath(`${c.name}/${path.basename(aaa)}`),
-                    )
-                    .map(aa => `${aa.replace('.ts', '')}${b}`),
-                ]);
-              }, []),
-            ),
-        [],
-      );
-    } else if (
-      this.project.framework.isStandaloneProject ||
-      this.project.framework.isSmartContainerChild
-    ) {
+    if (this.project.framework.isStandaloneProject) {
       return [
         config.folder.bin,
         config.folder.lib,
@@ -288,27 +264,15 @@ export class NodeModules extends BaseNodeModules {
     //#region @backendFunc
 
     //#region source folder
-    const sourcePathToLocalProj = sourceOfCompiledProject.framework
-      .isStandaloneProject
-      ? crossPlatformPath([
-          sourceOfCompiledProject.location,
-          config.folder.tmpDistRelease,
-          config.folder.dist,
-          'project',
-          sourceOfCompiledProject.name,
-          `tmp-local-copyto-proj-${config.folder.dist}/${config.folder.node_modules}/${sourceOfCompiledProject.name}`,
-        ])
-      : crossPlatformPath([
-          sourceOfCompiledProject.location,
-          config.folder.tmpDistRelease,
-          config.folder.dist,
-          'project',
-          sourceOfCompiledProject.name,
-          config.folder.dist,
-          sourceOfCompiledProject.name,
-          sourceOfCompiledProject.framework.smartContainerBuildTarget.name,
-          `tmp-local-copyto-proj-${config.folder.dist}/${config.folder.node_modules}/@${sourceOfCompiledProject.name}`,
-        ]);
+    const sourcePathToLocalProj = crossPlatformPath([
+      sourceOfCompiledProject.location,
+      config.folder.tmpDistRelease,
+      config.folder.dist,
+      'project',
+      sourceOfCompiledProject.name,
+      `tmp-local-copyto-proj-${config.folder.dist}/${config.folder.node_modules}/${sourceOfCompiledProject.name}`,
+    ]);
+
     //#endregion
 
     //#region copy process
@@ -340,14 +304,6 @@ export class NodeModules extends BaseNodeModules {
       'after release update',
     );
 
-    //#endregion
-  }
-  //#endregion
-
-  //#region set to smart container
-  setToSmartContainer(): void {
-    //#region @backendFunc
-    this.project.taonJson.setType('container', { smart: true });
     //#endregion
   }
   //#endregion
@@ -468,6 +424,43 @@ export class NodeModules extends BaseNodeModules {
       'chai',
       'vpn-split',
     ];
+  }
+  //#endregion
+
+  //#region remove tnp from itself
+  /**
+   * Remove already compiled package from node_modules
+   * in project with the same name
+   *
+   * let say we have project "my-project" and we want to remove
+   * "my-project" from node_modules of "my-project"
+   *
+   * This helper is helpful when we want to minified whole library
+   * into single file (using ncc)
+   */
+  public async removeOwnPackage(
+    actionwhenNotInNodeModules: () => {},
+  ): Promise<void> {
+    //#region @backendFunc
+    const nodeModulesPath = this.project.nodeModules.path;
+    if (Helpers.exists(nodeModulesPath)) {
+      const folderToMove = crossPlatformPath([
+        crossPlatformPath(fse.realpathSync(nodeModulesPath)),
+        this.project.name,
+      ]);
+
+      const folderTemp = crossPlatformPath([
+        crossPlatformPath(fse.realpathSync(nodeModulesPath)),
+        `temp-location-${this.project.name}`,
+      ]);
+
+      Helpers.move(folderToMove, folderTemp);
+      await Helpers.runSyncOrAsync({
+        functionFn: actionwhenNotInNodeModules,
+      });
+      Helpers.move(folderTemp, folderToMove);
+    }
+    //#endregion
   }
   //#endregion
 }

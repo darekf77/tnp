@@ -54,57 +54,6 @@ export class Framework extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region is smart container target
-  get isSmartContainerTarget(): boolean {
-    //#region @backendFunc
-    const folderBefore = path.basename(
-      path.dirname(path.dirname(this.project.location)),
-    );
-    return (
-      [config.folder.dist].includes(folderBefore) &&
-      this.smartContainerTargetParentContainer?.framework.isSmartContainer
-    );
-    //#endregion
-  }
-  //#endregion
-
-  //#region is smart container non client target
-  /**
-   * other projects beside smart container target
-   */
-  get isSmartContainerTargetNonClient(): boolean {
-    //#region @backendFunc
-    const parent = this.smartContainerTargetParentContainer;
-    return !!(
-      parent?.framework.isSmartContainer &&
-      parent.framework.smartContainerBuildTarget?.name !== this.project.name
-    );
-    //#endregion
-  }
-  //#endregion
-
-  //#region is smart container
-  get isSmartContainer(): boolean {
-    //#region @backendFunc
-    return (
-      this.frameworkVersionAtLeast('v3') &&
-      this.project.taonJson.isSmart &&
-      this.isContainer &&
-      !this.isContainerCoreProject &&
-      !this.isContainerCoreProjectTempProj
-    );
-    //#endregion
-  }
-  //#endregion
-
-  //#region is smart container child
-  get isSmartContainerChild(): boolean {
-    //#region @backendFunc
-    return !!this.project.parent?.framework.isSmartContainer;
-    //#endregion
-  }
-  //#endregion
-
   //#region is container or workspace with linked projects
   get isContainerWithLinkedProjects(): boolean {
     //#region @backendFunc
@@ -247,80 +196,6 @@ export class Framework extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region smart container build target
-  get smartContainerBuildTarget(): Project {
-    //#region @backendFunc
-    if (this.isSmartContainerChild) {
-      return this.project.parent.framework.smartContainerBuildTarget;
-    }
-
-    if (this.isSmartContainerTarget) {
-      return this.smartContainerTargetParentContainer.framework
-        .smartContainerBuildTarget;
-    }
-
-    if (!this.project.taonJson.smartContainerBuildTarget) {
-      if (this.project.children.length === 1) {
-        this.project.taonJson.setSmartContainerBuildTarget(
-          _.first(this.project.children).name,
-        );
-      } else {
-        if (this.isSmartContainerChild || this.isSmartContainer) {
-          //#region display update messge for container build
-          Helpers.logError(
-            `
-
- Please specify in your configuration proper ${chalk.bold(
-   'smartContainerBuildTarget',
- )}:
-
- file: ${config.file.taon_jsonc}
-
-   ...
-     smartContainerBuildTarget: <name of main project>
-   ...
-
-
-
-       `,
-            false,
-            true,
-          );
-
-          Helpers.log(
-            `[singularbuildcontainer] children for build: \n\n${this.project.children.map(
-              c => c.name,
-            )}\n\n`,
-          );
-          //#endregion
-        }
-      }
-    }
-
-    const children = this.project.children;
-    let target = children
-      .filter(c => c.typeIs('isomorphic-lib'))
-      .find(c => c.name === this.project.taonJson.smartContainerBuildTarget);
-
-    if (!target && children.length === 1) {
-      target = _.first(children);
-    }
-
-    return target;
-    //#endregion
-  }
-  //#endregion
-
-  //#region get smart container target parent
-  get smartContainerTargetParentContainer(): Project | undefined {
-    //#region @backendFunc
-    return this.project.ins.From(
-      path.dirname(path.dirname(path.dirname(this.project.location))),
-    ) as Project;
-    //#endregion
-  }
-  //#endregion
-
   //#region core container data from node modules link
   private get containerDataFromNodeModulesLink() {
     //#region @backendFunc
@@ -410,9 +285,12 @@ export class Framework extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region getters & methods / name, names / get temp project name
-  __getTempProjName(outdir: 'dist') {
+  /**
+   * project stores node_modules with compiles npm lib
+   */
+  getTempProjectNameForCopyTo(): string {
     //#region @backendFunc
-    const tempProjName = `tmp-local-copyto-proj-${outdir}`;
+    const tempProjName = `tmp-local-copyto-proj-${config.folder.dist}`;
     return tempProjName;
     //#endregion
   }
@@ -424,16 +302,12 @@ export class Framework extends BaseFeatureForProject<Project> {
    */
   public get universalPackageName(): string {
     //#region @backendFunc
-    if (this.isSmartContainerChild) {
-      return `@${this.project.parent?.name}/${this.project.name}`;
-    }
-    if (this.isSmartContainer) {
-      return `@${this.project.parent?.name}`;
-    }
+
     const parentBasename =
       !this.isStandaloneProject && this.project.parentBasename.startsWith('@')
         ? this.project.parentBasename
         : '';
+
     if (parentBasename) {
       return crossPlatformPath([
         this.project.parentBasename,
@@ -441,6 +315,15 @@ export class Framework extends BaseFeatureForProject<Project> {
       ]);
     }
     return this.project.name;
+    //#endregion
+  }
+
+  get allNpmPackagesNames(): string[] {
+    //#region @backendFunc
+    return [
+      this.project.framework.universalPackageName,
+      ...this.project.taonJson.additionalNpmNames,
+    ];
     //#endregion
   }
   //#endregion
@@ -452,14 +335,7 @@ export class Framework extends BaseFeatureForProject<Project> {
    */
   public get packageNamesFromProject(): string[] {
     //#region @backendFunc
-    if (this.isSmartContainer) {
-      return this.project.children.map(c => c.framework.universalPackageName);
-    }
-    if (this.isSmartContainerTarget) {
-      return (this.smartContainerTargetParentContainer.children || []).map(
-        c => c.framework.universalPackageName,
-      );
-    }
+
     return [this.universalPackageName];
     //#endregion
   }
@@ -468,9 +344,7 @@ export class Framework extends BaseFeatureForProject<Project> {
   //#region getters & methods / name, names / get string npm package name
   public get __npmPackageName(): string {
     //#region @backendFunc
-    if (this.isSmartContainerChild) {
-      return `@${this.project.parent.name}/${this.project.name}`;
-    }
+
     return `${this.project.name}`;
     //#endregion
   }

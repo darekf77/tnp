@@ -11,7 +11,6 @@ import {
 } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
-import { VpnSplit } from 'vpn-split/src';
 
 import { MESSAGES, TEMP_DOCS } from '../../constants';
 import { BuildOptions, InitOptions } from '../../options';
@@ -95,13 +94,6 @@ export class $Open extends BaseCommandLineFeature<{}, Project> {
     this._openThing('tmp-routes.json');
   }
 
-  release() {
-    Helpers.run(
-      `code ${this.project.releaseProcess.releaseCiProject.location}`,
-    ).sync();
-    process.exit(0);
-  }
-
   private _openThing(fileName: string) {
     const proj = this.project;
 
@@ -113,10 +105,7 @@ export class $Open extends BaseCommandLineFeature<{}, Project> {
       }
     };
 
-    if (
-      proj.framework.isStandaloneProject &&
-      !proj.framework.isSmartContainerChild
-    ) {
+    if (proj.framework.isStandaloneProject) {
       const pathToDB = path.join(proj.location, fileName);
       openFn(pathToDB);
     }
@@ -156,12 +145,6 @@ export class $Open extends BaseCommandLineFeature<{}, Project> {
       openFn(pathToTHing);
     };
 
-    if (proj.framework.isSmartContainer) {
-      smartContainerFn(proj);
-    }
-    if (proj.framework.isSmartContainerChild) {
-      smartContainerFn(proj.parent);
-    }
     this._exit();
   }
 }

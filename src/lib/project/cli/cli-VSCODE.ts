@@ -117,7 +117,7 @@ export class $Vscode extends BaseCommandLineFeature<
   }
 
   async vsce() {
-    await this.project.artifactsManager.artifact.vscodeExtensionPLugin.createVscePackage(
+    await this.project.artifactsManager.artifact.vscodePlugin.createVscePackage(
       {
         args: this.argsWithParams,
       },

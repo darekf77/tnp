@@ -18,13 +18,6 @@ class $Build extends BaseCommandLineFeature<BuildOptions, Project> {
     this.params = BuildOptions.from(this.params);
     //#region resolve smart containter
     this._tryResolveChildIfInsideArg();
-    if (this.project.framework.isSmartContainerChild) {
-      this.params.smartContainerTargetName = this.project.name;
-      this.project = this.project.parent;
-    } else if (this.project.framework.isSmartContainer) {
-      this.params.smartContainerTargetName =
-        this.project.framework.smartContainerBuildTarget?.name;
-    }
 
     //#endregion
     // console.log(this.params)
@@ -34,17 +27,85 @@ class $Build extends BaseCommandLineFeature<BuildOptions, Project> {
     await this.project.build(
       BuildOptions.from({
         ...this.params,
-        buildType: 'lib',
         finishCallback: () => this._exit(),
       }),
     );
   }
 
+  async watchLib() {
+    await this.project.build(
+      BuildOptions.from({
+        ...this.params,
+        targetArtifact: 'npm-lib-and-cli-tool',
+        watch: true,
+        finishCallback: () => this._exit(),
+      }),
+    );
+  }
+
+  async lib() {
+    await this.project.build(
+      BuildOptions.from({
+        ...this.params,
+        targetArtifact: 'npm-lib-and-cli-tool',
+        finishCallback: () => this._exit(),
+      }),
+    );
+  }
+
+  async vscode(watch = false) {
+    await this.project.build(
+      BuildOptions.from({
+        ...this.params,
+        watch,
+        targetArtifact: 'vscode-plugin',
+        finishCallback: () => this._exit(),
+      }),
+    );
+  }
+
+  async watchVscode() {
+    await this.vscode(true);
+  }
+
+  async watchAppWebsql() {
+    await this.watchApp(true);
+  }
+
+  async watchApp(websql = false) {
+    await this.project.build(
+      BuildOptions.from({
+        ...this.params,
+        websql,
+        targetArtifact: 'angular-node-app',
+        finishCallback: () => this._exit(),
+      }),
+    );
+  }
+
+  async watchElectronWebsql() {
+    await this.watchElectron(true);
+  }
+
+  async watchElectron(websql = false) {
+    await this.project.build(
+      BuildOptions.from({
+        ...this.params,
+        websql,
+        watch: true,
+        targetArtifact: 'electron-app',
+        finishCallback: () => this._exit(),
+      }),
+    );
+  }
+
+  /**
+   * display console menu
+   */
   async watch() {
     await this.project.build(
       BuildOptions.from({
         ...this.params,
-        buildType: 'lib',
         watch: true,
       }),
     );
@@ -64,7 +125,6 @@ class $Build extends BaseCommandLineFeature<BuildOptions, Project> {
     await this.project.build(
       BuildOptions.from({
         ...this.params,
-        buildType: 'lib',
         watch: true,
       }),
     );
@@ -74,7 +134,6 @@ class $Build extends BaseCommandLineFeature<BuildOptions, Project> {
     await this.project.build(
       BuildOptions.from({
         ...this.params,
-        buildType: 'app',
         finishCallback: () => this._exit(),
       }),
     );
@@ -84,58 +143,15 @@ class $Build extends BaseCommandLineFeature<BuildOptions, Project> {
     await this.project.build(
       BuildOptions.from({
         ...this.params,
-        buildType: 'app',
         watch: true,
       }),
     );
   }
 
-  compiledPathes() {
-    console.log(
-      this.project.nodeModules.compiledProjectFilesAndFolders.join('\n'),
-    );
-    this._exit();
-  }
-
   async start() {
-    const { smartContainerTargetName } = this.params;
-
-    // console.log('smartContainerTargetName', smartContainerTargetName);
-    // console.log(
-    //   'this.project?.smartContainerBuildTarget?.name',
-    //   this.project?.smartContainerBuildTarget?.name,
-    // );
-    //#region prevent start mode for smart container non child
-    if (
-      smartContainerTargetName !==
-      this.project?.framework.smartContainerBuildTarget?.name
-    ) {
-      Helpers.error(
-        `Start mode only available for child project "${
-          this.project?.framework.smartContainerBuildTarget.name
-        }"
-
-        Please use 2 commands instead (in 2 separaed terminals):
-
-1. Build of every lib in container
-${config.frameworkName} build:watch
-
-2. Start ng server for app
-${config.frameworkName} app ${smartContainerTargetName} ${
-          this.params.websql ? '--websql' : ''
-        }  # to build app
-
-
-        `,
-        false,
-        true,
-      );
-    }
-    //#endregion
     await this.project.build(
       BuildOptions.from({
         ...this.params,
-        buildType: 'lib-app',
         watch: true,
       }),
     );

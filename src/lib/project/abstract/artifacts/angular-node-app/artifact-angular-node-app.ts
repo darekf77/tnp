@@ -1,24 +1,61 @@
 //#region imports
+import { BaseContext, Taon } from 'taon/src';
 import { config } from 'tnp-config/src';
 import { crossPlatformPath, path, _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
+import {
+  createSourceFile,
+  isClassDeclaration,
+  ScriptTarget,
+  Node,
+  forEachChild,
+} from 'typescript';
 
-import { DEFAULT_PORT, PortUtils } from '../../../../constants';
-import { BuildOptions, ClearOptions, ReleaseOptions } from '../../../../options';
+import {
+  COMPILATION_COMPLETE_APP_NG_SERVE,
+  DEFAULT_PORT,
+  PortUtils,
+  tmpBaseHrefOverwriteRelPath,
+  tmpBuildPort,
+} from '../../../../constants';
+import {
+  BuildOptions,
+  ClearOptions,
+  InitOptions,
+  ReleaseOptions,
+  ReleaseType,
+} from '../../../../options';
+import type { Project } from '../../project';
 import { BaseArtifact } from '../__base__/base-artifact';
+import { BuildProcess } from '../__base__/build-process/app/build-process/build-process';
+import { BuildProcessController } from '../__base__/build-process/app/build-process/build-process.controller';
+import { InsideStructuresApp } from '../npm-lib-and-cli-tool/tools/inside-structures/inside-structures';
 
 import { AssetsFileListGenerator } from './tools/assets-list-file-generator';
 import { AssetsManager } from './tools/assets-manager';
 import { AngularFeBasenameManager } from './tools/basename-manager';
 import { GithubPagesAppBuildConfig } from './tools/docs-app-build-config';
 import { MigrationHelper } from './tools/migrations-helper';
-import type { Project } from '../../project';
+
 //#endregion
 
-export class ArtifactAngularNodeApp extends BaseArtifact {
+export class ArtifactAngularNodeApp extends BaseArtifact<
+  {
+    angularNodeAppDistOutPath: string;
+    angularWebsqlAppDistOutPath: string;
+    dockerAngularNodeAppDistOutPath: string;
+    dockerAngularWebsqlAppDistOutPath: string;
+  },
+  {
+    releaseProjPath: string;
+    releaseType: ReleaseType;
+  }
+> {
   //#region fields
   public readonly migrationHelper: MigrationHelper;
   public readonly angularFeBasenameManager: AngularFeBasenameManager;
+
+  public readonly insideStructureApp: InsideStructuresApp;
   public readonly __assetsFileListGenerator: AssetsFileListGenerator;
   public readonly __docsAppBuild: GithubPagesAppBuildConfig;
   public readonly __assetsManager: AssetsManager;
@@ -31,52 +68,56 @@ export class ArtifactAngularNodeApp extends BaseArtifact {
 
   //#region constructor
   constructor(readonly project: Project) {
-    super(project);
+    super(project, 'angular-node-app');
     this.migrationHelper = new MigrationHelper(project);
     this.angularFeBasenameManager = new AngularFeBasenameManager(project);
+    this.insideStructureApp = new InsideStructuresApp(project);
     this.__assetsFileListGenerator = new AssetsFileListGenerator(project);
     this.__docsAppBuild = new GithubPagesAppBuildConfig(project);
     this.__assetsManager = new AssetsManager(project);
   }
   //#endregion
 
-  async structPartial(options): Promise<void> {
-    return void 0; // TODO implement
+  async initPartial(initOptions: InitOptions): Promise<void> {
+    await this.insideStructureApp.init(initOptions);
+    this.fixAppTsFile();
+    this.buildAssetsFile(initOptions);
   }
 
-  async initPartial(options): Promise<void> {
-    return void 0; // TODO implement
-  }
+  async buildPartial(buildOptions: BuildOptions): Promise<{
+    angularNodeAppDistOutPath: string;
+    angularWebsqlAppDistOutPath: string;
+    dockerAngularNodeAppDistOutPath: string;
+    dockerAngularWebsqlAppDistOutPath: string;
+  }> {
+    //#region @backendFunc
 
-  async buildPartial(options): Promise<void> {
-    return void 0; // TODO implement
-  }
+    //#region prevent empty baseHref for app build
+    if (!_.isUndefined(buildOptions.baseHref)) {
+      Helpers.error(
+        `Build baseHref only can be specify when build lib code:
 
-  async releasePartial(options): Promise<void> {
-    return void 0; // TODO implement
-  }
+      try commands:
+      ${config.frameworkName} start --base-href ${buildOptions.baseHref} # it will do lib and app code build
+      ${config.frameworkName} build:watch --base-href ${buildOptions.baseHref} # it will do lib code build
 
-  async clearPartial(options: ClearOptions): Promise<void> {
-    return void 0; // TODO implement
-  }
+      `,
+        false,
+        true,
+      );
+    }
 
-  //#region getters & methods / build app
-  async buildApp(buildOptions: BuildOptions): Promise<void> {
-    //#region @backend
-
-    //#region prepare variables
-
-    //#region prepare variables / baseHref
-
-    const isSmartContainerTarget =
-      this.project.framework.isSmartContainerTarget;
-    const isSmartContainerTargetNonClient =
-      this.project.framework.isSmartContainerTargetNonClient;
+    const fromFileBaseHref = Helpers.readFile(
+      this.project.pathFor(tmpBaseHrefOverwriteRelPath),
+    );
+    buildOptions.baseHref = fromFileBaseHref;
 
     //#endregion
 
+    //#region prepare variables
+
     //#region prepare variables / webpack params
-    let webpackEnvParams = `--env.outFolder=${buildOptions.outDir}`;
+    let webpackEnvParams = `--env.outFolder=${config.folder.dist}`;
     webpackEnvParams =
       webpackEnvParams + (buildOptions.watch ? ' --env.watch=true' : '');
 
@@ -84,26 +125,14 @@ export class ArtifactAngularNodeApp extends BaseArtifact {
     const backeFromRelease = `../../../../`;
     const backeFromContainerTarget = `../../../`;
     let back = backAppTmpFolders;
-    if (this.project.releaseProcess.isInCiReleaseProject) {
-      if (isSmartContainerTarget) {
-        back = `${backAppTmpFolders}${backeFromContainerTarget}${backeFromRelease}`;
-      } else {
-        back = `${backAppTmpFolders}${backeFromRelease}`;
-      }
-    } else {
-      if (isSmartContainerTarget) {
-        back = `${backAppTmpFolders}${backeFromContainerTarget}`;
-      }
+
+    if (buildOptions.releaseType) {
+      back = `${backAppTmpFolders}${backeFromRelease}`;
     }
 
-    let outDirApp = this.project.releaseProcess.isInCiReleaseProject
-      ? config.folder.docs
-      : `${buildOptions.outDir}-app${buildOptions.websql ? '-websql' : ''}`;
-    if (isSmartContainerTargetNonClient) {
-      outDirApp = `${outDirApp}/-/${this.project.name}`;
-    }
 
-    const outPutPathCommand = `--output-path ${back}${outDirApp} `;
+
+    const outPutPathCommand = `--output-path ${back}${buildOptions.outDirApp} `;
 
     //#endregion
 
@@ -132,23 +161,17 @@ export class ArtifactAngularNodeApp extends BaseArtifact {
       await Helpers.killProcessByPort(portAssignedToAppBuild);
     }
 
-    const isStandalone =
-      this.project.framework.isStandaloneProject && !isSmartContainerTarget;
+    const isStandalone = this.project.framework.isStandaloneProject;
 
-    const buildOutDir = buildOptions.outDir;
-    const parent = !isStandalone
-      ? isSmartContainerTarget
-        ? this.project.framework.smartContainerTargetParentContainer
-        : this.project.parent
-      : void 0;
+    const parent = this.project.parent;
 
     const additionalReplace = (line: string) => {
       const beforeModule2 = crossPlatformPath(
         path.join(
-          buildOutDir,
+          config.folder.dist,
           parent.name,
           this.project.name,
-          `tmp-apps-for-${buildOutDir}/${this.project.name}`,
+          `tmp-apps-for-${config.folder.dist}/${this.project.name}`,
         ),
       );
 
@@ -187,7 +210,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact {
     }
     //#endregion
 
-    const angularTempProj = this.globalHelper.__getProxyNgProj(buildOptions);
+    const angularTempProj = this.globalHelper.getProxyNgProj(buildOptions);
 
     //#region prepare variables / angular info
     const showInfoAngular = () => {
@@ -208,11 +231,11 @@ export class ArtifactAngularNodeApp extends BaseArtifact {
     await angularTempProj.execute(angularBuildAppCmd, {
       similarProcessKey: 'ng',
       resolvePromiseMsg: {
-        stdout: 'Compiled successfully',
+        stdout: COMPILATION_COMPLETE_APP_NG_SERVE,
       },
       //#region command execute params
       exitOnErrorCallback: async code => {
-        if (buildOptions.buildForRelease) {
+        if (buildOptions.releaseType) {
           throw 'Angular compilation lib error!!!asd';
         } else {
           Helpers.error(
@@ -257,7 +280,182 @@ export class ArtifactAngularNodeApp extends BaseArtifact {
       //#endregion
     });
     //#endregion
+
+    return void 0; // TODO @DELETE
   }
+
+  async releasePartial(options): Promise<{
+    releaseProjPath: string;
+    releaseType: ReleaseType;
+  }> {
+    return void 0; // TODO implement
+  }
+
+  async clearPartial(options: ClearOptions): Promise<void> {
+    return void 0; // TODO implement
+  }
+
+  //#region build assets file
+  /**
+   * Build assets file for app in app build mode
+   */
+  async buildAssetsFile(initOptions: InitOptions): Promise<void> {
+    // console.log('after build steps');
+
+    const shouldGenerateAssetsList = this.project.framework.isStandaloneProject;
+
+    // console.log({ shouldGenerateAssetsList });
+    if (shouldGenerateAssetsList) {
+      if (initOptions.watch) {
+        await this.__assetsFileListGenerator.startAndWatch(initOptions.websql);
+      } else {
+        await this.__assetsFileListGenerator.start(initOptions.websql);
+      }
+    }
+  }
+  //#endregion
+
+  //#region fix missing components/modules
+  protected fixAppTsFile(): string {
+    //#region @backendFunc
+    if (!this.project.framework.isStandaloneProject) {
+      return;
+    }
+
+    const relativeAppTs = crossPlatformPath([config.folder.src, 'app.ts']);
+    const appFile = this.project.pathFor(relativeAppTs);
+    if (Helpers.exists(appFile)) {
+      let contentAppFile = Helpers.readFile(appFile);
+      let newContentAppFile = this.replaceModuleAndComponentName(
+        contentAppFile,
+        this.project.name,
+      );
+
+      if (contentAppFile !== newContentAppFile) {
+        Helpers.writeFile(appFile, newContentAppFile);
+        try {
+          this.project.formatFile(relativeAppTs);
+        } catch (error) {}
+      }
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region add missing components/modules
+  private replaceModuleAndComponentName(
+    tsFileContent: string,
+    projectName: string,
+  ) {
+    //#region @backendFunc
+    // Parse the source file using TypeScript API
+
+    const sourceFile = createSourceFile(
+      'temp.ts',
+      tsFileContent,
+      ScriptTarget.Latest,
+      true,
+    );
+
+    let moduleName: string | null = null;
+    let componentName: string | null = null;
+    let tooMuchToProcess = false;
+
+    const newComponentName = `${_.upperFirst(_.camelCase(projectName))}Component`;
+    const newModuleName = `${_.upperFirst(_.camelCase(projectName))}Module`;
+    let orignalComponentClassName: string;
+    let orignalModuleClassName: string;
+
+    // Visitor to analyze the AST
+    const visit = (node: Node) => {
+      if (isClassDeclaration(node) && node.name) {
+        const className = node.name.text;
+
+        if (className.endsWith('Module')) {
+          if (moduleName) {
+            // More than one module found, return original content
+            tooMuchToProcess = true;
+            return;
+          }
+          moduleName = className;
+          orignalModuleClassName = className;
+        }
+
+        if (className.endsWith('Component')) {
+          if (componentName) {
+            // More than one component found, return original content
+            tooMuchToProcess = true;
+            return;
+          }
+          componentName = className;
+          orignalComponentClassName = className;
+        }
+      }
+
+      forEachChild(node, visit);
+    };
+
+    visit(sourceFile);
+
+    if (tooMuchToProcess) {
+      return tsFileContent;
+    }
+
+    const moduleTempalte =
+      [`\n//#re`, `gion  ${this.project.name} module `].join('') +
+      ['\n//#re', 'gion @bro', 'wser'].join('') +
+      `\n@NgModule({ declarations: [${newComponentName}],` +
+      ` imports: [CommonModule], exports: [${newComponentName}] })\n` +
+      `export class ${newModuleName} {}` +
+      ['\n//#endre', 'gion'].join('') +
+      ['\n//#endre', 'gion'].join('');
+
+    const componentTemplate =
+      [`\n//#re`, `gion  ${this.project.name} component `].join('') +
+      ['\n//#re', 'gion @bro', 'wser'].join('') +
+      `\n@Component({ template: 'hello world fromr ${this.project.name}' })` +
+      `\nexport class ${newComponentName} {}` +
+      ['\n//#endre', 'gion'].join('') +
+      ['\n//#endre', 'gion'].join('');
+
+    if (orignalModuleClassName) {
+      tsFileContent = tsFileContent.replace(
+        new RegExp(orignalModuleClassName, 'g'),
+        newModuleName,
+      );
+    }
+
+    if (orignalComponentClassName) {
+      tsFileContent = tsFileContent.replace(
+        new RegExp(orignalComponentClassName, 'g'),
+        newComponentName,
+      );
+    }
+
+    if (moduleName === null && componentName === null) {
+      // No module or component found, append new ones
+      return (
+        tsFileContent + '\n\n' + componentTemplate + '\n\n' + moduleTempalte
+      );
+    }
+
+    if (moduleName === null && componentName !== null) {
+      // append only module
+      return tsFileContent + '\n\n' + moduleTempalte;
+    }
+
+    if (moduleName !== null && componentName === null) {
+      // Either module or component is missing; leave content unchanged
+      return tsFileContent + '\n\n' + componentTemplate;
+    }
+
+    return tsFileContent;
+    //#endregion
+  }
+  //#endregion
+
+  //#region getters & methods / build app
+  async buildApp(buildOptions: BuildOptions): Promise<void> {}
   //#endregion
 
   //#region getters & methods / set project info port

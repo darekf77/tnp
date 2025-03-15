@@ -7,7 +7,7 @@ import { BaseFeatureForProject } from 'tnp-helpers/src';
 
 import type { Project } from '../../../project';
 
- // @ts-ignore TODO weird inheritance problem
+// @ts-ignore TODO weird inheritance problem
 export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
   project: Project;
   public readonly propertyInTaonJsonc = 'shouldGenerateAutogenIndexFile';
@@ -24,10 +24,7 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
 
   get generateIndexAutogenFile(): boolean {
     //#region @backendFunc
-    return !!this.project.getValueFromJSONC(
-      config.file.taon_jsonc,
-      this.propertyInTaonJsonc,
-    );
+    return this.project.taonJson.shouldGenerateAutogenIndexFile;
     //#endregion
   }
 

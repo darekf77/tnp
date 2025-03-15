@@ -48,6 +48,7 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
           : {}
       ) as any;
       // Helpers.log(`Started for ${f}`);
+
       this.processFile(filePath, fileContent, env, _, soft);
       // Helpers.log(`Processed DONE for ${f}`);
     }
@@ -99,6 +100,10 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
       `.${config.filesExtensions.filetemplate}`,
       '',
     );
+    // if (filePath.endsWith('tsconfig.json')) {
+    //   debugger;
+    // }
+
     Helpers.log('processing file template', 1);
     // Helpers.pressKeyAndContinue();
     let newContent = content
