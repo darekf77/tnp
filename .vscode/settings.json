@@ -148,18 +148,26 @@
     "**/src/**"
   ],
   "window.title": "npm/taon-dev/tnp  [ ${activeEditorShort} ]",
-  "json.schemas": [{
-    "fileMatch": [
-      "/taon.jsonc"
-    ],
-    "url": "./taon-config-standalone.schema.json"
-  }, {
-    "fileMatch": ["/docs-config.jsonc"],
-    "url": "./docs-config.schema.json"
-  }, {
-    "fileMatch": ["/taon.jsonc"],
-    "url": "./taon-config.schema.json"
-  }],
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "/taon.jsonc"
+      ],
+      "url": "./taon-config-standalone.schema.json"
+    },
+    {
+      "fileMatch": [
+        "/docs-config.jsonc"
+      ],
+      "url": "./docs-config.schema.json"
+    },
+    {
+      "fileMatch": [
+        "/taon.jsonc"
+      ],
+      "url": "./taon-config.schema.json"
+    }
+  ],
   "eslint.migration.2_x": "off",
   "cSpell.words": [
     "Initing"
