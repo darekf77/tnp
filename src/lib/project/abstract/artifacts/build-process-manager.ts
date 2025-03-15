@@ -1,6 +1,6 @@
 import { spawn, ChildProcess, exec, execSync } from 'child_process';
 
-import { chalk } from 'tnp-core/src';
+import { chalk, UtilsProcess } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { Helpers } from 'tnp-core/src';
 
@@ -338,6 +338,12 @@ export class BuildProcessManager {
 
     while (true) {
       console.clear();
+      Helpers.info(`
+
+        Gathering processes information...
+
+        `);
+
       this.showLogs = false;
       const showOutput = 'Show output';
       const buildMore = 'Build more';
@@ -371,8 +377,22 @@ export class BuildProcessManager {
       optionsToKill.push(showOutput);
       // options.push(exit);
 
+      const proc = await UtilsProcess.getCurrentProcessAndChildUsage();
+      console.clear();
+      Helpers.info(`
+
+        Manage Processes (${chalk.bold('ctrl + c')} to exit)
+
+        Cpu current proc: ${proc.current.cpu}/100%
+        Mem usage: ${proc.current.memoryInMB} MB
+
+        Child processes:
+${proc.children.map(c => `- pid ${c.pid}, cpu: ${c.cpu}, mem: ${c.memoryInMB} MB`).join('\n')}
+
+        `);
+
       const action: string = await new Select({
-        message: `Manage Processes (${chalk.bold('ctrl + c')} to exit)`,
+        message: `Select action`,
         choices: optionsToKill,
       }).run();
 
