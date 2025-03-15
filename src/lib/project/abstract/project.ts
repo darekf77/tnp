@@ -168,6 +168,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#region api / release
   public async release(releaseOptions: ReleaseOptions): Promise<void> {
     releaseOptions = ReleaseOptions.from(releaseOptions);
+    await this.npmHelpers.checkProjectReadyForNpmRelease();
+    await this.npmHelpers.makeSureLoggedInToNpmRegistry();
 
     if (this.framework.isStandaloneProject) {
       await this.git.resolveActionCommits();
