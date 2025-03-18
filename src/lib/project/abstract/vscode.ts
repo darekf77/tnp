@@ -57,14 +57,21 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     }[] =
       this.project.getValueFromJSONC(this.settingsJson, `['json.schemas']`) ||
       [];
-    const existedIndex = currentSchemas.findIndex(
-      x => x.url === properSchema.url,
-    );
-    if (existedIndex !== -1) {
-      currentSchemas[existedIndex] = properSchema;
-    } else {
-      currentSchemas.push(properSchema);
+
+    const toDeleteIndex = currentSchemas
+      .filter(
+        (x, i) => x =>
+          (_.first(x.fileMatch) as string)?.startsWith(
+            `/${this.project.artifactsManager.artifact.docsWebapp.docs.docsConfigJsonFileName}`,
+          ),
+      )
+      .map((_, i) => i);
+
+    for (const index of toDeleteIndex) {
+      currentSchemas.splice(index, 1);
     }
+
+    currentSchemas.push(properSchema);
 
     this.project.setValueToJSONC(
       this.settingsJson,
@@ -104,17 +111,8 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
         url: `./${taonConfigSchemaJsonStandalone}`,
       };
 
-      // TODO @LAST filter schemas
-      // currentSchemas = Utils.uniqArray(currentSchemas,'fileMatch');
+      currentSchemas.push(properSchema);
 
-      const existedIndex = currentSchemas.findIndex(
-        x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
-      );
-      if (existedIndex !== -1) {
-        currentSchemas[existedIndex] = properSchema;
-      } else {
-        currentSchemas.push(properSchema);
-      }
       this.project.removeFile(taonConfigSchemaJsonContainer);
     }
 
@@ -123,14 +121,9 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
         fileMatch: [`/${config.file.taon_jsonc}`],
         url: `./${taonConfigSchemaJsonContainer}`,
       };
-      const existedIndex = currentSchemas.findIndex(
-        x => _.first(x.fileMatch) === _.first(properSchema.fileMatch),
-      );
-      if (existedIndex !== -1) {
-        currentSchemas[existedIndex] = properSchema;
-      } else {
-        currentSchemas.push(properSchema);
-      }
+
+      currentSchemas.push(properSchema);
+
       this.project.removeFile(taonConfigSchemaJsonStandalone);
     }
 
@@ -228,10 +221,10 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
         type: 'extensionHost',
         request: 'launch',
         runtimeExecutable: '${execPath}',
-        "sourceMaps": true,
-        "resolveSourceMapLocations": [
-          "${workspaceFolder}/**",
-          "!**/node_modules/**"
+        sourceMaps: true,
+        resolveSourceMapLocations: [
+          '${workspaceFolder}/**',
+          '!**/node_modules/**',
         ],
         args: [
           `--extensionDevelopmentPath=\${workspaceFolder}/${vscodeProjDevPath}`,
