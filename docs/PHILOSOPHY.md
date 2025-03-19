@@ -31,7 +31,7 @@ everytime every crucial framework file/config!
 (located in: ~/.taon/taon/projects/container-v18) <br>
 => many projects takes megabytes instead gigabytes
 
-## 8. Automation for releasing projects (standalone and organization) to remote serves, npm's
+## 8. Cloud based projects releases (standalone and organization) to remote serves, npm's
 
 ...start complex release processes with one simple command
 
@@ -41,11 +41,11 @@ everytime every crucial framework file/config!
 
 ## 10. NodeJs packages are mixed with proper Angular ivy packages
 
-...ship powerfull packages (with frontend and backend)
+...ship powerful packages (with frontend, backend)
 
 ## 11. Shared assets inside npm package! (only from **/src/assets/shared**)
 
-...because why not
+...because why not!
 
 ## 12. Websql development mode for developing SQL backend/db inside browser
 
