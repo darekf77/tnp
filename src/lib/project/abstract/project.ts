@@ -155,6 +155,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       await this.artifactsManager.build(buildOptions);
     }
     if (this.framework.isContainer) {
+      buildOptions.watch = false; // there is no need to watch for container ever
       await this.artifactsManager.build(buildOptions);
       await this.artifactsManager.buildAllChildren(buildOptions);
     }
@@ -168,11 +169,17 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#region api / release
   public async release(releaseOptions: ReleaseOptions): Promise<void> {
     releaseOptions = ReleaseOptions.from(releaseOptions);
+    await this.npmHelpers.checkProjectReadyForNpmRelease();
+    await this.npmHelpers.makeSureLoggedInToNpmRegistry();
 
     if (this.framework.isStandaloneProject) {
+      await this.git.resolveActionCommits();
       await this.artifactsManager.release(releaseOptions);
     }
     if (this.framework.isContainer) {
+      for (const child of this.children) {
+        await child.git.resolveActionCommits();
+      }
       await this.artifactsManager.releaseAllChildren(releaseOptions);
       await this.artifactsManager.release(releaseOptions);
     }
@@ -329,6 +336,12 @@ ${gitChildren}
     }
     return [];
     //#endregion
+  }
+  //#endregion
+
+  //#region is monorepo
+  get isMonorepo(): boolean {
+    return this.taonJson?.isMonorepo;
   }
   //#endregion
 }

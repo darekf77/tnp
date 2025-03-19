@@ -66,9 +66,7 @@ export class IncrementalBuildProcess {
         this.backendCompilation.isEnableCompilation = false;
       }
     }
-    if (buildOptions.onlyBackend) {
-      return;
-    }
+
     //#endregion
 
     if (project.framework.isStandaloneProject) {

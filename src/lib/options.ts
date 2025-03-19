@@ -105,6 +105,10 @@ class SystemTask<T> {
    * null  - means it is development build
    */
   releaseType: ReleaseType | null = null;
+  /**
+   * process that is running in CI (no questions for user)
+   */
+  ciProcess?: boolean;
 }
 
 export class BaseBuild<T> extends SystemTask<T> {
@@ -210,20 +214,16 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
     //#endregion
   }
 
-  get outDirApp(): string {
-    let outDirApp = `${config.folder.dist}-app${this.websql ? '-websql' : ''}`;
-    return outDirApp;
-  }
+  /**
+   * override output path
+   * for combined/bundled build artifact
+   */
+  overrideOutputPath: string;
 
   /**
    *
    */
   websql: boolean;
-
-  /**
-   * override port number for app build
-   */
-  port: number;
 
   skipCopyManager: boolean;
   /**
@@ -234,10 +234,7 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
    * Do not generate backend code
    */
   genOnlyClientCode: boolean;
-  /**
-   * Generate only backend, without browser version
-   */
-  onlyBackend: boolean;
+
   /**
    * Optionally we can start build of smart container
    * with different app
@@ -250,7 +247,7 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
 
   public static fromRelease(releaseOptions: ReleaseOptions): BuildOptions {
     const buildOptions = BuildOptions.from(releaseOptions as any);
-
+    buildOptions.watch = false;
     return buildOptions;
   }
 }

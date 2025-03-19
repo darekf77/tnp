@@ -4,21 +4,29 @@ tnp new my-standalone-project
 tnp new my-organization/main-entry-project
 ```
 
-## Isomorphic code build
+## On build command for all artifacts
 
 ```bash 
-tnp build # Typescript tsc + Angular ng build
+tnp build
 tnp b
 
 tnp build:watch
 tnp bw
 ```
+<!--
+![alt text](image.png)
 
-## Angular app build
+Other artifact can be build/debug through VSCode **Run and Debug**
 
+![alt text](image-2.png)
+--> 
+
+## Link 
+Similar command to npm link for taon projects
 ```bash
-tnp app # normal angular ng serve + docker run
-tnp app --websql # start ng serve in special "backend inside browser" mode
+# - link local lib/cli development build as global cli tool
+# - link local repo cli as global cli tools
+tnp  link
 ```
 
 ## Migrations (for databases)
@@ -43,6 +51,7 @@ tnp mr timestamp                # server and it will stop after contexts
 ```
 
 ## Documentation (mkdocs , storybook, compodoc) build
+Separated command - same thing can be achive with `taon build`
 
 ```bash
 tnp docs

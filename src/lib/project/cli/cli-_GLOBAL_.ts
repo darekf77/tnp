@@ -40,7 +40,7 @@ import {
   Helpers,
   BaseGlobalCommandLine,
   UtilsNpm,
-  recognizeImportsFromFile,
+  UtilsTypescript,
 } from 'tnp-helpers/src';
 import { createGenerator, SchemaGenerator } from 'ts-json-schema-generator';
 
@@ -1639,7 +1639,7 @@ ${this.project.children
             }),
           });
 
-          const importsExports = recognizeImportsFromFile(
+          const importsExports = UtilsTypescript.recognizeImportsFromFile(
             Helpers.readFile(selectedFileAbsPath),
           ).map(i => {
             return `(${i.type}) ${chalk.bold(i.cleanEmbeddedPathToFile)}`;

@@ -2,7 +2,7 @@
 import { BaseContext, Taon } from 'taon/src';
 import { config } from 'tnp-config/src';
 import { crossPlatformPath, path, _ } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 import {
   createSourceFile,
   isClassDeclaration,
@@ -27,8 +27,6 @@ import {
 } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact } from '../__base__/base-artifact';
-import { BuildProcess } from '../__base__/build-process/app/build-process/build-process';
-import { BuildProcessController } from '../__base__/build-process/app/build-process/build-process.controller';
 import { InsideStructuresApp } from '../npm-lib-and-cli-tool/tools/inside-structures/inside-structures';
 
 import { AssetsFileListGenerator } from './tools/assets-list-file-generator';
@@ -41,10 +39,10 @@ import { MigrationHelper } from './tools/migrations-helper';
 
 export class ArtifactAngularNodeApp extends BaseArtifact<
   {
-    angularNodeAppDistOutPath: string;
-    angularWebsqlAppDistOutPath: string;
-    dockerAngularNodeAppDistOutPath: string;
-    dockerAngularWebsqlAppDistOutPath: string;
+    appDistOutBrowserAngularAbsPath: string;
+    appDistOutBackendNodeAbsPath: string;
+    angularNgServeAddress: URL;
+    dockerBackendFrontendAppDistOutPath: string;
   },
   {
     releaseProjPath: string;
@@ -59,10 +57,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   public readonly __assetsFileListGenerator: AssetsFileListGenerator;
   public readonly __docsAppBuild: GithubPagesAppBuildConfig;
   public readonly __assetsManager: AssetsManager;
-  public projectInfoPort: number;
-  public backendPort: number;
-  public standaloneNormalAppPort: number;
-  public standaloneWebsqlAppPort: number;
 
   //#endregion
 
@@ -78,28 +72,36 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }
   //#endregion
 
+  //#region init partial
   async initPartial(initOptions: InitOptions): Promise<void> {
     await this.insideStructureApp.init(initOptions);
     this.fixAppTsFile();
-    this.buildAssetsFile(initOptions);
+    await this.buildAssetsFile(initOptions);
   }
+  //#endregion
 
+  //#region build partial
   async buildPartial(buildOptions: BuildOptions): Promise<{
-    angularNodeAppDistOutPath: string;
-    angularWebsqlAppDistOutPath: string;
-    dockerAngularNodeAppDistOutPath: string;
-    dockerAngularWebsqlAppDistOutPath: string;
+    appDistOutBrowserAngularAbsPath: string;
+    appDistOutBackendNodeAbsPath: string;
+    angularNgServeAddress: URL;
+    dockerBackendFrontendAppDistOutPath: string;
   }> {
     //#region @backendFunc
 
-    //#region prevent empty baseHref for app build
+    const appDistOutBrowserAngularAbsPath =
+      this.getOutDirAngularBrowserAppAbsPath(buildOptions);
+    const appDistOutBackendNodeAbsPath =
+      this.getOutDirNodeBackendAppAbsPath(buildOptions);
+
+    const dockerBackendFrontendAppDistOutPath: string = void 0; // TODO implement
+
     if (!_.isUndefined(buildOptions.baseHref)) {
       Helpers.error(
         `Build baseHref only can be specify when build lib code:
 
       try commands:
-      ${config.frameworkName} start --base-href ${buildOptions.baseHref} # it will do lib and app code build
-      ${config.frameworkName} build:watch --base-href ${buildOptions.baseHref} # it will do lib code build
+      ${config.frameworkName} build:lib --base-href ${buildOptions.baseHref} # it will do lib code build
 
       `,
         false,
@@ -107,85 +109,57 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       );
     }
 
+    await this.initPartial(InitOptions.fromBuild(buildOptions));
+
     const fromFileBaseHref = Helpers.readFile(
       this.project.pathFor(tmpBaseHrefOverwriteRelPath),
     );
     buildOptions.baseHref = fromFileBaseHref;
 
-    //#endregion
+    const outPutPathCommand =
+      `--output-path ` +
+      `${this.getOutDirAngularBrowserAppAbsPath(buildOptions)} `;
 
-    //#region prepare variables
-
-    //#region prepare variables / webpack params
-    let webpackEnvParams = `--env.outFolder=${config.folder.dist}`;
-    webpackEnvParams =
-      webpackEnvParams + (buildOptions.watch ? ' --env.watch=true' : '');
-
-    const backAppTmpFolders = `../../`;
-    const backeFromRelease = `../../../../`;
-    const backeFromContainerTarget = `../../../`;
-    let back = backAppTmpFolders;
-
-    if (buildOptions.releaseType) {
-      back = `${backAppTmpFolders}${backeFromRelease}`;
-    }
-
-
-
-    const outPutPathCommand = `--output-path ${back}${buildOptions.outDirApp} `;
-
-    //#endregion
-
-    //#region prepare variables / general variables
-
-    let portAssignedToAppBuild: number = Number(buildOptions.port);
-
-    if (!_.isNumber(portAssignedToAppBuild) || !portAssignedToAppBuild) {
-      portAssignedToAppBuild = buildOptions.websql
-        ? this.project.artifactsManager.artifact.angularNodeApp
-            .standaloneWebsqlAppPort
-        : this.project.artifactsManager.artifact.angularNodeApp
-            .standaloneNormalAppPort;
-    }
-
-    if (!_.isNumber(portAssignedToAppBuild) || !portAssignedToAppBuild) {
-      portAssignedToAppBuild = await this.project.registerAndAssignPort(
+    // TODO @LAST this shoudl be set externally
+    const portAssignedToAppBuild: number =
+      await this.project.registerAndAssignPort(
         `build ng app (${buildOptions.websql ? 'websql' : 'normal'})`,
         {
           startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
         },
       );
+
+    if (!buildOptions.websql) {
+      const backendPort = await this.project.registerAndAssignPort(
+        `node backend`,
+        {
+          startFrom: DEFAULT_PORT.SERVER_LOCALHOST,
+        },
+      );
+
+      UtilsTypescript.setValueToVariableInTsFile(
+        this.project.pathFor('src/app.hosts.ts'),
+        'HOST_BACKEND_PORT',
+        backendPort,
+      );
     }
+
+    const angularNgServeAddress: URL = new URL(
+      `http://localhost:${portAssignedToAppBuild}`,
+    );
+
+    UtilsTypescript.setValueToVariableInTsFile(
+      this.project.pathFor('src/app.hosts.ts'),
+      buildOptions.websql
+        ? 'CLIENT_DEV_WEBSQL_APP_PORT'
+        : 'CLIENT_DEV_NORMAL_APP_PORT',
+      portAssignedToAppBuild,
+    );
 
     if (buildOptions.watch) {
       await Helpers.killProcessByPort(portAssignedToAppBuild);
     }
 
-    const isStandalone = this.project.framework.isStandaloneProject;
-
-    const parent = this.project.parent;
-
-    const additionalReplace = (line: string) => {
-      const beforeModule2 = crossPlatformPath(
-        path.join(
-          config.folder.dist,
-          parent.name,
-          this.project.name,
-          `tmp-apps-for-${config.folder.dist}/${this.project.name}`,
-        ),
-      );
-
-      // console.log({ beforeModule2 })
-
-      if (line.search(beforeModule2) !== -1) {
-        line = line.replace(beforeModule2 + '/', '');
-      }
-
-      return line;
-    };
-    //#endregion
-
-    //#region prepare variables / prepare angular command
     let angularBuildAppCmd: string;
     const portAssignedToAppBuildCommandPart = _.isNumber(portAssignedToAppBuild)
       ? `--port=${portAssignedToAppBuild}`
@@ -208,11 +182,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         `${buildOptions.watch ? '--watch' : ''}` +
         `${outPutPathCommand} `;
     }
-    //#endregion
 
     const angularTempProj = this.globalHelper.getProxyNgProj(buildOptions);
 
-    //#region prepare variables / angular info
     const showInfoAngular = () => {
       Helpers.logInfo(`
 
@@ -222,12 +194,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
   `);
     };
-    //#endregion
-
-    //#endregion
 
     showInfoAngular();
 
+    const isStandalone = this.project.framework.isStandaloneProject;
     await angularTempProj.execute(angularBuildAppCmd, {
       similarProcessKey: 'ng',
       resolvePromiseMsg: {
@@ -259,7 +229,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
           if (line.search(`src/app/${this.project.name}/libs/`) !== -1) {
             const [__, ___, ____, _____, ______, moduleName] = line.split('/');
-            return additionalReplace(
+            return this.replaceLineInNgOutputProcess(
               line.replace(
                 `src/app/${this.project.name}/libs/${moduleName}/`,
                 `${moduleName}/src/lib/`,
@@ -269,20 +239,26 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
           if (line.search(`src/app/`) !== -1) {
             const [__, ___, ____, moduleName] = line.split('/');
-            return additionalReplace(
+            return this.replaceLineInNgOutputProcess(
               line.replace(`src/app/${moduleName}/`, `${moduleName}/src/`),
             );
           }
-          return additionalReplace(line);
+          return this.replaceLineInNgOutputProcess(line);
         }
         //#endregion
       },
       //#endregion
     });
-    //#endregion
 
-    return void 0; // TODO @DELETE
+    return {
+      appDistOutBackendNodeAbsPath,
+      appDistOutBrowserAngularAbsPath,
+      angularNgServeAddress,
+      dockerBackendFrontendAppDistOutPath,
+    };
+    //#endregion
   }
+  //#endregion
 
   async releasePartial(options): Promise<{
     releaseProjPath: string;
@@ -294,6 +270,36 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   async clearPartial(options: ClearOptions): Promise<void> {
     return void 0; // TODO implement
   }
+
+  //#region get out dir app
+  /**
+   * Absolute path to the output directory for the app
+   */
+  getOutDirNodeBackendAppAbsPath(buildOptions: BuildOptions): string {
+    let outDirApp =
+      `.${config.frameworkName}/${this.currentArtifactName}/` +
+      `${buildOptions.releaseType ? buildOptions.releaseType : 'development'}/` +
+      `backend/` +
+      `${config.folder.dist}-app${buildOptions.websql ? '-websql' : ''}`;
+
+    return this.project.pathFor(outDirApp);
+  }
+  //#endregion
+
+  //#region get out dir app
+  /**
+   * Absolute path to the output directory for the app
+   */
+  getOutDirAngularBrowserAppAbsPath(buildOptions: BuildOptions): string {
+    let outDirApp =
+      `.${config.frameworkName}/${this.currentArtifactName}/` +
+      `${buildOptions.releaseType ? buildOptions.releaseType : 'development'}/` +
+      `${config.folder.browser}/` +
+      `${config.folder.dist}-app${buildOptions.websql ? '-websql' : ''}`;
+
+    return this.project.pathFor(outDirApp);
+  }
+  //#endregion
 
   //#region build assets file
   /**
@@ -315,8 +321,27 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }
   //#endregion
 
+  //#region replace line in output
+  private replaceLineInNgOutputProcess(line: string): string {
+    const beforeModule2 = crossPlatformPath(
+      path.join(
+        config.folder.dist,
+        this.project.name,
+        this.project.name,
+        `tmp-apps-for-${config.folder.dist}/${this.project.name}`,
+      ),
+    );
+
+    if (line.search(beforeModule2) !== -1) {
+      line = line.replace(beforeModule2 + '/', '');
+    }
+
+    return line;
+  }
+  //#endregion
+
   //#region fix missing components/modules
-  protected fixAppTsFile(): string {
+  private fixAppTsFile(): string {
     //#region @backendFunc
     if (!this.project.framework.isStandaloneProject) {
       return;
@@ -458,51 +483,31 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   async buildApp(buildOptions: BuildOptions): Promise<void> {}
   //#endregion
 
-  //#region getters & methods / set project info port
-  public __setProjectInfoPort(v): void {
-    //#region @backend
-    this.projectInfoPort = v;
-    const children = this.project.children.filter(
-      f => f.location !== this.project.location,
-    );
-    for (const child of children) {
-      child.artifactsManager.artifact.angularNodeApp.__setProjectInfoPort(v);
-    }
-    //#endregion
-  }
-  //#endregion
-
   //#region getters & methods / write ports to file
   public writePortsToFile(): void {
     //#region @backend
-    const appHostsFile = crossPlatformPath(
-      path.join(this.project.location, config.folder.src, 'app.hosts.ts'),
-    );
-
-    Helpers.writeFile(
-      appHostsFile,
-      PortUtils.instance(this.projectInfoPort).appHostTemplateFor(this.project),
-    );
-
-    if (this.project.framework.isStandaloneProject) {
-      this.project.writeFile(
-        'BUILD-INFO.md',
-        `
-*This file is generated. This file is generated.*
-
-# Project info
-
-- Project name: ${this.project.genericName}
-- project info host: http://localhost:${this.projectInfoPort}
-- backend host: http://localhost:${this.backendPort}
-- standalone normal app host: http://localhost:${this.standaloneNormalAppPort}
-- standalone websql app host: http://localhost:${this.standaloneWebsqlAppPort}
-
-*This file is generated. This file is generated.*
-      `,
-      );
-    }
-
+    //     const appHostsFile = crossPlatformPath(
+    //       path.join(this.project.location, config.folder.src, 'app.hosts.ts'),
+    //     );
+    //     Helpers.writeFile(
+    //       appHostsFile,
+    //       PortUtils.instance(this.projectInfoPort).appHostTemplateFor(this.project),
+    //     );
+    //     if (this.project.framework.isStandaloneProject) {
+    //       this.project.writeFile(
+    //         'BUILD-INFO.md',
+    //         `
+    // *This file is generated. This file is generated.*
+    // # Project info
+    // - Project name: ${this.project.genericName}
+    // - project info host: http://localhost:${this.projectInfoPort}
+    // - backend host: http://localhost:${this.backendPort}
+    // - standalone normal app host: http://localhost:${this.standaloneNormalAppPort}
+    // - standalone websql app host: http://localhost:${this.standaloneWebsqlAppPort}
+    // *This file is generated. This file is generated.*
+    //       `,
+    //       );
+    //     }
     //#endregion
   }
   //#endregion

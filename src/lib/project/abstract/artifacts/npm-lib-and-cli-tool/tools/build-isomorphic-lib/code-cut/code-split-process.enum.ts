@@ -1,6 +1,6 @@
-import { TsImportExport } from 'tnp-helpers/src';
+import { UtilsTypescript } from 'tnp-helpers/src';
 export const CallBackProcess = (
-  fun: (imp: TsImportExport, isomorphicLibraries: string[]) => boolean,
+  fun: (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => boolean,
 ) => {
   return fun;
 };
@@ -14,7 +14,7 @@ export namespace CODE_SPLIT_PROCESS {
     export namespace SPLIT {
       export const IMPORT_EXPORT = {
         WITH_LIB_TO_SRC: CallBackProcess(
-          (imp: TsImportExport, isomorphicLibraries: string[]) => {
+          (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
             // console.log('WITH_LIB_TO_SRC');
             if (
               imp.wrapInParenthesis(imp.packageName) + '/lib' ===
@@ -29,7 +29,7 @@ export namespace CODE_SPLIT_PROCESS {
           },
         ),
         WITH_SOURCE_TO_SRC: CallBackProcess(
-          (imp: TsImportExport, isomorphicLibraries: string[]) => {
+          (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
             // console.log('WITH_SOURCE_TO_SRC');
             if (
               imp.wrapInParenthesis(imp.packageName) + '/source' ===
@@ -44,7 +44,7 @@ export namespace CODE_SPLIT_PROCESS {
           },
         ),
         NOTHING_TO_SRC: CallBackProcess(
-          (imp: TsImportExport, isomorphicLibraries: string[]) => {
+          (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
             // console.log('NOTHING_TO_SRC');
             if (
               imp.wrapInParenthesis(imp.packageName) ===
@@ -59,7 +59,7 @@ export namespace CODE_SPLIT_PROCESS {
           },
         ),
         DEEP_TO_SHORT_SRC: CallBackProcess(
-          (imp: TsImportExport, isomorphicLibraries: string[]) => {
+          (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
             // console.log('DEEP_TO_SHORT_SRC');
             if (
               imp.cleanEmbeddedPathToFile.replace(
@@ -76,12 +76,12 @@ export namespace CODE_SPLIT_PROCESS {
           },
         ),
         BROWSER_TO_SRC: CallBackProcess(
-          (imp: TsImportExport, isomorphicLibraries: string[]) => {
+          (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
             return false; // TODO
           },
         ),
         WEBSQL_TO_SRC: CallBackProcess(
-          (imp: TsImportExport, isomorphicLibraries: string[]) => {
+          (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
             return false; // TODO
           },
         ),
@@ -94,20 +94,20 @@ export namespace CODE_SPLIT_PROCESS {
   export namespace DURING {
     export namespace BACKEND {
       export const SPLIT = {
-        FOR_APP_STANDALONE: (imp: TsImportExport) => {},
-        FOR_APP_ORGANIZATION: (imp: TsImportExport) => {},
-        FOR_LIB_STANDALONE: (imp: TsImportExport) => {},
-        FOR_LIB_ORGANIZATION: (imp: TsImportExport) => {},
-        FOR_FULL_DTS_STANDALONE: (imp: TsImportExport) => {},
-        FOR_FULL_DTS_ORGANIZATION: (imp: TsImportExport) => {},
+        FOR_APP_STANDALONE: (imp: UtilsTypescript.TsImportExport) => {},
+        FOR_APP_ORGANIZATION: (imp: UtilsTypescript.TsImportExport) => {},
+        FOR_LIB_STANDALONE: (imp: UtilsTypescript.TsImportExport) => {},
+        FOR_LIB_ORGANIZATION: (imp: UtilsTypescript.TsImportExport) => {},
+        FOR_FULL_DTS_STANDALONE: (imp: UtilsTypescript.TsImportExport) => {},
+        FOR_FULL_DTS_ORGANIZATION: (imp: UtilsTypescript.TsImportExport) => {},
       };
     }
     export namespace CLIENT {
       export const SPLIT = {
-        WEBSQL_FOR_LIB: (imp: TsImportExport) => {},
-        WEBSQL_FOR_APP: (imp: TsImportExport) => {},
-        BROWSER_FOR_LIB: (imp: TsImportExport) => {},
-        BROWSER_FOR_APP: (imp: TsImportExport) => {},
+        WEBSQL_FOR_LIB: (imp: UtilsTypescript.TsImportExport) => {},
+        WEBSQL_FOR_APP: (imp: UtilsTypescript.TsImportExport) => {},
+        BROWSER_FOR_LIB: (imp: UtilsTypescript.TsImportExport) => {},
+        BROWSER_FOR_APP: (imp: UtilsTypescript.TsImportExport) => {},
       };
     }
   }
