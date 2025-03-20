@@ -1,10 +1,25 @@
-## Creating new project
+## Create new project
 ```bash
 tnp new my-standalone-project
 tnp new my-organization/main-entry-project
 ```
 
-## On build command for all artifacts
+## Build & Release artifacts
+
+Supported artifacts by tnp cli:
+
+- npm lib *(entrypoint **./src/lib/index.ts**)*
+- cli tool (entrypoint **./src/cli.ts**)
+- fe/be angular/node app  (entrypoint **./src/app.ts**)
+- electron app  (entrypoint **./src/app.electron.ts**)
+- vscode plugin (entrypoint **./src/app.vscode.ts**)
+- mobile cordova app (entrypoint **./src/app.mobile.ts**)
+- docs (mkdocs, storybook, compodoc) **\*\*/\*.md, \*\*/\*.story.ts**
+
+
+### Build process
+
+Single easy to remember build command
 
 ```bash 
 tnp build
@@ -13,16 +28,24 @@ tnp b
 tnp build:watch
 tnp bw
 ```
-<!--
-![alt text](image.png)
 
-Other artifact can be build/debug through VSCode **Run and Debug**
+### Release process
 
-![alt text](image-2.png)
---> 
+Single easy to remember release command
 
-## Link 
-Similar command to npm link for taon projects
+```bash
+# show menu
+tnp release
+tnp r
+
+# repeat last release process based on created config
+tnp release:last
+tnp rl
+```
+
+
+## Link project or bundle
+Similar command to npm link for tnp projects
 ```bash
 # - link local lib/cli development build as global cli tool
 # - link local repo cli as global cli tools
@@ -50,17 +73,6 @@ tnp mr timestamp                # server and it will stop after contexts
                                 # initialize() functions...
 ```
 
-## Documentation (mkdocs , storybook, compodoc) build
-Separated command - same thing can be achive with `taon build`
-
-```bash
-tnp docs
-tnp d
-
-tnp docs:watch
-tnp dw
-```
-
 ## Testing
 
 ```bash
@@ -78,31 +90,4 @@ tnp tu
 # E2e testing (playwright)
 tnp e2e
 tnp e2e:watch
-```
-
-## Release
-
-Release all possible artifacts:
-
-- npm lib (entrypoint src/lib/index.ts)
-- cli tool (entrypoint src/cli.ts)
-- fe/be angular/node app  (entrypoint src/app.ts)
-- electron app  (entrypoint src/app.electron.ts)
-- vscode plugin (entrypoint src/app.vscode.ts)
-- mobile cordova app (entrypoint src/app.mobile.ts)
-- docs (mkdocs, storybook, compodoc)
-
-```bash
-# show menu
-tnp release
-tnp r
-
-# repeat last release process
-tnp release:last
-tnp rl
-
-# automatic release process (by default patch for lib and cli)
-# can be configured in release-config.jsonc
-tnp automatic:release
-tnp ar
 ```

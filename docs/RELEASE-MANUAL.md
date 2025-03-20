@@ -1,10 +1,10 @@
 
 ### Manual Release
-> 🚀 Release artifact using cli on development machine
+> 🚀 Purpose: release artifacts using cli on development machine
 
-> 🚀 This release creates config that can be use in Cloud Release
+> 🚀 Purpose: A convenient way to check if the Cloud Release will work.
 
-> 🚀 Best for any size of project (from small to big) but with few people
+> 🚀 This release creates a config that is used later in the Cloud Release.
 
 <table>
   <tr>
@@ -17,23 +17,17 @@
       ⌛ - publish as normal package (project name as npm name) <br>
       ⌛ - publish as organization package (container name as org. name) <br>
       ⌛ - handle public/private npm (login if needed), use .npmrc <br>
-      ⌛ - use parent container as name for organization <br>
-      ⌛ - use parents of containers as level/names of organization packages<br>
-         (second level and more levels of nest package ex. @angular/core/testing )<br>
-      ✅ - prevent not log in to npm (public) <br>
-      ✅ - prevent not log in to npm (private) <br>
-      ⌛ - build option: only cli without lib code <br>
-      🤔 - build option:  minify/obscure library code file by file  <br>
-      ⌛ - build option: minify/minify whole library  <br>
-      
+      ⌛ - build option: publish only cli without lib code <br>
+      🤔 - build option: minify/obscure library code file by file  <br>
+      ⌛ - build option: (single one file) minify/obscure whole library/cli<br>
     </td>
   </tr>
   <tr>
     <td><b>angular node app</b><br>(manual)</td>
     <td> 
     ⌛ - build docker with router for NodeJs backend and Angular frontend <br>
-    ⌛ - docker can be use with any docker management tool but taon cloud - best <br>
-    ⌛ - taon cloud handle start/stop/update/deployment of dockers with apps<br>
+    ⌛ - docker can be use with any docker management system<br>
+    ⌛ - taon cloud handle start/stop/update/deployment of dockers/apps<br>
     ⌛ - release docs webapp to github_pages special branch: <br>
     </td>
   </tr>

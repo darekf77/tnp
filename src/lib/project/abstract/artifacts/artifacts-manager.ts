@@ -243,7 +243,7 @@ export class ArtifactManager {
       const mkdocsLabel = chalk.bold('(mkdocs, compodoc, typedoc)');
 
       const names = {
-        isomorphicLib: `Isomorphic Nodejs/Angular backend + npm library`,
+        isomorphicLib: `Isomorphic Nodejs/Angular library`,
         angularApp: `Angular (for Nodejs backend) frontend app`,
         angularAppWebsql: `Angular (for Websql backend) frontend app`,
       };

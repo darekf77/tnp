@@ -2,7 +2,7 @@
 ### Local/Repo  - local repository release
 > 🚀 All released artifacts stored inside project repository
 
-> 🚀 Very good if you are starting project alone
+> 🚀 Perfect if you are starting project alone and you need to somehow show your work/progress
 
 <table>
   <tr>
@@ -12,7 +12,7 @@
   <tr>
     <td><b>npm lib and cli tool</b><br>(local/repo)</td>
     <td> 
-     💡 Fully ready cli can be quickly linked in system (npm link)<br>
+     💡 Fully ready cli quickly globally linked in system (npm link)<br>
      ⌛  - release lib and cli into:<br>
       <u>repo-folder/local_release/npm-lib-and-cli-tool/project-name</u>  <br>
     </td>
@@ -28,15 +28,15 @@
   <tr>
     <td><b>vscode plugin</b><br>(local/repo)</td>
     <td>
-    💡 Installable vsix VSCode extension for dev-s local development.<br>
-    🔲  - release vsix plugin file into: <br>
+    💡 Installable *.vsix VSCode extension for dev-s local development.<br>
+    🔲  - release *.vsix plugin file into: <br>
     <u>repo-folder/local_release/vscode-plugin/project-name</u>  <br>
     </td>
   </tr>
   <tr>
     <td><b>electron app</b><br>(local/repo)</td>
     <td>
-    💡 App needed for local development/projects managements<br>
+    💡 App needed for local development/projects management<br>
     🔲  - release app installer (or executable) into: <br>
     <u>repo-folder/local_release/electron-app/(win/mac/linux)/project-name</u>  <br>
     </td>
@@ -52,7 +52,7 @@
   <tr>
     <td><b>docs webapp<br></b>(local/repo)</td>
     <td>
-    💡 Putting docs of application inside repo instead hosting.<br>
+    💡 Docs of application inside repo instead online<br>
     🔲  - release docs webapp into: <br>
     <u>repo-folder/local_release/docs-webapp/(win/mac/linux)/project-name</u>  <br>
     </td>

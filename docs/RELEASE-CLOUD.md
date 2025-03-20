@@ -1,11 +1,8 @@
 
 ### Cloud Release
-> 🚀 Trigger release on remote (or localhost) taon cloud instance
+> 🚀 Trigger release on remote (or localhost) *Taon Cloud* instance
 
-
-> 🚀 Cloud Release triggers *Manual Release* with config on remote (or locahost) taon cloud instance
-
-> 🚀 Best for big projects and many people in team
+> 🚀 *Cloud Release* actually uses *Manual Release* with config on remote (or localhost) *Taon Cloud* 
 
 <table>
   <tr>
