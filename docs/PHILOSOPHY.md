@@ -11,7 +11,7 @@ TypeScript, Angular, NodeJs, RxJS, NgRx, TypeOrm, ExpressJs ..
 
 .. only possible with isomorphic code
 
-## 4. Strongly type frontend/backend/database
+## 4. Strongly typed frontend/backend/database
 
 ...imagine: changing in one place entity property and because of that <br>
 angular templates variables are also being changed!

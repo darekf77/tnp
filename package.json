@@ -2,7 +2,8 @@
   "name": "tnp",
   "version": "18.0.25",
   "scripts": {
-    "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link"
+    "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
+    "mkdocs": "python3 -m mkdocs"
   },
   "license": "MIT",
   "author": "Dariusz Filipiak",
