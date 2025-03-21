@@ -678,11 +678,16 @@ markdown_extensions:
 
     if (Helpers.filesFrom(orgLocation).length === 0) {
       const nearestProj = this.project.ins.nearestTo(orgLocation);
-      Helpers.error(
-        `Please rebuild docs for this project ${nearestProj?.genericName}.`,
-        false,
-        true,
+      Helpers.warn(
+        `
+
+
+        Please rebuild docs for this project ${chalk.bold(nearestProj?.genericName)}.
+
+
+        `
       );
+      return;
     }
 
     if (!this.linkedAlreadProjects[orgLocation]) {

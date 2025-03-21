@@ -28,7 +28,7 @@ import {
   ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
-import { BaseArtifact } from '../__base__/base-artifact';
+import { BaseArtifact } from '../base-artifact';
 
 import { IncrementalBuildProcess } from './tools/build-isomorphic-lib/compilations/incremental-build-process';
 import { CopyManager } from './tools/copy-manager/copy-manager';
@@ -1490,6 +1490,7 @@ export * from './lib';
       ).location,
       'app/src/assets/sql-wasm.wasm',
     ]);
+
     const wasmfileDest = crossPlatformPath([nccBase, 'sql-wasm.wasm']);
     Helpers.copyFile(wasmfileSource, wasmfileDest);
 

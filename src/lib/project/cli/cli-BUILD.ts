@@ -134,6 +134,7 @@ class $Build extends BaseCommandLineFeature<BuildOptions, Project> {
     await this.project.build(
       BuildOptions.from({
         ...this.params,
+        targetArtifact: 'angular-node-app',
         finishCallback: () => this._exit(),
       }),
     );
@@ -143,6 +144,7 @@ class $Build extends BaseCommandLineFeature<BuildOptions, Project> {
     await this.project.build(
       BuildOptions.from({
         ...this.params,
+        targetArtifact: 'angular-node-app',
         watch: true,
       }),
     );

@@ -26,7 +26,7 @@ import {
   ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
-import { BaseArtifact } from '../__base__/base-artifact';
+import { BaseArtifact } from '../base-artifact';
 import { InsideStructuresApp } from '../npm-lib-and-cli-tool/tools/inside-structures/inside-structures';
 
 import { AssetsFileListGenerator } from './tools/assets-list-file-generator';
@@ -54,7 +54,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   public readonly angularFeBasenameManager: AngularFeBasenameManager;
 
   public readonly insideStructureApp: InsideStructuresApp;
-  public readonly __assetsFileListGenerator: AssetsFileListGenerator;
+  public readonly assetsFileListGenerator: AssetsFileListGenerator;
   public readonly __docsAppBuild: GithubPagesAppBuildConfig;
   public readonly __assetsManager: AssetsManager;
 
@@ -66,7 +66,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     this.migrationHelper = new MigrationHelper(project);
     this.angularFeBasenameManager = new AngularFeBasenameManager(project);
     this.insideStructureApp = new InsideStructuresApp(project);
-    this.__assetsFileListGenerator = new AssetsFileListGenerator(project);
+    this.assetsFileListGenerator = new AssetsFileListGenerator(project);
     this.__docsAppBuild = new GithubPagesAppBuildConfig(project);
     this.__assetsManager = new AssetsManager(project);
   }
@@ -74,9 +74,31 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
   //#region init partial
   async initPartial(initOptions: InitOptions): Promise<void> {
+    //#region @backendFunc
     await this.insideStructureApp.init(initOptions);
     this.fixAppTsFile();
-    await this.buildAssetsFile(initOptions);
+
+    // Build assets file for app in app build mode
+    if (this.project.framework.isStandaloneProject) {
+      if (initOptions.watch) {
+        await this.assetsFileListGenerator.startAndWatch(initOptions.websql);
+      } else {
+        await this.assetsFileListGenerator.start(initOptions.websql);
+      }
+    }
+
+    const wasmfileSource = crossPlatformPath([
+      this.project.ins.by(
+        'isomorphic-lib',
+        this.project.framework.frameworkVersion,
+      ).location,
+      'app/src/assets/sql-wasm.wasm',
+    ]);
+    const wasmfileDest = this.project.pathFor(
+      `tmp-src-dist${initOptions.websql ? '-websql' : ''}/assets/sql-wasm.wasm`,
+    );
+    Helpers.copyFile(wasmfileSource, wasmfileDest);
+    //#endregion
   }
   //#endregion
 
@@ -88,13 +110,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     dockerBackendFrontendAppDistOutPath: string;
   }> {
     //#region @backendFunc
-
-    const appDistOutBrowserAngularAbsPath =
-      this.getOutDirAngularBrowserAppAbsPath(buildOptions);
-    const appDistOutBackendNodeAbsPath =
-      this.getOutDirNodeBackendAppAbsPath(buildOptions);
-
-    const dockerBackendFrontendAppDistOutPath: string = void 0; // TODO implement
 
     if (!_.isUndefined(buildOptions.baseHref)) {
       Helpers.error(
@@ -109,25 +124,31 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       );
     }
 
+    const dockerBackendFrontendAppDistOutPath: string = void 0; // TODO implement
+
+    const appDistOutBrowserAngularAbsPath =
+      this.getOutDirAngularBrowserAppAbsPath(buildOptions);
+    const appDistOutBackendNodeAbsPath =
+      this.getOutDirNodeBackendAppAbsPath(buildOptions);
+
+    // TODO @LAST this shoudl be set externally
+    const portAssignedToAppBuild: number =
+      await this.project.registerAndAssignPort(
+        `${buildOptions.watch ? 'serve' : 'build'} ng app (${buildOptions.websql ? 'websql' : 'normal'})`,
+        {
+          startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
+        },
+      );
+    const angularNgServeAddress: URL = new URL(
+      `http://localhost:${portAssignedToAppBuild}`,
+    );
+
     await this.initPartial(InitOptions.fromBuild(buildOptions));
 
     const fromFileBaseHref = Helpers.readFile(
       this.project.pathFor(tmpBaseHrefOverwriteRelPath),
     );
     buildOptions.baseHref = fromFileBaseHref;
-
-    const outPutPathCommand =
-      `--output-path ` +
-      `${this.getOutDirAngularBrowserAppAbsPath(buildOptions)} `;
-
-    // TODO @LAST this shoudl be set externally
-    const portAssignedToAppBuild: number =
-      await this.project.registerAndAssignPort(
-        `build ng app (${buildOptions.websql ? 'websql' : 'normal'})`,
-        {
-          startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
-        },
-      );
 
     if (!buildOptions.websql) {
       const backendPort = await this.project.registerAndAssignPort(
@@ -144,10 +165,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       );
     }
 
-    const angularNgServeAddress: URL = new URL(
-      `http://localhost:${portAssignedToAppBuild}`,
-    );
-
     UtilsTypescript.setValueToVariableInTsFile(
       this.project.pathFor('src/app.hosts.ts'),
       buildOptions.websql
@@ -160,28 +177,27 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       await Helpers.killProcessByPort(portAssignedToAppBuild);
     }
 
-    let angularBuildAppCmd: string;
     const portAssignedToAppBuildCommandPart = _.isNumber(portAssignedToAppBuild)
       ? `--port=${portAssignedToAppBuild}`
       : '';
 
-    if (buildOptions.watch) {
-      angularBuildAppCmd =
-        `${this.NPM_RUN_NG_COMMAND} serve ${
+    const outPutPathCommand =
+      `--output-path ` +
+      `${this.getOutDirAngularBrowserAppAbsPath(buildOptions)} `;
+
+    const angularBuildAppCmd = buildOptions.watch
+      ? `${this.NPM_RUN_NG_COMMAND} serve ${
           buildOptions.buildAngularAppForElectron ? 'angular-electron' : 'app'
         } ` +
         ` ${portAssignedToAppBuildCommandPart} ${
           buildOptions.prod ? '--prod' : ''
-        }`;
-    } else {
-      angularBuildAppCmd =
-        `${this.NPM_RUN_NG_COMMAND} build ${
+        }`
+      : `${this.NPM_RUN_NG_COMMAND} build ${
           buildOptions.buildAngularAppForElectron ? 'angular-electron' : 'app'
         }` +
         `${buildOptions.prod ? '--configuration production' : ''} ` +
         `${buildOptions.watch ? '--watch' : ''}` +
         `${outPutPathCommand} `;
-    }
 
     const angularTempProj = this.globalHelper.getProxyNgProj(buildOptions);
 
@@ -298,26 +314,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       `${config.folder.dist}-app${buildOptions.websql ? '-websql' : ''}`;
 
     return this.project.pathFor(outDirApp);
-  }
-  //#endregion
-
-  //#region build assets file
-  /**
-   * Build assets file for app in app build mode
-   */
-  async buildAssetsFile(initOptions: InitOptions): Promise<void> {
-    // console.log('after build steps');
-
-    const shouldGenerateAssetsList = this.project.framework.isStandaloneProject;
-
-    // console.log({ shouldGenerateAssetsList });
-    if (shouldGenerateAssetsList) {
-      if (initOptions.watch) {
-        await this.__assetsFileListGenerator.startAndWatch(initOptions.websql);
-      } else {
-        await this.__assetsFileListGenerator.start(initOptions.websql);
-      }
-    }
   }
   //#endregion
 

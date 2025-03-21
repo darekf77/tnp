@@ -18,7 +18,7 @@ import type { Project } from '../project';
 import type {
   BaseArtifact,
   IArtifactProcessObj,
-} from './__base__/base-artifact';
+} from './base-artifact';
 import { ArtifactsGlobalHelper } from './__helpers__/artifacts-helpers';
 import { BuildProcessManager } from './build-process-manager';
 //#endregion

@@ -1,5 +1,5 @@
 
-## 1. One language for frontend/backend/database - **TypeScript**
+## 1. One language for Frontend/Backend/Database - **TypeScript**
 
 ...best programming language on the market 🚀
 
@@ -11,12 +11,11 @@ TypeScript, Angular, NodeJs, RxJS, NgRx, TypeOrm, ExpressJs ..⭐
 
 .. only possible with isomorphic code ✅
 
-
 ## 4. Strongly Typed Frontend/Backend/Database
 
-...imagine changing entity property and because of that <br>
-angular templates variables get refactor!<br>
-You can't better "not repeat yourself" coding! ✍️
+...imagine changing an entity property, and as a result,<br>
+Angular template variables are automatically refactored! <br>
+This is the ultimate way to practice "Don't Repeat Yourself" (DRY) in coding! ✍️
 
 ## 5. Everything automatically generated
 
@@ -32,24 +31,25 @@ every time every crucial framework file/config! ✏️
 ...one big npm packages container
 (located in: ~/.taon/taon/projects/container-v18) <br>
 => many projects takes megabytes instead gigabytes 🐳<br>
-=> instant installation of node_modules 🕙
+=> instant *node_modules* installation 🕙
 
 ## 8. Cloud based projects releases (standalone and organization) to remote serves, npm's
 
 ...start complex release processes with one simple command ⚡
 
-## 9. Develop libraries and apps at the same time!
+## 9. Develop libraries and apps at the same time
 
 ...only possible with isomorphic code (shared files between backend/frontend/libraries) 🌟
 
 ## 10. NodeJs packages are mixed with proper Angular ivy packages
 
-...ship powerful packages (with frontend, backend) 🤝
+...ship powerful packages with Frontend and Backend 🤝
 
 ## 11. Shared assets inside npm package! (only from **/src/assets/shared**)
 
-...because why not! 💾 
+...because why not! 💾
 
 ## 12. Websql development mode for developing SQL backend/db inside browser
 
-...If browsers are so powerful now, why not to develop parts of the backend inside them? TypeORM/Sql.js lets you use browser IndexedDB as proper DB! 🌐 🗄️
+...If browsers are so powerful, why not to write Backend inside them? 🌐 <br>
+ TypeORM/Sql.js lets you use browser IndexedDB as proper DB!  🗄️

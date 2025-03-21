@@ -12,15 +12,15 @@ import {
   ReleaseArtifactTaonNamesArr,
   ReleaseOptions,
   ReleaseType,
-} from '../../../../options';
-import type { Project } from '../../project';
-import type { ArtifactsGlobalHelper } from '../__helpers__/artifacts-helpers';
-import type { ArtifactAngularNodeApp } from '../angular-node-app';
-import type { ArtifactDocsWebapp } from '../docs-webapp';
-import type { ArtifactElectronApp } from '../electron-app';
-import type { ArtifactMobileApp } from '../mobile-app';
-import type { ArtifactNpmLibAndCliTool } from '../npm-lib-and-cli-tool';
-import type { ArtifactVscodePlugin } from '../vscode-plugin';
+} from './../../../options';
+import type { Project } from './../project';
+import type { ArtifactsGlobalHelper } from './__helpers__/artifacts-helpers';
+import type { ArtifactAngularNodeApp } from './angular-node-app';
+import type { ArtifactDocsWebapp } from './docs-webapp';
+import type { ArtifactElectronApp } from './electron-app';
+import type { ArtifactMobileApp } from './mobile-app';
+import type { ArtifactNpmLibAndCliTool } from './npm-lib-and-cli-tool';
+import type { ArtifactVscodePlugin } from './vscode-plugin';
 //#endregion
 
 export type IArtifactProcessObj = {

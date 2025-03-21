@@ -3,7 +3,7 @@
   "version": "18.0.25",
   "scripts": {
     "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
-    "mkdocs": "mkdocs"
+    "mkdocs": "python3 -m mkdocs"
   },
   "license": "MIT",
   "author": "Dariusz Filipiak",
