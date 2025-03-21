@@ -10,12 +10,12 @@ TypeScript, Angular, NodeJs, RxJS, NgRx, TypeOrm, ExpressJs ..⭐
 ## 3. **Never** ever **repeat** single line of **code**
 
 .. only possible with isomorphic code ✅
-     
 
-## 4. Strongly typed frontend/backend/database
+
+## 4. Strongly Typed Frontend/Backend/Database
 
 ...imagine changing entity property and because of that <br>
-angular templates variables get refactor! <br>
+angular templates variables get refactor!<br>
 You can't better "not repeat yourself" coding! ✍️
 
 ## 5. Everything automatically generated
@@ -32,7 +32,7 @@ every time every crucial framework file/config! ✏️
 ...one big npm packages container
 (located in: ~/.taon/taon/projects/container-v18) <br>
 => many projects takes megabytes instead gigabytes 🐳<br>
-=> instant installation of node_modules 🕙<br>
+=> instant installation of node_modules 🕙
 
 ## 8. Cloud based projects releases (standalone and organization) to remote serves, npm's
 
@@ -48,7 +48,7 @@ every time every crucial framework file/config! ✏️
 
 ## 11. Shared assets inside npm package! (only from **/src/assets/shared**)
 
-...because why not! 💾
+...because why not! 💾 
 
 ## 12. Websql development mode for developing SQL backend/db inside browser
 
