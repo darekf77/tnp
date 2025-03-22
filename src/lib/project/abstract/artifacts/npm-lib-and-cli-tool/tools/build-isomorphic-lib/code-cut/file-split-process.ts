@@ -1,7 +1,7 @@
 import { extAllowedToExportAndReplaceTSJSCodeFiles } from 'tnp-config/src';
 import { path, _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
-import { TsImportExport, recognizeImportsFromFile } from 'tnp-helpers/src';
+import { UtilsTypescript } from 'tnp-helpers/src';
 
 import { taonIgnore } from '../../../../../../../constants';
 
@@ -9,14 +9,14 @@ import { CODE_SPLIT_PROCESS } from './code-split-process.enum';
 import type { CallBackProcess } from './code-split-process.enum';
 
 export class SplitFileProcess {
-  private importExports: TsImportExport[] = [];
+  private importExports: UtilsTypescript.TsImportExport[] = [];
   private rewriteFile: boolean = false;
   constructor(
     private fileContent: string,
     private filePath: string,
     private isomorphicLibraries: string[],
   ) {
-    this.importExports = recognizeImportsFromFile(fileContent);
+    this.importExports = UtilsTypescript.recognizeImportsFromFile(fileContent);
     this.processImportsExports();
   }
 
@@ -88,7 +88,7 @@ export class SplitFileProcess {
 
   private replaceInFile(
     fileContent: string,
-    imports: TsImportExport[],
+    imports: UtilsTypescript.TsImportExport[],
   ): string {
     // Split the content into lines
     const lines = fileContent.split('\n');
