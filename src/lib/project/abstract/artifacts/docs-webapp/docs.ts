@@ -29,6 +29,7 @@ export class Docs extends BaseDebounceCompilerForProject<
      * Relative or absolute (TODO) path to the folder where the docs will be generated
      */
     docsOutFolder?: string;
+    ciBuild?: boolean;
   },
   // @ts-ignore TODO weird inheritance problem
   Project
@@ -249,7 +250,7 @@ export class Docs extends BaseDebounceCompilerForProject<
           });
         });
 
-      if (this.initalParams.docsOutFolder) {
+      if (this.initalParams.docsOutFolder && !this.initalParams.ciBuild) {
         const portForDocs = await this.project.registerAndAssignPort(
           'docs port for http server',
           {
@@ -454,6 +455,7 @@ markdown_extensions:
           startFrom: 3900,
         },
       );
+      await Helpers.killOnPort(this.mkdocsServePort);
       // python3 -m
       Helpers.run(
         process.platform === 'darwin'
@@ -464,6 +466,7 @@ markdown_extensions:
           cwd: this.project.pathFor([this.tmpDocsFolderRoot]),
         },
       ).async();
+
       Helpers.info(
         `Mkdocs server started on  http://localhost:${this.mkdocsServePort}`,
       );
@@ -472,7 +475,10 @@ markdown_extensions:
         Helpers.mkdirp(this.outDocsDistFolderAbs);
       }
       Helpers.run(
-        `python3 -m mkdocs build --site-dir ${this.outDocsDistFolderAbs}`,
+        process.platform === 'darwin'
+          ? `mkdocs build --site-dir ${this.outDocsDistFolderAbs}`
+          : //
+            `python3 -m mkdocs build --site-dir ${this.outDocsDistFolderAbs}`,
         {
           cwd: this.project.pathFor([this.tmpDocsFolderRoot]),
         },
@@ -672,11 +678,16 @@ markdown_extensions:
 
     if (Helpers.filesFrom(orgLocation).length === 0) {
       const nearestProj = this.project.ins.nearestTo(orgLocation);
-      Helpers.error(
-        `Please rebuild docs for this project ${nearestProj?.genericName}.`,
-        false,
-        true,
+      Helpers.warn(
+        `
+
+
+        Please rebuild docs for this project ${chalk.bold(nearestProj?.genericName)}.
+
+
+        `
       );
+      return;
     }
 
     if (!this.linkedAlreadProjects[orgLocation]) {
