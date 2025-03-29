@@ -53,3 +53,14 @@ every time every crucial framework file/config! ✏️
 
 ...If browsers are so powerful, why not to write Backend inside them? 🌐 <br>
  TypeORM/Sql.js lets you use browser IndexedDB as proper DB!  🗄️
+
+## 13. Out-of-the-box CI/CD solution, free of charge!
+
+...start with free websql app demo in github pages publishing/deployment service <br>
+=> .. and if peoples love idea <br>
+=>  deploy to FAST TAON CLOUD just by choosing
+different release type in cli!  ⚡
+
+## 14. The Most Thought-Out Development Process
+...you are not going to need any DEV_OPS - cli & configs <br>
+are build for humans 🧠

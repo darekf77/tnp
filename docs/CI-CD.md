@@ -1,5 +1,10 @@
 **Taon** aside
-migrations - supports 3 types of release ( Local/Repo, Manual and Cloud )<br>
+migrations - supports 4 types of release:<br>
+ + Local/Repo<br>
+ + Manual<br>
+ + Cloud<br>
+ + Static Pages<br>
+ 
 than can be used to achieve proper CI/CD<br>
 [*( Continuous Integration (CI) and Continuous Delivery (CD) )*.](https://en.wikipedia.org/wiki/CI/CD)
 <br>

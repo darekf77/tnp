@@ -1,8 +1,12 @@
 
-### Local/Repo  - local repository release
+### Local/Repo Release
+
 > 🚀 All released artifacts stored inside project repository
 
-> 🚀 Perfect if you are starting project alone and you need to somehow show your work/progress
+> 🚀 Perfect if you are starting project alone and you need<br>
+ to somehow show your work/progress
+
+
 
 <table>
   <tr>
