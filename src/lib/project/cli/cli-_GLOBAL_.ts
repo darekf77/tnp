@@ -1651,6 +1651,14 @@ ${this.project.children
     this._exit();
   }
   //#endregion
+
+  ng() {
+    Helpers.run(`npx -p @angular/cli ng ${this.argsWithParams}`, {
+      output: true,
+      silence: false,
+    }).sync();
+    this._exit();
+  }
 }
 
 export default {
