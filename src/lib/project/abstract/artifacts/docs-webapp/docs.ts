@@ -190,6 +190,8 @@ export class Docs extends BaseDebounceCompilerForProject<
         project.pathFor('browser'),
         project.pathFor('websql/**/*.*'),
         project.pathFor('websql'),
+        project.pathFor('projects/**/*.*'),
+        project.pathFor('projects'),
         // QUICK_FIX I may include for example .ts files in md files with handlebars
         ...['ts', 'js', 'scss', 'css', 'html'].map(ext =>
           project.pathFor(`src/**/*.${ext}`),
