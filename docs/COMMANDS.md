@@ -8,7 +8,7 @@ tnp new my-organization/main-entry-project
 
 Supported artifacts by tnp cli:
 
-- npm lib *(entrypoint **./src/lib/index.ts**)*
+- npm lib (entrypoint **./src/lib/index.ts**)
 - cli tool (entrypoint **./src/cli.ts**)
 - fe/be angular/node app  (entrypoint **./src/app.ts**)
 - electron app  (entrypoint **./src/app.electron.ts**)

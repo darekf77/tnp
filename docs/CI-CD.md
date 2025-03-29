@@ -1,8 +1,8 @@
 **Taon** aside
 migrations - supports 4 types of release:<br>
- + Local/Repo<br>
  + Manual<br>
  + Cloud<br>
+ + Local/Repo<br>
  + Static Pages<br>
  
 than can be used to achieve proper CI/CD<br>
