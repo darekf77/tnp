@@ -12,7 +12,7 @@ import {
   ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
-import { BaseArtifact } from '../__base__/base-artifact';
+import { BaseArtifact } from '../base-artifact';
 
 export class ArtifactElectronApp extends BaseArtifact<
   {

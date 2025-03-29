@@ -43,19 +43,20 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
     while (true) {
       UtilsTerminal.clearConsole();
       //#region info
-      console.info(`
-        ${chalk.bold.yellow('Manual release')} => for everything whats Taon supports
+      console.info(
+        `
+${chalk.bold.green('Manual release')} => for everything whats Taon supports
         - everything is done here manually, you have to provide options
-        - from here you can save release options for ${chalk.bold.green('Taon Cloud')} release
-
-        ${chalk.bold.green('Cloud release')} => trigger remote release action on server (local or remote)
+        - config saved during release process can be use for 'Cloud release' later
+${chalk.bold.blue('Cloud release')} => trigger remote release action on server (local or remote)
         - trigger release base on config stored inside cloud
         - use local Taon Cloud or login to remote Taon Cloud
-
-        ${chalk.bold.gray('Local release')} => use current git repo for storing release data
+${chalk.bold.gray('Local release')} => use current git repo for storing release data
         - for anything that you want to backup inside your git repository
-
-        `);
+${chalk.bold.yellow('Static Pages release')} => use specific branch for storing release data
+        - perfect for github pages, gitlab pages and similar solutions
+        `.trimStart(),
+      );
       //#endregion
 
       if (
@@ -74,14 +75,22 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
       const manual = 'manual' as ReleaseType;
       const cloud = 'cloud' as ReleaseType;
       const local = 'local' as ReleaseType;
+      const staticPages = 'static-pages' as ReleaseType;
+      const priovider =
+        _.upperFirst(_.first(this.project.git.remoteProvider.split('.'))) ||
+        'unknow';
 
       // const { actionResult } =
       await UtilsTerminal.selectActionAndExecute(
         {
           [manual]: {
             //#region manual
-            name: `${this.getColoredTextItem(manual)} release`,
+            name: `${this.getColoredTextItem(manual)} Taon release + create config for Cloud`,
             action: async () => {
+              await UtilsTerminal.pressAnyKeyToContinueAsync({
+                message: 'Not implemented yet.. press any key to go back',
+              });
+              return;
               const selectedProjects =
                 await this.project.releaseProcess.displayProjectsSelectionMenu();
               const releaseArtifactsTaon =
@@ -96,8 +105,12 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
           },
           [cloud]: {
             //#region cloud
-            name: `${this.getColoredTextItem(cloud)} release`,
+            name: `${this.getColoredTextItem(cloud)} release tirgger for Taon Cloud`,
             action: async () => {
+              await UtilsTerminal.pressAnyKeyToContinueAsync({
+                message: 'Not implemented yet.. press any key to go back',
+              });
+              return;
               const selectedProjects =
                 await this.project.releaseProcess.displayProjectsSelectionMenu();
               const releaseArtifactsTaon =
@@ -112,14 +125,41 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
           },
           [local]: {
             //#region local
-            name: `${this.getColoredTextItem(local)} release`,
+            name: `${this.getColoredTextItem(local)} release to current git repository`,
             action: async () => {
+              await UtilsTerminal.pressAnyKeyToContinueAsync({
+                message: 'Not implemented yet.. press any key to go back',
+              });
+              return;
               const selectedProjects =
                 await this.project.releaseProcess.displayProjectsSelectionMenu();
               const releaseArtifactsTaon =
                 await this.displaySelectArtifactsMenu(local, selectedProjects);
               await this.releaseArtifacts(
                 local,
+                releaseArtifactsTaon,
+                selectedProjects,
+              );
+            },
+            //#endregion
+          },
+          [staticPages]: {
+            //#region local
+            name: `${this.getColoredTextItem(staticPages)} release for ${priovider} pages`,
+            action: async () => {
+              await UtilsTerminal.pressAnyKeyToContinueAsync({
+                message: 'Not implemented yet.. press any key to go back',
+              });
+              return;
+              const selectedProjects =
+                await this.project.releaseProcess.displayProjectsSelectionMenu();
+              const releaseArtifactsTaon =
+                await this.displaySelectArtifactsMenu(
+                  staticPages,
+                  selectedProjects,
+                );
+              await this.releaseArtifacts(
+                staticPages,
                 releaseArtifactsTaon,
                 selectedProjects,
               );
@@ -240,6 +280,7 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
     selectedProjects: Project[],
   ): Promise<void> {
     //#region @backend
+
     for (const project of selectedProjects) {
       for (const targetArtifact of releaseArtifactsTaon) {
         await project.releaseProcess.startRelease(
@@ -267,6 +308,7 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
   }
   //#endregion
 
+  //#region private methods / get release header
   private getReleaseHeader(releaseProcessType: ReleaseType) {
     //#region @backendFunc
     // if (this.project.framework.isContainer) {
@@ -286,18 +328,22 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
     // );
     //#endregion
   }
+  //#endregion
 
   //#region private methods / get colored text item
   private getColoredTextItem(releaseProcessType: ReleaseType): string {
     //#region @backendFunc
     if (releaseProcessType === 'manual') {
-      return _.upperFirst(chalk.bold.yellow('Manual'));
+      return _.upperFirst(chalk.bold.green('Manual'));
     }
     if (releaseProcessType === 'cloud') {
-      return _.upperFirst(chalk.bold.green('Cloud'));
+      return _.upperFirst(chalk.bold.blue('Cloud'));
     }
     if (releaseProcessType === 'local') {
       return _.upperFirst(chalk.bold.gray('Local'));
+    }
+    if (releaseProcessType === 'static-pages') {
+      return _.upperFirst(chalk.bold.yellow('Static Pages'));
     }
     //#endregion
   }

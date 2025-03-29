@@ -1,6 +1,4 @@
 //#region imports
-import { stdout } from 'process';
-
 import { config } from 'tnp-config/src';
 import { Helpers, UtilsTerminal, _, chalk, path } from 'tnp-core/src';
 
@@ -20,7 +18,7 @@ import type { Project } from '../project';
 import type {
   BaseArtifact,
   IArtifactProcessObj,
-} from './__base__/base-artifact';
+} from './base-artifact';
 import { ArtifactsGlobalHelper } from './__helpers__/artifacts-helpers';
 import { BuildProcessManager } from './build-process-manager';
 //#endregion
@@ -219,6 +217,8 @@ export class ArtifactManager {
   //#region build
   async build(buildOptions: BuildOptions): Promise<void> {
     if (!buildOptions.targetArtifact) {
+      await this.init(InitOptions.from({ ...buildOptions, watch: false }));
+      //#region  build Menu
       const buildWatchCmdForArtifact = (
         artifact: ReleaseArtifactTaon,
         options?: {
@@ -232,51 +232,55 @@ export class ArtifactManager {
         );
       };
       const processManager = new BuildProcessManager();
-      const libBuild = buildOptions.watch
-        ? chalk.bold('(ng build lib-name --watch)')
-        : chalk.bold('(ng build lib-name)');
+      // const libBuild = buildOptions.watch
+      //   ? chalk.bold('(ng build lib-name --watch)')
+      //   : chalk.bold('(ng build lib-name)');
 
-      const appBuild = buildOptions.watch
-        ? chalk.bold('(ng serve app-name)')
-        : chalk.bold('(ng build --prod app-name)');
+      // const appBuild = buildOptions.watch
+      //   ? chalk.bold('(ng serve app-name)')
+      //   : chalk.bold('(ng build --prod app-name)');
 
       const mkdocsLabel = chalk.bold('(mkdocs, compodoc, typedoc)');
 
       const names = {
-        isomorphicLib: `Isomorphic Nodejs/Angular backend + npm library ${libBuild}`,
-        angularApp: `Angular (for Nodejs backend) frontend app ${appBuild}`,
-        electronApp: `Electron app with Nodejs/Ipc backend`,
-        angularAppWebsql: `Angular (for Websql backend) frontend app ${appBuild}`,
-        electronAppWebsql: `Electron app with Websql backend`,
+        isomorphicLib: `Isomorphic Nodejs/Angular library`,
+        angularApp: `Angular (for Nodejs backend) frontend app`,
+        angularAppWebsql: `Angular (for Websql backend) frontend app`,
       };
+
+      //     const header = `
+
+      // ${libBuild} - needed for ${chalk.gray(
+      //   (
+      //     [
+      //       'npm-lib-and-cli-tool',
+      //       'angular-node-app',
+      //       'electron-app',
+      //       'mobile-app',
+      //       'vscode-plugin',
+      //     ] as ReleaseArtifactTaon[]
+      //   ).join(', '),
+      // )}
+
+      // ${appBuild} - needed for ${chalk.gray(
+      //   (
+      //     [
+      //       'angular-node-app',
+      //       'electron-app',
+      //       'mobile-app',
+      //     ] as ReleaseArtifactTaon[]
+      //   ).join(', '),
+      // )}
+
+      // ${chalk.bold('mkdocs, compodoc, typedoc')} - needed for ${chalk.gray('docs-webapp')}
+
+      //       `;
 
       await processManager.init({
         watch: !!buildOptions.watch,
         header: `
 
-  ${libBuild} - needed for ${chalk.gray(
-    (
-      [
-        'npm-lib-and-cli-tool',
-        'angular-node-app',
-        'electron-app',
-        'mobile-app',
-        'vscode-plugin',
-      ] as ReleaseArtifactTaon[]
-    ).join(', '),
-  )}
-
-  ${appBuild} - needed for ${chalk.gray(
-    (
-      [
-        'angular-node-app',
-        'electron-app',
-        'mobile-app',
-      ] as ReleaseArtifactTaon[]
-    ).join(', '),
-  )}
-
-  ${chalk.bold('mkdocs, compodoc, typedoc')} - needed for ${chalk.gray('docs-webapp')}
+        Build process for ${this.project.name}
 
         `,
         title: `Select what do you want to build ${buildOptions.watch ? 'in watch mode' : ''}?`,
@@ -298,11 +302,6 @@ export class ArtifactManager {
             },
           },
           {
-            name: names.electronApp,
-            dependencyProcessesNames: [names.angularApp],
-            cmd: buildWatchCmdForArtifact('electron-app'),
-          },
-          {
             name: names.angularAppWebsql,
             cmd: buildWatchCmdForArtifact('angular-node-app', { websql: true }),
             dependencyProcessesNames: [names.isomorphicLib],
@@ -311,16 +310,12 @@ export class ArtifactManager {
             },
           },
           {
-            name: names.electronAppWebsql,
-            dependencyProcessesNames: [names.angularAppWebsql],
-            cmd: buildWatchCmdForArtifact('electron-app', { websql: true }),
-          },
-          {
             name: `Documentation ${mkdocsLabel}`,
             cmd: buildWatchCmdForArtifact('docs-webapp'),
           },
         ],
       });
+      //#endregion
     } else {
       if (
         !buildOptions.targetArtifact ||
@@ -386,29 +381,39 @@ export class ArtifactManager {
       !releaseOptions.targetArtifact ||
       releaseOptions.targetArtifact === 'angular-node-app'
     ) {
-      await this.artifact.npmLibAndCliTool.buildPartial(BuildOptions.fromRelease(releaseOptions));
+      await this.artifact.npmLibAndCliTool.buildPartial(
+        BuildOptions.fromRelease(releaseOptions),
+      );
       await this.artifact.angularNodeApp.releasePartial(releaseOptions);
     }
     if (
       !releaseOptions.targetArtifact ||
       releaseOptions.targetArtifact === 'electron-app'
     ) {
-      await this.artifact.npmLibAndCliTool.buildPartial(BuildOptions.fromRelease(releaseOptions));
-      await this.artifact.angularNodeApp.buildPartial(BuildOptions.fromRelease(releaseOptions));
+      await this.artifact.npmLibAndCliTool.buildPartial(
+        BuildOptions.fromRelease(releaseOptions),
+      );
+      await this.artifact.angularNodeApp.buildPartial(
+        BuildOptions.fromRelease(releaseOptions),
+      );
       await this.artifact.electronApp.releasePartial(releaseOptions);
     }
     if (
       !releaseOptions.targetArtifact ||
       releaseOptions.targetArtifact === 'mobile-app'
     ) {
-      await this.artifact.npmLibAndCliTool.buildPartial(BuildOptions.fromRelease(releaseOptions));
+      await this.artifact.npmLibAndCliTool.buildPartial(
+        BuildOptions.fromRelease(releaseOptions),
+      );
       await this.artifact.mobileApp.releasePartial(releaseOptions);
     }
     if (
       !releaseOptions.targetArtifact ||
       releaseOptions.targetArtifact === 'vscode-plugin'
     ) {
-      await this.artifact.npmLibAndCliTool.buildPartial(BuildOptions.fromRelease(releaseOptions));
+      await this.artifact.npmLibAndCliTool.buildPartial(
+        BuildOptions.fromRelease(releaseOptions),
+      );
       await this.artifact.vscodePlugin.releasePartial(releaseOptions);
     }
   }
@@ -442,6 +447,7 @@ export class ArtifactManager {
   }
   //#endregion
 
+  //#region DEPRECATED
   private async wrappWithProcessInfo(
     fn: () => Promise<void>,
     processName: keyof ArtifactManager,
@@ -522,4 +528,5 @@ export class ArtifactManager {
     // await buildProcessController.initializeClientToRemoteServer(this.project);
     //#endregion
   }
+  //#endregion
 }

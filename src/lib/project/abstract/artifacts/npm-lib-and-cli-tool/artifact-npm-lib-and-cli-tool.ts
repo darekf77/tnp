@@ -28,7 +28,7 @@ import {
   ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
-import { BaseArtifact } from '../__base__/base-artifact';
+import { BaseArtifact } from '../base-artifact';
 
 import { IncrementalBuildProcess } from './tools/build-isomorphic-lib/compilations/incremental-build-process';
 import { CopyManager } from './tools/copy-manager/copy-manager';
@@ -352,14 +352,22 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     );
     //#endregion
   }
+  //#endregion
 
   async releasePartial(releaseOptions: ReleaseOptions): Promise<{
     releaseProjPath: string;
     releaseType: ReleaseType;
   }> {
-    // await this.buildPartial(BuildOptions.fromRelease(releaseOptions));
+    let releaseProjPath: string;
+    let releaseType: ReleaseType;
+    const {
+      npmLibraryInNodeModulesAbsPath,
+      distOutBackendPath,
+      distOutBrowserPath,
+      distOutWebsqlPath,
+    } = await this.buildPartial(BuildOptions.fromRelease(releaseOptions));
     // TODO
-    return void 0;
+    return { releaseProjPath, releaseType };
   }
   clearPartial(options?: ClearOptions): Promise<void> {
     return void 0; // TODO implement
@@ -1482,6 +1490,7 @@ export * from './lib';
       ).location,
       'app/src/assets/sql-wasm.wasm',
     ]);
+
     const wasmfileDest = crossPlatformPath([nccBase, 'sql-wasm.wasm']);
     Helpers.copyFile(wasmfileSource, wasmfileDest);
 

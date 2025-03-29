@@ -240,6 +240,11 @@ export namespace Models {
 
   // taon json
   export interface TaonJsonStandalone extends TaonJsonCommon {
+    /**
+     * override npm name for build/relese
+     */
+    overrideNpmName?: string;
+
     type: 'isomorphic-lib';
     /**
      * Static resurces for standalone project, that are
@@ -275,6 +280,7 @@ export namespace Models {
      */
     isUsingOwnNodeModulesInsteadCoreContainer?: boolean;
 
+
     /**
      * @deprecated
      * use isUsingOwnNodeModulesInsteadCoreContainer
@@ -305,6 +311,10 @@ export namespace Models {
      * Project is monorepo
      */
     monorepo?: boolean;
+    /**
+     * Project is organization/scope (like @angular)
+     */
+    isOrganization?: boolean;
   }
 
   interface TaonJsonCommon {

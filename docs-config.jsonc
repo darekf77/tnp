@@ -19,13 +19,19 @@
         "packageNameWithPath": "tnp/docs/ADDITIONAL-COMMANDS.md",
         "overrideTitle": "Additional Commands",
       },
+      {
+        "packageNameWithPath": [
+          "tnp/docs/CI-CD.md",
+          "tnp/docs/RELEASE-MANUAL.md",
+          "tnp/docs/RELEASE-CLOUD.md",
+          "tnp/docs/RELEASE-LOCAL.md",
+          "tnp/docs/RELEASE-STATIC-PAGES.md",
+        ],
+        "overrideTitle": "CI-CD",
+      },
     ],
   },
-  "omitFilesPatters": [
-    "BUILD-INFO.md",
-    "README.md",
-    "GIT-COMMANDS"
-  ],
+  "omitFilesPatters": ["BUILD-INFO.md", "README.md", "GIT-COMMANDS"],
   "priorityOrder": ["Start"],
   "mapTitlesNames": {
     "README": "Start",

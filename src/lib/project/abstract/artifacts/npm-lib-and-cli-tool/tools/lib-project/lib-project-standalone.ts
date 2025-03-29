@@ -196,14 +196,14 @@ export class LibProjectStandalone extends LibProjectBase {
           config.folder.src,
           config.folder.assets,
           this.project.artifactsManager.artifact.angularNodeApp
-            .__assetsFileListGenerator.filename,
+            .assetsFileListGenerator.filename,
         ]);
         const assetsListPathDestMain = crossPlatformPath([
           this.project.location,
           config.folder.docs,
           config.folder.assets,
           this.project.artifactsManager.artifact.angularNodeApp
-            .__assetsFileListGenerator.filename,
+            .assetsFileListGenerator.filename,
         ]);
         // console.log({
         //   assetsListPathSourceMain,

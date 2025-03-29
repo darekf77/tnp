@@ -21,7 +21,7 @@ import {
   ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
-import { BaseArtifact } from '../__base__/base-artifact';
+import { BaseArtifact } from '../base-artifact';
 
 export class ArtifactVscodePlugin extends BaseArtifact<
   {
@@ -78,6 +78,10 @@ export class ArtifactVscodePlugin extends BaseArtifact<
   //#region init partial
   async initPartial(initOptions: InitOptions): Promise<void> {
     //#region @backendFunc
+    if (!this.project.framework.isStandaloneProject) {
+      return;
+    }
+
     const tmpVscodeProjPath = this.getTmpVscodeProjPath(
       initOptions.releaseType,
     );
@@ -105,11 +109,13 @@ export class ArtifactVscodePlugin extends BaseArtifact<
         tmpVscodeProjPath,
         initOptions.releaseType ? config.folder.dist : config.folder.out,
       ]),
+      { tryRemoveDesPath: true, continueWhenExistedFolderDoesntExists: true },
     );
 
     Helpers.createSymLink(
       this.project.pathFor(config.folder.node_modules),
       crossPlatformPath([tmpVscodeProjPath, config.folder.node_modules]),
+      { tryRemoveDesPath: true, continueWhenExistedFolderDoesntExists: true },
     );
 
     Helpers.createSymLink(
@@ -118,6 +124,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
         tmpVscodeProjPath,
         this.vcodeProjectUpdatePackageJsonFilename,
       ]),
+      { tryRemoveDesPath: true, continueWhenExistedFolderDoesntExists: true },
     );
 
     //#region recreate app.vscode.js
@@ -194,6 +201,7 @@ export default { commands };
     //#region @backendFunc
 
     await this.initPartial(InitOptions.fromBuild(buildOptions));
+
     const tmpVscodeProjPath = this.getTmpVscodeProjPath(
       buildOptions.releaseType,
     );
