@@ -1,6 +1,7 @@
 //#region imports
 import { config } from 'tnp-config/src';
 import { Helpers, UtilsTerminal, _, chalk, path } from 'tnp-core/src';
+import { BaseProcessManger, CommandConfig } from 'tnp-helpers/src';
 
 import {
   COMPILATION_COMPLETE_APP_NG_SERVE,
@@ -13,14 +14,10 @@ import {
   ReleaseArtifactTaon,
   ReleaseOptions,
 } from '../../../options';
-import type { Project } from '../project';
+import { Project } from '../project';
 
-import type {
-  BaseArtifact,
-  IArtifactProcessObj,
-} from './base-artifact';
 import { ArtifactsGlobalHelper } from './__helpers__/artifacts-helpers';
-import { BuildProcessManager } from './build-process-manager';
+import type { BaseArtifact, IArtifactProcessObj } from './base-artifact';
 //#endregion
 
 /**
@@ -218,6 +215,7 @@ export class ArtifactManager {
   async build(buildOptions: BuildOptions): Promise<void> {
     if (!buildOptions.targetArtifact) {
       await this.init(InitOptions.from({ ...buildOptions, watch: false }));
+
       //#region  build Menu
       const buildWatchCmdForArtifact = (
         artifact: ReleaseArtifactTaon,
@@ -231,50 +229,38 @@ export class ArtifactManager {
           `--targetArtifact ${artifact} ${buildOptions.websql ? '--websql' : ''}`
         );
       };
-      const processManager = new BuildProcessManager();
-      // const libBuild = buildOptions.watch
-      //   ? chalk.bold('(ng build lib-name --watch)')
-      //   : chalk.bold('(ng build lib-name)');
+      const processManager = new BaseProcessManger(this.project as any);
 
-      // const appBuild = buildOptions.watch
-      //   ? chalk.bold('(ng serve app-name)')
-      //   : chalk.bold('(ng build --prod app-name)');
+      const ngBuildLibCommand = CommandConfig.from({
+        name: `Isomorphic Nodejs/Angular library`,
+        cmd: buildWatchCmdForArtifact('npm-lib-and-cli-tool'),
+        goToNextCommandWhenOutput: {
+          stdoutContains: COMPILATION_COMPLETE_LIB_NG_BUILD,
+        },
+      });
 
-      const mkdocsLabel = chalk.bold('(mkdocs, compodoc, typedoc)');
+      const ngServeAppCommand = CommandConfig.from({
+        name: `Angular (for Nodejs backend) frontend app`,
+        cmd: buildWatchCmdForArtifact('angular-node-app'),
+        shouldBeActiveOrAlreadyBuild: [ngBuildLibCommand],
+        goToNextCommandWhenOutput: {
+          stdoutContains: COMPILATION_COMPLETE_APP_NG_SERVE,
+        },
+      });
 
-      const names = {
-        isomorphicLib: `Isomorphic Nodejs/Angular library`,
-        angularApp: `Angular (for Nodejs backend) frontend app`,
-        angularAppWebsql: `Angular (for Websql backend) frontend app`,
-      };
+      const ngServeWebsqlAppCommand = CommandConfig.from({
+        name: `Angular (for Websql backend) frontend app`,
+        cmd: buildWatchCmdForArtifact('angular-node-app', { websql: true }),
+        shouldBeActiveOrAlreadyBuild: [ngBuildLibCommand],
+        goToNextCommandWhenOutput: {
+          stdoutContains: COMPILATION_COMPLETE_APP_NG_SERVE,
+        },
+      });
 
-      //     const header = `
-
-      // ${libBuild} - needed for ${chalk.gray(
-      //   (
-      //     [
-      //       'npm-lib-and-cli-tool',
-      //       'angular-node-app',
-      //       'electron-app',
-      //       'mobile-app',
-      //       'vscode-plugin',
-      //     ] as ReleaseArtifactTaon[]
-      //   ).join(', '),
-      // )}
-
-      // ${appBuild} - needed for ${chalk.gray(
-      //   (
-      //     [
-      //       'angular-node-app',
-      //       'electron-app',
-      //       'mobile-app',
-      //     ] as ReleaseArtifactTaon[]
-      //   ).join(', '),
-      // )}
-
-      // ${chalk.bold('mkdocs, compodoc, typedoc')} - needed for ${chalk.gray('docs-webapp')}
-
-      //       `;
+      const documenationCommand = CommandConfig.from({
+        name: `Documentation (mkdocs, compodoc, typedoc)`,
+        cmd: buildWatchCmdForArtifact('docs-webapp'),
+      });
 
       await processManager.init({
         watch: !!buildOptions.watch,
@@ -285,34 +271,10 @@ export class ArtifactManager {
         `,
         title: `Select what do you want to build ${buildOptions.watch ? 'in watch mode' : ''}?`,
         commands: [
-          {
-            name: names.isomorphicLib,
-            cmd: buildWatchCmdForArtifact('npm-lib-and-cli-tool'),
-            goToNextCommandWhen: {
-              stdoutContains: COMPILATION_COMPLETE_LIB_NG_BUILD,
-            },
-          },
-          {
-            name: names.angularApp,
-            cmd: buildWatchCmdForArtifact('angular-node-app'),
-            // cmd: 'node -e "let i = 0; setInterval(() => console.log(\'Compiled success \' + (++i)), 1000)"',
-            dependencyProcessesNames: [names.isomorphicLib],
-            goToNextCommandWhen: {
-              stdoutContains: COMPILATION_COMPLETE_APP_NG_SERVE,
-            },
-          },
-          {
-            name: names.angularAppWebsql,
-            cmd: buildWatchCmdForArtifact('angular-node-app', { websql: true }),
-            dependencyProcessesNames: [names.isomorphicLib],
-            goToNextCommandWhen: {
-              stdoutContains: COMPILATION_COMPLETE_APP_NG_SERVE,
-            },
-          },
-          {
-            name: `Documentation ${mkdocsLabel}`,
-            cmd: buildWatchCmdForArtifact('docs-webapp'),
-          },
+          ngBuildLibCommand,
+          ngServeAppCommand,
+          ngServeWebsqlAppCommand,
+          documenationCommand,
         ],
       });
       //#endregion
