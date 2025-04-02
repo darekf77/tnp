@@ -30,6 +30,7 @@ export class Docs extends BaseDebounceCompilerForProject<
      */
     docsOutFolder?: string;
     ciBuild?: boolean;
+    port?: number;
   },
   // @ts-ignore TODO weird inheritance problem
   Project
@@ -99,7 +100,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   get outDocsDistFolderAbs() {
     //#region @backendFunc
     return this.project.pathFor([
-      this.initalParams.docsOutFolder || `.${config.frameworkName}/docs-dist`,
+      this.initialParams.docsOutFolder || `.${config.frameworkName}/docs-dist`,
     ]);
     //#endregion
   }
@@ -252,14 +253,11 @@ export class Docs extends BaseDebounceCompilerForProject<
           });
         });
 
-      if (this.initalParams.docsOutFolder && !this.initalParams.ciBuild) {
-        const portForDocs = await this.project.registerAndAssignPort(
-          'docs port for http server',
-          {
-            startFrom: 3950,
-          },
+      if (this.initialParams.docsOutFolder && !this.initialParams.ciBuild) {
+        await UtilsHttp.startHttpServer(
+          this.outDocsDistFolderAbs,
+          this.initialParams.port,
         );
-        await UtilsHttp.startHttpServer(this.outDocsDistFolderAbs, portForDocs);
       }
     }
     if (asyncEvent) {
@@ -687,7 +685,7 @@ markdown_extensions:
         Please rebuild docs for this project ${chalk.bold(nearestProj?.genericName)}.
 
 
-        `
+        `,
       );
       return;
     }

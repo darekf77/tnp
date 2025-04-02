@@ -24,6 +24,15 @@ export class ArtifactDocsWebapp extends BaseArtifact<
 > {
   public docs: Docs;
 
+  async DOCS_ARTIFACT_PORT_UNIQ_KEY(
+    buildOptions: BuildOptions,
+  ): Promise<number> {
+    const key = 'docs port for http server';
+    return await this.project.registerAndAssignPort(key, {
+      startFrom: 3950,
+    });
+  }
+
   constructor(protected readonly project: Project) {
     super(project, 'docs-webapp');
     this.docs = new Docs(this.project);
@@ -45,11 +54,14 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     await this.initPartial(InitOptions.fromBuild(buildOptions));
     const combinedDocsHttpServerUrl: Url = void 0; // TODO implement
     const docsWebappDistOutPath: string = buildOptions.overrideOutputPath;
+    const port = await this.DOCS_ARTIFACT_PORT_UNIQ_KEY(buildOptions);
+
     await this.docs.runTask({
       watch: buildOptions.watch,
-      initalParams: {
+      initialParams: {
         docsOutFolder: docsWebappDistOutPath,
         ciBuild: buildOptions.ciProcess,
+        port,
       },
     });
 

@@ -49,7 +49,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     releaseType: ReleaseType;
   }
 > {
-  //#region fields
+  //#region fields & getters
   public readonly migrationHelper: MigrationHelper;
   public readonly angularFeBasenameManager: AngularFeBasenameManager;
 
@@ -57,6 +57,26 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   public readonly assetsFileListGenerator: AssetsFileListGenerator;
   public readonly __docsAppBuild: GithubPagesAppBuildConfig;
   public readonly __assetsManager: AssetsManager;
+
+  async APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+    buildOptions: Partial<BuildOptions>,
+  ): Promise<number> {
+    buildOptions = BuildOptions.from(buildOptions);
+    const key = `${buildOptions.watch ? 'serve' : 'build'} ng app (${buildOptions.websql ? 'websql' : 'normal'})`;
+    return await this.project.registerAndAssignPort(key, {
+      startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
+    });
+  }
+
+  async NODE_BACKEND_PORT_UNIQ_KEY(
+    buildOptions: BuildOptions,
+  ): Promise<number> {
+    buildOptions = BuildOptions.from(buildOptions);
+    const key = `node backend`;
+    return await this.project.registerAndAssignPort(key, {
+      startFrom: DEFAULT_PORT.SERVER_LOCALHOST,
+    });
+  }
 
   //#endregion
 
@@ -94,6 +114,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       ).location,
       'app/src/assets/sql-wasm.wasm',
     ]);
+
     const wasmfileDest = this.project.pathFor(
       `tmp-src-dist${initOptions.websql ? '-websql' : ''}/assets/sql-wasm.wasm`,
     );
@@ -132,16 +153,16 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       this.getOutDirNodeBackendAppAbsPath(buildOptions);
 
     // TODO @LAST this shoudl be set externally
-    const portAssignedToAppBuild: number =
-      await this.project.registerAndAssignPort(
-        `${buildOptions.watch ? 'serve' : 'build'} ng app (${buildOptions.websql ? 'websql' : 'normal'})`,
-        {
-          startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
-        },
-      );
-    const angularNgServeAddress: URL = new URL(
-      `http://localhost:${portAssignedToAppBuild}`,
-    );
+    buildOptions.ngNormalAppPort =
+      buildOptions.ngNormalAppPort ||
+      (await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(buildOptions));
+
+    buildOptions.ngWebsqlAppPort =
+      buildOptions.ngWebsqlAppPort ||
+      (await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY({
+        ...buildOptions,
+        websql: true,
+      }));
 
     await this.initPartial(InitOptions.fromBuild(buildOptions));
 
@@ -151,12 +172,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     buildOptions.baseHref = fromFileBaseHref;
 
     if (!buildOptions.websql) {
-      const backendPort = await this.project.registerAndAssignPort(
-        `node backend`,
-        {
-          startFrom: DEFAULT_PORT.SERVER_LOCALHOST,
-        },
-      );
+      const backendPort =
+        buildOptions.nodeBeAppPort ||
+        (await this.NODE_BACKEND_PORT_UNIQ_KEY(buildOptions));
 
       UtilsTypescript.setValueToVariableInTsFile(
         this.project.pathFor('src/app.hosts.ts'),
@@ -167,19 +185,25 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     UtilsTypescript.setValueToVariableInTsFile(
       this.project.pathFor('src/app.hosts.ts'),
+      'CLIENT_DEV_WEBSQL_APP_PORT',
+      buildOptions.ngWebsqlAppPort,
+    );
+
+    UtilsTypescript.setValueToVariableInTsFile(
+      this.project.pathFor('src/app.hosts.ts'),
+      'CLIENT_DEV_NORMAL_APP_PORT',
+      buildOptions.ngNormalAppPort,
+    );
+
+    const portAssignedToAppBuild: number = Number(
       buildOptions.websql
-        ? 'CLIENT_DEV_WEBSQL_APP_PORT'
-        : 'CLIENT_DEV_NORMAL_APP_PORT',
-      portAssignedToAppBuild,
+        ? buildOptions.ngWebsqlAppPort
+        : buildOptions.ngNormalAppPort,
     );
 
     if (buildOptions.watch) {
       await Helpers.killProcessByPort(portAssignedToAppBuild);
     }
-
-    const portAssignedToAppBuildCommandPart = _.isNumber(portAssignedToAppBuild)
-      ? `--port=${portAssignedToAppBuild}`
-      : '';
 
     const outPutPathCommand =
       `--output-path ` +
@@ -189,7 +213,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       ? `${this.NPM_RUN_NG_COMMAND} serve ${
           buildOptions.buildAngularAppForElectron ? 'angular-electron' : 'app'
         } ` +
-        ` ${portAssignedToAppBuildCommandPart} ${
+        ` ${`--port=${portAssignedToAppBuild}`} ${
           buildOptions.prod ? '--prod' : ''
         }`
       : `${this.NPM_RUN_NG_COMMAND} build ${
@@ -269,7 +293,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     return {
       appDistOutBackendNodeAbsPath,
       appDistOutBrowserAngularAbsPath,
-      angularNgServeAddress,
+      angularNgServeAddress: new URL(
+        `http://localhost:${portAssignedToAppBuild}`,
+      ),
       dockerBackendFrontendAppDistOutPath,
     };
     //#endregion
@@ -473,10 +499,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     return tsFileContent;
     //#endregion
   }
-  //#endregion
-
-  //#region getters & methods / build app
-  async buildApp(buildOptions: BuildOptions): Promise<void> {}
   //#endregion
 
   //#region getters & methods / write ports to file

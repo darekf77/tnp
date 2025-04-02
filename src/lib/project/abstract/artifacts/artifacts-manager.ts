@@ -219,14 +219,16 @@ export class ArtifactManager {
       //#region  build Menu
       const buildWatchCmdForArtifact = (
         artifact: ReleaseArtifactTaon,
-        options?: {
-          websql?: boolean;
-        },
+        options?: Partial<BuildOptions>,
       ): string => {
         options = options || {};
         return (
           `${config.frameworkName} build${buildOptions.watch ? ':watch' : ''} ` +
-          `--targetArtifact ${artifact} ${buildOptions.websql ? '--websql' : ''}`
+          `--targetArtifact ${artifact} ` +
+          ` ${options.websql ? '--websql' : ''} ` +
+          ` ${options.ngNormalAppPort ? `--ngNormalAppPort ${options.ngNormalAppPort}` : ''}` +
+          ` ${options.ngWebsqlAppPort ? `--ngWebsqlAppPort ${options.ngWebsqlAppPort}` : ''}` +
+          ` ${options.nodeBeAppPort ? `--nodeBeAppPort ${options.nodeBeAppPort}` : ''}`
         );
       };
       const processManager = new BaseProcessManger(this.project as any);
@@ -239,27 +241,62 @@ export class ArtifactManager {
         },
       });
 
+      const ngNormalAppPort =
+        await this.artifact.angularNodeApp.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+          BuildOptions.from({ ...buildOptions, websql: false }),
+        );
+
+      const ngWebsqlAppPort =
+        await this.artifact.angularNodeApp.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+          BuildOptions.from({ ...buildOptions, websql: true }),
+        );
+
+      const nodeBeAppPort =
+        await this.artifact.angularNodeApp.NODE_BACKEND_PORT_UNIQ_KEY(
+          BuildOptions.from(buildOptions),
+        );
+
       const ngServeAppCommand = CommandConfig.from({
         name: `Angular (for Nodejs backend) frontend app`,
-        cmd: buildWatchCmdForArtifact('angular-node-app'),
+        cmd: buildWatchCmdForArtifact('angular-node-app', {
+          ngNormalAppPort,
+          nodeBeAppPort,
+          ngWebsqlAppPort,
+        }),
         shouldBeActiveOrAlreadyBuild: [ngBuildLibCommand],
         goToNextCommandWhenOutput: {
           stdoutContains: COMPILATION_COMPLETE_APP_NG_SERVE,
         },
+        headerMessageWhenActive:
+          `Normal Angular App is running on ` +
+          `http://localhost:${ngNormalAppPort}`,
       });
 
       const ngServeWebsqlAppCommand = CommandConfig.from({
         name: `Angular (for Websql backend) frontend app`,
-        cmd: buildWatchCmdForArtifact('angular-node-app', { websql: true }),
+        cmd: buildWatchCmdForArtifact('angular-node-app', {
+          websql: true,
+          ngNormalAppPort,
+          nodeBeAppPort,
+          ngWebsqlAppPort,
+        }),
         shouldBeActiveOrAlreadyBuild: [ngBuildLibCommand],
         goToNextCommandWhenOutput: {
           stdoutContains: COMPILATION_COMPLETE_APP_NG_SERVE,
         },
+        headerMessageWhenActive:
+          `Websql Angular App is running on ` +
+          `http://localhost:${ngWebsqlAppPort}`,
       });
 
       const documenationCommand = CommandConfig.from({
         name: `Documentation (mkdocs, compodoc, typedoc)`,
         cmd: buildWatchCmdForArtifact('docs-webapp'),
+        headerMessageWhenActive:
+          `Documentation is running on http://localhost:` +
+          `${await this.artifact.docsWebapp.DOCS_ARTIFACT_PORT_UNIQ_KEY(
+            BuildOptions.from(buildOptions),
+          )}`,
       });
 
       await processManager.init({
@@ -279,6 +316,7 @@ export class ArtifactManager {
       });
       //#endregion
     } else {
+      //#region partial build
       if (
         !buildOptions.targetArtifact ||
         buildOptions.targetArtifact === 'docs-webapp'
@@ -315,6 +353,7 @@ export class ArtifactManager {
       ) {
         await this.artifact.vscodePlugin.buildPartial(buildOptions);
       }
+      //#endregion
     }
   }
 

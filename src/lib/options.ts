@@ -226,6 +226,21 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
   overrideOutputPath: string;
 
   /**
+   * override port for angular ng serve in normal mode
+   */
+  ngNormalAppPort?: number;
+
+  /**
+   * override port for angular ng serve in websql mode
+   */
+  ngWebsqlAppPort?: number;
+
+   /**
+   * override port for nodejs backend server
+   */
+   nodeBeAppPort?: number;
+
+  /**
    *
    */
   websql: boolean;

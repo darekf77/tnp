@@ -90,7 +90,7 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
 
   async syncAction(
     absolteFilesPathes?: string[],
-    initalParams?: {},
+    initialParams?: {},
   ): Promise<void> {
     //#region @backendFunc
     Helpers.logInfo(
@@ -108,7 +108,7 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
 
   async asyncAction(
     asyncEvents: ChangeOfFile,
-    initalParams?: {},
+    initialParams?: {},
   ): Promise<void> {
     //#region @backendFunc
     this.processFile(asyncEvents.fileAbsolutePath, true);

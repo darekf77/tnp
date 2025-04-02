@@ -68,7 +68,7 @@ export const TEMP_DOCS = 'tmp-documentation';
 export const DEFAULT_PORT = {
   DIST_SERVER_DOCS: 4000,
   APP_BUILD_LOCALHOST: 4200,
-  SERVER_LOCALHOST: 4199,
+  SERVER_LOCALHOST: 4100,
 };
 
 export const tmpBuildPort = 'tmp-build-port';
@@ -77,20 +77,20 @@ export const tmpBaseHrefOverwriteRelPath = 'tmp-base-href-overwrite';
 /**
  *
  * Ports for:
-      max = max instances = max container childs = 20;
-      n = folder process build number (searches for new port always)
-      index = container project index (can't exceeds max)
+    max = max instances = max container childs = 20;
+    n = folder process build number (searches for new port always)
+    index = container project index (can't exceeds max)
 
-      build process service 4100 = 4100 + n
+    build process service 4100 = 4100 + n
 
-      standalone server 4500 = 4100  + 400 + n
-      containers servers 4600 = 4100  + 500 + n * max + index
+    standalone server 4500 = 4100  + 400 + n
+    containers servers 4600 = 4100  + 500 + n * max + index
 
-      standalone ng serve normal 4300 = 4100  + 200 + n
-      standalone ng serve websql 4400 = 4100  + 300 + n
+    standalone ng serve normal 4300 = 4100  + 200 + n
+    standalone ng serve websql 4400 = 4100  + 300 + n
 
-      container ng serve normal 4800 = 4100  + 700 + n + max + index
-      container ng serve websql 4900 = 4100  + 800 + n + max + index
+    container ng serve normal 4800 = 4100  + 700 + n + max + index
+    container ng serve websql 4900 = 4100  + 800 + n + max + index
  *
  * @param basePort 4100 + n
  * @returns
