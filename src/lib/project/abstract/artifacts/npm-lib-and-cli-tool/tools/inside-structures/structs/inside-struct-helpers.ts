@@ -126,16 +126,19 @@ export function appfileTemplate(project: Project) {
   // TODO quick fix for @ browser remover
   return `
 ${'//#reg' + 'ion'} imports
-import { Taon, BaseContext } from 'taon/src';
-import { Helpers } from 'tnp-core/src';
-import { Observable, map } from 'rxjs';
-import { HOST_BACKEND_PORT, CLIENT_DEV_WEBSQL_APP_PORT, CLIENT_DEV_NORMAL_APP_PORT } from './app.hosts';
-${'//#reg' + 'ion'} @${'bro' + 'wser'}
+import { CommonModule } from '@angular/common';
 import { NgModule, inject, Injectable } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { VERSION } from '@angular/core';
-${'//#end' + 'region'}
+import { Observable, map } from 'rxjs';
+import { Taon, BaseContext } from 'taon';
+import { Helpers } from 'tnp-core';
+
+import {
+  HOST_BACKEND_PORT,
+  CLIENT_DEV_WEBSQL_APP_PORT,
+  CLIENT_DEV_NORMAL_APP_PORT,
+} from './app.hosts';
 ${'//#end' + 'region'}
 
 console.log('hello world');
