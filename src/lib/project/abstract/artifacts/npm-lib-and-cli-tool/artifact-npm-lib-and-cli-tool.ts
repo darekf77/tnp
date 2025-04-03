@@ -369,8 +369,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     // TODO
     return { releaseProjPath, releaseType };
   }
-  clearPartial(options?: ClearOptions): Promise<void> {
-    return void 0; // TODO implement
+  async clearPartial(options?: ClearOptions): Promise<void> {
+    // TODO make it better
+    rimraf.sync(this.project.pathFor('dist') + '*');
+    rimraf.sync(this.project.pathFor('tmp') + '*');
   }
 
   updateStanaloneProjectBeforePublishing(): void {

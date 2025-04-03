@@ -111,9 +111,14 @@ class $Build extends BaseCommandLineFeature<BuildOptions, Project> {
     );
   }
 
-  async cleanWatch() {
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.clearPartial();
-    await this.watch();
+  async cleanWatchLib() {
+    await this.project.clear();
+    await this.watchLib();
+  }
+
+  async cleanLib() {
+    await this.project.clear();
+    await this.lib();
   }
 
   async cleanBuild() {

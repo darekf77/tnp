@@ -195,8 +195,14 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#endregion
 
   //#region api / clear
-  public async clear(options: ClearOptions) {
-    // TODO
+  public async clear(clearOptions?: Partial<ClearOptions>) {
+    clearOptions = ClearOptions.from(clearOptions);
+    await this.artifactsManager.clear(clearOptions as ClearOptions);
+    if (clearOptions.recrusive) {
+      await this.artifactsManager.clearAllChildren(
+        clearOptions as ClearOptions,
+      );
+    }
   }
   //#endregion
 
