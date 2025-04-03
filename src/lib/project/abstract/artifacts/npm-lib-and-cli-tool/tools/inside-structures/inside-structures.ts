@@ -185,7 +185,6 @@ export class InsideStructuresApp
   //#endregion
 }
 
-// @ts-ignore TODO weird inheritance problem
 export class InsideStructuresLib
   extends InsideStructuresProcess
   implements InitingPartialProcess

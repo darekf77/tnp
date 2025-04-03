@@ -18,9 +18,6 @@ import type { Project } from './project';
 
 // @ts-ignore TODO weird inheritance problem
 export class Framework extends BaseFeatureForProject<Project> {
-  // @ts-ignore TODO weird inheritance problem
-  project: Project;
-
   //#region is unknown npm project
   get isUnknownNpmProject(): boolean {
     //#region @backendFunc

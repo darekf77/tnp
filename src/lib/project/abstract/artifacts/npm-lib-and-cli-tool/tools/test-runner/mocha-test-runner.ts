@@ -3,14 +3,12 @@ import { _ } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
-
 import { Helpers } from 'tnp-helpers/src';
 
 import { UNIT_TEST_TIMEOUT } from '../../../../../../constants';
 import type { Project } from '../../../../project';
 
 export class MochaTestRunner
-
   // @ts-ignore TODO weird inheritance problem
   extends BaseFeatureForProject<Project>
 {

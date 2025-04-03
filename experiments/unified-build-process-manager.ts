@@ -22,7 +22,7 @@ processManager.init({
     },
   ],
 });
-process.on('SIGINT', () => {
-  Object.values(processManager.processes).forEach(proc => proc.kill());
-  process.exit(0);
-});
+  // process.on('SIGINT', () => {
+  //   Object.values(processManager.processes).forEach(proc => proc.kill());
+  //   process.exit(0);
+  // });

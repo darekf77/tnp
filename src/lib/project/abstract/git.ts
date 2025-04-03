@@ -21,7 +21,10 @@ export class Git extends BaseGit<Project> {
    * @param newVersion
    * @param pushWithoutAsking
    */
-  async tagAndPushToGitRepo(newVersion: string, pushWithoutAsking = false):Promise<void> {
+  async tagAndPushToGitRepo(
+    newVersion: string,
+    pushWithoutAsking = false,
+  ): Promise<void> {
     //#region @backendFunc
     const pushFun = async () => {
       if (newVersion) {

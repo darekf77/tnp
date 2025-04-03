@@ -17,7 +17,10 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
     return this.project.name;
   }
 
-  private resolveBaseHrefForProj(overrideBaseHref: string, releaseType?: ReleaseArtifactTaon) {
+  private resolveBaseHrefForProj(
+    overrideBaseHref: string,
+    releaseType?: ReleaseArtifactTaon,
+  ) {
     //#region @backendFunc
     let baseHref = this.rootBaseHref;
 

@@ -238,7 +238,7 @@ export namespace Models {
   }
   //#endregion
 
-  // taon json
+  //#region taon json
   export interface TaonJsonStandalone extends TaonJsonCommon {
     /**
      * override npm name for build/relese
@@ -279,7 +279,6 @@ export namespace Models {
      * Project is using own node_modules instead of core container
      */
     isUsingOwnNodeModulesInsteadCoreContainer?: boolean;
-
 
     /**
      * @deprecated
@@ -342,6 +341,7 @@ export namespace Models {
 
   export type TaonJson = TaonJsonCommon &
     (TaonJsonStandalone | TaonJsonContainer);
+  //#endregion
 
   //#region DocsConfig
   export interface DocsConfig {

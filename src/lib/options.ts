@@ -7,7 +7,7 @@ import type { Project } from './project/abstract/project';
 
 //#region helpers / instance from
 const instanceFrom = (
-  options: Partial<InitOptions | BuildOptions | ReleaseOptions>,
+  options: Partial<InitOptions | BuildOptions | ReleaseOptions | ClearOptions>,
   classFn: Function,
 ) => {
   const orgFinishCallback = options?.finishCallback;
@@ -169,6 +169,9 @@ export class NewOptions extends SystemTask<NewOptions> {
 
 //#region clear options
 export class ClearOptions extends SystemTask<ClearOptions> {
+  public static from(options: Partial<ClearOptions>): ClearOptions {
+    return instanceFrom(options, ClearOptions);
+  }
   recrusive?: boolean;
 }
 //#endregion
@@ -235,10 +238,10 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
    */
   ngWebsqlAppPort?: number;
 
-   /**
+  /**
    * override port for nodejs backend server
    */
-   nodeBeAppPort?: number;
+  nodeBeAppPort?: number;
 
   /**
    *

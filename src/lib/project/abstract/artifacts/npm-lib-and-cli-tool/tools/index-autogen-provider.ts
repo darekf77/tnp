@@ -9,7 +9,6 @@ import type { Project } from '../../../project';
 
 // @ts-ignore TODO weird inheritance problem
 export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
-  project: Project;
   public readonly propertyInTaonJsonc = 'shouldGenerateAutogenIndexFile';
 
   //#region @backend

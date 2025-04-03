@@ -12,12 +12,11 @@ import type { Project } from '../../../project';
 //#endregion
 
 export class MigrationHelper extends BaseDebounceCompilerForProject<
-  {},
-   // @ts-ignore TODO weird inheritance problem
+  {}, // @ts-ignore TODO weird inheritance problem
   Project
 > {
   //#region constructor
-  constructor(public project: Project) {
+  constructor(project: Project) {
     super(project, {
       folderPath: project.pathFor([
         config.folder.src,

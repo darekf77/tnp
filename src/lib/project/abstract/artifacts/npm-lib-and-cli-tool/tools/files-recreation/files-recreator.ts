@@ -18,13 +18,10 @@ import type { Project } from '../../../../project';
 
 export type RecreateFile = { where: string; from: string };
 
-// @ts-ignore TODO weird inheritance problem
 export class FilesRecreator // @ts-ignore TODO weird inheritance problem
   extends BaseFeatureForProject<Project>
   implements InitingPartialProcess
 {
-  project: Project;
-
   //#region recreate simple files
   public async init(): Promise<void> {
     //#region @backendFunc

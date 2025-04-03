@@ -11,9 +11,6 @@ import type { Project } from '../abstract/project';
 
 // @ts-ignore TODO weird inheritance problem
 export class QuickFixes extends BaseQuickFixes<Project> {
-  // @ts-ignore TODO weird inheritance problem
-  project: Project;
-
   //#region recreate temp source necessary files
   recreateTempSourceNecessaryFiles(outDir: 'dist'): void {
     //#region @backendFunc

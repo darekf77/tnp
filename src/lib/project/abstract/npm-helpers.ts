@@ -23,7 +23,6 @@ import type { Project } from './project';
 
 // @ts-ignore TODO weird inheritance problem
 export class NpmHelpers extends BaseNpmHelpers<Project> {
-  project: Project;
   public _nodeModulesType = NodeModules as any;
   public _packageJsonType = PackageJSON as any;
   // @ts-ignore TODO weird inheritance problem

@@ -15,8 +15,7 @@ export interface AppBuildConfig {
 
 /**
  * @deprecated replace with static pages
- */
-// @ts-ignore TODO weird inheritance problem
+ */ // @ts-ignore TODO weird inheritance problem
 export class GithubPagesAppBuildConfig extends BaseFeatureForProject<Project> {
   private oldConfigName = 'docs-app-build-config.json5';
   private get configFileName() {

@@ -4,7 +4,6 @@ import { InitingPartialProcess } from '../../options';
 
 import type { Project } from './project';
 
-// @ts-ignore TODO weird inheritance problem
 export class Linter // @ts-ignore TODO weird inheritance problem
   extends BaseFeatureForProject<Project>
   implements InitingPartialProcess

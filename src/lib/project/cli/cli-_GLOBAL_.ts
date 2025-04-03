@@ -54,9 +54,12 @@ import type { Project } from '../abstract/project';
 import type { TaonProjectResolve } from '../abstract/project-resolve';
 //#endregion
 
-// @ts-ignore TODO weird inheritance problem
-export class $Global extends BaseGlobalCommandLine<{}, Project> {
-  readonly ins: TaonProjectResolve;
+export class $Global extends BaseGlobalCommandLine<
+  {},
+  // @ts-ignore TODO weird inheritance problem
+  Project,
+  TaonProjectResolve
+> {
   public async _() {
     await this.ins.taonProjectsWorker.infoScreen();
   }

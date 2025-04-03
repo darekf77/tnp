@@ -19,13 +19,11 @@ import type { Project } from './project';
 /**
  * Handle taon things related to vscode
  * support for launch.json, settings.json etc
- */ // @ts-ignore TODO weird inheritance problem
+ */
 export class Vscode // @ts-ignore TODO weird inheritance problem
   extends BaseVscodeHelpers<Project>
   implements InitingPartialProcess
 {
-  project: Project;
-
   async init(): Promise<void> {
     this.recreateJsonSchemas();
     this.project.vsCodeHelpers.recreateExtensions();

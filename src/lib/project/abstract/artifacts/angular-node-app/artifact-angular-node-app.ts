@@ -152,6 +152,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     const appDistOutBackendNodeAbsPath =
       this.getOutDirNodeBackendAppAbsPath(buildOptions);
 
+    await this.initPartial(InitOptions.fromBuild(buildOptions));
+
     // TODO @LAST this shoudl be set externally
     buildOptions.ngNormalAppPort =
       buildOptions.ngNormalAppPort ||
@@ -164,24 +166,20 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         websql: true,
       }));
 
-    await this.initPartial(InitOptions.fromBuild(buildOptions));
-
     const fromFileBaseHref = Helpers.readFile(
       this.project.pathFor(tmpBaseHrefOverwriteRelPath),
     );
     buildOptions.baseHref = fromFileBaseHref;
 
-    if (!buildOptions.websql) {
-      const backendPort =
-        buildOptions.nodeBeAppPort ||
-        (await this.NODE_BACKEND_PORT_UNIQ_KEY(buildOptions));
+    const backendPort =
+      buildOptions.nodeBeAppPort ||
+      (await this.NODE_BACKEND_PORT_UNIQ_KEY(buildOptions));
 
-      UtilsTypescript.setValueToVariableInTsFile(
-        this.project.pathFor('src/app.hosts.ts'),
-        'HOST_BACKEND_PORT',
-        backendPort,
-      );
-    }
+    UtilsTypescript.setValueToVariableInTsFile(
+      this.project.pathFor('src/app.hosts.ts'),
+      'HOST_BACKEND_PORT',
+      backendPort,
+    );
 
     UtilsTypescript.setValueToVariableInTsFile(
       this.project.pathFor('src/app.hosts.ts'),
@@ -238,6 +236,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     showInfoAngular();
 
     const isStandalone = this.project.framework.isStandaloneProject;
+
     await angularTempProj.execute(angularBuildAppCmd, {
       similarProcessKey: 'ng',
       resolvePromiseMsg: {
@@ -503,29 +502,24 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
   //#region getters & methods / write ports to file
   public writePortsToFile(): void {
-    //#region @backend
-    //     const appHostsFile = crossPlatformPath(
-    //       path.join(this.project.location, config.folder.src, 'app.hosts.ts'),
-    //     );
-    //     Helpers.writeFile(
-    //       appHostsFile,
-    //       PortUtils.instance(this.projectInfoPort).appHostTemplateFor(this.project),
-    //     );
-    //     if (this.project.framework.isStandaloneProject) {
-    //       this.project.writeFile(
-    //         'BUILD-INFO.md',
-    //         `
-    // *This file is generated. This file is generated.*
-    // # Project info
-    // - Project name: ${this.project.genericName}
-    // - project info host: http://localhost:${this.projectInfoPort}
-    // - backend host: http://localhost:${this.backendPort}
-    // - standalone normal app host: http://localhost:${this.standaloneNormalAppPort}
-    // - standalone websql app host: http://localhost:${this.standaloneWebsqlAppPort}
-    // *This file is generated. This file is generated.*
-    //       `,
-    //       );
-    //     }
+    // #region @backend
+    const appHostsFile = crossPlatformPath(
+      path.join(this.project.location, config.folder.src, 'app.hosts.ts'),
+    );
+    Helpers.writeFile(
+      appHostsFile,
+      `
+// THIS FILE IS GENERATED - DO NOT MODIFY
+
+export const HOST_BACKEND_PORT = undefined;
+export const CLIENT_DEV_NORMAL_APP_PORT = undefined;
+export const CLIENT_DEV_WEBSQL_APP_PORT = undefined;
+
+// THIS FILE IS GENERATED - DO NOT MODIFY
+
+
+      `,
+    );
     //#endregion
   }
   //#endregion

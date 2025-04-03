@@ -25,14 +25,8 @@ import type { Project } from '../project';
  * manage standalone or container release process
  */ // @ts-ignore TODO weird inheritance problem
 export class ReleaseProcess extends BaseReleaseProcess<Project> {
-  //#region fields & getters
-  readonly project: Project;
-
-  //#endregion
-
   //#region constructor
   constructor(project: Project) {
-    // @ts-ignore TODO weird inheritance problem
     super(project);
   }
   //#endregion

@@ -17,8 +17,6 @@ const subPath = [config.folder.src, config.folder.assets, ...generatedPwa];
  * Automatically brand you project (based on logo.png, taon.json, etc)
  */ // @ts-ignore TODO weird inheritance problem
 export class Branding extends BaseFeatureForProject<Project> {
-  project: Project;
-
   //#region path
   private get path(): string {
     //#region @backendFunc

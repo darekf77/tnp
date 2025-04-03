@@ -29,7 +29,7 @@ import { TaonJson } from './taonJson';
 import { Vscode } from './vscode';
 //#endregion
 
-//@ts-ignore
+// @ts-ignore TODO weird inheritance problem
 export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#region static
 
@@ -40,7 +40,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#endregion
 
   //#region fields
+  // @ts-ignore TODO weird inheritance problem
   public readonly type: CoreModels.LibType;
+  // @ts-ignore TODO weird inheritance problem
   public readonly vsCodeHelpers: Vscode;
 
   // @ts-ignore TODO weird inheritance problem
@@ -49,11 +51,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   // @ts-ignore TODO weird inheritance problem
   public readonly npmHelpers: NpmHelpers;
 
-  // @ts-ignore TODO weird inheritance problem
   get packageJson(): PackageJSON {
     return this.npmHelpers.packageJson as any;
   }
-
   // @ts-ignore TODO weird inheritance problem
   get nodeModules(): NodeModules {
     return this.npmHelpers.nodeModules as any;
@@ -65,6 +65,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   // @ts-ignore TODO weird inheritance problem
   public readonly quickFixes: QuickFixes;
   public readonly artifactsManager: ArtifactManager;
+  // @ts-ignore TODO weird inheritance problem
   public readonly git: Git;
   public readonly taonJson: TaonJson;
   public readonly packagesRecognition: PackagesRecognition;

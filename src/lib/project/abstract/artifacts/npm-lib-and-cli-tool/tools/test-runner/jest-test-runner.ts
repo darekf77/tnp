@@ -1,13 +1,12 @@
 import { _, crossPlatformPath } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
-
 import { Helpers } from 'tnp-helpers/src';
+
 import { tempSourceFolder } from '../../../../../../constants';
 import type { Project } from '../../../../project';
 
 export class JestTestRunner
-
   // @ts-ignore TODO weird inheritance problem
   extends BaseFeatureForProject<Project>
 {

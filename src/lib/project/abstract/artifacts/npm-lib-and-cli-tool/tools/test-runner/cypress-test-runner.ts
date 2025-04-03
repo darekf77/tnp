@@ -1,11 +1,11 @@
+import { config } from 'tnp-config/src';
 import { _ } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
-
-import { config } from 'tnp-config/src';
 import { Helpers } from 'tnp-helpers/src';
-import type { Project } from '../../../../project';
+
 import { UNIT_TEST_TIMEOUT } from '../../../../../../constants';
+import type { Project } from '../../../../project';
 
 export class CypressTestRunner
   // @ts-ignore TODO weird inheritance problem

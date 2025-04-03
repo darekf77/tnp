@@ -21,10 +21,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
   //#region constructor
   //#region @backend
-  constructor(
-    public project: Project,
-    defaultValue?: Partial<Models.TaonJson>,
-  ) {
+  constructor(project: Project, defaultValue?: Partial<Models.TaonJson>) {
     super(project);
 
     this.data = Helpers.readJson5([project.pathFor(config.file.taon_jsonc)]);
