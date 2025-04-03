@@ -457,7 +457,9 @@ ${appComponentFile}
             const assetsSource = crossPlatformPath(
               path.join(
                 project.location,
-                replacement(`tmp-src-${config.folder.dist}`),
+                replacement(
+                  `tmp-src-${config.folder.dist}${this.websql ? '-websql' : ''}`,
+                ),
                 config.folder.assets,
               ),
             );
