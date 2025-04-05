@@ -11,7 +11,7 @@ import {
   taonConfigSchemaJsonContainer,
 } from '../../constants';
 import { Models } from '../../models';
-import { InitingPartialProcess } from '../../options';
+import { EnvOptions, InitingPartialProcess } from '../../options';
 
 import type { Project } from './project';
 //#endregion
@@ -111,7 +111,9 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
       currentSchemas.push(properSchema);
 
-      this.project.removeFile(taonConfigSchemaJsonContainer);
+      if (!this.project.framework.isCoreProject) {
+        this.project.removeFile(taonConfigSchemaJsonContainer);
+      }
     }
 
     if (this.project.framework.isContainer) {
@@ -122,7 +124,9 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
       currentSchemas.push(properSchema);
 
-      this.project.removeFile(taonConfigSchemaJsonStandalone);
+      if (!this.project.framework.isCoreProject) {
+        this.project.removeFile(taonConfigSchemaJsonStandalone);
+      }
     }
 
     this.project.removeFile('taon-config.schema.json'); // QUICK_FIX
@@ -299,7 +303,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
           JSON.stringify(
             {
               clientProjectName: clientProject.name,
-            } as Models.EnvConfig,
+            } as Partial<EnvOptions>,
             null,
             4,
           ),

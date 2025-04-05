@@ -11,7 +11,7 @@ import { PackageJson } from 'type-fest';
 
 import { TO_REMOVE_TAG } from '../../../../../../constants';
 import { Models } from '../../../../../../models';
-import { BuildOptions } from '../../../../../../options';
+import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
 
 import { CopyMangerHelpers } from './copy-manager-helpers';
@@ -29,9 +29,8 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 > {
   //#region fields
   public _isomorphicPackages = [] as string[];
-  protected buildOptions: BuildOptions;
+  protected buildOptions: EnvOptions;
   protected copyto: Project[] = [];
-  protected cliBuildNoDts: boolean;
   protected renameDestinationFolder?: string;
 
   //#region getters & methods / select all project to copy to
@@ -536,7 +535,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       this.initalFixForDestination(destination);
     }
 
-    const allFolderLinksExists = !this.buildOptions.watch
+    const allFolderLinksExists = !this.buildOptions.build.watch
       ? true
       : this.linksForPackageAreOk(destination);
 
@@ -563,11 +562,11 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
         );
         if (
           REPLACE_INDEX_D_TS_IN_DEST_WHEN_WATCH &&
-          this.buildOptions.watch &&
+          this.buildOptions.build.watch &&
           specificFileRelativePath.endsWith('/index.d.ts')
         ) {
           // TODO could be limited more
-          this.replaceIndexDtsForEntryPorjIndex(destination);
+          this.replaceIndexDtsForEntryProjectIndex(destination);
         }
         //#endregion
       }
@@ -583,13 +582,14 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       this.removeSourceSymlinks(destination);
       this.addSourceSymlinks(destination);
 
-      if (!this.cliBuildNoDts) {
-        this.updateBackendFullDtsFiles(destination);
-        this.updateBackendFullDtsFiles(this.monitoredOutDir);
-      }
+      this.updateBackendFullDtsFiles(destination);
+      this.updateBackendFullDtsFiles(this.monitoredOutDir);
 
-      if (REPLACE_INDEX_D_TS_IN_DEST_WHEN_WATCH && this.buildOptions.watch) {
-        this.replaceIndexDtsForEntryPorjIndex(destination);
+      if (
+        REPLACE_INDEX_D_TS_IN_DEST_WHEN_WATCH &&
+        this.buildOptions.build.watch
+      ) {
+        this.replaceIndexDtsForEntryProjectIndex(destination);
       }
 
       // TODO not working werid tsc issue with browser/index
@@ -652,7 +652,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
     absoluteAssetFilePath: string,
     destination: Project,
   );
-  abstract replaceIndexDtsForEntryPorjIndex(destination: Project);
+  abstract replaceIndexDtsForEntryProjectIndex(destination: Project);
   /**
    * fix d.ts files in angular build - problem with require() in d.ts with wrong name
    */

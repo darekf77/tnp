@@ -1,7 +1,7 @@
 import { crossPlatformPath, path, _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { BuildOptions } from '../../../../../../options';
+import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
 
 export class SourceMappingUrl {
@@ -9,7 +9,7 @@ export class SourceMappingUrl {
 
   static fixContent(
     absFilePath: string,
-    buildOptions: BuildOptions,
+    buildOptions: EnvOptions,
     // content?: string
   ) {
     //#region @backendFunc
@@ -54,10 +54,10 @@ export class SourceMappingUrl {
   //#endregion
   //#endregion
 
-  process(buildOptions: BuildOptions): string {
+  process(buildOptions: EnvOptions): string {
     //#region @backendFunc
     if (this.mappingLineIndex !== -1) {
-      if (buildOptions.releaseType) {
+      if (buildOptions.release.releaseType) {
         // TODO links on windows sucks d
         this.contentLines[this.mappingLineIndex] =
           `${SourceMappingUrl.SOURCEMAPDES}${path.basename(this.absFilePath)}.map`;

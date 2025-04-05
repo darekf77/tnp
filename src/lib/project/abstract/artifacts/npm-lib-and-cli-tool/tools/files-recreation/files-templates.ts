@@ -6,8 +6,9 @@ import { _ } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { Models } from '../../../../../../models';
+import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
+
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -41,18 +42,13 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
         );
         continue;
       }
-      const env = (
-        this.project.artifactsManager.globalHelper.env &&
-        this.project.artifactsManager.globalHelper.env.config
-          ? this.project.artifactsManager.globalHelper.env.config
-          : {}
-      ) as any;
+      const env = this.project.env || EnvOptions.from({});
       // Helpers.log(`Started for ${f}`);
 
       this.processFile(filePath, fileContent, env, _, soft);
       // Helpers.log(`Processed DONE for ${f}`);
     }
-    this.project.quickFixes.recreateTempSourceNecessaryFiles('dist');
+    this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting();
     //#endregion
   }
   //#endregion
@@ -75,12 +71,7 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
       );
       return;
     }
-    const env = (
-      this.project.artifactsManager.globalHelper.env &&
-      this.project.artifactsManager.globalHelper.env.config
-        ? this.project.artifactsManager.globalHelper.env.config
-        : {}
-    ) as any;
+    const env = this.project.env || EnvOptions.from({});
     this.processFile(filePath, fileContent, env, _, soft);
     //#endregion
   }
@@ -90,10 +81,10 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
   private processFile(
     orgFilePath: string,
     content: string,
-    reservedExpSec: Models.EnvConfig,
+    reservedExpSec: EnvOptions,
     reservedExpOne: any,
     soft: boolean,
-  ) {
+  ):void {
     //#region @backendFunc
     // lodash
     const filePath = orgFilePath.replace(

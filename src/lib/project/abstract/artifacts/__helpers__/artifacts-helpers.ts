@@ -3,11 +3,10 @@ import { config } from 'tnp-config/src';
 import { crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { BuildOptions } from '../../../../options';
+import { EnvOptions } from '../../../../options';
 import type { Project } from '../../project';
 
 import { Branding } from './branding';
-import { EnvironmentConfig } from './environment-config/environment-config';
 //#endregion
 
 /**
@@ -16,10 +15,9 @@ import { EnvironmentConfig } from './environment-config/environment-config';
 export class ArtifactsGlobalHelper {
   protected readonly FOLDER_SRC_FOR_STANDALONE: string = `${config.folder.src}-for-standalone`;
   public readonly branding: Branding;
-  public readonly env: EnvironmentConfig;
+
   constructor(private project: Project) {
     this.branding = new Branding(project);
-    this.env = new EnvironmentConfig(project);
   }
 
   //#region angular proj proxy path
@@ -64,7 +62,7 @@ export class ArtifactsGlobalHelper {
 
   //#region get proxy ng projects
   getProxyNgProj(
-    buildOptions: BuildOptions,
+    buildOptions: EnvOptions,
     type: 'app' | 'lib' = 'app',
   ): Project {
     //#region @backendFunc
@@ -72,7 +70,7 @@ export class ArtifactsGlobalHelper {
       path.join(
         this.project.location,
         this.project.artifactsManager.globalHelper.__angularProjProxyPath({
-          websql: buildOptions.websql,
+          websql: buildOptions.build.websql,
           type,
         }),
       ),

@@ -11,9 +11,10 @@ import type { Project } from '../abstract/project';
 
 // @ts-ignore TODO weird inheritance problem
 export class QuickFixes extends BaseQuickFixes<Project> {
-  //#region recreate temp source necessary files
-  recreateTempSourceNecessaryFiles(outDir: 'dist'): void {
+  //#region recreate temp source necessary files for tests
+  recreateTempSourceNecessaryFilesForTesting(): void {
     //#region @backendFunc
+    const outDir = config.folder.dist as 'dist';
     if (this.project.typeIsNot('isomorphic-lib')) {
       return;
     }

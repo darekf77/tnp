@@ -5,12 +5,10 @@ import { CoreModels, _, crossPlatformPath, glob, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
 import {
-  BuildOptions,
-  InitOptions,
   ReleaseArtifactTaon,
   ReleaseArtifactTaonNames,
   ReleaseArtifactTaonNamesArr,
-  ReleaseOptions,
+  EnvOptions,
   ReleaseType,
 } from './../../../options';
 import type { Project } from './../project';
@@ -39,6 +37,17 @@ export abstract class BaseArtifact<
     releaseType: ReleaseType;
   },
 > {
+  envConfigFor(
+    environemtnName: CoreModels.EnvironmentNameTaon,
+    envNum: number = undefined,
+  ): EnvOptions {
+    return this.project.environmentConfig.envConfigFor(
+      this.currentArtifactName,
+      environemtnName,
+      envNum,
+    );
+  }
+
   constructor(
     protected readonly project: Project,
     protected readonly currentArtifactName: ReleaseArtifactTaon,
@@ -53,7 +62,7 @@ export abstract class BaseArtifact<
    * + (when struct flag = false) start any longer process that reaches
    *   for external resources like for example: npm install
    */
-  abstract initPartial(options: InitOptions): Promise<void>;
+  abstract initPartial(options: EnvOptions): Promise<void>;
   //#endregion
 
   //#region  public abstract methods / build
@@ -61,7 +70,7 @@ export abstract class BaseArtifact<
    * everything that in init()
    * + build project
    */
-  abstract buildPartial(options: BuildOptions): Promise<BUILD_OUTPUT>;
+  abstract buildPartial(options: EnvOptions): Promise<BUILD_OUTPUT>;
   //#endregion
 
   //#region  public abstract methods / release
@@ -69,7 +78,7 @@ export abstract class BaseArtifact<
    * everything that in build()
    * + release project (publish to npm, deploy to cloud/server etc.)
    */
-  abstract releasePartial(options: ReleaseOptions): Promise<RELEASE_OUTPUT>;
+  abstract releasePartial(options: EnvOptions): Promise<RELEASE_OUTPUT>;
   //#endregion
 
   //#region  public abstract methods / clear
@@ -77,7 +86,7 @@ export abstract class BaseArtifact<
    * everything that in build()
    * + release project (publish to npm, deploy to cloud/server etc.)
    */
-  abstract clearPartial(options: ReleaseOptions): Promise<void>;
+  abstract clearPartial(options: EnvOptions): Promise<void>;
   //#endregion
 
   //#region getters & methods / all resources
@@ -104,7 +113,7 @@ export abstract class BaseArtifact<
   //#endregion
 
   //#region getters & methods / cut release code
-  protected __restoreCuttedReleaseCodeFromSrc(buildOptions: BuildOptions) {
+  protected __restoreCuttedReleaseCodeFromSrc(buildOptions: EnvOptions) {
     //#region @backend
     const releaseSrcLocation = crossPlatformPath(
       path.join(this.project.location, config.folder.src),
@@ -121,7 +130,7 @@ export abstract class BaseArtifact<
 
     //#endregion
   }
-  protected __cutReleaseCodeFromSrc(buildOptions: BuildOptions) {
+  protected __cutReleaseCodeFromSrc(buildOptions: EnvOptions) {
     //#region @backend
     const releaseSrcLocation = crossPlatformPath(
       path.join(this.project.location, config.folder.src),

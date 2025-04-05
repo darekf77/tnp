@@ -1,5 +1,5 @@
-import type { EnvOptions } from '../../src/lib/options';
-import baseEnv from './env.angular-node-app.__';
+import type { EnvOptions } from 'tnp/src';
+import baseEnv from '../../env';
 
 const env: Partial<EnvOptions> = {
   ...baseEnv,

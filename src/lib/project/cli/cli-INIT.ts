@@ -10,23 +10,23 @@ import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { MESSAGES, TEMP_DOCS } from '../../constants';
-import { BuildOptions, InitOptions } from '../../options';
+import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 
 // @ts-ignore TODO weird inheritance problem
-export class $Init extends BaseCommandLineFeature<InitOptions, Project> {
+export class $Init extends BaseCommandLineFeature<EnvOptions, Project> {
   //#region prepare args
-  protected async __initialize__() {
+  async __initialize__(): Promise<void> {
+    this.params = EnvOptions.from(this.params);
     await this.__askForWhenEmpty();
-    this._tryResolveChildIfInsideArg();
-    this.params = InitOptions.from(this.params);
+    // this._tryResolveChildIfInsideArg();
   }
   //#endregion
 
   //#region init
   public async _() {
     await this.project.init(
-      InitOptions.from({
+      EnvOptions.from({
         ...this.params,
         purpose: 'cli init',
         finishCallback: () => {
@@ -41,10 +41,12 @@ export class $Init extends BaseCommandLineFeature<InitOptions, Project> {
   //#region struct
   async struct() {
     await this.project.init(
-      InitOptions.from({
+      EnvOptions.from({
         ...this.params,
         purpose: 'cli struct init',
-        struct: true,
+        init: {
+          struct: true,
+        },
         finishCallback: () => this._exit(),
       }),
     );

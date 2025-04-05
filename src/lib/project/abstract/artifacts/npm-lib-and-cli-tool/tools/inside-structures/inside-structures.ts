@@ -4,7 +4,7 @@ import { crossPlatformPath, path, _, CoreModels } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
-import { InitingPartialProcess, InitOptions } from '../../../../../../options';
+import { InitingPartialProcess, EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
 import type { InsideStructAngular13App } from '../../../angular-node-app/tools/inside-struct-angular13-app';
 import type { InsideStructAngular13Lib } from '../inside-struct-angular13-lib';
@@ -37,7 +37,7 @@ const clearUnexistedLinks = (pathToClear: string) => {
 export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
   async process(
     structs: BaseInsideStruct[],
-    initOptions: InitOptions,
+    initOptions: EnvOptions,
   ): Promise<void> {
     //#region @backendFunc
     for (let index = 0; index < structs.length; index++) {
@@ -90,7 +90,7 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
       //#endregion
 
       //#region linking node_modules
-      if (insideStruct?.struct?.linkNodeModulesTo && !initOptions.struct) {
+      if (insideStruct?.struct?.linkNodeModulesTo && !initOptions.init.struct) {
         for (
           let index = 0;
           index < insideStruct.struct.linkNodeModulesTo.length;
@@ -156,9 +156,9 @@ export class InsideStructuresApp
   private insideStructAngular13AppWebsql: InsideStructAngular13App;
 
   //#region api / recreate
-  public async init(initOptions: InitOptions): Promise<void> {
+  public async init(initOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
-    initOptions = InitOptions.from(initOptions);
+    initOptions = EnvOptions.from(initOptions);
 
     const { InsideStructAngular13App: InsideStructAngular13AppClass } =
       await import(
@@ -167,11 +167,11 @@ export class InsideStructuresApp
 
     this.insideStructAngular13AppNormal = new InsideStructAngular13AppClass(
       this.project,
-      initOptions.clone({ websql: false }),
+      initOptions.clone({ build: { websql: false } }),
     );
     this.insideStructAngular13AppWebsql = new InsideStructAngular13AppClass(
       this.project,
-      initOptions.clone({ websql: true }),
+      initOptions.clone({ build: { websql: true } }),
     );
 
     const structs: BaseInsideStruct[] = [
@@ -193,21 +193,21 @@ export class InsideStructuresLib
   private insideStructAngular13LibWebsql: InsideStructAngular13Lib;
 
   //#region api / recreate
-  public async init(initOptions: InitOptions): Promise<void> {
+  public async init(initOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
-    initOptions = InitOptions.from(initOptions);
+    initOptions = EnvOptions.from(initOptions);
 
     const { InsideStructAngular13Lib: InsideStructAngular13LibClass } =
       await import('../inside-struct-angular13-lib');
 
     this.insideStructAngular13LibNormal = new InsideStructAngular13LibClass(
       this.project,
-      initOptions.clone({ websql: false }),
+      initOptions.clone({ build: { websql: false } }),
     );
 
     this.insideStructAngular13LibWebsql = new InsideStructAngular13LibClass(
       this.project,
-      initOptions.clone({ websql: true }),
+      initOptions.clone({ build: { websql: true } }),
     );
 
     const structs: BaseInsideStruct[] = [

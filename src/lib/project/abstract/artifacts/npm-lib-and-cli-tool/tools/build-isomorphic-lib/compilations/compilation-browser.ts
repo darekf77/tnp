@@ -14,7 +14,7 @@ import {
 import { Helpers } from 'tnp-helpers/src';
 
 import { Models } from '../../../../../../../models';
-import { BuildOptions } from '../../../../../../../options';
+import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 import { CodeCut } from '../code-cut/code-cut';
 import { codeCuttFn } from '../code-cut/cut-fn';
@@ -61,7 +61,7 @@ export class BrowserCompilation extends BackendCompilation {
     isWatchBuild: boolean,
     public compilationProject: Project,
     public moduleName: string,
-    public ENV: Models.EnvConfig,
+    public ENV: EnvOptions,
     /**
      * tmp-src-for-(dist)-browser
      */
@@ -73,7 +73,7 @@ export class BrowserCompilation extends BackendCompilation {
     location: string,
     cwdProject: Project,
     public backendOutFolder: string,
-    public buildOptions: BuildOptions,
+    public buildOptions: EnvOptions,
   ) {
     super(
       buildOptions,
@@ -81,9 +81,9 @@ export class BrowserCompilation extends BackendCompilation {
       outFolder,
       location,
       cwdProject,
-      buildOptions.websql,
+      buildOptions.build.websql,
     );
-    BrowserCompilation.instances[String(!!buildOptions.websql)] = this;
+    BrowserCompilation.instances[String(!!buildOptions.build.websql)] = this;
     this.compilerName = this.customCompilerName;
 
     Helpers.log(
@@ -130,7 +130,7 @@ export class BrowserCompilation extends BackendCompilation {
     Helpers.mkdirp(tmpSource);
 
     this.initCodeCut();
-    this.project.quickFixes.recreateTempSourceNecessaryFiles('dist');
+    this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting();
 
     const filesBase = crossPlatformPath(path.join(this.cwd, this.srcFolder));
     const relativePathesToProcess = absFilesFromSrc.map(absFilePath => {
@@ -139,7 +139,7 @@ export class BrowserCompilation extends BackendCompilation {
 
     this.codecut.files(relativePathesToProcess);
     this.project.artifactsManager.artifact.angularNodeApp.__assetsManager.copyExternalAssets(
-      this.buildOptions?.websql,
+      this.buildOptions?.build.websql,
     );
     // process.exit(0)
     //#endregion
@@ -155,10 +155,10 @@ export class BrowserCompilation extends BackendCompilation {
       return;
     }
 
-    if (!this.buildOptions.websql) {
+    if (!this.buildOptions.build.websql) {
       // TODO QUICK_FIX QUICK_DIRTY_FIX
       const websqlInstance =
-        BrowserCompilation.instances[String(!this.buildOptions.websql)];
+        BrowserCompilation.instances[String(!this.buildOptions.build.websql)];
       await websqlInstance.asyncAction(event);
     }
 
@@ -233,7 +233,7 @@ export class BrowserCompilation extends BackendCompilation {
   initCodeCut() {
     //#region @backendFunc
     // console.log('inside')
-    let env: Models.EnvConfig = this.ENV;
+    let env: EnvOptions = this.ENV;
     const compilationProject: Project = this.compilationProject;
     if (!compilationProject) {
       return;
@@ -242,10 +242,10 @@ export class BrowserCompilation extends BackendCompilation {
     this.ENV = env;
     // console.log('here1')
 
-    let project: Project;
-    if (env) {
-      project = this.cwdProject.ins.From(env.currentProjectLocation);
-    }
+    let project: Project = this.cwdProject;
+    // if (env) {
+    //   project = this.cwdProject.ins.From(env.currentProjectLocation);
+    // }
 
     if (compilationProject.framework.isStandaloneProject) {
       project = compilationProject;
@@ -256,7 +256,7 @@ export class BrowserCompilation extends BackendCompilation {
     replacements.push([TAGS.BACKEND_FUNC, `return (void 0);`]);
     replacements.push(TAGS.BACKEND as any);
 
-    if (!this.buildOptions.websql) {
+    if (!this.buildOptions.build.websql) {
       replacements.push(TAGS.WEBSQL_ONLY as any);
       replacements.push([TAGS.WEBSQL_FUNC, `return (void 0);`]);
       replacements.push(TAGS.WEBSQL as any);

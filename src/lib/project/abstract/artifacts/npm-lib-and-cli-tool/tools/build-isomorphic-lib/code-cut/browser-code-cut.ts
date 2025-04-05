@@ -21,7 +21,7 @@ import {
 import { Helpers } from 'tnp-helpers/src';
 
 import { TO_REMOVE_TAG } from '../../../../../../../constants';
-import { BuildOptions, InitOptions } from '../../../../../../../options';
+import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 import { MjsModule } from '../../copy-manager/mjs-fesm-module-spliter';
 
@@ -94,7 +94,7 @@ export class BrowserCodeCut {
      */
     protected absPathTmpSrcDistFolder: string,
     private project: Project,
-    private buildOptions: BuildOptions,
+    private buildOptions: EnvOptions,
   ) {
     // console.log(`[incremental-build-process INSIDE BROWSER!!! '${this.buildOptions.baseHref}'`)
 
@@ -104,9 +104,9 @@ export class BrowserCodeCut {
     );
     this.absFileSourcePathBrowserOrWebsqlAPPONLY =
       this.absFileSourcePathBrowserOrWebsql.replace(
-        `tmp-src-${config.folder.dist}${buildOptions.websql ? '-websql' : ''}`,
+        `tmp-src-${config.folder.dist}${buildOptions.build.websql ? '-websql' : ''}`,
         `tmp-src-app-${config.folder.dist}${
-          buildOptions.websql ? '-websql' : ''
+          buildOptions.build.websql ? '-websql' : ''
         }`,
       ); // for slighted modifed app release dist
 
@@ -765,7 +765,7 @@ export class BrowserCodeCut {
       const replacedImp = imp.replace(
         inlinePkg.realName,
         `${inlinePkg.realName}/${
-          this.buildOptions.websql
+          this.buildOptions.build.websql
             ? config.folder.websql
             : config.folder.browser
         }`,
@@ -918,7 +918,7 @@ export class BrowserCodeCut {
     // console.log(`[incremental-build-process processAssetsLinksForApp '${this.buildOptions.baseHref}'`)
     const baseHref =
       this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
-        InitOptions.fromBuild(this.buildOptions),
+        EnvOptions.fromBuild(this.buildOptions),
       );
     // console.log(`Fixing with basehref: '${baseHref}'`)
 

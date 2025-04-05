@@ -3,12 +3,9 @@ import { crossPlatformPath } from 'tnp-core/src';
 import { Helpers, UtilsQuickFixes } from 'tnp-helpers/src';
 
 import {
-  BuildOptions,
-  ClearOptions,
-  InitOptions,
   ReleaseArtifactTaonNames,
   ReleaseArtifactTaonNamesArr,
-  ReleaseOptions,
+  EnvOptions,
   ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
@@ -28,12 +25,15 @@ export class ArtifactElectronApp extends BaseArtifact<
     super(project, 'electron-app');
   }
 
-  async clearPartial(options: ClearOptions): Promise<void> {
+  async clearPartial(options: EnvOptions): Promise<void> {
     return void 0; // TODO implement
   }
 
-  async initPartial(initOptions: InitOptions) {
-    if (this.project.framework.isStandaloneProject && initOptions.releaseType) {
+  async initPartial(initOptions: EnvOptions) {
+    if (
+      this.project.framework.isStandaloneProject &&
+      initOptions.release.releaseType
+    ) {
       this.project.packageJson.setMainProperty(
         'dist/app.electron.js',
         'update main for electron',
@@ -42,13 +42,13 @@ export class ArtifactElectronApp extends BaseArtifact<
   }
 
   //#region build
-  async buildPartial(buildOptions: BuildOptions): Promise<{
+  async buildPartial(buildOptions: EnvOptions): Promise<{
     electronDistOutAppPath: string;
     electronDistOutAppPathWebsql: string;
   }> {
     //#region @backendFunc
 
-    if (buildOptions.watch) {
+    if (buildOptions.build.watch) {
       await this.project.tryKillAllElectronInstances(); // TODO QUICK_FIX
     }
 
@@ -64,29 +64,31 @@ export class ArtifactElectronApp extends BaseArtifact<
     const elecProj = this.project.ins.From(
       this.project.pathFor([
         `tmp-apps-for-${config.folder.dist}${
-          buildOptions.websql ? '-websql' : ''
+          buildOptions.build.websql ? '-websql' : ''
         }`,
         this.project.name,
       ]),
     );
     Helpers.info('Starting electron ...');
 
-    if (buildOptions.watch) {
+    if (buildOptions.build.watch) {
       elecProj
         .run(
           `npm-run  electron . --serve ${
-            buildOptions.websql ? '--websql' : ''
+            buildOptions.build.websql ? '--websql' : ''
           }`,
         )
         .async();
     } else {
       Helpers.info('Release build of electron app');
-      if (buildOptions.releaseType) {
-        if (!buildOptions.releaseType) {
+      if (buildOptions.release.releaseType) {
+        if (!buildOptions.release.releaseType) {
           await this.initPartial(
-            InitOptions.fromBuild(
+            EnvOptions.fromBuild(
               buildOptions.clone({
-                baseHref: baseHrefElectron,
+                build: {
+                  baseHref: baseHrefElectron,
+                },
                 purpose: 'before building electron app init',
               }),
             ),
@@ -106,7 +108,7 @@ export class ArtifactElectronApp extends BaseArtifact<
 
         const elecProj = this.project.ins.From(
           this.project.pathFor([
-            `tmp-apps-for-dist${buildOptions.websql ? '-websql' : ''}`,
+            `tmp-apps-for-dist${buildOptions.build.websql ? '-websql' : ''}`,
             this.project.name,
           ]),
         );
@@ -129,12 +131,19 @@ export class ArtifactElectronApp extends BaseArtifact<
         Helpers.info('Building lib...');
         await this.buildPartial(
           buildOptions.clone({
-            targetArtifact: 'angular-node-app',
-            watch: false,
-            baseHref: baseHrefElectron,
-            disableServiceWorker: true,
-            skipCopyManager: true,
-            buildAngularAppForElectron: true,
+            release: {
+              targetArtifact: 'angular-node-app',
+            },
+            build: {
+              watch: false,
+              baseHref: baseHrefElectron,
+              pwa: {
+                disableServiceWorker: true,
+              },
+            },
+            copyToManager: {
+              skip: true,
+            },
             finishCallback: () => {},
           }),
         );
@@ -195,7 +204,7 @@ export class ArtifactElectronApp extends BaseArtifact<
         elecProj.run(`npm-run electron-builder build --publish=never`).sync();
         this.project.openLocation(
           this.__getElectronAppRelativePath({
-            websql: buildOptions.websql,
+            websql: buildOptions.build.websql,
           }),
         );
       } else {

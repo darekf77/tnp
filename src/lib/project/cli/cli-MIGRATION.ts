@@ -12,13 +12,18 @@ import {
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import { BuildOptions, ReleaseOptions } from '../../options';
+import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
-class $Migration extends BaseCommandLineFeature<ReleaseOptions, Project> {
+class $Migration extends BaseCommandLineFeature<EnvOptions, Project> {
   //#region migration console menu
+
+  __initialize__(): void {
+    this.params = EnvOptions.from(this.params);
+  }
+
   public async _() {
     await this._displayMenu();
   }

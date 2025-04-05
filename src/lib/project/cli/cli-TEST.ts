@@ -6,12 +6,16 @@ import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { MESSAGES, TEMP_DOCS } from '../../constants';
 import { Models } from '../../models';
-import { BuildOptions, InitOptions } from '../../options';
+import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
-export class $Test extends BaseCommandLineFeature<{}, Project> {
+export class $Test extends BaseCommandLineFeature<EnvOptions, Project> {
+  __initialize__(): void {
+    this.params = EnvOptions.from(this.params);
+  }
+
   async _() {
     await this._testSelectors(false, false, this.argsWithParams);
   }
@@ -116,7 +120,7 @@ export class $Test extends BaseCommandLineFeature<{}, Project> {
   async _cypressTests(watch: boolean, debug: boolean, args: string) {
     const proj = this.project;
     await this.project.init(
-      InitOptions.from({ purpose: 'initing before cypress tests' }),
+      EnvOptions.from({ purpose: 'initing before cypress tests' }),
     );
     if (watch) {
       await this.project.artifactsManager.artifact.npmLibAndCliTool.__testsCypress.startAndWatch(
@@ -136,7 +140,7 @@ export class $Test extends BaseCommandLineFeature<{}, Project> {
 
   async _mochaTests(watch: boolean, debug: boolean, args: string) {
     await this.project.init(
-      InitOptions.from({
+      EnvOptions.from({
         purpose: 'initing before mocha tests',
       }),
     );
@@ -158,7 +162,7 @@ export class $Test extends BaseCommandLineFeature<{}, Project> {
 
   async _jestTests(watch: boolean, debug: boolean, args: string) {
     await this.project.init(
-      InitOptions.from({
+      EnvOptions.from({
         purpose: 'initing before jest tests',
       }),
     );

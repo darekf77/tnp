@@ -15,16 +15,20 @@ import { PackageJson } from 'type-fest';
 import {
   ReleaseArtifactTaon,
   ReleaseArtifactTaonNamesArr,
-  ReleaseOptions,
+  EnvOptions,
   ReleaseType,
 } from '../../../options';
 import type { Project } from '../project';
+
+import { ReleaseConfig } from './release-config';
 //#endregion
 
 /**
  * manage standalone or container release process
  */ // @ts-ignore TODO weird inheritance problem
 export class ReleaseProcess extends BaseReleaseProcess<Project> {
+  config = new ReleaseConfig(this.project);
+
   //#region constructor
   constructor(project: Project) {
     super(project);
@@ -53,6 +57,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       );
       //#endregion
 
+      //#region return if not projects
       if (
         this.project.framework.isContainer &&
         this.project.children.length === 0
@@ -65,6 +70,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
         });
         return;
       }
+      //#endregion
 
       const manual = 'manual' as ReleaseType;
       const cloud = 'cloud' as ReleaseType;
@@ -81,19 +87,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             //#region manual
             name: `${this.getColoredTextItem(manual)} Taon release + create config for Cloud`,
             action: async () => {
-              await UtilsTerminal.pressAnyKeyToContinueAsync({
-                message: 'Not implemented yet.. press any key to go back',
-              });
-              return;
-              const selectedProjects =
-                await this.project.releaseProcess.displayProjectsSelectionMenu();
-              const releaseArtifactsTaon =
-                await this.displaySelectArtifactsMenu(manual, selectedProjects);
-              await this.releaseArtifacts(
-                manual,
-                releaseArtifactsTaon,
-                selectedProjects,
-              );
+              await this.releaseByType(manual);
             },
             //#endregion
           },
@@ -105,15 +99,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
                 message: 'Not implemented yet.. press any key to go back',
               });
               return;
-              const selectedProjects =
-                await this.project.releaseProcess.displayProjectsSelectionMenu();
-              const releaseArtifactsTaon =
-                await this.displaySelectArtifactsMenu(cloud, selectedProjects);
-              await this.releaseArtifacts(
-                cloud,
-                releaseArtifactsTaon,
-                selectedProjects,
-              );
+              await this.releaseByType(cloud);
             },
             //#endregion
           },
@@ -125,15 +111,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
                 message: 'Not implemented yet.. press any key to go back',
               });
               return;
-              const selectedProjects =
-                await this.project.releaseProcess.displayProjectsSelectionMenu();
-              const releaseArtifactsTaon =
-                await this.displaySelectArtifactsMenu(local, selectedProjects);
-              await this.releaseArtifacts(
-                local,
-                releaseArtifactsTaon,
-                selectedProjects,
-              );
+              await this.releaseByType(local);
             },
             //#endregion
           },
@@ -145,18 +123,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
                 message: 'Not implemented yet.. press any key to go back',
               });
               return;
-              const selectedProjects =
-                await this.project.releaseProcess.displayProjectsSelectionMenu();
-              const releaseArtifactsTaon =
-                await this.displaySelectArtifactsMenu(
-                  staticPages,
-                  selectedProjects,
-                );
-              await this.releaseArtifacts(
-                staticPages,
-                releaseArtifactsTaon,
-                selectedProjects,
-              );
+              await this.releaseByType(staticPages);
             },
             //#endregion
           },
@@ -170,6 +137,25 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       );
       break; // TODO do I need a loop here
     }
+    //#endregion
+  }
+  //#endregion
+
+  //#region release by type
+  async releaseByType(releaseType: ReleaseType): Promise<void> {
+    //#region @backendFunc
+    const selectedProjects =
+      await this.project.releaseProcess.displayProjectsSelectionMenu();
+    const releaseArtifactsTaon = await this.displaySelectArtifactsMenu(
+      releaseType,
+      selectedProjects,
+      ['npm-lib-and-cli-tool'],
+    );
+    await this.releaseArtifacts(
+      releaseType,
+      releaseArtifactsTaon,
+      selectedProjects,
+    );
     //#endregion
   }
   //#endregion
@@ -219,13 +205,19 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
   public async displaySelectArtifactsMenu(
     releaseType: ReleaseType,
     selectedProjects: Project[],
+    allowedArtifacts?: ReleaseArtifactTaon[] | undefined,
   ): Promise<ReleaseArtifactTaon[]> {
     //#region @backendFunc
 
     while (true) {
       UtilsTerminal.clearConsole();
       // console.info(this.getReleaseHeader('')); // TODO UNCOMMET
-      const choices = ReleaseArtifactTaonNamesArr.reduce((acc, curr) => {
+      const choices = ReleaseArtifactTaonNamesArr.filter(f => {
+        if (Array.isArray(allowedArtifacts)) {
+          return allowedArtifacts.includes(f as ReleaseArtifactTaon);
+        }
+        return true;
+      }).reduce((acc, curr) => {
         return _.merge(acc, {
           [curr]: {
             name: `${_.upperFirst(_.startCase(curr))} release`,
@@ -260,9 +252,9 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
 
   //#region public methods / start release
   // @ts-ignore TODO weird inheritance problem
-  async startRelease(options?: ReleaseOptions): Promise<void> {
+  async startRelease(options?: EnvOptions): Promise<void> {
     //#region @backendFunc
-    await this.project.artifactsManager.release(options);
+    await this.project.release(options);
     //#endregion
   }
   //#endregion
@@ -278,9 +270,11 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     for (const project of selectedProjects) {
       for (const targetArtifact of releaseArtifactsTaon) {
         await project.releaseProcess.startRelease(
-          ReleaseOptions.from({
-            targetArtifact,
-            releaseType,
+          EnvOptions.from({
+            release: {
+              targetArtifact,
+              releaseType,
+            },
           }),
         );
       }

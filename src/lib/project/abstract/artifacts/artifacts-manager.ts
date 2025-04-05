@@ -7,13 +7,7 @@ import {
   COMPILATION_COMPLETE_APP_NG_SERVE,
   COMPILATION_COMPLETE_LIB_NG_BUILD,
 } from '../../../constants';
-import {
-  BuildOptions,
-  ClearOptions,
-  InitOptions,
-  ReleaseArtifactTaon,
-  ReleaseOptions,
-} from '../../../options';
+import { ReleaseArtifactTaon, EnvOptions } from '../../../options';
 import { Project } from '../project';
 
 import { ArtifactsGlobalHelper } from './__helpers__/artifacts-helpers';
@@ -72,7 +66,7 @@ export class ArtifactManager {
   //#endregion
 
   //#region clear
-  async clear(options: ClearOptions): Promise<void> {
+  async clear(options: EnvOptions): Promise<void> {
     await this.artifact.npmLibAndCliTool.clearPartial(options);
     await this.artifact.angularNodeApp.clearPartial(options);
     await this.artifact.electronApp.clearPartial(options);
@@ -81,7 +75,7 @@ export class ArtifactManager {
     await this.artifact.vscodePlugin.clearPartial(options);
   }
 
-  async clearAllChildren(options: ClearOptions): Promise<void> {
+  async clearAllChildren(options: EnvOptions): Promise<void> {
     for (const child of this.project.children) {
       await child.artifactsManager.clear(options);
     }
@@ -93,10 +87,10 @@ export class ArtifactManager {
    * struct current project only
    * struct() <=> init() with struct flag
    */
-  async struct(initOptions: InitOptions): Promise<void> {
+  async struct(initOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
     initOptions.purpose = 'only structure init';
-    initOptions.struct = true;
+    initOptions.init.struct = true;
     await this.init(initOptions);
     //#endregion
   }
@@ -104,7 +98,7 @@ export class ArtifactManager {
   /**
    * struct all children artifacts
    */
-  async structAllChildren(options: InitOptions): Promise<void> {
+  async structAllChildren(options: EnvOptions): Promise<void> {
     for (const child of this.project.children) {
       await child.artifactsManager.struct(options);
     }
@@ -112,7 +106,7 @@ export class ArtifactManager {
   //#endregion
 
   //#region init
-  async init(initOptions: InitOptions): Promise<void> {
+  async init(initOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
     //#region prevent not requested framework version
     if (this.project.framework.frameworkVersionLessThan('v18')) {
@@ -160,43 +154,43 @@ export class ArtifactManager {
 
     if (this.project.framework.isStandaloneProject) {
       await this.project.artifactsManager.globalHelper.branding.apply(
-        !!initOptions.branding,
+        !!initOptions.init.branding,
       );
     }
 
     if (
-      !initOptions.targetArtifact ||
-      initOptions.targetArtifact === 'docs-webapp'
+      !initOptions.release.targetArtifact ||
+      initOptions.release.targetArtifact === 'docs-webapp'
     ) {
       await this.artifact.docsWebapp.initPartial(initOptions);
     }
     if (
-      !initOptions.targetArtifact ||
-      initOptions.targetArtifact === 'npm-lib-and-cli-tool'
+      !initOptions.release.targetArtifact ||
+      initOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
     ) {
       await this.artifact.npmLibAndCliTool.initPartial(initOptions);
     }
     if (
-      !initOptions.targetArtifact ||
-      initOptions.targetArtifact === 'angular-node-app'
+      !initOptions.release.targetArtifact ||
+      initOptions.release.targetArtifact === 'angular-node-app'
     ) {
       await this.artifact.angularNodeApp.initPartial(initOptions);
     }
     if (
-      !initOptions.targetArtifact ||
-      initOptions.targetArtifact === 'electron-app'
+      !initOptions.release.targetArtifact ||
+      initOptions.release.targetArtifact === 'electron-app'
     ) {
       await this.artifact.electronApp.initPartial(initOptions);
     }
     if (
-      !initOptions.targetArtifact ||
-      initOptions.targetArtifact === 'mobile-app'
+      !initOptions.release.targetArtifact ||
+      initOptions.release.targetArtifact === 'mobile-app'
     ) {
       await this.artifact.mobileApp.initPartial(initOptions);
     }
     if (
-      !initOptions.targetArtifact ||
-      initOptions.targetArtifact === 'vscode-plugin'
+      !initOptions.release.targetArtifact ||
+      initOptions.release.targetArtifact === 'vscode-plugin'
     ) {
       await this.artifact.vscodePlugin.initPartial(initOptions);
     }
@@ -204,7 +198,7 @@ export class ArtifactManager {
     //#endregion
   }
 
-  async initAllChildren(options: InitOptions): Promise<void> {
+  async initAllChildren(options: EnvOptions): Promise<void> {
     for (const child of this.project.children) {
       await child.artifactsManager.init(options);
     }
@@ -212,30 +206,41 @@ export class ArtifactManager {
   //#endregion
 
   //#region build
-  async build(buildOptions: BuildOptions): Promise<void> {
-    if (!buildOptions.targetArtifact) {
-      await this.init(InitOptions.from({ ...buildOptions, watch: false }));
+  private buildWatchCmdForArtifact = (
+    artifact: ReleaseArtifactTaon,
+    options?: Partial<EnvOptions>,
+  ): string => {
+    options = EnvOptions.from(options);
+    let params = '';
+
+    // try {
+    params = EnvOptions.getParamsString({
+      ...options,
+      release: { targetArtifact: artifact },
+    });
+    // } catch (error) {
+    //   Helpers.error(error, true, true);
+    //   Helpers.throw(
+    //     `Error while creating params for ${artifact} build command`,
+    //   );
+    // }
+
+    return `${config.frameworkName} build${options.build.watch ? ':watch' : ''} ${params}`;
+  };
+
+  async build(buildOptions: EnvOptions): Promise<void> {
+    if (!buildOptions.release.targetArtifact) {
+      await this.init(
+        EnvOptions.from({ ...buildOptions, build: { watch: false } }),
+      );
 
       //#region  build Menu
-      const buildWatchCmdForArtifact = (
-        artifact: ReleaseArtifactTaon,
-        options?: Partial<BuildOptions>,
-      ): string => {
-        options = options || {};
-        return (
-          `${config.frameworkName} build${buildOptions.watch ? ':watch' : ''} ` +
-          `--targetArtifact ${artifact} ` +
-          ` ${options.websql ? '--websql' : ''} ` +
-          ` ${options.ngNormalAppPort ? `--ngNormalAppPort ${options.ngNormalAppPort}` : ''}` +
-          ` ${options.ngWebsqlAppPort ? `--ngWebsqlAppPort ${options.ngWebsqlAppPort}` : ''}` +
-          ` ${options.nodeBeAppPort ? `--nodeBeAppPort ${options.nodeBeAppPort}` : ''}`
-        );
-      };
+
       const processManager = new BaseProcessManger(this.project as any);
 
       const ngBuildLibCommand = CommandConfig.from({
         name: `Isomorphic Nodejs/Angular library`,
-        cmd: buildWatchCmdForArtifact('npm-lib-and-cli-tool'),
+        cmd: this.buildWatchCmdForArtifact('npm-lib-and-cli-tool'),
         goToNextCommandWhenOutput: {
           stdoutContains: COMPILATION_COMPLETE_LIB_NG_BUILD,
         },
@@ -243,25 +248,27 @@ export class ArtifactManager {
 
       const ngNormalAppPort =
         await this.artifact.angularNodeApp.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
-          BuildOptions.from({ ...buildOptions, websql: false }),
+          EnvOptions.from({ ...buildOptions, build: { websql: false } }),
         );
 
       const ngWebsqlAppPort =
         await this.artifact.angularNodeApp.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
-          BuildOptions.from({ ...buildOptions, websql: true }),
+          EnvOptions.from({ ...buildOptions, build: { websql: true } }),
         );
 
       const nodeBeAppPort =
         await this.artifact.angularNodeApp.NODE_BACKEND_PORT_UNIQ_KEY(
-          BuildOptions.from(buildOptions),
+          EnvOptions.from(buildOptions),
         );
 
       const ngServeAppCommand = CommandConfig.from({
         name: `Angular (for Nodejs backend) frontend app`,
-        cmd: buildWatchCmdForArtifact('angular-node-app', {
-          ngNormalAppPort,
-          nodeBeAppPort,
-          ngWebsqlAppPort,
+        cmd: this.buildWatchCmdForArtifact('angular-node-app', {
+          ports: {
+            ngNormalAppPort,
+            nodeBeAppPort,
+            ngWebsqlAppPort,
+          },
         }),
         shouldBeActiveOrAlreadyBuild: [ngBuildLibCommand],
         goToNextCommandWhenOutput: {
@@ -274,11 +281,15 @@ export class ArtifactManager {
 
       const ngServeWebsqlAppCommand = CommandConfig.from({
         name: `Angular (for Websql backend) frontend app`,
-        cmd: buildWatchCmdForArtifact('angular-node-app', {
-          websql: true,
-          ngNormalAppPort,
-          nodeBeAppPort,
-          ngWebsqlAppPort,
+        cmd: this.buildWatchCmdForArtifact('angular-node-app', {
+          build: {
+            websql: true,
+          },
+          ports: {
+            ngNormalAppPort,
+            nodeBeAppPort,
+            ngWebsqlAppPort,
+          },
         }),
         shouldBeActiveOrAlreadyBuild: [ngBuildLibCommand],
         goToNextCommandWhenOutput: {
@@ -291,22 +302,22 @@ export class ArtifactManager {
 
       const documenationCommand = CommandConfig.from({
         name: `Documentation (mkdocs, compodoc, typedoc)`,
-        cmd: buildWatchCmdForArtifact('docs-webapp'),
+        cmd: this.buildWatchCmdForArtifact('docs-webapp'),
         headerMessageWhenActive:
           `Documentation is running on http://localhost:` +
           `${await this.artifact.docsWebapp.DOCS_ARTIFACT_PORT_UNIQ_KEY(
-            BuildOptions.from(buildOptions),
+            EnvOptions.from(buildOptions),
           )}`,
       });
 
       await processManager.init({
-        watch: !!buildOptions.watch,
+        watch: !!buildOptions.build.watch,
         header: `
 
         Build process for ${this.project.name}
 
         `,
-        title: `Select what do you want to build ${buildOptions.watch ? 'in watch mode' : ''}?`,
+        title: `Select what do you want to build ${buildOptions.build.watch ? 'in watch mode' : ''}?`,
         commands: [
           ngBuildLibCommand,
           ngServeAppCommand,
@@ -318,38 +329,38 @@ export class ArtifactManager {
     } else {
       //#region partial build
       if (
-        !buildOptions.targetArtifact ||
-        buildOptions.targetArtifact === 'docs-webapp'
+        !buildOptions.release.targetArtifact ||
+        buildOptions.release.targetArtifact === 'docs-webapp'
       ) {
         await this.artifact.docsWebapp.buildPartial(buildOptions);
       }
       if (
-        !buildOptions.targetArtifact ||
-        buildOptions.targetArtifact === 'npm-lib-and-cli-tool'
+        !buildOptions.release.targetArtifact ||
+        buildOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
       ) {
         await this.artifact.npmLibAndCliTool.buildPartial(buildOptions);
       }
       if (
-        !buildOptions.targetArtifact ||
-        buildOptions.targetArtifact === 'angular-node-app'
+        !buildOptions.release.targetArtifact ||
+        buildOptions.release.targetArtifact === 'angular-node-app'
       ) {
         await this.artifact.angularNodeApp.buildPartial(buildOptions);
       }
       if (
-        !buildOptions.targetArtifact ||
-        buildOptions.targetArtifact === 'electron-app'
+        !buildOptions.release.targetArtifact ||
+        buildOptions.release.targetArtifact === 'electron-app'
       ) {
         await this.artifact.electronApp.buildPartial(buildOptions);
       }
       if (
-        !buildOptions.targetArtifact ||
-        buildOptions.targetArtifact === 'mobile-app'
+        !buildOptions.release.targetArtifact ||
+        buildOptions.release.targetArtifact === 'mobile-app'
       ) {
         await this.artifact.mobileApp.buildPartial(buildOptions);
       }
       if (
-        !buildOptions.targetArtifact ||
-        buildOptions.targetArtifact === 'vscode-plugin'
+        !buildOptions.release.targetArtifact ||
+        buildOptions.release.targetArtifact === 'vscode-plugin'
       ) {
         await this.artifact.vscodePlugin.buildPartial(buildOptions);
       }
@@ -357,7 +368,7 @@ export class ArtifactManager {
     }
   }
 
-  async buildAllChildren(options: BuildOptions): Promise<void> {
+  async buildAllChildren(options: EnvOptions): Promise<void> {
     for (const child of this.project.children) {
       await child.artifactsManager.build(options);
     }
@@ -365,61 +376,61 @@ export class ArtifactManager {
   //#endregion
 
   //#region release
-  async release(releaseOptions: ReleaseOptions): Promise<void> {
+  async release(releaseOptions: EnvOptions): Promise<void> {
     if (
-      !releaseOptions.targetArtifact ||
-      releaseOptions.targetArtifact === 'docs-webapp'
+      !releaseOptions.release.targetArtifact ||
+      releaseOptions.release.targetArtifact === 'docs-webapp'
     ) {
       await this.artifact.docsWebapp.releasePartial(releaseOptions);
     }
     if (
-      !releaseOptions.targetArtifact ||
-      releaseOptions.targetArtifact === 'npm-lib-and-cli-tool'
+      !releaseOptions.release.targetArtifact ||
+      releaseOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
     ) {
       await this.artifact.npmLibAndCliTool.releasePartial(releaseOptions);
     }
     if (
-      !releaseOptions.targetArtifact ||
-      releaseOptions.targetArtifact === 'angular-node-app'
+      !releaseOptions.release.targetArtifact ||
+      releaseOptions.release.targetArtifact === 'angular-node-app'
     ) {
       await this.artifact.npmLibAndCliTool.buildPartial(
-        BuildOptions.fromRelease(releaseOptions),
+        EnvOptions.fromRelease(releaseOptions),
       );
       await this.artifact.angularNodeApp.releasePartial(releaseOptions);
     }
     if (
-      !releaseOptions.targetArtifact ||
-      releaseOptions.targetArtifact === 'electron-app'
+      !releaseOptions.release.targetArtifact ||
+      releaseOptions.release.targetArtifact === 'electron-app'
     ) {
       await this.artifact.npmLibAndCliTool.buildPartial(
-        BuildOptions.fromRelease(releaseOptions),
+        EnvOptions.fromRelease(releaseOptions),
       );
       await this.artifact.angularNodeApp.buildPartial(
-        BuildOptions.fromRelease(releaseOptions),
+        EnvOptions.fromRelease(releaseOptions),
       );
       await this.artifact.electronApp.releasePartial(releaseOptions);
     }
     if (
-      !releaseOptions.targetArtifact ||
-      releaseOptions.targetArtifact === 'mobile-app'
+      !releaseOptions.release.targetArtifact ||
+      releaseOptions.release.targetArtifact === 'mobile-app'
     ) {
       await this.artifact.npmLibAndCliTool.buildPartial(
-        BuildOptions.fromRelease(releaseOptions),
+        EnvOptions.fromRelease(releaseOptions),
       );
       await this.artifact.mobileApp.releasePartial(releaseOptions);
     }
     if (
-      !releaseOptions.targetArtifact ||
-      releaseOptions.targetArtifact === 'vscode-plugin'
+      !releaseOptions.release.targetArtifact ||
+      releaseOptions.release.targetArtifact === 'vscode-plugin'
     ) {
       await this.artifact.npmLibAndCliTool.buildPartial(
-        BuildOptions.fromRelease(releaseOptions),
+        EnvOptions.fromRelease(releaseOptions),
       );
       await this.artifact.vscodePlugin.releasePartial(releaseOptions);
     }
   }
 
-  async releaseAllChildren(options: ReleaseOptions): Promise<void> {
+  async releaseAllChildren(options: EnvOptions): Promise<void> {
     // let resolved = [];
     // if (this.project.framework.isContainer) {
     //   resolved = Helpers.cliTool.resolveItemsFromArgsBegin<Project>(
@@ -476,7 +487,7 @@ export class ArtifactManager {
     //   You can check info about build in ${chalk.bold(hostForBuild)}
     //         `);
     // Helpers.taskStarted(`starting project service... ${hostForBuild}`);
-    // // TODO @LAST create global task server
+    // // TODO create global task server
     // const ProjectBuildContext = Taon.createContext(() => ({
     //   contextName: 'ProjectBuildContext',
     //   host: hostForBuild,

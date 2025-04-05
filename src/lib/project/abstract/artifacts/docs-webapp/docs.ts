@@ -156,14 +156,18 @@ export class Docs extends BaseDebounceCompilerForProject<
         this.defaultDocsConfig(),
       );
     }
-    try {
-      fse.unlinkSync(this.project.pathFor(this.docsConfigSchema));
-    } catch (error) {}
-    Helpers.createSymLink(
-      this.docsConfigSchemaPath,
-      this.project.pathFor(this.docsConfigSchema),
-      { continueWhenExistedFolderDoesntExists: true },
-    );
+
+    if (!this.project.framework.isCoreProject) {
+      try {
+        fse.unlinkSync(this.project.pathFor(this.docsConfigSchema));
+      } catch (error) {}
+
+      Helpers.createSymLink(
+        this.docsConfigSchemaPath,
+        this.project.pathFor(this.docsConfigSchema),
+        { continueWhenExistedFolderDoesntExists: true },
+      );
+    }
 
     this.linkDocsToGlobalContainer();
 
@@ -360,7 +364,7 @@ export class Docs extends BaseDebounceCompilerForProject<
     // - QA: qa/index.md
     // docs_dir: ./
     return `site_name: ${this.config.site_name ? this.config.site_name : _.upperFirst(this.project.name) + 'Documentation'}
-# site_url:  ${this.project.artifactsManager.globalHelper.env.config.domain}
+# site_url:  ${this.project.env.website.domain}
 nav:
 ${this.applyPriorityOrder(entryPointFilesRelativePaths)
   .map(p => {

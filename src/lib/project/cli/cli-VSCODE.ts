@@ -7,18 +7,19 @@ import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { MESSAGES, TEMP_DOCS } from '../../constants';
-import { BuildOptions, InitOptions } from '../../options';
+import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 //#endregion
 
 export class $Vscode extends BaseCommandLineFeature<
-  {
-    o: string;
-    copyto?: string[];
-    copytoall?: boolean;
-  }, // @ts-ignore TODO weird inheritance problem
+  EnvOptions,
+  // @ts-ignore TODO weird inheritance problem
   Project
 > {
+  __initialize__(): void {
+    this.params = EnvOptions.from(this.params);
+  }
+
   public async _() {
     this._displayMenu();
   }

@@ -13,12 +13,16 @@ import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { MESSAGES, TEMP_DOCS } from '../../constants';
-import { BuildOptions, InitOptions } from '../../options';
+import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
-export class $Open extends BaseCommandLineFeature<{}, Project> {
+export class $Open extends BaseCommandLineFeature<EnvOptions, Project> {
+  __initialize__(): void {
+    this.params = EnvOptions.from(this.params);
+  }
+
   public _() {
     Helpers.info('Opening folder...');
     let pathToFolder = this.firstArg;

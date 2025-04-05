@@ -1,4 +1,4 @@
-import { BuildOptions, InitOptions } from '../../../../../../../options';
+import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 import { InsideStruct } from '../inside-struct';
 
@@ -7,13 +7,13 @@ import { InsideStruct } from '../inside-struct';
  */
 export class BaseInsideStruct {
   get websql() {
-    return this.initOptions?.websql;
+    return this.initOptions?.build.websql;
   }
 
   public struct: InsideStruct;
   constructor(
     public readonly project: Project,
-    public readonly initOptions: InitOptions,
+    public readonly initOptions: EnvOptions,
   ) {
     this.initOptions = initOptions;
   }
