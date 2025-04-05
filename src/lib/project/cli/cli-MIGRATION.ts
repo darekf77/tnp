@@ -1,7 +1,6 @@
 //#region imports
 import { config } from 'tnp-config/src';
 import {
-  CoreModels,
   Utils,
   UtilsMigrations,
   UtilsTerminal,
@@ -10,15 +9,17 @@ import {
   path,
 } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
-import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import { BuildOptions, ReleaseOptions } from '../../options';
-import type { Project } from '../abstract/project';
+import { EnvOptions } from '../../options';
+
+import { BaseCli } from './base-cli';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
-class $Migration extends BaseCommandLineFeature<ReleaseOptions, Project> {
+class $Migration extends BaseCli {
   //#region migration console menu
+
+
   public async _() {
     await this._displayMenu();
   }

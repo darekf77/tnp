@@ -5,13 +5,9 @@ import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { Helpers, BaseProject } from 'tnp-helpers/src';
 
-import {
-  BuildOptions,
-  ClearOptions,
-  InitOptions,
-  ReleaseOptions,
-} from '../../options';
+import { EnvOptions } from '../../options';
 
+import { EnvironmentConfig } from './artifacts/__helpers__/environment-config/environment-config';
 import { ArtifactManager } from './artifacts/artifacts-manager';
 import { Framework } from './framework';
 import { Git } from './git';
@@ -46,7 +42,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   public readonly vsCodeHelpers: Vscode;
 
   // @ts-ignore TODO weird inheritance problem
-  public readonly releaseProcess?: ReleaseProcess;
+  public readonly releaseProcess: ReleaseProcess;
 
   // @ts-ignore TODO weird inheritance problem
   public readonly npmHelpers: NpmHelpers;
@@ -69,6 +65,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   public readonly git: Git;
   public readonly taonJson: TaonJson;
   public readonly packagesRecognition: PackagesRecognition;
+  public readonly environmentConfig: EnvironmentConfig;
 
   //#endregion
 
@@ -109,14 +106,16 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     this.artifactsManager = ArtifactManager.for(this);
 
+    this.environmentConfig = new EnvironmentConfig(this);
+
     Project.ins.add(this);
   }
   //#endregion
   //#endregion
 
   //#region api / struct
-  async struct(initOptions?: InitOptions): Promise<void> {
-    initOptions = InitOptions.from(initOptions);
+  async struct(initOptions?: EnvOptions): Promise<void> {
+    initOptions = EnvOptions.from(initOptions);
 
     if (this.framework.isStandaloneProject) {
       await this.artifactsManager.struct(initOptions);
@@ -131,8 +130,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#endregion
 
   //#region api / init
-  async init(initOptions?: InitOptions): Promise<void> {
-    initOptions = InitOptions.from(initOptions);
+  async init(initOptions?: EnvOptions): Promise<void> {
+    initOptions = EnvOptions.from(initOptions);
 
     if (this.framework.isStandaloneProject) {
       await this.artifactsManager.init(initOptions);
@@ -142,34 +141,34 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       await this.artifactsManager.initAllChildren(initOptions);
     }
 
-    if (!initOptions.watch) {
+    if (!initOptions.build.watch) {
       initOptions.finishCallback();
     }
   }
   //#endregion
 
   //#region api / build
-  async build(buildOptions?: BuildOptions): Promise<void> {
-    buildOptions = BuildOptions.from(buildOptions);
+  async build(buildOptions?: EnvOptions): Promise<void> {
+    buildOptions = EnvOptions.from(buildOptions);
 
     if (this.framework.isStandaloneProject) {
       await this.artifactsManager.build(buildOptions);
     }
     if (this.framework.isContainer) {
-      buildOptions.watch = false; // there is no need to watch for container ever
+      buildOptions.build.watch = false; // there is no need to watch for container ever
       await this.artifactsManager.build(buildOptions);
       await this.artifactsManager.buildAllChildren(buildOptions);
     }
 
-    if (!buildOptions.watch && !!buildOptions.targetArtifact) {
+    if (!buildOptions.build.watch && !!buildOptions.release.targetArtifact) {
       buildOptions.finishCallback();
     }
   }
   //#endregion
 
   //#region api / release
-  public async release(releaseOptions: ReleaseOptions): Promise<void> {
-    releaseOptions = ReleaseOptions.from(releaseOptions);
+  public async release(releaseOptions: EnvOptions): Promise<void> {
+    releaseOptions = EnvOptions.from(releaseOptions);
     await this.npmHelpers.checkProjectReadyForNpmRelease();
     await this.npmHelpers.makeSureLoggedInToNpmRegistry();
 
@@ -196,16 +195,18 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#endregion
 
   //#region api / clear
-  public async clear(clearOptions?: Partial<ClearOptions>) {
-    clearOptions = ClearOptions.from(clearOptions);
-    await this.artifactsManager.clear(clearOptions as ClearOptions);
-    if (clearOptions.recrusive) {
-      await this.artifactsManager.clearAllChildren(
-        clearOptions as ClearOptions,
-      );
+  public async clear(clearOptions?: Partial<EnvOptions>) {
+    clearOptions = EnvOptions.from(clearOptions);
+    await this.artifactsManager.clear(clearOptions as EnvOptions);
+    if (clearOptions.recursiveAction) {
+      await this.artifactsManager.clearAllChildren(clearOptions as EnvOptions);
     }
   }
   //#endregion
+
+  // get env(): EnvOptions {
+  //   return this.environmentConfig.config;
+  // }
 
   //#region taon relative projects paths
   /**

@@ -5,7 +5,7 @@ import { path, crossPlatformPath } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { BuildOptions } from '../../../../../../../options';
+import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
 import { BackendCompilation } from './compilation-backend';
@@ -25,7 +25,7 @@ export class IncrementalBuildProcess {
   //#region @backend
   constructor(
     private project: Project,
-    private buildOptions: BuildOptions,
+    private buildOptions: EnvOptions,
   ) {
     Helpers.log(
       `[incremental-build-process] for project: ${project.genericName}`,
@@ -50,18 +50,18 @@ export class IncrementalBuildProcess {
 
     this.backendCompilation = new BackendCompilation(
       buildOptions,
-      buildOptions.watch,
+      buildOptions.build.watch,
       outFolder,
       location,
       project,
-      this.buildOptions.websql,
+      this.buildOptions.build.websql,
     );
 
     Helpers.log(
       `[incremental-build-process] this.backendCompilation exists: ${!!this.backendCompilation}`,
     );
 
-    if (buildOptions.genOnlyClientCode) {
+    if (buildOptions.build.genOnlyClientCode) {
       if (this.backendCompilation) {
         this.backendCompilation.isEnableCompilation = false;
       }
@@ -72,14 +72,14 @@ export class IncrementalBuildProcess {
     if (project.framework.isStandaloneProject) {
       let browserOutFolder = Helpers.getBrowserVerPath(
         void 0,
-        this.buildOptions.websql,
+        this.buildOptions.build.websql,
       );
       this.browserCompilationStandalone = new BrowserCompilation(
-        buildOptions.watch,
+        buildOptions.build.watch,
         this.project,
         void 0,
         void 0,
-        `tmp-src-${outFolder}${this.buildOptions.websql ? '-websql' : ''}`,
+        `tmp-src-${outFolder}${this.buildOptions.build.websql ? '-websql' : ''}`,
         browserOutFolder as any,
         location,
         project,
@@ -91,16 +91,16 @@ export class IncrementalBuildProcess {
       const envConfig = {} as any;
       let browserOutFolder = Helpers.getBrowserVerPath(
         moduleName,
-        this.buildOptions.websql,
+        this.buildOptions.build.websql,
       );
 
-      if (this.buildOptions.releaseType) {
+      if (this.buildOptions.release.releaseType) {
         browserOutFolder = crossPlatformPath(
           path.join(outFolder, browserOutFolder),
         );
       }
       this.browserCompilationSmartContainer = new BrowserCompilation(
-        buildOptions.watch,
+        buildOptions.build.watch,
         this.project,
         moduleName,
         envConfig,

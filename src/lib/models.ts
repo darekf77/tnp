@@ -24,146 +24,10 @@ export namespace Models {
     | 'lds-ripple';
   //#endregion
 
-  //#region env config project
-  export interface EnvConfigProject {
-    baseUrl: string;
-    host?: string; // generated
-    externalHost?: string;
-    name: string; // checked
-    type?: CoreModels.LibType; // checked
-
-    port: number; // override type port
-    // @backend
-    $db?: any;
-    isWatchBuild?: boolean; // generated
-    isWebsqlBuild?: boolean; // generated
-  }
-  //#endregion
-
-  //#region env config
-  export interface EnvConfig {
-    /**
-     * angular production mode
-     */
-    angularProd?: boolean;
-    /**
-     * replace title in taon app
-     */
-    title?: string;
-    /**
-     * override pwa manifest values
-     */
-    pwa?: {
-      name?: string;
-      short_name?: string;
-      start_url?: string;
-      // theme_color?: string;
-      // background_color?: string;
-      // display?: string;
-      // scope?: string;
-    };
-
-    loading?: {
-      /**
-       * this is persented before boostrapign of angular
-       * at the begining of first index.html fetch
-       */
-      preAngularBootstrap?: {
-        /**
-         * loder path to image or
-         * build in loader config
-         */
-        loader?: string | TaonLoaderConfig;
-        background?: string;
-      };
-      /**
-       * this loader is presented when
-       * taon app data is being loader
-       * (right after *preAngularBootstrap*)
-       */
-      afterAngularBootstrap?: {
-        /**
-         * loder path to image or
-         * build in loader config
-         */
-        loader?: string | TaonLoaderConfig;
-        background?: string;
-      };
-    };
-
-    pathes?: any;
-    config?: any;
-    configsFromJs?: any;
-    /**
-     * I will check if code should be available for npm version
-     */
-    notForNpm?: boolean;
-    isCoreProject?: boolean; // generated
-    isStandaloneProject?: boolean; // generated
-    name?: CoreModels.EnvironmentName; // generated
-    frameworks?: CoreModels.UIFramework[];
-    /**
-     * override domain name (use useDomain property to make it work)
-     */
-    domain?: string;
-    /**
-     * actually build enviroment for domain from enviroment.js
-     */
-    useDomain?: boolean;
-    dynamicGenIps?: boolean;
-    ip?: string | 'localhost';
-    workspace: {
-      workspace: EnvConfigProject;
-      build?: {
-        browser: {
-          minify: boolean;
-          aot: boolean;
-          production: boolean;
-        };
-        server: {
-          minify: boolean;
-          production: boolean;
-        };
-      };
-      projects: EnvConfigProject[];
-    };
-    clientProjectName?: string;
-    currentLibProjectSourceFolder?: 'src';
-    currentProjectName?: string;
-    currentProjectGenericName?: string;
-    currentProjectPort?: number;
-    currentProjectLocation?: string;
-    currentFrameworkVersion?: string;
-    currentProjectIsSite?: boolean;
-    currentProjectIsStrictSite?: boolean;
-    currentProjectIsDependencySite?: boolean;
-    currentProjectIsStatic?: boolean;
-    currentProjectComponentsFolder?: string;
-    currentProjectTsConfigPathes?: string;
-    currentProjectTsConfigPathesForBrowser?: string;
-    currentProjectType?: CoreModels.LibType;
-    packageJSON?: PackageJson;
-
-    cloud?: {
-      ports: {
-        update: number;
-      };
-    };
-
-    build?: {
-      number?: number;
-      hash?: string;
-      date?: Date;
-      options?: {
-        isWatchBuild?: boolean;
-        isWebsqlBuild?: boolean;
-        outDir?: 'dist';
-      };
-    };
-  }
-  //#endregion
-
   //#region site option
+  /**
+   * @deprecated
+   */
   export type NewSiteOptions = {
     type?: CoreModels.NewFactoryType;
     name?: string;
@@ -227,17 +91,6 @@ export namespace Models {
   }
   //#endregion
 
-  //#region create json schema options
-  export interface CliLibReleaseOptions {
-    cliBuildObscure?: boolean;
-    cliBuildUglify?: boolean;
-    cliBuildNoDts?: boolean;
-    cliBuildIncludeNodeModules?: boolean;
-    libBuildUglify?: boolean;
-    libBuildObscure?: boolean;
-  }
-  //#endregion
-
   //#region taon json
   export interface TaonJsonStandalone extends TaonJsonCommon {
     /**
@@ -285,11 +138,6 @@ export namespace Models {
      * use isUsingOwnNodeModulesInsteadCoreContainer
      */
     usesItsOwnNodeModules?: boolean;
-
-    /**
-     * options what to do with cli tool
-     */
-    cliLibReleaseOptions: CliLibReleaseOptions;
 
     /**
      * generate src/lib/index._auto-generated_.ts with

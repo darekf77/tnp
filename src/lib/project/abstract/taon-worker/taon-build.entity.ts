@@ -1,7 +1,7 @@
 import { Taon } from 'taon/src';
 import { _ } from 'tnp-core/src';
 
-import { BuildOptions } from '../../../options';
+import { EnvOptions } from '../../../options';
 
 @Taon.Entity({
   className: 'TaonBuild',
@@ -35,6 +35,6 @@ export class TaonBuild extends Taon.Base.AbstractEntity {
   //#region @websql
   @Taon.Orm.Column.SimpleJson()
   //#endregion
-  type: BuildOptions;
+  type: EnvOptions;
   //#endregion
 }

@@ -5,16 +5,19 @@ import { _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import { BuildOptions } from '../../options';
-import type { Project } from '../abstract/project';
+import { EnvOptions } from '../../options';
+
+import { BaseCli } from './base-cli';
 
 // @ts-ignore TODO weird inheritance problem
-class $Docs extends BaseCommandLineFeature<{}, Project> {
-  public async _() {
+class $Docs extends BaseCli {
+  public async _(): Promise<void> {
     await this.project.build(
-      BuildOptions.from({
+      EnvOptions.from({
         ...this.params,
-        targetArtifact: 'docs-webapp',
+        release: {
+          targetArtifact: 'docs-webapp',
+        },
         finishCallback: () => this._exit(),
       }),
     );
@@ -23,10 +26,14 @@ class $Docs extends BaseCommandLineFeature<{}, Project> {
 
   async watch() {
     await this.project.build(
-      BuildOptions.from({
+      EnvOptions.from({
         ...this.params,
-        watch: true,
-        targetArtifact: 'docs-webapp',
+        build: {
+          watch: true,
+        },
+        release: {
+          targetArtifact: 'docs-webapp',
+        },
         finishCallback: () => this._exit(),
       }),
     );

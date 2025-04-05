@@ -9,7 +9,7 @@
 // import { config } from 'tnp-config/src';
 // import type { Project } from '../../lib/project/abstract/project';
 // import { Helpers } from 'tnp-helpers/src';
-// import { BuildOptions } from '../../lib/options';
+// import { EnvOptions } from '../../lib/options';
 // import { PackageJSON } from '../../lib/project/features/package-json/package-json';
 // import { dummyfiles } from './copyto-manager-dummy-files';
 
@@ -67,7 +67,7 @@
 //           const outDir = 'dist';
 
 //           dummy1.copyNpmDistLibManager.init(
-//             BuildOptions.fromJson({
+//             EnvOptions.fromJson({
 //               copyto: [mainProject],
 //               args: '',
 //               watch: false,
@@ -128,7 +128,7 @@
 //           // dummy1.run(`${config.frameworkName} bd`).sync();
 
 //           dummy1.copyNpmDistLibManager.init(
-//             BuildOptions.fromJson({
+//             EnvOptions.fromJson({
 //               copyto: [mainProject],
 //               args: '',
 //               watch: true,
@@ -245,7 +245,7 @@
 //           const outDir = 'dist';
 
 //           dummyContainer.copyNpmDistLibManager.init(
-//             BuildOptions.fromJson({
+//             EnvOptions.fromJson({
 //               copyto: [mainProject],
 //               args: '',
 //               watch: false,

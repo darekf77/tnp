@@ -1,28 +1,18 @@
+//#region imports
 import { config } from 'tnp-config/src';
 import { CoreModels, _, UtilsTerminal, path, chalk } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { Models } from '../../models';
-import {
-  BuildOptions,
-  ReleaseArtifactTaon,
-  ReleaseOptions,
-  ReleaseType,
-} from '../../options';
+import { ReleaseArtifactTaon, EnvOptions, ReleaseType } from '../../options';
 import type { Project } from '../abstract/project';
 
+import { BaseCli } from './base-cli';
+//#endregion
+
 // @ts-ignore TODO weird inheritance problem
-class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
-  //#region __initialize__
-  __initialize__() {
-    //#region resolve smart containter
-
-    this.params = ReleaseOptions.from({ ...this.params });
-    //#endregion
-  }
-  //#endregion
-
+class $Release extends BaseCli {
   //#region _
   public async _() {
     await this.project.releaseProcess.displayReleaseProcessMenu();
@@ -30,25 +20,16 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
     this._exit();
   }
   //#endregion
+
+  //#region release process
   async _releaseProcess(
     releaseType: ReleaseType,
     artifact?: ReleaseArtifactTaon,
   ): Promise<void> {
-    const selectedProjects =
-      await this.project.releaseProcess.displayProjectsSelectionMenu();
-    const selectedArtifacts = artifact
-      ? [artifact]
-      : await this.project.releaseProcess.displaySelectArtifactsMenu(
-          releaseType,
-          selectedProjects,
-        );
-    await this.project.releaseProcess.releaseArtifacts(
-      releaseType,
-      selectedArtifacts,
-      selectedProjects,
-    );
+    await this.project.releaseProcess.releaseByType(releaseType);
     this._exit();
   }
+  //#endregion
 
   //#region local
   async local(): Promise<void> {
@@ -68,13 +49,23 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
   }
   //#endregion
 
+  //#region cloud
   async cloud(): Promise<void> {
     await this._releaseProcess('cloud');
   }
+  //#endregion
 
+  //#region manual
   async manual(): Promise<void> {
     await this._releaseProcess('manual');
   }
+  //#endregion
+
+  //#region static pages
+  async staticPages(): Promise<void> {
+    await this._releaseProcess('static-pages');
+  }
+  //#endregion
 
   //#region old release functions
 
@@ -107,22 +98,19 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
   private async _startLibCliReleaseProcess(
     npmReleaseVersionType: CoreModels.ReleaseVersionType = 'patch',
     autoReleaseUsingConfig: boolean = false,
-  ) {
-    Helpers.clearConsole();
+  ): Promise<void> {
     // const taonReleaseVersionType = await this.chooseTaonReleaseVersionType();
 
-    const releaseOptions = ReleaseOptions.from({
+    const releaseOptions = EnvOptions.from({
       ...this.params,
-      releaseVersionBumpType: npmReleaseVersionType,
-      autoReleaseUsingConfig,
+      release: {
+        releaseVersionBumpType: npmReleaseVersionType,
+        autoReleaseUsingConfig,
+      },
       finishCallback: () => {
         this._exit();
       },
     });
-    releaseOptions.specifiedVersion =
-      this.args.find(
-        k => k.startsWith('v') && Number(k.replace('v', '')) >= 3,
-      ) || '';
 
     await this.shouldReleaseLibMessage(releaseOptions, this.project);
     await this.project.release(releaseOptions);
@@ -131,28 +119,23 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
   //#endregion
 
   //#region should release lib
-  async shouldReleaseLibMessage(
-    releaseOptions: ReleaseOptions,
-    project: Project,
-  ) {
+  async shouldReleaseLibMessage(releaseOptions: EnvOptions, project: Project) {
     //#region @backendFunc
-    if (releaseOptions.autoReleaseUsingConfigDocs) {
-      return false;
-    }
+
     let newVersion;
-    if (releaseOptions.releaseVersionBumpType === 'major') {
+    if (releaseOptions.release.releaseVersionBumpType === 'major') {
       newVersion =
         project.packageJson.versionWithMajorPlusOneAndMinorZeroAndPatchZero;
-    } else if (releaseOptions.releaseVersionBumpType === 'minor') {
+    } else if (releaseOptions.release.releaseVersionBumpType === 'minor') {
       newVersion = project.packageJson.versionWithMinorPlusOneAndPatchZero;
-    } else if (releaseOptions.releaseVersionBumpType === 'patch') {
+    } else if (releaseOptions.release.releaseVersionBumpType === 'patch') {
       newVersion = project.packageJson.versionWithPatchPlusOne;
     }
 
     // TODO detecting changes for children when start container
 
     const message = `Proceed with release of new version: ${newVersion} ?`;
-    return releaseOptions.autoReleaseUsingConfig
+    return releaseOptions.release.autoReleaseUsingConfig
       ? true
       : await Helpers.questionYesNo(message);
 
@@ -161,6 +144,22 @@ class $Release extends BaseCommandLineFeature<ReleaseOptions, Project> {
   //#endregion
 
   //#endregion
+
+  async config() {
+    console.log(this.params);
+    this._exit();
+    this.project.releaseProcess.config.init();
+    this._exit();
+  }
+
+  async configCreateFromTnp() {
+    if (this.project.name !== 'tnp') {
+      return;
+    }
+    this.project.releaseProcess.config.init();
+    this.project.releaseProcess.config.create();
+    this._exit();
+  }
 }
 
 export default {

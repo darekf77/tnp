@@ -2,7 +2,10 @@ import { CoreModels, _, crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
+import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
+
+import { BaseCli } from './base-cli';
 
 /**
  # Branding of assets
@@ -20,12 +23,8 @@ import type { Project } from '../abstract/project';
     + files contents
 
  */ // @ts-ignore TODO weird inheritance problem
-export class $Branding extends BaseCommandLineFeature<{}, Project> {
-  protected __initialize__(): void {
-    this._tryResolveChildIfInsideArg();
-  }
-
-  public async _() {
+export class $Branding extends BaseCli {
+  public async _(): Promise<void> {
     await this.project.artifactsManager.globalHelper.branding.apply(true);
     this._exit();
   }

@@ -49,13 +49,13 @@ import {
   taonConfigSchemaJsonStandalone,
 } from '../../constants';
 import { Models } from '../../models';
-import { BuildOptions, InitOptions } from '../../options';
+import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 import type { TaonProjectResolve } from '../abstract/project-resolve';
 //#endregion
 
 export class $Global extends BaseGlobalCommandLine<
-  {},
+  any,
   // @ts-ignore TODO weird inheritance problem
   Project,
   TaonProjectResolve
@@ -131,7 +131,7 @@ export class $Global extends BaseGlobalCommandLine<
         {},
       );
       // const dependencies = Helpers.readValueFromJson(path.join(newProj.location, config.file.package_json), 'dependencies') as Object;
-      await newProj.init(InitOptions.from({ purpose: 'initing after fork' }));
+      await newProj.init(EnvOptions.from({ purpose: 'initing after fork' }));
       newProj = this.ins.From(
         path.join(this.project.location, projectName),
       ) as Project;
@@ -887,7 +887,7 @@ ${this.project.children
   async prettier() {
     Helpers.info(`Initing before prettier...`);
     await this.project.init(
-      InitOptions.from({ purpose: 'initing before prettier' }),
+      EnvOptions.from({ purpose: 'initing before prettier' }),
     );
     Helpers.info(`Running prettier...`);
     this.project.formatAllFiles();
@@ -1479,7 +1479,7 @@ ${this.project.children
   //#region json schema docs watcher
   async jsonSchemaDocsWatch() {
     await this.project.init(
-      InitOptions.from({
+      EnvOptions.from({
         purpose: 'initing before json schema docs watch',
       }),
     );
@@ -1519,7 +1519,7 @@ ${this.project.children
   //#region json schema taon watch
   async jsonSchemaTaonWatch() {
     // await this.project.init(
-    //   InitOptions.from({
+    //   EnvOptions.from({
     //     purpose: 'initing before json schema docs watch',
     //   }),
     // );

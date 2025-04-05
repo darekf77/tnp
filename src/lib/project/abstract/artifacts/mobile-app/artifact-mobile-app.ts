@@ -1,4 +1,4 @@
-import { ClearOptions, ReleaseOptions, ReleaseType } from '../../../../options';
+import { EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact } from '../base-artifact';
 
@@ -15,7 +15,7 @@ export class ArtifactMobileApp extends BaseArtifact<
   constructor(project: Project) {
     super(project, 'mobile-app');
   }
-  async clearPartial(options: ClearOptions): Promise<void> {
+  async clearPartial(options: EnvOptions): Promise<void> {
     return void 0; // TODO implement
   }
 

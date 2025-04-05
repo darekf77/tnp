@@ -1,4 +1,4 @@
-import { BuildOptions } from '../../../../../../options';
+import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
 
 import { BaseCopyManger } from './base-copy-manager';
@@ -17,7 +17,7 @@ export abstract class CopyManager extends BaseCopyManger {
   }
   //#endregion
   abstract init(
-    buildOptions: BuildOptions,
+    buildOptions: EnvOptions,
     renameDestinationFolder?: string,
   ): void;
 }

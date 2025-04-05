@@ -12,12 +12,9 @@ import { Helpers, UtilsQuickFixes } from 'tnp-helpers/src';
 import { DEFAULT_PORT } from '../../../../constants';
 import { Models } from '../../../../models';
 import {
-  BuildOptions,
-  ClearOptions,
-  InitOptions,
   ReleaseArtifactTaonNames,
   ReleaseArtifactTaonNamesArr,
-  ReleaseOptions,
+  EnvOptions,
   ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
@@ -70,20 +67,20 @@ export class ArtifactVscodePlugin extends BaseArtifact<
   //#endregion
 
   //#region clear partial
-  async clearPartial(clearOption: ClearOptions) {
+  async clearPartial(clearOption: EnvOptions) {
     return void 0; // TODO implement
   }
   //#endregion
 
   //#region init partial
-  async initPartial(initOptions: InitOptions): Promise<void> {
+  async initPartial(initOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
     if (!this.project.framework.isStandaloneProject) {
       return;
     }
 
     const tmpVscodeProjPath = this.getTmpVscodeProjPath(
-      initOptions.releaseType,
+      initOptions.release.releaseType,
     );
 
     Helpers.writeJson(
@@ -91,7 +88,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
       {
         name: this.project.name,
         version: this.project.packageJson.version,
-        main: `./out/${initOptions.releaseType ? 'extension.js' : 'app.vscode.js'}`,
+        main: `./out/${initOptions.release.releaseType ? 'extension.js' : 'app.vscode.js'}`,
         categories: ['Other'],
         activationEvents: ['*'],
         displayName: `${this.project.name}-vscode-ext`,
@@ -107,7 +104,9 @@ export class ArtifactVscodePlugin extends BaseArtifact<
       this.project.pathFor(config.folder.dist),
       crossPlatformPath([
         tmpVscodeProjPath,
-        initOptions.releaseType ? config.folder.dist : config.folder.out,
+        initOptions.release.releaseType
+          ? config.folder.dist
+          : config.folder.out,
       ]),
       { tryRemoveDesPath: true, continueWhenExistedFolderDoesntExists: true },
     );
@@ -195,21 +194,23 @@ export default { commands };
   //#endregion
 
   //#region build partial
-  async buildPartial(buildOptions: BuildOptions): Promise<{
+  async buildPartial(buildOptions: EnvOptions): Promise<{
     vscodeVsixOutPath: string;
   }> {
     //#region @backendFunc
 
-    await this.initPartial(InitOptions.fromBuild(buildOptions));
+    await this.initPartial(EnvOptions.fromBuild(buildOptions));
 
     const tmpVscodeProjPath = this.getTmpVscodeProjPath(
-      buildOptions.releaseType,
+      buildOptions.release.releaseType,
     );
     const extProj = this.project.ins.From(tmpVscodeProjPath);
     const vscodeVsixOutPath: string = extProj.pathFor(this.extensionVsixName);
-    const destExtensionJs = this.getDestExtensionJs(buildOptions.releaseType);
+    const destExtensionJs = this.getDestExtensionJs(
+      buildOptions.release.releaseType,
+    );
 
-    if (buildOptions.watch) {
+    if (buildOptions.build.watch) {
       // NOTHING TO DO HERE
       // extProj
       //   .run(
@@ -219,7 +220,7 @@ export default { commands };
       //   )
       //   .async();
     } else {
-      if (buildOptions.releaseType) {
+      if (buildOptions.release.releaseType) {
         await Helpers.ncc(
           crossPlatformPath([
             tmpVscodeProjPath,
@@ -233,12 +234,12 @@ export default { commands };
       extProj
         .run(
           `node ${this.vcodeProjectUpdatePackageJsonFilename} ` +
-            `${!buildOptions.releaseType ? 'app.vscode' : ''} `,
+            `${!buildOptions.release.releaseType ? 'app.vscode' : ''} `,
         )
         .sync();
     }
 
-    if (!buildOptions.watch && buildOptions.releaseType) {
+    if (!buildOptions.build.watch && buildOptions.release.releaseType) {
       extProj.run(`taon-vsce package`).sync();
     }
 
@@ -248,29 +249,31 @@ export default { commands };
   //#endregion
 
   //#region release partial
-  async releasePartial(releaseOptions: ReleaseOptions): Promise<{
+  async releasePartial(releaseOptions: EnvOptions): Promise<{
     releaseProjPath: string;
     releaseType: ReleaseType;
   }> {
     //#region @backendFunc
     let releaseProjPath: string;
-    let releaseType: ReleaseType = releaseOptions.releaseType;
+    let releaseType: ReleaseType = releaseOptions.release.releaseType;
     const { vscodeVsixOutPath } = await this.buildPartial(
-      BuildOptions.fromRelease(releaseOptions),
+      EnvOptions.fromRelease(releaseOptions),
     );
 
-    if (releaseOptions.releaseType === 'local') {
+    if (releaseOptions.release.releaseType === 'local') {
       Helpers.copyFile(
         vscodeVsixOutPath,
         this.project.pathFor(
-          `${config.folder.local_release}/${releaseOptions.targetArtifact}/${this.extensionVsixName}`,
+          `${config.folder.local_release}` +
+            `/${releaseOptions.release.targetArtifact}` +
+            `/${this.extensionVsixName}`,
         ),
       );
     }
-    if (releaseOptions.releaseType === 'manual') {
+    if (releaseOptions.release.releaseType === 'manual') {
       // TODO release to microsoft store or serve with place to put assets
     }
-    if (releaseOptions.releaseType === 'cloud') {
+    if (releaseOptions.release.releaseType === 'cloud') {
       // TODO trigger cloud release (it will actually be manual on remote server)
     }
     return { releaseProjPath, releaseType };
@@ -282,7 +285,7 @@ export default { commands };
   /**
    * TODO move this to local release
    */
-  private async installLocally(releaseOptions?: ReleaseOptions) {
+  private async installLocally(releaseOptions?: EnvOptions) {
     //#region @backendFunc
     const vsixPackageName = this.extensionVsixName.replace(
       config.frameworkNames.productionFrameworkName,
@@ -298,7 +301,7 @@ export default { commands };
     ];
 
     if (!this.project.containsFile(config.folder.out)) {
-      await this.project.build(BuildOptions.from({ watch: false }));
+      await this.project.build(EnvOptions.from({ build: { watch: false } })); // TODO remove this
     }
     const pathTempInstallDir = this.project.pathFor(`tmp-install-dir`);
     const pathPackageJSON = crossPlatformPath([
@@ -323,7 +326,7 @@ export default { commands };
     }
     Helpers.setValueToJSON(pathPackageJSON, 'main', 'extension.js');
     const tempProj = this.project.ins.From(pathTempInstallDir);
-    // await tempProj.build(BuildOptions.from({ watch: false }));
+
     const extensionName = (tempProj.readJson(config.file.package_json) as any)
       .name;
 

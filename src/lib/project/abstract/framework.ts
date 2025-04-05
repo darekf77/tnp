@@ -11,7 +11,7 @@ import {
 } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
-import { InitOptions } from '../../options';
+import { EnvOptions } from '../../options';
 
 import type { Project } from './project';
 //#endregion
@@ -361,7 +361,7 @@ export class Framework extends BaseFeatureForProject<Project> {
     if (oldContainer.nodeModules.empty) {
       Helpers.info('initing container v1 for global packages');
       await oldContainer.init(
-        InitOptions.from({
+        EnvOptions.from({
           purpose: 'old container init',
         }),
       );

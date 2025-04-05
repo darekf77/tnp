@@ -10,12 +10,6 @@
     "isomorphic-region-loader",
   ],
 
-  "cliLibReleaseOptions": {
-    "cliBuildIncludeNodeModules": true,
-    "cliBuildNoDts": false,
-    "cliBuildObscure": false,
-    "cliBuildUglify": false,
-  },
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
   "resources": [],
   // TODO remove when all things updated

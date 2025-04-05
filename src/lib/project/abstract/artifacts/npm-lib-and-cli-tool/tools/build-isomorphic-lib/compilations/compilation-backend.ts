@@ -11,7 +11,7 @@ import {
 } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { BuildOptions } from '../../../../../../../options';
+import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 //#endregion
 
@@ -48,7 +48,7 @@ export class BackendCompilation extends IncCompiler.Base {
   //#region constructor
   //#region @backend
   constructor(
-    public buildOptions: BuildOptions,
+    public buildOptions: EnvOptions,
     public isWatchBuild: boolean,
     /**
      * Output folder
@@ -98,7 +98,7 @@ export class BackendCompilation extends IncCompiler.Base {
 
   //#region methods / lib compilation
   async libCompilation(
-    buildOptions: BuildOptions,
+    buildOptions: EnvOptions,
     {
       cwd,
       watch = false,
@@ -188,7 +188,7 @@ export class BackendCompilation extends IncCompiler.Base {
 
   //#region methods / build standar lib version
   protected async buildStandardLibVer(
-    buildOptions: BuildOptions,
+    buildOptions: EnvOptions,
     options: {
       watch: boolean;
       commandJs: string;
@@ -260,7 +260,7 @@ Starting backend TypeScript build....
     await Helpers.execute(commandJs, cwd, {
       similarProcessKey: 'tsc',
       exitOnErrorCallback: async code => {
-        if (buildOptions.releaseType) {
+        if (buildOptions.release.releaseType) {
           throw 'Typescript compilation (backend)';
         } else {
           Helpers.error(

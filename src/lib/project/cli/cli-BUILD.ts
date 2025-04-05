@@ -1,116 +1,160 @@
-import { config } from 'tnp-config/src';
-import { _, chalk, UtilsTerminal } from 'tnp-core/src';
-import { Utils } from 'tnp-core/src';
+//#region imports
+import { _, UtilsTerminal } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
-import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import { TEMP_DOCS } from '../../constants';
-import { BuildOptions } from '../../options';
-import type { Project } from '../abstract/project';
+import { EnvOptions } from '../../options';
+
+import { BaseCli } from './base-cli';
+//#endregion
 
 // @ts-ignore TODO weird inheritance problem
-class $Build extends BaseCommandLineFeature<BuildOptions, Project> {
-  protected async __initialize__() {
-    if (this.params['base-href'] && !this.params.baseHref) {
-      this.params.baseHref = this.params['base-href'];
-      delete this.params['base-href'];
+class $Build extends BaseCli {
+  //#region initialize
+  async __initialize__(): Promise<void> {
+    await super.__initialize__();
+    if (this.params.build['base-href'] && !this.params.build.baseHref) {
+      this.params.build.baseHref = this.params.build['base-href'];
+      delete this.params.build['base-href'];
     }
-    this.params = BuildOptions.from(this.params);
-    //#region resolve smart containter
-    this._tryResolveChildIfInsideArg();
-
-    //#endregion
-    // console.log(this.params)
   }
+  //#endregion
 
-  public async _() {
+  //#region  _
+  public async _(): Promise<void> {
     await this.project.build(
-      BuildOptions.from({
+      EnvOptions.from({
         ...this.params,
         finishCallback: () => this._exit(),
       }),
     );
   }
+  //#endregion
 
-  async watchLib() {
-    await this.project.build(
-      BuildOptions.from({
-        ...this.params,
-        targetArtifact: 'npm-lib-and-cli-tool',
-        watch: true,
-        finishCallback: () => this._exit(),
-      }),
-    );
-  }
-
-  async lib() {
-    await this.project.build(
-      BuildOptions.from({
-        ...this.params,
-        targetArtifact: 'npm-lib-and-cli-tool',
-        finishCallback: () => this._exit(),
-      }),
-    );
-  }
-
-  async vscode(watch = false) {
-    await this.project.build(
-      BuildOptions.from({
-        ...this.params,
-        watch,
-        targetArtifact: 'vscode-plugin',
-        finishCallback: () => this._exit(),
-      }),
-    );
-  }
-
-  async watchVscode() {
-    await this.vscode(true);
-  }
-
-  async watchAppWebsql() {
-    await this.watchApp(true);
-  }
-
-  async watchApp(websql = false) {
-    await this.project.build(
-      BuildOptions.from({
-        ...this.params,
-        websql,
-        targetArtifact: 'angular-node-app',
-        finishCallback: () => this._exit(),
-      }),
-    );
-  }
-
-  async watchElectronWebsql() {
-    await this.watchElectron(true);
-  }
-
-  async watchElectron(websql = false) {
-    await this.project.build(
-      BuildOptions.from({
-        ...this.params,
-        websql,
-        watch: true,
-        targetArtifact: 'electron-app',
-        finishCallback: () => this._exit(),
-      }),
-    );
-  }
-
+  //#region watch build interactive mode
   /**
    * display console menu
    */
   async watch() {
     await this.project.build(
-      BuildOptions.from({
+      EnvOptions.from({
         ...this.params,
-        watch: true,
+        build: {
+          ...this.params.build,
+          watch: true,
+        },
       }),
     );
   }
+  //#endregion
 
+  //#region other build commands
+
+  //#region other build commands / watch build library
+  async watchLib() {
+    await this.project.build(
+      EnvOptions.from({
+        ...this.params,
+        release: {
+          ...this.params.release,
+          targetArtifact: 'npm-lib-and-cli-tool',
+        },
+        build: {
+          ...this.params.build,
+          watch: true,
+        },
+        finishCallback: () => this._exit(),
+      }),
+    );
+  }
+  //#endregion
+
+  //#region other build commands / build library
+  async lib() {
+    await this.project.build(
+      EnvOptions.from({
+        ...this.params,
+        release: {
+          ...this.params.release,
+          targetArtifact: 'npm-lib-and-cli-tool',
+        },
+        finishCallback: () => this._exit(),
+      }),
+    );
+  }
+  //#endregion
+
+  //#region other build commands / watch build vscode
+  async watchVscode() {
+    await this.vscode(true);
+  }
+  //#endregion
+
+  //#region other build commands / build vscode
+  async vscode(watch = false) {
+    await this.project.build(
+      EnvOptions.from({
+        ...this.params,
+        build: {
+          watch,
+        },
+        release: {
+          targetArtifact: 'vscode-plugin',
+        },
+        finishCallback: () => this._exit(),
+      }),
+    );
+  }
+  //#endregion
+
+  //#region other build commands / watch build websql app
+  async watchAppWebsql() {
+    await this.watchApp(true);
+  }
+  //#endregion
+
+  //#region other build commands / watch build normal app
+  async watchApp(websql = false) {
+    await this.project.build(
+      EnvOptions.from({
+        ...this.params,
+        build: {
+          websql,
+        },
+        release: {
+          targetArtifact: 'angular-node-app',
+        },
+        finishCallback: () => this._exit(),
+      }),
+    );
+  }
+  //#endregion
+
+  //#region other build commands / watch build electron websql app
+  async watchElectronWebsql() {
+    await this.watchElectron(true);
+  }
+  //#endregion
+
+  //#region other build commands / watch build electron normal app
+  async watchElectron(websql = false) {
+    await this.project.build(
+      EnvOptions.from({
+        ...this.params,
+        build: {
+          websql,
+          watch: true,
+        },
+        release: {
+          targetArtifact: 'electron-app',
+        },
+
+        finishCallback: () => this._exit(),
+      }),
+    );
+  }
+  //#endregion
+
+  //#region other build commands / clean watch/build
   async cleanWatchLib() {
     await this.project.clear();
     await this.watchLib();
@@ -125,50 +169,85 @@ class $Build extends BaseCommandLineFeature<BuildOptions, Project> {
     await this.project.artifactsManager.artifact.npmLibAndCliTool.clearPartial();
     await this._();
   }
+  //#endregion
 
+  //#region other build commands / default build for project
   async default() {
     await this.project.build(
-      BuildOptions.from({
+      // TODO ADD ARTIFACT ?
+      EnvOptions.from({
         ...this.params,
-        watch: true,
+        build: {
+          watch: true,
+        },
       }),
     );
   }
+  //#endregion
 
+  //#region other build commands / build angular app
+  /**
+   * @deprecated
+   */
   async app() {
     await this.project.build(
-      BuildOptions.from({
+      EnvOptions.from({
         ...this.params,
-        targetArtifact: 'angular-node-app',
+        release: {
+          targetArtifact: 'angular-node-app',
+        },
         finishCallback: () => this._exit(),
       }),
     );
   }
 
+  /**
+   * @deprecated
+   */
   async appWatch() {
     await this.project.build(
-      BuildOptions.from({
+      EnvOptions.from({
         ...this.params,
-        targetArtifact: 'angular-node-app',
-        watch: true,
+        release: {
+          targetArtifact: 'angular-node-app',
+        },
+        build: {
+          watch: true,
+        },
       }),
     );
   }
+  //#endregion
 
+  //#region other build commands / start lib/app build
+  /**
+   * @deprecated
+   */
   async start() {
+    // TODO add proper logic
     await this.project.build(
-      BuildOptions.from({
+      EnvOptions.from({
         ...this.params,
-        watch: true,
+        build: {
+          watch: true,
+        },
       }),
     );
   }
 
+  /**
+   * @deprecated
+   */
   async startClean() {
     await this.project.artifactsManager.artifact.npmLibAndCliTool.clearPartial();
     await this.start();
   }
+  //#endregion
 
+  //#region other build commands / mk docs build
+  /**
+   * @deprecated
+   */
   async mkdocs() {
     const mkdocsActions = {
       //#region @notForNpm
@@ -236,6 +315,9 @@ class $Build extends BaseCommandLineFeature<BuildOptions, Project> {
     Helpers.info('DONE BUILDING DOCS');
     this._exit();
   }
+  //#endregion
+
+  //#endregion
 }
 
 export default {

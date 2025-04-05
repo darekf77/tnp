@@ -5,10 +5,12 @@ import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import type { Project } from '../abstract/project';
 
+import { BaseCli } from './base-cli';
+
 declare const ENV: any;
 
 // @ts-ignore TODO weird inheritance problem
-export class $Version extends BaseCommandLineFeature<{}, Project> {
+export class $Version extends BaseCli {
   //#region _
   public _() {
     // Helpers.log(`Framework name: '${config.frameworkName}'`);

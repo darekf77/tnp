@@ -6,8 +6,9 @@ import { _ } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { Models } from '../../../../../../models';
+import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
+
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -21,7 +22,7 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region rebuild
-  rebuild(soft = false) {
+  rebuild(initOptions: EnvOptions, soft = false) {
     //#region @backendFunc
     const files = this.files;
     // Helpers.info(`Files templates for project:
@@ -41,68 +42,57 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
         );
         continue;
       }
-      const env = (
-        this.project.artifactsManager.globalHelper.env &&
-        this.project.artifactsManager.globalHelper.env.config
-          ? this.project.artifactsManager.globalHelper.env.config
-          : {}
-      ) as any;
+
       // Helpers.log(`Started for ${f}`);
 
-      this.processFile(filePath, fileContent, env, _, soft);
+      this.processFile(filePath, fileContent, initOptions, _, soft);
       // Helpers.log(`Processed DONE for ${f}`);
     }
-    this.project.quickFixes.recreateTempSourceNecessaryFiles('dist');
+    this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting();
     //#endregion
   }
   //#endregion
 
   //#region rebuildFile
-  rebuildFile(filetemplateRelativePath, soft = false) {
-    //#region @backendFunc
-    const filePath = path.join(this.project.location, filetemplateRelativePath);
-    try {
-      var fileContent = Helpers.readFile(filePath);
-      if (!fileContent) {
-        Helpers.warn(
-          `[filesTemplats][rebuildFile] Not able to read file: ${filePath} - no content of file`,
-        );
-        return;
-      }
-    } catch (error) {
-      Helpers.warn(
-        `[filesTemplats][rebuildFile] Not able to read file: ${filePath} - problem with reading file`,
-      );
-      return;
-    }
-    const env = (
-      this.project.artifactsManager.globalHelper.env &&
-      this.project.artifactsManager.globalHelper.env.config
-        ? this.project.artifactsManager.globalHelper.env.config
-        : {}
-    ) as any;
-    this.processFile(filePath, fileContent, env, _, soft);
-    //#endregion
-  }
+  // rebuildFile(filetemplateRelativePath, soft = false) {
+  // const filePath = path.join(this.project.location, filetemplateRelativePath);
+  // try {
+  //   var fileContent = Helpers.readFile(filePath);
+  //   if (!fileContent) {
+  //     Helpers.warn(
+  //       `[filesTemplats][rebuildFile] Not able to read file: ${filePath} - no content of file`,
+  //     );
+  //     return;
+  //   }
+  // } catch (error) {
+  //   Helpers.warn(
+  //     `[filesTemplats][rebuildFile] Not able to read file: ${filePath} - problem with reading file`,
+  //   );
+  //   return;
+  // }
+  // const env = this.project.env || EnvOptions.from({});
+  // this.processFile(filePath, fileContent, env, _, soft);
+
+  // }
   //#endregion
 
   //#region processFile
   private processFile(
     orgFilePath: string,
     content: string,
-    reservedExpSec: Models.EnvConfig,
+    reservedExpSec: EnvOptions,
     reservedExpOne: any,
     soft: boolean,
-  ) {
+  ): void {
     //#region @backendFunc
     // lodash
     const filePath = orgFilePath.replace(
       `.${config.filesExtensions.filetemplate}`,
       '',
     );
-    // if (filePath.endsWith('tsconfig.json')) {
-    //   debugger;
-    // }
+    if (filePath.endsWith('tsconfig.json')) {
+      debugger;
+    }
 
     Helpers.log('processing file template', 1);
     // Helpers.pressKeyAndContinue();

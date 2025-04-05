@@ -2,7 +2,7 @@ import { config, PREFIXES } from 'tnp-config/src';
 import { crossPlatformPath, glob, path, _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { BuildOptions, ReleaseArtifactTaon } from '../../../../../../options';
+import { EnvOptions, ReleaseArtifactTaon } from '../../../../../../options';
 import type { Project } from '../../../../project';
 
 import { CopyManager } from './copy-manager';
@@ -14,14 +14,12 @@ export class CopyManagerStandalone extends CopyManager {
   dtsFixer: TypescriptDtsFixer;
 
   //#region init
-  public init(buildOptions: BuildOptions, renameDestinationFolder?: string) {
+  public init(buildOptions: EnvOptions, renameDestinationFolder?: string) {
     //#region @backendFunc
     this.buildOptions = buildOptions;
     this.renameDestinationFolder = renameDestinationFolder;
 
     this.selectAllProjectCopyto();
-
-    this.cliBuildNoDts = !!buildOptions.cliBuildNoDts;
 
     if (!Array.isArray(this.copyto)) {
       this.copyto = [];
@@ -383,7 +381,7 @@ export class CopyManagerStandalone extends CopyManager {
   //#endregion
 
   //#region replace d.ts files in destination after copy
-  replaceIndexDtsForEntryPorjIndex(destination: Project) {
+  replaceIndexDtsForEntryProjectIndex(destination: Project) {
     //#region @backendFunc
     const location = destination.nodeModules.pathFor(this.rootPackageName);
     Helpers.writeFile(

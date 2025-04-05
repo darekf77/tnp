@@ -3,12 +3,16 @@ import { chalk, _, crossPlatformPath, glob, path } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { BaseCommandLineFeature, Helpers } from 'tnp-helpers/src';
 
+import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
+
+import { BaseCli } from './base-cli';
 
 /**
  * TODO refactor move to tnp-helpers
  */ // @ts-ignore TODO weird inheritance problem
-export class $Link extends BaseCommandLineFeature<{}, Project> {
+export class $Link extends BaseCli {
+
   async _() {
     let project = this.project;
 

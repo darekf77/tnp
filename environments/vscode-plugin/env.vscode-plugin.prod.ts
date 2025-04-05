@@ -1,4 +1,4 @@
-import type { EnvOptions } from '../../src/lib/options';
+import type { EnvOptions } from 'tnp/src';
 import baseEnv from './env.vscode-plugin.__';
 import type { EnvVSCodePaths } from './env.vscode-plugin.__';
 

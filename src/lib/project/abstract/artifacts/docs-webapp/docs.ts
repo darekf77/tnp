@@ -9,6 +9,7 @@ import { BaseDebounceCompilerForProject } from 'tnp-helpers/src';
 import { Helpers, UtilsHttp } from 'tnp-helpers/src';
 
 import { Models } from '../../../../models';
+import { EnvOptions } from '../../../../options';
 import type { Project } from '../../project';
 
 //#endregion
@@ -156,14 +157,18 @@ export class Docs extends BaseDebounceCompilerForProject<
         this.defaultDocsConfig(),
       );
     }
-    try {
-      fse.unlinkSync(this.project.pathFor(this.docsConfigSchema));
-    } catch (error) {}
-    Helpers.createSymLink(
-      this.docsConfigSchemaPath,
-      this.project.pathFor(this.docsConfigSchema),
-      { continueWhenExistedFolderDoesntExists: true },
-    );
+
+    if (!this.project.framework.isCoreProject) {
+      try {
+        fse.unlinkSync(this.project.pathFor(this.docsConfigSchema));
+      } catch (error) {}
+
+      Helpers.createSymLink(
+        this.docsConfigSchemaPath,
+        this.project.pathFor(this.docsConfigSchema),
+        { continueWhenExistedFolderDoesntExists: true },
+      );
+    }
 
     this.linkDocsToGlobalContainer();
 
@@ -171,7 +176,9 @@ export class Docs extends BaseDebounceCompilerForProject<
   }
   //#endregion
 
-  initizalizeWatchers(): void {
+  private envOptions: EnvOptions;
+  initializeWatchers(envOptions: EnvOptions): void {
+    this.envOptions = envOptions;
     const timestampContainer = crossPlatformPath(
       path.dirname(this.docsGlobalTimestampForWatcherAbsPath),
     );
@@ -360,7 +367,7 @@ export class Docs extends BaseDebounceCompilerForProject<
     // - QA: qa/index.md
     // docs_dir: ./
     return `site_name: ${this.config.site_name ? this.config.site_name : _.upperFirst(this.project.name) + 'Documentation'}
-# site_url:  ${this.project.artifactsManager.globalHelper.env.config.domain}
+# site_url:  ${this.envOptions.website.domain}
 nav:
 ${this.applyPriorityOrder(entryPointFilesRelativePaths)
   .map(p => {

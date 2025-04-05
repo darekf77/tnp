@@ -10,23 +10,24 @@ import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { MESSAGES, TEMP_DOCS } from '../../constants';
-import { BuildOptions, InitOptions } from '../../options';
+import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 
+import { BaseCli } from './base-cli';
+
 // @ts-ignore TODO weird inheritance problem
-export class $Init extends BaseCommandLineFeature<InitOptions, Project> {
+export class $Init extends BaseCli {
   //#region prepare args
-  protected async __initialize__() {
+  async __initialize__(): Promise<void> {
+    await super.__initialize__();
     await this.__askForWhenEmpty();
-    this._tryResolveChildIfInsideArg();
-    this.params = InitOptions.from(this.params);
   }
   //#endregion
 
   //#region init
   public async _() {
     await this.project.init(
-      InitOptions.from({
+      EnvOptions.from({
         ...this.params,
         purpose: 'cli init',
         finishCallback: () => {
@@ -41,10 +42,12 @@ export class $Init extends BaseCommandLineFeature<InitOptions, Project> {
   //#region struct
   async struct() {
     await this.project.init(
-      InitOptions.from({
+      EnvOptions.from({
         ...this.params,
         purpose: 'cli struct init',
-        struct: true,
+        init: {
+          struct: true,
+        },
         finishCallback: () => this._exit(),
       }),
     );
@@ -52,7 +55,7 @@ export class $Init extends BaseCommandLineFeature<InitOptions, Project> {
   //#endregion
 
   async templatesBuilder() {
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.filesTemplatesBuilder.rebuild();
+    await this.project.artifactsManager.artifact.npmLibAndCliTool.filesTemplatesBuilder.rebuild(this.params);
     this._exit();
   }
 

@@ -12,7 +12,7 @@ import {
   taonConfigSchemaJsonStandalone,
   taonConfigSchemaJsonContainer,
 } from '../../../../../../constants';
-import { InitOptions, InitingPartialProcess } from '../../../../../../options';
+import { EnvOptions, InitingPartialProcess } from '../../../../../../options';
 import type { Project } from '../../../../project';
 //#endregion
 

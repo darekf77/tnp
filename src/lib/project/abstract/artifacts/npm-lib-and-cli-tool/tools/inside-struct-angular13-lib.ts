@@ -5,7 +5,7 @@ import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
 import { Models } from '../../../../../models';
-import { InitOptions } from '../../../../../options';
+import { EnvOptions } from '../../../../../options';
 import type { Project } from '../../../project';
 
 import { InsideStruct } from './inside-structures/inside-struct';
@@ -18,7 +18,7 @@ import {
 //#endregion
 
 export class InsideStructAngular13Lib extends BaseInsideStruct {
-  constructor(project: Project, initOptions: InitOptions) {
+  constructor(project: Project, initOptions: EnvOptions) {
     super(project, initOptions);
     //#region @backend
     if (

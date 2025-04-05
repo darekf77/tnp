@@ -3,7 +3,7 @@ import { config } from 'tnp-config/src';
 import { crossPlatformPath, path, _, CoreModels } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 
-import { InitOptions } from '../../../../../options';
+import { EnvOptions } from '../../../../../options';
 import type { Project } from '../../../project';
 import { InsideStruct } from '../../npm-lib-and-cli-tool/tools/inside-structures/inside-struct';
 import { BaseInsideStruct } from '../../npm-lib-and-cli-tool/tools/inside-structures/structs/base-inside-struct';
@@ -14,7 +14,7 @@ import { getLoader } from '../../npm-lib-and-cli-tool/tools/inside-structures/st
 //#endregion
 
 export class InsideStructAngular13App extends BaseInsideStruct {
-  constructor(project: Project, initOptions: InitOptions) {
+  constructor(project: Project, initOptions: EnvOptions) {
     super(project, initOptions);
     //#region @backend
     if (
@@ -140,7 +140,8 @@ ${appModuleFile}
             );
 
             const enableServiceWorker =
-              this.initOptions.releaseType && !initOptions.disableServiceWorker;
+              this.initOptions.release.releaseType &&
+              !initOptions.build.pwa.disableServiceWorker;
 
             if (enableServiceWorker) {
               // TODO it will colide with ng serve ?
@@ -274,8 +275,7 @@ ${appComponentFile}
               let appHtmlFile = Helpers.readFile(appModuleHtmlPath);
 
               const loaderData =
-                this.project.artifactsManager.globalHelper.env.config?.loading
-                  ?.afterAngularBootstrap?.loader;
+                this.initOptions.loading.afterAngularBootstrap.loader;
               const loaderIsImage = _.isString(loaderData);
 
               if (loaderIsImage) {
@@ -314,8 +314,8 @@ ${appComponentFile}
               let appScssFile = Helpers.readFile(appModuleFilePath);
 
               const bgColor =
-                this.project.artifactsManager.globalHelper.env.config?.loading
-                  ?.afterAngularBootstrap?.background;
+                this.initOptions.loading.afterAngularBootstrap.background;
+
               if (bgColor) {
                 appScssFile = appScssFile.replace(
                   'TAON_TO_REPLACE_COLOR',
@@ -337,8 +337,8 @@ ${appComponentFile}
               let indexHtmlFile = Helpers.readFile(appModuleFilePath);
 
               const loaderData =
-                this.project.artifactsManager.globalHelper.env.config?.loading
-                  ?.preAngularBootstrap?.loader;
+                this.initOptions.loading.preAngularBootstrap.loader;
+
               const loaderIsImage = _.isString(loaderData);
 
               if (loaderIsImage) {
@@ -363,8 +363,8 @@ ${appComponentFile}
               }
 
               const bgColor =
-                this.project.artifactsManager.globalHelper.env.config?.loading
-                  ?.preAngularBootstrap?.background;
+                this.initOptions.loading.preAngularBootstrap.background;
+
               const bgColorStyle = bgColor
                 ? `style="background-color: ${bgColor};"`
                 : '';
@@ -389,8 +389,8 @@ ${appComponentFile}
 
             let indexHtmlFile = Helpers.readFile(indexHtmlFilePath);
 
-            const title =
-              this.project.artifactsManager.globalHelper.env.config?.title;
+            const title = this.initOptions.website.title;
+
             const titleToReplace = title
               ? title
               : _.startCase(this.project.name);
@@ -523,7 +523,7 @@ ${appComponentFile}
 
             packageJson.setName(this.project.name);
 
-            if (this.initOptions.releaseType) {
+            if (this.initOptions.release.releaseType) {
               packageJson.setMainProperty('electron/index.js');
             }
             packageJson.setVersion(this.project.packageJson.version);
@@ -555,16 +555,11 @@ ${appComponentFile}
             );
             let indexHtml = Helpers.readFile(indexHtmlPath);
 
-            manifestJson.name = this.project.artifactsManager.globalHelper.env
-              .config?.pwa?.name
-              ? this.project.artifactsManager.globalHelper.env.config.pwa.name
-              : _.startCase(project.name);
+            manifestJson.name =
+              this.initOptions.build.pwa.name || _.startCase(project.name);
 
-            manifestJson.short_name = this.project.artifactsManager.globalHelper
-              .env.config?.pwa?.short_name
-              ? this.project.artifactsManager.globalHelper.env.config.pwa
-                  .short_name
-              : project.name;
+            manifestJson.short_name =
+              this.initOptions.build.pwa.short_name || project.name;
 
             const assetsPath = crossPlatformPath(
               path.join(
@@ -626,17 +621,10 @@ ${appComponentFile}
               return c;
             });
 
-            if (
-              this.project.artifactsManager.globalHelper.env.config?.pwa
-                ?.start_url
-            ) {
-              manifestJson.start_url = (
-                this.project.artifactsManager.globalHelper.env.config as any
-              ).pwa.start_url;
-            } else if (
-              this.project.artifactsManager.globalHelper.env.config?.useDomain
-            ) {
-              manifestJson.start_url = `https://${this.project.artifactsManager.globalHelper.env.config.domain}/`;
+            if (this.initOptions.build.pwa.start_url) {
+              manifestJson.start_url = this.initOptions.build.pwa.start_url;
+            } else if (this.initOptions.website.useDomain) {
+              manifestJson.start_url = `https://${this.initOptions.website.domain}/`;
             } else {
               manifestJson.start_url = `/${this.project.name}/`; // perfect for github.io OR when subdomain myproject.com/docs/
             }

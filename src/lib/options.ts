@@ -1,26 +1,9 @@
+import { walk } from 'lodash-walk-object/src';
 import { config } from 'tnp-config/src';
+import { Helpers } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
-import { CLASS } from 'typescript-class-helpers/src';
 
 import { Models } from './models';
-import type { Project } from './project/abstract/project';
-
-//#region helpers / instance from
-const instanceFrom = (
-  options: Partial<InitOptions | BuildOptions | ReleaseOptions | ClearOptions>,
-  classFn: Function,
-) => {
-  const orgFinishCallback = options?.finishCallback;
-  options = (options ? options : {}) as any;
-  const res = _.merge(new (classFn as any)(), _.cloneDeep(options));
-  if (orgFinishCallback) {
-    res.finishCallback = orgFinishCallback;
-  } else {
-    res.finishCallback = () => {};
-  }
-  return res;
-};
-//#endregion
 
 //#region release artifact taon
 /**
@@ -28,6 +11,10 @@ const instanceFrom = (
  * for MANUAL/CLOUD release
  */
 export const ReleaseArtifactTaonNames = Object.freeze({
+  /**
+   * Npm lib package and global cli tool
+   */
+  NPM_LIB_PKG_AND_CLI_TOOL: 'npm-lib-and-cli-tool',
   /**
    * Angular frontend webapp (pwa) + nodejs backend inside docker
    */
@@ -41,18 +28,14 @@ export const ReleaseArtifactTaonNames = Object.freeze({
    */
   MOBILE_APP: 'mobile-app',
   /**
+   * Visual Studio Code extension/plugin
+   */
+  VSCODE_PLUGIN: 'vscode-plugin',
+  /**
    * Documentation (MkDocs + compodoc + storybook)
    * webapp (pwa) inside docker
    */
   DOCS_DOCS_WEBAPP: 'docs-webapp',
-  /**
-   * Npm lib package and global cli tool
-   */
-  NPM_LIB_PKG_AND_CLI_TOOL: 'npm-lib-and-cli-tool',
-  /**
-   * Visual Studio Code extension/plugin
-   */
-  VSCODE_PLUGIN: 'vscode-plugin',
 });
 
 export type ReleaseArtifactTaon =
@@ -92,36 +75,51 @@ export const ReleaseTypeNamesArr: ReleaseType[] =
   Object.values(ReleaseTypeNames);
 //#endregion
 
-//#region system-task options
-class SystemTask<T> {
-  protected constructor() {}
-  finishCallback: () => any;
-  public clone(override: Partial<T>): T {
-    const classFn = CLASS.getFromObject(this);
-    const result = _.merge(new classFn(), _.merge(_.cloneDeep(this), override));
-    // console.log({result})
-    return result;
-  }
-  copyto?: string[];
-  copytoall?: boolean;
-  purpose?: string;
-  targetArtifact: ReleaseArtifactTaon;
+//#region initing partial process
+/**
+ * Class is as part of initing project structure process
+ */
+export interface InitingPartialProcess {
   /**
-   * null  - means it is development build
+   * All initialization process from class
+   * gathered in one place
    */
-  releaseType: ReleaseType | null = null;
-  /**
-   * process that is running in CI (no questions for user)
-   */
-  ciProcess?: boolean;
+  init(options: EnvOptions): Promise<void>;
 }
+//#endregion
 
-export class BaseBuild<T> extends SystemTask<T> {
+//#region env options
+
+//#region env options / build
+
+//#region env options / build / pwa
+class EnvOptionsBuildPwa {
+  disableServiceWorker: boolean;
+  name?: string;
+  short_name?: string;
+  start_url?: string;
+  // theme_color?: string;
+  // background_color?: string;
+  // display?: string;
+  // scope?: string;
+}
+//#endregion
+
+//#region env options / build / cli
+class EnvOptionsBuildCli {
+  uglify: boolean;
+  obscure: boolean;
+  includeNodeModules: boolean;
+  includeSourceMaps: boolean;
+}
+//#endregion
+
+class EnvOptionsBuild {
   /**
-   * watch build
+   * override output path
+   * for combined/bundled build artifact
    */
-  watch: boolean;
-
+  overrideOutputPath: string;
   /**
    * base-href -> is a part of lib code build
    *
@@ -140,94 +138,23 @@ export class BaseBuild<T> extends SystemTask<T> {
     this._baseHref = crossPlatformPath(v);
   }
   private _baseHref: string;
-
-  disableServiceWorker: boolean;
-  buildAngularAppForElectron: boolean;
-}
-
-class BuildOptionsLibOrApp<T> extends BaseBuild<T> {
-  cliBuildNoDts: boolean;
-  cliBuildUglify: boolean;
-  cliBuildObscure: boolean;
-  cliBuildIncludeNodeModules: boolean;
-
-  /**
-   * Enable all production optimalization for build
-   * - minification
-   * - caches
-   * etc.
-   */
-  prod: boolean;
-}
-//#endregion
-
-//#region new options
-export class NewOptions extends SystemTask<NewOptions> {
-  branding: boolean;
-}
-//#endregion
-
-//#region clear options
-export class ClearOptions extends SystemTask<ClearOptions> {
-  public static from(options: Partial<ClearOptions>): ClearOptions {
-    return instanceFrom(options, ClearOptions);
-  }
-  recrusive?: boolean;
-}
-//#endregion
-
-//#region initing partial process
-/**
- * Class is as part of initing project structure process
- */
-export interface InitingPartialProcess {
-  /**
-   * All initialization process from class
-   * gathered in one place
-   */
-  init(options: InitOptions): Promise<void>;
-}
-//#endregion
-
-//#region init options
-export class InitOptions extends BaseBuild<InitOptions> {
-  private constructor() {
-    super();
-  }
-
-  /**
-   * init only structure without external deps
-   */
-  struct: boolean;
   websql: boolean;
-  branding: boolean;
-
-  public static from(options: Partial<InitOptions>): InitOptions {
-    return instanceFrom(options, InitOptions);
-  }
-
-  public static fromBuild(buildOptions: BuildOptions): InitOptions {
-    const initOptions = InitOptions.from(buildOptions as any);
-
-    return initOptions;
-  }
+  /**
+   * watch build
+   */
+  watch: boolean;
+  pwa: Partial<EnvOptionsBuildPwa>;
+  angularProd: boolean;
+  cli: Partial<EnvOptionsBuildCli>;
+  /**
+   * Do not generate backend code
+   */
+  genOnlyClientCode: boolean;
 }
 //#endregion
 
-//#region build options
-export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
-  get temporarySrcForReleaseCutCode(): string {
-    //#region @backendFunc
-    return `tmp-cut-release-src-${config.folder.dist}${this.websql ? '-websql' : ''}`;
-    //#endregion
-  }
-
-  /**
-   * override output path
-   * for combined/bundled build artifact
-   */
-  overrideOutputPath: string;
-
+//#region env options / ports
+class EnvOptionsPorts {
   /**
    * override port for angular ng serve in normal mode
    */
@@ -242,48 +169,101 @@ export class BuildOptions extends BuildOptionsLibOrApp<BuildOptions> {
    * override port for nodejs backend server
    */
   nodeBeAppPort?: number;
+}
+//#endregion
 
+//#region env options / loading
+
+//#region env options / loading / pre-angular-bootstrap
+class EnvOptionsLoadingPreAngularBootstrap {
   /**
-   *
+   * loder path to image or
+   * build in loader config
    */
-  websql: boolean;
+  loader?: string | Models.TaonLoaderConfig;
+  background?: string;
+}
+//#endregion
 
-  skipCopyManager: boolean;
+//#region env options / loading / after-angular-bootstrap
+class EnvOptionsLoadingAfterAngularBootstrapConfig {
+  /**
+   * loder path to image or
+   * build in loader config
+   */
+  loader?: string | Models.TaonLoaderConfig;
+  background?: string;
+}
+//#endregion
+
+class EnvOptionsLoading {
+  /**
+   * this is presented before bootstrapping of angular
+   * at the beginning of first index.html fetch
+   */
+  preAngularBootstrap?: Partial<EnvOptionsLoadingPreAngularBootstrap>;
+  /**
+   * this loader is presented when
+   * taon app data is being loader
+   * (right after *preAngularBootstrap*)
+   */
+  afterAngularBootstrap?: Partial<EnvOptionsLoadingAfterAngularBootstrapConfig>;
+}
+//#endregion
+
+//#region env options / release
+class EnvOptionsRelease {
+  targetArtifact: ReleaseArtifactTaon;
+  /**
+   * null  - means it is development build
+   */
+  releaseType: ReleaseType | null = null;
+  /**
+   * process that is running in CI (no questions for user)
+   */
+
+  releaseVersionBumpType: CoreModels.ReleaseVersionType = 'patch';
+  /**
+   * quick automatic release of lib
+   */
+  autoReleaseUsingConfig: boolean;
+  environment: CoreModels.EnvironmentNameTaon;
+  envNum: number | undefined;
   /**
    * Cut <@>notForNpm  tag from lib build
    */
   cutNpmPublishLibReleaseCode: boolean;
-  /**
-   * Do not generate backend code
-   */
-  genOnlyClientCode: boolean;
-
-  /**
-   * Optionally we can start build of smart container
-   * with different app
-   */
-  smartContainerTargetName: string;
-
-  public static from(options: Partial<BuildOptions>): BuildOptions {
-    return instanceFrom(options, BuildOptions);
-  }
-
-  public static fromRelease(releaseOptions: ReleaseOptions): BuildOptions {
-    const buildOptions = BuildOptions.from(releaseOptions as any);
-    buildOptions.watch = false;
-    return buildOptions;
-  }
 }
 //#endregion
 
-//#region release options
+//#region env options / init
+class EnvOptionsInit {
+  /**
+   * init only structure without external deps
+   */
+  struct: boolean;
+  branding: boolean;
+}
+//#endregion
 
-export class ReleaseOptions extends BuildOptionsLibOrApp<ReleaseOptions> {
-  private constructor() {
-    super();
-  }
-  releaseVersionBumpType: CoreModels.ReleaseVersionType = 'patch';
+//#region env options / copy to manager
+class EnvOptionsCopyToManager {
+  skip: boolean;
+  copyToLocations: string[];
+  copyToProjects: string[];
+}
+//#endregion
 
+//#region env options / website
+class EnvOptionsWebsite {
+  title: string;
+  domain: string;
+  useDomain: boolean;
+}
+//#endregion
+
+//#region env options / container
+class EnvOptionsContainer {
   /**
    * start release on project
    */
@@ -296,26 +276,192 @@ export class ReleaseOptions extends BuildOptionsLibOrApp<ReleaseOptions> {
    * end release on project
    */
   end?: string;
-
-  /**
-   * quick automatic release of lib
-   */
-  autoReleaseUsingConfig: boolean;
-  /**
-   * quick automatic release of docs app(s)
-   */
-  autoReleaseUsingConfigDocs: boolean;
-  /**
-   * @deprecated
-   */
-  specifiedVersion: string;
-  /**
-   * release only trusted projects for specific container framework version
-   */
-  trusted: boolean;
-  public static from(options: Partial<ReleaseOptions>): ReleaseOptions {
-    return instanceFrom(options, ReleaseOptions);
-  }
 }
+//#endregion
 
+export class EnvOptions<PATHS = {}, CONFIGS = {}> {
+  //#region static / from
+  public static from(options: Partial<EnvOptions>): EnvOptions {
+    const orgFinishCallback = options?.finishCallback;
+    let res = _.merge(new EnvOptions(), _.cloneDeep(options));
+    res = res.clone(options);
+    if (orgFinishCallback) {
+      res.finishCallback = orgFinishCallback;
+    } else {
+      res.finishCallback = () => {};
+    }
+    return res;
+  }
+
+  public static fromRelease(releaseOptions: EnvOptions): EnvOptions {
+    const buildOptions = EnvOptions.from(releaseOptions as any);
+    buildOptions.build.watch = false;
+    return buildOptions;
+  }
+
+  public static fromBuild(releaseOptions: EnvOptions): EnvOptions {
+    const buildOptions = EnvOptions.from(releaseOptions as any);
+    // buildOptions.build.watch = false;
+    return buildOptions;
+  }
+
+  public static saveToFile(
+    options: Partial<EnvOptions>,
+    absFilePath: string,
+  ): void {
+    //#region @backendFunc
+    Helpers.writeJson(absFilePath, options);
+    //#endregion
+  }
+
+  public static loadFromFile(absFilePath: string): EnvOptions {
+    //#region @backendFunc
+    const options = Helpers.readJson(absFilePath);
+    return EnvOptions.from(options);
+    //#endregion
+  }
+
+  public static getParamsString(options: Partial<EnvOptions>): string {
+    //#region @backendFunc
+    const env = EnvOptions.from(options);
+    let pathWithParams = '';
+    walk.Object(
+      env,
+      (value, lodashPath) => {
+        if (_.isNil(value) || _.isFunction(value) || _.isObject(value)) {
+          // skipping
+        } else {
+          if (Array.isArray(value)) {
+            for (const val of value) {
+              if (_.isBoolean(value)) {
+                pathWithParams += ` --${lodashPath}=${val ? 'true' : 'false'} `;
+              } else {
+                pathWithParams += ` --${lodashPath}=${val} `;
+              }
+            }
+          } else {
+            const val = value;
+            if (_.isBoolean(value)) {
+              pathWithParams += ` --${lodashPath}=${val ? 'true' : 'false'} `;
+            } else {
+              pathWithParams += ` --${lodashPath}=${val} `;
+            }
+          }
+        }
+      },
+      { walkGetters: false },
+    );
+    return pathWithParams ? ` ${pathWithParams.trim()} ` : ' ';
+    //#endregion
+  }
+
+  //#endregion
+
+  private applyFields(options: Partial<EnvOptions> = {}): void {
+    const override = _.cloneDeep(options);
+    Object.keys(override).forEach(key => {
+      this[key] = override[key];
+    });
+
+    this.paths = this.paths || ({} as any);
+    this.config = this.config || ({} as any);
+
+    this.paths = _.merge(this.paths, override.paths);
+    this.config = _.merge(this.config, override.config);
+
+    this.container = _.merge(EnvOptionsContainer, override.container);
+
+    this.ports = _.merge(EnvOptionsPorts, override.ports);
+    this.init = _.merge(EnvOptionsInit, override.init);
+    this.build = _.merge(EnvOptionsBuild, override.build);
+    this.build.pwa = _.merge(EnvOptionsBuildPwa, override.build?.pwa);
+    this.build.cli = _.merge(EnvOptionsBuildCli, override.build?.cli);
+    this.build.websql = !!(override.build?.websql || this.build.websql);
+
+    this.loading = _.merge(EnvOptionsLoading, override.loading);
+    this.loading.preAngularBootstrap = _.merge(
+      EnvOptionsLoadingPreAngularBootstrap,
+      override.loading?.preAngularBootstrap,
+    );
+    this.loading.afterAngularBootstrap = _.merge(
+      EnvOptionsLoadingAfterAngularBootstrapConfig,
+      override.loading?.afterAngularBootstrap,
+    );
+    this.release = _.merge(EnvOptionsRelease, override.release);
+    this.copyToManager = _.merge(
+      EnvOptionsCopyToManager,
+      override.copyToManager,
+    );
+    this.website = _.merge(EnvOptionsWebsite, override.website);
+    if (_.isString(this.website.domain)) {
+      this.website.domain = this.website.domain.replace(/\/$/, '');
+      this.website.domain = this.website.domain.replace(/^https?:\/\//, '');
+    }
+  }
+
+  protected constructor(options: Partial<EnvOptions> = {}) {
+    this.applyFields(options);
+  }
+  finishCallback: () => any;
+
+  public saveToFile(absFilePath: string): void {
+    //#region @backendFunc
+    EnvOptions.saveToFile(this, absFilePath);
+    //#endregion
+  }
+
+  public loadFromFile(absFilePath: string): void {
+    //#region @backendFunc
+    const data = EnvOptions.loadFromFile(absFilePath);
+    this.applyFields(data);
+    //#endregion
+  }
+
+  //#region clone
+  public clone(override: Partial<EnvOptions>): EnvOptions {
+    const result = new EnvOptions(_.merge(_.cloneDeep(this), override));
+    return result;
+  }
+  //#endregion
+
+  get temporarySrcForReleaseCutCode(): string {
+    //#region @backendFunc
+    return `tmp-cut-release-src-${config.folder.dist}${this.build.websql ? '-websql' : ''}`;
+    //#endregion
+  }
+
+  paths?: PATHS;
+  config?: CONFIGS;
+  purpose?: string;
+  /**
+   * action is recursive
+   */
+  recursiveAction?: boolean;
+  isCiProcess?: boolean;
+  declare container: Partial<EnvOptionsContainer>;
+  declare ports: Partial<EnvOptionsPorts>;
+  declare release: Partial<EnvOptionsRelease>;
+  declare init: Partial<EnvOptionsInit>;
+  declare build: Partial<EnvOptionsBuild>;
+  declare loading: Partial<EnvOptionsLoading>;
+  declare copyToManager: Partial<EnvOptionsCopyToManager>;
+  declare website: Partial<EnvOptionsWebsite>;
+
+  //#region generated fields
+  declare readonly name?: CoreModels.EnvironmentNameTaon; // generated
+  declare readonly currentProjectName?: string;
+  declare readonly currentProjectGenericName?: string;
+  declare readonly currentProjectType?: CoreModels.LibType;
+  declare readonly buildInfo?: {
+    number?: number;
+    hash?: string;
+    date?: Date;
+    options?: {
+      isWatchBuild?: boolean;
+      isWebsqlBuild?: boolean;
+      outDir?: 'dist';
+    };
+  };
+  //#endregion
+}
 //#endregion

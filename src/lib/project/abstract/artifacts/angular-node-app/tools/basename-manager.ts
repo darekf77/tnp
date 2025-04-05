@@ -1,6 +1,6 @@
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
-import { InitOptions, ReleaseArtifactTaon } from '../../../../../options';
+import { EnvOptions, ReleaseArtifactTaon } from '../../../../../options';
 import type { Project } from '../../../project';
 
 /**
@@ -17,11 +17,9 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
     return this.project.name;
   }
 
-  private resolveBaseHrefForProj(
-    overrideBaseHref: string,
-    releaseType?: ReleaseArtifactTaon,
-  ) {
+  private resolveBaseHrefForProj(initOptions: EnvOptions) {
     //#region @backendFunc
+    const overrideBaseHref: string = initOptions.build.baseHref;
     let baseHref = this.rootBaseHref;
 
     if (overrideBaseHref === '') {
@@ -30,10 +28,8 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
       if (overrideBaseHref) {
         baseHref = overrideBaseHref;
       } else {
-        if (releaseType) {
-          if (
-            this.project.artifactsManager.globalHelper.env.config?.useDomain
-          ) {
+        if (initOptions.release.releaseType) {
+          if (initOptions.website.useDomain) {
             baseHref = this.rootBaseHref;
           } else {
             baseHref = `/${this.baseHrefForGhPages}/`;
@@ -46,9 +42,9 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
     //#endregion
   }
 
-  getBaseHref(initOptions: InitOptions) {
+  getBaseHref(initOptions: EnvOptions) {
     //#region @backendFunc
-    let baseHref = this.resolveBaseHrefForProj(initOptions.baseHref);
+    let baseHref = this.resolveBaseHrefForProj(initOptions);
 
     // baseHref = baseHref.endsWith('/') ? baseHref : (baseHref + '/');
     // baseHref = baseHref.startsWith('/') ? baseHref : ('/' + baseHref);
@@ -57,7 +53,7 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
     //#endregion
   }
 
-  replaceBaseHrefInFile(fileAbsPath: string, initOptions: InitOptions) {
+  replaceBaseHrefInFile(fileAbsPath: string, initOptions: EnvOptions) {
     //#region @backendFunc
     let fileContent = Helpers.readFile(fileAbsPath);
     const frontendBaseHref =

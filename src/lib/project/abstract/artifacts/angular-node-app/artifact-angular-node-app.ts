@@ -18,13 +18,7 @@ import {
   tmpBaseHrefOverwriteRelPath,
   tmpBuildPort,
 } from '../../../../constants';
-import {
-  BuildOptions,
-  ClearOptions,
-  InitOptions,
-  ReleaseOptions,
-  ReleaseType,
-} from '../../../../options';
+import { EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact } from '../base-artifact';
 import { InsideStructuresApp } from '../npm-lib-and-cli-tool/tools/inside-structures/inside-structures';
@@ -59,19 +53,19 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   public readonly __assetsManager: AssetsManager;
 
   async APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
-    buildOptions: Partial<BuildOptions>,
+    buildOptions: Partial<EnvOptions>,
   ): Promise<number> {
-    buildOptions = BuildOptions.from(buildOptions);
-    const key = `${buildOptions.watch ? 'serve' : 'build'} ng app (${buildOptions.websql ? 'websql' : 'normal'})`;
+    buildOptions = EnvOptions.from(buildOptions);
+    const key =
+      `${buildOptions.build.watch ? 'serve' : 'build'} ` +
+      `ng app (${buildOptions.build.websql ? 'websql' : 'normal'})`;
     return await this.project.registerAndAssignPort(key, {
       startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
     });
   }
 
-  async NODE_BACKEND_PORT_UNIQ_KEY(
-    buildOptions: BuildOptions,
-  ): Promise<number> {
-    buildOptions = BuildOptions.from(buildOptions);
+  async NODE_BACKEND_PORT_UNIQ_KEY(buildOptions: EnvOptions): Promise<number> {
+    buildOptions = EnvOptions.from(buildOptions);
     const key = `node backend`;
     return await this.project.registerAndAssignPort(key, {
       startFrom: DEFAULT_PORT.SERVER_LOCALHOST,
@@ -93,17 +87,19 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   //#endregion
 
   //#region init partial
-  async initPartial(initOptions: InitOptions): Promise<void> {
+  async initPartial(initOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
     await this.insideStructureApp.init(initOptions);
     this.fixAppTsFile();
 
     // Build assets file for app in app build mode
     if (this.project.framework.isStandaloneProject) {
-      if (initOptions.watch) {
-        await this.assetsFileListGenerator.startAndWatch(initOptions.websql);
+      if (initOptions.build.watch) {
+        await this.assetsFileListGenerator.startAndWatch(
+          initOptions.build.websql,
+        );
       } else {
-        await this.assetsFileListGenerator.start(initOptions.websql);
+        await this.assetsFileListGenerator.start(initOptions.build.websql);
       }
     }
 
@@ -116,7 +112,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     ]);
 
     const wasmfileDest = this.project.pathFor(
-      `tmp-src-dist${initOptions.websql ? '-websql' : ''}/assets/sql-wasm.wasm`,
+      `tmp-src-dist${initOptions.build.websql ? '-websql' : ''}` +
+        `/assets/sql-wasm.wasm`,
     );
     Helpers.copyFile(wasmfileSource, wasmfileDest);
     //#endregion
@@ -124,7 +121,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   //#endregion
 
   //#region build partial
-  async buildPartial(buildOptions: BuildOptions): Promise<{
+  async buildPartial(buildOptions: EnvOptions): Promise<{
     appDistOutBrowserAngularAbsPath: string;
     appDistOutBackendNodeAbsPath: string;
     angularNgServeAddress: URL;
@@ -132,12 +129,15 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }> {
     //#region @backendFunc
 
-    if (!_.isUndefined(buildOptions.baseHref)) {
+    if (!_.isUndefined(buildOptions.build.baseHref)) {
       Helpers.error(
-        `Build baseHref only can be specify when build lib code:
+        `Build baseHref only can be specify when` +
+          ` build lib code:
 
       try commands:
-      ${config.frameworkName} build:lib --base-href ${buildOptions.baseHref} # it will do lib code build
+      ${config.frameworkName} build:lib --base-href ` +
+          `${buildOptions.build.baseHref} ` +
+          `# it will do lib code build
 
       `,
         false,
@@ -152,27 +152,29 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     const appDistOutBackendNodeAbsPath =
       this.getOutDirNodeBackendAppAbsPath(buildOptions);
 
-    await this.initPartial(InitOptions.fromBuild(buildOptions));
+    await this.initPartial(EnvOptions.from(buildOptions));
 
-    // TODO @LAST this shoudl be set externally
-    buildOptions.ngNormalAppPort =
-      buildOptions.ngNormalAppPort ||
+    // TODO @LAST this should be set externally
+    buildOptions.ports.ngNormalAppPort =
+      buildOptions.ports.ngNormalAppPort ||
       (await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(buildOptions));
 
-    buildOptions.ngWebsqlAppPort =
-      buildOptions.ngWebsqlAppPort ||
+    buildOptions.ports.ngWebsqlAppPort =
+      buildOptions.ports.ngWebsqlAppPort ||
       (await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY({
         ...buildOptions,
-        websql: true,
+        build: {
+          websql: true,
+        },
       }));
 
     const fromFileBaseHref = Helpers.readFile(
       this.project.pathFor(tmpBaseHrefOverwriteRelPath),
     );
-    buildOptions.baseHref = fromFileBaseHref;
+    buildOptions.build.baseHref = fromFileBaseHref;
 
     const backendPort =
-      buildOptions.nodeBeAppPort ||
+      buildOptions.ports.nodeBeAppPort ||
       (await this.NODE_BACKEND_PORT_UNIQ_KEY(buildOptions));
 
     UtilsTypescript.setValueToVariableInTsFile(
@@ -184,22 +186,22 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     UtilsTypescript.setValueToVariableInTsFile(
       this.project.pathFor('src/app.hosts.ts'),
       'CLIENT_DEV_WEBSQL_APP_PORT',
-      buildOptions.ngWebsqlAppPort,
+      buildOptions.ports.ngWebsqlAppPort,
     );
 
     UtilsTypescript.setValueToVariableInTsFile(
       this.project.pathFor('src/app.hosts.ts'),
       'CLIENT_DEV_NORMAL_APP_PORT',
-      buildOptions.ngNormalAppPort,
+      buildOptions.ports.ngNormalAppPort,
     );
 
     const portAssignedToAppBuild: number = Number(
-      buildOptions.websql
-        ? buildOptions.ngWebsqlAppPort
-        : buildOptions.ngNormalAppPort,
+      buildOptions.build.websql
+        ? buildOptions.ports.ngWebsqlAppPort
+        : buildOptions.ports.ngNormalAppPort,
     );
 
-    if (buildOptions.watch) {
+    if (buildOptions.build.watch) {
       await Helpers.killProcessByPort(portAssignedToAppBuild);
     }
 
@@ -207,18 +209,22 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       `--output-path ` +
       `${this.getOutDirAngularBrowserAppAbsPath(buildOptions)} `;
 
-    const angularBuildAppCmd = buildOptions.watch
+    const angularBuildAppCmd = buildOptions.build.watch
       ? `${this.NPM_RUN_NG_COMMAND} serve ${
-          buildOptions.buildAngularAppForElectron ? 'angular-electron' : 'app'
+          buildOptions.release.targetArtifact === 'electron-app'
+            ? 'angular-electron'
+            : 'app'
         } ` +
         ` ${`--port=${portAssignedToAppBuild}`} ${
-          buildOptions.prod ? '--prod' : ''
+          buildOptions.build.angularProd ? '--prod' : ''
         }`
       : `${this.NPM_RUN_NG_COMMAND} build ${
-          buildOptions.buildAngularAppForElectron ? 'angular-electron' : 'app'
+          buildOptions.release.targetArtifact === 'electron-app'
+            ? 'angular-electron'
+            : 'app'
         }` +
-        `${buildOptions.prod ? '--configuration production' : ''} ` +
-        `${buildOptions.watch ? '--watch' : ''}` +
+        `${buildOptions.build.angularProd ? '--configuration production' : ''} ` +
+        `${buildOptions.build.watch ? '--watch' : ''}` +
         `${outPutPathCommand} `;
 
     const angularTempProj = this.globalHelper.getProxyNgProj(buildOptions);
@@ -244,7 +250,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       },
       //#region command execute params
       exitOnErrorCallback: async code => {
-        if (buildOptions.releaseType) {
+        if (buildOptions.release.releaseType) {
           throw 'Angular compilation lib error!!!asd';
         } else {
           Helpers.error(
@@ -308,7 +314,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     return void 0; // TODO implement
   }
 
-  async clearPartial(options: ClearOptions): Promise<void> {
+  async clearPartial(options: EnvOptions): Promise<void> {
     return void 0; // TODO implement
   }
 
@@ -316,12 +322,12 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   /**
    * Absolute path to the output directory for the app
    */
-  getOutDirNodeBackendAppAbsPath(buildOptions: BuildOptions): string {
+  getOutDirNodeBackendAppAbsPath(buildOptions: EnvOptions): string {
     let outDirApp =
       `.${config.frameworkName}/${this.currentArtifactName}/` +
-      `${buildOptions.releaseType ? buildOptions.releaseType : 'development'}/` +
+      `${buildOptions.release.releaseType ? buildOptions.release.releaseType : 'development'}/` +
       `backend/` +
-      `${config.folder.dist}-app${buildOptions.websql ? '-websql' : ''}`;
+      `${config.folder.dist}-app${buildOptions.build.websql ? '-websql' : ''}`;
 
     return this.project.pathFor(outDirApp);
   }
@@ -331,12 +337,12 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   /**
    * Absolute path to the output directory for the app
    */
-  getOutDirAngularBrowserAppAbsPath(buildOptions: BuildOptions): string {
+  getOutDirAngularBrowserAppAbsPath(buildOptions: EnvOptions): string {
     let outDirApp =
       `.${config.frameworkName}/${this.currentArtifactName}/` +
-      `${buildOptions.releaseType ? buildOptions.releaseType : 'development'}/` +
+      `${buildOptions.release.releaseType ? buildOptions.release.releaseType : 'development'}/` +
       `${config.folder.browser}/` +
-      `${config.folder.dist}-app${buildOptions.websql ? '-websql' : ''}`;
+      `${config.folder.dist}-app${buildOptions.build.websql ? '-websql' : ''}`;
 
     return this.project.pathFor(outDirApp);
   }

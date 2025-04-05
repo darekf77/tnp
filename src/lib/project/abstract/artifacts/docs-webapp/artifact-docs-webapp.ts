@@ -1,12 +1,6 @@
 import { Url } from 'url';
 
-import {
-  BuildOptions,
-  ClearOptions,
-  InitOptions,
-  ReleaseOptions,
-  ReleaseType,
-} from '../../../../options';
+import { EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact } from '../base-artifact';
 
@@ -24,9 +18,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
 > {
   public docs: Docs;
 
-  async DOCS_ARTIFACT_PORT_UNIQ_KEY(
-    buildOptions: BuildOptions,
-  ): Promise<number> {
+  async DOCS_ARTIFACT_PORT_UNIQ_KEY(buildOptions: EnvOptions): Promise<number> {
     const key = 'docs port for http server';
     return await this.project.registerAndAssignPort(key, {
       startFrom: 3950,
@@ -38,34 +30,34 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     this.docs = new Docs(this.project);
   }
 
-  async clearPartial(clearOptions: ClearOptions): Promise<void> {
+  async clearPartial(clearOptions: EnvOptions): Promise<void> {
     return void 0; // TODO implement
   }
 
-  async initPartial(initOptions: InitOptions): Promise<void> {
-    await this.docs.initizalizeWatchers();
+  async initPartial(initOptions: EnvOptions): Promise<void> {
+    await this.docs.initializeWatchers(initOptions);
     await this.docs.init();
   }
 
-  async buildPartial(buildOptions: BuildOptions): Promise<{
+  async buildPartial(buildOptions: EnvOptions): Promise<{
     docsWebappDistOutPath: string;
     combinedDocsHttpServerUrl: Url;
   }> {
-    await this.initPartial(InitOptions.fromBuild(buildOptions));
+    await this.initPartial(EnvOptions.from(buildOptions));
     const combinedDocsHttpServerUrl: Url = void 0; // TODO implement
-    const docsWebappDistOutPath: string = buildOptions.overrideOutputPath;
+    const docsWebappDistOutPath: string = buildOptions.build.overrideOutputPath;
     const port = await this.DOCS_ARTIFACT_PORT_UNIQ_KEY(buildOptions);
 
     await this.docs.runTask({
-      watch: buildOptions.watch,
+      watch: buildOptions.build.watch,
       initialParams: {
         docsOutFolder: docsWebappDistOutPath,
-        ciBuild: buildOptions.ciProcess,
+        ciBuild: buildOptions.isCiProcess,
         port,
       },
     });
 
-    if (!buildOptions.watch) {
+    if (!buildOptions.build.watch) {
       buildOptions.finishCallback?.();
     }
 
@@ -73,15 +65,15 @@ export class ArtifactDocsWebapp extends BaseArtifact<
   }
 
   async releasePartial(
-    releaseOptions: ReleaseOptions,
+    releaseOptions: EnvOptions,
   ): Promise<{ releaseProjPath: string; releaseType: ReleaseType }> {
     const releaseProjPath: string = void 0; // TODO implement
     const releaseType: ReleaseType = void 0; // TODO implement
 
     const { docsWebappDistOutPath } = await this.buildPartial(
-      BuildOptions.from({ ...releaseOptions, ciProcess: true }),
+      EnvOptions.from({ ...releaseOptions, isCiProcess: true }),
     );
-    if (releaseOptions.releaseType === 'local') {
+    if (releaseOptions.release.releaseType === 'local') {
       // TODO move folder
     }
 

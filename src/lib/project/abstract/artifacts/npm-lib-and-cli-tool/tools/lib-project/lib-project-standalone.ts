@@ -9,7 +9,7 @@ import {
   clientCodeVersionFolder,
 } from '../../../../../../constants';
 import { Models } from '../../../../../../models';
-import { BuildOptions } from '../../../../../../options';
+import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
 import type { AppBuildConfig } from '../../../angular-node-app/tools/docs-app-build-config'; // '../../features/docs-app-build-config';
 
@@ -25,84 +25,6 @@ export class LibProjectStandalone extends LibProjectBase {
   }
   //#endregion
 
-  //#region  fix package.json
-
-  fixPackageJson() {
-    //#region @backendFunc
-    // [
-    //   // config.folder.browser, /// TODO FIX for typescript
-    //   config.folder.client,
-    //   '',
-    // ].forEach(c => {
-    //   const pjPath = path.join(this.lib.location, config.folder.dist, c, config.file.package_json);
-    //   const content = Helpers.readJson(pjPath);
-    //   Helpers.remove(pjPath);
-    //   Helpers.writeFile(pjPath, content);
-    // });
-
-    this.project.npmHelpers.copyDepsFromCoreContainer(
-      `after release show when ok`,
-    );
-    if (this.project.taonJson.cliLibReleaseOptions.cliBuildIncludeNodeModules) {
-      // this.lib.packageJson.clearForRelease('dist');
-    } else {
-      //#region copy packagejson before release (beacuse it may be link)
-      const packageJsonInDistReleasePath = path.join(
-        this.project.location,
-        config.folder.dist,
-        config.file.package_json,
-      );
-      const orgPj = Helpers.readFile(packageJsonInDistReleasePath);
-      Helpers.removeFileIfExists(packageJsonInDistReleasePath);
-      Helpers.writeFile(packageJsonInDistReleasePath, orgPj);
-      //#endregion
-
-      if (this.project.packageJson.name === 'tnp') {
-        // TODO QUICK_FIX
-        Helpers.setValueToJSON(
-          path.join(
-            this.project.location,
-            config.folder.dist,
-            config.file.package_json,
-          ),
-          'dependencies',
-          (
-            this.project.ins.Tnp.taonJson.dependenciesNamesForNpmLib || []
-          ).reduce((a, b) => {
-            return _.merge(a, {
-              [b]: this.project.ins.Tnp.packageJson.dependencies[b],
-            });
-          }, {}),
-        );
-      } else {
-        Helpers.setValueToJSON(
-          packageJsonInDistReleasePath,
-          'devDependencies',
-          {},
-        );
-        // QUICK FIX include only
-        const dependenciesNamesForNpmLib =
-          this.project.taonJson.dependenciesNamesForNpmLib || [];
-
-        const dependencies =
-          Helpers.readJson(packageJsonInDistReleasePath, {}).dependencies || {};
-
-        Object.keys(dependencies).forEach(packageName => {
-          if (!dependenciesNamesForNpmLib.includes(packageName)) {
-            delete dependencies[packageName];
-          }
-        });
-        Helpers.setValueToJSON(
-          packageJsonInDistReleasePath,
-          'dependencies',
-          dependencies,
-        );
-      }
-    }
-    //#endregion
-  }
-  //#endregion
-
   //#region build docs
   async buildDocs(
     prod: boolean,
@@ -113,7 +35,7 @@ export class LibProjectStandalone extends LibProjectBase {
 
     //#region resovle variables
     const mainProjectName = this.project.name;
-    let appBuildOptions = { docsAppInProdMode: prod, websql: false };
+    let appEnvOptions = { docsAppInProdMode: prod, websql: false };
     //#endregion
 
     return await Helpers.questionYesNo(
@@ -121,7 +43,7 @@ export class LibProjectStandalone extends LibProjectBase {
       async () => {
         //#region questions
         if (autoReleaseUsingConfigDocs) {
-          appBuildOptions = {
+          appEnvOptions = {
             docsAppInProdMode:
               this.project.artifactsManager.artifact.angularNodeApp
                 .__docsAppBuild.config.prod,
@@ -135,28 +57,28 @@ export class LibProjectStandalone extends LibProjectBase {
           await Helpers.questionYesNo(
             `Do you want build in production mode`,
             () => {
-              appBuildOptions.docsAppInProdMode = true;
+              appEnvOptions.docsAppInProdMode = true;
             },
             () => {
-              appBuildOptions.docsAppInProdMode = false;
+              appEnvOptions.docsAppInProdMode = false;
             },
           );
 
           await Helpers.questionYesNo(
             `Do you wanna use websql mode ?`,
             () => {
-              appBuildOptions.websql = true;
+              appEnvOptions.websql = true;
             },
             () => {
-              appBuildOptions.websql = false;
+              appEnvOptions.websql = false;
             },
           );
         }
 
         const cfg: AppBuildConfig = {
           build: true,
-          prod: appBuildOptions.docsAppInProdMode,
-          websql: appBuildOptions.websql,
+          prod: appEnvOptions.docsAppInProdMode,
+          websql: appEnvOptions.websql,
           projName: mainProjectName,
         };
 
@@ -174,9 +96,11 @@ export class LibProjectStandalone extends LibProjectBase {
         await Helpers.runSyncOrAsync({ functionFn: libBuildCallback });
 
         await this.project.build(
-          BuildOptions.from({
-            prod: appBuildOptions.docsAppInProdMode,
-            websql: appBuildOptions.websql,
+          EnvOptions.from({
+            build: {
+              angularProd: appEnvOptions.docsAppInProdMode,
+              websql: appEnvOptions.websql,
+            },
           }),
         );
 
@@ -191,7 +115,7 @@ export class LibProjectStandalone extends LibProjectBase {
         const assetsListPathSourceMain = crossPlatformPath([
           this.project.location,
           `tmp-dist-release/${config.folder.dist}/project/${this.project.name}`,
-          `tmp-apps-for-${config.folder.dist}${appBuildOptions.websql ? '-websql' : ''}`,
+          `tmp-apps-for-${config.folder.dist}${appEnvOptions.websql ? '-websql' : ''}`,
           this.project.name,
           config.folder.src,
           config.folder.assets,

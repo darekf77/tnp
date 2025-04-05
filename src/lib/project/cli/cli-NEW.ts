@@ -14,13 +14,17 @@ import { PackageJson } from 'type-fest';
 
 import { MESSAGES, TEMP_DOCS, notAllowedProjectNames } from '../../constants';
 import { Models } from '../../models';
-import { BuildOptions, InitOptions, NewOptions } from '../../options';
+import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 import { TaonJson } from '../abstract/taonJson';
+
+import { BaseCli } from './base-cli';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
-export class $New extends BaseCommandLineFeature<NewOptions, Project> {
+export class $New extends BaseCli {
+
+
   public async _() {
     await this._containerStandaloneFromArgs(this.args.join(' '));
   }
@@ -375,7 +379,7 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
     }
 
     await appProj.init(
-      InitOptions.from({
+      EnvOptions.from({
         purpose: 'initing new app',
       }),
     );
@@ -437,7 +441,7 @@ export class $New extends BaseCommandLineFeature<NewOptions, Project> {
       const container = containers[index];
 
       await container.init(
-        InitOptions.from({
+        EnvOptions.from({
           purpose: 'initing new container',
         }),
       );

@@ -4,7 +4,7 @@ import { config, PREFIXES } from 'tnp-config/src';
 import { extAllowedToReplace } from 'tnp-config/src';
 import { crossPlatformPath, fse, path, _ } from 'tnp-core/src';
 
-import { BuildOptions } from '../../../../../../../options';
+import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
 import { BrowserCodeCut } from './browser-code-cut';
@@ -28,7 +28,7 @@ export class CodeCut {
      * @deprecated
      */
     private compilationProject: Project,
-    private buildOptions: BuildOptions,
+    private buildOptions: EnvOptions,
     public sourceOutBrowser: string,
   ) {}
   //#endregion
@@ -61,6 +61,7 @@ export class CodeCut {
   }
 
   file(relativePathToFile: string, remove: boolean = false) {
+    // console.log('CUT: ', relativePathToFile);
     //#region @backendFunc
     if (!this.isAllowedPathForSave(relativePathToFile)) {
       return;

@@ -224,6 +224,10 @@ export const notAllowedProjectNames = [
   '_',
 ];
 
+export const envTs = 'env.ts';
+
+export const environments = 'environments';
+
 export function tempSourceFolder(
   outDir: 'dist',
   appForLib: boolean,
