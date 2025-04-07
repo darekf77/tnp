@@ -68,7 +68,11 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
   public checkProjectReadyForNpmRelease(): void {
     //#region @backendFunc
 
-    if (this.project.framework.isStandaloneProject) {
+    if (
+      (this.project.framework.isStandaloneProject ||
+        this.project.framework.isContainer) &&
+      !this.project.framework.isCoreProject
+    ) {
       return;
     }
 

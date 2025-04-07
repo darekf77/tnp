@@ -184,15 +184,22 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         )
       : this.children;
 
+    // console.log('before sorting ',children.map(c => c.name));
+
     if (this.framework.isContainer) {
       children = this.ins // @ts-ignore BaseProject inheritace compatiblity with Project problem
         .sortGroupOfProject<Project>(
           children,
-          proj => proj.taonJson.dependenciesNamesForNpmLib,
+          proj => [
+            ...proj.taonJson.dependenciesNamesForNpmLib,
+            proj.taonJson.peerDependenciesNamesForNpmLib,
+          ],
           proj => proj.name,
         )
         .filter(d => d.name !== this.name); // TODO probably not needed
     }
+
+    // console.log('after sorting ',children.map(c => c.name));
     //#endregion
 
     //#region question about release
@@ -200,7 +207,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       !(await this.npmHelpers.shouldReleaseMessage({
         releaseVersionBumpType: releaseOptions.release.releaseVersionBumpType,
         versionToUse: newVersion,
-        whatToRelase: {
+        children: children as any,
+        whatToRelease: {
           itself: this.framework.isStandaloneProject,
           children: this.framework.isContainer,
         },
@@ -213,7 +221,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     }
     //#endregion
 
-    //#region resovle git changes
+    //#region resolve git changes
     if (this.framework.isStandaloneProject) {
       await this.git.resolveLastChanges({
         tryAutomaticActionFirst: releaseOptions.release.autoReleaseUsingConfig,
@@ -230,7 +238,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     }
     //#endregion
 
-    //#region actuall release process
+    //#region actual release process
 
     if (this.framework.isStandaloneProject) {
       await this.artifactsManager.tryCatchWrapper(async () => {
