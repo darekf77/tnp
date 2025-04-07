@@ -1,6 +1,7 @@
 {
   "type": "isomorphic-lib",
   "version": "v18",
+
   "dependenciesNamesForNpmLib": [
     // "favicons": "~7.1.2", // favicons generator! - has node gyp dep
     "ora",
@@ -10,10 +11,16 @@
     "isomorphic-region-loader",
   ],
 
+  "autoReleaseConfigAllowedItems": [{
+    "artifactName": "npm-lib-and-cli-tool"
+  }],
+
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
   "resources": [],
+
   // TODO remove when all things updated
   "usesItsOwnNodeModules": true,
+
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
     "license": "MIT",
@@ -22,5 +29,5 @@
     "scripts": {
       "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     }
-  },
+  }
 }

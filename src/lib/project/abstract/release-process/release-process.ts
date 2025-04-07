@@ -12,6 +12,7 @@ import { Helpers } from 'tnp-helpers/src';
 import { BaseReleaseProcess } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
+import { environments } from '../../../constants';
 import {
   ReleaseArtifactTaon,
   ReleaseArtifactTaonNamesArr,
@@ -20,14 +21,14 @@ import {
 } from '../../../options';
 import type { Project } from '../project';
 
-import { ReleaseConfig } from './release-config';
+// import { ReleaseConfig } from './release-config';
 //#endregion
 
 /**
  * manage standalone or container release process
  */ // @ts-ignore TODO weird inheritance problem
 export class ReleaseProcess extends BaseReleaseProcess<Project> {
-  config = new ReleaseConfig(this.project);
+  // config = new ReleaseConfig(this.project);
 
   //#region constructor
   constructor(project: Project) {
@@ -36,7 +37,9 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
   //#endregion
 
   //#region display release process menu
-  public async displayReleaseProcessMenu(): Promise<void> {
+  public async displayReleaseProcessMenu(
+    envOptions: EnvOptions,
+  ): Promise<void> {
     //#region @backendFunc
     while (true) {
       UtilsTerminal.clearConsole();
@@ -87,7 +90,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             //#region manual
             name: `${this.getColoredTextItem(manual)} Taon release + create config for Cloud`,
             action: async () => {
-              await this.releaseByType(manual);
+              await this.releaseByType(manual, envOptions);
             },
             //#endregion
           },
@@ -99,7 +102,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
                 message: 'Not implemented yet.. press any key to go back',
               });
               return;
-              await this.releaseByType(cloud);
+              await this.releaseByType(cloud, envOptions);
             },
             //#endregion
           },
@@ -111,7 +114,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
                 message: 'Not implemented yet.. press any key to go back',
               });
               return;
-              await this.releaseByType(local);
+              await this.releaseByType(local, envOptions);
             },
             //#endregion
           },
@@ -123,7 +126,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
                 message: 'Not implemented yet.. press any key to go back',
               });
               return;
-              await this.releaseByType(staticPages);
+              await this.releaseByType(staticPages, envOptions);
             },
             //#endregion
           },
@@ -142,26 +145,86 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
   //#endregion
 
   //#region release by type
-  async releaseByType(releaseType: ReleaseType): Promise<void> {
+  async releaseByType(
+    releaseType: ReleaseType,
+    envOptions: EnvOptions,
+  ): Promise<void> {
     //#region @backendFunc
+
     const selectedProjects =
-      await this.project.releaseProcess.displayProjectsSelectionMenu();
+      await this.project.releaseProcess.displayProjectsSelectionMenu(
+        envOptions,
+      );
     const releaseArtifactsTaon = await this.displaySelectArtifactsMenu(
-      releaseType,
+      envOptions,
       selectedProjects,
       ['npm-lib-and-cli-tool'],
     );
+    if (!envOptions.release.releaseVersionBumpType) {
+      if (envOptions.release.autoReleaseUsingConfig) {
+        envOptions.release.releaseVersionBumpType = 'patch';
+      } else {
+        envOptions.release.releaseVersionBumpType =
+          await this.selectReleaseType(bumpType =>
+            this.project.packageJson.resolvePossibleNewVersion(bumpType),
+          );
+      }
+    }
+
     await this.releaseArtifacts(
       releaseType,
       releaseArtifactsTaon,
       selectedProjects,
+      envOptions,
     );
     //#endregion
   }
   //#endregion
 
+  //#region get environment names by artifact
+  public getEnvNamesByArtifact(artifact: ReleaseArtifactTaon): {
+    envName: CoreModels.EnvironmentNameTaon;
+    envNumber?: number | undefined;
+  }[] {
+    //#region @backendFunc
+    if (!artifact) {
+      throw new Error('Artifact is required');
+    }
+    const pathToEnvFolder = this.project.pathFor([environments, artifact]);
+    const files = Helpers.filesFrom(pathToEnvFolder);
+
+    return files
+      .map(f => path.basename(f))
+      .filter(f => f.startsWith('env.') && f.endsWith('.ts'))
+      .map(f => {
+        const env = f.replace(`env.${artifact}.`, '').replace('.ts', '');
+        const envRemovedNumbers = env.replace(/\d/g, '');
+        const envNumber = parseInt(env.replace(envRemovedNumbers, ''));
+        return {
+          envName: envRemovedNumbers as CoreModels.EnvironmentNameTaon,
+          envNumber: !isNaN(envNumber) ? envNumber : undefined,
+        };
+      })
+      .sort((a, b) => {
+        if (a.envNumber && b.envNumber) {
+          return a.envNumber - b.envNumber;
+        }
+        if (a.envName === '__') {
+          return -1;
+        }
+        if (b.envName === '__') {
+          return 1;
+        }
+        return 0;
+      });
+    //#endregion
+  }
+  //#endregion
+
   //#region display projects selection menu
-  async displayProjectsSelectionMenu(): Promise<Project[]> {
+  async displayProjectsSelectionMenu(
+    envOptions: EnvOptions,
+  ): Promise<Project[]> {
     //#region @backendFunc
     const selectedProjects: Project[] = [this.project];
     if (this.project.framework.isStandaloneProject) {
@@ -203,7 +266,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
 
   //#region display artifacts menu
   public async displaySelectArtifactsMenu(
-    releaseType: ReleaseType,
+    envOptions: EnvOptions,
     selectedProjects: Project[],
     allowedArtifacts?: ReleaseArtifactTaon[] | undefined,
   ): Promise<ReleaseArtifactTaon[]> {
@@ -252,9 +315,47 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
 
   //#region public methods / start release
   // @ts-ignore TODO weird inheritance problem
-  async startRelease(options?: EnvOptions): Promise<void> {
+  async startRelease(envOptions?: EnvOptions): Promise<void> {
     //#region @backendFunc
-    await this.project.release(options);
+    if (!envOptions.release.envName) {
+      if (!envOptions.release.autoReleaseUsingConfig) {
+        const environments = this.getEnvNamesByArtifact(
+          envOptions.release.targetArtifact,
+        );
+        let selected: ReturnType<typeof this.getEnvNamesByArtifact>[number];
+        Helpers.info(
+          `Release environment for ${chalk.bold(envOptions.release.targetArtifact)}`,
+        );
+        if (environments.length == 0) {
+          this.project.environmentConfig.createForArtifact(
+            envOptions.release.targetArtifact,
+          );
+          selected = {
+            envName: '__',
+          };
+        } else if (environments.length === 1) {
+          selected = environments[0];
+        } else {
+          const selectedEnv = await UtilsTerminal.select({
+            choices: environments.map(e => {
+              return {
+                name: e.envName === '__' ? '__ ( default )' : e.envName,
+                value: e.envName,
+              };
+            }),
+            question: `Select environment`,
+            autocomplete: true,
+          });
+          selected = environments.find(e => e.envName === selectedEnv);
+        }
+
+        envOptions.release.envName = selected.envName;
+        envOptions.release.envNumber = selected.envNumber;
+
+      }
+    }
+
+    await this.project.release(envOptions);
     //#endregion
   }
   //#endregion
@@ -264,6 +365,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     releaseType: ReleaseType,
     releaseArtifactsTaon: ReleaseArtifactTaon[],
     selectedProjects: Project[],
+    envOptions: EnvOptions,
   ): Promise<void> {
     //#region @backend
 
@@ -271,7 +373,9 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       for (const targetArtifact of releaseArtifactsTaon) {
         await project.releaseProcess.startRelease(
           EnvOptions.from({
+            ...envOptions,
             release: {
+              ...envOptions.release,
               targetArtifact,
               releaseType,
             },

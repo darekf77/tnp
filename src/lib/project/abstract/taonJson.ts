@@ -172,7 +172,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
   //#region dependencies names for npm lib
   /**
-   * Resource to include in npm lib
+   * deps to inlculde in npm lib
    * (relative paths to files or folders)
    */
   get dependenciesNamesForNpmLib(): string[] {
@@ -181,8 +181,23 @@ export class TaonJson extends BaseFeatureForProject<Project> {
       ?.dependenciesNamesForNpmLib;
 
     if (!_.isArray(res)) {
-      return this.data.overrided.includeOnly || [];
+      return this.data.overrided?.includeOnly || [];
     }
+
+    return res || [];
+    //#endregion
+  }
+  //#endregion
+
+  //#region peerDependencies names for npm lib
+  /**
+   * Peer deps to inlculde in npm lib
+   * (relative paths to files or folders)
+   */
+  get peerDependenciesNamesForNpmLib(): string[] {
+    //#region @backendFunc
+    let res = (this.data as Models.TaonJsonStandalone)
+      ?.peerDependenciesNamesForNpmLib;
 
     return res || [];
     //#endregion
@@ -245,6 +260,33 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region is organization
+  get isOrganization(): boolean {
+    //#region @backendFunc
+    const data = this.data as Models.TaonJsonContainer;
+    return !!data?.organization;
+    //#endregion
+  }
+  //#endregion
+
+  //#region name when inside organization
+  get nameWhenInsideOrganiation(): string | undefined {
+    //#region @backendFunc
+    const data = this.data as Models.TaonJsonStandalone;
+    return data?.overrideNameWhenInsideOrganization;
+    //#endregion
+  }
+  //#endregion
+
+  //#region name when inside organization
+  get overrideNpmName(): string | undefined {
+    //#region @backendFunc
+    const data = this.data as Models.TaonJsonStandalone;
+    return data?.overrideNpmName;
+    //#endregion
+  }
+  //#endregion
+
   //#region is core project
   get isCoreProject(): boolean {
     //#region @backendFunc
@@ -279,6 +321,19 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   get additionalNpmNames(): string[] {
     const data = this.data as Models.TaonJsonStandalone;
     return data?.additionalNpmNames || [];
+  }
+  //#endregion
+
+  //#region auto release config allowed items
+  get autoReleaseConfigAllowedItems(): Models.TaonAutoReleaseItem[] {
+    const data = this.data as Models.TaonJsonStandalone;
+    return data?.autoReleaseConfigAllowedItems || [];
+  }
+
+  set autoReleaseConfigAllowedItems(items: Models.TaonAutoReleaseItem[]) {
+    const data = this.data as Models.TaonJsonStandalone;
+    data.autoReleaseConfigAllowedItems = items;
+    this.saveToDisk('updating auto release config allowed items');
   }
   //#endregion
 }

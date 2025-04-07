@@ -1,6 +1,6 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { fse, os, requiredForDev } from 'tnp-core/src';
+import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { Helpers, BaseProject } from 'tnp-helpers/src';
@@ -168,23 +168,82 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
   //#region api / release
   public async release(releaseOptions: EnvOptions): Promise<void> {
+    //#region @backendFunc
     releaseOptions = EnvOptions.from(releaseOptions);
     await this.npmHelpers.checkProjectReadyForNpmRelease();
     await this.npmHelpers.makeSureLoggedInToNpmRegistry();
 
+    const newVersion = this.packageJson.resolvePossibleNewVersion(
+      releaseOptions.release.releaseVersionBumpType,
+    );
+
+    //#region prepare release children
+    let children = releaseOptions.release.autoReleaseUsingConfig
+      ? this.children.filter(
+          f => f.taonJson.autoReleaseConfigAllowedItems.length > 0,
+        )
+      : this.children;
+
+    if (this.framework.isContainer) {
+      children = this.ins // @ts-ignore BaseProject inheritace compatiblity with Project problem
+        .sortGroupOfProject<Project>(
+          children,
+          proj => proj.taonJson.dependenciesNamesForNpmLib,
+          proj => proj.name,
+        )
+        .filter(d => d.name !== this.name); // TODO probably not needed
+    }
+    //#endregion
+
+    //#region question about release
+    if (
+      !(await this.npmHelpers.shouldReleaseMessage({
+        releaseVersionBumpType: releaseOptions.release.releaseVersionBumpType,
+        versionToUse: newVersion,
+        whatToRelase: {
+          itself: this.framework.isStandaloneProject,
+          children: this.framework.isContainer,
+        },
+        skipQuestionToUser:
+          this.framework.isStandaloneProject &&
+          releaseOptions.release.autoReleaseUsingConfig,
+      }))
+    ) {
+      return;
+    }
+    //#endregion
+
+    //#region resovle git changes
     if (this.framework.isStandaloneProject) {
-      await this.git.resolveActionCommits();
-      await this.artifactsManager.release(releaseOptions);
+      await this.git.resolveLastChanges({
+        tryAutomaticActionFirst: releaseOptions.release.autoReleaseUsingConfig,
+      });
     }
     if (this.framework.isContainer) {
-      for (const child of this.children) {
-        await child.git.resolveActionCommits();
+      for (const child of children) {
+        await child.git.resolveLastChanges({
+          tryAutomaticActionFirst:
+            releaseOptions.release.autoReleaseUsingConfig,
+          projectNameAsOutputPrefix: child.name,
+        });
       }
-      await this.artifactsManager.releaseAllChildren(releaseOptions);
-      await this.artifactsManager.release(releaseOptions);
     }
+    //#endregion
 
-    releaseOptions.finishCallback();
+    //#region actuall release process
+
+    if (this.framework.isStandaloneProject) {
+      await this.artifactsManager.tryCatchWrapper(async () => {
+        await this.artifactsManager.release(releaseOptions);
+      }, 'release');
+    }
+    if (this.framework.isContainer) {
+      await this.artifactsManager.releaseAllChildren(releaseOptions, children);
+    }
+    //#endregion
+
+    releaseOptions.finishCallback && releaseOptions.finishCallback();
+    //#endregion
   }
   //#endregion
 
@@ -204,7 +263,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   }
   //#endregion
 
-  // get env(): EnvOptions {
+  // get env(): EnvOptions  //
   //   return this.environmentConfig.config;
   // }
 
@@ -239,6 +298,31 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       ? this.packageJson.name
       : path.basename(this.location);
     //#endregion
+  }
+  //#endregion
+
+  //#region name for npm package
+  /**
+   * @overload
+   */
+  get nameForNpmPackage(): string {
+    if (
+      this.framework.isStandaloneProject &&
+      this.parent?.framework?.isContainer &&
+      this.parent?.taonJson.isOrganization
+    ) {
+      let nameWhenInOrganization = this.taonJson.nameWhenInsideOrganiation
+        ? this.taonJson.nameWhenInsideOrganiation
+        : this.name;
+      nameWhenInOrganization = this.taonJson.overrideNpmName
+        ? this.taonJson.overrideNpmName
+        : nameWhenInOrganization;
+
+      return `@${this.parent.name}/${nameWhenInOrganization}`;
+    }
+    return this.taonJson.overrideNpmName
+      ? this.taonJson.overrideNpmName
+      : this.name;
   }
   //#endregion
 

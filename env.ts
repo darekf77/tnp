@@ -1,4 +1,4 @@
-import type { EnvOptions } from './src/lib/options';
+import type { EnvOptions } from 'tnp/src';
 
 const env: Partial<EnvOptions> = {
   website: {

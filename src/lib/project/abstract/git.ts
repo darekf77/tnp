@@ -1,6 +1,7 @@
 //#region imports
+import { UtilsTerminal } from 'tnp-core';
 import { BaseGit, Helpers } from 'tnp-helpers/src';
-
+import { EnvOptions } from '../../options';
 import type { Project } from './project';
 //#endregion
 
@@ -23,54 +24,44 @@ export class Git extends BaseGit<Project> {
    */
   async tagAndPushToGitRepo(
     newVersion: string,
-    pushWithoutAsking = false,
+    releaseOptions: EnvOptions,
   ): Promise<void> {
     //#region @backendFunc
-    const pushFun = async () => {
-      if (newVersion) {
-        const tagName = `v${newVersion}`;
-        const commitMessage = 'new version ' + newVersion;
-        try {
-          this.project
-            .run(`git tag -a ${tagName} ` + `-m "${commitMessage}"`, {
-              output: false,
-            })
-            .sync();
-        } catch (error) {
-          Helpers.error(`Not able to tag project`, false, true);
-        }
-        const lastCommitHash = this.project.git.lastCommitHash();
-        this.project.packageJson.setBuildHash(lastCommitHash);
+    const tagName = `v${newVersion}`;
 
-        this.project.git.__commitRelease(newVersion, `release: `);
-      } else {
-        this.project.git.__commitRelease();
-      }
+    this.stageAllAndCommit(`release: ${tagName}`);
 
+    const tagMessage = 'new version ' + newVersion;
+    try {
+      this.project
+        .run(`git tag -a ${tagName} ` + `-m "${tagMessage}"`, {
+          output: false,
+        })
+        .sync();
+    } catch (error) {
+      Helpers.throw(`Not able to tag project`);
+    }
+    // const lastCommitHash = this.project.git.lastCommitHash();
+    // this.project.packageJson.setBuildHash(lastCommitHash);
+
+    if (
+      releaseOptions.release.autoReleaseUsingConfig ||
+      (await UtilsTerminal.confirm({
+        message: `Push changes to git repo ?`,
+        defaultValue: true,
+      }))
+    ) {
       Helpers.log('Pushing to git repository... ');
       Helpers.log(`Git branch: ${this.project.git.currentBranchName}`);
-      await this.project.git.pushCurrentBranch({ askToRetry: true });
+
+      if (
+        !(await this.project.git.pushCurrentBranch({
+          askToRetry: !releaseOptions.isCiProcess,
+        }))
+      ) {
+        Helpers.throw(`Not able to push to git repository`);
+      }
       Helpers.info('Pushing to git repository done.');
-    };
-
-    if (pushWithoutAsking) {
-      await pushFun();
-    } else {
-      await Helpers.questionYesNo('Push changes to git repo ?', async () => {
-        await pushFun();
-      });
-    }
-    //#endregion
-  }
-  //#endregion
-
-  //#region commit release
-  public __commitRelease(newVer?: string, message = 'new version') {
-    //#region @backendFunc
-    if (newVer) {
-      this.stageAllAndCommit(`${message} v${newVer}`);
-    } else {
-      this.stageAllAndCommit('relese update');
     }
     //#endregion
   }

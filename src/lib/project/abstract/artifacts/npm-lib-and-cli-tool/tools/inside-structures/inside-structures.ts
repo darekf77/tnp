@@ -165,13 +165,16 @@ export class InsideStructuresApp
         '../../../angular-node-app/tools/inside-struct-angular13-app'
       );
 
+    const optionsNormal = initOptions.clone({ build: { websql: false } });
+    const optionsWebsql = initOptions.clone({ build: { websql: true } });
+
     this.insideStructAngular13AppNormal = new InsideStructAngular13AppClass(
       this.project,
-      initOptions.clone({ build: { websql: false } }),
+      optionsNormal,
     );
     this.insideStructAngular13AppWebsql = new InsideStructAngular13AppClass(
       this.project,
-      initOptions.clone({ build: { websql: true } }),
+      optionsWebsql,
     );
 
     const structs: BaseInsideStruct[] = [
@@ -200,14 +203,17 @@ export class InsideStructuresLib
     const { InsideStructAngular13Lib: InsideStructAngular13LibClass } =
       await import('../inside-struct-angular13-lib');
 
+    const optionsNormal = initOptions.clone({ build: { websql: false } });
+    const optionsWebsql = initOptions.clone({ build: { websql: true } });
+
     this.insideStructAngular13LibNormal = new InsideStructAngular13LibClass(
       this.project,
-      initOptions.clone({ build: { websql: false } }),
+      optionsNormal,
     );
 
     this.insideStructAngular13LibWebsql = new InsideStructAngular13LibClass(
       this.project,
-      initOptions.clone({ build: { websql: true } }),
+      optionsWebsql,
     );
 
     const structs: BaseInsideStruct[] = [

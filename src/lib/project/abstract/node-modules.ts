@@ -65,13 +65,6 @@ export class NodeModules extends BaseNodeModules {
 
     Helpers.log(`Packages full installation for ${this.project.genericName}`);
 
-    if (
-      this.project.framework.isStandaloneProject ||
-      this.project.framework.isContainer
-    ) {
-      this.project.npmHelpers.copyDepsFromCoreContainer();
-    }
-
     if (this.npmHelpers.useLinkAsNodeModules) {
       await this.project.nodeModules.linkFromCoreContainer();
     } else {
@@ -455,9 +448,7 @@ export class NodeModules extends BaseNodeModules {
       ]);
 
       Helpers.move(folderToMove, folderTemp);
-      await Helpers.runSyncOrAsync({
-        functionFn: actionwhenNotInNodeModules,
-      });
+      await actionwhenNotInNodeModules();
       Helpers.move(folderTemp, folderToMove);
     }
     //#endregion

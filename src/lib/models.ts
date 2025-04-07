@@ -92,11 +92,64 @@ export namespace Models {
   //#endregion
 
   //#region taon json
+  export interface TaonAutoReleaseItem {
+    artifactName:
+      | 'npm-lib-and-cli-tool'
+      | 'angular-node-app'
+      | 'electron-app'
+      | 'mobile-app'
+      | 'vscode-plugin'
+      | 'docs-webapp';
+    // | ReleaseArtifactTaon; // TODO this alone should be enough but parese crate invalid schema
+    /**
+     * if not proviede default  env.<artifact-name>.__.ts will be in use
+     */
+    envName?:
+      | 'localhost'
+      | 'dev'
+      | 'stage'
+      | 'prod'
+      | 'test'
+      | 'qa'
+      | 'sandbox'
+      | 'uat'
+      | 'preprod'
+      | 'demo'
+      | 'ci'
+      | 'training';
+    // CoreModels.EnvironmentNameTaon; // TODO this alone should be enough but parser creates invalid schema
+    /**
+     * example for dev environtment
+     * > undefined - env.<artifact-name>.dev.ts
+     * > 1 - env.<artifact-name>.dev1.ts
+     * > 2 - env.<artifact-name>.dev2.ts
+     * ...
+     */
+    envNumber?: number | undefined;
+    /**
+     * skip release of this artifact
+     */
+    skip?: boolean;
+  }
+
   export interface TaonJsonStandalone extends TaonJsonCommon {
     /**
      * override npm name for build/relese
      */
     overrideNpmName?: string;
+
+    /**
+     * it override name of project when is inside container that
+     * is organization.
+     *
+     * Property "overrideNpmName" can override this name.
+     */
+    overrideNameWhenInsideOrganization?: string;
+
+    /**
+     * override name of cli tool created from project
+     */
+    overrideNameForCli?: string;
 
     type: 'isomorphic-lib';
     /**
@@ -144,10 +197,18 @@ export namespace Models {
      * all exports from lib ts files
      */
     shouldGenerateAutogenIndexFile: boolean;
+
+    /**
+     * Auto release helps with releasing multiple projects from a local machine.
+     * This is useful when we don't have Taon Cloud set up and want to release
+     * all projects with a single command.
+     */
+    autoReleaseConfigAllowedItems?: TaonAutoReleaseItem[];
   }
 
   export interface TaonJsonContainer extends TaonJsonCommon {
     type: 'container';
+
     /**
      * Static resurces for site project, that are
      * going to be included in release dist
@@ -158,10 +219,19 @@ export namespace Models {
      * Project is monorepo
      */
     monorepo?: boolean;
+
     /**
      * Project is organization/scope (like @angular)
      */
-    isOrganization?: boolean;
+    organization?: boolean;
+
+    /**
+     * Container projects can be used as micro frontends
+     * with router:
+     *  <site-path>/  (microFrontendMainProjectName)
+     *  <site-path>/_/other-project-name
+     */
+    microFrontendMainProjectName?: string;
   }
 
   interface TaonJsonCommon {

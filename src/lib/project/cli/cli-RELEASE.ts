@@ -15,7 +15,7 @@ import { BaseCli } from './base-cli';
 class $Release extends BaseCli {
   //#region _
   public async _() {
-    await this.project.releaseProcess.displayReleaseProcessMenu();
+    await this.project.releaseProcess.displayReleaseProcessMenu(this.params);
     // await this.patch();
     this._exit();
   }
@@ -23,143 +23,153 @@ class $Release extends BaseCli {
 
   //#region release process
   async _releaseProcess(
+    envOptions: EnvOptions,
     releaseType: ReleaseType,
     artifact?: ReleaseArtifactTaon,
   ): Promise<void> {
-    await this.project.releaseProcess.releaseByType(releaseType);
+    await this.project.releaseProcess.releaseByType(releaseType, envOptions);
     this._exit();
   }
   //#endregion
 
   //#region local
   async local(): Promise<void> {
-    await this._releaseProcess('local');
+    await this._releaseProcess(this.params, 'local');
   }
 
   async localNpm(): Promise<void> {
-    await this._releaseProcess('local', 'npm-lib-and-cli-tool');
+    await this._releaseProcess(this.params, 'local', 'npm-lib-and-cli-tool');
   }
 
   async localVscode(): Promise<void> {
-    await this._releaseProcess('local', 'vscode-plugin');
+    await this._releaseProcess(this.params, 'local', 'vscode-plugin');
   }
 
   async localElectron(): Promise<void> {
-    await this._releaseProcess('local', 'electron-app');
+    await this._releaseProcess(this.params, 'local', 'electron-app');
   }
   //#endregion
 
   //#region cloud
   async cloud(): Promise<void> {
-    await this._releaseProcess('cloud');
+    await this._releaseProcess(this.params, 'cloud');
   }
   //#endregion
 
   //#region manual
   async manual(): Promise<void> {
-    await this._releaseProcess('manual');
+    await this._releaseProcess(this.params, 'manual');
   }
   //#endregion
 
   //#region static pages
   async staticPages(): Promise<void> {
-    await this._releaseProcess('static-pages');
+    await this._releaseProcess(this.params, 'static-pages');
   }
   //#endregion
 
-  //#region old release functions
+  //#region auto release
 
-  //#region automatic release
-  async auto() {
-    await this._startLibCliReleaseProcess('patch', true);
-  }
-  //#endregion
-
-  //#region major
-  async major() {
-    await this._startLibCliReleaseProcess('major');
-  }
-  //#endregion
-
-  //#region minor
-  async minor() {
-    await this._startLibCliReleaseProcess('minor');
-  }
-  //#endregion
-
-  //#region patch
-  async patch() {
-    await this._startLibCliReleaseProcess('patch');
-  }
-  //#endregion
-
-  //#region start
-  // TODO move this to release process separate class
-  private async _startLibCliReleaseProcess(
-    npmReleaseVersionType: CoreModels.ReleaseVersionType = 'patch',
-    autoReleaseUsingConfig: boolean = false,
-  ): Promise<void> {
-    // const taonReleaseVersionType = await this.chooseTaonReleaseVersionType();
-
-    const releaseOptions = EnvOptions.from({
-      ...this.params,
-      release: {
-        releaseVersionBumpType: npmReleaseVersionType,
-        autoReleaseUsingConfig,
-      },
-      finishCallback: () => {
-        this._exit();
-      },
-    });
-
-    await this.shouldReleaseLibMessage(releaseOptions, this.project);
-    await this.project.release(releaseOptions);
+  //#region auto release / auto
+  async auto(): Promise<void> {
+    await this.project.release(
+      EnvOptions.from({
+        ...this.params,
+        release: {
+          autoReleaseUsingConfig: true,
+          releaseVersionBumpType: 'patch',
+          releaseType: 'manual',
+        },
+      }),
+    );
     this._exit();
   }
   //#endregion
 
-  //#region should release lib
-  async shouldReleaseLibMessage(releaseOptions: EnvOptions, project: Project) {
-    //#region @backendFunc
+  //#region auto release / auto
+  async autoClear(): Promise<void> {
+    await this.project.clear();
+    await this.project.release(
+      EnvOptions.from({
+        ...this.params,
+        release: {
+          autoReleaseUsingConfig: true,
+          releaseVersionBumpType: 'patch',
+          releaseType: 'manual',
+        },
+      }),
+    );
+    this._exit();
+  }
+  //#endregion
 
-    let newVersion;
-    if (releaseOptions.release.releaseVersionBumpType === 'major') {
-      newVersion =
-        project.packageJson.versionWithMajorPlusOneAndMinorZeroAndPatchZero;
-    } else if (releaseOptions.release.releaseVersionBumpType === 'minor') {
-      newVersion = project.packageJson.versionWithMinorPlusOneAndPatchZero;
-    } else if (releaseOptions.release.releaseVersionBumpType === 'patch') {
-      newVersion = project.packageJson.versionWithPatchPlusOne;
-    }
+  //#region auto release / major
+  async major(): Promise<void> {
+    await this.project.release(
+      EnvOptions.from({
+        ...this.params,
+        release: {
+          autoReleaseUsingConfig: true,
+          releaseVersionBumpType: 'major',
+          releaseType: 'manual',
+        },
+      }),
+    );
+    this._exit();
+  }
+  //#endregion
 
-    // TODO detecting changes for children when start container
+  //#region auto release / minor
+  async minor(): Promise<void> {
+    await this.project.release(
+      EnvOptions.from({
+        ...this.params,
+        release: {
+          autoReleaseUsingConfig: true,
+          releaseVersionBumpType: 'minor',
+          releaseType: 'manual',
+        },
+      }),
+    );
+    this._exit();
+  }
+  //#endregion
 
-    const message = `Proceed with release of new version: ${newVersion} ?`;
-    return releaseOptions.release.autoReleaseUsingConfig
-      ? true
-      : await Helpers.questionYesNo(message);
-
-    //#endregion
+  //#region auto release / patch
+  async patch(): Promise<void> {
+    await this.project.release(
+      EnvOptions.from({
+        ...this.params,
+        release: {
+          autoReleaseUsingConfig: true,
+          releaseVersionBumpType: 'major',
+          releaseType: 'manual',
+        },
+      }),
+    );
+    this._exit();
   }
   //#endregion
 
   //#endregion
 
-  async config() {
-    console.log(this.params);
-    this._exit();
-    this.project.releaseProcess.config.init();
-    this._exit();
-  }
+  // TODO
+  // async config() {
+  //   console.log(this.params);
+  //   this._exit();
+  //   this.project.releaseProcess.config.init();
+  //   this._exit();
+  // }
 
-  async configCreateFromTnp() {
-    if (this.project.name !== 'tnp') {
-      return;
-    }
-    this.project.releaseProcess.config.init();
-    this.project.releaseProcess.config.create();
-    this._exit();
-  }
+  // TODO
+  // async configCreateFromTnp() {
+  //   if (this.project.name !== 'tnp') {
+  //     return;
+  //   }
+  //   this.project.releaseProcess.config.init();
+  //   this.project.releaseProcess.config.create();
+  //   this._exit();
+  // }
 }
 
 export default {

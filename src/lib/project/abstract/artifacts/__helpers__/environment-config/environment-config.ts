@@ -15,7 +15,6 @@ import {
   ReleaseArtifactTaon,
 } from '../../../../../options';
 import type { Project } from '../../../project';
-import { Env } from 'electron/common';
 
 //#endregion
 
@@ -27,6 +26,20 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   extends BaseFeatureForProject<Project>
   implements InitingPartialProcess
 {
+  //#region get base env template
+  getBaseEnvTemplate(jsonString = '{ ...baseEnv }'): string {
+    //#region @backendFunc
+    const isBase = jsonString === '{ ...baseEnv }';
+    const fileToSave = `${'import'} type { EnvOptions } from '${'tnp'}/${'src'}';
+${isBase ? `${'import'} baseEnv from '../../env';` : ''}
+const env: Partial<EnvOptions> = ${jsonString};
+export default env;
+`;
+    return fileToSave;
+    //#endregion
+  }
+  //#endregion
+
   //#region copy to
   copyTo(destination: string): void {
     //#region @backend
@@ -60,6 +73,8 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   //#region read env config for artifact/environment
   envOptionsResolve(envOptions: EnvOptions): EnvOptions {
     //#region @backendFunc
+    envOptions = EnvOptions.from(envOptions);
+
     if (!this.project.hasFolder(environments)) {
       const coreEnv = this.project.ins
         .by('isomorphic-lib')
@@ -70,21 +85,38 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       });
     }
 
-    if (envOptions.release.environment && envOptions.release.targetArtifact) {
+    if (envOptions.release.envName && envOptions.release.targetArtifact) {
       const envConfigForArtifactAndEnvironment =
         this.project.environmentConfig.envOptionsFor(
           envOptions.release.targetArtifact,
-          envOptions.release.environment,
-          envOptions.release.envNum,
+          envOptions.release.envName,
+          envOptions.release.envNumber,
         );
-      envOptions = EnvOptions.from(
-        _.merge(envConfigForArtifactAndEnvironment, _.cloneDeep(envOptions)),
+      walk.Object(
+        envConfigForArtifactAndEnvironment,
+        (val, lodashPath, newValue) => {
+          if (_.isNil(val) || _.isObject(val)) {
+            // nothing
+          } else {
+            _.set(envOptions, lodashPath, val);
+          }
+        },
+        { walkGetters: false },
       );
     } else {
-      envOptions = EnvOptions.from(
-        _.merge(this.envOptionsProjectLevel, _.cloneDeep(envOptions)),
+      walk.Object(
+        this.envOptionsProjectLevel,
+        (val, lodashPath, newValue) => {
+          if (_.isNil(val) || _.isObject(val)) {
+            // nothing
+          } else {
+            _.set(envOptions, lodashPath, val);
+          }
+        },
+        { walkGetters: false },
       );
     }
+    // debugger
     return this.setGeneratedValues(envOptions);
     //#endregion
   }
@@ -162,11 +194,10 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
         },
       } as Partial<EnvOptions>);
 
-      const fileToSave = `${'import'} type { EnvOptions } from '${'tnp'}/${'src'}';
-const env: Partial<EnvOptions> = ${jsonString};
-export default env;
-`;
-      Helpers.writeFile(pathToProjectEnvironmentAbsPath, fileToSave);
+      Helpers.writeFile(
+        pathToProjectEnvironmentAbsPath,
+        this.getBaseEnvTemplate(jsonString),
+      );
 
       UtilsTypescript.formatFile(pathToProjectEnvironmentAbsPath);
     }
@@ -200,8 +231,7 @@ export default env;
 
     // @ts-expect-error overriding readonly property
     envOptions.currentProjectName = this.project.name;
-    // @ts-expect-error overriding readonly property
-    envOptions.currentProjectGenericName = this.project.genericName;
+
     // @ts-expect-error overriding readonly property
     envOptions.currentProjectType = this.project.type;
 
@@ -264,5 +294,25 @@ export default env;
   }
   //#endregion
 
+  //#endregion
+
+  //#region create artifact
+  async createForArtifact(
+    artifactName: ReleaseArtifactTaon,
+    envName: CoreModels.EnvironmentNameTaon = CoreModels.EnvironmentName.__,
+    envNumber: number = undefined,
+  ): Promise<void> {
+    //#region @backendFunc
+    const environmentsAbsPath = this.project.pathFor([
+      environments,
+      artifactName,
+      `env.${artifactName}.${envName}${envNumber ?? ''}.ts`,
+    ]);
+
+    Helpers.writeFile(environmentsAbsPath, this.getBaseEnvTemplate());
+
+    UtilsTypescript.formatFile(environmentsAbsPath);
+    //#endregion
+  }
   //#endregion
 }

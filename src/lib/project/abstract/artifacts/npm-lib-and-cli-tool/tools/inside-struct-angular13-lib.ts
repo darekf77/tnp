@@ -27,7 +27,9 @@ export class InsideStructAngular13Lib extends BaseInsideStruct {
     ) {
       return;
     }
-    const tmpProjectsStandalone = `tmp-libs-for-${config.folder.dist}${this.websql ? '-websql' : ''}/${project.name}`;
+    const tmpProjectsStandalone =
+      `tmp-libs-for-${config.folder.dist}` +
+      `${this.initOptions.build.websql ? '-websql' : ''}/${project.name}`;
 
     const result = InsideStruct.from(
       {
@@ -121,7 +123,8 @@ export class InsideStructAngular13Lib extends BaseInsideStruct {
             //#region hande / src / migrations
             const source = path.join(
               this.project.location,
-              `tmp-src-${config.folder.dist}${this.websql ? '-websql' : ''}`,
+              `tmp-src-${config.folder.dist}` +
+                `${this.initOptions.build.websql ? '-websql' : ''}`,
               'migrations',
             );
 
@@ -141,7 +144,8 @@ export class InsideStructAngular13Lib extends BaseInsideStruct {
             //#region hande / src / lib
             const source = path.join(
               this.project.location,
-              `tmp-src-${config.folder.dist}${this.websql ? '-websql' : ''}`,
+              `tmp-src-${config.folder.dist}` +
+                `${this.initOptions.build.websql ? '-websql' : ''}`,
               'lib',
             );
 
@@ -224,6 +228,7 @@ export * from './lib';
                 this.project.name,
               );
               if (path.basename(f) === 'tsconfig.json') {
+                // debugger;
                 content = content.replace(
                   new RegExp(
                     Helpers.escapeStringForRegEx(
@@ -231,7 +236,9 @@ export * from './lib';
                     ),
                     'g',
                   ),
-                  `"../../${config.folder.dist}/${this.websql ? config.folder.websql : config.folder.browser}/${this.project.name}`,
+                  `"../../${config.folder.dist}/` +
+                    `${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}` +
+                    `/${this.project.name}`,
                 );
               }
 
@@ -240,11 +247,11 @@ export * from './lib';
           );
 
           (() => {
-            const json = Helpers.readJson(ngPackageJson); // dist is on porpose
+            const json = Helpers.readJson(ngPackageJson); // dist is on purpose
             json.dest = json.dest.replace(
               `/${config.folder.dist}/${this.project.name}`,
               `/../../${config.folder.dist}/` +
-                `${this.websql ? config.folder.websql : config.folder.browser}`,
+                `${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}`,
             );
 
             Helpers.writeJson(ngPackageJson, json);

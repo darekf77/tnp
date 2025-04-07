@@ -109,6 +109,7 @@ export async function start(
       // 'ra': 'release:all',
       e: 'electron',
       ekill: 'electron:kill',
+      car: 'release:auto:clear',
       ar: 'release:auto',
       ard: 'release:auto:docs',
       re: 'reinstall',

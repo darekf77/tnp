@@ -376,7 +376,33 @@ export class ArtifactManager {
   //#endregion
 
   //#region release
-  async release(releaseOptions: EnvOptions): Promise<void> {
+  async release(
+    releaseOptions: EnvOptions,
+    autoReleaseProcess = false,
+  ): Promise<void> {
+    //#region @backendFunc
+    if (!autoReleaseProcess && releaseOptions.release.autoReleaseUsingConfig) {
+      const autoReleaseConfigAllowedItems =
+        this.project.taonJson.autoReleaseConfigAllowedItems;
+
+      for (const item of autoReleaseConfigAllowedItems) {
+        const envForChild = EnvOptions.from({
+          ...releaseOptions,
+          release: {
+            ...releaseOptions.release,
+            targetArtifact: item.artifactName,
+            envName: item.envName,
+            envNumber: item.envNumber,
+          },
+        });
+        await this.release(envForChild, true);
+      }
+      return;
+    }
+
+    releaseOptions =
+      this.project.environmentConfig.envOptionsResolve(releaseOptions);
+
     if (
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'docs-webapp'
@@ -428,116 +454,67 @@ export class ArtifactManager {
       );
       await this.artifact.vscodePlugin.releasePartial(releaseOptions);
     }
-  }
-
-  async releaseAllChildren(options: EnvOptions): Promise<void> {
-    // let resolved = [];
-    // if (this.project.framework.isContainer) {
-    //   resolved = Helpers.cliTool.resolveItemsFromArgsBegin<Project>(
-    //     this.args,
-    //     a => {
-    //       return this.project.ins.From(path.join(this.project.location, a));
-    //     },
-    //   )?.allResolved;
-
-    //   const otherDeps = this.project.children.filter(c => {
-    //     return !resolved.includes(c);
-    //   });
-
-    //   resolved = this.project.ins // @ts-ignore
-    //     .sortGroupOfProject<Project>(
-    //       [...resolved, ...otherDeps],
-    //       proj => proj.taonJson.dependenciesNamesForNpmLib,
-    //       proj => proj.name,
-    //     )
-    //     .filter(d => d.name !== this.project.name);
-    // }
-
-    for (const child of this.project.children) {
-      await child.artifactsManager.release(options);
-    }
-  }
-  //#endregion
-
-  //#region DEPRECATED
-  private async wrappWithProcessInfo(
-    fn: () => Promise<void>,
-    processName: keyof ArtifactManager,
-  ) {
-    //#region @backendFunc
-    // const projectInfoPort = await this.project.registerAndAssignPort(
-    //   `project-build-info`,
-    //   {
-    //     startFrom: 4100,
-    //   },
-    // );
-    // this.project.artifactsManager.artifact.angularNodeApp.__setProjectInfoPort(
-    //   projectInfoPort,
-    // );
-    // this.project.artifactsManager.artifact.angularNodeApp.backendPort =
-    //   PortUtils.instance(
-    //     this.project.artifactsManager.artifact.angularNodeApp.projectInfoPort,
-    //   ).calculateServerPortFor(this.project);
-    // Helpers.writeFile(
-    //   this.project.pathFor(tmpBuildPort),
-    //   projectInfoPort?.toString(),
-    // );
-    // const hostForBuild = `http://localhost:${projectInfoPort}`;
-    // console.info(`
-    //   You can check info about build in ${chalk.bold(hostForBuild)}
-    //         `);
-    // Helpers.taskStarted(`starting project service... ${hostForBuild}`);
-    // // TODO create global task server
-    // const ProjectBuildContext = Taon.createContext(() => ({
-    //   contextName: 'ProjectBuildContext',
-    //   host: hostForBuild,
-    //   contexts: { BaseContext },
-    //   controllers: { BuildProcessController },
-    //   entities: { BuildProcess },
-    //   skipWritingServerRoutes: true,
-    //   logs: false,
-    //   database: {
-    //     autoSave: false, // skip creationg db file
-    //   },
-    // }));
-    // await ProjectBuildContext.initialize();
-    // const buildProcessController: BuildProcessController =
-    //   ProjectBuildContext.getClassInstance(BuildProcessController);
-    // await buildProcessController.initializeServer(this.project);
-    // this.project.vsCodeHelpers.__saveLaunchJson(projectInfoPort);
-    // Helpers.taskDone('project service started');
     //#endregion
   }
 
-  async getInforServerController() {
+  async releaseAllChildren(
+    options: EnvOptions,
+    children = this.project.children,
+  ): Promise<void> {
     //#region @backendFunc
-    // const projectInfoPortFromFile = Number(
-    //   Helpers.readFile(this.project.pathFor(tmpBuildPort)),
-    // );
-    // console.log({
-    //   projectInfoPortFromFile,
-    // });
-    // this.project.artifactsManager.artifact.angularNodeApp.__setProjectInfoPort(
-    //   projectInfoPortFromFile,
-    // );
-    // const hostForAppWorker = `http://localhost:${projectInfoPortFromFile}`;
-    // // console.log({ hostForAppWorker })
-    // const ProjectBuildContext = Taon.createContext(() => ({
-    //   contextName: 'ProjectBuildContext',
-    //   remoteHost: hostForAppWorker,
-    //   contexts: { BaseContext },
-    //   controllers: { BuildProcessController },
-    //   entities: { BuildProcess },
-    //   skipWritingServerRoutes: true,
-    //   logs: false,
-    //   database: {
-    //     autoSave: false, // probably not needed here
-    //   },
-    // }));
-    // await ProjectBuildContext.initialize();
-    // const buildProcessController: BuildProcessController =
-    //   ProjectBuildContext.getClassInstance(BuildProcessController);
-    // await buildProcessController.initializeClientToRemoteServer(this.project);
+    for (const child of children) {
+      await this.tryCatchWrapper(async () => {
+        await child.artifactsManager.release(options);
+      }, 'release');
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region try catch wrapper
+  public async tryCatchWrapper(
+    action: () => any,
+    actionName: 'release' | 'build' | 'init' | 'clear' | 'struct' | 'brand',
+  ): Promise<void> {
+    //#region @backendFunc
+    while (true) {
+      try {
+        await action();
+        return;
+      } catch (error) {
+        if (error?.name === 'ExitPromptError') {
+          process.exit(0);
+        }
+        // console.log(error);
+        Helpers.error(error, true, true);
+        Helpers.error(
+          `Not able to ${actionName} your project ${chalk.bold(this.project.genericName)}`,
+          true,
+          true,
+        );
+        const errorOptions = {
+          tryAgain: {
+            name: 'Try again',
+          },
+          skipPackage: {
+            name: `Skip ${actionName} for this project`,
+          },
+          exit: {
+            name: 'Exit process',
+          },
+        };
+        const res = await UtilsTerminal.select<keyof typeof errorOptions>({
+          choices: errorOptions,
+          question: 'What you wanna do ?',
+        });
+
+        if (res === 'exit') {
+          process.exit(0);
+        } else if (res === 'skipPackage') {
+          break;
+        }
+      }
+    }
     //#endregion
   }
   //#endregion

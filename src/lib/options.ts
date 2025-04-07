@@ -94,10 +94,10 @@ export interface InitingPartialProcess {
 
 //#region env options / build / pwa
 class EnvOptionsBuildPwa {
-  disableServiceWorker: boolean;
-  name?: string;
-  short_name?: string;
-  start_url?: string;
+  declare disableServiceWorker: boolean;
+  declare name?: string;
+  declare short_name?: string;
+  declare start_url?: string;
   // theme_color?: string;
   // background_color?: string;
   // display?: string;
@@ -107,10 +107,18 @@ class EnvOptionsBuildPwa {
 
 //#region env options / build / cli
 class EnvOptionsBuildCli {
-  uglify: boolean;
-  obscure: boolean;
-  includeNodeModules: boolean;
-  includeSourceMaps: boolean;
+  declare uglify: boolean;
+  declare obscure: boolean;
+  declare includeNodeModules: boolean;
+}
+//#endregion
+
+//#region env options / build / cli
+class EnvOptionsBuildLib {
+  declare removeDts: boolean;
+  declare uglifyFileByFile: boolean;
+  declare obscureFileByFile: boolean;
+  declare includeSourceMaps: boolean;
 }
 //#endregion
 
@@ -119,7 +127,7 @@ class EnvOptionsBuild {
    * override output path
    * for combined/bundled build artifact
    */
-  overrideOutputPath: string;
+  declare overrideOutputPath: string;
   /**
    * base-href -> is a part of lib code build
    *
@@ -137,19 +145,19 @@ class EnvOptionsBuild {
   set baseHref(v) {
     this._baseHref = crossPlatformPath(v);
   }
-  private _baseHref: string;
-  websql: boolean;
+  private declare _baseHref: string;
+  declare websql: boolean;
   /**
    * watch build
    */
-  watch: boolean;
-  pwa: Partial<EnvOptionsBuildPwa>;
-  angularProd: boolean;
-  cli: Partial<EnvOptionsBuildCli>;
+  declare watch: boolean;
+  declare angularProd: boolean;
+
   /**
    * Do not generate backend code
    */
-  genOnlyClientCode: boolean;
+  declare genOnlyClientCode: boolean;
+  declare pwa: Partial<EnvOptionsBuildPwa>;
 }
 //#endregion
 
@@ -158,17 +166,17 @@ class EnvOptionsPorts {
   /**
    * override port for angular ng serve in normal mode
    */
-  ngNormalAppPort?: number;
+  declare ngNormalAppPort?: number;
 
   /**
    * override port for angular ng serve in websql mode
    */
-  ngWebsqlAppPort?: number;
+  declare ngWebsqlAppPort?: number;
 
   /**
    * override port for nodejs backend server
    */
-  nodeBeAppPort?: number;
+  declare nodeBeAppPort?: number;
 }
 //#endregion
 
@@ -180,8 +188,8 @@ class EnvOptionsLoadingPreAngularBootstrap {
    * loder path to image or
    * build in loader config
    */
-  loader?: string | Models.TaonLoaderConfig;
-  background?: string;
+  declare loader?: string | Models.TaonLoaderConfig;
+  declare background?: string;
 }
 //#endregion
 
@@ -191,8 +199,8 @@ class EnvOptionsLoadingAfterAngularBootstrapConfig {
    * loder path to image or
    * build in loader config
    */
-  loader?: string | Models.TaonLoaderConfig;
-  background?: string;
+  declare loader?: string | Models.TaonLoaderConfig;
+  declare background?: string;
 }
 //#endregion
 
@@ -201,38 +209,45 @@ class EnvOptionsLoading {
    * this is presented before bootstrapping of angular
    * at the beginning of first index.html fetch
    */
-  preAngularBootstrap?: Partial<EnvOptionsLoadingPreAngularBootstrap>;
+  declare preAngularBootstrap?: Partial<EnvOptionsLoadingPreAngularBootstrap>;
   /**
    * this loader is presented when
    * taon app data is being loader
    * (right after *preAngularBootstrap*)
    */
-  afterAngularBootstrap?: Partial<EnvOptionsLoadingAfterAngularBootstrapConfig>;
+  declare afterAngularBootstrap?: Partial<EnvOptionsLoadingAfterAngularBootstrapConfig>;
 }
 //#endregion
 
 //#region env options / release
 class EnvOptionsRelease {
-  targetArtifact: ReleaseArtifactTaon;
+  declare targetArtifact: ReleaseArtifactTaon;
   /**
-   * null  - means it is development build
+   * undefined  - means it is development build
    */
-  releaseType: ReleaseType | null = null;
+  declare releaseType?: ReleaseType | undefined;
   /**
    * process that is running in CI (no questions for user)
    */
 
-  releaseVersionBumpType: CoreModels.ReleaseVersionType = 'patch';
+  declare releaseVersionBumpType: CoreModels.ReleaseVersionType;
   /**
    * quick automatic release of lib
    */
-  autoReleaseUsingConfig: boolean;
-  environment: CoreModels.EnvironmentNameTaon;
-  envNum: number | undefined;
+  declare autoReleaseUsingConfig: boolean;
+  declare envName: CoreModels.EnvironmentNameTaon;
+  /**
+   * undefined - prod
+   * number   -  prod1
+   */
+  declare envNumber: number | undefined;
   /**
    * Cut <@>notForNpm  tag from lib build
    */
-  cutNpmPublishLibReleaseCode: boolean;
+  declare cutNpmPublishLibReleaseCode: boolean;
+
+  declare cli: Partial<EnvOptionsBuildCli>;
+  declare lib: Partial<EnvOptionsBuildLib>;
 }
 //#endregion
 
@@ -241,24 +256,24 @@ class EnvOptionsInit {
   /**
    * init only structure without external deps
    */
-  struct: boolean;
-  branding: boolean;
+  declare struct: boolean;
+  declare branding: boolean;
 }
 //#endregion
 
 //#region env options / copy to manager
 class EnvOptionsCopyToManager {
-  skip: boolean;
-  copyToLocations: string[];
-  copyToProjects: string[];
+  declare skip: boolean;
+  declare copyToLocations: string[];
+  declare copyToProjects: string[];
 }
 //#endregion
 
 //#region env options / website
 class EnvOptionsWebsite {
-  title: string;
-  domain: string;
-  useDomain: boolean;
+  declare title: string;
+  declare domain: string;
+  declare useDomain: boolean;
 }
 //#endregion
 
@@ -267,15 +282,15 @@ class EnvOptionsContainer {
   /**
    * start release on project
    */
-  start?: string;
+  declare start?: string;
   /**
    * release only specified projects
    */
-  only?: string | string[];
+  declare only?: string | string[];
   /**
    * end release on project
    */
-  end?: string;
+  declare end?: string;
 }
 //#endregion
 
@@ -284,7 +299,7 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   public static from(options: Partial<EnvOptions>): EnvOptions {
     const orgFinishCallback = options?.finishCallback;
     let res = _.merge(new EnvOptions(), _.cloneDeep(options));
-    res = res.clone(options);
+    // res = res.clone(options);
     if (orgFinishCallback) {
       res.finishCallback = orgFinishCallback;
     } else {
@@ -293,13 +308,13 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     return res;
   }
 
-  public static fromRelease(releaseOptions: EnvOptions): EnvOptions {
+  public static fromRelease(releaseOptions: Partial<EnvOptions>): EnvOptions {
     const buildOptions = EnvOptions.from(releaseOptions as any);
     buildOptions.build.watch = false;
     return buildOptions;
   }
 
-  public static fromBuild(releaseOptions: EnvOptions): EnvOptions {
+  public static fromBuild(releaseOptions: Partial<EnvOptions>): EnvOptions {
     const buildOptions = EnvOptions.from(releaseOptions as any);
     // buildOptions.build.watch = false;
     return buildOptions;
@@ -369,30 +384,35 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     this.paths = _.merge(this.paths, override.paths);
     this.config = _.merge(this.config, override.config);
 
-    this.container = _.merge(EnvOptionsContainer, override.container);
+    this.container = _.merge(new EnvOptionsContainer(), override.container);
 
-    this.ports = _.merge(EnvOptionsPorts, override.ports);
-    this.init = _.merge(EnvOptionsInit, override.init);
-    this.build = _.merge(EnvOptionsBuild, override.build);
-    this.build.pwa = _.merge(EnvOptionsBuildPwa, override.build?.pwa);
-    this.build.cli = _.merge(EnvOptionsBuildCli, override.build?.cli);
-    this.build.websql = !!(override.build?.websql || this.build.websql);
+    this.ports = _.merge(new EnvOptionsPorts(), override.ports);
+    this.init = _.merge(new EnvOptionsInit(), override.init);
+    this.build = _.merge(new EnvOptionsBuild(), override.build);
+    this.build.pwa = _.merge(new EnvOptionsBuildPwa(), override.build?.pwa);
+    // this.build.websql = !!(override.build?.websql || this.build.websql);
 
-    this.loading = _.merge(EnvOptionsLoading, override.loading);
+    this.loading = _.merge(new EnvOptionsLoading(), override.loading);
     this.loading.preAngularBootstrap = _.merge(
-      EnvOptionsLoadingPreAngularBootstrap,
+      new EnvOptionsLoadingPreAngularBootstrap(),
       override.loading?.preAngularBootstrap,
     );
     this.loading.afterAngularBootstrap = _.merge(
-      EnvOptionsLoadingAfterAngularBootstrapConfig,
+      new EnvOptionsLoadingAfterAngularBootstrapConfig(),
       override.loading?.afterAngularBootstrap,
     );
-    this.release = _.merge(EnvOptionsRelease, override.release);
+    this.release = _.merge(new EnvOptionsRelease(), override.release);
+    this.release.releaseVersionBumpType =
+      this.release.releaseVersionBumpType ?? 'patch';
+
+    this.release.cli = _.merge(new EnvOptionsBuildCli(), override.release?.cli);
+    this.release.lib = _.merge(new EnvOptionsBuildLib(), override.release?.lib);
+
     this.copyToManager = _.merge(
-      EnvOptionsCopyToManager,
+      new EnvOptionsCopyToManager(),
       override.copyToManager,
     );
-    this.website = _.merge(EnvOptionsWebsite, override.website);
+    this.website = _.merge(new EnvOptionsWebsite(), override.website);
     if (_.isString(this.website.domain)) {
       this.website.domain = this.website.domain.replace(/\/$/, '');
       this.website.domain = this.website.domain.replace(/^https?:\/\//, '');
@@ -419,7 +439,12 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 
   //#region clone
   public clone(override: Partial<EnvOptions>): EnvOptions {
-    const result = new EnvOptions(_.merge(_.cloneDeep(this), override));
+    const toClone = {
+      ..._.cloneDeep(this),
+      ..._.cloneDeep(override),
+    };
+    // console.log({toClone})
+    const result = new EnvOptions(toClone);
     return result;
   }
   //#endregion
@@ -430,14 +455,14 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     //#endregion
   }
 
-  paths?: PATHS;
-  config?: CONFIGS;
-  purpose?: string;
+  declare paths?: PATHS;
+  declare config?: CONFIGS;
+  declare purpose?: string;
   /**
    * action is recursive
    */
-  recursiveAction?: boolean;
-  isCiProcess?: boolean;
+  declare recursiveAction?: boolean;
+  declare isCiProcess?: boolean;
   declare container: Partial<EnvOptionsContainer>;
   declare ports: Partial<EnvOptionsPorts>;
   declare release: Partial<EnvOptionsRelease>;
@@ -450,7 +475,6 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   //#region generated fields
   declare readonly name?: CoreModels.EnvironmentNameTaon; // generated
   declare readonly currentProjectName?: string;
-  declare readonly currentProjectGenericName?: string;
   declare readonly currentProjectType?: CoreModels.LibType;
   declare readonly buildInfo?: {
     number?: number;

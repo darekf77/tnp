@@ -1,11 +1,23 @@
+import { gt, gte } from 'semver';
 import { config } from 'tnp-config/src';
-import { CoreModels, Helpers, Utils, _, path } from 'tnp-core/src';
+import {
+  CoreModels,
+  Helpers,
+  Utils,
+  _,
+  crossPlatformPath,
+  fg,
+  glob,
+  path,
+} from 'tnp-core/src';
 import {
   BaseFeatureForProject,
   BasePackageJson,
   BaseJsonFileReaderOptions,
 } from 'tnp-helpers/src';
 import { PackageJson, PackageJson as PackageJsonType } from 'type-fest';
+
+import { EnvOptions } from '../../options';
 
 import type { Project } from './project';
 
@@ -45,6 +57,23 @@ export class PackageJSON extends BasePackageJson {
         this.data = packageJsonOverride;
       }
     }
+  }
+
+  recreateBin(): any {
+    // Helpers.taskStarted('Recreating bin...');
+    const pattern = `${this.project.pathFor(config.folder.bin)}/*`;
+    const countLinkInPackageJsonBin = fg
+      .sync(pattern)
+      .map(f => crossPlatformPath(f))
+      .filter(f => {
+        return (Helpers.readFile(f) || '').startsWith('#!/usr/bin/env');
+      });
+    const bin = {};
+    countLinkInPackageJsonBin.forEach(p => {
+      bin[path.basename(p)] = `bin/${path.basename(p)}`;
+    });
+    // Helpers.taskDone('done recreating bin...');
+    return bin;
   }
 
   saveToDisk(purpose?: string): void {
@@ -91,9 +120,58 @@ export class PackageJSON extends BasePackageJson {
         ...sorted,
       };
 
+      destinationObject.bin = this.recreateBin();
+
       this.data = destinationObject;
     }
     super.saveToDisk();
+    //#endregion
+  }
+
+  resolvePossibleNewVersion(
+    releaseVersionBumpType: CoreModels.ReleaseVersionType,
+  ): string {
+    //#region @backendFunc
+    const pj = new BasePackageJson({
+      jsonContent: {
+        version: this.project.packageJson.getVersionFor(releaseVersionBumpType),
+      },
+      reloadInMemoryCallback: data => {
+        // console.log('new pj data', data);
+      },
+    });
+
+    const lastTagVersion =
+      this.project.git.lastTagVersionName.trim().replace('v', '') || '0.0.0';
+
+    const pjtag = new BasePackageJson({
+      jsonContent: {
+        version: lastTagVersion,
+      },
+      reloadInMemoryCallback: data => {
+        // console.log('new pj data', data);
+      },
+    });
+
+    if (pjtag.version) {
+      pjtag.setVersion(pjtag.getVersionFor(releaseVersionBumpType));
+    }
+
+    let i = 0;
+    while (true) {
+      if (i++ > 10) {
+        Helpers.logInfo('Resolving new version...');
+      }
+
+      if (!pjtag.version) {
+        return pj.version;
+      }
+
+      if (gte(pj.version, pjtag.version)) {
+        return pj.version;
+      }
+      pj.setVersion(pjtag.version);
+    }
     //#endregion
   }
 }

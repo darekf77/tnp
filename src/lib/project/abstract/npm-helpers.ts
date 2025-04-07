@@ -104,10 +104,4 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
     //#endregion
   }
   //#endregion
-
-  //#region copy deps from core container
-  copyDepsFromCoreContainer(purpose?: string): void {
-    // TODO @LAST implement
-  }
-  //#endregion
 }

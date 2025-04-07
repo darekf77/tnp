@@ -513,10 +513,6 @@ export class $Global extends BaseGlobalCommandLine<
 
   //#region deps
 
-  DEPS_SHOW() {
-    this.project.npmHelpers.copyDepsFromCoreContainer('deps show');
-    this._exit();
-  }
 
   /**
    * generate deps json
@@ -1455,7 +1451,14 @@ ${this.project.children
 
   //#region not for npm / tnp fix taon json
   //#region @notForNpm
-  async tnpFixTaonJson() {
+  async taonJsonAddAutoElement() {
+    for (const child of this.project.children) {
+      child.taonJson.autoReleaseConfigAllowedItems = [
+        {
+          artifactName: 'npm-lib-and-cli-tool',
+        },
+      ];
+    }
     this._exit();
   }
   //#endregion

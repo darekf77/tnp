@@ -16,6 +16,9 @@ import type { AppBuildConfig } from '../../../angular-node-app/tools/docs-app-bu
 import { LibProjectBase } from './lib-project-base';
 //#endregion
 
+/**
+ * @deprecated
+ */
 export class LibProjectStandalone extends LibProjectBase {
   //#region prepare package
   preparePackage(smartContainer: Project, newVersion: string) {
@@ -140,97 +143,6 @@ export class LibProjectStandalone extends LibProjectBase {
         Building docs preview - done
 
         `);
-      },
-    );
-    //#endregion
-  }
-  //#endregion
-
-  //#region publish
-  async publish(options: {
-    newVersion: string;
-    autoReleaseUsingConfig: boolean;
-    prod: boolean;
-  }) {
-    //#region @backendFunc
-    const { newVersion, autoReleaseUsingConfig, prod } = options;
-
-    const existedReleaseDist = crossPlatformPath([
-      this.project.location,
-      this.project.framework.getTempProjectNameForCopyTo(),
-      config.folder.node_modules,
-      this.project.name,
-    ]);
-    Helpers.info(`Publish cwd: ${existedReleaseDist}`);
-    await Helpers.questionYesNo(
-      `Publish on npm version: ${newVersion} ?`,
-      async () => {
-        // QUICK_FIX
-        for (const clientFolder of clientCodeVersionFolder) {
-          Helpers.writeFile(
-            [existedReleaseDist, clientFolder, config.file._npmignore],
-            '# file overrided - I need package.json on npm',
-          );
-          // console.log(`Write file: ${existedReleaseDist}/${clientFolder}/${config.file._npmignore}`);
-        }
-
-        // publishing standalone
-        try {
-          Helpers.run('npm publish', {
-            cwd: existedReleaseDist,
-            output: true,
-          }).sync();
-        } catch (e) {
-          this.project.git.__removeTagAndCommit(autoReleaseUsingConfig);
-        }
-
-        // release additional packages names
-        const names = this.project.taonJson.additionalNpmNames;
-        for (let index = 0; index < names.length; index++) {
-          const c = names[index];
-          const additionBase = crossPlatformPath(
-            path.resolve(
-              path.join(this.project.location, `../../../additional-dist-${c}`),
-            ),
-          );
-          Helpers.mkdirp(additionBase);
-          Helpers.copy(existedReleaseDist, additionBase, {
-            copySymlinksAsFiles: true,
-            omitFolders: [config.folder.node_modules],
-            omitFoldersBaseFolder: existedReleaseDist,
-          });
-          const pathPackageJsonRelease = path.join(
-            additionBase,
-            config.file.package_json,
-          );
-          const packageJsonAdd: PackageJson = Helpers.readJson(
-            path.join(additionBase, config.file.package_json),
-          );
-
-          packageJsonAdd.name = c;
-          // const keys = Object.keys(packageJsonAdd.bin || {});
-          // keys.forEach(k => {
-          //   const v = packageJsonAdd.bin[k] as string;
-          //   packageJsonAdd.bin[k.replace(this.name, c)] = v.replace(this.name, c);
-          //   delete packageJsonAdd.bin[k];
-          // });
-          Helpers.writeFile(pathPackageJsonRelease, packageJsonAdd);
-          Helpers.info('log addtional dist created');
-          try {
-            if (!global.tnpNonInteractive) {
-              Helpers.run(`code ${additionBase}`).sync();
-              Helpers.info(
-                `Check you additional dist for ${chalk.bold(c)} and press any key to publish...`,
-              );
-              Helpers.pressKeyAndContinue();
-            }
-            Helpers.run('npm publish', { cwd: additionBase }).sync();
-          } catch (error) {
-            Helpers.warn(`No able to push additional dist for name: ${c}`);
-          }
-        }
-
-        await this.updateTnpAndCoreContainers(newVersion);
       },
     );
     //#endregion

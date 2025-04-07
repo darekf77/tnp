@@ -255,6 +255,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       type: 'node',
       request: 'attach',
       name: 'Attach to global cli tool',
+      autoAttachChildProcesses: false, // TODO probably no need for now
       port: 9229,
       skipFiles: ['<node_internals>/**'],
       // "outFiles": ["${workspaceFolder}/dist/**/*.js"] // not wokring for copy manager
@@ -376,13 +377,13 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   get __vscodeLaunchRuntimeArgs() {
     //#region @backendFunc
     return [
-      '--nolazy',
-      '-r',
-      'ts-node/register',
-      // needs to be for debugging from node_modules
+      // '--nolazy',
+      // '-r',
+      // 'ts-node/register',
+      // // needs to be for debugging from node_modules
       '--preserve-symlinks',
-      // "--preserve-symlinks-main",NOT WORKING
-      '--experimental-worker',
+      // // "--preserve-symlinks-main",NOT WORKING
+      // '--experimental-worker',
     ];
     //#endregion
   }

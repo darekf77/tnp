@@ -295,6 +295,7 @@ export class Framework extends BaseFeatureForProject<Project> {
 
   //#region getters & methods / name, names / universal package name
   /**
+   * @deprecated use project.npmPackageName
    * get actual npm package name from project
    */
   public get universalPackageName(): string {

@@ -23,7 +23,9 @@ export class InsideStructAngular13App extends BaseInsideStruct {
     ) {
       return;
     }
-    const tmpProjectsStandalone = `tmp-apps-for-${config.folder.dist}${this.websql ? '-websql' : ''}/${project.name}`;
+    const tmpProjectsStandalone =
+      `tmp-apps-for-${config.folder.dist}` +
+      `${this.initOptions.build.websql ? '-websql' : ''}/${project.name}`;
 
     const result = InsideStruct.from(
       {
@@ -81,7 +83,9 @@ export class InsideStructAngular13App extends BaseInsideStruct {
           //#region what and where needs to linked
           [
             opt => {
-              const standalonePath = `tmp-src-app-${config.folder.dist}${this.websql ? '-websql' : ''}`;
+              const standalonePath =
+                `tmp-src-app-${config.folder.dist}` +
+                `${this.initOptions.build.websql ? '-websql' : ''}`;
               return standalonePath;
             },
             opt => {
@@ -94,7 +98,9 @@ export class InsideStructAngular13App extends BaseInsideStruct {
           //#region link not containter target clients
           [
             opt => {
-              const standalonePath = `tmp-src-${config.folder.dist}${this.websql ? '-websql' : ''}`;
+              const standalonePath =
+                `tmp-src-${config.folder.dist}` +
+                `${this.initOptions.build.websql ? '-websql' : ''}`;
 
               return '';
             },
@@ -170,12 +176,12 @@ ${appModuleFile}
 
             appComponentFile = appComponentFile.replace(
               `import { Taon } from 'taon/src';`,
-              `import { Taon } from 'taon/${this.websql ? config.folder.websql : config.folder.browser}/src';`,
+              `import { Taon } from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}/src';`,
             );
 
             appComponentFile = appComponentFile.replace(
               `from 'taon/src';`,
-              `from 'taon/${this.websql ? config.folder.websql : config.folder.browser}/src';`,
+              `from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}/src';`,
             );
 
             appComponentFile = appComponentFile.replace(
@@ -211,7 +217,11 @@ ${appComponentFile}
 
             appModuleFile = appModuleFile.replace(
               `import { TaonAdminModeConfigurationModule } from 'taon/src';`,
-              `import { TaonAdminModeConfigurationModule } from 'taon/${this.websql ? config.folder.websql : config.folder.browser}/src';`,
+              `import { TaonAdminModeConfigurationModule } from 'taon/${
+                this.initOptions.build.websql
+                  ? config.folder.websql
+                  : config.folder.browser
+              }/src';`,
             );
 
             Helpers.writeFile(appComponentFilePath, appModuleFile);
@@ -228,7 +238,7 @@ ${appComponentFile}
 
             let appMainFile = Helpers.readFile(appMainFilePath);
 
-            if (!this.websql) {
+            if (!this.initOptions.build.websql) {
               appMainFile = appMainFile.replace(
                 `require('sql.js');`,
                 `(arg: any) => {
@@ -240,17 +250,17 @@ ${appComponentFile}
 
             appMainFile = appMainFile.replace(
               `import { Helpers } from 'tnp-core/src';`,
-              `import { Helpers } from 'tnp-core/${this.websql ? config.folder.websql : config.folder.browser}/src';`,
+              `import { Helpers } from 'tnp-core/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}/src';`,
             );
 
             appMainFile = appMainFile.replace(
               `import { TaonAdmin } from 'taon/src';`,
-              `import { TaonAdmin } from 'taon/${this.websql ? config.folder.websql : config.folder.browser}/src';`,
+              `import { TaonAdmin } from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}/src';`,
             );
 
             appMainFile = appMainFile.replace(
               `import { Stor } from 'taon-storage/src';`,
-              `import { Stor } from 'taon-storage/${this.websql ? config.folder.websql : config.folder.browser}/src';`,
+              `import { Stor } from 'taon-storage/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}/src';`,
             );
 
             Helpers.writeFile(appMainFilePath, appMainFile);
@@ -458,7 +468,7 @@ ${appComponentFile}
               path.join(
                 project.location,
                 replacement(
-                  `tmp-src-${config.folder.dist}${this.websql ? '-websql' : ''}`,
+                  `tmp-src-${config.folder.dist}${this.initOptions.build.websql ? '-websql' : ''}`,
                 ),
                 config.folder.assets,
               ),
@@ -509,7 +519,12 @@ ${appComponentFile}
             );
 
             const electronConfig = Helpers.readJson(electronConfigPath);
-            electronConfig.directories.output = `../../${this.project.artifactsManager.artifact.electronApp.__getElectronAppRelativePath({ websql: this.websql })}/`;
+            electronConfig.directories.output =
+              `../../` +
+              `${this.project.artifactsManager.artifact.electronApp.__getElectronAppRelativePath(
+                { websql: this.initOptions.build.websql },
+              )}/`;
+
             Helpers.writeJson(electronConfigPath, electronConfig);
             const packageJson = new BasePackageJson({
               cwd: crossPlatformPath(
@@ -714,9 +729,9 @@ ${appComponentFile}
                   .join('/')
                   .replace('src/', `src/app/${project.name}/`);
                 return _.merge(a, {
-                  [`@${parent.name}/${path.basename(b)}/${this.websql ? config.folder.websql : config.folder.browser}`]:
+                  [`@${parent.name}/${path.basename(b)}/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}`]:
                     [`./${pathRelative}`],
-                  [`@${parent.name}/${path.basename(b)}/${this.websql ? config.folder.websql : config.folder.browser}/*`]:
+                  [`@${parent.name}/${path.basename(b)}/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}/*`]:
                     [`./${pathRelative}/*`],
                 });
               }, {});
