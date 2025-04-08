@@ -1,7 +1,9 @@
 //#region imports
-import { UtilsTerminal } from 'tnp-core';
+import { UtilsTerminal } from 'tnp-core/src';
 import { BaseGit, Helpers } from 'tnp-helpers/src';
+
 import { EnvOptions } from '../../options';
+
 import type { Project } from './project';
 //#endregion
 

@@ -112,8 +112,11 @@ export class ArtifactManager {
     if (this.project.framework.frameworkVersionLessThan('v18')) {
       Helpers.error(
         `Please upgrade taon framework version to to at least v18
+        in project: ${this.project.name}
 
         ${config.file.taon_jsonc} => version => should be at least 18
+        inside file
+        ${chalk.underline(this.project.pathFor(config.file.taon_jsonc))}
 
         `,
         false,
@@ -140,7 +143,7 @@ export class ArtifactManager {
 
 
         `);
-      UtilsTerminal.pressAnyKeyToContinueAsync({
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
         message: 'Press any key to continue',
       });
       return;
@@ -469,7 +472,7 @@ export class ArtifactManager {
         UtilsTerminal.clearConsole();
       }
       Helpers.info(
-        `Releasing continer child: ${child.name}  (${howManyChildren}/${index + 1}) `,
+        `Releasing container child: ${child.name}  (${howManyChildren}/${index + 1}) `,
       );
       await this.tryCatchWrapper(
         async () => {
@@ -499,8 +502,7 @@ export class ArtifactManager {
         if (error?.name === 'ExitPromptError') {
           process.exit(0);
         }
-        console.log(error);
-        Helpers.error(error, true, true);
+        console.error(error);
         Helpers.error(
           `Not able to ${actionName} your project ${chalk.bold(project.genericName)}`,
           true,

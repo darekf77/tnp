@@ -14,7 +14,9 @@
         "${workspaceFolder}/dist/**/*.js",
         "!**/node_modules/**"
       ],
-      "runtimeArgs": []
+      "runtimeArgs": [
+        "--preserve-symlinks"
+      ]
     },
     {
       "name": "Debug/Start Electron",

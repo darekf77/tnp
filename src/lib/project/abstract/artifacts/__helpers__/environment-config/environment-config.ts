@@ -31,6 +31,55 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   extends BaseFeatureForProject<Project>
   implements InitingPartialProcess
 {
+  /**
+   * TODO THIS IS QUICK_FIX
+   */
+  private makeSureConfigIsProperForTsNode(): void {
+    //#region @backend
+    console.log(`checking tsconfig.json for ${this.project.genericName}`);
+    const template = {
+      compilerOptions: {
+        module: 'NodeNext',
+        moduleResolution: 'NodeNext',
+        strictNullChecks: false,
+        rootDir: './',
+        paths: {},
+      },
+      include: ['environments/**/*.ts', 'env.ts'],
+    };
+    const tsconfigPath = this.project.pathFor('tsconfig.json');
+    const json: typeof template = this.project.readJson('tsconfig.json');
+    if (!json) {
+      Helpers.writeJson(tsconfigPath, template);
+      Helpers.info(`tsconfig.json created for ${tsconfigPath} project`);
+      return;
+    }
+    json.compilerOptions = json.compilerOptions || ({} as any);
+    json.include = json.include || [];
+
+    if (json.compilerOptions?.module !== 'NodeNext') {
+      json.compilerOptions.module = 'NodeNext';
+    }
+    if (json.compilerOptions?.moduleResolution !== 'NodeNext') {
+      json.compilerOptions.moduleResolution = 'NodeNext';
+    }
+
+    if (json.compilerOptions?.rootDir !== './') {
+      json.compilerOptions.rootDir = './';
+    }
+
+    if (!json.include.includes('environments/**/*.ts')) {
+      json.include.push('environments/**/*.ts');
+    }
+    if (!json.include.includes('env.ts')) {
+      json.include.push('env.ts');
+    }
+
+    Helpers.writeJson(tsconfigPath, json);
+    Helpers.info(`tsconfig.json update for ${tsconfigPath} project`);
+    //#endregion
+  }
+
   //#region get base env template
   getBaseEnvTemplate(jsonString = '{ ...baseEnv }'): string {
     //#region @backendFunc
@@ -133,6 +182,11 @@ export default env;
   ): EnvOptions {
     //#region @backendFunc
     let env: EnvOptions;
+    Helpers.taskStarted(
+      `Reading environment config for ` +
+        `${artifactName}/${environmentName}/${envNum || ''}`,
+    );
+    this.makeSureConfigIsProperForTsNode();
     try {
       env = require(
         this.project.pathFor(
@@ -141,7 +195,7 @@ export default env;
         ),
       )?.default;
     } catch (error) {
-      Helpers.error(error, true, true);
+      console.error(error, true, true);
       Helpers.error(
         `Incorrect env config for:
          artifactName: ${artifactName}
@@ -150,6 +204,10 @@ export default env;
         `,
       );
     }
+    Helpers.taskDone(
+      `Reading environment config for ` +
+        `${artifactName}/${environmentName}/${envNum || ''}`,
+    );
     return env;
     //#endregion
   }
@@ -185,7 +243,6 @@ export default env;
   //#region standalone config by
   private async getConfigFor(project: Project): Promise<EnvOptions> {
     //#region @backendFunc
-
     var pathToProjectEnvironmentAbsPath = crossPlatformPath([
       project.location,
       envTs,
@@ -207,9 +264,21 @@ export default env;
       UtilsTypescript.formatFile(pathToProjectEnvironmentAbsPath);
     }
 
-    let configStandaloneEnv: EnvOptions = require(
-      pathToProjectEnvironmentAbsPath,
-    )?.default;
+    Helpers.taskStarted(`Reading environment config for ${project.name}`);
+    this.makeSureConfigIsProperForTsNode();
+    try {
+      var configStandaloneEnv: EnvOptions = require(
+        pathToProjectEnvironmentAbsPath,
+      )?.default;
+    } catch (error) {
+      console.log(error);
+      Helpers.error(
+        `Incorrect env config for:
+         project: ${project.name}
+        `,
+      );
+    }
+    Helpers.taskDone(`Done reading environment config for ${project.name}`);
 
     if (!configStandaloneEnv) {
       Helpers.throw(
