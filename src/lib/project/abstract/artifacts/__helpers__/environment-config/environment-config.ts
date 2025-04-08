@@ -19,7 +19,12 @@ import type { Project } from '../../../project';
 //#endregion
 
 //#region @backend
-register();
+register({
+  transpileOnly: true,
+  compilerOptions: {
+    skipLibCheck: true,
+  },
+});
 //#endregion
 
 export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
