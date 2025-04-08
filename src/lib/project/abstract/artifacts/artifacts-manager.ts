@@ -462,11 +462,24 @@ export class ArtifactManager {
     children = this.project.children,
   ): Promise<void> {
     //#region @backendFunc
-    for (const child of children) {
-      await this.tryCatchWrapper(async () => {
-        await child.artifactsManager.release(options);
-      }, 'release');
+    const howManyChildren = children.length;
+    for (let index = 0; index < children.length; index++) {
+      const child = children[index];
+      if (!options.isCiProcess) {
+        UtilsTerminal.clearConsole();
+      }
+      Helpers.info(
+        `Releasing continer child: ${child.name}  (${howManyChildren}/${index + 1}) `,
+      );
+      await this.tryCatchWrapper(
+        async () => {
+          await child.artifactsManager.release(options);
+        },
+        'release',
+        child,
+      );
     }
+
     //#endregion
   }
   //#endregion
@@ -475,6 +488,7 @@ export class ArtifactManager {
   public async tryCatchWrapper(
     action: () => any,
     actionName: 'release' | 'build' | 'init' | 'clear' | 'struct' | 'brand',
+    project: Project = this.project,
   ): Promise<void> {
     //#region @backendFunc
     while (true) {
@@ -488,7 +502,7 @@ export class ArtifactManager {
         console.log(error);
         Helpers.error(error, true, true);
         Helpers.error(
-          `Not able to ${actionName} your project ${chalk.bold(this.project.genericName)}`,
+          `Not able to ${actionName} your project ${chalk.bold(project.genericName)}`,
           true,
           true,
         );
@@ -512,7 +526,7 @@ export class ArtifactManager {
         });
 
         if (res === 'openInVscode') {
-          this.project.vsCodeHelpers.openInVscode();
+          project.vsCodeHelpers.openInVscode();
           await UtilsTerminal.pressAnyKeyToContinueAsync({
             message: 'Press any key to try release again',
           });
