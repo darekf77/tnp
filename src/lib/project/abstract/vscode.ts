@@ -390,24 +390,10 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   //#endregion
 
   //#region open in vscode
-  public __openInVscode() {
+  public openInVscode() {
     //#region @backendFunc
     this.filesRecreatorCodeWorkspace();
-    if (
-      this.project.framework.isStandaloneProject ||
-      this.project.framework.isUnknownNpmProject
-    ) {
-      this.project.run(`code ${this.project.location}`).sync();
-    } else {
-      const isomorphicServers: Project[] = this.project.children.filter(c =>
-        c.typeIs('isomorphic-lib'),
-      );
-
-      this.project.run(`code ${this.project.location}`).sync();
-      isomorphicServers.forEach(s => {
-        s.run(`code ${s.location}`).sync();
-      });
-    }
+    this.project.run(`code ${this.project.location}`).sync();
     //#endregion
   }
   //#endregion

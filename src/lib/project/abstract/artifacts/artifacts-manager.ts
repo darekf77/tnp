@@ -485,7 +485,7 @@ export class ArtifactManager {
         if (error?.name === 'ExitPromptError') {
           process.exit(0);
         }
-        // console.log(error);
+        console.log(error);
         Helpers.error(error, true, true);
         Helpers.error(
           `Not able to ${actionName} your project ${chalk.bold(this.project.genericName)}`,
@@ -499,6 +499,9 @@ export class ArtifactManager {
           skipPackage: {
             name: `Skip ${actionName} for this project`,
           },
+          openInVscode: {
+            name: `Open in VSCode ... try release again`,
+          },
           exit: {
             name: 'Exit process',
           },
@@ -507,6 +510,13 @@ export class ArtifactManager {
           choices: errorOptions,
           question: 'What you wanna do ?',
         });
+
+        if (res === 'openInVscode') {
+          this.project.vsCodeHelpers.openInVscode();
+          await UtilsTerminal.pressAnyKeyToContinueAsync({
+            message: 'Press any key to try release again',
+          });
+        }
 
         if (res === 'exit') {
           process.exit(0);

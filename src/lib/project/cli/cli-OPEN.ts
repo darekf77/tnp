@@ -84,7 +84,7 @@ export class $Open extends BaseCli {
         config.file.taon_jsonc,
       ]),
     );
-    libs.forEach(l => l.vsCodeHelpers.__openInVscode());
+    libs.forEach(l => l.vsCodeHelpers.openInVscode());
     this._exit();
   }
 

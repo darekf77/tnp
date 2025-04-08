@@ -196,7 +196,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
           ],
           proj => proj.name,
         )
-        .filter(d => d.name !== this.name); // TODO probably not needed
+        .filter(d => d.framework.isStandaloneProject);
     }
 
     // console.log('after sorting ',children.map(c => c.name));
@@ -238,7 +238,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         if (!releaseOptions.isCiProcess) {
           Helpers.clearConsole();
         }
-        Helpers.info(`Checking if project has any unfinish/uncommited git changes: ${child.name}`);
+        Helpers.info(
+          `Checking if project has any unfinish/uncommited git changes: ${child.name}`,
+        );
         await child.git.resolveLastChanges({
           tryAutomaticActionFirst:
             releaseOptions.release.autoReleaseUsingConfig,
