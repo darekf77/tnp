@@ -203,6 +203,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     //#endregion
 
     //#region question about release
+    if (!releaseOptions.isCiProcess) {
+      Helpers.clearConsole();
+    }
     if (
       !(await this.npmHelpers.shouldReleaseMessage({
         releaseVersionBumpType: releaseOptions.release.releaseVersionBumpType,
@@ -222,6 +225,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     //#endregion
 
     //#region resolve git changes
+    if (!releaseOptions.isCiProcess) {
+      Helpers.clearConsole();
+    }
     if (this.framework.isStandaloneProject) {
       await this.git.resolveLastChanges({
         tryAutomaticActionFirst: releaseOptions.release.autoReleaseUsingConfig,
@@ -229,12 +235,19 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     }
     if (this.framework.isContainer) {
       for (const child of children) {
+        if (!releaseOptions.isCiProcess) {
+          Helpers.clearConsole();
+        }
+        Helpers.info(`Checking if project has any unfinish/uncommited git changes: ${child.name}`);
         await child.git.resolveLastChanges({
           tryAutomaticActionFirst:
             releaseOptions.release.autoReleaseUsingConfig,
           projectNameAsOutputPrefix: child.name,
         });
       }
+    }
+    if (!releaseOptions.isCiProcess) {
+      Helpers.clearConsole();
     }
     //#endregion
 
