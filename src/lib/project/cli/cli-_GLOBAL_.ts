@@ -513,7 +513,6 @@ export class $Global extends BaseGlobalCommandLine<
 
   //#region deps
 
-
   /**
    * generate deps json
    */
@@ -1657,6 +1656,25 @@ ${this.project.children
     this._exit();
   }
   //#endregion
+
+  async coreContainerDepsUpdate() {
+    const containerCore = this.project.framework.coreContainer;
+    for (const child of this.project.parent.children.filter(
+      f => f.framework.isStandaloneProject,
+    )) {
+      Helpers.info(`Updating ${child.name} version from npm...`);
+      const version = await child.npmHelpers.getPackageVersionFromNpmRegistry(
+        child.nameForNpmPackage,
+      );
+      console.info(`Found version: ${version} for ${child.nameForNpmPackage}`);
+      containerCore.taonJson.overridePackageJsonManager.updateDependency({
+        packageName: `~${child.nameForNpmPackage}`,
+        version,
+      });
+    }
+    Helpers.info(`Container deps updated`);
+    this._exit();
+  }
 
   ng() {
     Helpers.run(`npx -p @angular/cli ng ${this.argsWithParams}`, {

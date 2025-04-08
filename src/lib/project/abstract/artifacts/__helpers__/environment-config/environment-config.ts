@@ -41,6 +41,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       compilerOptions: {
         module: 'NodeNext',
         moduleResolution: 'NodeNext',
+        esModuleInterop: true,
         strictNullChecks: false,
         rootDir: './',
         paths: {},
@@ -62,6 +63,10 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     }
     if (json.compilerOptions?.moduleResolution !== 'NodeNext') {
       json.compilerOptions.moduleResolution = 'NodeNext';
+    }
+
+    if (!json.compilerOptions?.esModuleInterop) {
+      json.compilerOptions.esModuleInterop = true;
     }
 
     if (json.compilerOptions?.rootDir !== './') {
