@@ -4,7 +4,7 @@ import { crossPlatformPath, path, _, CoreModels } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
-import { InitingPartialProcess, EnvOptions } from '../../../../../../options';
+import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
 import type { InsideStructAngular13App } from '../../../angular-node-app/tools/inside-struct-angular13-app';
 import type { InsideStructAngular13Lib } from '../inside-struct-angular13-lib';
@@ -150,7 +150,6 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
 
 export class InsideStructuresApp
   extends InsideStructuresProcess
-  implements InitingPartialProcess
 {
   private insideStructAngular13AppNormal: InsideStructAngular13App;
   private insideStructAngular13AppWebsql: InsideStructAngular13App;
@@ -190,7 +189,6 @@ export class InsideStructuresApp
 
 export class InsideStructuresLib
   extends InsideStructuresProcess
-  implements InitingPartialProcess
 {
   private insideStructAngular13LibNormal: InsideStructAngular13Lib;
   private insideStructAngular13LibWebsql: InsideStructAngular13Lib;

@@ -11,7 +11,6 @@ import { register } from 'ts-node';
 import { environments, envTs } from '../../../../../constants';
 import {
   EnvOptions,
-  InitingPartialProcess,
   ReleaseArtifactTaon,
 } from '../../../../../options';
 import type { Project } from '../../../project';
@@ -29,14 +28,13 @@ register({
 
 export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   extends BaseFeatureForProject<Project>
-  implements InitingPartialProcess
 {
   /**
    * TODO THIS IS QUICK_FIX
    */
   private makeSureConfigIsProperForTsNode(): void {
     //#region @backend
-    console.log(`checking tsconfig.json for ${this.project.genericName}`);
+    // console.log(`checking tsconfig.json for ${this.project.genericName}`);
     const template = {
       compilerOptions: {
         module: 'NodeNext',
@@ -81,7 +79,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     }
 
     Helpers.writeJson(tsconfigPath, json);
-    Helpers.info(`tsconfig.json update for ${tsconfigPath} project`);
+    // Helpers.info(`tsconfig.json update for ${tsconfigPath} project`);
     //#endregion
   }
 
@@ -120,11 +118,12 @@ export default env;
   //#endregion
 
   //#region init
-  public async init(): Promise<void> {
+  public async init<EnvConfig>(): Promise<EnvOptions> {
     //#region @backendFunc
     const configResult = await this.getConfigFor(this.project);
 
     await this.updateData(configResult);
+    return configResult;
     //#endregion
   }
   //#endregion
@@ -324,6 +323,11 @@ export default env;
         });
     } else if (this.project.framework.isContainer) {
       // TODO
+      console.log(`
+
+        container not initing
+
+        `);
     }
 
     if (
@@ -364,8 +368,8 @@ export default env;
         }
       });
       Helpers.writeJson(tmpEnvironmentPathBrowser, clonedConfig);
-      Helpers.log(
-        `Config saved in project ${chalk.bold(this.project.genericName)}
+      Helpers.info(
+        `Config saved in project ${chalk.bold(this.project.pathFor('tsconfig.json'))}
       ${tmpEnvironmentPath}`,
       );
     }

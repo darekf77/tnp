@@ -1,7 +1,8 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { chalk, fse, json5, path, _ } from 'tnp-core/src';
+import { chalk, fse, json5, path, _, os } from 'tnp-core/src';
 import { Utils } from 'tnp-core/src';
+import { crossPlatformPath } from 'tnp-core/src';
 import { BaseVscodeHelpers, Helpers } from 'tnp-helpers/src';
 
 import {
@@ -11,7 +12,7 @@ import {
   taonConfigSchemaJsonContainer,
 } from '../../constants';
 import { Models } from '../../models';
-import { EnvOptions, InitingPartialProcess } from '../../options';
+import { EnvOptions } from '../../options';
 
 import type { Project } from './project';
 //#endregion
@@ -22,7 +23,6 @@ import type { Project } from './project';
  */
 export class Vscode // @ts-ignore TODO weird inheritance problem
   extends BaseVscodeHelpers<Project>
-  implements InitingPartialProcess
 {
   async init(): Promise<void> {
     this.recreateJsonSchemas();
@@ -139,6 +139,75 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     //#endregion
   }
   //#endregion
+
+  get properPowerShellConfigOhMyPosh() {
+    //     `$env:PATH += ";${os.homedir()}\AppData\Local\Programs\oh-my-posh\bin"
+    // oh-my-posh init pwsh --config "C:\Users\darek\AppData\Local\Programs\oh-my-posh\themes\jandedobbeleer.omp.json" | Invoke-Expression`
+
+    const config = {
+      $schema:
+        'https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json',
+      console_title_template: '{{ .Folder }}',
+      blocks: [
+        {
+          type: 'prompt',
+          alignment: 'left',
+          segments: [
+            {
+              properties: {
+                cache_duration: 'none',
+              },
+              template: '{{ .UserName }}@{{ .HostName }} ',
+              foreground: '#00FF00',
+              type: 'session',
+              style: 'plain',
+            },
+            {
+              properties: {
+                cache_duration: 'none',
+              },
+              template: 'POWERSHELL ',
+              foreground: '#FF69B4',
+              type: 'shell',
+              style: 'plain',
+            },
+            {
+              properties: {
+                cache_duration: 'none',
+                style: 'full',
+              },
+              template: '{{ .Path }} ',
+              foreground: '#D4AF37',
+              type: 'path',
+              style: 'plain',
+            },
+            {
+              properties: {
+                branch_icon: '',
+                cache_duration: 'none',
+                display_stash_count: false,
+                display_status: false,
+                display_upstream_icon: false,
+              },
+              template: '({{ .HEAD }})',
+              foreground: '#3399FF',
+              type: 'git',
+              style: 'plain',
+            },
+          ],
+        },
+      ],
+      version: 3,
+      final_space: true,
+    };
+
+    return {
+      config,
+      path: crossPlatformPath(
+        `${os.homedir()}/AppData/Local/Programs/oh-my-posh/themes/jandedobbeleer.omp.json`,
+      ),
+    };
+  }
 
   get vscodeTempProjFolderName() {
     return `tmp-vscode-proj`;

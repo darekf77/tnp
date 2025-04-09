@@ -12,7 +12,7 @@ import {
   taonConfigSchemaJsonStandalone,
   taonConfigSchemaJsonContainer,
 } from '../../../../../../constants';
-import { EnvOptions, InitingPartialProcess } from '../../../../../../options';
+import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
 //#endregion
 
@@ -20,7 +20,6 @@ export type RecreateFile = { where: string; from: string };
 
 export class FilesRecreator // @ts-ignore TODO weird inheritance problem
   extends BaseFeatureForProject<Project>
-  implements InitingPartialProcess
 {
   //#region recreate simple files
   public async init(): Promise<void> {

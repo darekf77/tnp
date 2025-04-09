@@ -203,7 +203,7 @@ export class ArtifactManager {
 
   async initAllChildren(options: EnvOptions): Promise<void> {
     for (const child of this.project.children) {
-      await child.artifactsManager.init(options);
+      await child.artifactsManager.init(options.clone({}));
     }
   }
   //#endregion

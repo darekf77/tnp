@@ -1,12 +1,9 @@
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
-import { InitingPartialProcess } from '../../options';
-
 import type { Project } from './project';
 
 export class Linter // @ts-ignore TODO weird inheritance problem
   extends BaseFeatureForProject<Project>
-  implements InitingPartialProcess
 {
   async init(): Promise<void> {
     this.recreateLintConfiguration();

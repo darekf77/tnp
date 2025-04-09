@@ -5,6 +5,7 @@ import { path, crossPlatformPath } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
+import { getBrowserVerPath } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
@@ -50,11 +51,9 @@ export class IncrementalBuildProcess {
 
     this.backendCompilation = new BackendCompilation(
       buildOptions,
-      buildOptions.build.watch,
       outFolder,
       location,
       project,
-      this.buildOptions.build.websql,
     );
 
     Helpers.log(
@@ -70,29 +69,17 @@ export class IncrementalBuildProcess {
     //#endregion
 
     if (project.framework.isStandaloneProject) {
-      let browserOutFolder = Helpers.getBrowserVerPath(
-        void 0,
-        this.buildOptions.build.websql,
-      );
+      let browserOutFolder = getBrowserVerPath(this.buildOptions.build.websql);
       this.browserCompilationStandalone = new BrowserCompilation(
-        buildOptions.build.watch,
         this.project,
-        void 0,
-        void 0,
         `tmp-src-${outFolder}${this.buildOptions.build.websql ? '-websql' : ''}`,
         browserOutFolder as any,
         location,
-        project,
         outFolder,
         buildOptions,
       );
     } else {
-      const moduleName = '';
-      const envConfig = {} as any;
-      let browserOutFolder = Helpers.getBrowserVerPath(
-        moduleName,
-        this.buildOptions.build.websql,
-      );
+      let browserOutFolder = getBrowserVerPath(this.buildOptions.build.websql);
 
       if (this.buildOptions.release.releaseType) {
         browserOutFolder = crossPlatformPath(
@@ -100,14 +87,10 @@ export class IncrementalBuildProcess {
         );
       }
       this.browserCompilationSmartContainer = new BrowserCompilation(
-        buildOptions.build.watch,
         this.project,
-        moduleName,
-        envConfig,
         `tmp-src-${outFolder}-${browserOutFolder}`,
         browserOutFolder as any,
         location,
-        project,
         outFolder,
         buildOptions,
       );

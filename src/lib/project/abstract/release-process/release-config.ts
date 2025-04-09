@@ -2,7 +2,6 @@
 // import { BaseFeatureForProject } from 'tnp-helpers/src';
 
 // import {
-//   InitingPartialProcess,
 //   ReleaseArtifactTaon,
 //   ReleaseArtifactTaonNamesArr,
 //   EnvOptions,
@@ -11,7 +10,6 @@
 
 // export class ReleaseConfig // @ts-ignore TODO weird inheritance problem
 //   extends BaseFeatureForProject<Project>
-//   implements InitingPartialProcess
 // {
 //   async init(options?: EnvOptions): Promise<void> {
 //     //#region @backendFunc

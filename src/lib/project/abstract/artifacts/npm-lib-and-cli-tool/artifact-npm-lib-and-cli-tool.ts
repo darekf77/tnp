@@ -539,9 +539,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#region cli
     if (releaseOptions.release.cli.includeNodeModules) {
       await this.project.nodeModules.removeOwnPackage(async () => {
-        await this.backendIncludeNodeModulesInCompilation(
-          releaseAbsPath,
-        );
+        await this.backendIncludeNodeModulesInCompilation(releaseAbsPath);
       });
     }
 
@@ -665,27 +663,24 @@ export * from './lib';
         }
       },
       outputLineReplace: (line: string) => {
-        if (this.project.framework.isStandaloneProject) {
-          if (line.startsWith('WARNING: postcss-url')) {
-            return ' --- [taon] IGNORED WARN ---- ';
-          }
-
-          line = line.replace(`projects/${this.project.name}/src/`, `./src/`);
-
-          if (line.search(`/src/libs/`) !== -1) {
-            const [__, ___, ____, moduleName] = line.split('/');
-            // console.log({
-            //   moduleName,
-            //   standalone: 'inlib'
-            // })
-            return line.replace(
-              `/src/libs/${moduleName}/`,
-              `/${moduleName}/src/lib/`,
-            );
-          }
-
-          return line;
+        if (line.startsWith('WARNING: postcss-url')) {
+          return ' --- [taon] IGNORED WARN ---- ';
         }
+
+        line = line.replace(`projects/${this.project.name}/src/`, `./src/`);
+
+        if (line.search(`/src/libs/`) !== -1) {
+          const [__, ___, ____, moduleName] = line.split('/');
+          // console.log({
+          //   moduleName,
+          //   standalone: 'inlib'
+          // })
+          return line.replace(
+            `/src/libs/${moduleName}/`,
+            `/${moduleName}/src/lib/`,
+          );
+        }
+
         return line;
       },
     } as CoreModels.ExecuteOptions;

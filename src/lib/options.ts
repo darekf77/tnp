@@ -75,18 +75,7 @@ export const ReleaseTypeNamesArr: ReleaseType[] =
   Object.values(ReleaseTypeNames);
 //#endregion
 
-//#region initing partial process
-/**
- * Class is as part of initing project structure process
- */
-export interface InitingPartialProcess {
-  /**
-   * All initialization process from class
-   * gathered in one place
-   */
-  init(options: EnvOptions): Promise<void>;
-}
-//#endregion
+
 
 //#region env options
 
@@ -438,7 +427,9 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   }
 
   //#region clone
-  public clone(override: Partial<EnvOptions>): EnvOptions {
+  public clone(override?: Partial<EnvOptions>): EnvOptions {
+    //#region @backendFunc
+    override = override || {};
     const toClone = {
       ..._.cloneDeep(this),
       ..._.cloneDeep(override),
@@ -446,6 +437,7 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     // console.log({toClone})
     const result = new EnvOptions(toClone);
     return result;
+    //#endregion
   }
   //#endregion
 

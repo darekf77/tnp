@@ -32,7 +32,7 @@ export class BackendCompilation extends IncCompiler.Base {
 
   get cwd() {
     //#region @backendFunc
-    return this.cwdProject.location;
+    return this.project.location;
     //#endregion
   }
 
@@ -49,7 +49,6 @@ export class BackendCompilation extends IncCompiler.Base {
   //#region @backend
   constructor(
     public buildOptions: EnvOptions,
-    public isWatchBuild: boolean,
     /**
      * Output folder
      * Ex. dist
@@ -60,16 +59,10 @@ export class BackendCompilation extends IncCompiler.Base {
      * Ex. src | components
      */
     public srcFolder: string,
-    /**
-     * Current cwd same for browser and backend
-     * but browser project has own compilation folder
-     * Ex. /home/username/project/myproject
-     */
-    public cwdProject: Project,
-    public websql: boolean,
+    public project: Project,
   ) {
     super({
-      folderPath: crossPlatformPath([cwdProject.location, srcFolder]),
+      folderPath: crossPlatformPath([project.location, srcFolder]),
       notifyOnFileUnlink: true,
       followSymlinks: true,
       taskName: 'BackendCompilation',
@@ -88,7 +81,6 @@ export class BackendCompilation extends IncCompiler.Base {
     }
     await this.libCompilation(this.buildOptions, {
       cwd: this.cwd,
-      watch: this.isWatchBuild,
       outDir: this.outFolder as any,
       generateDeclarations: true,
     });
@@ -101,7 +93,6 @@ export class BackendCompilation extends IncCompiler.Base {
     buildOptions: EnvOptions,
     {
       cwd,
-      watch = false,
       outDir,
       generateDeclarations = false,
       tsExe = 'npm-run tsc',
@@ -109,6 +100,7 @@ export class BackendCompilation extends IncCompiler.Base {
     }: CoreModels.TscCompileOptions,
   ) {
     //#region @backendFunc
+    const watch = true; // @UNCOMMENT
     if (!this.isEnableCompilation) {
       Helpers.log(
         `Compilation disabled for ${_.startCase(BackendCompilation.name)}`,
@@ -117,7 +109,7 @@ export class BackendCompilation extends IncCompiler.Base {
     }
     // let id = BackendCompilation.counter++;
 
-    const project = this.cwdProject.ins.nearestTo(cwd) as Project;
+    const project = this.project.ins.nearestTo(cwd) as Project;
 
     //#region prepare params
     const paramsNoWatch = [
@@ -137,7 +129,7 @@ export class BackendCompilation extends IncCompiler.Base {
 
     //#region cmd
     let cmd = (specificTsconfig?: string) => {
-      let commandJs, commandMaps, commandJsOrganizationInitial, commandDts;
+      let commandJs, commandMaps, commandDts;
       const nocutsrcFolder = `${project.location}/${outDir}-nocutsrc`;
       // commandJs = `${tsExe} -d false  --mapRoot ${nocutsrc} ${params.join(' ')} `
       //   + (specificTsconfig ? `--project ${specificTsconfig}` : '');
@@ -146,17 +138,12 @@ export class BackendCompilation extends IncCompiler.Base {
         `${tsExe} --mapRoot ${nocutsrcFolder} ${params.join(' ')} ` +
         (specificTsconfig ? `--project ${specificTsconfig}` : '');
 
-      commandJsOrganizationInitial =
-        `${tsExe} --mapRoot ${nocutsrcFolder} ${paramsNoWatch.join(' ')} ` +
-        (specificTsconfig ? `--project ${specificTsconfig}` : '');
-
       // commandDts = `${tsExe} --emitDeclarationOnly  ${params.join(' ')}`;
       params[1] = ` --outDir ${nocutsrcFolder}`;
       commandMaps = `${tsExe} ${params.join(' ').replace('--noEmitOnError true', '--noEmitOnError false')} `;
       return {
         commandJs,
         commandMaps,
-        commandJsOrganizationInitial,
         // commandDts
       };
     };
@@ -164,45 +151,41 @@ export class BackendCompilation extends IncCompiler.Base {
 
     let tscCommands = {} as {
       commandJs: string;
-      commandJsOrganizationInitial: string;
       commandMaps: string;
     };
 
     const tsconfigBackendPath = crossPlatformPath(
-      project.pathFor(`tsconfig.backend.${outDir}.json`),
+      project.pathFor(`tsconfig.backend.dist.json`),
     );
     tscCommands = cmd(tsconfigBackendPath);
 
     await this.buildStandardLibVer(buildOptions, {
-      watch,
       ...tscCommands,
       generateDeclarations,
       cwd,
       project,
-      outDir,
     });
     //#endregion
   }
 
   //#endregion
 
-  //#region methods / build standar lib version
+  //#region methods / build standard lib version
   protected async buildStandardLibVer(
     buildOptions: EnvOptions,
     options: {
-      watch: boolean;
       commandJs: string;
       commandMaps: string;
-      commandJsOrganizationInitial: string;
       generateDeclarations: boolean;
       cwd: string;
       project: Project;
-      outDir: 'dist';
     },
   ) {
     //#region @backendFunc
-    let { commandJs, commandMaps, cwd, project, outDir, watch } = options;
+    const outDir = 'dist';
+    let { commandJs, commandMaps, cwd, project } = options;
 
+    // console.log({ commandMaps, commandJs, cwd, outDir, watch });
     // console.log({ childrenNames });
 
     const isStandalone = project.framework.isStandaloneProject;
@@ -340,8 +323,8 @@ Starting backend TypeScript build....
         stdout: ['Watching for file changes.'],
       },
     });
-    Helpers.log(
-      `* Typescirpt compilation second part done (${outDir}  build). `,
+    Helpers.logInfo(
+      `* Typescript compilation second part done`,
     );
     Helpers.info(`
 
@@ -349,7 +332,7 @@ Starting backend TypeScript build....
 
         `);
 
-    if (watch) {
+    if (buildOptions.build.watch) {
       // console.log(Helpers.terminalLine());
       Helpers.info(`
 

@@ -44,24 +44,16 @@ export class BrowserCompilation extends BackendCompilation {
   }
   get customCompilerName() {
     //#region @backendFunc
-    if (this.ENV) {
-      return `Browser compilation for ${this.ENV.currentProjectName}`;
-    }
     return `Browser compilation`;
     //#endregion
   }
 
   //#endregion
 
-  readonly project: Project;
-
   //#region constructor
   //#region @backend
   constructor(
-    isWatchBuild: boolean,
-    public compilationProject: Project,
-    public moduleName: string,
-    public ENV: EnvOptions,
+    public project: Project,
     /**
      * tmp-src-for-(dist)-browser
      */
@@ -71,29 +63,21 @@ export class BrowserCompilation extends BackendCompilation {
      */
     outFolder: CoreModels.OutFolder,
     location: string,
-    cwdProject: Project,
     public backendOutFolder: string,
     public buildOptions: EnvOptions,
   ) {
-    super(
-      buildOptions,
-      isWatchBuild,
-      outFolder,
-      location,
-      cwdProject,
-      buildOptions.build.websql,
-    );
+    super(buildOptions, outFolder, location, project);
     BrowserCompilation.instances[String(!!buildOptions.build.websql)] = this;
     this.compilerName = this.customCompilerName;
 
     Helpers.log(
       `[BrowserCompilation][constructor]
 
-    compilationProject.genericName: ${compilationProject?.genericName}
-    compilationProject.type: ${compilationProject?.type}
-    ENV?: ${!!ENV}
+    compilationProject.genericName: ${project?.genericName}
+    compilationProject.type: ${project?.type}
+    ENV?: ${!!this.buildOptions}
 
-    cwd: ${cwdProject.location}
+    cwd: ${this.project.location}
     sourceOut: ${sourceOutBrowser}
     location: ${location}
     backendOut: ${backendOutFolder}
@@ -109,7 +93,7 @@ export class BrowserCompilation extends BackendCompilation {
     // console.log('LOCATION', location)
     // console.log('MODULE NAME', moduleName)
     // console.log(Helpers.terminalLine())
-    this.project = cwdProject.ins.From(this.cwd) as Project;
+    // this.project = cwdProject.ins.From(this.cwd) as Project;
   }
   //#endregion
   //#endregion
@@ -233,16 +217,14 @@ export class BrowserCompilation extends BackendCompilation {
   initCodeCut() {
     //#region @backendFunc
     // console.log('inside')
-    let env: EnvOptions = this.ENV;
-    const compilationProject: Project = this.compilationProject;
+
+    const compilationProject: Project = this.project;
     if (!compilationProject) {
       return;
     }
-    env = _.cloneDeep(env);
-    this.ENV = env;
     // console.log('here1')
 
-    let project: Project = this.cwdProject;
+    let project: Project = this.project;
     // if (env) {
     //   project = this.cwdProject.ins.From(env.currentProjectLocation);
     // }
@@ -269,7 +251,7 @@ export class BrowserCompilation extends BackendCompilation {
       this.absPathTmpSrcDistFolder,
       {
         replacements: replacements.filter(f => !!f),
-        env,
+        env: this.buildOptions.clone(),
       },
       project,
       compilationProject,

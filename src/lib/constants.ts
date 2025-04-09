@@ -172,26 +172,22 @@ export class PortUtils {
 
   appHostTemplateFor(project: Project) {
     //#region @backendFunc
-//     const clientPorts = project.framework.isStandaloneProject
-//       ? `
-// export const CLIENT_DEV_NORMAL_APP_PORT = ${project.artifactsManager.artifact.angularNodeApp.standaloneNormalAppPort};
-// export const CLIENT_DEV_WEBSQL_APP_PORT = ${project.artifactsManager.artifact.angularNodeApp.standaloneWebsqlAppPort};
-//     `
-//       : '';
-
-//     return `
-// // THIS FILE IS GENERATED - DO NOT MODIFY
-
-// export const HOST_BACKEND_PORT = ${project.artifactsManager.artifact.angularNodeApp.backendPort};
-// ${clientPorts}
-
-// // Check yout build info here http://localhost:${this.basePort}
-// // BACKEND FOR NORMAL APP: http://localhost:${this.basePort}/helloworld
-// // NORMAL APP: http://localhost:${project.artifactsManager.artifact.angularNodeApp.standaloneNormalAppPort}
-// // WEBSQL APP: http://localhost:${project.artifactsManager.artifact.angularNodeApp.standaloneWebsqlAppPort}
-
-// // THIS FILE IS GENERATED - DO NOT MODIFY
-// `.trim();
+    //     const clientPorts = project.framework.isStandaloneProject
+    //       ? `
+    // export const CLIENT_DEV_NORMAL_APP_PORT = ${project.artifactsManager.artifact.angularNodeApp.standaloneNormalAppPort};
+    // export const CLIENT_DEV_WEBSQL_APP_PORT = ${project.artifactsManager.artifact.angularNodeApp.standaloneWebsqlAppPort};
+    //     `
+    //       : '';
+    //     return `
+    // // THIS FILE IS GENERATED - DO NOT MODIFY
+    // export const HOST_BACKEND_PORT = ${project.artifactsManager.artifact.angularNodeApp.backendPort};
+    // ${clientPorts}
+    // // Check yout build info here http://localhost:${this.basePort}
+    // // BACKEND FOR NORMAL APP: http://localhost:${this.basePort}/helloworld
+    // // NORMAL APP: http://localhost:${project.artifactsManager.artifact.angularNodeApp.standaloneNormalAppPort}
+    // // WEBSQL APP: http://localhost:${project.artifactsManager.artifact.angularNodeApp.standaloneWebsqlAppPort}
+    // // THIS FILE IS GENERATED - DO NOT MODIFY
+    // `.trim();
     //#endregion
   }
 }
@@ -227,6 +223,17 @@ export const notAllowedProjectNames = [
 export const envTs = 'env.ts';
 
 export const environments = 'environments';
+
+//#region methods & getters / get browser ver path
+/**
+ * @deprecated
+ */
+export const getBrowserVerPath = (websql: boolean = false) => {
+  //#region @backend
+  return websql ? config.folder.websql : config.folder.browser;
+  //#endregion
+};
+//#endregion
 
 export function tempSourceFolder(
   outDir: 'dist',
