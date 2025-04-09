@@ -372,7 +372,18 @@ export class ArtifactManager {
   }
 
   async buildAllChildren(options: EnvOptions): Promise<void> {
-    for (const child of this.project.children) {
+    const startIndex = this.project.children.findIndex(
+      c => c.name === options.container.start,
+    );
+    const children = this.project.children.filter((c, i) => {
+      if (startIndex === -1) {
+        return true;
+      }
+      return i >= startIndex;
+    });
+    for (const child of children) {
+      if (options.container.start) {
+      }
       await child.artifactsManager.build(options);
     }
   }
