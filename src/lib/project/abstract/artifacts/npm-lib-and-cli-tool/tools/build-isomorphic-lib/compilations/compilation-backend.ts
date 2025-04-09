@@ -100,7 +100,7 @@ export class BackendCompilation extends IncCompiler.Base {
     }: CoreModels.TscCompileOptions,
   ) {
     //#region @backendFunc
-    const watch = true; // @UNCOMMENT
+    const watch = buildOptions.build.watch;
     if (!this.isEnableCompilation) {
       Helpers.log(
         `Compilation disabled for ${_.startCase(BackendCompilation.name)}`,
@@ -193,7 +193,7 @@ export class BackendCompilation extends IncCompiler.Base {
 
     Helpers.info(`
 
-Starting backend TypeScript build....
+Starting (${buildOptions.build.watch ? 'watch' : 'normal'}) backend TypeScript build....
 
     `);
     const additionalReplace = (line: string) => {
@@ -323,9 +323,7 @@ Starting backend TypeScript build....
         stdout: ['Watching for file changes.'],
       },
     });
-    Helpers.logInfo(
-      `* Typescript compilation second part done`,
-    );
+    Helpers.logInfo(`* Typescript compilation second part done`);
     Helpers.info(`
 
     Backend Typescirpt build done....
