@@ -1,5 +1,5 @@
 import { config } from 'tnp-config/src';
-import { chalk, _, crossPlatformPath, glob, path } from 'tnp-core/src';
+import { chalk, _, crossPlatformPath, glob, path, UtilsOs } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { BaseCommandLineFeature, Helpers } from 'tnp-helpers/src';
 
@@ -12,7 +12,6 @@ import { BaseCli } from './base-cli';
  * TODO refactor move to tnp-helpers
  */ // @ts-ignore TODO weird inheritance problem
 export class $Link extends BaseCli {
-
   async _() {
     let project = this.project;
 
@@ -86,10 +85,21 @@ export class $Link extends BaseCli {
     // }
     //#region linking to global/local bin
     let globalBinFolderPath = path.dirname(
-      Helpers.run(`which ${config.frameworkName}`, { output: false })
-        .sync()
-        .toString(),
+      (
+        _.first(
+          Helpers.run(
+            `${UtilsOs.isRunningInWindowsPowerShell() ? 'where.exe' : 'which'} ${config.frameworkName}`,
+            { output: false },
+          )
+            .sync()
+            .toString()
+            .split('\n'),
+        ) || ''
+      ).trim(),
     );
+    console.log({ FISRT_KRUWA: globalBinFolderPath });
+    // console.log(`globalBinFolderPath "${globalBinFolderPath}"`, );
+    // process.exit(0)
     if (process.platform === 'win32') {
       globalBinFolderPath = crossPlatformPath(globalBinFolderPath);
       if (/^\/[a-z]\//.test(globalBinFolderPath)) {
@@ -99,6 +109,7 @@ export class $Link extends BaseCli {
         );
       }
     }
+    console.log({ globalBinFolderPath });
     const globalNodeModules = crossPlatformPath(
       path.join(
         globalBinFolderPath,
@@ -107,9 +118,11 @@ export class $Link extends BaseCli {
           : `../lib/${config.folder.node_modules}`,
       ),
     );
+    console.log({ globalNodeModules });
     const packageInGlobalNodeModules = crossPlatformPath(
       path.resolve(path.join(globalNodeModules, project.name)),
     );
+    console.log({ packageInGlobalNodeModules });
     // packageInGlobalNodeModules
     Helpers.removeIfExists(packageInGlobalNodeModules);
     project.linkTo(packageInGlobalNodeModules);
