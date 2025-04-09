@@ -9,10 +9,7 @@ import { Helpers } from 'tnp-helpers/src';
 import { register } from 'ts-node';
 
 import { environments, envTs } from '../../../../../constants';
-import {
-  EnvOptions,
-  ReleaseArtifactTaon,
-} from '../../../../../options';
+import { EnvOptions, ReleaseArtifactTaon } from '../../../../../options';
 import type { Project } from '../../../project';
 
 //#endregion
@@ -323,11 +320,9 @@ export default env;
         });
     } else if (this.project.framework.isContainer) {
       // TODO
-      console.log(`
-
-        container not initing
-
-        `);
+      // console.log(`
+      //   container not initing
+      //   `);
     }
 
     if (
