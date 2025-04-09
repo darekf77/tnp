@@ -1668,8 +1668,8 @@ ${this.project.children
       );
       console.info(`Found version: ${version} for ${child.nameForNpmPackage}`);
       containerCore.taonJson.overridePackageJsonManager.updateDependency({
-        packageName: `~${child.nameForNpmPackage}`,
-        version,
+        packageName: child.nameForNpmPackage,
+        version: `~${version}`,
       });
     }
     Helpers.info(`Container deps updated`);
