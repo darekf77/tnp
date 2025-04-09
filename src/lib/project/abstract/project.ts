@@ -184,17 +184,6 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         )
       : this.children;
 
-    const startIndex = children.findIndex(
-      c => c.name === releaseOptions.container.start,
-    );
-    // console.log('start index', startIndex);
-    children = children.filter((c, i) => {
-      if (startIndex === -1) {
-        return true;
-      }
-      return i >= startIndex;
-    });
-
     // console.log('before sorting ',children.map(c => c.name));
 
     if (this.framework.isContainer) {
@@ -208,6 +197,17 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
           proj => proj.name,
         )
         .filter(d => d.framework.isStandaloneProject);
+
+      const startIndex = children.findIndex(
+        c => c.name === releaseOptions.container.start,
+      );
+      // console.log('start index', startIndex);
+      children = children.filter((c, i) => {
+        if (startIndex === -1) {
+          return true;
+        }
+        return i >= startIndex;
+      });
     }
 
     // console.log('after sorting ',children.map(c => c.name));
