@@ -43,6 +43,7 @@ export class NodeModules extends BaseNodeModules {
     options?: Omit<CoreModels.NpmInstallOptions, 'pkg'>,
   ): Promise<void> {
     //#region @backendFunc
+    options = options || {};
     if (
       this.project.framework.isContainer &&
       !this.project.framework.isContainerCoreProject
