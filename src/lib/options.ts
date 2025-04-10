@@ -75,8 +75,6 @@ export const ReleaseTypeNamesArr: ReleaseType[] =
   Object.values(ReleaseTypeNames);
 //#endregion
 
-
-
 //#region env options
 
 //#region env options / build
@@ -135,6 +133,7 @@ class EnvOptionsBuild {
     this._baseHref = crossPlatformPath(v);
   }
   private declare _baseHref: string;
+  declare skipBuildForRelease?: boolean;
   declare websql: boolean;
   /**
    * watch build

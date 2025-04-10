@@ -426,12 +426,14 @@ export class ArtifactManager {
       releaseOptions.release.targetArtifact === 'docs-webapp'
     ) {
       await this.artifact.docsWebapp.releasePartial(releaseOptions);
+      return;
     }
     if (
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
     ) {
       await this.artifact.npmLibAndCliTool.releasePartial(releaseOptions);
+      return;
     }
     if (
       !releaseOptions.release.targetArtifact ||
@@ -441,6 +443,7 @@ export class ArtifactManager {
         EnvOptions.fromRelease(releaseOptions),
       );
       await this.artifact.angularNodeApp.releasePartial(releaseOptions);
+      return;
     }
     if (
       !releaseOptions.release.targetArtifact ||
@@ -453,6 +456,7 @@ export class ArtifactManager {
         EnvOptions.fromRelease(releaseOptions),
       );
       await this.artifact.electronApp.releasePartial(releaseOptions);
+      return;
     }
     if (
       !releaseOptions.release.targetArtifact ||
@@ -462,6 +466,7 @@ export class ArtifactManager {
         EnvOptions.fromRelease(releaseOptions),
       );
       await this.artifact.mobileApp.releasePartial(releaseOptions);
+      return;
     }
     if (
       !releaseOptions.release.targetArtifact ||
@@ -471,6 +476,7 @@ export class ArtifactManager {
         EnvOptions.fromRelease(releaseOptions),
       );
       await this.artifact.vscodePlugin.releasePartial(releaseOptions);
+      return;
     }
     //#endregion
   }

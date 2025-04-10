@@ -22,8 +22,12 @@ const REPLACE_INDEX_D_TS_IN_DEST_WHEN_WATCH = false;
 
 const log = Log.create(_.startCase(path.basename(__filename)));
 
+export interface BaseCopyMangerInitialParams {
+  skipCopyDistToLocalTempProject?: boolean;
+}
+
 export abstract class BaseCopyManger extends BaseCompilerForProject<
-  {},
+  BaseCopyMangerInitialParams,
   // @ts-ignore TODO weird inheritance problem
   Project
 > {
@@ -441,8 +445,12 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   //#endregion
 
   //#region sync action
-  async syncAction(files: string[]) {
+  async syncAction(
+    files: string[],
+    initialParams: BaseCopyMangerInitialParams,
+  ) {
     //#region @backendFunc
+
     for (const fileAbsPath of files) {
       this.contentReplaced(fileAbsPath);
     }
@@ -451,6 +459,15 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     const outDir = config.folder.dist;
 
     const projectToCopyTo = this.projectToCopyTo;
+    if (initialParams?.skipCopyDistToLocalTempProject) {
+      projectToCopyTo.splice(
+        projectToCopyTo.findIndex(
+          p => p.location === this.localTempProj.location,
+        ),
+        1,
+      );
+    }
+
     // (${proj.location}/${config.folder.node_modules}/${this.rootPackageName})
 
     if (projectToCopyTo.length > 0) {
@@ -515,8 +532,6 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
     const {
       specificFileRelativePath = void 0,
       absoluteAssetFilePath = void 0,
-      outDir,
-      event,
     } = options || {};
 
     // if (!specificFileRelativePath) {

@@ -191,6 +191,15 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     const isOrganizationPackage =
       this.project.nameForNpmPackage.startsWith('@');
 
+    if (buildOptions.build.skipBuildForRelease) {
+      Helpers.warn(`Skipping build for release`);
+      return {
+        tmpProjNpmLibraryInNodeModulesAbsPath,
+        isOrganizationPackage,
+        packageName,
+      };
+    }
+
     Helpers.log(`[buildLib] start of building...`);
 
     //#region init incremental process
@@ -447,9 +456,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         releaseOptions.release.autoReleaseUsingConfig,
       )
     ) {
-      await this.copyNpmDistLibManager.runTask({
-        taskName: 'copyto manger release action',
-      });
       await this.project.git.tagAndPushToGitRepo(newVersion, releaseOptions);
     }
 

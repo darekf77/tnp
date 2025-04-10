@@ -27,7 +27,7 @@ export class CopyManagerStandalone extends CopyManager {
 
     if (this.copyto.length === 0) {
       Helpers.log(
-        `No need to --copyto on build finsh...(only copy to local temp proj) `,
+        `No need to --copyto on build finish...(only copy to local temp proj) `,
       );
     }
 
@@ -37,7 +37,7 @@ export class CopyManagerStandalone extends CopyManager {
       this.project.packagesRecognition.allIsomorphicPackagesFromMemory;
 
     Helpers.log(
-      `Opearating on ${this.isomorphicPackages.length} isomorphic pacakges...`,
+      `Operating on ${this.isomorphicPackages.length} isomorphic packages...`,
     );
     this.recreateTempProj();
 

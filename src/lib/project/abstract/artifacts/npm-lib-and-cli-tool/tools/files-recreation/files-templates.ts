@@ -90,9 +90,9 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
       `.${config.filesExtensions.filetemplate}`,
       '',
     );
-    if (filePath.endsWith('tsconfig.json')) {
-      debugger;
-    }
+    // if (filePath.endsWith('tsconfig.json')) {
+    //   debugger;
+    // }
 
     Helpers.log('processing file template', 1);
     // Helpers.pressKeyAndContinue();
