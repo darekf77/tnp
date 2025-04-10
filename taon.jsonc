@@ -7,13 +7,18 @@
     "ora",
     "progress",
     "open",
+    "ts-node",
+    "webpack",
+    "typescript",
     "magic-renamer",
   ],
 
-  "autoReleaseConfigAllowedItems": [{
-    "artifactName": "npm-lib-and-cli-tool",
-    "envName": "prod",
-  }],
+  "autoReleaseConfigAllowedItems": [
+    {
+      "artifactName": "npm-lib-and-cli-tool",
+      "envName": "prod",
+    },
+  ],
 
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
   "resources": [],
@@ -28,6 +33,7 @@
 
     "scripts": {
       "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
-    }
-  }
+    },
+    "sideEffects": false,
+  },
 }
