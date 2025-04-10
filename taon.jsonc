@@ -8,8 +8,8 @@
     "progress",
     "open",
     "ts-node",
-    "webpack",
-    "typescript",
+    // "webpack",
+    // "typescript",
     "magic-renamer",
   ],
 
@@ -34,6 +34,6 @@
     "scripts": {
       "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     },
-    "sideEffects": false,
+    // "sideEffects": false,
   },
 }

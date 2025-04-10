@@ -449,6 +449,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     ) {
       await this.copyNpmDistLibManager.runTask({
         taskName: 'copyto manger release action',
+        initialParams: {
+          skipCopyDistToLocalTempProject: true,
+        }
       });
       await this.project.git.tagAndPushToGitRepo(newVersion, releaseOptions);
     }
