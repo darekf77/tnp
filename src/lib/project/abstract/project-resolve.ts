@@ -403,8 +403,8 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
         `projects/container-${ver}`,
       ]);
       Helpers.run(
-        // $Global.prototype.REINSTALL.name
-        `${config.frameworkName} ${'REINSTALL'} --skipCoreCheck`,
+        // $Global.prototype.reinstallCore.name
+        `${config.frameworkName} ${'reinstallCore'} --skipCoreCheck`,
         {
           cwd: nodeModulesForContainer,
         },
