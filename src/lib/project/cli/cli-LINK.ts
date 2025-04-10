@@ -97,7 +97,7 @@ export class $Link extends BaseCli {
         ) || ''
       ).trim(),
     );
-    console.log({ FISRT_KRUWA: globalBinFolderPath });
+
     // console.log(`globalBinFolderPath "${globalBinFolderPath}"`, );
     // process.exit(0)
     if (process.platform === 'win32') {
@@ -109,7 +109,7 @@ export class $Link extends BaseCli {
         );
       }
     }
-    console.log({ globalBinFolderPath });
+
     const globalNodeModules = crossPlatformPath(
       path.join(
         globalBinFolderPath,
@@ -118,11 +118,11 @@ export class $Link extends BaseCli {
           : `../lib/${config.folder.node_modules}`,
       ),
     );
-    console.log({ globalNodeModules });
+
     const packageInGlobalNodeModules = crossPlatformPath(
       path.resolve(path.join(globalNodeModules, project.name)),
     );
-    console.log({ packageInGlobalNodeModules });
+
     // packageInGlobalNodeModules
     Helpers.removeIfExists(packageInGlobalNodeModules);
     project.linkTo(packageInGlobalNodeModules);
