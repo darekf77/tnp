@@ -14,7 +14,9 @@ export class BaseCli extends BaseCommandLineFeature<EnvOptions, Project> {
   }
 
   protected __recreateEnvForArtifactAndEnvironment(): void {
-    this.params = this.project.environmentConfig.envOptionsResolve(this.params);
+    this.params = this.project
+      ? this.project.environmentConfig.envOptionsResolve(this.params)
+      : this.params;
   }
 
   public _() {}

@@ -110,6 +110,10 @@ export class ArtifactManager {
     //#region @backendFunc
     //#region prevent not requested framework version
     if (this.project.framework.frameworkVersionLessThan('v18')) {
+      // TODO QUICK_FIX @REMOVE
+      if(this.project.framework.isCoreProject) {
+        return;
+      }
       Helpers.error(
         `Please upgrade taon framework version to to at least v18
         in project: ${this.project.name}

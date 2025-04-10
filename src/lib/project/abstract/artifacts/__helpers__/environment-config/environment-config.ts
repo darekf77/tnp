@@ -196,6 +196,10 @@ export default env;
         ),
       )?.default;
     } catch (error) {
+      // TODO QUICK_FIX @UNCOMMENT @LAST
+      if(this.project.framework.isCoreProject) {
+        return EnvOptions.from({});
+      }
       console.error(error, true, true);
       Helpers.error(
         `Incorrect env config for:
@@ -272,6 +276,10 @@ export default env;
         pathToProjectEnvironmentAbsPath,
       )?.default;
     } catch (error) {
+      // TODO QUICK_FIX @UNCOMMENT @LAST
+      if(project.framework.isCoreProject) {
+        return EnvOptions.from({});
+      }
       console.log(error);
       Helpers.error(
         `Incorrect env config for:

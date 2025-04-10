@@ -207,6 +207,7 @@ export class Framework extends BaseFeatureForProject<Project> {
       this.project.ins.From(pathCCfromCurrentProj)) as Project;
 
     const isCoreContainer =
+      coreContainerFromNodeModules &&
       coreContainerFromNodeModules?.framework.isCoreProject &&
       coreContainerFromNodeModules?.framework.isContainer &&
       coreContainerFromNodeModules.framework.frameworkVersionEquals(

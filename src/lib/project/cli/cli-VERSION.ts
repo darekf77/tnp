@@ -3,7 +3,8 @@ import { CoreModels, fse, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import type { Project } from '../abstract/project';
+// TODO QUICK FIX for version
+import { Project } from '../abstract/project';
 
 import { BaseCli } from './base-cli';
 
@@ -37,8 +38,11 @@ export class $Version extends BaseCli {
     // Helpers.sleep(5);
     // global.spinner?.stop();
     // log.data('Hellleoeoeo')
-    const tnpProj = this.project.ins.Tnp;
-    const taonProj = this.ins.From([
+
+    // TODO QUICK FIX
+    const tnpProj = Project.ins.Tnp;
+    //
+    const taonProj = Project.ins.From([
       fse.realpathSync(path.dirname(tnpProj.location)),
       config.frameworkNames.productionFrameworkName,
     ]);
