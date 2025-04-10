@@ -314,7 +314,6 @@ export class NodeModules extends BaseNodeModules {
     this.dedupePackages(
       packages,
       false,
-      !this.project.npmHelpers.useLinkAsNodeModules,
     );
     //#endregion
   }
@@ -332,14 +331,20 @@ export class NodeModules extends BaseNodeModules {
     this.dedupePackages(
       packages,
       true,
-      !this.project.npmHelpers.useLinkAsNodeModules,
     );
     //#endregion
   }
   //#endregion
 
   //#region packages to dedupe
-  private get packagesToDedupe(): (string | string[])[] {
+  private get packagesToDedupe(): (
+    | string
+    | {
+        package: string;
+        excludeFrom?: string[];
+        includeOnlyIn?: string[];
+      }
+  )[] {
     return [
       'tnp-models',
       'tnp-helpers',
@@ -399,13 +404,18 @@ export class NodeModules extends BaseNodeModules {
       'prettier',
       '@types/node',
       'record-replay-req-res-scenario',
-      [
-        'core-js',
-        '!babel-register',
-        '!babel-runtime',
-        '!babel-polyfill',
-        '@jimp*',
-      ],
+      // [
+      //   'core-js',
+      //   '!babel-register',
+      //   '!babel-runtime',
+      //   '!babel-polyfill',
+      //   '@jimp*',
+      // ],
+      {
+        package: 'core-js',
+        excludeFrom: ['babel-register', 'babel-runtime', 'babel-polyfill'],
+        includeOnlyIn: ['@jimp'],
+      },
       'core-js-compat',
       '@ngx-formly/bootstrap',
       '@ngx-formly/core',
