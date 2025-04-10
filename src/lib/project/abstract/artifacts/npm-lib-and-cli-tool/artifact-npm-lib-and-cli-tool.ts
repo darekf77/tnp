@@ -200,7 +200,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       };
     }
 
-    Helpers.log(`[buildLib] start of building...`);
+    Helpers.logInfo(
+      `Start of (${buildOptions.build.watch ? 'watch' : 'normal'}) lib building...`,
+    );
 
     //#region init incremental process
     const incrementalBuildProcess = new IncrementalBuildProcess(
@@ -294,10 +296,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       `);
     //#endregion
 
-    if (
-      !buildOptions.build.watch &&
-      buildOptions.release.cutNpmPublishLibReleaseCode
-    ) {
+    if (!buildOptions.build.watch && buildOptions.release.releaseType) {
       this.__cutReleaseCodeFromSrc(buildOptions);
     }
 
@@ -356,7 +355,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     }
     //#endregion
 
-    if (buildOptions.release.cutNpmPublishLibReleaseCode) {
+    if (!buildOptions.build.watch && buildOptions.release.releaseType) {
       this.__restoreCuttedReleaseCodeFromSrc(buildOptions);
     }
 

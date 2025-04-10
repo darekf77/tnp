@@ -128,7 +128,7 @@ export class BackendCompilation extends IncCompiler.Base {
     //#endregion
 
     //#region cmd
-    let cmd = (specificTsconfig?: string) => {
+    let prepareCmd = (specificTsconfig?: string) => {
       let commandJs, commandMaps, commandDts;
       const nocutsrcFolder = `${project.location}/${outDir}-nocutsrc`;
       // commandJs = `${tsExe} -d false  --mapRoot ${nocutsrc} ${params.join(' ')} `
@@ -157,7 +157,7 @@ export class BackendCompilation extends IncCompiler.Base {
     const tsconfigBackendPath = crossPlatformPath(
       project.pathFor(`tsconfig.backend.dist.json`),
     );
-    tscCommands = cmd(tsconfigBackendPath);
+    tscCommands = prepareCmd(tsconfigBackendPath);
 
     await this.buildStandardLibVer(buildOptions, {
       ...tscCommands,
@@ -326,7 +326,7 @@ Starting (${buildOptions.build.watch ? 'watch' : 'normal'}) backend TypeScript b
     Helpers.logInfo(`* Typescript compilation second part done`);
     Helpers.info(`
 
-    Backend Typescirpt build done....
+    Backend TypeScript build done....
 
         `);
 

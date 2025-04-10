@@ -229,10 +229,6 @@ class EnvOptionsRelease {
    * number   -  prod1
    */
   declare envNumber: number | undefined;
-  /**
-   * Cut <@>notForNpm  tag from lib build
-   */
-  declare cutNpmPublishLibReleaseCode: boolean;
 
   declare cli: Partial<EnvOptionsBuildCli>;
   declare lib: Partial<EnvOptionsBuildLib>;
@@ -360,11 +356,27 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 
   //#endregion
 
-  private applyFields(options: Partial<EnvOptions> = {}): void {
-    const override = _.cloneDeep(options);
-    Object.keys(override).forEach(key => {
-      this[key] = override[key];
-    });
+  private applyFields(
+    override: Partial<EnvOptions> = {},
+    skipClone = false,
+  ): void {
+    if (!skipClone) {
+      override = _.cloneDeep(override || {});
+    }
+
+    walk.Object(
+      override || {},
+      (value, lodashPath) => {
+        if (_.isNil(value) || _.isFunction(value) || _.isObject(value)) {
+          // skipping
+        } else {
+          _.set(this, lodashPath, value);
+        }
+      },
+      {
+        walkGetters: false,
+      },
+    );
 
     this.paths = this.paths || ({} as any);
     this.config = this.config || ({} as any);
@@ -429,12 +441,22 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   public clone(override?: Partial<EnvOptions>): EnvOptions {
     //#region @backendFunc
     override = override || {};
-    const toClone = {
-      ..._.cloneDeep(this),
-      ..._.cloneDeep(override),
-    };
-    // console.log({toClone})
-    const result = new EnvOptions(toClone);
+    const toClone = _.cloneDeep(this);
+    walk.Object(
+      override || {},
+      (value, lodashPath) => {
+        if (_.isNil(value) || _.isFunction(value) || _.isObject(value)) {
+          // skipping
+        } else {
+          _.set(toClone, lodashPath, value);
+        }
+      },
+      {
+        walkGetters: false,
+      },
+    );
+    const result = new EnvOptions();
+    result.applyFields(toClone, true);
     return result;
     //#endregion
   }
