@@ -287,6 +287,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     //#region @backendFunc
     const cwd = taonRepoPathUserInUserDir;
     Helpers.info(`Syncing... Fetching git data... `);
+    CLI.installEnvironment(requiredForDev);
 
     //#region reset origin of taon repo
     try {
