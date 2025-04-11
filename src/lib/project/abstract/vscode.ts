@@ -144,6 +144,10 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     //     `$env:PATH += ";${os.homedir()}\AppData\Local\Programs\oh-my-posh\bin"
     // oh-my-posh init pwsh --config "C:\Users\darek\AppData\Local\Programs\oh-my-posh\themes\jandedobbeleer.omp.json" | Invoke-Expression`
 
+
+    // Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+
     const config = {
       $schema:
         'https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json',
