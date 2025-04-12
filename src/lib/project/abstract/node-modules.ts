@@ -86,13 +86,14 @@ export class NodeModules extends BaseNodeModules {
       await super.reinstall(options);
 
       //#region after npm install taon things
-      this.project.quickFixes.unpackNodeModulesPackagesZipReplacements();
+      // TODO not a good idea
+      // this.project.quickFixes.unpackNodeModulesPackagesZipReplacements();
       await this.project.packagesRecognition.start('after npm install');
       if (!options.generateYarnOrPackageJsonLock) {
         if (options.useYarn) {
           const yarnLockPath = this.project.pathFor(config.file.yarn_lock);
-          const yarnLockExisits = fse.existsSync(yarnLockPath);
-          if (yarnLockExisits) {
+          const yarnLockExists = fse.existsSync(yarnLockPath);
+          if (yarnLockExists) {
             if (this.project.git.isInsideGitRepo) {
               this.project.git.resetFiles(config.file.yarn_lock);
             }
@@ -116,6 +117,12 @@ export class NodeModules extends BaseNodeModules {
       if (this.project.nodeModules.shouldDedupePackages) {
         this.project.nodeModules.dedupe();
       }
+
+      // TODO QUICK FIX in version 19 fix all d.ts
+      this.project.quickFixes.excludeNodeModulesDtsFromTypescriptCheck([
+        this.project.nodeModules.pathFor('@types/glob/index.d.ts'),
+        this.project.nodeModules.pathFor('chokidar/types/index.d.ts'),
+      ])
       this.project.quickFixes.fixSQLLiteModuleInNodeModules();
       //#endregion
     }
