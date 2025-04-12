@@ -144,6 +144,8 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     //     `$env:PATH += ";${os.homedir()}\AppData\Local\Programs\oh-my-posh\bin"
     // oh-my-posh init pwsh --config "C:\Users\darek\AppData\Local\Programs\oh-my-posh\themes\jandedobbeleer.omp.json" | Invoke-Expression`
 
+    // Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+
     const config = {
       $schema:
         'https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json',
@@ -327,7 +329,8 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       autoAttachChildProcesses: false, // TODO probably no need for now
       port: 9229,
       skipFiles: ['<node_internals>/**'],
-      // "outFiles": ["${workspaceFolder}/dist/**/*.js"] // not wokring for copy manager
+      outFiles: this.outFiles,
+      sourceMapPathOverrides: this.sourceMapPathOverrides,
     };
     //#endregion
 
@@ -347,7 +350,8 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
         program: '${workspaceFolder}/run.js',
         cwd: void 0,
         args: [`port=${backendPort}`],
-        outFiles: this.outFilesArgs,
+        outFiles: this.outFiles,
+        sourceMapPathOverrides: this.sourceMapPathOverrides,
         // "outFiles": ["${workspaceFolder}/dist/**/*.js"], becouse of this debugging inside node_moudles
         // with compy manager created moduels does not work..
         runtimeArgs: this.__vscodeLaunchRuntimeArgs,
@@ -436,6 +440,18 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       configurations,
       compounds,
     });
+
+    configurations.forEach(c => {
+      // c.outFiles = ['${workspaceFolder}/dist/**/*.js', '!**/node_modules/**'];
+      delete c.outFiles;
+      delete c.sourceMapPathOverrides;
+    });
+
+    this.project.writeJson('.vscode/launch-backup.json', {
+      version: '0.2.0',
+      configurations,
+      compounds,
+    });
     //#endregion
 
     //#endregion
@@ -514,39 +530,60 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   }
   //#endregion
 
-  //#region get default out files for debugging
-  get defaultOutFilesLaunchJson() {
-    return ['${workspaceFolder}/dist/**/*.js', '!**/node_modules/**'];
-  }
-  //#endregion
-
   //#region get out files for debugging
   /**
    * for debugging node_modules
    * get out files for debugging
    */
-  get outFilesArgs() {
+  get outFiles() {
     //#region @backendFunc
-    return !this.project.framework.isStandaloneProject
-      ? void 0
-      : [
-          ...this.defaultOutFilesLaunchJson,
-          // TODO this allow debugging thir party modules.. but it is not reliable
-          // ...Helpers.uniqArray(
-          //   this.allIsomorphicPackagesFromMemory
-          //     .map(packageName => {
-          //       const p = this.pathFor([
-          //         config.folder.node_modules,
-          //         packageName,
-          //         config.folder.source,
-          //       ]);
-          //       return Helpers.isExistedSymlink(p)
-          //         ? `${crossPlatformPath(fse.realpathSync(p))}/../dist/**/*.js`
-          //         : void 0;
-          //     })
-          //     .filter(f => !!f),
-          // ),
-        ];
+    return [
+      '${workspaceFolder}/dist/**/*.js',
+      // '!**/node_modules/**',
+      // TODO this allow debugging thir party modules.. but it is not reliable
+      ...Helpers.uniqArray(
+        this.project.packagesRecognition.allIsomorphicPackagesFromMemory
+          .filter(f => this.project.name !== f) // TODO or other names of this project
+          .map(packageName => {
+            const p = this.project.pathFor([
+              config.folder.node_modules,
+              packageName,
+              config.folder.source,
+            ]);
+            return Helpers.isExistedSymlink(p)
+              ? `${crossPlatformPath(path.dirname(fse.realpathSync(p)))}/dist/**/*.js`
+              : void 0;
+          })
+          .filter(f => !!f),
+      ),
+    ];
+    //#endregion
+  }
+
+  get sourceMapPathOverrides() {
+    //#region @backendFunc
+    const sourceMapPathOverrides = {};
+    Helpers.uniqArray(
+      this.project.packagesRecognition.allIsomorphicPackagesFromMemory,
+    )
+      .filter(f => this.project.name !== f) // TODO or other names of this project
+      .forEach(packageName => {
+        const p = this.project.pathFor([
+          config.folder.node_modules,
+          packageName,
+          config.folder.source,
+        ]);
+        if (!Helpers.isExistedSymlink(p)) {
+          return;
+        }
+        const realPathToPackage = crossPlatformPath(
+          path.dirname(fse.realpathSync(p)),
+        );
+        sourceMapPathOverrides[`${realPathToPackage}/src/lib/*`] =
+          `\${workspaceFolder}/node_modules/${packageName}/source/lib/*`;
+      });
+
+    return sourceMapPathOverrides;
     //#endregion
   }
   //#endregion

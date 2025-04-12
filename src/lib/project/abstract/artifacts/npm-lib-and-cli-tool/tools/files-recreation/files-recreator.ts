@@ -647,6 +647,7 @@ ${this.project.framework.isStandaloneProject ? `/${config.folder.testsEnvironmen
 /src/migrations/migrations-info.md
 /src/tests/mocha-tests-info.md
 /src/assets/shared/shared_folder_info.txt
+.vscode/launch.json
 
 # System Files
 .DS_Store

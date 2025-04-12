@@ -111,7 +111,7 @@ export class ArtifactManager {
     //#region prevent not requested framework version
     if (this.project.framework.frameworkVersionLessThan('v18')) {
       // TODO QUICK_FIX @REMOVE
-      if(this.project.framework.isCoreProject) {
+      if (this.project.framework.isCoreProject) {
         return;
       }
       Helpers.error(
@@ -236,11 +236,11 @@ export class ArtifactManager {
   };
 
   async build(buildOptions: EnvOptions): Promise<void> {
-    if (!buildOptions.release.targetArtifact) {
-      await this.init(
-        EnvOptions.from({ ...buildOptions, build: { watch: false } }),
-      );
+    await this.init(
+      EnvOptions.from({ ...buildOptions, build: { watch: false } }),
+    );
 
+    if (!buildOptions.release.targetArtifact) {
       //#region  build Menu
 
       const processManager = new BaseProcessManger(this.project as any);
