@@ -10,6 +10,7 @@ import {
   glob,
   path,
   rimraf,
+  UtilsString,
   UtilsTerminal,
 } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
@@ -314,6 +315,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     showInfoAngular();
 
     //#region ng build
+    const outputOptions = await this.outputFixNgLibBuild(buildOptions);
+
     const runNgBuild = async () => {
       await proxyProject.execute(commandForLibraryBuild, {
         similarProcessKey: 'ng',
@@ -322,7 +325,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
             ? COMPILATION_COMPLETE_LIB_NG_BUILD
             : undefined,
         },
-        ...this.sharedOptions(buildOptions),
+        ...outputOptions,
       });
       await proxyProjectWebsql.execute(commandForLibraryBuild, {
         similarProcessKey: 'ng',
@@ -331,7 +334,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
             ? COMPILATION_COMPLETE_LIB_NG_BUILD
             : undefined,
         },
-        ...this.sharedOptions(buildOptions),
+        ...outputOptions,
       });
     };
     //#endregion
@@ -653,7 +656,7 @@ export * from './lib';
   //#endregion
 
   //#region private methods / fix terminal output paths
-  private async sharedOptions(buildOptions: EnvOptions): Promise<any> {
+  private async outputFixNgLibBuild(buildOptions: EnvOptions): Promise<any> {
     return {
       // askToTryAgainOnError: true,
       exitOnErrorCallback: async code => {
@@ -668,10 +671,10 @@ export * from './lib';
         }
       },
       outputLineReplace: (line: string) => {
+        // line = UtilsString.removeChalkSpecialChars(line);
         if (line.startsWith('WARNING: postcss-url')) {
           return ' --- [taon] IGNORED WARN ---- ';
         }
-
         line = line.replace(`projects/${this.project.name}/src/`, `./src/`);
 
         if (line.search(`/src/libs/`) !== -1) {
