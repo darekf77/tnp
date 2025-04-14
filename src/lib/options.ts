@@ -282,7 +282,7 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   //#region static / from
   public static from(options: Partial<EnvOptions>): EnvOptions {
     const orgFinishCallback = options?.finishCallback;
-    let res = _.merge(new EnvOptions(), _.cloneDeep(options));
+    let res = new EnvOptions(options);
     // res = res.clone(options);
     if (orgFinishCallback) {
       res.finishCallback = orgFinishCallback;
@@ -302,6 +302,27 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     const buildOptions = EnvOptions.from(releaseOptions as any);
     // buildOptions.build.watch = false;
     return buildOptions;
+  }
+
+  /**
+   * override existed/proper fields from "override" object
+   * inside "destination" object
+   */
+  static merge(destination, override): EnvOptions {
+    walk.Object(
+      override || {},
+      (value, lodashPath) => {
+        if (_.isNil(value) || _.isFunction(value) || _.isObject(value)) {
+          // skipping
+        } else {
+          _.set(destination, lodashPath, value);
+        }
+      },
+      {
+        walkGetters: false,
+      },
+    );
+    return destination;
   }
 
   public static saveToFile(
@@ -356,118 +377,8 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 
   //#endregion
 
-  private applyFields(
-    override: Partial<EnvOptions> = {},
-    skipClone = false,
-  ): void {
-    if (!skipClone) {
-      override = _.cloneDeep(override || {});
-    }
-
-    walk.Object(
-      override || {},
-      (value, lodashPath) => {
-        if (_.isNil(value) || _.isFunction(value) || _.isObject(value)) {
-          // skipping
-        } else {
-          _.set(this, lodashPath, value);
-        }
-      },
-      {
-        walkGetters: false,
-      },
-    );
-
-    this.paths = this.paths || ({} as any);
-    this.config = this.config || ({} as any);
-
-    this.paths = _.merge(this.paths, override.paths);
-    this.config = _.merge(this.config, override.config);
-
-    this.container = _.merge(new EnvOptionsContainer(), override.container);
-
-    this.ports = _.merge(new EnvOptionsPorts(), override.ports);
-    this.init = _.merge(new EnvOptionsInit(), override.init);
-    this.build = _.merge(new EnvOptionsBuild(), override.build);
-    this.build.pwa = _.merge(new EnvOptionsBuildPwa(), override.build?.pwa);
-    // this.build.websql = !!(override.build?.websql || this.build.websql);
-
-    this.loading = _.merge(new EnvOptionsLoading(), override.loading);
-    this.loading.preAngularBootstrap = _.merge(
-      new EnvOptionsLoadingPreAngularBootstrap(),
-      override.loading?.preAngularBootstrap,
-    );
-    this.loading.afterAngularBootstrap = _.merge(
-      new EnvOptionsLoadingAfterAngularBootstrapConfig(),
-      override.loading?.afterAngularBootstrap,
-    );
-    this.release = _.merge(new EnvOptionsRelease(), override.release);
-    this.release.releaseVersionBumpType =
-      this.release.releaseVersionBumpType ?? 'patch';
-
-    this.release.cli = _.merge(new EnvOptionsBuildCli(), override.release?.cli);
-    this.release.lib = _.merge(new EnvOptionsBuildLib(), override.release?.lib);
-
-    this.copyToManager = _.merge(
-      new EnvOptionsCopyToManager(),
-      override.copyToManager,
-    );
-    this.website = _.merge(new EnvOptionsWebsite(), override.website);
-    if (_.isString(this.website.domain)) {
-      this.website.domain = this.website.domain.replace(/\/$/, '');
-      this.website.domain = this.website.domain.replace(/^https?:\/\//, '');
-    }
-  }
-
-  protected constructor(options: Partial<EnvOptions> = {}) {
-    this.applyFields(options);
-  }
-  finishCallback: () => any;
-
-  public saveToFile(absFilePath: string): void {
-    //#region @backendFunc
-    EnvOptions.saveToFile(this, absFilePath);
-    //#endregion
-  }
-
-  public loadFromFile(absFilePath: string): void {
-    //#region @backendFunc
-    const data = EnvOptions.loadFromFile(absFilePath);
-    this.applyFields(data);
-    //#endregion
-  }
-
-  //#region clone
-  public clone(override?: Partial<EnvOptions>): EnvOptions {
-    //#region @backendFunc
-    override = override || {};
-    const toClone = _.cloneDeep(this);
-    walk.Object(
-      override || {},
-      (value, lodashPath) => {
-        if (_.isNil(value) || _.isFunction(value) || _.isObject(value)) {
-          // skipping
-        } else {
-          _.set(toClone, lodashPath, value);
-        }
-      },
-      {
-        walkGetters: false,
-      },
-    );
-    const result = new EnvOptions();
-    result.applyFields(toClone, true);
-    return result;
-    //#endregion
-  }
-  //#endregion
-
-  get temporarySrcForReleaseCutCode(): string {
-    //#region @backendFunc
-    return `tmp-cut-release-src-${config.folder.dist}${this.build.websql ? '-websql' : ''}`;
-    //#endregion
-  }
-
+  //#region fields
+  declare finishCallback: () => any;
   declare paths?: PATHS;
   declare config?: CONFIGS;
   declare purpose?: string;
@@ -490,15 +401,107 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   declare readonly currentProjectName?: string;
   declare readonly currentProjectType?: CoreModels.LibType;
   declare readonly buildInfo?: {
-    number?: number;
+    // number?: number; // count commits takes time
     hash?: string;
     date?: Date;
-    options?: {
-      isWatchBuild?: boolean;
-      isWebsqlBuild?: boolean;
-      outDir?: 'dist';
-    };
   };
+  //#endregion
+
+  //#endregion
+
+  //#region constructor
+  protected constructor(options: Partial<EnvOptions> = {}) {
+    this.applyFieldsFrom(options);
+  }
+  //#endregion
+
+  //#region apply fields
+  public applyFieldsFrom(override?: Partial<EnvOptions>): void {
+    override = override || {};
+    EnvOptions.merge(this, override);
+
+    this.paths = this.paths || ({} as any);
+    this.config = this.config || ({} as any);
+
+    this.paths = _.merge(this.paths, _.cloneDeep(override.paths));
+    this.config = _.merge(this.config, _.cloneDeep(override.config));
+
+    this.container = _.merge(new EnvOptionsContainer(), this.container);
+
+    this.ports = _.merge(new EnvOptionsPorts(), this.ports);
+    this.init = _.merge(new EnvOptionsInit(), this.init);
+    this.build = this.build || ({} as any);
+    this.build.pwa = _.merge(new EnvOptionsBuildPwa(), this.build?.pwa);
+    this.build = _.merge(new EnvOptionsBuild(), this.build);
+
+    this.loading = this.loading || ({} as any);
+
+    this.loading.preAngularBootstrap = _.merge(
+      new EnvOptionsLoadingPreAngularBootstrap(),
+      this.loading?.preAngularBootstrap,
+    );
+    this.loading.afterAngularBootstrap = _.merge(
+      new EnvOptionsLoadingAfterAngularBootstrapConfig(),
+      this.loading?.afterAngularBootstrap,
+    );
+    this.loading = _.merge(new EnvOptionsLoading(), this.loading);
+
+    this.release = this.release || ({} as any);
+
+    this.release.cli = _.merge(new EnvOptionsBuildCli(), this.release?.cli);
+    this.release.lib = _.merge(new EnvOptionsBuildLib(), this.release?.lib);
+    this.release = _.merge(new EnvOptionsRelease(), this.release);
+
+    this.copyToManager = _.merge(
+      new EnvOptionsCopyToManager(),
+      this.copyToManager,
+    );
+
+    this.website = _.merge(new EnvOptionsWebsite(), this.website);
+
+    // fields fixes, prevent incorrect values
+    if (_.isString(this.website.domain)) {
+      this.website.domain = this.website.domain.replace(/\/$/, '');
+      this.website.domain = this.website.domain.replace(/^https?:\/\//, '');
+    }
+  }
+  //#endregion
+
+  //#region save to file
+  public saveToFile(absFilePath: string): void {
+    //#region @backendFunc
+    EnvOptions.saveToFile(this, absFilePath);
+    //#endregion
+  }
+  //#endregion
+
+  //#region load from file
+  public loadFromFile(absFilePath: string): void {
+    //#region @backendFunc
+    const data = EnvOptions.loadFromFile(absFilePath);
+    this.applyFieldsFrom(data);
+    //#endregion
+  }
+  //#endregion
+
+  //#region clone
+  public clone(override?: Partial<EnvOptions>): EnvOptions {
+    //#region @backendFunc
+    override = override || {};
+    const toClone = _.cloneDeep(this);
+    EnvOptions.merge(toClone, override);
+    const result = new EnvOptions(toClone);
+    return result;
+    //#endregion
+  }
+  //#endregion
+
+  //#region getters
+  get temporarySrcForReleaseCutCode(): string {
+    //#region @backendFunc
+    return `tmp-cut-release-src-${config.folder.dist}${this.build.websql ? '-websql' : ''}`;
+    //#endregion
+  }
   //#endregion
 }
 //#endregion

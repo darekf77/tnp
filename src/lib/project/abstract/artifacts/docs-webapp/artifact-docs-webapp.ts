@@ -34,16 +34,17 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     return void 0; // TODO implement
   }
 
-  async initPartial(initOptions: EnvOptions): Promise<void> {
+  async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     await this.docs.initializeWatchers(initOptions);
     await this.docs.init();
+    return initOptions;
   }
 
   async buildPartial(buildOptions: EnvOptions): Promise<{
     docsWebappDistOutPath: string;
     combinedDocsHttpServerUrl: Url;
   }> {
-    await this.initPartial(EnvOptions.from(buildOptions));
+    buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
     const combinedDocsHttpServerUrl: Url = void 0; // TODO implement
     const docsWebappDistOutPath: string = buildOptions.build.overrideOutputPath;
     const port = await this.DOCS_ARTIFACT_PORT_UNIQ_KEY(buildOptions);

@@ -105,7 +105,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#endregion
 
   //#region init partial
-  async initPartial(initOptions: EnvOptions): Promise<void> {
+  async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
 
     Helpers.taskStarted(
@@ -118,7 +118,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     this.filesRecreator.vscode.settings.toogleHideOrShowDeps();
 
-    await this.project.environmentConfig.init();
+    initOptions = await this.project.environmentConfig.update(initOptions);
+    // const updatedConfig =
+    // if (updatedConfig) {
+    //   initOptions = updatedConfig;
+    // }
 
     if (this.project.framework.isStandaloneProject) {
       await this.insideStructureLib.init(initOptions);
@@ -166,7 +170,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     this.copyEssentialFilesTo([
       crossPlatformPath([this.project.pathFor(config.folder.dist)]),
     ]);
-
+    return initOptions;
     //#endregion
   }
   //#endregion
@@ -182,7 +186,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       return;
     }
 
-    await this.initPartial(EnvOptions.fromBuild(buildOptions));
+    buildOptions = await this.initPartial(EnvOptions.fromBuild(buildOptions));
     const packageName = this.project.nameForNpmPackage;
     const tmpProjNpmLibraryInNodeModulesAbsPath = this.project.pathFor(
       `tmp-local-copyto-proj-${config.folder.dist}/` +

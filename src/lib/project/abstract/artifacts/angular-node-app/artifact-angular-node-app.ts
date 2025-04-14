@@ -87,7 +87,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   //#endregion
 
   //#region init partial
-  async initPartial(initOptions: EnvOptions): Promise<void> {
+  async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
     await this.insideStructureApp.init(initOptions);
     this.fixAppTsFile();
@@ -116,6 +116,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         `/assets/sql-wasm.wasm`,
     );
     Helpers.copyFile(wasmfileSource, wasmfileDest);
+    return initOptions;
     //#endregion
   }
   //#endregion
@@ -152,7 +153,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     const appDistOutBackendNodeAbsPath =
       this.getOutDirNodeBackendAppAbsPath(buildOptions);
 
-    await this.initPartial(EnvOptions.from(buildOptions));
+    buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
 
     // TODO @LAST this should be set externally
     buildOptions.ports.ngNormalAppPort =

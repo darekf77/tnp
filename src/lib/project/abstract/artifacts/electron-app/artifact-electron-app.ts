@@ -29,7 +29,7 @@ export class ArtifactElectronApp extends BaseArtifact<
     return void 0; // TODO implement
   }
 
-  async initPartial(initOptions: EnvOptions) {
+  async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     if (
       this.project.framework.isStandaloneProject &&
       initOptions.release.releaseType
@@ -39,6 +39,7 @@ export class ArtifactElectronApp extends BaseArtifact<
         'update main for electron',
       );
     }
+    return initOptions;
   }
 
   //#region build
@@ -47,7 +48,8 @@ export class ArtifactElectronApp extends BaseArtifact<
     electronDistOutAppPathWebsql: string;
   }> {
     //#region @backendFunc
-
+    buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
+    
     if (buildOptions.build.watch) {
       await this.project.tryKillAllElectronInstances(); // TODO QUICK_FIX
     }

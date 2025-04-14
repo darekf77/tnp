@@ -8,15 +8,15 @@ import type { Project } from '../abstract/project';
 export class BaseCli extends BaseCommandLineFeature<EnvOptions, Project> {
   async __initialize__(): Promise<void> {
     this.params = EnvOptions.from(this.params);
-    this.__recreateEnvForArtifactAndEnvironment();
+    // await this.__recreateEnvForArtifactAndEnvironment(); // TODO this taks too much time
     // console.log('this.params', this.params);
     // this._tryResolveChildIfInsideArg();
   }
 
-  protected __recreateEnvForArtifactAndEnvironment(): void {
-    this.params = this.project
-      ? this.project.environmentConfig.envOptionsResolve(this.params)
-      : this.params;
+  protected async __recreateEnvForArtifactAndEnvironment(): Promise<void> {
+    // this.params = this.project // I am recreating only basic things
+    //   ? await this.project.environmentConfig.update(this.params)
+    //   : this.params;
   }
 
   public _() {}

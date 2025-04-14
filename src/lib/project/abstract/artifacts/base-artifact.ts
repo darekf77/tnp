@@ -51,7 +51,7 @@ export abstract class BaseArtifact<
    * + (when struct flag = false) start any longer process that reaches
    *   for external resources like for example: npm install
    */
-  abstract initPartial(options: EnvOptions): Promise<void>;
+  abstract initPartial(options: EnvOptions): Promise<EnvOptions>;
   //#endregion
 
   //#region  public abstract methods / build

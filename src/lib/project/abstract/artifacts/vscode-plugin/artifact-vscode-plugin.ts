@@ -73,10 +73,10 @@ export class ArtifactVscodePlugin extends BaseArtifact<
   //#endregion
 
   //#region init partial
-  async initPartial(initOptions: EnvOptions): Promise<void> {
+  async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
     if (!this.project.framework.isStandaloneProject) {
-      return;
+      return initOptions;
     }
 
     const tmpVscodeProjPath = this.getTmpVscodeProjPath(
@@ -189,6 +189,7 @@ export default { commands };
     }
     //#endregion
 
+    return initOptions;
     //#endregion
   }
   //#endregion

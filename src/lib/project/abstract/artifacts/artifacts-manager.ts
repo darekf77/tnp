@@ -134,6 +134,18 @@ export class ArtifactManager {
       path.join(this.project.location, config.file.tnpEnvironment_json),
     );
 
+    if (!initOptions.isCiProcess) {
+      // do some fixing on dev machine
+      // TODO QUICK_FIX
+      try {
+        this.project.run(`git rm -f .vscode/launch.json`).sync();
+      } catch (error) {}
+      this.project.removeFile('.vscode/launch-backup.json');
+      try {
+        this.project.run(`git rm -f .vscode/launch-backup.json`).sync();
+      } catch (error) {}
+    }
+
     if (
       (this.project.framework.isContainer ||
         this.project.framework.isStandaloneProject) &&
@@ -408,22 +420,20 @@ export class ArtifactManager {
         this.project.taonJson.autoReleaseConfigAllowedItems;
 
       for (const item of autoReleaseConfigAllowedItems) {
-        const envForChild = EnvOptions.from({
-          ...releaseOptions,
+        const clonedOptions = releaseOptions.clone({
           release: {
-            ...releaseOptions.release,
             targetArtifact: item.artifactName,
             envName: item.envName,
             envNumber: item.envNumber,
           },
         });
-        await this.release(envForChild, true);
+        await this.release(clonedOptions, true);
       }
       return;
     }
 
     releaseOptions =
-      this.project.environmentConfig.envOptionsResolve(releaseOptions);
+      await this.project.environmentConfig.update(releaseOptions);
 
     if (
       !releaseOptions.release.targetArtifact ||

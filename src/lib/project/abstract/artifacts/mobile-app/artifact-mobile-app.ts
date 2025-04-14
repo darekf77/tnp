@@ -4,7 +4,7 @@ import { BaseArtifact } from '../base-artifact';
 
 export class ArtifactMobileApp extends BaseArtifact<
   {
-    anrdoidMobileAppApkPath: string;
+    androidMobileAppApkPath: string;
     iosMobileAppIpaPath: string;
   },
   {
@@ -19,12 +19,15 @@ export class ArtifactMobileApp extends BaseArtifact<
     return void 0; // TODO implement
   }
 
-  async initPartial(options) {
-    return void 0; // TODO implement
+  async initPartial(options: EnvOptions): Promise<EnvOptions> {
+    return options;
   }
-
-  async buildPartial(options) {
-    return void 0; // TODO implement
+  async buildPartial(buildOptions: EnvOptions): Promise<{
+    androidMobileAppApkPath: string;
+    iosMobileAppIpaPath: string;
+  }> {
+    buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
+    return void 0;
   }
 
   async releasePartial(options) {
