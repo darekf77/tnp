@@ -159,6 +159,7 @@ export class CopyManagerStandalone extends CopyManager {
   //#region initial fix for destination pacakge
   initalFixForDestination(destination: Project): void {
     //#region @backendFunc
+
     const destPackageInNodeModules = crossPlatformPath(
       path.join(
         destination.location,
@@ -166,6 +167,13 @@ export class CopyManagerStandalone extends CopyManager {
         this.rootPackageName,
       ),
     );
+
+    if (this.isStartFromScratch) {
+      Helpers.logInfo(
+        `[copy-manager] Removing dest: ${destPackageInNodeModules}`,
+      );
+      Helpers.remove(destPackageInNodeModules);
+    }
 
     for (
       let index = 0;

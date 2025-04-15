@@ -445,12 +445,27 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   }
   //#endregion
 
+  readonly isStartFromScratch: boolean = true;
+
   //#region sync action
   async syncAction(
     files: string[],
     initialParams: BaseCopyMangerInitialParams,
   ) {
     //#region @backendFunc
+
+    const startFromScratchFileBasename = 'tmp-already-started-copy-manager';
+    if (
+      this.project.hasFile(startFromScratchFileBasename) &&
+      this.project.readFile(startFromScratchFileBasename) === '-'
+    ) {
+      // @ts-ignore
+      this.isStartFromScratch = false;
+    } else {
+      this.project.writeFile(startFromScratchFileBasename, '-');
+      // @ts-ignore
+      this.isStartFromScratch = true;
+    }
 
     for (const fileAbsPath of files) {
       this.contentReplaced(fileAbsPath);
