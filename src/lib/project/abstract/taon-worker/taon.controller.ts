@@ -13,9 +13,11 @@ export class TaonProjectsController extends BaseCliWorkerController {
 
   @Taon.Http.GET()
   getEnvironments(): Taon.Response<TaonEnv[]> {
+    //#region @backendFunc
     return async (req, res) => {
       return this.taonEnvRepo.find();
     };
+    //#endregion
   }
 }
 //#endregion

@@ -61,7 +61,7 @@ export class $Global extends BaseGlobalCommandLine<
   TaonProjectResolve
 > {
   public async _() {
-    await this.ins.taonProjectsWorker.infoScreen();
+    await this.ins.taonProjectsWorker.terminalUI.infoScreen();
   }
 
   //#region kill process on port

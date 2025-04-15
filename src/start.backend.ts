@@ -51,7 +51,7 @@ export async function start(
           defaultValue: true,
         })
       ) {
-        await ProjectClass.ins.taonProjectsWorker.infoScreen();
+        await ProjectClass.ins.taonProjectsWorker.terminalUI.infoScreen();
       } else {
         process.exit(0);
       }
