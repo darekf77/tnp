@@ -488,11 +488,10 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
                     s['files.exclude'][f] = true;
                   });
                 if (!project.framework.isCoreProject) {
-                  if (config.frameworkName !== 'tnp') {
-                    for (const element of frameworkBuildFolders) {
-                      s['files.exclude'][element] = true;
-                    }
+                  for (const element of frameworkBuildFolders) {
+                    s['files.exclude'][element] = true;
                   }
+
                   s['files.exclude']['**/*.filetemplate'] = true;
                   s['files.exclude']['**/tsconfig.*'] = true;
                   s['files.exclude']['**/tslint.*'] = true;
