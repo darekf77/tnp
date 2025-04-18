@@ -1658,6 +1658,12 @@ ${this.project.children
   //#endregion
 
   async coreContainerDepsUpdate() {
+    if (
+      this.project.name !== 'taon' &&
+      this.project?.parent?.typeIsNot('container')
+    ) {
+      Helpers.error(`This command is only for taon project`, false, true);
+    }
     const containerCore = this.project.framework.coreContainer;
     for (const child of this.project.parent.children.filter(
       f => f.framework.isStandaloneProject,
