@@ -1,6 +1,6 @@
 {
   "type": "isomorphic-lib",
-  "version": "v18",
+  "version": "v19",
 
   "dependenciesNamesForNpmLib": [
     // "favicons": "~7.1.2", // favicons generator! - has node gyp dep
@@ -16,7 +16,6 @@
   "autoReleaseConfigAllowedItems": [
     {
       "artifactName": "npm-lib-and-cli-tool",
-      "envName": "prod",
     },
   ],
 

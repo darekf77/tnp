@@ -98,6 +98,7 @@ export async function start(
       rm: 'release:manual',
       rmajor: 'release:major',
       rminor: 'release:minor',
+      setFrameworkVersion: 'version:setFrameworkVersion',
       'r:major': 'release:major',
       'r:minor': 'release:minor',
       'set:minor:version': 'release:set:minor:version',

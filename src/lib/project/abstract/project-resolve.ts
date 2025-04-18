@@ -397,7 +397,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   //#region reinstall active framework containers
   private reinstallActiveFrameworkContainers() {
     //#region @backendFunc
-    for (const ver of config.activeFramewrokVersions) {
+    for (const ver of config.activeFrameworkVersions) {
       const nodeModulesForContainer = crossPlatformPath([
         taonRepoPathUserInUserDir,
         `projects/container-${ver}`,
@@ -417,7 +417,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
   //#region get node modules installed for core container
   // private get nodeModulesInstalledForCoreContainer(): boolean {
-  //   for (const ver of config.activeFramewrokVersions) {
+  //   for (const ver of config.activeFrameworkVersions) {
   //     const nodeModulesForContainer = crossPlatformPath([
   //       taonRepoPathUserInUserDir,
   //       `projects/container-${ver}`,

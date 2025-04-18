@@ -1465,7 +1465,7 @@ ${this.project.children
 
   //#region list active core container
   listActiveCoreContainer() {
-    config.activeFramewrokVersions.forEach(v => {
+    config.activeFrameworkVersions.forEach(v => {
       console.log(`- ${v} = `, this.ins.by('container', v).location);
     });
     this._exit();

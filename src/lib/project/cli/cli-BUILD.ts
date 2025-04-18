@@ -191,8 +191,7 @@ class $Build extends BaseCli {
    */
   async app() {
     await this.project.build(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
         release: {
           targetArtifact: 'angular-node-app',
         },
@@ -206,8 +205,7 @@ class $Build extends BaseCli {
    */
   async appWatch() {
     await this.project.build(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
         release: {
           targetArtifact: 'angular-node-app',
         },

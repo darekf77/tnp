@@ -140,9 +140,9 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 
     //#region resolve all possible project for package distribution
     let projectForNodeModulesPkgUpdate: Project[] = [
-      ...(config.activeFramewrokVersions.length > 1
+      ...(config.activeFrameworkVersions.length > 1
         ? [
-            ...config.activeFramewrokVersions.map(
+            ...config.activeFrameworkVersions.map(
               // this may be different then this.project.coreContainer
               v => this.project.ins.by('container', v),
             ),

@@ -122,7 +122,7 @@ export class NodeModules extends BaseNodeModules {
       this.project.quickFixes.excludeNodeModulesDtsFromTypescriptCheck([
         this.project.nodeModules.pathFor('@types/glob/index.d.ts'),
         this.project.nodeModules.pathFor('chokidar/types/index.d.ts'),
-      ])
+      ]);
       this.project.quickFixes.fixSQLLiteModuleInNodeModules();
       //#endregion
     }
@@ -318,10 +318,7 @@ export class NodeModules extends BaseNodeModules {
         : this.packagesToDedupe
     ) as any;
 
-    this.dedupePackages(
-      packages,
-      false,
-    );
+    this.dedupePackages(packages, false);
     //#endregion
   }
   //#endregion
@@ -335,10 +332,7 @@ export class NodeModules extends BaseNodeModules {
         : this.packagesToDedupe
     ) as any;
 
-    this.dedupePackages(
-      packages,
-      true,
-    );
+    this.dedupePackages(packages, true);
     //#endregion
   }
   //#endregion
@@ -392,6 +386,8 @@ export class NodeModules extends BaseNodeModules {
       '@angular/platform-browser',
       '@angular/platform-browser-dynamic',
       '@angular/pwa',
+      '@angular/platform-server',
+      "@angular/ssr",
       '@angular/router',
       '@angular/service-worker',
       'zone.js',
