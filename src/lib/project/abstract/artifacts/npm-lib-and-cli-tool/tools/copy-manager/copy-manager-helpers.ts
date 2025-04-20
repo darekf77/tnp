@@ -73,9 +73,6 @@ export namespace CopyMangerHelpers {
       ...(filterForReleaseDist
         ? ['.vscode', ...Helpers.values(config.tempFolders)]
         : []),
-      ...project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator
-        .__projectLinkedFiles()
-        .map(c => c.relativePath),
       ...(filterForReleaseDist && ommitSourceCode ? sourceFolders : []),
       // ...toOmmitV3,
     ];

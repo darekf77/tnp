@@ -35,6 +35,21 @@ export class NodeModules extends BaseNodeModules {
     );
   }
 
+  /**
+   * TODO use this when async not available
+   */
+  reinstallSync(): void {
+    //#region @backendFunc
+    // TODO in future - check if node_modules are empty
+    // the problem is that I don't wanna check each time I am acessing core container
+    if (this.project.nodeModules.empty) {
+      this.project
+        .run(`${config.frameworkName} reinstall --skipCoreCheck`)
+        .sync();
+    }
+    //#endregion
+  }
+
   //#region reinstall
   /**
    * OVERRIDDEN METHOD for taon use case
@@ -387,7 +402,7 @@ export class NodeModules extends BaseNodeModules {
       '@angular/platform-browser-dynamic',
       '@angular/pwa',
       '@angular/platform-server',
-      "@angular/ssr",
+      '@angular/ssr',
       '@angular/router',
       '@angular/service-worker',
       'zone.js',

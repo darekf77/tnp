@@ -462,11 +462,11 @@ export function TaonSubscriber(options: TaonSubscriberOptions) {
 protected async header(): Promise<void> {
   //#region @backendFunc
   const logoLight = this.ins
-    .by('container', config.defaultFrameworkVersion)
+    .by('container',DEFAULT_FRAMEWORK_VERSION)
     .pathFor('../../__images/logo/logo-console-light.png');
 
   const logoDark = this.ins
-    .by('container', config.defaultFrameworkVersion)
+    .by('container',DEFAULT_FRAMEWORK_VERSION)
     .pathFor('../../__images/logo/logo-console-dark.png');
 
   // console.log({ logoLight });

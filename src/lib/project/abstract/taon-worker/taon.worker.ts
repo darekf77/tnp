@@ -1,12 +1,13 @@
 //#region imports
+import { EndpointContext } from 'taon/src';
 import { config } from 'tnp-config/src';
-import { fse, UtilsTerminal } from 'tnp-core/src';
+import { _, fse, UtilsTerminal } from 'tnp-core/src';
 import { BaseCliWorker, Helpers } from 'tnp-helpers/src';
 
 import type { TaonProjectResolve } from '../project-resolve';
 
-import { TaonTerminalUI } from './taon-termina-ui';
-import { TaonProjectsContext } from './taon.context';
+import { TaonTerminalUI } from './taon-terminal-ui';
+import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
 //#endregion
 
@@ -14,7 +15,11 @@ export class TaonProjectsWorker extends BaseCliWorker<
   TaonProjectsController,
   TaonTerminalUI
 > {
-  terminalUI: TaonTerminalUI = new TaonTerminalUI(this);
+  // @ts-ignore
+  terminalUI = new TaonTerminalUI(this);
+
+  workerContextTemplate = TaonProjectsContextTemplate as any; // TODO for some reason as any is nessesary
+  controllerClass = TaonProjectsController;
 
   //#region constructor
   constructor(
@@ -32,51 +37,19 @@ export class TaonProjectsWorker extends BaseCliWorker<
   }
   //#endregion
 
-  //#region methods / get controller for remote connection
-
-  async getControllerForRemoteConnection(): Promise<TaonProjectsController> {
-    //#region @backendFunc
-    await this.waitForProcessPortSavedToDisk();
-    const refRemote = await TaonProjectsContext.initialize({
-      overrideRemoteHost: `http://localhost:${this.processLocalInfoObj.port}`,
-    });
-    const taonProjectsController = refRemote.getInstanceBy(
-      TaonProjectsController,
-    );
-    return taonProjectsController;
-    //#endregion
-  }
-  //#endregion
-
   //#region methods / start normally in current process
   /**
    * start normally process
    * this will crash if process already started
    */
-  async startNormallyInCurrentProcess(options?: {
-    healthCheckRequestTrys?: number;
-  }): Promise<void> {
+  async startNormallyInCurrentProcess(): Promise<void> {
     //#region @backendFunc
-
     Helpers.taskStarted(`Waiting for ports manager to be started...`);
     await this.ins.portsWorker.startDetachedIfNeedsToBeStarted({
       useCurrentWindowForDetach: true,
     });
     Helpers.taskDone(`Ports manager started !`);
-
-    options = options || {};
-    await this.preventStartIfAlreadyStarted();
-    const port = await this.getServicePort();
-
-    await TaonProjectsContext.initialize({
-      overrideHost: `http://localhost:${port}`,
-    });
-
-    await this.initializeWorkerMetadata();
-
-    Helpers.info(`Service started !`);
-    this.preventExternalConfigChange();
-    await this.terminalUI.infoScreen();
+    await super.startNormallyInCurrentProcess();
     //#endregion
   }
   //#endregion

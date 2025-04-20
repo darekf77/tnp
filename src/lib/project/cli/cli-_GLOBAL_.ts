@@ -45,12 +45,13 @@ import {
 import { createGenerator, SchemaGenerator } from 'ts-json-schema-generator';
 
 import {
+  DEFAULT_FRAMEWORK_VERSION,
   taonConfigSchemaJsonContainer,
   taonConfigSchemaJsonStandalone,
 } from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions } from '../../options';
-import type { Project } from '../abstract/project';
+import { Project } from '../abstract/project';
 import type { TaonProjectResolve } from '../abstract/project-resolve';
 //#endregion
 
@@ -554,8 +555,48 @@ export class $Global extends BaseGlobalCommandLine<
   //#endregion
 
   //#region reinstall
-  async reinstallCore() {
-    await this.project.framework.coreContainer?.nodeModules.reinstall();
+  async reinstall() {
+    Helpers.taskStarted(`Reinstalling ${this.project.genericName}...`);
+    if (!this.project) {
+      Helpers.error(`Project not found in ${this.cwd}`, true, false);
+      this._exit();
+    }
+    await this.project?.nodeModules?.reinstall();
+    Helpers.info(`Done reinstalling ${this.project.genericName}`);
+    this._exit();
+  }
+  //#endregion
+
+  //#region reinstall core containers
+  async reinstallCoreContainers(): Promise<void> {
+    const toReinstallCoreContainers = crossPlatformPath([
+      Project.ins.by('container').location,
+      '..',
+    ]);
+    const folders = Helpers.foldersFrom(toReinstallCoreContainers, {
+      recursive: false,
+    })
+      .filter(f => path.basename(f).startsWith('container'))
+      .filter(f => {
+        const project = this.ins.From(f) as Project;
+        return project && project.framework.frameworkVersionAtLeast('v18');
+      });
+
+    const projectsFolders = await UtilsTerminal.multiselect({
+      question: `Select core containers to reinstall`,
+      choices: folders.map(f => {
+        return {
+          name: path.basename(f),
+          value: f,
+        };
+      }),
+    });
+
+    for (let index = 0; index < projectsFolders.length; index++) {
+      const project = this.ins.From(projectsFolders[index]) as Project;
+      await project.nodeModules.reinstall();
+    }
+    Helpers.info(`Done reinstalling core containers`);
     this._exit();
   }
   //#endregion
@@ -645,49 +686,6 @@ export class $Global extends BaseGlobalCommandLine<
   }
   //#endregion
 
-  //#region init core porjects
-  async INIT_CORE() {
-    Helpers.taskStarted(`${config.frameworkName} initing core projects`);
-    let allCoreProject: (Project & {
-      projectLinkedFiles: any; // TODO QUICKFIX,
-      filesStructure: any;
-    })[] = [];
-
-    (config.coreProjectVersions as CoreModels.FrameworkVersion[]).forEach(v => {
-      let corePorjectsTypes: CoreModels.LibType[] = ['isomorphic-lib'];
-      const projects = corePorjectsTypes.map(t => this.ins.by(t, v));
-      allCoreProject = [...projects, ...allCoreProject] as any;
-    });
-
-    for (let index = 0; index < allCoreProject.length; index++) {
-      const projectToInit = allCoreProject[index] as Project;
-      Helpers.log(`${projectToInit.genericName} ${projectToInit.location}`);
-      const linkedFiles =
-        projectToInit.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.__projectLinkedFiles();
-      for (let index2 = 0; index2 < linkedFiles.length; index2++) {
-        const l = linkedFiles[index2];
-        const source = path.join(l.sourceProject.location, l.relativePath);
-        const dest = path.join(projectToInit.location, l.relativePath);
-        if (!Helpers.exists(source)) {
-          Helpers.error(
-            `[${config.frameworkName}] Core source do not exists: ${source}`,
-            false,
-            true,
-          );
-        }
-        Helpers.log(`${config.frameworkName} link from: ${source} to ${dest}`);
-
-        Helpers.createSymLink(source, dest, {
-          continueWhenExistedFolderDoesntExists: true,
-        });
-      }
-      await projectToInit.struct();
-    }
-    Helpers.taskDone('DONE');
-    this._exit();
-  }
-  //#endregion
-
   //#region sync core repositories
   async SYNC() {
     this.ins.sync({ syncFromCommand: true });
@@ -727,7 +725,7 @@ export class $Global extends BaseGlobalCommandLine<
     if (container.framework.frameworkVersionLessThan('v3')) {
       container = this.ins.by(
         'container',
-        config.defaultFrameworkVersion,
+        DEFAULT_FRAMEWORK_VERSION,
       ) as Project;
     }
 
@@ -1463,15 +1461,6 @@ ${this.project.children
   //#endregion
   //#endregion
 
-  //#region list active core container
-  listActiveCoreContainer() {
-    config.activeFrameworkVersions.forEach(v => {
-      console.log(`- ${v} = `, this.ins.by('container', v).location);
-    });
-    this._exit();
-  }
-  //#endregion
-
   //#region start taon projects worker
   async startCliServiceTaonProjectsWorker() {
     await this.ins.taonProjectsWorker.cliStartProcedure(this.params);
@@ -1658,6 +1647,12 @@ ${this.project.children
   //#endregion
 
   async coreContainerDepsUpdate() {
+    if (
+      this.project.name !== 'taon' &&
+      this.project?.parent?.typeIsNot('container')
+    ) {
+      Helpers.error(`This command is only for taon project in taon-dev container`, false, true);
+    }
     const containerCore = this.project.framework.coreContainer;
     for (const child of this.project.parent.children.filter(
       f => f.framework.isStandaloneProject,

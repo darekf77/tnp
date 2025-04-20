@@ -11,6 +11,12 @@ import type { Project } from '../abstract/project';
 
 // @ts-ignore TODO weird inheritance problem
 export class QuickFixes extends BaseQuickFixes<Project> {
+  removeHuskyHooks(): void {
+    //#region @backendFunc
+    this.project.removeFolderByRelativePath('node_modules/husky');
+    //#endregion
+  }
+
   //#region recreate temp source necessary files for tests
   recreateTempSourceNecessaryFilesForTesting(): void {
     //#region @backendFunc

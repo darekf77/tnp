@@ -257,17 +257,21 @@ export class Framework extends BaseFeatureForProject<Project> {
       const { isCoreContainer, coreContainerFromNodeModules } =
         this.containerDataFromNodeModulesLink;
       if (isCoreContainer) {
+        // this.project.nodeModules.reinstallSync();
         return coreContainerFromNodeModules;
       }
     }
     const coreContainer = this.project.ins.by(
       'container',
       this.frameworkVersion,
-    ) as any;
+    ) as Project;
 
     if (!coreContainer) {
       Helpers.error(
-        `You need to sync taon. Try command:
+        `
+        There is something wrong with core container-${this.frameworkVersion}
+
+        You need to sync taon containers. Try command:
 
       ${config.frameworkName} sync
 
@@ -276,7 +280,9 @@ export class Framework extends BaseFeatureForProject<Project> {
         true,
       );
     }
-    // TODO @LAST install automatically
+    // TODO I cloud install node_modules here automatically, but sometimes
+    // is is not needed
+    // coreContainer.nodeModules.reinstallSync();
     return coreContainer;
     //#endregion
   }

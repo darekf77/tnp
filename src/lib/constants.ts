@@ -1,6 +1,6 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { os } from 'tnp-core/src';
+import { CoreModels, os } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { crossPlatformPath, path, Utils } from 'tnp-core/src';
 
@@ -34,6 +34,9 @@ export const COMPILATION_COMPLETE_LIB_NG_BUILD =
   'Compilation complete. Watching for file changes';
 
 export const COMPILATION_COMPLETE_APP_NG_SERVE = 'Compiled successfully';
+
+// TODO get this from cli, global
+export const DEFAULT_FRAMEWORK_VERSION = 'v19' as CoreModels.FrameworkVersion;
 
 export let taonRepoPathUserInUserDir: string =
   //#region @backend

@@ -12,7 +12,12 @@ import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
-import { MESSAGES, TEMP_DOCS, notAllowedProjectNames } from '../../constants';
+import {
+  DEFAULT_FRAMEWORK_VERSION,
+  MESSAGES,
+  TEMP_DOCS,
+  notAllowedProjectNames,
+} from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
@@ -23,8 +28,6 @@ import { BaseCli } from './base-cli';
 
 // @ts-ignore TODO weird inheritance problem
 export class $New extends BaseCli {
-
-
   public async _() {
     await this._containerStandaloneFromArgs(this.args.join(' '));
   }
@@ -48,7 +51,7 @@ export class $New extends BaseCli {
     }
 
     if (_.isNil(options.version)) {
-      options.version = config.defaultFrameworkVersion; // OK
+      options.version = DEFAULT_FRAMEWORK_VERSION; // OK
     }
 
     if (_.isNil(options.skipInit)) {
@@ -286,7 +289,7 @@ export class $New extends BaseCli {
             version: '0.0.0',
             private: true,
             tnp: {
-              version: version || config.defaultFrameworkVersion,
+              version: version || DEFAULT_FRAMEWORK_VERSION,
               type: 'container',
               monorepo,
               smartContainerBuildTarget,
@@ -346,7 +349,7 @@ export class $New extends BaseCli {
 
     const taonJson = new TaonJson(this.project.ins.From(packageJson.cwd), {});
     taonJson.setType('isomorphic-lib');
-    taonJson.setFrameworkVersion(version || config.defaultFrameworkVersion);
+    taonJson.setFrameworkVersion(version || DEFAULT_FRAMEWORK_VERSION);
     taonJson.overridePackageJsonManager.setIsPrivate(true);
 
     appProj = this.ins.From(appLocation) as Project;

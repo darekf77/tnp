@@ -210,8 +210,8 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       ) {
         this.coreContainer
           .run(
-            // $Global.prototype.reinstallCore.name
-            `${config.frameworkName}  ${'reinstallCore'}`,
+            // $Global.prototype.reinstall.name
+            `${config.frameworkName}  ${'reinstall'}`,
           )
           .sync();
         this.resolveAndAddIsomorphicLibsToMemory(

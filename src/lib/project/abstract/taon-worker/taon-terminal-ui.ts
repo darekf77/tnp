@@ -3,6 +3,8 @@ import { config } from 'tnp-config/src';
 import { UtilsTerminal, _, fse } from 'tnp-core/src';
 import { BaseCliWorkerTerminalUI } from 'tnp-helpers/src';
 
+import { DEFAULT_FRAMEWORK_VERSION } from '../../../constants';
+
 import type { TaonProjectsWorker } from './taon.worker';
 //#endregion
 
@@ -18,7 +20,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
     //#region @backendFunc
     // return super.header();
     const consoleLogoPath = this.worker.ins
-      .by('container', config.defaultFrameworkVersion)
+      .by('container', DEFAULT_FRAMEWORK_VERSION)
       .pathFor('../../__images/logo/logo-console.png');
 
     // console.log({ logoLight });
@@ -59,7 +61,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       tcpUdPorts: {
         name: 'Manage TCP/UDP ports',
         action: async () => {
-          await this.worker.ins.portsWorker.terminalUi.infoScreen({
+          await this.worker.ins.portsWorker.terminalUI.infoScreen({
             exitIsOnlyReturn: true,
           });
         },

@@ -276,7 +276,7 @@
 //     version: '0.0.0',
 //     tnp: {
 //       type: 'isomorphic-lib',
-//       version: config.defaultFrameworkVersion, // OK
+//       version:DEFAULT_FRAMEWORK_VERSION, // OK
 //     },
 //   });
 
@@ -291,7 +291,7 @@
 //     tnp: {
 //       type: 'container',
 //       smart: true,
-//       version: config.defaultFrameworkVersion, // OK
+//       version:DEFAULT_FRAMEWORK_VERSION, // OK
 //     },
 //   });
 

@@ -120,50 +120,7 @@ export class Git extends BaseGit<Project> {
         .sync();
     }
 
-    this.project.removeFolderByRelativePath('node_modules/husky');
-
-    // if (this.project.framework.isStandaloneProject) {
-    //   if (this.project.hasFile(`.vscode/launch.json`)) {
-    //     const launchJson =
-    //       this.project.readJson<LaunchJson>(`.vscode/launch.json`);
-
-    //     const typeNode = launchJson.configurations.find(
-    //       (c: any) => c.type === 'node',
-    //     );
-    //     if (typeNode) {
-    //       typeNode.outFiles = this.project.defaultOutFilesLaunchJson;
-    //     }
-    //   }
-    // }
-
-    // ? TODO not needed anymore
-    // if (this.project.name === config.frameworkNames.productionFrameworkName) {
-    //   config.activeFrameworkVersions.forEach(frameworkVersion => {
-    //     // console.log(`Active Framework: ${frameworkVersion}`)
-    //     const taonProjectContainerPath = path.join(
-    //       this.project.location,
-    //       'projects',
-    //       `container${frameworkVersion === 'v1' ? '' : `-${frameworkVersion}`}`,
-    //     );
-    //     const containerCoreForVersion = this.project.ins.From(
-    //       taonProjectContainerPath,
-    //     ) as Project;
-    //     if (containerCoreForVersion) {
-    //       Helpers.info(
-    //         `[${config.frameworkName}] updating on push global container${
-    //           frameworkVersion === 'v1' ? '' : `-${frameworkVersion}`
-    //         } in ${this.project.name}`,
-    //       );
-    //       containerCoreForVersion.packageJson.save(
-    //         'Updating taon container',
-    //       );
-    //     } else {
-    //       Helpers.warn(
-    //         `[taon][hotfix] Not able to find container for framework version ${frameworkVersion}`,
-    //       );
-    //     }
-    //   });
-    // }
+    this.project.quickFixes.removeHuskyHooks();
 
     //#endregion
   }

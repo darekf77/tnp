@@ -57,7 +57,6 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
         .concat([
           'tsconfig.browser.json',
           'webpack.config.js',
-          'webpack.backend-dist-build.js',
           'run.js',
           'run-org.js',
           'update-vscode-package-json.js',
@@ -479,14 +478,9 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
                 s['files.exclude']['scripts'] = true;
                 // s['files.exclude']["bin"] = true;
 
-                project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator
-                  .__projectLinkedFiles()
-                  .forEach(({ relativePath }) => {
-                    s['files.exclude'][relativePath] = true;
-                  }),
-                  [...self.filesIgnoredBy.vscodeSidebarFilesView].map(f => {
-                    s['files.exclude'][f] = true;
-                  });
+                [...self.filesIgnoredBy.vscodeSidebarFilesView].map(f => {
+                  s['files.exclude'][f] = true;
+                });
                 if (!project.framework.isCoreProject) {
                   for (const element of frameworkBuildFolders) {
                     s['files.exclude'][element] = true;
@@ -710,27 +704,7 @@ ${this.project.framework.isCoreProject ? '!*.filetemplate' : '*.filetemplate'}
       crossPlatformPath(this.project.location) ===
       crossPlatformPath(defaultProjectProptotype?.location)
     ) {
-      Helpers.info(
-        `LINKING CORE PROJECT ${this.project.name} ${this.project.type} ${this.project.framework.frameworkVersion}`,
-      );
-      if (
-        this.project.framework.frameworkVersionAtLeast('v3') &&
-        this.project.typeIsNot('isomorphic-lib')
-      ) {
-        // nothing
-      } else {
-        const toLink =
-          defaultProjectProptotype.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.__projectLinkedFiles();
-        toLink.forEach(c => {
-          Helpers.info(
-            `[LINKING] ${c.relativePath} from ${c.sourceProject.location}  `,
-          );
-          Helpers.createSymLink(
-            path.join(c.sourceProject.location, c.relativePath),
-            path.join(this.project.location, c.relativePath),
-          );
-        });
-      }
+      // nothing
     } else if (defaultProjectProptotype) {
       const projectSpecyficFiles =
         this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.projectSpecyficFiles();
@@ -748,17 +722,7 @@ ${this.project.framework.isCoreProject ? '!*.filetemplate' : '*.filetemplate'}
         // console.log({ relativeFilePath, from });
 
         if (!Helpers.exists(from)) {
-          const linked =
-            defaultProjectProptotype.artifactsManager.artifact.npmLibAndCliTool.filesRecreator
-              .__projectLinkedFiles()
-              .find(a => a.relativePath === relativeFilePath);
-          if (linked) {
-            Helpers.warn(`[taon] FIXING LINKED projects`);
-            Helpers.createSymLink(
-              path.join(linked.sourceProject.location, linked.relativePath),
-              path.join(defaultProjectProptotype.location, relativeFilePath),
-            );
-          } else if (
+          if (
             defaultProjectProptotype.framework.frameworkVersionAtLeast('v2')
           ) {
             const notExistedTaonVersions = ['v17'];
@@ -814,25 +778,6 @@ ${this.project.framework.isCoreProject ? '!*.filetemplate' : '*.filetemplate'}
       ),
       ...this.projectSpecyficFiles(),
     ];
-    //#endregion
-  }
-  //#endregion
-
-  //#region getters & methods / project linked files placeholder
-  __projectLinkedFiles(): { sourceProject: Project; relativePath: string }[] {
-    //#region @backendFunc
-    const files = [];
-
-    if (this.project.framework.isStandaloneProject) {
-      if (this.project.framework.frameworkVersionAtLeast('v2')) {
-        files.push({
-          sourceProject: this.project.ins.by(this.project.type, 'v1'),
-          relativePath: 'webpack.backend-dist-build.js',
-        });
-      }
-    }
-
-    return files;
     //#endregion
   }
   //#endregion

@@ -9,7 +9,11 @@ import {
 import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import { MESSAGES, TEMP_DOCS } from '../../constants';
+import {
+  DEFAULT_FRAMEWORK_VERSION,
+  MESSAGES,
+  TEMP_DOCS,
+} from '../../constants';
 import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 
@@ -55,7 +59,9 @@ export class $Init extends BaseCli {
   //#endregion
 
   async templatesBuilder() {
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.filesTemplatesBuilder.rebuild(this.params);
+    await this.project.artifactsManager.artifact.npmLibAndCliTool.filesTemplatesBuilder.rebuild(
+      this.params,
+    );
     this._exit();
   }
 
@@ -108,7 +114,7 @@ export class $Init extends BaseCli {
               type: responseProjectType,
               monorepo,
               smart,
-              version: config.defaultFrameworkVersion, // OK
+              version: DEFAULT_FRAMEWORK_VERSION, // OK
             },
           },
         );
@@ -120,7 +126,7 @@ export class $Init extends BaseCli {
             version: '0.0.0',
             tnp: {
               type: responseProjectType,
-              version: config.defaultFrameworkVersion, // OK
+              version: DEFAULT_FRAMEWORK_VERSION, // OK
             },
           },
         );

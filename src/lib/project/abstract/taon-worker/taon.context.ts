@@ -22,7 +22,7 @@ if (!Helpers.exists(path.dirname(taonProjectsWorkerDatabaseLocation))) {
 }
 //#endregion
 
-export const TaonProjectsContext = Taon.createContext(() => ({
+export const TaonProjectsContextTemplate = Taon.createContextTemplate(() => ({
   contextName: 'TaonProjectsContext',
   contexts: { BaseContext },
   controllers: { TaonProjectsController },

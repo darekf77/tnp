@@ -6,7 +6,10 @@ import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { CLI } from 'tnp-core/src';
 import { Helpers, BaseProjectResolver } from 'tnp-helpers/src';
 
-import { taonRepoPathUserInUserDir } from '../../constants';
+import {
+  DEFAULT_FRAMEWORK_VERSION,
+  taonRepoPathUserInUserDir,
+} from '../../constants';
 
 import type { Project } from './project';
 import { TaonProjectsWorker } from './taon-worker/taon.worker';
@@ -228,7 +231,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   public by(
     libraryType: CoreModels.NewFactoryType,
     //#region @backend
-    version: CoreModels.FrameworkVersion = config.defaultFrameworkVersion,
+    version: CoreModels.FrameworkVersion = DEFAULT_FRAMEWORK_VERSION,
     //#endregion
   ): Project {
     //#region @backendFunc
@@ -386,49 +389,15 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     //#endregion
 
     if (syncFromCommand) {
-      this.reinstallActiveFrameworkContainers();
+      Helpers.run(
+        // $Global.prototype.reinstallCoreContainers.name
+        `${config.frameworkName} ${'reinstallCoreContainers'} --skipCoreCheck`,
+      ).sync();
     }
 
     Helpers.success('taon framework synced ok');
     //#endregion
   }
-  //#endregion
-
-  //#region reinstall active framework containers
-  private reinstallActiveFrameworkContainers() {
-    //#region @backendFunc
-    for (const ver of config.activeFrameworkVersions) {
-      const nodeModulesForContainer = crossPlatformPath([
-        taonRepoPathUserInUserDir,
-        `projects/container-${ver}`,
-      ]);
-      Helpers.run(
-        // $Global.prototype.reinstallCore.name
-        `${config.frameworkName} ${'reinstallCore'} --skipCoreCheck`,
-        {
-          cwd: nodeModulesForContainer,
-        },
-      ).sync();
-      Helpers.success(`${config.frameworkName.toUpperCase()} AUTOUPDATE DONE`);
-    }
-    //#endregion
-  }
-  //#endregion
-
-  //#region get node modules installed for core container
-  // private get nodeModulesInstalledForCoreContainer(): boolean {
-  //   for (const ver of config.activeFrameworkVersions) {
-  //     const nodeModulesForContainer = crossPlatformPath([
-  //       taonRepoPathUserInUserDir,
-  //       `projects/container-${ver}`,
-  //       config.folder.node_modules,
-  //     ]);
-  //     if (!Helpers.exists(nodeModulesForContainer)) {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // }
   //#endregion
 
   //#region initial check
@@ -478,35 +447,11 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
         );
       }
 
-      try {
-        child_process.execSync(
-          //$Global.prototype.INIT_CORE.name
-          `${config.frameworkName} ${'INIT_CORE'} --skipCoreCheck`,
-          {
-            stdio: [0, 1, 2],
-          },
-        );
-      } catch (error) {
-        Helpers.error(
-          `[${config.frameworkName}][config] Not able init core project`,
-          false,
-          true,
-        );
-      }
-
       this.sync();
 
       this.hasResolveCoreDepsAndFolder = true;
     }
 
-    // TODO (remove this) this is causing problems
-    // if (
-    //   !this.nodeModulesInstalledForCoreContainer &&
-    //   config.frameworkName === config.frameworkNames.productionFrameworkName &&
-    //   !global.skipCoreCheck
-    // ) {
-    //   Project.reinstallActiveFrameworkContainers();
-    // }
     //#endregion
   }
   //#endregion
