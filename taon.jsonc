@@ -12,7 +12,7 @@
     "typescript",
     // "rxjs",
     // "tslib",
-    "magic-renamer",
+    // "magic-renamer",
   ],
 
   "autoReleaseConfigAllowedItems": [
