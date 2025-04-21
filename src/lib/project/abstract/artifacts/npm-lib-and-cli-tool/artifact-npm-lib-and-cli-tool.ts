@@ -563,6 +563,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         releaseAbsPath,
         strategy: 'cli-only',
         reservedNames,
+        compress: releaseOptions.release.cli.compress,
       });
     }
 
@@ -585,6 +586,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         releaseAbsPath,
         strategy: 'lib-only',
         reservedNames,
+        compress: releaseOptions.release.lib.compress,
       });
     }
 
@@ -817,9 +819,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     strategy: 'lib-and-cli' | 'cli-only' | 'lib-only';
     releaseAbsPath: string;
     reservedNames: string[];
+    compress: boolean;
   }): void {
     //#region @backendFunc
-    const { strategy, releaseAbsPath, reservedNames } = options;
+    const { strategy, releaseAbsPath, reservedNames, compress } = options;
+    Helpers.taskStarted(`Minifying started , strategy: ${strategy}`);
     const cliJsPath = crossPlatformPath([releaseAbsPath, 'cli.js']);
 
     const files =
@@ -837,9 +841,12 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         path.dirname(fileAbsPath),
         path.basename(fileAbsPath).replace('.js', '') + '.min.js',
       ]);
+      Helpers.logInfo(
+        `minifying ${fileAbsPath} to ${path.basename(uglifiedTempPath)}`,
+      );
       const command =
-        `npm-run uglifyjs ${fileAbsPath} --output ` +
-        `${uglifiedTempPath} -b` +
+        `npm-run uglifyjs ${fileAbsPath} ${compress ? '--compress' : ''} ` +
+        ` --output ${uglifiedTempPath} -b` +
         ` --mangle reserved=[${reservedNames.map(n => `'${n}'`).join(',')}]`;
       // + ` --mangle-props reserved=[${reservedNames.join(',')}]` // it breakes code
       this.project.run(command, { biggerBuffer: false }).sync();
@@ -847,7 +854,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       Helpers.copyFile(uglifiedTempPath, fileAbsPath);
       Helpers.removeFileIfExists(uglifiedTempPath);
     }
-
+    Helpers.taskDone(`Minifying done , strategy: ${strategy}`);
     //#endregion
   }
   //#endregion

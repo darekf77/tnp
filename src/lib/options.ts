@@ -95,6 +95,7 @@ class EnvOptionsBuildPwa {
 //#region env options / build / cli
 class EnvOptionsBuildCli {
   declare uglify: boolean;
+  declare compress: boolean;
   declare obscure: boolean;
   declare includeNodeModules: boolean;
 }
@@ -106,6 +107,7 @@ class EnvOptionsBuildLib {
   declare uglifyFileByFile: boolean;
   declare obscureFileByFile: boolean;
   declare includeSourceMaps: boolean;
+  declare compress: boolean;
 }
 //#endregion
 

@@ -7,6 +7,7 @@ const env: Partial<EnvOptions> = {
     cli: {
       includeNodeModules: true,
       uglify: true,
+      compress: true,
     },
   },
 };
