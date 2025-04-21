@@ -1,5 +1,5 @@
 // @ts-nocheck
 // This file is auto-generated. Do not modify.
-// This is only placholder.
+// This is only placeholder.
 // Use property "shouldGenerateAutogenIndexFile: true" 
-// in taon.jsonc to enable autogeneration. 
+// in taon.jsonc to enable ts exports auto generation. 
