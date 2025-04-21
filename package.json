@@ -1,6 +1,6 @@
 {
   "name": "tnp",
-  "version": "19.0.7",
+  "version": "19.0.9",
   "scripts": {
     "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link"
   },
@@ -325,6 +325,7 @@
     "yup": "~1.0.0-beta.8",
     "zone.js": "~0.13.0"
   },
+  "sideEffects": false,
   "bin": {
     "t": "bin/t",
     "t-debug": "bin/t-debug",

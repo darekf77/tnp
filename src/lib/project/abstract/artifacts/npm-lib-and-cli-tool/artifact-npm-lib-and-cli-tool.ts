@@ -552,7 +552,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#region cli
     if (releaseOptions.release.cli.includeNodeModules) {
       await this.project.nodeModules.removeOwnPackage(async () => {
-        await this.backendIncludeNodeModulesInCompilation(releaseAbsPath);
+        await this.backendIncludeNodeModulesInCompilation(
+          releaseAbsPath,
+          releaseOptions.release.cli.minify,
+        );
       });
     }
 
@@ -1006,13 +1009,14 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   //#region private methods / include node_modules in compilation
   async backendIncludeNodeModulesInCompilation(
     releaseAbsLocation: string,
+    minify: boolean,
   ): Promise<void> {
     //#region @backendFunc
 
     const destCli = crossPlatformPath([releaseAbsLocation, 'index.js']);
     const destCliMin = crossPlatformPath([releaseAbsLocation, 'cli.js']);
 
-    await Helpers.ncc(destCli, destCliMin);
+    await Helpers.ncc(destCli, destCliMin, { minify });
 
     // copy wasm file for dest
     const wasmfileSource = crossPlatformPath([

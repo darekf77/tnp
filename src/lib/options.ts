@@ -94,10 +94,26 @@ class EnvOptionsBuildPwa {
 
 //#region env options / build / cli
 class EnvOptionsBuildCli {
-  declare uglify: boolean;
-  declare compress: boolean;
-  declare obscure: boolean;
+  /**
+   * using ncc
+   */
+  declare minify: boolean;
+  /**
+   * using ncc
+   */
   declare includeNodeModules: boolean;
+  /**
+   * using uglifyjs
+   */
+  declare uglify: boolean;
+  /**
+   * using only works with uglify = true
+   */
+  declare compress: boolean;
+  /**
+   * using  obscurejs
+   */
+  declare obscure: boolean;
 }
 //#endregion
 
@@ -134,7 +150,7 @@ class EnvOptionsBuild {
   set baseHref(v) {
     this._baseHref = crossPlatformPath(v);
   }
-  private declare _baseHref: string;
+  declare private _baseHref: string;
   declare skipBuildForRelease?: boolean;
   declare websql: boolean;
   /**

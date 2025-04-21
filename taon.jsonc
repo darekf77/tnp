@@ -9,7 +9,9 @@
     "open",
     "ts-node",
     // "webpack",
-    // "typescript",
+    "typescript",
+    // "rxjs",
+    // "tslib",
     "magic-renamer",
   ],
 
@@ -33,6 +35,6 @@
     "scripts": {
       "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     },
-    // "sideEffects": false,
+    "sideEffects": false,
   },
 }
