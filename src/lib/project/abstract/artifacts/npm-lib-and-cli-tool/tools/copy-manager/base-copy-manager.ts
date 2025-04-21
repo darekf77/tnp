@@ -145,26 +145,10 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     ];
     //#endregion
 
-    // QUICK_FIX
-    if (
-      isTaonProdCli &&
-      !!this.project.tnpCurrentCoreContainer &&
-      (this.project.framework.isLinkToNodeModulesDifferentThanCoreContainer ||
-        this.project.name === 'tnp') // BIG QUICK FIX
-    ) {
-      projectForNodeModulesPkgUpdate.push(this.project.tnpCurrentCoreContainer);
-      projectForNodeModulesPkgUpdate = projectForNodeModulesPkgUpdate.filter(
-        p => {
-          return (
-            p.location !==
-            this.project.ins.by(
-              'container',
-              this.project.framework.frameworkVersion,
-            ).location
-          );
-        },
-      );
-    }
+    projectForNodeModulesPkgUpdate.push(this.project.tnpCurrentCoreContainer);
+    projectForNodeModulesPkgUpdate = projectForNodeModulesPkgUpdate.filter(
+      f => !!f,
+    );
 
     if (
       isTaonProdCli &&

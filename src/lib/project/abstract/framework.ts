@@ -194,7 +194,10 @@ export class Framework extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region core container data from node modules link
-  private get containerDataFromNodeModulesLink() {
+  get containerDataFromNodeModulesLink(): {
+    isCoreContainer: boolean;
+    coreContainerFromNodeModules: Project;
+  } {
     //#region @backendFunc
     const realpathCCfromCurrentProj =
       fse.existsSync(this.project.nodeModules.path) &&
@@ -209,10 +212,8 @@ export class Framework extends BaseFeatureForProject<Project> {
     const isCoreContainer =
       coreContainerFromNodeModules &&
       coreContainerFromNodeModules?.framework.isCoreProject &&
-      coreContainerFromNodeModules?.framework.isContainer &&
-      coreContainerFromNodeModules.framework.frameworkVersionEquals(
-        this.frameworkVersion,
-      );
+      coreContainerFromNodeModules?.framework.isContainer;
+
     return { isCoreContainer, coreContainerFromNodeModules };
     //#endregion
   }
@@ -256,6 +257,7 @@ export class Framework extends BaseFeatureForProject<Project> {
     ) {
       const { isCoreContainer, coreContainerFromNodeModules } =
         this.containerDataFromNodeModulesLink;
+
       if (isCoreContainer) {
         // this.project.nodeModules.reinstallSync();
         return coreContainerFromNodeModules;

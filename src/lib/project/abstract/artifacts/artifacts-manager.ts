@@ -1,6 +1,6 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { Helpers, UtilsTerminal, _, chalk, path } from 'tnp-core/src';
+import { Helpers, UtilsTerminal, _, chalk, fse, path } from 'tnp-core/src';
 import { BaseProcessManger, CommandConfig } from 'tnp-helpers/src';
 
 import {
@@ -175,6 +175,29 @@ export class ArtifactManager {
       await this.project.artifactsManager.globalHelper.branding.apply(
         !!initOptions.init.branding,
       );
+    }
+
+    if (config.frameworkName === 'tnp') {
+      // TODO QUICK_FIX
+      const { isCoreContainer, coreContainerFromNodeModules } =
+        this.project.framework.containerDataFromNodeModulesLink;
+
+      const isIncorrectLinkToNodeModules =
+        this.project.taonJson.frameworkVersion !==
+        coreContainerFromNodeModules.taonJson.frameworkVersion;
+
+      if (
+        isCoreContainer &&
+        isIncorrectLinkToNodeModules &&
+        this.project.nodeModules.isLink
+      ) {
+        try {
+          Helpers.info(
+            `Unlinking incorrect node_modules link from ${this.project.name}`,
+          );
+          fse.unlinkSync(this.project.nodeModules.path);
+        } catch (error) {}
+      }
     }
 
     if (
