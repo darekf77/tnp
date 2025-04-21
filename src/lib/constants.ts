@@ -12,6 +12,9 @@ export const taonIgnore = '@taon' + '-' + 'ignore';
 
 export const DEBUG_WORD = 'Debug/Start';
 
+export const THIS_IS_GENERATED_STRING = `THIS FILE IS GENERATED - DO NOT MODIFY`;
+export const THIS_IS_GENERATED_INFO_COMMENT = `// ${THIS_IS_GENERATED_STRING}`;
+
 export const OVERRIDE_FROM_TNP = [
   'activationEvents',
   'author',
@@ -171,27 +174,6 @@ export class PortUtils {
     const clientPort =
       this.basePort + (websql ? 800 : 700) + this.n * this.max + index;
     return clientPort;
-  }
-
-  appHostTemplateFor(project: Project) {
-    //#region @backendFunc
-    //     const clientPorts = project.framework.isStandaloneProject
-    //       ? `
-    // export const CLIENT_DEV_NORMAL_APP_PORT = ${project.artifactsManager.artifact.angularNodeApp.standaloneNormalAppPort};
-    // export const CLIENT_DEV_WEBSQL_APP_PORT = ${project.artifactsManager.artifact.angularNodeApp.standaloneWebsqlAppPort};
-    //     `
-    //       : '';
-    //     return `
-    // // THIS FILE IS GENERATED - DO NOT MODIFY
-    // export const HOST_BACKEND_PORT = ${project.artifactsManager.artifact.angularNodeApp.backendPort};
-    // ${clientPorts}
-    // // Check yout build info here http://localhost:${this.basePort}
-    // // BACKEND FOR NORMAL APP: http://localhost:${this.basePort}/helloworld
-    // // NORMAL APP: http://localhost:${project.artifactsManager.artifact.angularNodeApp.standaloneNormalAppPort}
-    // // WEBSQL APP: http://localhost:${project.artifactsManager.artifact.angularNodeApp.standaloneWebsqlAppPort}
-    // // THIS FILE IS GENERATED - DO NOT MODIFY
-    // `.trim();
-    //#endregion
   }
 }
 

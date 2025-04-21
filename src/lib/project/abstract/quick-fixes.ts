@@ -5,7 +5,7 @@ import { path, _, crossPlatformPath } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 import { Helpers, BaseQuickFixes } from 'tnp-helpers/src';
 
-import { folder_shared_folder_info, tempSourceFolder } from '../../constants';
+import { folder_shared_folder_info, tempSourceFolder, THIS_IS_GENERATED_INFO_COMMENT, THIS_IS_GENERATED_STRING } from '../../constants';
 import type { Project } from '../abstract/project';
 //#endregion
 
@@ -225,12 +225,12 @@ Object.defineProperty(document.body.style, 'transform', {
         Helpers.writeFile(
           shared_folder_info,
           `
-THIS FILE IS GENERATED. THIS FILE IS GENERATED. THIS FILE IS GENERATED.
+${THIS_IS_GENERATED_STRING}
 
 Assets from this folder are being shipped with this npm package (${this.project.framework.__npmPackageNameAndVersion})
 created from this project.
 
-THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
+${THIS_IS_GENERATED_STRING}
           `.trimLeft(),
         );
       })();
@@ -246,11 +246,11 @@ THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
         Helpers.writeFile(
           shared_folder_info,
           `
-THIS FILE IS GENERATED. THIS FILE IS GENERATED. THIS FILE IS GENERATED.
+${THIS_IS_GENERATED_STRING}
 
 This folder is only for storing migration files with auto-generated names.
 
-THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
+${THIS_IS_GENERATED_STRING}
           `.trimLeft(),
         );
       })();
@@ -266,11 +266,11 @@ THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
         Helpers.writeFile(
           shared_folder_info,
           `
-THIS FILE IS GENERATED. THIS FILE IS GENERATED. THIS FILE IS GENERATED.
+${THIS_IS_GENERATED_STRING}
 
 This folder is an entry point for npm Angular/NodeJS library
 
-THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
+${THIS_IS_GENERATED_STRING}
           `.trimLeft(),
         );
       })();
@@ -286,7 +286,7 @@ THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
         Helpers.writeFile(
           shared_folder_info,
           `
-THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
+${THIS_IS_GENERATED_STRING}
 
 # Purpose of this folder
 Put your backend **mocha** tests (with *.test.ts extension) in this folder or any other *tests*
@@ -331,7 +331,7 @@ describe('Set name for function or class', () => {
 });
 \`\`\`
 
-THIS FILE IS GENERATED.THIS FILE IS GENERATED. THIS FILE IS GENERATED.
+${THIS_IS_GENERATED_STRING}
 
           `.trimLeft(),
         );

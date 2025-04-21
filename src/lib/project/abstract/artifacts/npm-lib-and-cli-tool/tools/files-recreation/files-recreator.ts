@@ -633,7 +633,6 @@ ${frameworkBuildFolders
   .map(c => `/${c}`)
   .join('\n')}
 /${this.project.artifactsManager.artifact.docsWebapp.docs.docsConfigSchema}
-/**/*._auto-generated_.ts
 /**/BUILD-INFO.md
 ${this.project.framework.isStandaloneProject ? `/${config.folder.testsEnvironments}` : ''}
 /src/lib/lib-info.md

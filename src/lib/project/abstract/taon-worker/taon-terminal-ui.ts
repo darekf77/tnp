@@ -1,6 +1,6 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { UtilsTerminal, _, fse } from 'tnp-core/src';
+import { Helpers, UtilsTerminal, _, fse } from 'tnp-core/src';
 import { BaseCliWorkerTerminalUI } from 'tnp-helpers/src';
 
 import { DEFAULT_FRAMEWORK_VERSION } from '../../../constants';
@@ -46,8 +46,42 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
 
     return {
       ...this.chooseAction,
+      projects: {
+        name: 'Manage Taon Projects',
+        action: async () => {
+          await this.worker.ins.portsWorker.terminalUI.infoScreen({
+            exitIsOnlyReturn: true,
+          });
+        },
+      },
+      ports: {
+        name: 'Manage Ports (TCP/UDP)',
+        action: async () => {
+          await this.worker.ins.portsWorker.terminalUI.infoScreen({
+            exitIsOnlyReturn: true,
+          });
+        },
+      },
+      domains: {
+        name: 'Manage Domains (and /etc/hosts file)',
+        action: async () => {
+          Helpers.info(`This feature is not yet implemented.`);
+          await UtilsTerminal.pressAnyKeyToContinueAsync({
+            message: 'Press any key to go back to main menu',
+          });
+        },
+      },
+      deployments: {
+        name: 'Manage Deployments',
+        action: async () => {
+          Helpers.info(`This feature is not yet implemented.`);
+          await UtilsTerminal.pressAnyKeyToContinueAsync({
+            message: 'Press any key to go back to main menu',
+          });
+        },
+      },
       previewPorts: {
-        name: 'Show Environments builds',
+        name: 'Manage Environments',
         action: async () => {
           console.log('hello world');
           const ctrl = await this.worker.getControllerForRemoteConnection();
@@ -56,14 +90,6 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
             list.map(s => `${s.name} ${s.type}`),
           );
           await UtilsTerminal.pressAnyKeyToContinueAsync();
-        },
-      },
-      tcpUdPorts: {
-        name: 'Manage TCP/UDP ports',
-        action: async () => {
-          await this.worker.ins.portsWorker.terminalUI.infoScreen({
-            exitIsOnlyReturn: true,
-          });
         },
       },
       ...super.getWorkerTerminalActions({ chooseAction: false }),

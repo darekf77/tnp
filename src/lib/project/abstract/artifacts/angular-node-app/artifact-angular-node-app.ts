@@ -15,6 +15,7 @@ import {
   COMPILATION_COMPLETE_APP_NG_SERVE,
   DEFAULT_PORT,
   PortUtils,
+  THIS_IS_GENERATED_INFO_COMMENT,
   tmpBaseHrefOverwriteRelPath,
   tmpBuildPort,
 } from '../../../../constants';
@@ -516,13 +517,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     Helpers.writeFile(
       appHostsFile,
       `
-// THIS FILE IS GENERATED - DO NOT MODIFY
+${THIS_IS_GENERATED_INFO_COMMENT}
 
 export const HOST_BACKEND_PORT = undefined;
 export const CLIENT_DEV_NORMAL_APP_PORT = undefined;
 export const CLIENT_DEV_WEBSQL_APP_PORT = undefined;
 
-// THIS FILE IS GENERATED - DO NOT MODIFY
+${THIS_IS_GENERATED_INFO_COMMENT}
 
 
       `,

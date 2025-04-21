@@ -2,6 +2,7 @@ import { config, PREFIXES } from 'tnp-config/src';
 import { crossPlatformPath, glob, path, _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
+import { THIS_IS_GENERATED_INFO_COMMENT } from '../../../../../../constants';
 import { EnvOptions, ReleaseArtifactTaon } from '../../../../../../options';
 import type { Project } from '../../../../project';
 
@@ -425,11 +426,11 @@ export class CopyManagerStandalone extends CopyManager {
     Helpers.writeFile(
       srcDts,
       `
-// THIS FILE IS GENERATED
+${THIS_IS_GENERATED_INFO_COMMENT}
 export * from './source';
-// THIS FILE IS GENERATED
+${THIS_IS_GENERATED_INFO_COMMENT}
 // please use command: taon build:watch to see here links for your globally builded lib code files
-// THIS FILE IS GENERATED
+${THIS_IS_GENERATED_INFO_COMMENT}
             `.trimStart(),
     );
     //#endregion
@@ -447,11 +448,11 @@ export * from './source';
     Helpers.writeFile(
       srcDts,
       `
-// THIS FILE IS GENERATED
+${THIS_IS_GENERATED_INFO_COMMENT}
 export * from './source';
-// THIS FILE IS GENERATED
+${THIS_IS_GENERATED_INFO_COMMENT}
 // please use command: taon build:watch to see here links for your globally builded lib code files
-// THIS FILE IS GENERATED
+${THIS_IS_GENERATED_INFO_COMMENT}
             `.trimStart(),
     );
 

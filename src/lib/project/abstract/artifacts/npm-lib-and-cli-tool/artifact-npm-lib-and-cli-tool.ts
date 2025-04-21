@@ -21,6 +21,7 @@ import {
   COMPILATION_COMPLETE_LIB_NG_BUILD,
   DEFAULT_PORT,
   MESSAGES,
+  THIS_IS_GENERATED_INFO_COMMENT,
   tmpBaseHrefOverwriteRelPath,
 } from '../../../../constants';
 import { EnvOptions, ReleaseType } from '../../../../options';
@@ -646,11 +647,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     Helpers.writeFile(
       crossPlatformPath([relaseAbsPath, 'src.d.ts']),
       `
-// THIS FILE IS GENERATED
+${THIS_IS_GENERATED_INFO_COMMENT}
 export * from './lib';
-// THIS FILE IS GENERATED
+${THIS_IS_GENERATED_INFO_COMMENT}
 // please use command: taon build:watch to see here links for your globally builded lib code files
-// THIS FILE IS GENERATED
+${THIS_IS_GENERATED_INFO_COMMENT}
     `.trimStart(),
     );
 
@@ -950,9 +951,10 @@ export * from './lib';
       ]);
       Helpers.writeFile(
         dest,
-        `
+        `${THIS_IS_GENERATED_INFO_COMMENT}
 export const BUILD_FRAMEWORK_CLI_NAME = '${config.frameworkName}';
-
+export const CURRENT_PACKAGE_VERSION = '${this.project.packageJson.version}';
+${THIS_IS_GENERATED_INFO_COMMENT}
       `,
       );
     }
