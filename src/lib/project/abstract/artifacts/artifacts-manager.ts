@@ -446,7 +446,7 @@ export class ArtifactManager {
         const clonedOptions = releaseOptions.clone({
           release: {
             targetArtifact: item.artifactName,
-            envName: item.envName,
+            envName: item.envName || '__',
             envNumber: item.envNumber,
           },
         });

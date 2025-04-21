@@ -72,9 +72,9 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
 // This file is auto-generated. Do not modify.
 // ${
         isPlaceholderOnly
-          ? `This is only placholder.` +
+          ? `This is only placeholder.` +
             `\n// Use property "${this.propertyInTaonJsonc}: true" ` +
-            `\n// in ${config.file.taon_jsonc} to enable autogeneration.`
+            `\n// in ${config.file.taon_jsonc} to enable ts exports auto generation.`
           : `This disable this auto generate file.` +
             `\n// set property "${this.propertyInTaonJsonc}: false" ` +
             `\n// in ${config.file.taon_jsonc} of your project.`
