@@ -152,7 +152,7 @@ ${'//#reg' + 'ion'} ${project.name} component
 ${'//#reg' + 'ion'} @${'bro' + 'wser'}
 @Component({
   selector: 'app-${project.name}',
-  standalone: ${project.framework.frameworkVersionAtLeast('v19') ? 'true' : 'false'},
+  ${project.framework.frameworkVersionAtLeast('v19') ? 'standalone: false,' : ''}
   template: \`hello from ${project.name}<br>
     Angular version: {{ angularVersion }}<br>
     <br>

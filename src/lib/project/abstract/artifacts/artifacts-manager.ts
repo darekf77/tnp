@@ -183,8 +183,9 @@ export class ArtifactManager {
         this.project.framework.containerDataFromNodeModulesLink;
 
       const isIncorrectLinkToNodeModules =
+        !!coreContainerFromNodeModules &&
         this.project.taonJson.frameworkVersion !==
-        coreContainerFromNodeModules.taonJson.frameworkVersion;
+          coreContainerFromNodeModules.taonJson.frameworkVersion;
 
       if (
         isCoreContainer &&

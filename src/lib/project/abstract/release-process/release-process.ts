@@ -12,7 +12,7 @@ import { Helpers } from 'tnp-helpers/src';
 import { BaseReleaseProcess } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
-import { environments } from '../../../constants';
+import { ALLOWED_TO_RELEASE, environments } from '../../../constants';
 import {
   ReleaseArtifactTaon,
   ReleaseArtifactTaonNamesArr,
@@ -91,6 +91,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             name: `${this.getColoredTextItem(manual)} Taon release + create config for Cloud`,
             action: async () => {
               await this.releaseByType(manual, envOptions);
+              process.exit(0);
             },
             //#endregion
           },
@@ -98,11 +99,8 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             //#region cloud
             name: `${this.getColoredTextItem(cloud)} release tirgger for Taon Cloud`,
             action: async () => {
-              await UtilsTerminal.pressAnyKeyToContinueAsync({
-                message: 'Not implemented yet.. press any key to go back',
-              });
-              return;
               await this.releaseByType(cloud, envOptions);
+              process.exit(0);
             },
             //#endregion
           },
@@ -110,11 +108,8 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             //#region local
             name: `${this.getColoredTextItem(local)} release to current git repository`,
             action: async () => {
-              await UtilsTerminal.pressAnyKeyToContinueAsync({
-                message: 'Not implemented yet.. press any key to go back',
-              });
-              return;
               await this.releaseByType(local, envOptions);
+              process.exit(0);
             },
             //#endregion
           },
@@ -122,11 +117,8 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             //#region local
             name: `${this.getColoredTextItem(staticPages)} release for ${priovider} pages`,
             action: async () => {
-              await UtilsTerminal.pressAnyKeyToContinueAsync({
-                message: 'Not implemented yet.. press any key to go back',
-              });
-              return;
               await this.releaseByType(staticPages, envOptions);
+              process.exit(0);
             },
             //#endregion
           },
@@ -138,7 +130,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             `${this.project.framework.isContainer ? 'container' : 'standalone'} project ?`,
         },
       );
-      break; // TODO do I need a loop here
     }
     //#endregion
   }
@@ -158,7 +149,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     const releaseArtifactsTaon = await this.displaySelectArtifactsMenu(
       envOptions,
       selectedProjects,
-      ['npm-lib-and-cli-tool'],
+      ALLOWED_TO_RELEASE[releaseType] as ReleaseArtifactTaon[],
     );
     if (!envOptions.release.releaseVersionBumpType) {
       if (envOptions.release.autoReleaseUsingConfig) {
@@ -276,14 +267,17 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       UtilsTerminal.clearConsole();
       // console.info(this.getReleaseHeader('')); // TODO UNCOMMET
       const choices = ReleaseArtifactTaonNamesArr.filter(f => {
-        if (Array.isArray(allowedArtifacts)) {
-          return allowedArtifacts.includes(f as ReleaseArtifactTaon);
-        }
+        // if (Array.isArray(allowedArtifacts)) {
+        //   return allowedArtifacts.includes(f as ReleaseArtifactTaon);
+        // }
         return true;
       }).reduce((acc, curr) => {
         return _.merge(acc, {
           [curr]: {
             name: `${_.upperFirst(_.startCase(curr))} release`,
+            disabled:
+              Array.isArray(allowedArtifacts) &&
+              !allowedArtifacts.includes(curr as ReleaseArtifactTaon),
           },
         });
       }, {}) as {
@@ -351,7 +345,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
 
         envOptions.release.envName = selected.envName;
         envOptions.release.envNumber = selected.envNumber;
-
       }
     }
 

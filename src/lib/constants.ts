@@ -4,9 +4,19 @@ import { CoreModels, os } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { crossPlatformPath, path, Utils } from 'tnp-core/src';
 
+import { ReleaseArtifactTaon, ReleaseType } from './options';
 import type { Project } from './project/abstract/project';
 
 //#endregion
+
+export const ALLOWED_TO_RELEASE: {
+  [releaseType in ReleaseType]: ReleaseArtifactTaon[];
+} = {
+  manual: ['npm-lib-and-cli-tool'],
+  local: [],
+  cloud: [],
+  'static-pages': [],
+};
 
 export const taonIgnore = '@taon' + '-' + 'ignore';
 
