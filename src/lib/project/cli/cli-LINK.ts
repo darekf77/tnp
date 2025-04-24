@@ -3,7 +3,7 @@ import { chalk, _, crossPlatformPath, glob, path, UtilsOs } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { BaseCommandLineFeature, Helpers } from 'tnp-helpers/src';
 
-import { EnvOptions } from '../../options';
+import { EnvOptions, ReleaseArtifactTaon } from '../../options';
 import type { Project } from '../abstract/project';
 
 import { BaseCli } from './base-cli';
@@ -54,7 +54,7 @@ export class $Link extends BaseCli {
 
   _getDetectedLocalCLi() {
     const destBaseLatest = this.project.pathFor(
-      `${config.folder.local_release}/cli`,
+      `${config.folder.local_release}/${'npm-lib-and-cli-tool' as ReleaseArtifactTaon}`,
     );
     return Helpers.foldersFrom(destBaseLatest).filter(f => {
       const proj = this.ins.From(f);

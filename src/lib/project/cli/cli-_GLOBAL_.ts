@@ -56,7 +56,9 @@ import type { TaonProjectResolve } from '../abstract/project-resolve';
 //#endregion
 
 export class $Global extends BaseGlobalCommandLine<
-  any,
+  {
+    watch?: boolean;
+  },
   // @ts-ignore TODO weird inheritance problem
   Project,
   TaonProjectResolve
@@ -1468,7 +1470,7 @@ ${this.project.children
   //#endregion
 
   //#region json schema docs watcher
-  async jsonSchemaDocsWatch() {
+  async recreateDocsConfigJsonSchema(): Promise<void> {
     await this.project.init(
       EnvOptions.from({
         purpose: 'initing before json schema docs watch',
@@ -1496,19 +1498,24 @@ ${this.project.children
       );
     };
 
-    const debouceRecreate = _.debounce(recreate, 100);
+    const debounceRecreate = _.debounce(recreate, 100);
     Helpers.taskStarted('Recreating... src/lib/models.ts');
     await recreate();
     Helpers.taskDone('Recreation done src/lib/models.ts');
     Helpers.taskStarted('Watching for changes in src/lib/models.ts');
-    chokidar.watch(fileToWatch).on('change', () => {
-      debouceRecreate();
-    });
+    if (this.params.watch) {
+      chokidar.watch(fileToWatch).on('change', () => {
+        debounceRecreate();
+      });
+    } else {
+      await recreate();
+      this._exit();
+    }
   }
   //#endregion
 
   //#region json schema taon watch
-  async jsonSchemaTaonWatch() {
+  async recreateTaonJsonSchema(): Promise<void> {
     // await this.project.init(
     //   EnvOptions.from({
     //     purpose: 'initing before json schema docs watch',
@@ -1567,14 +1574,19 @@ ${this.project.children
       );
     };
 
-    const debouceRecreate = _.debounce(recreate, 100);
+    const debounceRecreate = _.debounce(recreate, 100);
     Helpers.taskStarted('Recreating... src/lib/models.ts');
     await recreate();
     Helpers.taskDone('Recreation done src/lib/models.ts');
     Helpers.taskStarted('Watching for changes in src/lib/models.ts');
-    chokidar.watch(fileToWatch).on('change', () => {
-      debouceRecreate();
-    });
+    if (this.params.watch) {
+      chokidar.watch(fileToWatch).on('change', () => {
+        debounceRecreate();
+      });
+    } else {
+      await recreate();
+      this._exit();
+    }
   }
 
   jsonSchema() {
@@ -1646,12 +1658,17 @@ ${this.project.children
   }
   //#endregion
 
+  //#region update core container deps
   async coreContainerDepsUpdate() {
     if (
       this.project.name !== 'taon' &&
       this.project?.parent?.typeIsNot('container')
     ) {
-      Helpers.error(`This command is only for taon project in taon-dev container`, false, true);
+      Helpers.error(
+        `This command is only for taon project in taon-dev container`,
+        false,
+        true,
+      );
     }
     const containerCore = this.project.framework.coreContainer;
     for (const child of this.project.parent.children.filter(
@@ -1670,7 +1687,9 @@ ${this.project.children
     Helpers.info(`Container deps updated`);
     this._exit();
   }
+  //#endregion
 
+  //#region wrapper for ng
   ng() {
     Helpers.run(`npx -p @angular/cli ng ${this.argsWithParams}`, {
       output: true,
@@ -1678,6 +1697,7 @@ ${this.project.children
     }).sync();
     this._exit();
   }
+  //#endregion
 }
 
 export default {

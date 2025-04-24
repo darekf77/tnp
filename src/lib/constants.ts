@@ -13,7 +13,7 @@ export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
 } = {
   manual: ['npm-lib-and-cli-tool'],
-  local: [],
+  local: ['npm-lib-and-cli-tool'],
   cloud: [],
   'static-pages': [],
 };

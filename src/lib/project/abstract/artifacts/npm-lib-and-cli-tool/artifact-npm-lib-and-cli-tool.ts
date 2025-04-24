@@ -457,13 +457,54 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       tmpProjNpmLibraryInNodeModulesAbsPath,
     );
 
-    if (
-      await projFromCompiled.releaseProcess.publishToNpm(
-        tmpProjNpmLibraryInNodeModulesAbsPath,
-        releaseOptions.release.autoReleaseUsingConfig,
-      )
-    ) {
-      await this.project.git.tagAndPushToGitRepo(newVersion, releaseOptions);
+    const allowedToNpmReleases: ReleaseType[] = ['manual', 'cloud'];
+
+    if (releaseOptions.release.lib.doNotIncludeLibFiles) {
+      Helpers.remove([releaseProjPath, 'lib']);
+      Helpers.remove([releaseProjPath, 'source']);
+      Helpers.remove([releaseProjPath, 'assets']);
+      Helpers.remove([releaseProjPath, config.folder.browser]);
+      Helpers.remove([releaseProjPath, config.folder.client]);
+      Helpers.remove([releaseProjPath, config.folder.websql]);
+      Helpers.remove([releaseProjPath, 'migrations']);
+      Helpers.remove([releaseProjPath, 'src']);
+      Helpers.remove([releaseProjPath, 'src.*']);
+      Helpers.remove([releaseProjPath, 'index.*']);
+      Helpers.remove([releaseProjPath, 'cli.d.ts']);
+      Helpers.remove([releaseProjPath, 'cli.js.map']);
+      Helpers.setValueToJSON([releaseProjPath, 'package.json'], 'scripts', {});
+    }
+
+    if (allowedToNpmReleases.includes(releaseOptions.release.releaseType)) {
+      if (
+        await projFromCompiled.releaseProcess.publishToNpm(
+          tmpProjNpmLibraryInNodeModulesAbsPath,
+          releaseOptions.release.autoReleaseUsingConfig,
+        )
+      ) {
+        await this.project.git.tagAndPushToGitRepo(newVersion, releaseOptions);
+      }
+    } else {
+      if (releaseOptions.release.releaseType === 'local') {
+        //#region local release
+        const releaseDest = this.project.pathFor([
+          config.folder.local_release,
+          this.currentArtifactName,
+          `${this.project.name}-latest`,
+        ]);
+        Helpers.remove(releaseDest, true);
+        Helpers.copy(releaseProjPath, releaseDest);
+
+        Helpers.info(`Local release done: ${releaseDest}`);
+        if (!releaseOptions.release.autoReleaseUsingConfig) {
+          await this.project.releaseProcess.checkBundleQuestion(
+            releaseDest,
+            `Select action before tagging/pushing compiled version`,
+          );
+        }
+        await this.project.git.tagAndPushToGitRepo(newVersion, releaseOptions);
+        //#endregion
+      }
     }
 
     return { releaseProjPath, releaseType };
@@ -1043,10 +1084,10 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     Helpers.writeFile(
       crossPlatformPath([releaseAbsLocation, 'CLI-README.md']),
       `# ${this.project.name} CLI\n\n
-    ## Installation as global tool
-    \`\`\`bash
-    npm link
-    \`\`\`
+## Installation as global tool
+\`\`\`bash
+npm link
+\`\`\`
     `,
     );
     //#endregion

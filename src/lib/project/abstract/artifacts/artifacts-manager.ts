@@ -449,6 +449,7 @@ export class ArtifactManager {
             targetArtifact: item.artifactName,
             envName: item.envName || '__',
             envNumber: item.envNumber,
+            releaseType: item.releaseType || releaseOptions.release.releaseType,
           },
         });
         await this.release(clonedOptions, true);

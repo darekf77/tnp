@@ -1,6 +1,7 @@
 import { CoreModels, _ } from 'tnp-core/src';
 import { PackageJson } from 'type-fest';
 
+import type { ReleaseType } from './options';
 import type { Project } from './project/abstract/project';
 
 export namespace Models {
@@ -130,6 +131,10 @@ export namespace Models {
      * skip release of this artifact
      */
     skip?: boolean;
+    /**
+     * select release type for automatic release
+     */
+    releaseType?: ReleaseType;
   }
 
   export interface TaonJsonStandalone extends TaonJsonCommon {

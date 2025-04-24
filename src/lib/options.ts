@@ -124,6 +124,11 @@ class EnvOptionsBuildLib {
   declare obscureFileByFile: boolean;
   declare includeSourceMaps: boolean;
   declare compress: boolean;
+  /**
+   * skip include lib files (only cli.js + bin stays)
+   * Perfect for just releasing cli tool
+   */
+  declare doNotIncludeLibFiles: boolean;
 }
 //#endregion
 
