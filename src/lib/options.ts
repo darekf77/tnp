@@ -155,7 +155,7 @@ class EnvOptionsBuild {
   set baseHref(v) {
     this._baseHref = crossPlatformPath(v);
   }
-  declare private _baseHref: string;
+  private declare _baseHref: string;
   declare skipBuildForRelease?: boolean;
   declare websql: boolean;
   /**
@@ -232,6 +232,15 @@ class EnvOptionsLoading {
 
 //#region env options / release
 class EnvOptionsRelease {
+  /**
+   * new version resolve at the beginning of release process
+   * and is used for all artifacts
+   */
+  declare readonly resolvedNewVersion: string;
+  /**
+   * release artifact name
+   * for example: "angular-node-app"
+   */
   declare targetArtifact: ReleaseArtifactTaon;
   /**
    * undefined  - means it is development build

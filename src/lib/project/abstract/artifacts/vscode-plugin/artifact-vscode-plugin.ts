@@ -1,3 +1,4 @@
+//#region imports
 import { config } from 'tnp-config/src';
 import {
   CoreModels,
@@ -19,6 +20,7 @@ import {
 } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact } from '../base-artifact';
+//#endregion
 
 export class ArtifactVscodePlugin extends BaseArtifact<
   {
@@ -34,37 +36,6 @@ export class ArtifactVscodePlugin extends BaseArtifact<
   }
 
   public readonly appVscodeJsName = 'app.vscode.js';
-
-  //#region private methods / get tmp vscode proj path (for any build)
-  public getTmpVscodeProjPath(releaseType?: ReleaseType): string {
-    const tmpVscodeProjPath = this.project.pathFor(
-      `${this.project.vsCodeHelpers.vscodeTempProjFolderName}/${
-        releaseType ? 'release' + releaseType : 'development'
-      }/${this.project.name}`,
-    );
-    return tmpVscodeProjPath;
-  }
-  //#endregion
-
-  //#region private methods / get dest extension js
-  private getDestExtensionJs(releaseType: ReleaseType): string {
-    const tmpVscodeProjPath = this.getTmpVscodeProjPath(releaseType);
-    const res = crossPlatformPath([tmpVscodeProjPath, 'out/extension.js']);
-    return res;
-  }
-  //#endregion
-
-  //#region private methods / get vcode project update package json filename
-  public get vcodeProjectUpdatePackageJsonFilename(): string {
-    return 'update-vscode-package-json.js';
-  }
-  //#endregion
-
-  //#region private methods / extension vsix name
-  private get extensionVsixName(): string {
-    return `${this.project.name}-${this.project.packageJson.version}.vsix`;
-  }
-  //#endregion
 
   //#region clear partial
   async clearPartial(clearOption: EnvOptions) {
@@ -262,13 +233,36 @@ export default { commands };
     );
 
     if (releaseOptions.release.releaseType === 'local') {
+      const localReleaseOutputBasePath = this.project.pathFor([
+        config.folder.local_release,
+        this.currentArtifactName,
+        `${this.project.name}-latest`,
+      ]);
+      Helpers.remove(localReleaseOutputBasePath);
       Helpers.copyFile(
         vscodeVsixOutPath,
-        this.project.pathFor(
-          `${config.folder.local_release}` +
-            `/${releaseOptions.release.targetArtifact}` +
-            `/${this.extensionVsixName}`,
-        ),
+        crossPlatformPath([localReleaseOutputBasePath, this.extensionVsixName]),
+      );
+      Helpers.writeFile(
+        crossPlatformPath([localReleaseOutputBasePath, 'README.md']),
+        `# Installation
+
+Right click on the file **${path.basename(this.extensionVsixName)}**
+and select "Install Extension VSIX" to install it in your
+local VSCode instance.
+
+`,
+      );
+      if (!releaseOptions.release.autoReleaseUsingConfig) {
+        await this.project.releaseProcess.checkBundleQuestion(
+          localReleaseOutputBasePath,
+          `Select action before tagging/pushing compiled version`,
+        );
+      }
+
+      await this.project.git.tagAndPushToGitRepo(
+        releaseOptions.release.resolvedNewVersion,
+        releaseOptions,
       );
     }
     if (releaseOptions.release.releaseType === 'manual') {
@@ -282,7 +276,40 @@ export default { commands };
   }
   //#endregion
 
-  //#region methods / install locally
+  //#region private methods
+
+  //#region private methods / get tmp vscode proj path (for any build)
+  public getTmpVscodeProjPath(releaseType?: ReleaseType): string {
+    const tmpVscodeProjPath = this.project.pathFor(
+      `${this.project.vsCodeHelpers.vscodeTempProjFolderName}/${
+        releaseType ? 'release' + releaseType : 'development'
+      }/${this.project.name}`,
+    );
+    return tmpVscodeProjPath;
+  }
+  //#endregion
+
+  //#region private methods / get dest extension js
+  private getDestExtensionJs(releaseType: ReleaseType): string {
+    const tmpVscodeProjPath = this.getTmpVscodeProjPath(releaseType);
+    const res = crossPlatformPath([tmpVscodeProjPath, 'out/extension.js']);
+    return res;
+  }
+  //#endregion
+
+  //#region private methods / get VSCode project update package json filename
+  public get vcodeProjectUpdatePackageJsonFilename(): string {
+    return 'update-vscode-package-json.js';
+  }
+  //#endregion
+
+  //#region private methods / extension vsix name
+  private get extensionVsixName(): string {
+    return `${this.project.name}-${this.project.packageJson.version}.vsix`;
+  }
+  //#endregion
+
+  //#region private methods / install locally
   /**
    * TODO move this to local release
    */
@@ -368,7 +395,7 @@ export default { commands };
   }
   //#endregion
 
-  //#region methods / create vscode package
+  //#region private methods / create vscode package
   async createVscePackage({
     showInfo = true,
     args = '',
@@ -399,5 +426,7 @@ export default { commands };
     }
     //#endregion
   }
+  //#endregion
+
   //#endregion
 }

@@ -170,12 +170,17 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   public async release(releaseOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
     releaseOptions = EnvOptions.from(releaseOptions);
+
     await this.npmHelpers.checkProjectReadyForNpmRelease();
-    await this.npmHelpers.makeSureLoggedInToNpmRegistry();
+    if (releaseOptions.release.targetArtifact === 'npm-lib-and-cli-tool') {
+      await this.npmHelpers.makeSureLoggedInToNpmRegistry();
+    }
 
     const newVersion = this.packageJson.resolvePossibleNewVersion(
       releaseOptions.release.releaseVersionBumpType,
     );
+    // @ts-ignore
+    releaseOptions.release.resolvedNewVersion = newVersion;
 
     //#region prepare release children
     let children = releaseOptions.release.autoReleaseUsingConfig
@@ -220,7 +225,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     if (
       !(await this.npmHelpers.shouldReleaseMessage({
         releaseVersionBumpType: releaseOptions.release.releaseVersionBumpType,
-        versionToUse: newVersion,
+        versionToUse: releaseOptions.release.resolvedNewVersion,
         children: children as any,
         whatToRelease: {
           itself: this.framework.isStandaloneProject,

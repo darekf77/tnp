@@ -428,11 +428,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     let releaseProjPath: string = tmpProjNpmLibraryInNodeModulesAbsPath;
     //#endregion
 
-    const newVersion = this.project.packageJson.resolvePossibleNewVersion(
-      releaseOptions.release.releaseVersionBumpType,
+    this.project.packageJson.setVersion(
+      releaseOptions.release.resolvedNewVersion,
     );
-
-    this.project.packageJson.setVersion(newVersion);
 
     this.removeNotNpmReleatedFilesFromReleaseBundle(
       tmpProjNpmLibraryInNodeModulesAbsPath,
@@ -482,7 +480,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           releaseOptions.release.autoReleaseUsingConfig,
         )
       ) {
-        await this.project.git.tagAndPushToGitRepo(newVersion, releaseOptions);
+        await this.project.git.tagAndPushToGitRepo(
+          releaseOptions.release.resolvedNewVersion,
+          releaseOptions,
+        );
       }
     } else {
       if (releaseOptions.release.releaseType === 'local') {
@@ -502,7 +503,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
             `Select action before tagging/pushing compiled version`,
           );
         }
-        await this.project.git.tagAndPushToGitRepo(newVersion, releaseOptions);
+        await this.project.git.tagAndPushToGitRepo(
+          releaseOptions.release.resolvedNewVersion,
+          releaseOptions,
+        );
         //#endregion
       }
     }
