@@ -428,6 +428,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     let releaseProjPath: string = tmpProjNpmLibraryInNodeModulesAbsPath;
     //#endregion
 
+    // @ts-ignore
+    releaseOptions.release.resolvedNewVersion =
+      this.project.packageJson.resolvePossibleNewVersion(
+        releaseOptions.release.releaseVersionBumpType,
+      );
+
     this.project.packageJson.setVersion(
       releaseOptions.release.resolvedNewVersion,
     );

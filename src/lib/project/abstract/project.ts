@@ -179,8 +179,6 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     const newVersion = this.packageJson.resolvePossibleNewVersion(
       releaseOptions.release.releaseVersionBumpType,
     );
-    // @ts-ignore
-    releaseOptions.release.resolvedNewVersion = newVersion;
 
     //#region prepare release children
     let children = releaseOptions.release.autoReleaseUsingConfig
@@ -225,7 +223,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     if (
       !(await this.npmHelpers.shouldReleaseMessage({
         releaseVersionBumpType: releaseOptions.release.releaseVersionBumpType,
-        versionToUse: releaseOptions.release.resolvedNewVersion,
+        versionToUse: newVersion,
         children: children as any,
         whatToRelease: {
           itself: this.framework.isStandaloneProject,

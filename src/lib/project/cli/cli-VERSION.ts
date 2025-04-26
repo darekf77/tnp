@@ -56,6 +56,15 @@ export class $Version extends BaseCli {
   }
   //#endregion
 
+  async path() {
+    console.log(`
+
+    next path
+    ${this.project.packageJson.resolvePossibleNewVersion('patch')}
+
+    `);
+    this._exit();
+  }
 
   //#region set framework version
   async setFrameworkVersion() {
