@@ -478,6 +478,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       Helpers.setValueToJSON([releaseProjPath, 'package.json'], 'scripts', {});
     }
 
+    Helpers.remove([releaseProjPath, config.file.taon_jsonc]);
+
     if (allowedToNpmReleases.includes(releaseOptions.release.releaseType)) {
       if (
         await projFromCompiled.releaseProcess.publishToNpm(
