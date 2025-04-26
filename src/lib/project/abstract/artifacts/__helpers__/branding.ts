@@ -154,35 +154,35 @@ export class Branding extends BaseFeatureForProject<Project> {
     };
 
     // TODO implement for sharp for taon branding
-    //#region @notForNpm
-    try {
-      const favicons = require('favicons');
-      const response = await favicons.favicons(sourceLogoPng, configuration);
-
-      // console.log(response.images); // Array of { name: string, contents: <buffer> }
-      // console.log(response.files); // Array of { name: string, contents: <string> }
-      // console.log(response.html); // Array of strings (html elements)
-
-      Helpers.mkdirp(dest);
-      await Promise.all(
-        response.images.map(async image => {
-          await fse.writeFile(path.join(dest, image.name), image.contents);
-        }),
-      );
-      await Promise.all(
-        response.files.map(async file => {
-          await fse.writeFile(path.join(dest, file.name), file.contents);
-        }),
-      );
-
-      await fse.writeFile(
-        path.join(dest, htmlBasename),
-        response.html.join('\n'),
-      );
-    } catch (error) {
-      console.log(error.message); // Error description e.g. "An unknownn error has occurred"
-    }
-    //#endregion
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+  
 
     Helpers.log(`Project ${proj.genericName} branding ended`);
     //#endregion

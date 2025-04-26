@@ -1421,46 +1421,46 @@ ${this.project.children
   //#endregion
 
   //#region not for npm / get trusted
-  //#region @notForNpm
-  getJsonCAttrs() {
-    console.log(`Scannign for args in jsonc files...`);
-    const jsoncContent = this.project.readFile(config.file.taon_jsonc);
-    walk.Object(Helpers.parse(jsoncContent, true), (value, jsonPath) => {
-      if (!this.firstArg || jsonPath.includes(this.firstArg)) {
-        // console.log('PATH: ' + jsonPath);
-        const attrs = Utils.json.getAtrributies(jsonPath, jsoncContent);
-
-        console.log(
-          `${attrs.length > 0 ? chalk.bold('DETECTED') : 'DETECTED'} ` +
-            `(${attrs.length} tags): ${attrs.length > 0 ? chalk.bold(jsonPath) : jsonPath}`,
-          attrs
-            .map(c =>
-              chalk.red.underline(
-                c.name + (c.value ? '=' + chalk.bold(c.value) : ''),
-              ),
-            )
-            .join(', '),
-        );
-      }
-    });
-    this._exit();
-  }
-  //#endregion
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+  
   //#endregion
 
   //#region not for npm / tnp fix taon json
-  //#region @notForNpm
-  async taonJsonAddAutoElement() {
-    for (const child of this.project.children) {
-      child.taonJson.autoReleaseConfigAllowedItems = [
-        {
-          artifactName: 'npm-lib-and-cli-tool',
-        },
-      ];
-    }
-    this._exit();
-  }
-  //#endregion
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+  
   //#endregion
 
   //#region start taon projects worker

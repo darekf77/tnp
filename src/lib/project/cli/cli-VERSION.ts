@@ -15,11 +15,11 @@ export class $Version extends BaseCli {
   //#region _
   public _() {
     // Helpers.log(`Framework name: '${config.frameworkName}'`);
-    //#region @notForNpm
-    if (ENV.notForNpm) {
-      Helpers.success(`I am secret project!!!`);
-    }
-    //#endregion
+/* */
+/* */
+/* */
+/* */
+  
     // global.spinner?.start();
     // Helpers.sleep(1);
     // Helpers.info(`${config.frameworkName} location: ${ this.Tnp.location}`)
