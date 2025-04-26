@@ -480,10 +480,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           releaseOptions.release.autoReleaseUsingConfig,
         )
       ) {
-        await this.project.git.tagAndPushToGitRepo(
-          releaseOptions.release.resolvedNewVersion,
-          releaseOptions,
-        );
+        if (!releaseOptions.release.skipTagGitPush) {
+          await this.project.git.tagAndPushToGitRepo(
+            releaseOptions.release.resolvedNewVersion,
+            releaseOptions,
+          );
+        }
       }
     } else {
       if (releaseOptions.release.releaseType === 'local') {
@@ -503,10 +505,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
             `Select action before tagging/pushing compiled version`,
           );
         }
-        await this.project.git.tagAndPushToGitRepo(
-          releaseOptions.release.resolvedNewVersion,
-          releaseOptions,
-        );
+        if (!releaseOptions.release.skipTagGitPush) {
+          await this.project.git.tagAndPushToGitRepo(
+            releaseOptions.release.resolvedNewVersion,
+            releaseOptions,
+          );
+        }
         //#endregion
       }
     }

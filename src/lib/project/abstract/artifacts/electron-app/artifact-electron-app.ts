@@ -49,7 +49,7 @@ export class ArtifactElectronApp extends BaseArtifact<
   }> {
     //#region @backendFunc
     buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
-    
+
     if (buildOptions.build.watch) {
       await this.project.tryKillAllElectronInstances(); // TODO QUICK_FIX
     }
@@ -190,6 +190,7 @@ export class ArtifactElectronApp extends BaseArtifact<
         await Helpers.ncc(
           crossPlatformPath([elecProj.location, 'electron', 'main.js']),
           indexJSPath,
+          { strategy: 'electron-app' },
         );
         Helpers.writeFile(
           indexJSPath,

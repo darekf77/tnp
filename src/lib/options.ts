@@ -238,6 +238,10 @@ class EnvOptionsRelease {
    */
   declare readonly resolvedNewVersion: string;
   /**
+   * skip tag and push after release
+   */
+  declare skipTagGitPush?: boolean;
+  /**
    * release artifact name
    * for example: "angular-node-app"
    */

@@ -73,8 +73,7 @@ class $Release extends BaseCli {
   //#region auto release / auto
   async auto(): Promise<void> {
     await this.project.release(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
         release: {
           autoReleaseUsingConfig: true,
           releaseVersionBumpType: 'patch',
@@ -90,8 +89,7 @@ class $Release extends BaseCli {
   async autoClear(): Promise<void> {
     await this.project.clear();
     await this.project.release(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
         release: {
           autoReleaseUsingConfig: true,
           releaseVersionBumpType: 'patch',

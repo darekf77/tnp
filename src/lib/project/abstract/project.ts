@@ -241,27 +241,31 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     //#endregion
 
     //#region resolve git changes
-    if (!releaseOptions.isCiProcess) {
-      Helpers.clearConsole();
-    }
-    if (this.framework.isStandaloneProject) {
-      await this.git.resolveLastChanges({
-        tryAutomaticActionFirst: releaseOptions.release.autoReleaseUsingConfig,
-      });
-    }
-    if (this.framework.isContainer) {
-      for (const child of children) {
-        if (!releaseOptions.isCiProcess) {
-          Helpers.clearConsole();
-        }
-        Helpers.info(
-          `Checking if project has any unfinish/uncommited git changes: ${child.name}`,
-        );
-        await child.git.resolveLastChanges({
+
+    if (!releaseOptions.release.skipTagGitPush) {
+      if (!releaseOptions.isCiProcess) {
+        Helpers.clearConsole();
+      }
+      if (this.framework.isStandaloneProject) {
+        await this.git.resolveLastChanges({
           tryAutomaticActionFirst:
             releaseOptions.release.autoReleaseUsingConfig,
-          projectNameAsOutputPrefix: child.name,
         });
+      }
+      if (this.framework.isContainer) {
+        for (const child of children) {
+          if (!releaseOptions.isCiProcess) {
+            Helpers.clearConsole();
+          }
+          Helpers.info(
+            `Checking if project has any unfinish/uncommited git changes: ${child.name}`,
+          );
+          await child.git.resolveLastChanges({
+            tryAutomaticActionFirst:
+              releaseOptions.release.autoReleaseUsingConfig,
+            projectNameAsOutputPrefix: child.name,
+          });
+        }
       }
     }
     if (!releaseOptions.isCiProcess) {
