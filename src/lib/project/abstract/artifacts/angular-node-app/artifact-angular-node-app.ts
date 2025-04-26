@@ -131,6 +131,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }> {
     //#region @backendFunc
 
+    buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
+
+    //#region prevent empty base href
     if (!_.isUndefined(buildOptions.build.baseHref)) {
       Helpers.error(
         `Build baseHref only can be specify when` +
@@ -146,15 +149,15 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         true,
       );
     }
+    //#endregion
 
     const dockerBackendFrontendAppDistOutPath: string = void 0; // TODO implement
 
     const appDistOutBrowserAngularAbsPath =
       this.getOutDirAngularBrowserAppAbsPath(buildOptions);
+
     const appDistOutBackendNodeAbsPath =
       this.getOutDirNodeBackendAppAbsPath(buildOptions);
-
-    buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
 
     // TODO @LAST this should be set externally
     buildOptions.ports.ngNormalAppPort =
@@ -207,9 +210,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       await Helpers.killProcessByPort(portAssignedToAppBuild);
     }
 
-    const outPutPathCommand =
-      `--output-path ` +
-      `${this.getOutDirAngularBrowserAppAbsPath(buildOptions)} `;
+    const outPutPathCommand = `--output-path ${appDistOutBrowserAngularAbsPath} `;
 
     const angularBuildAppCmd = buildOptions.build.watch
       ? `${this.NPM_RUN_NG_COMMAND} serve ${
@@ -253,7 +254,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       //#region command execute params
       exitOnErrorCallback: async code => {
         if (buildOptions.release.releaseType) {
-          throw 'Angular compilation lib error!!!asd';
+          throw 'Angular compilation lib error!';
         } else {
           Helpers.error(
             `[${config.frameworkName}] Typescript compilation error (code=${code})`,
@@ -309,18 +310,45 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }
   //#endregion
 
-  async releasePartial(options): Promise<{
+  //#region release partial
+  async releasePartial(releaseOptions: EnvOptions): Promise<{
     releaseProjPath: string;
     releaseType: ReleaseType;
   }> {
-    return void 0; // TODO implement
-  }
+    //#region @backendFunc
 
+    const { appDistOutBrowserAngularAbsPath, appDistOutBackendNodeAbsPath } =
+      await this.buildPartial(
+        EnvOptions.fromRelease({
+          ...releaseOptions,
+          // copyToManager: {
+          //   skip: true,
+          // },
+        }),
+      );
+
+    // console.log({
+    //   appDistOutBrowserAngularAbsPath,
+    //   appDistOutBackendNodeAbsPath,
+    // });
+
+    return {
+      releaseProjPath: appDistOutBrowserAngularAbsPath,
+      releaseType: releaseOptions.release.releaseType,
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region clear partial
   async clearPartial(options: EnvOptions): Promise<void> {
     return void 0; // TODO implement
   }
+  //#endregion
 
-  //#region get out dir app
+  //#region private methods
+
+  //#region private methods / get out dir app
   /**
    * Absolute path to the output directory for the app
    */
@@ -335,7 +363,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }
   //#endregion
 
-  //#region get out dir app
+  //#region private methods / get out dir app
   /**
    * Absolute path to the output directory for the app
    */
@@ -350,7 +378,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }
   //#endregion
 
-  //#region replace line in output
+  //#region private methods / replace line in output
   private replaceLineInNgOutputProcess(line: string): string {
     const beforeModule2 = crossPlatformPath(
       path.join(
@@ -369,7 +397,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }
   //#endregion
 
-  //#region fix missing components/modules
+  //#region private methods / fix missing components/modules
   private fixAppTsFile(): string {
     //#region @backendFunc
     if (!this.project.framework.isStandaloneProject) {
@@ -396,7 +424,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }
   //#endregion
 
-  //#region add missing components/modules
+  //#region private methods / add missing components/modules
   private replaceModuleAndComponentName(
     tsFileContent: string,
     projectName: string,
@@ -508,7 +536,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }
   //#endregion
 
-  //#region getters & methods / write ports to file
+  //#region private methods / write ports to file
   public writePortsToFile(): void {
     // #region @backend
     const appHostsFile = crossPlatformPath(
@@ -530,5 +558,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     );
     //#endregion
   }
+  //#endregion
+
   //#endregion
 }

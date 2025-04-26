@@ -15,7 +15,9 @@ export const ALLOWED_TO_RELEASE: {
   manual: ['npm-lib-and-cli-tool'],
   local: ['npm-lib-and-cli-tool', 'vscode-plugin'],
   cloud: [],
-  'static-pages': [],
+  'static-pages': [
+    // 'angular-node-app'
+  ],
 };
 
 export const taonIgnore = '@taon' + '-' + 'ignore';
