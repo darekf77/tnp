@@ -442,6 +442,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       tmpProjNpmLibraryInNodeModulesAbsPath,
     );
 
+    this.fixPackageJsonForRelease(
+      releaseProjPath,
+      releaseOptions.release.resolvedNewVersion,
+    );
+
     this.preparePackageJsonForReleasePublish(
       tmpProjNpmLibraryInNodeModulesAbsPath,
     );
@@ -520,7 +525,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   }
   //#endregion
 
-  //#region clear
+  //#region clear partial
   async clearPartial(options?: EnvOptions): Promise<void> {
     // TODO make it better
     rimraf.sync(this.project.pathFor('dist') + '*');
@@ -592,6 +597,52 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#endregion
 
   //#region private methods
+
+  //#region private methods / fix release package.json
+  private fixPackageJsonForRelease(
+    releaseProjPath: string,
+    newVersion: string,
+  ): void {
+    //#region @backendFunc
+    const folderToFix = [
+      config.folder.browser,
+      config.folder.client,
+      config.folder.websql,
+    ];
+
+    for (const folder of folderToFix) {
+      const folderAbsPath = crossPlatformPath([releaseProjPath, folder]);
+      Helpers.remove([folderAbsPath, '.npmignore']);
+
+      const rootPackageNameForChildBrowser = crossPlatformPath([
+        this.project.nameForNpmPackage,
+        folder,
+      ]);
+      const childName = this.project.name;
+
+      const pj = {
+        name: rootPackageNameForChildBrowser,
+        version: newVersion,
+        module: `fesm2022/${childName}.mjs`,
+        typings: `index.d.ts`,
+        exports: {
+          // './package.json': {
+          //   default: './package.json',
+          // },
+          '.': {
+            types: `./index.d.ts`,
+            // esm2022: `./esm2022/${childName}.mjs`,
+            // esm: `./esm2022/${childName}.mjs`,
+            default: `./fesm2022/${childName}.mjs`,
+          },
+        },
+        sideEffects: this.project.packageJson.sideEffects,
+      };
+      Helpers.writeJson([folderAbsPath, config.file.package_json], pj);
+    }
+    //#endregion
+  }
+  //#endregion
 
   //#region private methods / run after release js code actions
   private async runAfterReleaseJsCodeActions(
