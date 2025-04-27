@@ -45,18 +45,21 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     combinedDocsHttpServerUrl: Url;
   }> {
     buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
+    const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
     const combinedDocsHttpServerUrl: Url = void 0; // TODO implement
     const docsWebappDistOutPath: string = buildOptions.build.overrideOutputPath;
     const port = await this.DOCS_ARTIFACT_PORT_UNIQ_KEY(buildOptions);
 
-    await this.docs.runTask({
-      watch: buildOptions.build.watch,
-      initialParams: {
-        docsOutFolder: docsWebappDistOutPath,
-        ciBuild: buildOptions.isCiProcess,
-        port,
-      },
-    });
+    if (!shouldSkipBuild) {
+      await this.docs.runTask({
+        watch: buildOptions.build.watch,
+        initialParams: {
+          docsOutFolder: docsWebappDistOutPath,
+          ciBuild: buildOptions.isCiProcess,
+          port,
+        },
+      });
+    }
 
     if (!buildOptions.build.watch) {
       buildOptions.finishCallback?.();

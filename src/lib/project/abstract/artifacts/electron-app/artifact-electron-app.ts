@@ -49,6 +49,7 @@ export class ArtifactElectronApp extends BaseArtifact<
   }> {
     //#region @backendFunc
     buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
+    const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
     if (buildOptions.build.watch) {
       await this.project.tryKillAllElectronInstances(); // TODO QUICK_FIX
@@ -74,13 +75,15 @@ export class ArtifactElectronApp extends BaseArtifact<
     Helpers.info('Starting electron ...');
 
     if (buildOptions.build.watch) {
-      elecProj
-        .run(
-          `npm-run  electron . --serve ${
-            buildOptions.build.websql ? '--websql' : ''
-          }`,
-        )
-        .async();
+      if (!shouldSkipBuild) {
+        elecProj
+          .run(
+            `npm-run  electron . --serve ${
+              buildOptions.build.websql ? '--websql' : ''
+            }`,
+          )
+          .async();
+      }
     } else {
       Helpers.info('Release build of electron app');
       if (buildOptions.release.releaseType) {
@@ -152,7 +155,9 @@ export class ArtifactElectronApp extends BaseArtifact<
         Helpers.info('Build lib done.. building now electron app...');
 
         // Helpers.pressKeyAndContinue()
-        elecProj.run('npm-run ng build angular-electron').sync();
+        if (!shouldSkipBuild) {
+          elecProj.run('npm-run ng build angular-electron').sync();
+        }
         // await this.build(buildOptions.clone({
         //   buildType: 'app',
         //   targetApp: 'pwa',
@@ -187,11 +192,13 @@ export class ArtifactElectronApp extends BaseArtifact<
           'electron',
           'index.js',
         ]);
-        await Helpers.ncc(
-          crossPlatformPath([elecProj.location, 'electron', 'main.js']),
-          indexJSPath,
-          { strategy: 'electron-app' },
-        );
+        if (!shouldSkipBuild) {
+          await Helpers.ncc(
+            crossPlatformPath([elecProj.location, 'electron', 'main.js']),
+            indexJSPath,
+            { strategy: 'electron-app' },
+          );
+        }
         Helpers.writeFile(
           indexJSPath,
           UtilsQuickFixes.replaceSQLliteFaultyCode(

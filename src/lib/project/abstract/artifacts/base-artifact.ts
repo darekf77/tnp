@@ -88,6 +88,18 @@ export abstract class BaseArtifact<
     return releaseOptions;
   }
 
+  protected shouldSkipBuild(releaseOptions: EnvOptions): boolean {
+    if (_.isBoolean(releaseOptions.release.skipBuildingArtifacts)) {
+      return releaseOptions.release.skipBuildingArtifacts;
+    }
+    if (_.isArray(releaseOptions.release.skipBuildingArtifacts)) {
+      return releaseOptions.release.skipBuildingArtifacts.includes(
+        this.currentArtifactName,
+      );
+    }
+    return false;
+  }
+
   //#region getters & methods / all resources
   protected get __allResources(): string[] {
     //#region @backendFunc

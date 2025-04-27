@@ -171,7 +171,8 @@ export default { commands };
   }> {
     //#region @backendFunc
 
-    await this.initPartial(EnvOptions.fromBuild(buildOptions));
+    buildOptions = await this.initPartial(EnvOptions.fromBuild(buildOptions));
+    const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
     const tmpVscodeProjPath = this.getTmpVscodeProjPath(
       buildOptions.release.releaseType,
@@ -193,25 +194,29 @@ export default { commands };
       //   .async();
     } else {
       if (buildOptions.release.releaseType) {
-        await Helpers.ncc(
-          crossPlatformPath([
-            tmpVscodeProjPath,
-            config.folder.dist,
-            'app.vscode.js',
-          ]),
-          destExtensionJs,
-          {
-            strategy: 'vscode-ext',
-          },
-        );
+        if (!shouldSkipBuild) {
+          await Helpers.ncc(
+            crossPlatformPath([
+              tmpVscodeProjPath,
+              config.folder.dist,
+              'app.vscode.js',
+            ]),
+            destExtensionJs,
+            {
+              strategy: 'vscode-ext',
+            },
+          );
+        }
       }
 
-      extProj
-        .run(
-          `node ${this.vcodeProjectUpdatePackageJsonFilename} ` +
-            `${!buildOptions.release.releaseType ? 'app.vscode' : ''} `,
-        )
-        .sync();
+      if (!shouldSkipBuild) {
+        extProj
+          .run(
+            `node ${this.vcodeProjectUpdatePackageJsonFilename} ` +
+              `${!buildOptions.release.releaseType ? 'app.vscode' : ''} `,
+          )
+          .sync();
+      }
     }
 
     if (!buildOptions.build.watch && buildOptions.release.releaseType) {

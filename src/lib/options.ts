@@ -247,6 +247,11 @@ class EnvOptionsRelease {
    */
   declare targetArtifact: ReleaseArtifactTaon;
   /**
+   * true - skip all artifacts build
+   * or array of artifacts to skip
+   */
+  declare skipBuildingArtifacts?: ReleaseArtifactTaon[] | boolean;
+  /**
    * undefined  - means it is development build
    */
   declare releaseType?: ReleaseType | undefined;
@@ -499,6 +504,18 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     if (_.isString(this.website.domain)) {
       this.website.domain = this.website.domain.replace(/\/$/, '');
       this.website.domain = this.website.domain.replace(/^https?:\/\//, '');
+    }
+
+    if (_.isString(this.release.skipBuildingArtifacts)) {
+      if (this.release.skipBuildingArtifacts.includes(',')) {
+        this.release.skipBuildingArtifacts = this.release.skipBuildingArtifacts
+          .split(',')
+          .map(v => v.trim()) as ReleaseArtifactTaon[];
+      } else {
+        this.release.skipBuildingArtifacts = [
+          this.release.skipBuildingArtifacts as ReleaseArtifactTaon,
+        ];
+      }
     }
   }
   //#endregion

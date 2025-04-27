@@ -188,6 +188,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     }
 
     buildOptions = await this.initPartial(EnvOptions.fromBuild(buildOptions));
+    const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
+
     const packageName = this.project.nameForNpmPackage;
     const tmpProjNpmLibraryInNodeModulesAbsPath = this.project.pathFor(
       `tmp-local-copyto-proj-${config.folder.dist}/` +
@@ -307,14 +309,16 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     }
 
     //#region incremental build
-    await incrementalBuildProcess.runTask({
-      taskName: 'isomorphic compilation',
-      watch: buildOptions.build.watch,
-    });
-    await incrementalBuildProcessWebsql.runTask({
-      taskName: 'isomorphic compilation [WEBSQL]',
-      watch: buildOptions.build.watch,
-    });
+    if (!shouldSkipBuild) {
+      await incrementalBuildProcess.runTask({
+        taskName: 'isomorphic compilation',
+        watch: buildOptions.build.watch,
+      });
+      await incrementalBuildProcessWebsql.runTask({
+        taskName: 'isomorphic compilation [WEBSQL]',
+        watch: buildOptions.build.watch,
+      });
+    }
     //#endregion
 
     showInfoAngular();
@@ -345,20 +349,22 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#endregion
 
     //#region  handle watch & normal mode
-    if (buildOptions.build.watch) {
-      await runNgBuild();
-    } else {
-      try {
+    if (!shouldSkipBuild) {
+      if (buildOptions.build.watch) {
         await runNgBuild();
-      } catch (e) {
-        console.error(e);
+      } else {
+        try {
+          await runNgBuild();
+        } catch (e) {
+          console.error(e);
 
-        Helpers.throw(
-          `
+          Helpers.throw(
+            `
           Command failed: ${commandForLibraryBuild}
 
           Not able to build project: ${this.project.genericName}`,
-        );
+          );
+        }
       }
     }
     //#endregion
@@ -368,12 +374,14 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     }
 
     //#region start copy manager
-    if (!buildOptions.copyToManager.skip) {
-      this.copyNpmDistLibManager.init(buildOptions);
-      await this.copyNpmDistLibManager.runTask({
-        taskName: 'copyto manger',
-        watch: buildOptions.build.watch,
-      });
+    if (!shouldSkipBuild) {
+      if (!buildOptions.copyToManager.skip) {
+        this.copyNpmDistLibManager.init(buildOptions);
+        await this.copyNpmDistLibManager.runTask({
+          taskName: 'copyto manger',
+          watch: buildOptions.build.watch,
+        });
+      }
     }
     //#endregion
 

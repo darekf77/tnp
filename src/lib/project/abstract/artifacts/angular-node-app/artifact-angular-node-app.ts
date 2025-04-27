@@ -132,6 +132,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     //#region @backendFunc
 
     buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
+    const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
     //#region prevent empty base href
     if (!_.isUndefined(buildOptions.build.baseHref)) {
@@ -246,57 +247,60 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     const isStandalone = this.project.framework.isStandaloneProject;
 
-    await angularTempProj.execute(angularBuildAppCmd, {
-      similarProcessKey: 'ng',
-      resolvePromiseMsg: {
-        stdout: COMPILATION_COMPLETE_APP_NG_SERVE,
-      },
-      //#region command execute params
-      exitOnErrorCallback: async code => {
-        if (buildOptions.release.releaseType) {
-          throw 'Angular compilation lib error!';
-        } else {
-          Helpers.error(
-            `[${config.frameworkName}] Typescript compilation error (code=${code})`,
-            false,
-            true,
-          );
-        }
-      },
-      outputLineReplace: (line: string) => {
-        //#region replace outut line for better debugging
-        if (isStandalone) {
-          return line.replace(`src/app/${this.project.name}/`, `./src/`);
-        } else {
-          line = line.trim();
-
-          if (line.search('src/app/') !== -1) {
-            line = line.replace('src/app/', './src/app/');
-            line = line.replace('././src/app/', './src/app/');
-          }
-
-          if (line.search(`src/app/${this.project.name}/libs/`) !== -1) {
-            const [__, ___, ____, _____, ______, moduleName] = line.split('/');
-            return this.replaceLineInNgOutputProcess(
-              line.replace(
-                `src/app/${this.project.name}/libs/${moduleName}/`,
-                `${moduleName}/src/lib/`,
-              ),
+    if (!shouldSkipBuild) {
+      await angularTempProj.execute(angularBuildAppCmd, {
+        similarProcessKey: 'ng',
+        resolvePromiseMsg: {
+          stdout: COMPILATION_COMPLETE_APP_NG_SERVE,
+        },
+        //#region command execute params
+        exitOnErrorCallback: async code => {
+          if (buildOptions.release.releaseType) {
+            throw 'Angular compilation lib error!';
+          } else {
+            Helpers.error(
+              `[${config.frameworkName}] Typescript compilation error (code=${code})`,
+              false,
+              true,
             );
           }
+        },
+        outputLineReplace: (line: string) => {
+          //#region replace outut line for better debugging
+          if (isStandalone) {
+            return line.replace(`src/app/${this.project.name}/`, `./src/`);
+          } else {
+            line = line.trim();
 
-          if (line.search(`src/app/`) !== -1) {
-            const [__, ___, ____, moduleName] = line.split('/');
-            return this.replaceLineInNgOutputProcess(
-              line.replace(`src/app/${moduleName}/`, `${moduleName}/src/`),
-            );
+            if (line.search('src/app/') !== -1) {
+              line = line.replace('src/app/', './src/app/');
+              line = line.replace('././src/app/', './src/app/');
+            }
+
+            if (line.search(`src/app/${this.project.name}/libs/`) !== -1) {
+              const [__, ___, ____, _____, ______, moduleName] =
+                line.split('/');
+              return this.replaceLineInNgOutputProcess(
+                line.replace(
+                  `src/app/${this.project.name}/libs/${moduleName}/`,
+                  `${moduleName}/src/lib/`,
+                ),
+              );
+            }
+
+            if (line.search(`src/app/`) !== -1) {
+              const [__, ___, ____, moduleName] = line.split('/');
+              return this.replaceLineInNgOutputProcess(
+                line.replace(`src/app/${moduleName}/`, `${moduleName}/src/`),
+              );
+            }
+            return this.replaceLineInNgOutputProcess(line);
           }
-          return this.replaceLineInNgOutputProcess(line);
-        }
+          //#endregion
+        },
         //#endregion
-      },
-      //#endregion
-    });
+      });
+    }
 
     return {
       appDistOutBackendNodeAbsPath,
@@ -328,10 +332,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         }),
       );
 
-    // console.log({
-    //   appDistOutBrowserAngularAbsPath,
-    //   appDistOutBackendNodeAbsPath,
-    // });
+    console.log({
+      appDistOutBrowserAngularAbsPath,
+      appDistOutBackendNodeAbsPath,
+    });
 
     return {
       releaseProjPath: appDistOutBrowserAngularAbsPath,

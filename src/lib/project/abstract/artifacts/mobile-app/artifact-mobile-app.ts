@@ -27,6 +27,7 @@ export class ArtifactMobileApp extends BaseArtifact<
     iosMobileAppIpaPath: string;
   }> {
     buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
+    const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
     return void 0;
   }
 
