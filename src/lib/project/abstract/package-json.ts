@@ -1,4 +1,4 @@
-import { gt, gte } from 'semver';
+import { gt, gte, valid } from 'semver';
 import { config } from 'tnp-config/src';
 import {
   CoreModels,
@@ -144,10 +144,19 @@ export class PackageJSON extends BasePackageJson {
     const lastTagVersion =
       this.project.git.lastTagVersionName.trim().replace('v', '') || '0.0.0';
 
+    if (valid(lastTagVersion) === null) {
+      Helpers.warn(
+        `[${config.frameworkName}]
+
+        Last tag may not be proper version: "${lastTagVersion}"
+
+        `,
+      );
+      return pj.version;
+    }
+
     const pjtag = new BasePackageJson({
-      jsonContent: {
-        version: lastTagVersion,
-      },
+      jsonContent: { version: lastTagVersion },
       reloadInMemoryCallback: data => {
         // console.log('new pj data', data);
       },
@@ -166,7 +175,8 @@ export class PackageJSON extends BasePackageJson {
       if (!pjtag.version) {
         return pj.version;
       }
-
+      // console.log(`pj.version`, pj.version);
+      // console.log(`pjtag.version`, pjtag.version);
       if (gte(pj.version, pjtag.version)) {
         return pj.version;
       }
