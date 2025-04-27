@@ -1,6 +1,7 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { Helpers, UtilsTerminal, _, chalk, fse, path } from 'tnp-core/src';
+import { UtilsTerminal, _, chalk, fse, path } from 'tnp-core/src';
+import { Helpers } from 'tnp-helpers/src';
 import { BaseProcessManger, CommandConfig } from 'tnp-helpers/src';
 
 import {
@@ -11,7 +12,11 @@ import { ReleaseArtifactTaon, EnvOptions } from '../../../options';
 import { Project } from '../project';
 
 import { ArtifactsGlobalHelper } from './__helpers__/artifacts-helpers';
-import type { BaseArtifact, IArtifactProcessObj } from './base-artifact';
+import type {
+  BaseArtifact,
+  IArtifactProcessObj,
+  ReleasePartialOutput,
+} from './base-artifact';
 //#endregion
 
 /**
@@ -460,19 +465,21 @@ export class ArtifactManager {
     releaseOptions =
       await this.project.environmentConfig.update(releaseOptions);
 
+    let releaseOutput: ReleasePartialOutput;
+
     if (
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'docs-webapp'
     ) {
-      await this.artifact.docsWebapp.releasePartial(releaseOptions);
-      return;
+      releaseOutput =
+        await this.artifact.docsWebapp.releasePartial(releaseOptions);
     }
     if (
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
     ) {
-      await this.artifact.npmLibAndCliTool.releasePartial(releaseOptions);
-      return;
+      releaseOutput =
+        await this.artifact.npmLibAndCliTool.releasePartial(releaseOptions);
     }
     if (
       !releaseOptions.release.targetArtifact ||
@@ -481,8 +488,8 @@ export class ArtifactManager {
       await this.artifact.npmLibAndCliTool.buildPartial(
         EnvOptions.fromRelease(releaseOptions),
       );
-      await this.artifact.angularNodeApp.releasePartial(releaseOptions);
-      return;
+      releaseOutput =
+        await this.artifact.angularNodeApp.releasePartial(releaseOptions);
     }
     if (
       !releaseOptions.release.targetArtifact ||
@@ -494,8 +501,8 @@ export class ArtifactManager {
       await this.artifact.angularNodeApp.buildPartial(
         EnvOptions.fromRelease(releaseOptions),
       );
-      await this.artifact.electronApp.releasePartial(releaseOptions);
-      return;
+      releaseOutput =
+        await this.artifact.electronApp.releasePartial(releaseOptions);
     }
     if (
       !releaseOptions.release.targetArtifact ||
@@ -504,8 +511,8 @@ export class ArtifactManager {
       await this.artifact.npmLibAndCliTool.buildPartial(
         EnvOptions.fromRelease(releaseOptions),
       );
-      await this.artifact.mobileApp.releasePartial(releaseOptions);
-      return;
+      releaseOutput =
+        await this.artifact.mobileApp.releasePartial(releaseOptions);
     }
     if (
       !releaseOptions.release.targetArtifact ||
@@ -514,9 +521,35 @@ export class ArtifactManager {
       await this.artifact.npmLibAndCliTool.buildPartial(
         EnvOptions.fromRelease(releaseOptions),
       );
-      await this.artifact.vscodePlugin.releasePartial(releaseOptions);
-      return;
+      releaseOutput =
+        await this.artifact.vscodePlugin.releasePartial(releaseOptions);
     }
+
+    //#region tag and push
+    if (!releaseOptions.release.autoReleaseUsingConfig) {
+      await this.project.releaseProcess.checkBundleQuestion(
+        releaseOutput.releaseProjPath,
+        `Check ${chalk.bold('bundle')} before tagging/pushing`,
+      );
+    }
+
+    if (!releaseOptions.release.skipTagGitPush) {
+      for (const repoAbsPath of releaseOutput.projectsReposToPushAndTag) {
+        if (!releaseOptions.release.autoReleaseUsingConfig) {
+          await this.project.releaseProcess.checkBundleQuestion(
+            repoAbsPath,
+            `Check ${chalk.bold('project repo')} before tagging/pushing`,
+          );
+        }
+        await Helpers.git.tagAndPushToGitRepo(repoAbsPath, {
+          newVersion: releaseOutput.resolvedNewVersion,
+          autoReleaseUsingConfig: releaseOptions.release.autoReleaseUsingConfig,
+          isCiProcess: releaseOptions.isCiProcess,
+        });
+      }
+    }
+    //#endregion
+
     //#endregion
   }
 

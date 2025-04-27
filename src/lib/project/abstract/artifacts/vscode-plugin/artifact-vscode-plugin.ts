@@ -19,17 +19,14 @@ import {
   ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
-import { BaseArtifact } from '../base-artifact';
+import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 //#endregion
 
 export class ArtifactVscodePlugin extends BaseArtifact<
   {
     vscodeVsixOutPath: string;
   },
-  {
-    releaseProjPath: string;
-    releaseType: ReleaseType;
-  }
+  ReleasePartialOutput
 > {
   constructor(project: Project) {
     super(project, 'vscode-plugin');
@@ -229,10 +226,9 @@ export default { commands };
   //#endregion
 
   //#region release partial
-  async releasePartial(releaseOptions: EnvOptions): Promise<{
-    releaseProjPath: string;
-    releaseType: ReleaseType;
-  }> {
+  async releasePartial(
+    releaseOptions: EnvOptions,
+  ): Promise<ReleasePartialOutput> {
     //#region @backendFunc
     let releaseProjPath: string;
     let releaseType: ReleaseType = releaseOptions.release.releaseType;
@@ -263,19 +259,7 @@ local VSCode instance.
 
 `,
       );
-      if (!releaseOptions.release.autoReleaseUsingConfig) {
-        await this.project.releaseProcess.checkBundleQuestion(
-          localReleaseOutputBasePath,
-          `Select action before tagging/pushing compiled version`,
-        );
-      }
-
-      if (!releaseOptions.release.skipTagGitPush) {
-        await this.project.git.tagAndPushToGitRepo(
-          releaseOptions.release.resolvedNewVersion,
-          releaseOptions,
-        );
-      }
+      releaseProjPath = localReleaseOutputBasePath;
     }
     if (releaseOptions.release.releaseType === 'manual') {
       // TODO release to microsoft store or serve with place to put assets
@@ -283,7 +267,12 @@ local VSCode instance.
     if (releaseOptions.release.releaseType === 'cloud') {
       // TODO trigger cloud release (it will actually be manual on remote server)
     }
-    return { releaseProjPath, releaseType };
+    return {
+      resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
+      releaseProjPath,
+      releaseType,
+      projectsReposToPushAndTag: [this.project.location],
+    };
     //#endregion
   }
   //#endregion

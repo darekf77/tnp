@@ -2,7 +2,7 @@ import { Url } from 'url';
 
 import { EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
-import { BaseArtifact } from '../base-artifact';
+import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
 import { Docs } from './docs';
 
@@ -11,10 +11,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     docsWebappDistOutPath: string;
     combinedDocsHttpServerUrl: Url;
   },
-  {
-    releaseProjPath: string;
-    releaseType: ReleaseType;
-  }
+  ReleasePartialOutput
 > {
   public docs: Docs;
 
@@ -70,7 +67,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
 
   async releasePartial(
     releaseOptions: EnvOptions,
-  ): Promise<{ releaseProjPath: string; releaseType: ReleaseType }> {
+  ): Promise<ReleasePartialOutput> {
     const releaseProjPath: string = void 0; // TODO implement
     const releaseType: ReleaseType = void 0; // TODO implement
     releaseOptions = this.updateResolvedVersion(releaseOptions);
@@ -82,6 +79,11 @@ export class ArtifactDocsWebapp extends BaseArtifact<
       // TODO move folder
     }
 
-    return { releaseProjPath, releaseType };
+    return {
+      resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
+      releaseProjPath,
+      releaseType,
+      projectsReposToPushAndTag: [this.project.location],
+    };
   }
 }

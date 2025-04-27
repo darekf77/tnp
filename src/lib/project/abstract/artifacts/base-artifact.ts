@@ -30,12 +30,23 @@ export type IArtifactProcessObj = {
   vscodePlugin: ArtifactVscodePlugin;
 };
 
+export interface ReleasePartialOutput {
+  /**
+   * Compiled output path for the artifact
+   */
+  releaseProjPath: string;
+  releaseType: ReleaseType;
+  /**
+   * Absolute path to project folder where the artifact is located
+   * and ready to be released with new version
+   */
+  projectsReposToPushAndTag?: string[];
+  resolvedNewVersion?: string;
+}
+
 export abstract class BaseArtifact<
   BUILD_OUTPUT extends {},
-  RELEASE_OUTPUT extends {
-    releaseProjPath: string;
-    releaseType: ReleaseType;
-  },
+  RELEASE_OUTPUT extends ReleasePartialOutput,
 > {
   constructor(
     protected readonly project: Project,

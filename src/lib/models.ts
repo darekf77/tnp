@@ -116,6 +116,8 @@ export namespace Models {
       | 'uat'
       | 'preprod'
       | 'demo'
+      | 'docs'
+      | 'static-pages'
       | 'ci'
       | 'training';
     // CoreModels.EnvironmentNameTaon; // TODO this alone should be enough but parser creates invalid schema

@@ -26,7 +26,7 @@ import {
 } from '../../../../constants';
 import { EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
-import { BaseArtifact } from '../base-artifact';
+import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
 import { IncrementalBuildProcess } from './tools/build-isomorphic-lib/compilations/incremental-build-process';
 import { CopyManager } from './tools/copy-manager/copy-manager';
@@ -61,12 +61,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     packageName?: string;
     //#endregion
   },
-  {
-    //#region release output options
-    releaseProjPath: string;
-    releaseType: ReleaseType;
-    //#endregion
-  }
+  ReleasePartialOutput
 > {
   //#region fields
 
@@ -412,10 +407,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#endregion
 
   //#region release partial
-  async releasePartial(releaseOptions: EnvOptions): Promise<{
-    releaseProjPath: string;
-    releaseType: ReleaseType;
-  }> {
+  async releasePartial(
+    releaseOptions: EnvOptions,
+  ): Promise<ReleasePartialOutput> {
     //#region @backendFunc
 
     //#region prepare variables
@@ -492,19 +486,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     Helpers.remove([releaseProjPath, 'firedev.jsonc']);
 
     if (allowedToNpmReleases.includes(releaseOptions.release.releaseType)) {
-      if (
-        await projFromCompiled.releaseProcess.publishToNpm(
-          tmpProjNpmLibraryInNodeModulesAbsPath,
-          releaseOptions.release.autoReleaseUsingConfig,
-        )
-      ) {
-        if (!releaseOptions.release.skipTagGitPush) {
-          await this.project.git.tagAndPushToGitRepo(
-            releaseOptions.release.resolvedNewVersion,
-            releaseOptions,
-          );
-        }
-      }
+      await projFromCompiled.releaseProcess.publishToNpm(
+        tmpProjNpmLibraryInNodeModulesAbsPath,
+        releaseOptions.release.autoReleaseUsingConfig,
+      );
     } else {
       if (releaseOptions.release.releaseType === 'local') {
         //#region local release
@@ -517,23 +502,17 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         Helpers.copy(releaseProjPath, releaseDest);
 
         Helpers.info(`Local release done: ${releaseDest}`);
-        if (!releaseOptions.release.autoReleaseUsingConfig) {
-          await this.project.releaseProcess.checkBundleQuestion(
-            releaseDest,
-            `Select action before tagging/pushing compiled version`,
-          );
-        }
-        if (!releaseOptions.release.skipTagGitPush) {
-          await this.project.git.tagAndPushToGitRepo(
-            releaseOptions.release.resolvedNewVersion,
-            releaseOptions,
-          );
-        }
+        releaseProjPath = releaseDest;
         //#endregion
       }
     }
 
-    return { releaseProjPath, releaseType };
+    return {
+      resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
+      releaseProjPath,
+      releaseType,
+      projectsReposToPushAndTag: [this.project.location],
+    };
     //#endregion
   }
   //#endregion

@@ -21,7 +21,7 @@ import {
 } from '../../../../constants';
 import { EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
-import { BaseArtifact } from '../base-artifact';
+import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 import { InsideStructuresApp } from '../npm-lib-and-cli-tool/tools/inside-structures/inside-structures';
 
 import { AssetsFileListGenerator } from './tools/assets-list-file-generator';
@@ -39,10 +39,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     angularNgServeAddress: URL;
     dockerBackendFrontendAppDistOutPath: string;
   },
-  {
-    releaseProjPath: string;
-    releaseType: ReleaseType;
-  }
+  ReleasePartialOutput
 > {
   //#region fields & getters
   public readonly migrationHelper: MigrationHelper;
@@ -211,7 +208,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       await Helpers.killProcessByPort(portAssignedToAppBuild);
     }
 
-    const outPutPathCommand = `--output-path ${appDistOutBrowserAngularAbsPath} `;
+    const outPutPathCommand = ` --output-path ${appDistOutBrowserAngularAbsPath} `;
 
     const angularBuildAppCmd = buildOptions.build.watch
       ? `${this.NPM_RUN_NG_COMMAND} serve ${
@@ -227,9 +224,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
             ? 'angular-electron'
             : 'app'
         }` +
-        `${buildOptions.build.angularProd ? '--configuration production' : ''} ` +
-        `${buildOptions.build.watch ? '--watch' : ''}` +
-        `${outPutPathCommand} `;
+        ` ${buildOptions.build.angularProd ? '--configuration production' : ''} ` +
+        ` ${buildOptions.build.watch ? '--watch' : ''}` +
+        ` ${outPutPathCommand} `;
 
     const angularTempProj = this.globalHelper.getProxyNgProj(buildOptions);
 
@@ -315,12 +312,12 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   //#endregion
 
   //#region release partial
-  async releasePartial(releaseOptions: EnvOptions): Promise<{
-    releaseProjPath: string;
-    releaseType: ReleaseType;
-  }> {
+  async releasePartial(
+    releaseOptions: EnvOptions,
+  ): Promise<ReleasePartialOutput> {
     //#region @backendFunc
     releaseOptions = this.updateResolvedVersion(releaseOptions);
+    const projectsReposToPushAndTag: string[] = [this.project.location];
 
     const { appDistOutBrowserAngularAbsPath, appDistOutBackendNodeAbsPath } =
       await this.buildPartial(
@@ -332,14 +329,38 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         }),
       );
 
-    console.log({
-      appDistOutBrowserAngularAbsPath,
-      appDistOutBackendNodeAbsPath,
-    });
+    if (releaseOptions.release.releaseType === 'static-pages') {
+      const staticPagesProjLocation =
+        this.getStaticPagesClonedProjectLocation(releaseOptions);
+      try {
+        await Helpers.git.pullCurrentBranch(staticPagesProjLocation, {
+          // @ts-ignore TODO @REMOVE
+          exitOnError: false,
+        });
+      } catch (error) {}
+
+      const CNAMEcontent = this.project.readFile('CNAME');
+      Helpers.git.cleanRepoFromAnyFilesExceptDotGitFolder(
+        staticPagesProjLocation,
+      );
+      Helpers.writeFile([appDistOutBrowserAngularAbsPath, '.nojekyll'], '');
+      Helpers.copy(appDistOutBrowserAngularAbsPath, staticPagesProjLocation);
+      if (CNAMEcontent) {
+        Helpers.writeFile([staticPagesProjLocation, 'CNAME'], CNAMEcontent);
+      }
+
+      Helpers.info(`Static pages release done: ${staticPagesProjLocation}`);
+
+      if (!releaseOptions.release.skipTagGitPush) {
+        projectsReposToPushAndTag.unshift(staticPagesProjLocation);
+      }
+    }
 
     return {
+      resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
       releaseProjPath: appDistOutBrowserAngularAbsPath,
       releaseType: releaseOptions.release.releaseType,
+      projectsReposToPushAndTag,
     };
     //#endregion
   }
@@ -352,6 +373,34 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   //#endregion
 
   //#region private methods
+
+  getStaticPagesClonedProjectLocation(releaseOptions: EnvOptions): string {
+    //#region @backendFunc
+    const staticPagesRepoBranch = releaseOptions.release.releaseType;
+    const repoRoot = this.project.pathFor([
+      `.${config.frameworkName}`,
+      this.currentArtifactName,
+    ]);
+    const repoName = `repo-${this.project.name}-for-${releaseOptions.release.releaseType}`;
+    const repoPath = crossPlatformPath([repoRoot, repoName]);
+    if (!Helpers.exists(repoPath)) {
+      Helpers.mkdirp(repoRoot);
+      Helpers.git.clone({
+        cwd: repoRoot,
+        url: this.project.git.remoteOriginUrl,
+        override: true,
+        destinationFolderName: repoName,
+      });
+    }
+    Helpers.git.resetHard(repoPath);
+    Helpers.git.checkout(repoPath, staticPagesRepoBranch, {
+      createBranchIfNotExists: true,
+      fetchBeforeCheckout: true,
+      switchBranchWhenExists: true,
+    });
+    return repoPath;
+    //#endregion
+  }
 
   //#region private methods / get out dir app
   /**

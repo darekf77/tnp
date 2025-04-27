@@ -9,17 +9,14 @@ import {
   ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
-import { BaseArtifact } from '../base-artifact';
+import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
 export class ArtifactElectronApp extends BaseArtifact<
   {
     electronDistOutAppPath: string;
     electronDistOutAppPathWebsql: string;
   },
-  {
-    releaseProjPath: string;
-    releaseType: ReleaseType;
-  }
+  ReleasePartialOutput
 > {
   constructor(project: Project) {
     super(project, 'electron-app');
@@ -227,9 +224,12 @@ export class ArtifactElectronApp extends BaseArtifact<
   }
   //#endregion
 
-  async releasePartial(releaseOptions) {
+  async releasePartial(releaseOptions): Promise<ReleasePartialOutput> {
     releaseOptions = this.updateResolvedVersion(releaseOptions);
-    return void 0; // TODO implement
+
+    return {
+      resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
+    } as any; // TODO implement
   }
 
   //#region getters & methods / get electron app relative path

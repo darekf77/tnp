@@ -1,16 +1,13 @@
 import { EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
-import { BaseArtifact } from '../base-artifact';
+import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
 export class ArtifactMobileApp extends BaseArtifact<
   {
     androidMobileAppApkPath: string;
     iosMobileAppIpaPath: string;
   },
-  {
-    releaseProjPath: string;
-    releaseType: ReleaseType;
-  }
+  ReleasePartialOutput
 > {
   constructor(project: Project) {
     super(project, 'mobile-app');
@@ -31,8 +28,10 @@ export class ArtifactMobileApp extends BaseArtifact<
     return void 0;
   }
 
-  async releasePartial(releaseOptions) {
+  async releasePartial(releaseOptions): Promise<ReleasePartialOutput> {
     releaseOptions = this.updateResolvedVersion(releaseOptions);
-    return void 0; // TODO implement
+    return {
+      resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
+    } as any; // TODO implement
   }
 }

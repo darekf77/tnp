@@ -18,57 +18,6 @@ export class Git extends BaseGit<Project> {
   }
   //#endregion
 
-  //#region push to git repo
-  /**
-   *
-   * @param newVersion
-   * @param pushWithoutAsking
-   */
-  async tagAndPushToGitRepo(
-    newVersion: string,
-    releaseOptions: EnvOptions,
-  ): Promise<void> {
-    //#region @backendFunc
-    const tagName = `v${newVersion}`;
-
-    this.stageAllAndCommit(`release: ${tagName}`);
-
-    const tagMessage = 'new version ' + newVersion;
-    try {
-      this.project
-        .run(`git tag -a ${tagName} ` + `-m "${tagMessage}"`, {
-          output: false,
-        })
-        .sync();
-    } catch (error) {
-      Helpers.throw(`Not able to tag project`);
-    }
-    // const lastCommitHash = this.project.git.lastCommitHash();
-    // this.project.packageJson.setBuildHash(lastCommitHash);
-
-    if (
-      releaseOptions.release.autoReleaseUsingConfig ||
-      (await UtilsTerminal.confirm({
-        message: `Push changes to git repo ?`,
-        defaultValue: true,
-      }))
-    ) {
-      Helpers.log('Pushing to git repository... ');
-      Helpers.log(`Git branch: ${this.project.git.currentBranchName}`);
-
-      if (
-        !(await this.project.git.pushCurrentBranch({
-          askToRetry: !releaseOptions.isCiProcess,
-        }))
-      ) {
-        Helpers.throw(`Not able to push to git repository`);
-      }
-      Helpers.info('Pushing to git repository done.');
-    }
-    //#endregion
-  }
-  //#endregion
-
   //#region remove tag nad commit
   /**
    * @deprecated
