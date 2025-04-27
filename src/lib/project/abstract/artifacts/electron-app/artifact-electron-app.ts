@@ -220,7 +220,8 @@ export class ArtifactElectronApp extends BaseArtifact<
   }
   //#endregion
 
-  async releasePartial(options) {
+  async releasePartial(releaseOptions) {
+    releaseOptions = this.updateResolvedVersion(releaseOptions);
     return void 0; // TODO implement
   }
 

@@ -316,6 +316,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     releaseType: ReleaseType;
   }> {
     //#region @backendFunc
+    releaseOptions = this.updateResolvedVersion(releaseOptions);
 
     const { appDistOutBrowserAngularAbsPath, appDistOutBackendNodeAbsPath } =
       await this.buildPartial(

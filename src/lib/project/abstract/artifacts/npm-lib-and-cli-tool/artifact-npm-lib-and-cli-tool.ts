@@ -413,6 +413,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#region prepare variables
     let releaseType: ReleaseType = releaseOptions.release.releaseType;
 
+    releaseOptions = this.updateResolvedVersion(releaseOptions);
+
     const {
       isOrganizationPackage,
       packageName,
@@ -427,12 +429,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     );
     let releaseProjPath: string = tmpProjNpmLibraryInNodeModulesAbsPath;
     //#endregion
-
-    // @ts-ignore
-    releaseOptions.release.resolvedNewVersion =
-      this.project.packageJson.resolvePossibleNewVersion(
-        releaseOptions.release.releaseVersionBumpType,
-      );
 
     this.project.packageJson.setVersion(
       releaseOptions.release.resolvedNewVersion,
@@ -485,6 +481,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     }
 
     Helpers.remove([releaseProjPath, config.file.taon_jsonc]);
+    Helpers.remove([releaseProjPath, 'firedev.jsonc']);
 
     if (allowedToNpmReleases.includes(releaseOptions.release.releaseType)) {
       if (
@@ -1071,7 +1068,12 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         dest,
         `${THIS_IS_GENERATED_INFO_COMMENT}
 export const BUILD_FRAMEWORK_CLI_NAME = '${config.frameworkName}';
-export const CURRENT_PACKAGE_VERSION = '${this.project.packageJson.version}';
+export const CURRENT_PACKAGE_VERSION = '${
+          initOptions.release.releaseType &&
+          initOptions.release.resolvedNewVersion
+            ? initOptions.release.resolvedNewVersion
+            : this.project.packageJson.version
+        }';
 ${THIS_IS_GENERATED_INFO_COMMENT}
       `,
       );

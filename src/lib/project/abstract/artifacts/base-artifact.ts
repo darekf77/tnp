@@ -78,6 +78,16 @@ export abstract class BaseArtifact<
   abstract clearPartial(options: EnvOptions): Promise<void>;
   //#endregion
 
+  protected updateResolvedVersion(releaseOptions: EnvOptions): EnvOptions {
+    // @ts-ignore
+    releaseOptions.release.resolvedNewVersion =
+      this.project.packageJson.resolvePossibleNewVersion(
+        releaseOptions.release.releaseVersionBumpType,
+      );
+
+    return releaseOptions;
+  }
+
   //#region getters & methods / all resources
   protected get __allResources(): string[] {
     //#region @backendFunc

@@ -30,7 +30,8 @@ export class ArtifactMobileApp extends BaseArtifact<
     return void 0;
   }
 
-  async releasePartial(options) {
+  async releasePartial(releaseOptions) {
+    releaseOptions = this.updateResolvedVersion(releaseOptions);
     return void 0; // TODO implement
   }
 }

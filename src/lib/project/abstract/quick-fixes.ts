@@ -227,7 +227,7 @@ Object.defineProperty(document.body.style, 'transform', {
           `
 ${THIS_IS_GENERATED_STRING}
 
-Assets from this folder are being shipped with this npm package (${this.project.framework.__npmPackageNameAndVersion})
+Assets from this folder are being shipped with this npm package (${this.project.nameForNpmPackage})
 created from this project.
 
 ${THIS_IS_GENERATED_STRING}

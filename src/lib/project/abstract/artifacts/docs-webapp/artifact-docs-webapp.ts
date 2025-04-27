@@ -70,6 +70,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
   ): Promise<{ releaseProjPath: string; releaseType: ReleaseType }> {
     const releaseProjPath: string = void 0; // TODO implement
     const releaseType: ReleaseType = void 0; // TODO implement
+    releaseOptions = this.updateResolvedVersion(releaseOptions);
 
     const { docsWebappDistOutPath } = await this.buildPartial(
       EnvOptions.from({ ...releaseOptions, isCiProcess: true }),

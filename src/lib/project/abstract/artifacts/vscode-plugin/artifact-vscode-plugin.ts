@@ -231,6 +231,8 @@ export default { commands };
     //#region @backendFunc
     let releaseProjPath: string;
     let releaseType: ReleaseType = releaseOptions.release.releaseType;
+    releaseOptions = this.updateResolvedVersion(releaseOptions);
+
     const { vscodeVsixOutPath } = await this.buildPartial(
       EnvOptions.fromRelease(releaseOptions),
     );
@@ -332,7 +334,6 @@ local VSCode instance.
     //   config.file.package_json,
     //   config.file.tsconfig_json,
     // ];
-
     // if (!this.project.containsFile(config.folder.out)) {
     //   await this.project.build(EnvOptions.from({ build: { watch: false } })); // TODO remove this
     // }
@@ -346,12 +347,10 @@ local VSCode instance.
     //   'extension.js',
     // ]);
     // Helpers.remove(pathTempInstallDir);
-
     // await Helpers.ncc(
     //   crossPlatformPath([this.project.location, 'out', 'extension.js']),
     //   bundleExtensionJson,
     // );
-
     // for (const fileRelative of copyToInstallDir) {
     //   const source = crossPlatformPath([this.project.location, fileRelative]);
     //   const dest = crossPlatformPath([pathTempInstallDir, fileRelative]);
@@ -359,10 +358,8 @@ local VSCode instance.
     // }
     // Helpers.setValueToJSON(pathPackageJSON, 'main', 'extension.js');
     // const tempProj = this.project.ins.From(pathTempInstallDir);
-
     // const extensionName = (tempProj.readJson(config.file.package_json) as any)
     //   .name;
-
     // Helpers.setValueToJSON(
     //   tempProj.pathFor(config.file.package_json),
     //   'name',
@@ -371,13 +368,11 @@ local VSCode instance.
     //     config.frameworkName,
     //   ),
     // );
-
     // Helpers.setValueToJSON(
     //   tempProj.pathFor(config.file.package_json),
     //   'scripts.vscode:prepublish',
     //   void 0,
     // );
-
     // Helpers.setValueToJSON(
     //   tempProj.pathFor(config.file.package_json),
     //   'displayName',
@@ -386,11 +381,9 @@ local VSCode instance.
     //     config.frameworkName,
     //   ),
     // );
-
     // await tempProj.artifactsManager.artifact.vscodePlugin.createVscePackage({
     //   showInfo: false,
     // });
-
     // Helpers.info(
     //   `Installing extension: ${vsixPackageName} ` +
     //     `with creation date: ${fse.lstatSync(tempProj.pathFor(vsixPackageName)).birthtime}...`,
