@@ -878,19 +878,7 @@ ${this.project.children
   }
   //#endregion
 
-  //#region prettier
-  async prettier() {
-    Helpers.info(`Initing before prettier...`);
-    await this.project.init(
-      EnvOptions.from({ purpose: 'initing before prettier' }),
-    );
-    Helpers.info(`Running prettier...`);
-    this.project.formatAllFiles();
-    Helpers.info(`Prettier done`);
-    this._exit();
-  }
 
-  //#endregion
 
   //#region update deps for core container
   async updatedeps(): Promise<void> {
@@ -1445,7 +1433,7 @@ ${this.project.children
 /* */
 /* */
 /* */
-  
+
   //#endregion
 
   //#region not for npm / tnp fix taon json
@@ -1460,7 +1448,7 @@ ${this.project.children
 /* */
 /* */
 /* */
-  
+
   //#endregion
 
   //#region start taon projects worker

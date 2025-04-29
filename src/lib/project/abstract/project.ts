@@ -23,6 +23,7 @@ import { QuickFixes } from './quick-fixes';
 import type { ReleaseProcess } from './release-process';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode';
+import { Refactor } from './refactor';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -67,6 +68,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   public readonly packagesRecognition: PackagesRecognition;
   public readonly environmentConfig: EnvironmentConfig;
 
+  public readonly refactor: Refactor;
+
   //#endregion
 
   //#region constructor
@@ -108,6 +111,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     this.environmentConfig = new EnvironmentConfig(this);
 
+    this.refactor = new Refactor(this);
     Project.ins.add(this);
   }
   //#endregion
