@@ -295,8 +295,10 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     // console.log(`checking tsconfig.json for ${this.project.genericName}`);
     const template = {
       compilerOptions: {
-        module: 'NodeNext',
-        moduleResolution: 'NodeNext',
+        // module: 'NodeNext',
+        // moduleResolution: 'NodeNext',
+        module: 'CommonJS',
+        moduleResolution: 'Node',
         esModuleInterop: true,
         strictNullChecks: false,
         rootDir: './',
@@ -314,11 +316,11 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     json.compilerOptions = json.compilerOptions || ({} as any);
     json.include = json.include || [];
 
-    if (json.compilerOptions?.module !== 'NodeNext') {
-      json.compilerOptions.module = 'NodeNext';
+    if (json.compilerOptions?.module !== 'CommonJS') {
+      json.compilerOptions.module = 'CommonJS';
     }
-    if (json.compilerOptions?.moduleResolution !== 'NodeNext') {
-      json.compilerOptions.moduleResolution = 'NodeNext';
+    if (json.compilerOptions?.moduleResolution !== 'Node') {
+      json.compilerOptions.moduleResolution = 'Node';
     }
 
     if (!json.compilerOptions?.esModuleInterop) {
