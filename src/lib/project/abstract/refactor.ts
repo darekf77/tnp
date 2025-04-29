@@ -14,18 +14,20 @@ export class Refactor extends BaseFeatureForProject<Project> {
       for (const child of this.project.children) {
         await child.refactor.ALL();
       }
-    } else if (this.project.framework.isStandaloneProject) {
-      await this.changeCssToScss();
-      await this.removeBrowserRegion();
-      await this.eslint();
-      await this.properStandaloneNg19();
-      await this.prettier();
     }
+    await this.changeCssToScss();
+    await this.removeBrowserRegion();
+    await this.properStandaloneNg19();
+    await this.eslint();
+    await this.prettier();
   }
 
   async prettier() {
     //#region @backendFunc
     Helpers.info(`Running prettier...`);
+    UtilsTypescript.fixHtmlTemplatesInDir(
+      this.project.pathFor(config.folder.src),
+    );
     this.project.formatAllFiles();
     Helpers.info(`Prettier done`);
     //#endregion
@@ -34,7 +36,9 @@ export class Refactor extends BaseFeatureForProject<Project> {
   async eslint() {
     //#region @backendFunc
     Helpers.info(`Running eslint fix...`);
-    UtilsTypescript.eslintFixAllFilesInsideFolder([this.project.location]);
+    await UtilsTypescript.eslintFixAllFilesInsideFolder([
+      this.project.location,
+    ]);
     Helpers.info(`Eslint fix done`);
     //#endregion
   }
