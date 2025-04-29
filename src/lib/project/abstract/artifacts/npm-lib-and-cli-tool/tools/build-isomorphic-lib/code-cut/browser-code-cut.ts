@@ -23,7 +23,6 @@ import { Helpers } from 'tnp-helpers/src';
 import { TO_REMOVE_TAG } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
-import { MjsModule } from '../../copy-manager/mjs-fesm-module-spliter';
 
 import { SplitFileProcess } from './file-split-process';
 
@@ -296,7 +295,7 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / save empty file
-  private saveEmptyFile(isTsFile: boolean, endOfBrowserOrWebsqlCode: string) {
+  private saveEmptyFile(isTsFile: boolean) {
     //#region @backendFunc
     if (!fse.existsSync(path.dirname(this.absFileSourcePathBrowserOrWebsql))) {
       // write empty instead unlink
@@ -318,29 +317,13 @@ export class BrowserCodeCut {
           // QUICK_FIX remove directory when trying to save as file
           fse.removeSync(this.absFileSourcePathBrowserOrWebsql);
         } catch (error) {}
-        fse.writeFileSync(
-          this.absFileSourcePathBrowserOrWebsql,
-          `/* files for browser${
-            this.isWebsqlMode
-              ? '-websql' + endOfBrowserOrWebsqlCode
-              : '' + endOfBrowserOrWebsqlCode
-          } mode */`,
-          'utf8',
-        );
+        fse.writeFileSync(this.absFileSourcePathBrowserOrWebsql, 'utf8');
       }
       try {
         // QUICK_FIX remove directory when trying to save as file
         fse.removeSync(this.absFileSourcePathBrowserOrWebsqlAPPONLY);
       } catch (error) {}
-      fse.writeFileSync(
-        this.absFileSourcePathBrowserOrWebsqlAPPONLY,
-        `/* files for browser${
-          this.isWebsqlMode
-            ? '-websql' + endOfBrowserOrWebsqlCode
-            : '' + endOfBrowserOrWebsqlCode
-        } mode */`,
-        'utf8',
-      );
+      fse.writeFileSync(this.absFileSourcePathBrowserOrWebsqlAPPONLY, 'utf8');
     } else {
       if (!this.relativePath.startsWith('app/')) {
         try {
@@ -364,7 +347,7 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / save normal file
-  private saveNormalFile(isTsFile: boolean, endOfBrowserOrWebsqlCode?: string) {
+  private saveNormalFile(isTsFile: boolean) {
     //#region @backendFunc
     // console.log('SAVE NORMAL FILE')
     if (this.isAssetsFile) {
@@ -408,7 +391,6 @@ export class BrowserCodeCut {
           this.absFileSourcePathBrowserOrWebsql,
           this.changeBrowserOrWebsqlFileContentBeforeSave(
             this.rawContentForBrowser,
-            endOfBrowserOrWebsqlCode,
             this.absFileSourcePathBrowserOrWebsql,
           ),
           'utf8',
@@ -418,7 +400,6 @@ export class BrowserCodeCut {
         this.absFileSourcePathBrowserOrWebsqlAPPONLY,
         this.changeBrowserOrWebsqlFileContentBeforeSave(
           this.rawContentForAPPONLYBrowser,
-          endOfBrowserOrWebsqlCode,
           this.absFileSourcePathBrowserOrWebsqlAPPONLY,
         ),
         'utf8',
@@ -866,6 +847,7 @@ export class BrowserCodeCut {
     // console.log(`Ext: "${ext}" for file: ${path.basename(this.absoluteFilePath)}`)
     if (extAllowedToReplace.includes(ext)) {
       const orgContent = this.rawContentForBrowser;
+
       this.rawContentForBrowser = RegionRemover.from(
         this.relativePath,
         orgContent,
@@ -877,11 +859,20 @@ export class BrowserCodeCut {
         const regionsToRemove = [TAGS.BROWSER, TAGS.WEBSQL_ONLY];
 
         const orgContentBackend = this.rawContentBackend;
+
+        // const debug =  this.relativePath.endsWith('layout-simple-small-app.component.ts');
+        // if (debug ) {
+        //   console.log(this.relativePath);
+        //   console.log({ debugging: regionsToRemove });
+        //   console.log(orgContentBackend);
+        // }
+
         this.rawContentBackend = RegionRemover.from(
           this.absoluteBackendDestFilePath,
           orgContentBackend,
           regionsToRemove,
           this.project,
+          // debug
         ).output;
       }
     }
@@ -1035,21 +1026,16 @@ export class BrowserCodeCut {
       return;
     }
     // Helpers.log(`saving ismoprhic file: ${this.absoluteFilePath}`, 1)
-    const isFromLibs =
-      _.first(this.relativePath.split('/')) === config.folder.libs;
-    const module = isFromLibs
-      ? _.first(this.relativePath.split('/').slice(1))
-      : this.project.name; // taget
-    const endOfBrowserOrWebsqlCode = `\n ${MjsModule.KEY_END_MODULE_FILE}${module} ${this.relativePath}`;
+
     const isTsFile = ['.ts'].includes(
       path.extname(this.absFileSourcePathBrowserOrWebsql),
     );
     const backendFileSaveMode = !this.isWebsqlMode; // websql does not do anything on be
 
     if (this.isEmptyBrowserFile) {
-      this.saveEmptyFile(isTsFile, endOfBrowserOrWebsqlCode);
+      this.saveEmptyFile(isTsFile);
     } else {
-      this.saveNormalFile(isTsFile, endOfBrowserOrWebsqlCode);
+      this.saveNormalFile(isTsFile);
     }
 
     if (backendFileSaveMode) {
@@ -1184,7 +1170,6 @@ import { < My Stuff > } from '${this.project.name}/src';`,
   //#region private / methods & getters / fix comments
   private changeBrowserOrWebsqlFileContentBeforeSave(
     browserOrWebsqlFileContent: string,
-    endComment: string,
     absFilePath: string,
     packageName?: string,
   ) {
@@ -1196,8 +1181,6 @@ import { < My Stuff > } from '${this.project.name}/src';`,
       return browserOrWebsqlFileContent;
     }
 
-    const endOfFile =
-      this.relativePath.endsWith('.ts') && endComment ? endComment : '';
     const standaloneRegexImportExport = new RegExp(
       `from\\s+(\\'|\\")${Helpers.escapeStringForRegEx(
         packageName,
@@ -1222,10 +1205,7 @@ import { < My Stuff > } from '${this.project.name}/src';`,
     // }
     //#endregion
 
-    const splited = [
-      '\n', // TODO artifically added
-      ...browserOrWebsqlFileContent.split('\n'),
-    ];
+    const splited = [...browserOrWebsqlFileContent.split('\n')];
 
     const ignoreIndex = [];
     const res = splited.map((line, index) => {
@@ -1249,7 +1229,7 @@ import { < My Stuff > } from '${this.project.name}/src';`,
       res[ignoreIndex[index]] = res[ignoreIndex[index]] + ' // @ts-ignore';
     }
 
-    let result = res.join('\n') + endOfFile;
+    let result = res.join('\n');
 
     result = this.changeStandaloneBackendFileContentBeforeSave(
       result,
@@ -1340,25 +1320,6 @@ import { < My Stuff > } from '${this.project.name}/src';`,
   }
   //#endregion
 
-  //#region private / methods & getters / change file import/export for organization
-  /**
-   * TODO may be weak solutin
-   */
-  private changeOrganizationBackendFileContentBeforeSave(
-    content: string,
-    absFilePath: string,
-    isBrowser: boolean = false,
-  ): string {
-    //#region @backendFunc
-    return this.changeContenBeforeSave(content, absFilePath, {
-      additionalSmartPckages: this.project.framework.packageNamesFromProject,
-      isStandalone: false,
-      isBrowser,
-    });
-    //#endregion
-  }
-  //#endregion
-
   //#region private / methods & getters / change file import/export for standalone
   /**
    * TODO may be weak solutin
@@ -1378,7 +1339,7 @@ import { < My Stuff > } from '${this.project.name}/src';`,
   }
   //#endregion
 
-  //#region private / methods & getters / repalce accesets path
+  //#region private / methods & getters / replace assets path
   private replaceAssetsPath(absDestinationPath: string) {
     //#region @backendFunc
     const isAsset = this.relativePath.startsWith(`${config.folder.assets}/`);
