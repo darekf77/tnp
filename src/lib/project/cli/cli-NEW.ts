@@ -241,6 +241,11 @@ export class $New extends BaseCli {
           config.file.package_json,
         );
 
+        const taonJsoncPath = path.join(
+          currentContainerPath,
+          config.file.taon_jsonc,
+        );
+
         let monorepo = false;
         if (!Helpers.exists(packageJsonPath)) {
           if (isLastContainer && isBrandNew && !parentContainer) {
@@ -261,17 +266,17 @@ export class $New extends BaseCli {
                   chalk.italic(`/${lastProjectFromArgName}`)
                 : chalk.italic(standaloneOrOrgWithStanalonePathName);
 
-            Helpers.info(`
+            //             Helpers.info(`
 
- ${chalk.bold(
-   'SMART CONTAINERS',
- )} - can be used to publish npm organization packages ex. @org/package-name
- ${chalk.bold(
-   'NORMAL CONTAINERS',
- )} - are just a wrapper for other project for easy
- git pull/push or children packages release. Normal container can wrap "standalone" or "smart container" projects.
+            //  ${chalk.bold(
+            //    'SMART CONTAINERS',
+            //  )} - can be used to publish npm organization packages ex. @org/package-name
+            //  ${chalk.bold(
+            //    'NORMAL CONTAINERS',
+            //  )} - are just a wrapper for other project for easy
+            //  git pull/push or children packages release. Normal container can wrap "standalone" or "smart container" projects.
 
-             `);
+            //              `);
 
             monorepo = await Helpers.questionYesNo(
               `Do you want container ${displayNameForLastContainerBeforeApp} be monorepo ?`,
@@ -287,14 +292,14 @@ export class $New extends BaseCli {
           Helpers.writeJson(packageJsonPath, {
             name: path.basename(currentContainerPath),
             version: '0.0.0',
-            private: true,
-            tnp: {
-              version: version || DEFAULT_FRAMEWORK_VERSION,
-              type: 'container',
-              monorepo,
-              smartContainerBuildTarget,
-            },
           } as PackageJson);
+
+          Helpers.writeJson(taonJsoncPath, {
+            version: version || DEFAULT_FRAMEWORK_VERSION,
+            type: 'container' as any,
+            monorepo,
+            smartContainerBuildTarget,
+          } as Partial<Models.TaonJsonContainer>);
         }
 
         currentContainer = this.ins.From(currentContainerPath) as Project;

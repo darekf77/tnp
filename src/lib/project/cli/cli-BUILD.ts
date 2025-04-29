@@ -36,10 +36,8 @@ class $Build extends BaseCli {
    */
   async watch() {
     await this.project.build(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
         build: {
-          ...this.params.build,
           watch: true,
         },
       }),
@@ -52,14 +50,11 @@ class $Build extends BaseCli {
   //#region other build commands / watch build library
   async watchLib() {
     await this.project.build(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
         release: {
-          ...this.params.release,
           targetArtifact: 'npm-lib-and-cli-tool',
         },
         build: {
-          ...this.params.build,
           watch: true,
         },
         finishCallback: () => this._exit(),
@@ -248,34 +243,34 @@ class $Build extends BaseCli {
    */
   async mkdocs() {
     const mkdocsActions = {
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-  
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+
       SERVE_DOCS_TAON: {
         name: 'Serve docs for www.taon.dev on 8000',
         value: {

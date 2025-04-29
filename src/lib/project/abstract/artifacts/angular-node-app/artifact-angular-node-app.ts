@@ -27,7 +27,6 @@ import { InsideStructuresApp } from '../npm-lib-and-cli-tool/tools/inside-struct
 import { AssetsFileListGenerator } from './tools/assets-list-file-generator';
 import { AssetsManager } from './tools/assets-manager';
 import { AngularFeBasenameManager } from './tools/basename-manager';
-import { GithubPagesAppBuildConfig } from './tools/docs-app-build-config';
 import { MigrationHelper } from './tools/migrations-helper';
 
 //#endregion
@@ -47,8 +46,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
   public readonly insideStructureApp: InsideStructuresApp;
   public readonly assetsFileListGenerator: AssetsFileListGenerator;
-  public readonly __docsAppBuild: GithubPagesAppBuildConfig;
-  public readonly __assetsManager: AssetsManager;
+  public readonly assetsManager: AssetsManager;
 
   async APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
     buildOptions: Partial<EnvOptions>,
@@ -79,14 +77,15 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     this.angularFeBasenameManager = new AngularFeBasenameManager(project);
     this.insideStructureApp = new InsideStructuresApp(project);
     this.assetsFileListGenerator = new AssetsFileListGenerator(project);
-    this.__docsAppBuild = new GithubPagesAppBuildConfig(project);
-    this.__assetsManager = new AssetsManager(project);
+    this.assetsManager = new AssetsManager(project);
   }
   //#endregion
 
   //#region init partial
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
+
+    initOptions = await this.project.environmentConfig.update(initOptions);
     await this.insideStructureApp.init(initOptions);
     this.fixAppTsFile();
 
@@ -101,19 +100,25 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       }
     }
 
-    const wasmfileSource = crossPlatformPath([
-      this.project.ins.by(
-        'isomorphic-lib',
-        this.project.framework.frameworkVersion,
-      ).location,
-      'app/src/assets/sql-wasm.wasm',
-    ]);
+    const copyFromCoreAssets = (fileName: string) => {
+      const coreSource = crossPlatformPath([
+        this.project.ins.by(
+          'isomorphic-lib',
+          this.project.framework.frameworkVersion,
+        ).location,
+        `app/src/assets/${fileName}`,
+      ]);
 
-    const wasmfileDest = this.project.pathFor(
-      `tmp-src-dist${initOptions.build.websql ? '-websql' : ''}` +
-        `/assets/sql-wasm.wasm`,
-    );
-    Helpers.copyFile(wasmfileSource, wasmfileDest);
+      const tmpDest = this.project.pathFor(
+        `tmp-src-dist${initOptions.build.websql ? '-websql' : ''}` +
+          `/assets/${fileName}`,
+      );
+      Helpers.copyFile(coreSource, tmpDest);
+    };
+
+    copyFromCoreAssets('sql-wasm.wasm');
+    copyFromCoreAssets('flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2');
+
     return initOptions;
     //#endregion
   }
@@ -338,16 +343,12 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           exitOnError: false,
         });
       } catch (error) {}
-
-      const CNAMEcontent = this.project.readFile('CNAME');
       Helpers.git.cleanRepoFromAnyFilesExceptDotGitFolder(
         staticPagesProjLocation,
       );
       Helpers.writeFile([appDistOutBrowserAngularAbsPath, '.nojekyll'], '');
       Helpers.copy(appDistOutBrowserAngularAbsPath, staticPagesProjLocation);
-      if (CNAMEcontent) {
-        Helpers.writeFile([staticPagesProjLocation, 'CNAME'], CNAMEcontent);
-      }
+      Helpers.git.revertFileChanges(staticPagesProjLocation, 'CNAME');
 
       Helpers.info(`Static pages release done: ${staticPagesProjLocation}`);
 

@@ -122,7 +122,7 @@ export class BrowserCompilation extends BackendCompilation {
     });
 
     this.codecut.files(relativePathesToProcess);
-    this.project.artifactsManager.artifact.angularNodeApp.__assetsManager.copyExternalAssets(
+    this.project.artifactsManager.artifact.angularNodeApp.assetsManager.copyExternalAssets(
       this.buildOptions?.build.websql,
     );
     // process.exit(0)

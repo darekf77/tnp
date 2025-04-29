@@ -13,9 +13,9 @@ export namespace CODE_SPLIT_PROCESS {
   export namespace BEFORE {
     export namespace SPLIT {
       export const IMPORT_EXPORT = {
+        // my-lib/lib => my-lib/src
         WITH_LIB_TO_SRC: CallBackProcess(
           (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
-            // console.log('WITH_LIB_TO_SRC');
             if (
               imp.wrapInParenthesis(imp.packageName) + '/lib' ===
               imp.wrapInParenthesis(imp.cleanEmbeddedPathToFile)
@@ -28,6 +28,7 @@ export namespace CODE_SPLIT_PROCESS {
             return false;
           },
         ),
+        // my-lib/source => my-lib/src
         WITH_SOURCE_TO_SRC: CallBackProcess(
           (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
             // console.log('WITH_SOURCE_TO_SRC');
@@ -43,6 +44,7 @@ export namespace CODE_SPLIT_PROCESS {
             return false;
           },
         ),
+        // my-lib => my-lib/src
         NOTHING_TO_SRC: CallBackProcess(
           (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
             // console.log('NOTHING_TO_SRC');

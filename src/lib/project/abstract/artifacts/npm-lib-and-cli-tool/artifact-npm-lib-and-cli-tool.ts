@@ -36,7 +36,6 @@ import {
 } from './tools/files-recreation';
 import { IndexAutogenProvider } from './tools/index-autogen-provider';
 import { InsideStructuresLib } from './tools/inside-structures/inside-structures';
-import { LibProjectStandalone } from './tools/lib-project/lib-project-standalone';
 import { CypressTestRunner } from './tools/test-runner/cypress-test-runner';
 import { JestTestRunner } from './tools/test-runner/jest-test-runner';
 import { MochaTestRunner } from './tools/test-runner/mocha-test-runner';
@@ -65,7 +64,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 > {
   //#region fields
 
-  public readonly __libStandalone: LibProjectStandalone;
+
 
   public readonly __tests: MochaTestRunner;
   public readonly __testsJest: JestTestRunner;
@@ -85,7 +84,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   constructor(project: Project) {
     super(project, 'npm-lib-and-cli-tool');
 
-    this.__libStandalone = new LibProjectStandalone(project);
 
     this.__tests = new MochaTestRunner(project);
     this.__testsJest = new JestTestRunner(project);

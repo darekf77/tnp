@@ -379,6 +379,7 @@ export class CopyManagerStandalone extends CopyManager {
 
     this.removeSourceLinksFolders(pkgLocInDestNodeModules);
 
+    // TODO this thing is failing when copying unexisted file on macos
     Helpers.copy(monitorDir, pkgLocInDestNodeModules, {
       copySymlinksAsFiles: false,
       filter,

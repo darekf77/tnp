@@ -155,7 +155,7 @@ class EnvOptionsBuild {
   set baseHref(v) {
     this._baseHref = crossPlatformPath(v);
   }
-  private declare _baseHref: string;
+  declare private _baseHref: string;
   declare skipBuildForRelease?: boolean;
   declare websql: boolean;
   /**
@@ -475,6 +475,12 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     this.build.pwa = _.merge(new EnvOptionsBuildPwa(), this.build?.pwa);
     this.build = _.merge(new EnvOptionsBuild(), this.build);
 
+    if (_.isBoolean(this['websql'])) {
+      // QUICK FIX
+      this.build.websql = this['websql'];
+      delete this['websql'];
+    }
+
     this.loading = this.loading || ({} as any);
 
     this.loading.preAngularBootstrap = _.merge(
@@ -538,12 +544,26 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   //#endregion
 
   //#region clone
-  public clone(override?: Partial<EnvOptions>): EnvOptions {
+  public clone(
+    override?: Partial<EnvOptions>,
+    options?: {
+      skipPreservingFinishCallback?: boolean;
+    },
+  ): EnvOptions {
     //#region @backendFunc
+    options = options || {};
     override = override || {};
+    const orgFinishCallback = override?.finishCallback;
     const toClone = _.cloneDeep(this);
     EnvOptions.merge(toClone, override);
     const result = new EnvOptions(toClone);
+    if (!options.skipPreservingFinishCallback) {
+      if (orgFinishCallback) {
+        result.finishCallback = orgFinishCallback;
+      } else {
+        result.finishCallback = () => {};
+      }
+    }
     return result;
     //#endregion
   }

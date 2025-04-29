@@ -1,4 +1,3 @@
-
 // eslint.config.js
 const angularEslintRecommended = require('@angular-eslint/eslint-plugin').configs.recommended;
 const angularTemplateProcessInlineTemplates = require('@angular-eslint/eslint-plugin-template').configs['process-inline-templates'];
@@ -27,6 +26,7 @@ module.exports = [
       ...angularEslintRecommended.rules,
       ...angularTemplateProcessInlineTemplates.rules,
       ...prettierConfig.rules,
+      '@angular-eslint/prefer-standalone': 'off',
       '@angular-eslint/component-class-suffix': [
         'warn',
         {

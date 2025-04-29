@@ -277,9 +277,7 @@ export class ArtifactManager {
   };
 
   async build(buildOptions: EnvOptions): Promise<void> {
-    await this.init(
-      EnvOptions.from({ ...buildOptions, build: { watch: false } }),
-    );
+    await this.init(buildOptions.clone({ build: { watch: false } }));
 
     if (!buildOptions.release.targetArtifact) {
       //#region  build Menu
@@ -296,17 +294,17 @@ export class ArtifactManager {
 
       const ngNormalAppPort =
         await this.artifact.angularNodeApp.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
-          EnvOptions.from({ ...buildOptions, build: { websql: false } }),
+          buildOptions.clone({ build: { websql: false } }),
         );
 
       const ngWebsqlAppPort =
         await this.artifact.angularNodeApp.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
-          EnvOptions.from({ ...buildOptions, build: { websql: true } }),
+          buildOptions.clone({ build: { websql: true } }),
         );
 
       const nodeBeAppPort =
         await this.artifact.angularNodeApp.NODE_BACKEND_PORT_UNIQ_KEY(
-          EnvOptions.from(buildOptions),
+          buildOptions.clone(),
         );
 
       const ngServeAppCommand = CommandConfig.from({
