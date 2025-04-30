@@ -131,7 +131,7 @@ import { NgModule, inject, Injectable } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { VERSION } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { Taon, BaseContext } from 'taon';
+import { Taon, BaseContext } from 'taon/src';
 import { Helpers, UtilsOs } from 'tnp-core/src';
 
 import {

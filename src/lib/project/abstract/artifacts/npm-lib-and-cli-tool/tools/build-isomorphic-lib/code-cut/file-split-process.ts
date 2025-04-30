@@ -9,14 +9,18 @@ import { CODE_SPLIT_PROCESS } from './code-split-process.enum';
 import type { CallBackProcess } from './code-split-process.enum';
 
 export class SplitFileProcess {
-  private importExports: UtilsTypescript.TsImportExport[] = [];
+  declare _importExports: UtilsTypescript.TsImportExport[];
+  get importExports(): UtilsTypescript.TsImportExport[] {
+    return this._importExports;
+  }
   private rewriteFile: boolean = false;
   constructor(
     private fileContent: string,
     private filePath: string,
     private isomorphicLibraries: string[],
   ) {
-    this.importExports = UtilsTypescript.recognizeImportsFromFile(fileContent);
+    this._importExports =
+      UtilsTypescript.recognizeImportsFromContent(fileContent);
     this.processImportsExports();
   }
 
@@ -34,20 +38,10 @@ export class SplitFileProcess {
       return { modifiedContent: this.fileContent, rewriteFile: false };
     }
 
-    // console.log(this.isomorphicLibraries);
-    // process.exit(0);
-    //     console.log(`
-    //     file: ${path.basename(this.filePath)}
-    // ${this.importExports
-    //   .map(i => {
-    //     return `${i.embeddedPathToFile} (${i.type})`;
-    //   })
-    //   .join('\n')}
-    //     `);
     const BEFORE_PROCESSES = Object.values(
       CODE_SPLIT_PROCESS.BEFORE.SPLIT.IMPORT_EXPORT,
     );
-    for (const imp of this.importExports) {
+    for (const imp of this._importExports) {
       if (!imp.isIsomorphic) {
         continue;
       }
@@ -65,14 +59,15 @@ export class SplitFileProcess {
       }
     }
 
-    const result = this.replaceInFile(this.fileContent, this.importExports);
+    const result = this.replaceInFile(this.fileContent, this._importExports);
     return { modifiedContent: result, rewriteFile: this.rewriteFile };
     //#endregion
   }
   //#endregion
 
   private processImportsExports(): void {
-    for (const imp of this.importExports) {
+    for (const imp of this._importExports) {
+      // TODO @LAST better detect deep isomorphic packages
       imp.packageName = imp.cleanEmbeddedPathToFile.startsWith('@')
         ? imp.cleanEmbeddedPathToFile.split('/').slice(0, 2).join('/')
         : imp.cleanEmbeddedPathToFile.split('/')[0];
@@ -86,7 +81,7 @@ export class SplitFileProcess {
     }
   }
 
-  private replaceInFile(
+  public replaceInFile(
     fileContent: string,
     imports: UtilsTypescript.TsImportExport[],
   ): string {
@@ -120,8 +115,6 @@ export class SplitFileProcess {
           actualStartIndex < line.length &&
           actualEndIndex <= line.length
         ) {
-          // const before = line.substring(0, actualStartIndex);
-          // const after = line.substring(actualEndIndex + 1);
           lines[lineIndex] = lines[lineIndex].replace(
             imp.embeddedPathToFile,
             imp.embeddedPathToFileResult,

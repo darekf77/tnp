@@ -878,8 +878,6 @@ ${this.project.children
   }
   //#endregion
 
-
-
   //#region update deps for core container
   async updatedeps(): Promise<void> {
     if (!this.project || !this.project.framework.isCoreProject) {
@@ -1409,45 +1407,45 @@ ${this.project.children
   //#endregion
 
   //#region not for npm / get trusted
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
 
   //#endregion
 
   //#region not for npm / tnp fix taon json
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
 
   //#endregion
 
@@ -1686,6 +1684,14 @@ ${this.project.children
     this._exit();
   }
   //#endregion
+
+  imports() {
+    const imports = UtilsTypescript.recognizeImportsFromFile(
+      this.project.pathFor(this.firstArg),
+    );
+    console.log(imports);
+    this._exit();
+  }
 }
 
 export default {

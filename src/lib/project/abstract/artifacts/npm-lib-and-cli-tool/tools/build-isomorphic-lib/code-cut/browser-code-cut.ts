@@ -1,51 +1,24 @@
 //#region imports
 import { RegionRemover } from 'isomorphic-region-loader/src';
-import {
-  labelReplacementCode,
-  ReplaceOptionsExtended,
-} from 'isomorphic-region-loader/src';
+import { ReplaceOptionsExtended } from 'isomorphic-region-loader/src';
 import {
   config,
   extAllowedToReplace,
   frontEndOnly,
   TAGS,
 } from 'tnp-config/src';
-import {
-  _,
-  path,
-  fse,
-  crossPlatformPath,
-  CoreModels,
-  chalk,
-} from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
+import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 
 import { TO_REMOVE_TAG } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
 import { SplitFileProcess } from './file-split-process';
-
 //#endregion
 
-//#region consts
-const regexAsyncImport =
-  /\ import\((\`|\'|\")([a-zA-Z|\-|\@|\/|\.]+)(\`|\'|\")\)/;
-const regexAsyncImportG =
-  /\ import\((\`|\'|\")([a-zA-Z|\-|\@|\/|\.]+)(\`|\'|\")\)/g;
-
-const debugFiles = [
-  // 'taon-cms.models.ts'
-  // 'app.ts'
-];
-
-export type InlinePkg = {
-  isIsomorphic: boolean;
-  realName: string;
-};
-
 /**
- * Allow imports or exports with '/src' at tthe end
+ * Allow imports or exports with '/src' at the end
  *
  * import { ProcessController, Process } from '@codete-ngrx-quick-start/shared/src';
  * loadChildren: () => import(`@codete-ngrx-quick-start/realtime-process/src`)
@@ -56,16 +29,18 @@ export type InlinePkg = {
  * loadChildren: () => import(`@codete-ngrx-quick-start/realtime-process/src`)
  *
  */
-
-//#endregion
-
 export class BrowserCodeCut {
   //#region fields
-  readonly isAssetsFile: boolean = false;
+  /**
+   * slighted modifed app release dist
+   */
   protected absFileSourcePathBrowserOrWebsqlAPPONLY: string;
   private rawContentForBrowser: string;
   private rawContentForAPPONLYBrowser: string;
   private rawContentBackend: string;
+  public get importExportsFromOrgContent(): UtilsTypescript.TsImportExport[] {
+    return this.splitFileProcess?._importExports || [];
+  }
   private splitFileProcess: SplitFileProcess;
   /**
    * ex. path/to/file-somewhere.ts or assets/something/here
@@ -73,6 +48,7 @@ export class BrowserCodeCut {
    */
   private readonly relativePath: string;
   private readonly isWebsqlMode: boolean;
+  private readonly isAssetsFile: boolean = false;
   private readonly absoluteBackendDestFilePath: string;
 
   //#endregion
@@ -107,14 +83,9 @@ export class BrowserCodeCut {
         `tmp-src-app-${config.folder.dist}${
           buildOptions.build.websql ? '-websql' : ''
         }`,
-      ); // for slighted modifed app release dist
+      );
 
     this.absSourcePathFromSrc = crossPlatformPath(absSourcePathFromSrc);
-
-    // console.log('absSourcePathFromSrc:', absSourcePathFromSrc)
-    // if (absSourcePathFromSrc.endsWith('/file.ts')) {
-    //   debugger
-    // }
 
     if (project.framework.isStandaloneProject) {
       if (
@@ -167,22 +138,18 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / init and save cuttabl file
-  private initAndSaveCuttableFile(options: ReplaceOptionsExtended) {
+  private initAndSaveCuttableFile(options: ReplaceOptionsExtended): void {
     //#region @backendFunc
     return this.init()
       .REPLACERegionsForIsomorphicLib(_.cloneDeep(options) as any)
-      .FLATTypescriptImportExport('export')
-      .FLATTypescriptImportExport('import')
-      .REPLACERegionsFromTsImportExport('export')
-      .REPLACERegionsFromTsImportExport('import')
-      .REPLACERegionsFromJSrequire()
+      .REPLACERegionsFromTsImportExport()
       .save();
     //#endregion
   }
   //#endregion
 
   //#region private / methods & getters / init and save
-  private initAndSaveAssetFile(remove = false) {
+  private initAndSaveAssetFile(remove = false): BrowserCodeCut {
     //#region @backendFunc
     if (remove) {
       Helpers.removeIfExists(
@@ -231,8 +198,7 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / init
-
-  private init() {
+  private init(): BrowserCodeCut {
     //#region @backendFunc
     const orgContent =
       Helpers.readFile(this.absSourcePathFromSrc, void 0, true) || '';
@@ -266,7 +232,7 @@ export class BrowserCodeCut {
       }
     }
 
-    this.rawContentForBrowser = this.removeSrcAtEndFromImortExports(orgContent);
+    this.rawContentForBrowser = orgContent;
     this.rawContentForAPPONLYBrowser = this.rawContentForBrowser; // TODO not needed ?
     this.rawContentBackend = this.rawContentForBrowser; // at the beginning those are normal files from src
     return this;
@@ -295,7 +261,7 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / save empty file
-  private saveEmptyFile(isTsFile: boolean) {
+  private saveEmptyFile(isTsFile: boolean): void {
     //#region @backendFunc
     if (!fse.existsSync(path.dirname(this.absFileSourcePathBrowserOrWebsql))) {
       // write empty instead unlink
@@ -347,7 +313,7 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / save normal file
-  private saveNormalFile(isTsFile: boolean) {
+  private saveNormalFile(isTsFile: boolean): void {
     //#region @backendFunc
     // console.log('SAVE NORMAL FILE')
     if (this.isAssetsFile) {
@@ -376,10 +342,6 @@ export class BrowserCodeCut {
     }
 
     this.processAssetsLinksForApp();
-    this.warnAboutUsingFilesFromNodeModulesWithLibFiles(
-      this.rawContentForAPPONLYBrowser,
-      this.absFileSourcePathBrowserOrWebsqlAPPONLY,
-    );
 
     if (!this.isAssetsFile && this.relativePath.endsWith('.backend.ts')) {
       return;
@@ -422,394 +384,8 @@ export class BrowserCodeCut {
   }
   //#endregion
 
-  //#region private / methods & getters / remove src from imports
-  private processRegexForSrcRemove(
-    regexEnd: RegExp,
-    line: string,
-    matchType: 'from_import_export' | 'imports' | 'require',
-  ): string {
-    //#region @backendFunc
-    const matches = line.match(regexEnd);
-    const firstMatch = _.first(matches) as string;
-
-    let clean: string;
-    if (matchType === 'require' || matchType === 'imports') {
-      const endCharacters = firstMatch.slice(-2);
-      clean = firstMatch.replace('/src' + endCharacters, endCharacters);
-    } else {
-      let endCharacters = firstMatch.slice(-1);
-      clean = firstMatch.replace('/src' + endCharacters, endCharacters);
-    }
-
-    return line.replace(firstMatch, clean);
-    //#endregion
-  }
-  //#endregion
-
-  //#region private / methods & getters / remove src from imports/exports
-  private removeSrcAtEndFromImortExports(content: string): string {
-    //#region @backendFunc
-    const regexEnd = /from\s+(\'|\").+\/src(\'|\")/g;
-    const singleLineImporrt = /import\((\'|\"|\`).+\/src(\'|\"|\`)\)/g;
-    const singleLineRequire = /require\((\'|\"|\`).+\/src(\'|\"|\`)\)/g;
-
-    const commentMultilieStart = /^\/\*/;
-    const commentSingleLineStart = /^\/\//;
-
-    return content
-      .split(/\r?\n/)
-      .map((line, index) => {
-        const trimedLine = line.trimStart();
-        if (
-          commentMultilieStart.test(trimedLine) ||
-          commentSingleLineStart.test(trimedLine)
-        ) {
-          return line;
-        }
-        if (regexEnd.test(line)) {
-          return this.processRegexForSrcRemove(
-            regexEnd,
-            line,
-            'from_import_export',
-          );
-        }
-        if (singleLineImporrt.test(line)) {
-          return this.processRegexForSrcRemove(
-            singleLineImporrt,
-            line,
-            'imports',
-          );
-        }
-        if (singleLineRequire.test(line)) {
-          return this.processRegexForSrcRemove(
-            singleLineRequire,
-            line,
-            'require',
-          );
-        }
-        return line;
-      })
-      .join('\n');
-    //#endregion
-  }
-  //#endregion
-
-  //#region private / methods & getters / process browser not correct imports exports
-  private processBrowserNotCorrectImportsExports = (
-    importOrExportLine: string,
-  ) => {
-    //#region @backendFunc
-    // console.log({ importOrExportLine })
-    // TODO
-    return importOrExportLine;
-    //#endregion
-  };
-  //#endregion
-
-  //#region private / methods & getters / flat typescript import export
-  private FLATTypescriptImportExport(usage: CoreModels.TsUsage) {
-    //#region @backendFunc
-    if (this.isAssetsFile) {
-      return this;
-    }
-    if (!this.relativePath.endsWith('.ts')) {
-      return this;
-    }
-    const isExport = usage === 'export';
-    const fileContent: string = this.rawContentForBrowser;
-    const commentStart = new RegExp(`\\/\\*`);
-    const commentEnds = new RegExp(`\\*\\/`);
-
-    const commentEndExportOnly = new RegExp(`^(\\ )*\\}\\;?\\ *`);
-    const singleLineExport = new RegExp(`^\\ *export\\ +\\{.*\\}\\;?`);
-
-    const regexEnd = new RegExp(`from\\s+(\\'|\\").+(\\'|\\")`);
-    const regextStart = new RegExp(`${usage}\\s+{`);
-
-    let toAppendLines = 0;
-    let insideComment = false;
-    if (_.isString(fileContent)) {
-      let appendingToNewFlatOutput = false;
-      let newFlatOutput = '';
-      fileContent.split(/\r?\n/).forEach((line, index) => {
-        const matchSingleLineExport = isExport && singleLineExport.test(line);
-        const matchCommentStart = commentStart.test(line);
-        const matchCommentEnd = commentEnds.test(line);
-        const matchStart = regextStart.test(line);
-
-        const matchEndExportOnly =
-          isExport &&
-          commentEndExportOnly.test(line) &&
-          line.replace(commentEndExportOnly, '') === '';
-        const matchEnd = matchEndExportOnly || regexEnd.test(line);
-
-        if (matchCommentStart) {
-          insideComment = true;
-        }
-        if (insideComment && matchCommentEnd) {
-          insideComment = false;
-        }
-        // (path.basename(this.absoluteFilePath) === 'core-imports.ts') && console.log(`${insideComment}: ${line}`)
-        // isExport && (path.basename(this.absoluteFilePath) === 'core-imports.ts') && console.log(`export end: ${matchEndExportOnly}: >>>${line}<<<`)
-        // console.log(`I(${regexParialUsage.test(line)}) F(${regexFrom.test(line)})\t: ${line} `)
-        // (path.basename(this.absoluteFilePath) === 'core-imports.ts') && console.log(`matchSingleLineExport: ${matchSingleLineExport}: >>>${line}<<<`)
-        // if (insideComment || matchSingleLineExport) {
-        //   newFlatOutput += (((index > 0) ? '\n' : '') + line);
-        //   toAppendLines++;
-        // }
-        if (appendingToNewFlatOutput) {
-          if (!matchStart && !matchEnd) {
-            newFlatOutput += ` ${line}`;
-            toAppendLines++;
-          } else if (insideComment) {
-            newFlatOutput += ` ${line}`;
-            toAppendLines++;
-          } else if (matchEnd) {
-            appendingToNewFlatOutput = false;
-            newFlatOutput += ` ${this.processBrowserNotCorrectImportsExports(
-              line,
-            )}${_.times(
-              toAppendLines,
-              () => `${labelReplacementCode.flatenImportExportRequred}\n`,
-            ).join('')}`; // TOOD @UNCOMMENT
-            toAppendLines = 0;
-          }
-        } else {
-          if (insideComment) {
-            newFlatOutput += (index > 0 ? '\n' : '') + line;
-          } else {
-            if (matchSingleLineExport) {
-              newFlatOutput += (index > 0 ? '\n' : '') + line;
-            } else {
-              appendingToNewFlatOutput = matchStart && !matchEnd;
-              // if (joiningLine) console.log('line', line)
-              newFlatOutput +=
-                (index > 0 ? '\n' : '') +
-                this.processBrowserNotCorrectImportsExports(line);
-            }
-            toAppendLines = 1;
-          }
-        }
-      });
-      this.rawContentForBrowser = newFlatOutput;
-    }
-    // console.log('\n\n\n\n')
-    return this;
-    //#endregion
-  }
-  //#endregion
-
-  //#region private / methods & getters / resolved pacakge name from
-  /**
-   * Get "npm package name" from line of code in .ts or .js files
-   */
-  private get resolvePackageNameFrom() {
-    //#region @backendFunc
-    const self = this;
-    return {
-      JSrequired(rawImport) {
-        rawImport = rawImport.replace(new RegExp(`require\\((\\'|\\")`), '');
-        rawImport = rawImport.replace(new RegExp(`(\\'|\\")\\)`), '');
-        rawImport = rawImport.trim();
-        if (rawImport.startsWith(`./`)) return void 0;
-        if (rawImport.startsWith(`../`)) return void 0;
-        const fisrtName = rawImport.match(new RegExp(`\@?([a-zA-z]|\-)+\\/`));
-        let res: string =
-          _.isArray(fisrtName) && fisrtName.length > 0
-            ? fisrtName[0]
-            : rawImport;
-        if (res.endsWith('/') && res.length > 1) {
-          res = res.substring(0, res.length - 1);
-        }
-        return res;
-      },
-      TSimportExport(rawImport: string, usage: CoreModels.TsUsage) {
-        // const orgImport = rawImport;
-        if (usage === 'import') {
-          const matches = rawImport.match(regexAsyncImport);
-          if (Array.isArray(matches) && matches.length > 0) {
-            const first = _.first(matches);
-            rawImport = first;
-            rawImport = rawImport.replace(/\ import\((\`|\'|\")/, '');
-            rawImport = rawImport.replace(/(\`|\'|\")\)/, '');
-          }
-        }
-
-        rawImport = rawImport.replace(new RegExp(`${usage}.+from\\s+`), '');
-        rawImport = rawImport.replace(new RegExp(`(\'|\")`, 'g'), '').trim();
-        if (rawImport.startsWith(`./`)) return void 0;
-        if (rawImport.startsWith(`../`)) return void 0;
-
-        const workspacePackgeMatch = (
-          rawImport.match(
-            new RegExp(`^\\@([a-zA-z]|\\-)+\\/([a-zA-z]|\\-)+$`),
-          ) || []
-        ).filter(d => d.length > 1);
-        const worskpacePackageName =
-          _.isArray(workspacePackgeMatch) && workspacePackgeMatch.length === 1
-            ? _.first(workspacePackgeMatch)
-            : void 0;
-
-        // const normalPackageMatch = (rawImport.match(new RegExp(`^([a-zA-z]|\\-)+\\/`)) || []);
-        // const normalPackageName = (_.isArray(normalPackageMatch) && normalPackageMatch.length === 1)
-        //   ? _.first(normalPackageMatch) : '';
-
-        let res: string = worskpacePackageName
-          ? worskpacePackageName
-          : rawImport;
-        if (res.endsWith('/') && res.length > 1) {
-          res = res.substring(0, res.length - 1);
-        }
-
-        return res;
-      },
-    };
-    //#endregion
-  }
-  //#endregion
-
-  //#region private / methods & getters / get inline package
-  private getInlinePackage(packageName: string): InlinePkg {
-    //#region @backendFunc
-    const packagesNames =
-      this.project.packagesRecognition.allIsomorphicPackagesFromMemory;
-
-    let realName = packageName;
-    let isIsomorphic = false;
-    if (packageName !== void 0) {
-      isIsomorphic = !!packagesNames.find(p => {
-        if (p === packageName) {
-          return true;
-        }
-        const slashes = (p.match(new RegExp('/', 'g')) || []).length;
-        if (slashes === 0) {
-          return p === packageName;
-        }
-        // console.log('am here ', packageName)
-        // console.log('p', p)
-        if (p.startsWith(packageName)) {
-          realName = p;
-          // console.log('FOUDNED for ', packageName)
-          // console.log('is REAL', p)
-          return true;
-        }
-        return false;
-      });
-    }
-    return {
-      isIsomorphic,
-      realName,
-    };
-    //#endregion
-  }
-  //#endregion
-
-  //#region private / methods & getters / regex region
-  private REGEX_REGION(word) {
-    //#region @backendFunc
-    return new RegExp(
-      '[\\t ]*\\/\\/\\s*#?region\\s+' +
-        word +
-        ' ?[\\s\\S]*?\\/\\/\\s*#?endregion ?[\\t ]*\\n?',
-      'g',
-    );
-    //#endregion
-  }
-  //#endregion
-
-  //#region private / methods & getters / replace region with
-  private replaceRegionsWith(stringContent = '', words = []) {
-    //#region @backendFunc
-    if (words.length === 0) return stringContent;
-    let word = words.shift();
-    let replacement = '';
-    if (Array.isArray(word) && word.length === 2) {
-      replacement = word[1];
-      word = word[0];
-    }
-
-    stringContent = stringContent.replace(this.REGEX_REGION(word), replacement);
-    return this.replaceRegionsWith(stringContent, words);
-    //#endregion
-  }
-  //#endregion
-
-  //#region private / methods & getters / replace from line
-  private replaceFromLine(pkgName: string, imp: string) {
-    //#region @backendFunc
-    // console.log(`Check package: "${pkgName}"`)
-    // console.log(`imp: "${imp}"`)
-    const inlinePkg = this.getInlinePackage(pkgName);
-
-    if (inlinePkg.isIsomorphic) {
-      // console.log('inlinePkg ', inlinePkg.realName)
-      const replacedImp = imp.replace(
-        inlinePkg.realName,
-        `${inlinePkg.realName}/${
-          this.buildOptions.build.websql
-            ? config.folder.websql
-            : config.folder.browser
-        }`,
-      );
-
-      this.rawContentForBrowser = this.rawContentForBrowser.replace(
-        imp,
-        replacedImp,
-      );
-      return;
-    }
-    //#endregion
-  }
-  //#endregion
-
   //#region private / methods & getters / replace regions from ts import export
-  private REPLACERegionsFromTsImportExport(usage: CoreModels.TsUsage) {
-    //#region @backendFunc
-    // const debug = filesToDebug.includes(path.basename(this.absoluteFilePath));
-    // if (debug) {
-    //   debugger
-    // }
-    if (this.isAssetsFile) {
-      return this;
-    }
-    if (!this.relativePath.endsWith('.ts')) {
-      return this;
-    }
-    if (!_.isString(this.rawContentForBrowser)) return;
-    const importRegex = new RegExp(
-      `${usage}.+from\\s+(\\'|\\").+(\\'|\\")`,
-      'g',
-    );
-
-    const asynMatches =
-      usage === 'import'
-        ? this.rawContentForBrowser.match(regexAsyncImportG)
-        : [];
-    const normalMatches = this.rawContentForBrowser.match(importRegex);
-
-    const asyncImports = Array.isArray(asynMatches) ? asynMatches : [];
-    let imports = [
-      ...(Array.isArray(normalMatches) ? normalMatches : []),
-      ...asyncImports,
-    ];
-    // debug && console.log(imports)
-    if (_.isArray(imports)) {
-      imports.forEach(imp => {
-        // debug && console.log('imp: ' + imp)
-        const pkgName = this.resolvePackageNameFrom.TSimportExport(imp, usage);
-        // debug && console.log('pkgName: ' + pkgName)
-        if (pkgName) {
-          this.replaceFromLine(pkgName, imp);
-        }
-      });
-    }
-    return this;
-    //#endregion
-  }
-  //#endregion
-
-  //#region private / methods & getters / replace regions from js require
-  private REPLACERegionsFromJSrequire() {
+  private REPLACERegionsFromTsImportExport(): BrowserCodeCut {
     //#region @backendFunc
     if (this.isAssetsFile) {
       return this;
@@ -817,26 +393,50 @@ export class BrowserCodeCut {
     if (!this.relativePath.endsWith('.ts')) {
       return this;
     }
-    if (!_.isString(this.rawContentForBrowser)) return;
-    // fileContent = IsomorphicRegions.flattenRequiresForContent(fileContent, usage)
-    const importRegex = new RegExp(`require\\((\\'|\\").+(\\'|\\")\\)`, 'g');
-    let imports = this.rawContentForBrowser.match(importRegex);
-    // console.log(imports)
-    if (_.isArray(imports)) {
-      imports.forEach(imp => {
-        const pkgName = this.resolvePackageNameFrom.JSrequired(imp);
-        if (pkgName) {
-          this.replaceFromLine(pkgName, imp);
-        }
+    if (_.isString(this.rawContentForBrowser)) {
+      const toReplace = this.importExportsFromOrgContent.filter(imp => {
+        imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+          imp.cleanEmbeddedPathToFile.replace(
+            '/src',
+            `/${
+              this.buildOptions.build.websql
+                ? config.folder.websql
+                : config.folder.browser
+            }`,
+          ),
+        );
+        return imp.isIsomorphic;
       });
+
+      this.rawContentForBrowser = this.splitFileProcess.replaceInFile(
+        this.rawContentForBrowser,
+        toReplace,
+      );
     }
+
+    if (_.isString(this.rawContentBackend)) {
+      const toReplace = this.importExportsFromOrgContent.filter(imp => {
+        imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+          imp.cleanEmbeddedPathToFile.replace('/src', `/${config.folder.lib}`),
+        );
+        return imp.isIsomorphic;
+      });
+
+      this.rawContentBackend = this.splitFileProcess.replaceInFile(
+        this.rawContentBackend,
+        toReplace,
+      );
+    }
+
     return this;
     //#endregion
   }
   //#endregion
 
   //#region private / methods & getters / replace regions for isomorphic lib
-  private REPLACERegionsForIsomorphicLib(options: ReplaceOptionsExtended) {
+  private REPLACERegionsForIsomorphicLib(
+    options: ReplaceOptionsExtended,
+  ): BrowserCodeCut {
     //#region @backendFunc
     if (this.isAssetsFile) {
       return this;
@@ -900,7 +500,7 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / processing asset link for app
-  private processAssetsLinksForApp() {
+  private processAssetsLinksForApp(): void {
     //#region @backendFunc
     this.rawContentForAPPONLYBrowser = this.rawContentForBrowser.replace(
       new RegExp(Helpers.escapeStringForRegEx(TO_REMOVE_TAG), 'g'),
@@ -1019,7 +619,7 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / save
-  private save() {
+  private save(): void {
     //#region @backendFunc
     if (this.isAssetsFile) {
       this.saveNormalFile(false);
@@ -1058,110 +658,19 @@ export class BrowserCodeCut {
       const contentStandalone =
         isEmptyModuleBackendFile && isTsFile
           ? `export function dummy${new Date().getTime()}() { }`
-          : this.changeStandaloneBackendFileContentBeforeSave(
+          : this.changeContenBeforeSave(
               this.rawContentBackend,
               absoluteBackendDestFilePath,
+              {
+                additionalSmartPckages: [
+                  this.project.name,
+                  this.project.nameForNpmPackage,
+                ],
+                isBrowser: false,
+              },
             );
 
       fse.writeFileSync(absoluteBackendDestFilePath, contentStandalone, 'utf8');
-    }
-    //#endregion
-  }
-  //#endregion
-
-  //#region private / methods & getters / warn about using file from node_modules with lib files
-  private warnAboutUsingFilesFromNodeModulesWithLibFiles(
-    content: string,
-    absFilePath: string,
-  ) {
-    //#region @backendFunc
-    if (!absFilePath.endsWith('.ts')) {
-      // console.log(`NOT_FIXING: ${absFilePath}`)
-      return content;
-    }
-
-    if (
-      !(
-        this.relativePath.startsWith('app.ts') ||
-        this.relativePath.startsWith('app/')
-      )
-    ) {
-      return;
-    }
-    const howMuchBack = this.relativePath.split('/').length - 1;
-    // const debugFiles = [
-    //   // 'files.container.ts',
-    //   // 'app.ts',
-    // ];
-
-    // if (debugFiles.length > 0 && !debugFiles.includes(path.basename(absFilePath))) {
-    //   return;
-    // }
-
-    const recognizeImport = (usage: CoreModels.TsUsage) => {
-      const importRegex = new RegExp(
-        `${usage}.+from\\s+(\\'|\\").+(\\'|\\")`,
-        'g',
-      );
-
-      const asynMatches =
-        usage === 'import' ? content.match(regexAsyncImportG) : [];
-      const normalMatches = content.match(importRegex);
-
-      const asyncImports = Array.isArray(asynMatches) ? asynMatches : [];
-      let importsLines = [
-        ...(Array.isArray(normalMatches) ? normalMatches : []),
-        ...asyncImports,
-      ];
-      return importsLines;
-    };
-
-    let lines: [string, number][] = [
-      ...recognizeImport('import'),
-      ...recognizeImport('export'),
-    ]
-      .map((line, index) => {
-        if (howMuchBack === 0) {
-          const importRegex = new RegExp(
-            `from\\s+(\\'|\\")\\.\\/lib(\\/|(\\'|\\"))`,
-            'g',
-          );
-          const match = importRegex.test(line);
-          return match ? [line, index] : void 0;
-        } else {
-          const importRegex = new RegExp(
-            `from\\s+(\\'|\\")${_.times(howMuchBack, () => {
-              return '\\.\\.';
-            }).join('\\/')}\\/lib(\\/|(\\'|\\"))`,
-            'g',
-          );
-          const match = importRegex.test(line);
-          return match ? [line, index] : void 0;
-        }
-      })
-      .filter(f => !!f) as any;
-
-    // if(lines.length > 0) {
-    //   console.log({
-    //     'this.relativePath': this.relativePath,
-    //     'absFilePath': absFilePath,
-    //   })
-    // }
-
-    for (let index = 0; index < lines.length; index++) {
-      const [wrongImport, lineindex] = lines[index];
-      Helpers.warn(
-        `
-${chalk.bold('WARNING')}: ${chalk.underline(
-          './src/' + this.relativePath + `:${lineindex + 2}:1`,
-        )} Don't import things from lib like that (it may not work in your ${
-          this.project.name
-        }/src/app project);
-${chalk.bold(wrongImport)};
-Please use version compiled in node_modules:
-import { < My Stuff > } from '${this.project.name}/src';`,
-        false,
-      );
     }
     //#endregion
   }
@@ -1172,7 +681,7 @@ import { < My Stuff > } from '${this.project.name}/src';`,
     browserOrWebsqlFileContent: string,
     absFilePath: string,
     packageName?: string,
-  ) {
+  ): string {
     //#region @backendFunc
     if (!packageName) {
       packageName = this.project.name;
@@ -1181,61 +690,15 @@ import { < My Stuff > } from '${this.project.name}/src';`,
       return browserOrWebsqlFileContent;
     }
 
-    const standaloneRegexImportExport = new RegExp(
-      `from\\s+(\\'|\\")${Helpers.escapeStringForRegEx(
-        packageName,
-      )}\\/(browser|websql)(\\'|\\")`,
-      'g',
-    );
-    const standaloneRegexImports = new RegExp(
-      `imports\\((\\'|\\")${Helpers.escapeStringForRegEx(
-        packageName,
-      )}\\/(browser|websql)(\\'|\\")\\)`,
-      'g',
-    );
+    let result = browserOrWebsqlFileContent;
 
-    //#region debug stuff
-    // const debug = debugFiles.includes(path.basename(absFilePath));
-    // if (debug) {
-    //   console.log('Fixing browser/websqlf file: ' + absFilePath)
-    //   console.log({
-    //     standaloneRegexImportExport,
-    //     standaloneRegexImports,
-    //   })
-    // }
-    //#endregion
-
-    const splited = [...browserOrWebsqlFileContent.split('\n')];
-
-    const ignoreIndex = [];
-    const res = splited.map((line, index) => {
-      if (
-        standaloneRegexImportExport.test(line) ||
-        standaloneRegexImports.test(line)
-      ) {
-        ignoreIndex.push(index - 1);
-      }
-      if (
-        (line.trimLeft().startsWith('// ') ||
-          line.trimLeft().startsWith('//#')) &&
-        line.search('@ts-ignore') === -1
-      ) {
-        return '';
-      }
-      return line;
+    result = this.changeContenBeforeSave(result, absFilePath, {
+      additionalSmartPckages: [
+        this.project.name,
+        this.project.nameForNpmPackage,
+      ],
+      isBrowser: true,
     });
-
-    for (let index = 0; index < ignoreIndex.length; index++) {
-      res[ignoreIndex[index]] = res[ignoreIndex[index]] + ' // @ts-ignore';
-    }
-
-    let result = res.join('\n');
-
-    result = this.changeStandaloneBackendFileContentBeforeSave(
-      result,
-      absFilePath,
-      true,
-    );
 
     return result;
     //#endregion
@@ -1248,99 +711,65 @@ import { < My Stuff > } from '${this.project.name}/src';`,
     absFilePath: string,
     options: {
       additionalSmartPckages: string[];
-      isStandalone: boolean;
       isBrowser: boolean;
     },
-  ) {
+  ): string {
     //#region @backendFunc
     if (!absFilePath.endsWith('.ts')) {
       // console.log(`NOT_FIXING: ${absFilePath}`)
       return content;
     }
 
-    const { isBrowser, isStandalone, additionalSmartPckages } = options;
-
-    // const debug = debugFiles.includes(path.basename(absFilePath));
-    // debug && console.log(`FIXING: ${absFilePath} for ${isStandalone ? 'STANDALONE' : 'ORGANIZATION'}`)
+    const { isBrowser, additionalSmartPckages } = options;
 
     const howMuchBack = this.relativePath.split('/').length - 1;
+    const back =
+      howMuchBack === 0
+        ? './'
+        : _.times(howMuchBack)
+            .map(() => '../')
+            .join('');
 
-    for (let index = 0; index < additionalSmartPckages.length; index++) {
-      const rootChildPackage = additionalSmartPckages[index];
-      const [__, childName] = rootChildPackage.split('/');
-      const libName = isStandalone
-        ? config.folder.lib
-        : `${config.folder.libs}/${childName}`;
-      const back =
-        howMuchBack === 0
-          ? './'
-          : _.times(howMuchBack)
-              .map(() => '../')
-              .join('');
-      const escapedName = Helpers.escapeStringForRegEx(rootChildPackage);
+    let toReplace: UtilsTypescript.TsImportExport[] = [];
 
-      if (isBrowser) {
-        const regexFull = new RegExp(
-          `from\\s+(\\'|\\")${escapedName}\\/(browser|websql)(\\'|\\")`,
-          'g',
-        );
-        const regexPartial = new RegExp(
-          `from\\s+(\\'|\\")${escapedName}\\/(browser|websql)\\/`,
-          'g',
-        );
-        // debug && console.log({
-        //   escapedName,
-        //   regexFull,
-        //   regexPartial,
-        // });
-        content = content.replace(regexFull, `from '${back}${libName}'`);
-        content = content.replace(regexPartial, `from '${back}${libName}/`);
-      } else {
-        const regexFull = new RegExp(
-          `from\\s+(\\'|\\")${escapedName}(\\'|\\")`,
-          'g',
-        );
-        const regexPartial = new RegExp(
-          `from\\s+(\\'|\\")${escapedName}\\/`,
-          'g',
-        );
-        // debug && console.log({
-        //   escapedName,
-        //   regexFull,
-        //   regexPartial,
-        // });
-        content = content.replace(regexFull, `from '${back}${libName}'`);
-        content = content.replace(regexPartial, `from '${back}${libName}/`);
-      }
+    if (isBrowser) {
+      toReplace = UtilsTypescript.recognizeImportsFromContent(
+        this.rawContentForBrowser,
+      ).filter(f =>
+        additionalSmartPckages.includes(
+          f.cleanEmbeddedPathToFile
+            .replace(/\/browser$/, '')
+            .replace(/\/websql$/, ''),
+        ),
+      );
+    } else {
+      toReplace = UtilsTypescript.recognizeImportsFromContent(
+        this.rawContentBackend,
+      ).filter(f =>
+        additionalSmartPckages.includes(
+          f.cleanEmbeddedPathToFile.replace(/\/lib$/, ''),
+        ),
+      );
     }
-    // Helpers.warn(`[copytomanager] Empty content for ${absFilePath}`);
-    // console.log({ absFilePathJSJSJ: absFilePath })
+
+    for (const imp of toReplace) {
+      imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+        `${back}${config.folder.lib}`,
+      );
+    }
+    content = this.splitFileProcess.replaceInFile(content, toReplace);
+
+    // if (this.relativePath.endsWith('app.ts')) {
+    //   debugger;
+    // }
+
     return content;
     //#endregion
   }
   //#endregion
 
-  //#region private / methods & getters / change file import/export for standalone
-  /**
-   * TODO may be weak solutin
-   */
-  private changeStandaloneBackendFileContentBeforeSave(
-    content: string,
-    absFilePath: string,
-    isBrowser: boolean = false,
-  ) {
-    //#region @backendFunc
-    return this.changeContenBeforeSave(content, absFilePath, {
-      additionalSmartPckages: [this.project.name],
-      isStandalone: true,
-      isBrowser,
-    });
-    //#endregion
-  }
-  //#endregion
-
   //#region private / methods & getters / replace assets path
-  private replaceAssetsPath(absDestinationPath: string) {
+  private replaceAssetsPath(absDestinationPath: string): string {
     //#region @backendFunc
     const isAsset = this.relativePath.startsWith(`${config.folder.assets}/`);
 
