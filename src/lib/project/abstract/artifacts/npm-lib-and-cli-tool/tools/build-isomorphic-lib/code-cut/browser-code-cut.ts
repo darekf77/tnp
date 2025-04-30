@@ -17,6 +17,12 @@ import type { Project } from '../../../../../project';
 import { SplitFileProcess } from './file-split-process';
 //#endregion
 
+//#region constants
+const debugFile = [
+  // 'helpers-process.ts'
+];
+//#endregion
+
 /**
  * Allow imports or exports with '/src' at the end
  *
@@ -50,6 +56,7 @@ export class BrowserCodeCut {
   private readonly isWebsqlMode: boolean;
   private readonly isAssetsFile: boolean = false;
   private readonly absoluteBackendDestFilePath: string;
+  private readonly debug: boolean = false;
 
   //#endregion
 
@@ -100,6 +107,8 @@ export class BrowserCodeCut {
     this.relativePath = crossPlatformPath(
       this.absFileSourcePathBrowserOrWebsql,
     ).replace(`${this.absPathTmpSrcDistFolder}/`, '');
+
+    this.debug = debugFile.some(d => this.relativePath.endsWith(d));
 
     this.absoluteBackendDestFilePath = crossPlatformPath(
       path.join(
@@ -412,6 +421,9 @@ export class BrowserCodeCut {
         this.rawContentForBrowser,
         toReplace,
       );
+      this.importExportsFromOrgContent.forEach(
+        imp => delete imp.embeddedPathToFileResult,
+      );
     }
 
     if (_.isString(this.rawContentBackend)) {
@@ -425,6 +437,9 @@ export class BrowserCodeCut {
       this.rawContentBackend = this.splitFileProcess.replaceInFile(
         this.rawContentBackend,
         toReplace,
+      );
+      this.importExportsFromOrgContent.forEach(
+        imp => delete imp.embeddedPathToFileResult,
       );
     }
 
