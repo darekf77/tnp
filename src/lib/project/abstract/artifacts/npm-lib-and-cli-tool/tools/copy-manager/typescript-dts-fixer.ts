@@ -7,10 +7,16 @@ import { CopyMangerHelpers } from './copy-manager-helpers';
 export const TS_NOCHECK = '// @ts-nocheck';
 
 /**
+ * TODO QUICK_FIX: for typescript compiler doing wrong imports/exports in d.ts files
+ * example in file base context.d.ts
+ * readonly __refSync: import("taon").EndpointContext;
+ * instead of
+ * readonly __refSync: import("taon/browser").EndpointContext;
+ *
  * 1, import('') fixes for
  * - browser
  * - websql
- * 2. @dts nocheck fix at beginngin
+ * 2. @dts nocheck fix at beginning
  * - browser
  * - websql
  * - nodejs

@@ -115,7 +115,7 @@ export class Docs extends BaseDebounceCompilerForProject<
       this.project.framework.frameworkVersion,
     );
     return globalContainer.pathFor(
-      `.${config.frameworkName}/docs-from-projects/${this.project.framework.universalPackageName}`,
+      `.${config.frameworkName}/docs-from-projects/${this.project.nameForNpmPackage}`,
     );
     //#endregion
   }
@@ -125,7 +125,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   get docsGlobalTimestampForWatcherAbsPath() {
     //#region @backendFunc
     return this.getTimestampWatcherForPackageName(
-      this.project.framework.universalPackageName,
+      this.project.nameForNpmPackage,
     );
     //#endregion
   }
@@ -186,7 +186,7 @@ export class Docs extends BaseDebounceCompilerForProject<
     // process.exit(0);
     const project = this.project;
     this.initOptions({
-      taskName: 'DocsProvider',
+      taskName: `DocsProviderFor${_.upperFirst(_.camelCase(this.project.genericName))}`,
       folderPath: project.location,
       ignoreFolderPatter: [
         project.pathFor('tmp-*/**/*.*'),
@@ -653,7 +653,7 @@ markdown_extensions:
   private linkProjectToDocsFolder(packageName: string) {
     //#region @backendFunc
 
-    if (this.project.framework.universalPackageName === packageName) {
+    if (this.project.nameForNpmPackage === packageName) {
       // Helpers.warn(
       //   `Project ${packageName} is the same as current project ${this.project.universalPackageName}`,
       // );
@@ -865,7 +865,7 @@ markdown_extensions:
                 this.resolvePackageDataFrom(singlePackageNameWithPath);
 
               const orgLocation =
-                this.project.framework.universalPackageName === packageName
+                this.project.nameForNpmPackage === packageName
                   ? this.project.pathFor(
                       this.tmpDocsFolderRootDocsDirRelativePath,
                     )
@@ -924,13 +924,9 @@ markdown_extensions:
       //#region allow own packages redirection
       // QUICKFIX
       f => {
-        if (
-          f.relativePath.startsWith(
-            `${this.project.framework.universalPackageName}/`,
-          )
-        ) {
+        if (f.relativePath.startsWith(`${this.project.nameForNpmPackage}/`)) {
           f.relativePath = f.relativePath.replace(
-            `${this.project.framework.universalPackageName}/`,
+            `${this.project.nameForNpmPackage}/`,
             '',
           );
         }

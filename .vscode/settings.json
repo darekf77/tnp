@@ -66,6 +66,7 @@
     "**/package-lock.json": true,
     "**/protractor.conf.js": true,
     "**/karma.conf.js": true,
+    "**/.eslintrc.json": true,
     "**/docs-config.schema.json": true
   },
   "search.exclude": {

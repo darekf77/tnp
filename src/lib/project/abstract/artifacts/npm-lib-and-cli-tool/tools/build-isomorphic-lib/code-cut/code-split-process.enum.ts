@@ -1,6 +1,11 @@
 import { UtilsTypescript } from 'tnp-helpers/src';
 export const CallBackProcess = (
-  fun: (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => boolean,
+  fun: (
+    imp: UtilsTypescript.TsImportExport,
+    isomorphicLibraries: string[],
+    currentProjectName: string,
+    currentProjectNpmName: string,
+  ) => boolean,
 ) => {
   return fun;
 };
@@ -13,9 +18,39 @@ export namespace CODE_SPLIT_PROCESS {
   export namespace BEFORE {
     export namespace SPLIT {
       export const IMPORT_EXPORT = {
+        /**
+         * name => nameForNpmPackage
+         * my-lib => @my-org/my-lib
+         * my-lib => my-custom-npm-lib
+         */
+        NAME_TO_NPM_NAME: CallBackProcess(
+          (
+            imp: UtilsTypescript.TsImportExport,
+            isomorphicLibraries: string[],
+            currentProjectName: string,
+            currentProjectNpmName: string,
+          ) => {
+            if (
+              imp.isIsomorphic &&
+              imp.cleanEmbeddedPathToFile.startsWith(`${currentProjectName}/`)
+            ) {
+              imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+                imp.cleanEmbeddedPathToFile.replace(
+                  `${currentProjectName}/`,
+                  `${currentProjectNpmName}/`,
+                ),
+              );
+              return true;
+            }
+            return false;
+          },
+        ),
         // my-lib/lib => my-lib/src
         WITH_LIB_TO_SRC: CallBackProcess(
-          (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
+          (
+            imp: UtilsTypescript.TsImportExport,
+            isomorphicLibraries: string[],
+          ) => {
             if (
               imp.wrapInParenthesis(imp.packageName) + '/lib' ===
               imp.wrapInParenthesis(imp.cleanEmbeddedPathToFile)
@@ -30,7 +65,10 @@ export namespace CODE_SPLIT_PROCESS {
         ),
         // my-lib/source => my-lib/src
         WITH_SOURCE_TO_SRC: CallBackProcess(
-          (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
+          (
+            imp: UtilsTypescript.TsImportExport,
+            isomorphicLibraries: string[],
+          ) => {
             // console.log('WITH_SOURCE_TO_SRC');
             if (
               imp.wrapInParenthesis(imp.packageName) + '/source' ===
@@ -46,7 +84,10 @@ export namespace CODE_SPLIT_PROCESS {
         ),
         // my-lib => my-lib/src
         NOTHING_TO_SRC: CallBackProcess(
-          (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
+          (
+            imp: UtilsTypescript.TsImportExport,
+            isomorphicLibraries: string[],
+          ) => {
             // console.log('NOTHING_TO_SRC');
             if (
               imp.wrapInParenthesis(imp.packageName) ===
@@ -61,7 +102,10 @@ export namespace CODE_SPLIT_PROCESS {
           },
         ),
         DEEP_TO_SHORT_SRC: CallBackProcess(
-          (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
+          (
+            imp: UtilsTypescript.TsImportExport,
+            isomorphicLibraries: string[],
+          ) => {
             // console.log('DEEP_TO_SHORT_SRC');
             if (
               imp.cleanEmbeddedPathToFile.replace(
@@ -78,12 +122,18 @@ export namespace CODE_SPLIT_PROCESS {
           },
         ),
         BROWSER_TO_SRC: CallBackProcess(
-          (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
+          (
+            imp: UtilsTypescript.TsImportExport,
+            isomorphicLibraries: string[],
+          ) => {
             return false; // TODO
           },
         ),
         WEBSQL_TO_SRC: CallBackProcess(
-          (imp: UtilsTypescript.TsImportExport, isomorphicLibraries: string[]) => {
+          (
+            imp: UtilsTypescript.TsImportExport,
+            isomorphicLibraries: string[],
+          ) => {
             return false; // TODO
           },
         ),

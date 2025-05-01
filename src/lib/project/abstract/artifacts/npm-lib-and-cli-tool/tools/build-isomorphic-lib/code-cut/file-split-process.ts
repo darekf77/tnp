@@ -1,5 +1,5 @@
 import { extAllowedToExportAndReplaceTSJSCodeFiles } from 'tnp-config/src';
-import { path, _ } from 'tnp-core/src';
+import { path, _, Utils } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 
@@ -15,9 +15,11 @@ export class SplitFileProcess {
   }
   private rewriteFile: boolean = false;
   constructor(
-    private fileContent: string,
-    private filePath: string,
-    private isomorphicLibraries: string[],
+    private readonly fileContent: string,
+    private readonly filePath: string,
+    private readonly isomorphicLibraries: string[],
+    private readonly currentProjectName: string,
+    private readonly currentProjectNpmName: string,
   ) {
     this._importExports =
       UtilsTypescript.recognizeImportsFromContent(fileContent);
@@ -50,6 +52,8 @@ export class SplitFileProcess {
           const rewrite = (processFun as ReturnType<typeof CallBackProcess>)(
             imp,
             this.isomorphicLibraries,
+            this.currentProjectName,
+            this.currentProjectNpmName,
           );
           if (!this.rewriteFile && rewrite) {
             this.rewriteFile = true;
@@ -68,15 +72,30 @@ export class SplitFileProcess {
   private processImportsExports(): void {
     for (const imp of this._importExports) {
       // TODO @LAST better detect deep isomorphic packages
-      imp.packageName = imp.cleanEmbeddedPathToFile.startsWith('@')
-        ? imp.cleanEmbeddedPathToFile.split('/').slice(0, 2).join('/')
-        : imp.cleanEmbeddedPathToFile.split('/')[0];
-
-      imp.isIsomorphic = !_.isUndefined(
-        this.isomorphicLibraries.find(l => l === imp.packageName),
+      const matchRegex = new RegExp(
+        `^(${this.isomorphicLibraries
+          .sort((a, b) => b.length - a.length)
+          .map(Utils.escapeStringForRegEx)
+          .join('|')})`,
       );
-      if (!imp.isIsomorphic) {
-        continue;
+      const match = imp.cleanEmbeddedPathToFile.match(matchRegex);
+
+      // console.log(`match: >>${matchRegex.source}<< for >>${imp.embeddedPathToFile}<<`);
+      imp.isIsomorphic = Array.isArray(match) && match.length > 0;
+      if (imp.isIsomorphic) {
+        imp.packageName = _.first(match);
+        // console.log('isIsomorphic', imp.packageName, imp.embeddedPathToFile);
+      } else {
+        // I am not doing anything with non-isomorphic packages
+        // imp.packageName = imp.cleanEmbeddedPathToFile.startsWith('@')
+        //   ? imp.cleanEmbeddedPathToFile.split('/').slice(0, 2).join('/')
+        //   : imp.cleanEmbeddedPathToFile.split('/')[0];
+
+        // console.log(
+        //   'non isIsomorphic',
+        //   imp.packageName,
+        //   imp.embeddedPathToFile,
+        // );
       }
     }
   }

@@ -1,6 +1,6 @@
 //#region imports
 import { config, frontendFiles } from 'tnp-config/src';
-import { _, crossPlatformPath, path } from 'tnp-core/src';
+import { _, CoreModels, crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
@@ -9,17 +9,28 @@ import type { Project } from '../abstract/project';
 
 // @ts-ignore TODO weird inheritance problem
 export class Refactor extends BaseFeatureForProject<Project> {
-  async ALL() {
+  async ALL(initingFromParent = false) {
+    this.project.taonJson.setFrameworkVersion(
+      ('v' +
+        this.project.ins.angularMajorVersionForCurrentCli()) as CoreModels.FrameworkVersion,
+    );
     if (this.project.framework.isContainer) {
+      await this.project.init();
       for (const child of this.project.children) {
-        await child.refactor.ALL();
+        await child.refactor.ALL(true);
       }
+    }
+    if (!initingFromParent) {
+      await this.project.init();
     }
     await this.changeCssToScss();
     await this.removeBrowserRegion();
     await this.properStandaloneNg19();
     await this.eslint();
     await this.prettier();
+    this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode(
+      true,
+    );
   }
 
   async prettier() {

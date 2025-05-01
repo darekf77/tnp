@@ -203,8 +203,8 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       envOptions['pathsTsconfig'] =
         `"paths": ` +
         JSON.stringify({
-          [`${this.project.name}`]: ['./src/lib'],
-          [`${this.project.name}/*`]: ['./src/lib/*'],
+          [`${this.project.nameForNpmPackage}/src`]: ['./src/lib'],
+          [`${this.project.nameForNpmPackage}/src/*`]: ['./src/lib/*'],
         });
     } else if (this.project.framework.isContainer) {
       // TODO

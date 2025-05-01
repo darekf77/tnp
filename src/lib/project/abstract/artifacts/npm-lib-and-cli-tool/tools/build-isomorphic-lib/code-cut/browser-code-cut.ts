@@ -212,10 +212,15 @@ export class BrowserCodeCut {
     const orgContent =
       Helpers.readFile(this.absSourcePathFromSrc, void 0, true) || '';
 
+    const allIsomorphicPackagesFromMemory =
+      this.project.packagesRecognition.allIsomorphicPackagesFromMemory;
+
     this.splitFileProcess = new SplitFileProcess(
       orgContent,
       this.absSourcePathFromSrc,
-      this.project.packagesRecognition.allIsomorphicPackagesFromMemory,
+      allIsomorphicPackagesFromMemory,
+      this.project.name,
+      this.project.nameForNpmPackage,
     );
     const { modifiedContent: firstPass, rewriteFile: firstTimeRewriteFile } =
       this.splitFileProcess.content;
@@ -224,7 +229,9 @@ export class BrowserCodeCut {
       new SplitFileProcess(
         firstPass,
         this.absSourcePathFromSrc,
-        this.project.packagesRecognition.allIsomorphicPackagesFromMemory,
+        allIsomorphicPackagesFromMemory,
+        this.project.name,
+        this.project.nameForNpmPackage,
       ).content;
 
     if ((orgContent || '').trim() !== (firstPass || '')?.trim()) {
@@ -250,8 +257,16 @@ export class BrowserCodeCut {
 
   //#endregion
 
+  //#region private / methods & getters / project own smart packages
+  get projectOwnSmartPackages(): string[] {
+    //#region @backendFunc
+    return [this.project.name, this.project.nameForNpmPackage];
+    //#endregion
+  }
+  //#endregion
+
   //#region private / methods & getters / is empty browser file
-  private get isEmptyBrowserFile() {
+  private get isEmptyBrowserFile(): boolean {
     //#region @backendFunc
     return this.rawContentForBrowser.replace(/\s/g, '').trim() === '';
     //#endregion
@@ -259,7 +274,7 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / is empty module backend file
-  private get isEmptyModuleBackendFile() {
+  private get isEmptyModuleBackendFile(): boolean {
     //#region @backendFunc
     return (
       (this.rawContentBackend || '').replace(/\/\*\ \*\//g, '').trim()
@@ -357,21 +372,23 @@ export class BrowserCodeCut {
     }
 
     if (isTsFile) {
-      if (!this.relativePath.startsWith('app/')) {
+      if (!this.relativePath.startsWith('app/') && !this.relativePath.startsWith('app.')) {
         fse.writeFileSync(
           this.absFileSourcePathBrowserOrWebsql,
-          this.changeBrowserOrWebsqlFileContentBeforeSave(
+          this.changeNpmNameToLocalLibNamePath(
             this.rawContentForBrowser,
             this.absFileSourcePathBrowserOrWebsql,
+            { isBrowser: true },
           ),
           'utf8',
         );
       }
       fse.writeFileSync(
         this.absFileSourcePathBrowserOrWebsqlAPPONLY,
-        this.changeBrowserOrWebsqlFileContentBeforeSave(
+        this.changeNpmNameToLocalLibNamePath(
           this.rawContentForAPPONLYBrowser,
           this.absFileSourcePathBrowserOrWebsqlAPPONLY,
+          { isBrowser: true },
         ),
         'utf8',
       );
@@ -673,14 +690,10 @@ export class BrowserCodeCut {
       const contentStandalone =
         isEmptyModuleBackendFile && isTsFile
           ? `export function dummy${new Date().getTime()}() { }`
-          : this.changeContenBeforeSave(
+          : this.changeNpmNameToLocalLibNamePath(
               this.rawContentBackend,
               absoluteBackendDestFilePath,
               {
-                additionalSmartPckages: [
-                  this.project.name,
-                  this.project.nameForNpmPackage,
-                ],
                 isBrowser: false,
               },
             );
@@ -691,41 +704,11 @@ export class BrowserCodeCut {
   }
   //#endregion
 
-  //#region private / methods & getters / fix comments
-  private changeBrowserOrWebsqlFileContentBeforeSave(
-    browserOrWebsqlFileContent: string,
-    absFilePath: string,
-    packageName?: string,
-  ): string {
-    //#region @backendFunc
-    if (!packageName) {
-      packageName = this.project.name;
-    }
-    if (!this.relativePath.endsWith('.ts')) {
-      return browserOrWebsqlFileContent;
-    }
-
-    let result = browserOrWebsqlFileContent;
-
-    result = this.changeContenBeforeSave(result, absFilePath, {
-      additionalSmartPckages: [
-        this.project.name,
-        this.project.nameForNpmPackage,
-      ],
-      isBrowser: true,
-    });
-
-    return result;
-    //#endregion
-  }
-  //#endregion
-
   //#region private / methods & getters / change content before saving file
-  private changeContenBeforeSave(
+  private changeNpmNameToLocalLibNamePath(
     content: string,
     absFilePath: string,
     options: {
-      additionalSmartPckages: string[];
       isBrowser: boolean;
     },
   ): string {
@@ -735,7 +718,8 @@ export class BrowserCodeCut {
       return content;
     }
 
-    const { isBrowser, additionalSmartPckages } = options;
+    const projectOwnSmartPackages = this.projectOwnSmartPackages;
+    const { isBrowser } = options;
 
     const howMuchBack = this.relativePath.split('/').length - 1;
     const back =
@@ -750,21 +734,21 @@ export class BrowserCodeCut {
     if (isBrowser) {
       toReplace = UtilsTypescript.recognizeImportsFromContent(
         this.rawContentForBrowser,
-      ).filter(f =>
-        additionalSmartPckages.includes(
+      ).filter(f => {
+        return projectOwnSmartPackages.includes(
           f.cleanEmbeddedPathToFile
             .replace(/\/browser$/, '')
             .replace(/\/websql$/, ''),
-        ),
-      );
+        );
+      });
     } else {
       toReplace = UtilsTypescript.recognizeImportsFromContent(
         this.rawContentBackend,
-      ).filter(f =>
-        additionalSmartPckages.includes(
+      ).filter(f => {
+        return projectOwnSmartPackages.includes(
           f.cleanEmbeddedPathToFile.replace(/\/lib$/, ''),
-        ),
-      );
+        );
+      });
     }
 
     for (const imp of toReplace) {
@@ -773,10 +757,6 @@ export class BrowserCodeCut {
       );
     }
     content = this.splitFileProcess.replaceInFile(content, toReplace);
-
-    // if (this.relativePath.endsWith('app.ts')) {
-    //   debugger;
-    // }
 
     return content;
     //#endregion

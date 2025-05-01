@@ -302,69 +302,6 @@ export class Framework extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region getters & methods / name, names / universal package name
-  /**
-   * @deprecated use project.npmPackageName
-   * get actual npm package name from project
-   */
-  public get universalPackageName(): string {
-    //#region @backendFunc
-
-    const parentBasename =
-      !this.isStandaloneProject && this.project.parentBasename.startsWith('@')
-        ? this.project.parentBasename
-        : '';
-
-    if (parentBasename) {
-      return crossPlatformPath([
-        this.project.parentBasename,
-        this.project.name.replace(parentBasename, ''),
-      ]);
-    }
-    return this.project.name;
-    //#endregion
-  }
-
-  get allNpmPackagesNames(): string[] {
-    //#region @backendFunc
-    return [
-      this.project.framework.universalPackageName,
-      ...this.project.taonJson.additionalNpmNames,
-    ];
-    //#endregion
-  }
-  //#endregion
-
-  //#region getters & methods / name, names / package name from project
-  /**
-   * get all npm packages names that can be
-   * obtainer from project
-   */
-  public get packageNamesFromProject(): string[] {
-    //#region @backendFunc
-
-    return [this.universalPackageName];
-    //#endregion
-  }
-  //#endregion
-
-  //#region getters & methods / name, names / get string npm package name
-  public get __npmPackageName(): string {
-    //#region @backendFunc
-
-    return `${this.project.name}`;
-    //#endregion
-  }
-  //#endregion
-
-  //#region getters & methods / name, names / get string npm package name and version
-  public get __npmPackageNameAndVersion(): string {
-    //#region @backendFunc
-    return `${this.__npmPackageName}@${this.project.packageJson.version}`;
-    //#endregion
-  }
-  //#endregion
-
   async global(globalPackageName: string, packageOnly = false) {
     //#region @backendFunc
     const oldContainer = this.project.ins.by('container', 'v1') as Project;

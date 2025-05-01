@@ -72,12 +72,22 @@ export class ArtifactManager {
 
   //#region clear
   async clear(options: EnvOptions): Promise<void> {
+    Helpers.taskStarted(`
+
+      Clearing artifacts temp data in ${this.project.name}
+
+      `);
     await this.artifact.npmLibAndCliTool.clearPartial(options);
     await this.artifact.angularNodeApp.clearPartial(options);
     await this.artifact.electronApp.clearPartial(options);
     await this.artifact.mobileApp.clearPartial(options);
     await this.artifact.docsWebapp.clearPartial(options);
     await this.artifact.vscodePlugin.clearPartial(options);
+    Helpers.taskDone(`
+
+      Done cleaning artifacts temp data in ${this.project.name}
+
+      `);
   }
 
   async clearAllChildren(options: EnvOptions): Promise<void> {
@@ -168,6 +178,18 @@ export class ArtifactManager {
         message: 'Press any key to continue',
       });
       return;
+    }
+
+    // if organization project - children should have the same framework version
+    if (
+      this.project.framework.isContainer &&
+      this.project.taonJson.isOrganization
+    ) {
+      for (const orgChild of this.project.children) {
+        orgChild.taonJson.setFrameworkVersion(
+          this.project.taonJson.frameworkVersion,
+        );
+      }
     }
 
     this.project.taonJson.preservePropsFromPackageJson(); // TODO temporary remove
@@ -418,6 +440,16 @@ export class ArtifactManager {
     options: EnvOptions,
     children = this.project.children,
   ): Promise<void> {
+    children = this.project.ins // @ts-ignore BaseProject inheritace compatiblity with Project problem
+      .sortGroupOfProject<Project>(
+        children,
+        proj => [
+          ...proj.taonJson.dependenciesNamesForNpmLib,
+          proj.taonJson.peerDependenciesNamesForNpmLib,
+        ],
+        proj => proj.nameForNpmPackage,
+      );
+
     const startIndex = this.project.children.findIndex(
       c => c.name === options.container.start,
     );
@@ -429,8 +461,6 @@ export class ArtifactManager {
       return i >= startIndex;
     });
     for (const child of children) {
-      if (options.container.start) {
-      }
       await child.artifactsManager.build(options);
     }
   }

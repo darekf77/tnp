@@ -201,7 +201,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
             ...proj.taonJson.dependenciesNamesForNpmLib,
             proj.taonJson.peerDependenciesNamesForNpmLib,
           ],
-          proj => proj.name,
+          proj => proj.nameForNpmPackage,
         )
         .filter(d => d.framework.isStandaloneProject);
 
@@ -351,6 +351,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
    * @overload
    */
   get nameForNpmPackage(): string {
+    //#region @backendFunc
     if (
       this.framework.isStandaloneProject &&
       this.parent?.framework?.isContainer &&
@@ -368,6 +369,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     return this.taonJson.overrideNpmName
       ? this.taonJson.overrideNpmName
       : this.name;
+    //#endregion
   }
   //#endregion
 
@@ -390,6 +392,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     name: ${this.name}
     basename: ${this.basename}
+    nameForNpmPackage: ${this.nameForNpmPackage}
     has node_modules :${!this.nodeModules.empty}
     uses it own node_modules: ${this.taonJson.isUsingOwnNodeModulesInsteadCoreContainer}
     version: ${this.packageJson.version}
@@ -407,7 +410,6 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     should dedupe packages ${this.nodeModules.shouldDedupePackages}
 
     genericName: ${this.genericName}
-    universalPackageName: ${this.framework.universalPackageName}
 
     frameworkVersion: ${this.framework.frameworkVersion}
     type: ${this.type}

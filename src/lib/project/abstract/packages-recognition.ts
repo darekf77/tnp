@@ -121,7 +121,8 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     recognizedPackages = Helpers.uniqArray(
       [
         ...(recognizedPackages || []),
-        ...this.project.framework.packageNamesFromProject,
+        this.project.name,
+        this.project.nameForNpmPackage,
         ...(fromNodeModulesFolderSearch || []),
         ...Object.values(config.frameworkNames),
       ].filter(f => !f.startsWith(PREFIXES.RESTORE_NPM)),
@@ -183,7 +184,8 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       Helpers.uniqArray([
         ...this.coreContainer.packagesRecognition.inMemoryIsomorphicLibs,
         ...libsNames,
-        ...this.project.framework.packageNamesFromProject,
+        this.project.name,
+        this.project.nameForNpmPackage,
       ]);
     //#endregion
   }
@@ -232,7 +234,8 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     }
     const result = Helpers.uniqArray([
       ...this.coreContainer.packagesRecognition.inMemoryIsomorphicLibs,
-      ...this.project.framework.packageNamesFromProject,
+      this.project.nameForNpmPackage,
+      this.project.name,
     ]);
     // console.log(`allIsomorphicPackagesFromMemory: ${result.join('\n ')}`);
     return result;

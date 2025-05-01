@@ -4,10 +4,10 @@
     "strictNullChecks": false,
     "rootDir": "./",
     "paths": {
-      "tnp": [
+      "tnp/src": [
         "./src/lib"
       ],
-      "tnp/*": [
+      "tnp/src/*": [
         "./src/lib/*"
       ]
     },

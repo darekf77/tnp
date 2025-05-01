@@ -126,7 +126,8 @@ export class CopyManagerStandalone extends CopyManager {
       _.isString(this.renameDestinationFolder) &&
       this.renameDestinationFolder !== ''
         ? this.renameDestinationFolder
-        : this.project.name;
+        : this.project.nameForNpmPackage;
+
     return rootPackageName;
     //#endregion
   }
@@ -161,13 +162,11 @@ export class CopyManagerStandalone extends CopyManager {
   initalFixForDestination(destination: Project): void {
     //#region @backendFunc
 
-    const destPackageInNodeModules = crossPlatformPath(
-      path.join(
-        destination.location,
-        config.folder.node_modules,
-        this.rootPackageName,
-      ),
-    );
+    const destPackageInNodeModules = crossPlatformPath([
+      destination.location,
+      config.folder.node_modules,
+      this.rootPackageName,
+    ]);
 
     if (this.isStartFromScratch) {
       Helpers.logInfo(

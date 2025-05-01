@@ -138,6 +138,8 @@ export async function start(
       mctxs: 'migration:contexts',
       // vscode
       vsce: 'vscode:vsce',
+      vts: 'vscode:temp:show',
+      vth: 'vscode:temp:hide',
       //#endregion
     },
   });

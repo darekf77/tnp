@@ -314,16 +314,6 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region additional npm names
-  /**
-   * so I can release same npm lib with different name
-   */
-  get additionalNpmNames(): string[] {
-    const data = this.data as Models.TaonJsonStandalone;
-    return data?.additionalNpmNames || [];
-  }
-  //#endregion
-
   //#region auto release config allowed items
   get autoReleaseConfigAllowedItems(): Models.TaonAutoReleaseItem[] {
     const data = this.data as Models.TaonJsonStandalone;

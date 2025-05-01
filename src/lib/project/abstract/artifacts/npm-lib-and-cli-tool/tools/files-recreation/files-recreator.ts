@@ -499,6 +499,9 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
                   s['files.exclude']['**/protractor.conf.js'] = true;
                   s['files.exclude']['**/karma.conf.js'] = true;
                   s['files.exclude']['**/.editorconfig'] = true;
+                  s['files.exclude']['**/eslint.config.js'] = true;
+                  s['files.exclude']['**/update-vscode-package-json.js'] = true;
+                  s['files.exclude']['**/.eslintrc.json'] = true;
                   s['files.exclude'][
                     `**/${project.artifactsManager.artifact.docsWebapp.docs.docsConfigSchema}`
                   ] = true;
