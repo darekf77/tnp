@@ -28,6 +28,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
     await this.properStandaloneNg19();
     await this.eslint();
     await this.prettier();
+    await this.importsWrap();
     this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode(
       true,
     );
@@ -185,6 +186,27 @@ export class Refactor extends BaseFeatureForProject<Project> {
       },
     );
     Helpers.taskDone(`Done setting standalone property for ng19+...`);
+    //#endregion
+  }
+
+  async importsWrap() {
+    //#region @backendFunc
+    Helpers.info(`Wrapping first imports with imports region...`);
+
+    Helpers.filesFrom(this.project.pathFor(config.folder.src), true).forEach(
+      f => {
+        if (f.endsWith('.ts')) {
+          let content = Helpers.readFile(f);
+          const fixedComponent =
+            UtilsTypescript.wrapFirstImportsInImportsRegion(content);
+          if (fixedComponent.trim() !== content.trim()) {
+            Helpers.info(`Fixing imports region in ${f}`);
+            Helpers.writeFile(f, fixedComponent);
+          }
+        }
+      },
+    );
+    Helpers.taskDone(`Done wrapping first imports with region...`);
     //#endregion
   }
 }

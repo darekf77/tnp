@@ -74,9 +74,20 @@ export class $Refactor extends BaseCli {
   async properStandaloneNg19() {
     Helpers.info(`Initing before changing standalone property..`);
     await this.project.init(
-      EnvOptions.from({ purpose: 'initing before changing css to scss' }),
+      EnvOptions.from({ purpose: 'initing before changing standalone property' }),
     );
     await this.project.refactor.properStandaloneNg19();
+    this._exit();
+  }
+  //#endregion
+
+  //#region properStandaloneNg19
+  async importsWrap() {
+    Helpers.info(`Initing before wrapping imports..`);
+    await this.project.init(
+      EnvOptions.from({ purpose: 'initing before wrapping imports' }),
+    );
+    await this.project.refactor.importsWrap();
     this._exit();
   }
   //#endregion
