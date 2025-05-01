@@ -8,7 +8,7 @@ import { BaseFeatureForProject, UtilsTypescript } from 'tnp-helpers/src';
 import { Helpers } from 'tnp-helpers/src';
 import { register } from 'ts-node';
 
-import { environments, envTs } from '../../../../../constants';
+import { DUMMY_LIB, environments, envTs } from '../../../../../constants';
 import { EnvOptions, ReleaseArtifactTaon } from '../../../../../options';
 import type { Project } from '../../../project';
 
@@ -203,6 +203,8 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       envOptions['pathsTsconfig'] =
         `"paths": ` +
         JSON.stringify({
+          [`${DUMMY_LIB}`]: ['./src/lib'],
+          [`${DUMMY_LIB}/*`]: ['./src/lib/*'],
           [`${this.project.nameForNpmPackage}/src`]: ['./src/lib'],
           [`${this.project.nameForNpmPackage}/src/*`]: ['./src/lib/*'],
         });

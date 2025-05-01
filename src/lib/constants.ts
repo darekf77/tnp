@@ -9,6 +9,8 @@ import type { Project } from './project/abstract/project';
 
 //#endregion
 
+export const DUMMY_LIB = '@lib';
+
 export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
 } = {

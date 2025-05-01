@@ -3,7 +3,7 @@ import { path, _, Utils } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 
-import { taonIgnore } from '../../../../../../../constants';
+import { DUMMY_LIB, taonIgnore } from '../../../../../../../constants';
 
 import { CODE_SPLIT_PROCESS } from './code-split-process.enum';
 import type { CallBackProcess } from './code-split-process.enum';
@@ -57,7 +57,7 @@ export class SplitFileProcess {
           );
           if (!this.rewriteFile && rewrite) {
             this.rewriteFile = true;
-            continue;
+            break;
           }
         }
       }
@@ -81,16 +81,25 @@ export class SplitFileProcess {
       const match = imp.cleanEmbeddedPathToFile.match(matchRegex);
 
       // console.log(`match: >>${matchRegex.source}<< for >>${imp.embeddedPathToFile}<<`);
-      imp.isIsomorphic = Array.isArray(match) && match.length > 0;
+      const isDummyLib =
+        imp.cleanEmbeddedPathToFile.startsWith(`${DUMMY_LIB}/`) ||
+        imp.cleanEmbeddedPathToFile === DUMMY_LIB;
+
+      imp.isIsomorphic =
+        (Array.isArray(match) && match.length > 0) || isDummyLib;
+
       if (imp.isIsomorphic) {
-        imp.packageName = _.first(match);
+        if (isDummyLib) {
+          imp.packageName = DUMMY_LIB;
+        } else {
+          imp.packageName = _.first(match);
+        }
         // console.log('isIsomorphic', imp.packageName, imp.embeddedPathToFile);
       } else {
         // I am not doing anything with non-isomorphic packages
         // imp.packageName = imp.cleanEmbeddedPathToFile.startsWith('@')
         //   ? imp.cleanEmbeddedPathToFile.split('/').slice(0, 2).join('/')
         //   : imp.cleanEmbeddedPathToFile.split('/')[0];
-
         // console.log(
         //   'non isIsomorphic',
         //   imp.packageName,

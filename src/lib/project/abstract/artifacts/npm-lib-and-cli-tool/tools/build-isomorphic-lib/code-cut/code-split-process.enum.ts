@@ -1,4 +1,6 @@
 import { UtilsTypescript } from 'tnp-helpers/src';
+
+import { DUMMY_LIB } from '../../../../../../../constants';
 export const CallBackProcess = (
   fun: (
     imp: UtilsTypescript.TsImportExport,
@@ -18,6 +20,46 @@ export namespace CODE_SPLIT_PROCESS {
   export namespace BEFORE {
     export namespace SPLIT {
       export const IMPORT_EXPORT = {
+        // AT_LIB_TO_NPM_NAME: CallBackProcess(
+        //   (
+        //     imp: UtilsTypescript.TsImportExport,
+        //     isomorphicLibraries: string[],
+        //     currentProjectName: string,
+        //     currentProjectNpmName: string,
+        //   ) => {
+        //     // if (imp.cleanEmbeddedPathToFile.startsWith(`${DUMMY_LIB}`)) {
+        //     //   console.warn(
+        //     //     `KURWA  ${currentProjectName}, currentProjectNpmName: ${currentProjectNpmName}. c;eanEmbeddedPathToFile: ${imp.cleanEmbeddedPathToFile}`,
+        //     //   );
+        //     // }
+        //     if (imp.cleanEmbeddedPathToFile.startsWith(`${DUMMY_LIB}/`)) {
+        //       // console.warn(
+        //       //   `2 currentProjectName: ${currentProjectName}, currentProjectNpmName: ${currentProjectNpmName}`,
+        //       // );
+        //       imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+        //         imp.cleanEmbeddedPathToFile.replace(
+        //           `${DUMMY_LIB}/`,
+        //           `${currentProjectNpmName}/`,
+        //         ),
+        //       );
+        //       return true;
+        //     }
+        //     if (imp.cleanEmbeddedPathToFile === DUMMY_LIB) {
+        //       // console.warn(
+        //       //   `2 currentProjectName: ${currentProjectName}, currentProjectNpmName: ${currentProjectNpmName}`,
+        //       // );
+        //       imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+        //         imp.cleanEmbeddedPathToFile.replace(
+        //           `${DUMMY_LIB}`,
+        //           `${currentProjectNpmName}/src`,
+        //         ),
+        //       );
+        //       return true;
+        //     }
+
+        //     return false;
+        //   },
+        // ),
         /**
          * name => nameForNpmPackage
          * my-lib => @my-org/my-lib
@@ -31,7 +73,6 @@ export namespace CODE_SPLIT_PROCESS {
             currentProjectNpmName: string,
           ) => {
             if (
-              imp.isIsomorphic &&
               imp.cleanEmbeddedPathToFile.startsWith(`${currentProjectName}/`)
             ) {
               imp.embeddedPathToFileResult = imp.wrapInParenthesis(
@@ -87,15 +128,24 @@ export namespace CODE_SPLIT_PROCESS {
           (
             imp: UtilsTypescript.TsImportExport,
             isomorphicLibraries: string[],
+            currentProjectName: string,
+            currentProjectNpmName: string,
           ) => {
             // console.log('NOTHING_TO_SRC');
             if (
               imp.wrapInParenthesis(imp.packageName) ===
               imp.wrapInParenthesis(imp.cleanEmbeddedPathToFile)
             ) {
-              imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-                imp.cleanEmbeddedPathToFile + '/src',
-              );
+              if (imp.packageName === DUMMY_LIB) {
+                imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+                  currentProjectNpmName + '/src',
+                );
+              } else {
+                imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+                  imp.cleanEmbeddedPathToFile + '/src',
+                );
+              }
+
               return true;
             }
             return false;
@@ -105,6 +155,8 @@ export namespace CODE_SPLIT_PROCESS {
           (
             imp: UtilsTypescript.TsImportExport,
             isomorphicLibraries: string[],
+            currentProjectName: string,
+            currentProjectNpmName: string,
           ) => {
             // console.log('DEEP_TO_SHORT_SRC');
             if (
@@ -113,9 +165,16 @@ export namespace CODE_SPLIT_PROCESS {
                 '',
               ) !== ''
             ) {
-              imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-                imp.packageName + '/src',
-              );
+              if (imp.packageName === DUMMY_LIB) {
+                imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+                  currentProjectNpmName + '/src',
+                );
+              } else {
+                imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+                  imp.packageName + '/src',
+                );
+              }
+
               return true;
             }
             return false;
