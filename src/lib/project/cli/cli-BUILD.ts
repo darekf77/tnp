@@ -213,14 +213,25 @@ class $Build extends BaseCli {
   //#endregion
 
   //#region other build commands / start lib/app build
-  /**
-   * @deprecated
-   */
   async start() {
     // TODO add proper logic
     await this.project.build(
       EnvOptions.from({
         ...this.params,
+        release: {
+          targetArtifact: 'npm-lib-and-cli-tool',
+        },
+        build: {
+          watch: true,
+        },
+      }),
+    );
+    await this.project.build(
+      EnvOptions.from({
+        ...this.params,
+        release: {
+          targetArtifact: 'angular-node-app',
+        },
         build: {
           watch: true,
         },
