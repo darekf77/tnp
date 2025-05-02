@@ -58,7 +58,6 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
           'tsconfig.browser.json',
           'webpack.config.js',
           'run.js',
-          'run-org.js',
           'update-vscode-package-json.js',
           'eslint.config.js',
           ...this.__filesTemplates(),
@@ -289,23 +288,11 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
           )
           .concat(
             // core files of projects types
-            self.project.framework.isCoreProject
-              ? []
-              : self.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.projectSpecyficFiles(),
-          )
-          .concat(
-            // core files of projects types
             !self.project.framework.isCoreProject
               ? []
               : [config.folder.src, config.folder.components].map(
                   f => `${f}-for-stanalone`,
                 ),
-          )
-          .concat(
-            !self.project.framework.isStandaloneProject &&
-              !self.project.framework.isCoreProject
-              ? self.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.projectSpecyficFiles()
-              : [],
           )
           .concat(['projects/tmp*'])
           .concat(['tsconfig.backend.dist.json']);
