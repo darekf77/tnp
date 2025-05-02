@@ -191,6 +191,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       backendPort,
     );
 
+    // console.log(`
+
+    //   buildOptions.ports.ngWebsqlAppPort: ${buildOptions.ports.ngWebsqlAppPort}
+    //   buildOptions.ports.ngNormalAppPort: ${buildOptions.ports.ngNormalAppPort}
+
+    //   `);
+
     UtilsTypescript.setValueToVariableInTsFile(
       this.project.pathFor('src/app.hosts.ts'),
       'CLIENT_DEV_WEBSQL_APP_PORT',

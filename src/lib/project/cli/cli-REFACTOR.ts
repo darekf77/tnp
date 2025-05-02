@@ -81,7 +81,7 @@ export class $Refactor extends BaseCli {
   }
   //#endregion
 
-  //#region properStandaloneNg19
+  //#region imports region wrap
   async importsWrap() {
     Helpers.info(`Initing before wrapping imports..`);
     await this.project.init(

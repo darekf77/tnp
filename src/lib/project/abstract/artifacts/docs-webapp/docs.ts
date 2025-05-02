@@ -186,7 +186,9 @@ export class Docs extends BaseDebounceCompilerForProject<
     // process.exit(0);
     const project = this.project;
     this.initOptions({
-      taskName: `DocsProviderFor${_.upperFirst(_.camelCase(this.project.genericName))}`,
+      taskName: `DocsProviderFor${_.upperFirst(
+        _.camelCase(this.project.genericName),
+      )}`,
       folderPath: project.location,
       ignoreFolderPatter: [
         project.pathFor('tmp-*/**/*.*'),
@@ -366,7 +368,11 @@ export class Docs extends BaseDebounceCompilerForProject<
     // - Changelog: changelog/index.md
     // - QA: qa/index.md
     // docs_dir: ./
-    return `site_name: ${this.config.site_name ? this.config.site_name : _.upperFirst(this.project.name) + 'Documentation'}
+    return `site_name: ${
+      this.config.site_name
+        ? this.config.site_name
+        : _.upperFirst(this.project.name) + 'Documentation'
+    }
 # site_url:  ${this.envOptions.website.domain}
 nav:
 ${this.applyPriorityOrder(entryPointFilesRelativePaths)
@@ -625,7 +631,9 @@ markdown_extensions:
       ? `\nRefreshing http://localhost:${this.mkdocsServePort}..`
       : '';
     Helpers.info(
-      `(${asyncEvent ? 'async' : 'sync'}) [${Utils.fullDateTime()}] Copied ${counterCopy} ` +
+      `(${
+        asyncEvent ? 'async' : 'sync'
+      }) [${Utils.fullDateTime()}] Copied ${counterCopy} ` +
         `files to temp docs folder. ${asyncInfo}`,
     );
     //#endregion
@@ -689,7 +697,9 @@ markdown_extensions:
         `
 
 
-        Please rebuild docs for this project ${chalk.bold(nearestProj?.genericName)}.
+        Please rebuild docs for this project ${chalk.bold(
+          nearestProj?.genericName,
+        )}.
 
 
         `,
@@ -711,7 +721,9 @@ markdown_extensions:
         })
         .on('all', () => {
           Helpers.info(
-            `Docs changed  in external project "${chalk.bold(packageName)}".. rebuilding..`,
+            `Docs changed  in external project "${chalk.bold(
+              packageName,
+            )}".. rebuilding..`,
           );
           this.action({
             changeOfFiles: [],
@@ -964,6 +976,9 @@ markdown_extensions:
   //#region private methods / write global watcher timestamp
   private writeGlobalWatcherTimestamp() {
     //#region @backendFunc
+    try {
+      Helpers.mkdirp(path.dirname(this.docsGlobalTimestampForWatcherAbsPath));
+    } catch (error) {}
     Helpers.writeFile(
       this.docsGlobalTimestampForWatcherAbsPath,
       new Date().getTime().toString(),
