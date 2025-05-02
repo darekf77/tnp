@@ -339,9 +339,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         return path.basename(this.location);
       }
     }
-    return this.packageJson
-      ? this.packageJson.name
-      : path.basename(this.location);
+    return path.basename(this.location);
     //#endregion
   }
   //#endregion

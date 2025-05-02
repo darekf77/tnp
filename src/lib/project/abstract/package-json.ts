@@ -96,7 +96,7 @@ export class PackageJSON extends BasePackageJson {
           }
         }
       }
-      this.data.name = this.project.basename;
+      this.data.name = this.project.nameForNpmPackage;
       this.data.version = versionToPreserve;
       const showFirst = [
         'name',
