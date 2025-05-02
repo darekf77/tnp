@@ -175,24 +175,24 @@ ${appModuleFile}
             let appComponentFile = Helpers.readFile(appComponentFilePath);
 
             appComponentFile = appComponentFile.replace(
-              `import { Taon } from 'taon/src';`,
-              `import { Taon } from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}/src';`,
+              `${'import'} { Taon } from 'taon';`,
+              `${'import'} { Taon } from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
             );
 
             appComponentFile = appComponentFile.replace(
-              `from 'taon/src';`,
-              `from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}/src';`,
+              `${'import'} 'taon';`,
+              `${'import'} 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
             );
 
             appComponentFile = appComponentFile.replace(
-              `import start from './---projectname---/app';`,
-              `import start from './${this.project.name}/app';`,
+              `${'import'} start from './---projectname---/app';`,
+              `${'import'} start from './${this.project.name}/app';`,
             );
 
             const componentName =
               _.upperFirst(_.camelCase(project.name)) + 'Component';
             appComponentFile = `
-import { ${componentName} } from './${this.project.name}/app';
+${'import'} { ${componentName} } from './${this.project.name}/app';
 ${appComponentFile}
 `;
 
@@ -216,12 +216,12 @@ ${appComponentFile}
             let appModuleFile = Helpers.readFile(appComponentFilePath);
 
             appModuleFile = appModuleFile.replace(
-              `import { TaonAdminModeConfigurationModule } from 'taon/src';`,
-              `import { TaonAdminModeConfigurationModule } from 'taon/${
+              `${'import'} { TaonAdminModeConfigurationModule } from 'taon';`,
+              `${'import'} { TaonAdminModeConfigurationModule } from 'taon/${
                 this.initOptions.build.websql
                   ? config.folder.websql
                   : config.folder.browser
-              }/src';`,
+              }';`,
             );
 
             Helpers.writeFile(appComponentFilePath, appModuleFile);
@@ -249,18 +249,18 @@ ${appComponentFile}
             }
 
             appMainFile = appMainFile.replace(
-              `import { Helpers } from 'tnp-core/src';`,
-              `import { Helpers } from 'tnp-core/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}/src';`,
+              `${'import'} { Helpers } from 'tnp-core';`,
+              `${'import'} { Helpers } from 'tnp-core/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
             );
 
             appMainFile = appMainFile.replace(
-              `import { TaonAdmin } from 'taon/src';`,
-              `import { TaonAdmin } from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}/src';`,
+              `${'import'} { TaonAdmin } from 'taon';`,
+              `${'import'} { TaonAdmin } from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
             );
 
             appMainFile = appMainFile.replace(
-              `import { Stor } from 'taon-storage/src';`,
-              `import { Stor } from 'taon-storage/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}/src';`,
+              `${'import'} { Stor } from 'taon-storage';`,
+              `${'import'} { Stor } from 'taon-storage/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
             );
 
             Helpers.writeFile(appMainFilePath, appMainFile);
