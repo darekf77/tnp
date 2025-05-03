@@ -27,9 +27,11 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     public cliToolName: string,
   ) {
     super(classFn, cliToolName);
-    if (!this.cliToolName) {
-      Helpers.throw(`cliToolName is not provided`);
-    }
+
+    // if (!this.cliToolName) {
+    //   Helpers.throw(`cliToolName is not provided`);
+    // }
+
     this.taonProjectsWorker = new TaonProjectsWorker(
       'taon-projects',
       `${cliToolName} ${
@@ -330,10 +332,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     try {
       Helpers.run(
         `git reset --hard HEAD~20 && git reset --hard && git clean -df && git pull --tags origin master`,
-        {
-          cwd,
-          output: false,
-        },
+        { cwd, output: false },
       ).sync();
       Helpers.log('DONE PULLING MASTER');
     } catch (error) {

@@ -156,6 +156,7 @@ export class ArtifactManager {
         this.project.run(`git rm -f .vscode/launch.json`).sync();
       } catch (error) {}
       this.project.removeFile('.vscode/launch-backup.json');
+      this.project.removeFile('.vscode/run-org.js');
       try {
         this.project.run(`git rm -f .vscode/launch-backup.json`).sync();
       } catch (error) {}

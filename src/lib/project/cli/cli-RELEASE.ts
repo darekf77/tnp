@@ -5,7 +5,12 @@ import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { Models } from '../../models';
-import { ReleaseArtifactTaon, EnvOptions, ReleaseType } from '../../options';
+import {
+  ReleaseArtifactTaon,
+  EnvOptions,
+  ReleaseType,
+  ReleaseArtifactTaonNamesArr,
+} from '../../options';
 import type { Project } from '../abstract/project';
 
 import { BaseCli } from './base-cli';
@@ -146,6 +151,54 @@ class $Release extends BaseCli {
   }
   //#endregion
 
+  //#endregion
+
+  //#region install locally
+  async installLocally() {
+    //#region @backendFunc
+    const options = ReleaseArtifactTaonNamesArr.reverse().reduce((a, b) => {
+      return {
+        ...a,
+        ...{
+          [b]: {
+            name: b,
+          },
+        },
+      };
+    }, {});
+
+    const option = await UtilsTerminal.select<ReleaseArtifactTaon>({
+      choices: options,
+      question: 'What you wanna build/install locally ?',
+    });
+
+    const skipLibBuild = await UtilsTerminal.confirm({
+      message: 'Skip library build ?',
+      defaultValue: true,
+    });
+
+    if (option === 'vscode-plugin') {
+      await this.project.release(
+        this.params.clone({
+          build: {
+            watch: false,
+          },
+          release: {
+            skipTagGitPush: true,
+            skipResolvingGitChanges: true,
+            targetArtifact: 'vscode-plugin',
+            releaseType: 'local',
+            releaseVersionBumpType: 'patch',
+            installLocally: true,
+            skipBuildingArtifacts: skipLibBuild ? ['npm-lib-and-cli-tool'] : [],
+          },
+        }),
+      );
+    }
+
+    this._exit();
+    //#endregion
+  }
   //#endregion
 
   // TODO

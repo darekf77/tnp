@@ -20,10 +20,10 @@ import { PackageJSON } from './package-json';
 import { PackagesRecognition } from './packages-recognition';
 import { TaonProjectResolve } from './project-resolve';
 import { QuickFixes } from './quick-fixes';
+import { Refactor } from './refactor';
 import type { ReleaseProcess } from './release-process';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode';
-import { Refactor } from './refactor';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -249,24 +249,28 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         Helpers.clearConsole();
       }
       if (this.framework.isStandaloneProject) {
-        await this.git.resolveLastChanges({
-          tryAutomaticActionFirst:
-            releaseOptions.release.autoReleaseUsingConfig,
-        });
-      }
-      if (this.framework.isContainer) {
-        for (const child of children) {
-          if (!releaseOptions.isCiProcess) {
-            Helpers.clearConsole();
-          }
-          Helpers.info(
-            `Checking if project has any unfinish/uncommited git changes: ${child.name}`,
-          );
-          await child.git.resolveLastChanges({
+        if (!releaseOptions.release.skipResolvingGitChanges) {
+          await this.git.resolveLastChanges({
             tryAutomaticActionFirst:
               releaseOptions.release.autoReleaseUsingConfig,
-            projectNameAsOutputPrefix: child.name,
           });
+        }
+      }
+      if (this.framework.isContainer) {
+        if (!releaseOptions.release.skipResolvingGitChanges) {
+          for (const child of children) {
+            if (!releaseOptions.isCiProcess) {
+              Helpers.clearConsole();
+            }
+            Helpers.info(
+              `Checking if project has any unfinished/uncommitted git changes: ${child.name}`,
+            );
+            await child.git.resolveLastChanges({
+              tryAutomaticActionFirst:
+                releaseOptions.release.autoReleaseUsingConfig,
+              projectNameAsOutputPrefix: child.name,
+            });
+          }
         }
       }
     }
@@ -358,6 +362,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       let nameWhenInOrganization = this.taonJson.nameWhenInsideOrganiation
         ? this.taonJson.nameWhenInsideOrganiation
         : this.name;
+
       nameWhenInOrganization = this.taonJson.overrideNpmName
         ? this.taonJson.overrideNpmName
         : nameWhenInOrganization;
