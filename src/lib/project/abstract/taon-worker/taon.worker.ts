@@ -4,7 +4,7 @@ import { config } from 'tnp-config/src';
 import { _, fse, UtilsTerminal } from 'tnp-core/src';
 import { BaseCliWorker, Helpers } from 'tnp-helpers/src';
 
-import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
+// import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
 import type { TaonProjectResolve } from '../project-resolve';
 
 import { TaonTerminalUI } from './taon-terminal-ui';
@@ -34,7 +34,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
     startCommand: string,
     public readonly ins: TaonProjectResolve,
   ) {
-    super(serviceID, startCommand, CURRENT_PACKAGE_VERSION);
+    super(serviceID, startCommand, '0.0.1');
   }
   //#endregion
 

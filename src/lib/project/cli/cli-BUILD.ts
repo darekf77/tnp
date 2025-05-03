@@ -2,7 +2,12 @@
 import { _, UtilsTerminal } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { EnvOptions } from '../../options';
+import {
+  EnvOptions,
+  ReleaseArtifactTaon,
+  ReleaseArtifactTaonNames,
+  ReleaseArtifactTaonNamesArr,
+} from '../../options';
 
 import { BaseCli } from './base-cli';
 //#endregion

@@ -13,6 +13,7 @@ import {
 
 import type { Project } from './project';
 import { TaonProjectsWorker } from './taon-worker/taon.worker';
+import { UtilsOs } from 'tnp-core/src';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -27,9 +28,11 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     public cliToolName: string,
   ) {
     super(classFn, cliToolName);
-    if (!this.cliToolName) {
-      Helpers.throw(`cliToolName is not provided`);
-    }
+    // if (!UtilsOs.isRunningInVscodeExtension()) {
+    // if (!this.cliToolName) {
+    //   Helpers.throw(`cliToolName is not provided`);
+    // }
+
     this.taonProjectsWorker = new TaonProjectsWorker(
       'taon-projects',
       `${cliToolName} ${
@@ -38,6 +41,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       }`,
       this,
     );
+    // }
   }
   //#endregion
 
@@ -330,10 +334,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     try {
       Helpers.run(
         `git reset --hard HEAD~20 && git reset --hard && git clean -df && git pull --tags origin master`,
-        {
-          cwd,
-          output: false,
-        },
+        { cwd, output: false },
       ).sync();
       Helpers.log('DONE PULLING MASTER');
     } catch (error) {

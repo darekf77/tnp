@@ -242,6 +242,10 @@ class EnvOptionsRelease {
    */
   declare skipTagGitPush?: boolean;
   /**
+   * skip git commit
+   */
+  declare skipResolvingGitChanges?: boolean;
+  /**
    * release artifact name
    * for example: "angular-node-app"
    */
@@ -273,6 +277,16 @@ class EnvOptionsRelease {
 
   declare cli: Partial<EnvOptionsBuildCli>;
   declare lib: Partial<EnvOptionsBuildLib>;
+  /**
+   * after release install locally
+   * - vscode plugin -> to Local VSCode
+   * - npm lib -> to Local NPM
+   * - angular-node-app -> to Local docker
+   * - electron-app -> to current os
+   * - mobile-app -> to current connected device
+   * - docs-webapp -> as offline pwa app installed in current os
+   */
+  declare installLocally: boolean;
 }
 //#endregion
 
