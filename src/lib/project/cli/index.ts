@@ -3,6 +3,7 @@ import GLOBAL from './cli-_GLOBAL_';
 import BRANDING from './cli-BRANDING';
 import BUILD from './cli-BUILD';
 import DOCS from './cli-DOCS';
+import GENERATE from './cli-GENERATE';
 import INIT from './cli-INIT';
 import LINK from './cli-LINK';
 import MIGRATION from './cli-MIGRATION';
@@ -27,6 +28,7 @@ export default [
   MIGRATION,
   REFACTOR,
   VERSION,
+  GENERATE,
 ];
 
 //#endregion
