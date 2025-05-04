@@ -49,7 +49,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
     ];
 
     if (this.project.framework.isContainer) {
-      return [taonConfigSchemaJsonContainer];
+      return [taonConfigSchemaJsonContainer, 'eslint.config.js'];
     }
 
     if (this.project.framework.isStandaloneProject) {
