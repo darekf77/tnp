@@ -15,12 +15,15 @@ import type { Project } from '../../../project';
 //#endregion
 
 //#region @backend
-register({
-  transpileOnly: true,
-  compilerOptions: {
-    skipLibCheck: true,
-  },
-});
+try {
+  register({
+    transpileOnly: true,
+    compilerOptions: {
+      skipLibCheck: true,
+    },
+  });
+} catch (error) {}
+
 //#endregion
 
 export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem

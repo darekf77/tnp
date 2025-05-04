@@ -555,14 +555,14 @@ export class ArtifactManager {
     }
 
     //#region tag and push
-    if (!releaseOptions.release.autoReleaseUsingConfig) {
-      await this.project.releaseProcess.checkBundleQuestion(
-        releaseOutput.releaseProjPath,
-        `Check ${chalk.bold('bundle')} before tagging/pushing`,
-      );
-    }
-
     if (!releaseOptions.release.skipTagGitPush) {
+      if (!releaseOptions.release.autoReleaseUsingConfig) {
+        await this.project.releaseProcess.checkBundleQuestion(
+          releaseOutput.releaseProjPath,
+          `Check ${chalk.bold('bundle')} before tagging/pushing`,
+        );
+      }
+
       for (const repoAbsPath of releaseOutput.projectsReposToPushAndTag) {
         if (!releaseOptions.release.autoReleaseUsingConfig) {
           await this.project.releaseProcess.checkBundleQuestion(

@@ -64,8 +64,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 > {
   //#region fields
 
-
-
   public readonly __tests: MochaTestRunner;
   public readonly __testsJest: JestTestRunner;
   public readonly __testsCypress: CypressTestRunner;
@@ -83,7 +81,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#region @backend
   constructor(project: Project) {
     super(project, 'npm-lib-and-cli-tool');
-
 
     this.__tests = new MochaTestRunner(project);
     this.__testsJest = new JestTestRunner(project);
@@ -1112,7 +1109,10 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     const destCli = crossPlatformPath([releaseAbsLocation, 'index.js']);
     const destCliMin = crossPlatformPath([releaseAbsLocation, 'cli.js']);
 
-    await Helpers.ncc(destCli, destCliMin, { minify });
+    await Helpers.ncc(destCli, destCliMin, {
+      minify,
+      // additionalExternals: [this.project.nameForNpmPackage],
+    });
 
     // copy wasm file for dest
     const wasmfileSource = crossPlatformPath([

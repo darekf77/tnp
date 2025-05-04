@@ -11,7 +11,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         title: `${FRAMEWORK_NAME.toUpperCase()} create migration`,
         exec: `${FRAMEWORK_NAME} migration:create %migrationname%`,
         options: {
-          title: `taon is adding new migration..`,
+          titleWhenProcessing: `taon is adding new migration..`,
           cancellable: false,
           findNearestProject: true,
           findNearestProjectType: 'isomorphic-lib',
@@ -26,7 +26,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         title: `${FRAMEWORK_NAME.toUpperCase()} magic copy and rename`,
         exec: `${FRAMEWORK_NAME} copy:and:rename '%rules%'`,
         options: {
-          title: `taon is magically renaming files and folders..`,
+          titleWhenProcessing: `taon is magically renaming files and folders..`,
           cancellable: false,
           resolveVariables: [
             {
@@ -38,67 +38,40 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         },
       },
       //#endregion
-      //#region OPEN ROUTES FILE
-      {
-        title: `${FRAMEWORK_NAME.toUpperCase()} open routes file`,
-        exec: `${FRAMEWORK_NAME} open:routes`,
-        options: { title: 'open vscode routes', showSuccessMessage: false },
-      },
-      //#endregion
-      //#region OPEN DB FILE
-      {
-        title: `${FRAMEWORK_NAME.toUpperCase()} open database file`,
-        exec: `${FRAMEWORK_NAME} open:db`,
-        options: { title: 'open vscode db file', showSuccessMessage: false },
-      },
-      //#endregion
+
       //#region OPEN CORE CONTAINER
       {
         title: `${FRAMEWORK_NAME.toUpperCase()} open core container`,
         exec: `${FRAMEWORK_NAME} open:core:container`,
         options: {
-          title: 'opening core container',
+          titleWhenProcessing: 'opening core container',
           findNearestProject: true,
           showSuccessMessage: false,
         },
       },
       //#endregion
-      //#region GENERATE taon minimal
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} code gen taon minimal`,
-      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-minimal %entity%`,
-      //   options: {
-      //     title: 'generating taon code',
-      //     showSuccessMessage: false,
-      //     resolveVariables: [
-      //       { variable: 'entity', placeholder: `my-entity`, encode: true },
-      //     ],
-      //   },
-      // },
-      //#endregion
-      //#region GENERATE taon minimal
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} CODE GEN. taon minimal=>full`,
-      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-minimal-to-full %entity%`,
-      //   options: {
-      //     title: 'generating taon code',
-      //     showSuccessMessage: false,
-      //     // resolveVariables: [
-      //     //   {
-      //     //     variable: 'entity',
-      //     //     placeholder: `my-entity`,
-      //     //     encode: true,
-      //     //   },
-      //     // ],
-      //   },
-      // },
-      //#endregion
-      //#region GENERATE taon extended files
+
+      //#region CODEGEN SIMPLE/FULL
       {
-        title: `${FRAMEWORK_NAME.toUpperCase()} code generator quick example`,
+        title: `${FRAMEWORK_NAME.toUpperCase()} code generator taon full example`,
         exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-full %entity%`,
         options: {
-          title: 'generating taon code',
+          titleWhenProcessing: 'generating taon code',
+          showSuccessMessage: false,
+          resolveVariables: [
+            {
+              variable: 'entity',
+              placeholder: `my-entity`,
+              encode: true,
+            },
+          ],
+        },
+      },
+      {
+        title: `${FRAMEWORK_NAME.toUpperCase()} code generator taon simple example`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-simple %entity%`,
+        options: {
+          titleWhenProcessing: 'generating taon code',
           showSuccessMessage: false,
           resolveVariables: [
             {
@@ -175,6 +148,20 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       //#endregion
 
       //#region old commands
+      //#region OPEN ROUTES FILE
+      // {
+      //   title: `${FRAMEWORK_NAME.toUpperCase()} open routes file`,
+      //   exec: `${FRAMEWORK_NAME} open:routes`,
+      //   options: { title: 'open vscode routes', showSuccessMessage: false },
+      // },
+      //#endregion
+      //#region OPEN DB FILE
+      // {
+      //   title: `${FRAMEWORK_NAME.toUpperCase()} open database file`,
+      //   exec: `${FRAMEWORK_NAME} open:db`,
+      //   options: { title: 'open vscode db file', showSuccessMessage: false },
+      // },
+      //#endregion
       //#region TEMP FILES SHOW
       // {
       //   title: `${FRAMEWORK_NAME.toUpperCase()} TEMP FILES => SHOW`,
@@ -253,7 +240,36 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       //   },
       // },
       //#endregion
-
+      //#region GENERATE taon minimal
+      // {
+      //   title: `${FRAMEWORK_NAME.toUpperCase()} code gen taon minimal`,
+      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-minimal %entity%`,
+      //   options: {
+      //     title: 'generating taon code',
+      //     showSuccessMessage: false,
+      //     resolveVariables: [
+      //       { variable: 'entity', placeholder: `my-entity`, encode: true },
+      //     ],
+      //   },
+      // },
+      //#endregion
+      //#region GENERATE taon minimal
+      // {
+      //   title: `${FRAMEWORK_NAME.toUpperCase()} CODE GEN. taon minimal=>full`,
+      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-minimal-to-full %entity%`,
+      //   options: {
+      //     title: 'generating taon code',
+      //     showSuccessMessage: false,
+      //     // resolveVariables: [
+      //     //   {
+      //     //     variable: 'entity',
+      //     //     placeholder: `my-entity`,
+      //     //     encode: true,
+      //     //   },
+      //     // ],
+      //   },
+      // },
+      //#endregion
       // {
       //   title: `${FRAMEWORK_NAME.toUpperCase()} OPEN workspace`,
       //   exec: `${FRAMEWORK_NAME} open:workspace`,
