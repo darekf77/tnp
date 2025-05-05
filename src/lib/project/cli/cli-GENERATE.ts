@@ -18,7 +18,11 @@ import {
   UtilsString,
 } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
-import { BaseCommandLineFeature, Helpers } from 'tnp-helpers/src';
+import {
+  BaseCommandLineFeature,
+  Helpers,
+  UtilsTypescript,
+} from 'tnp-helpers/src';
 
 import { DEFAULT_FRAMEWORK_VERSION } from '../../constants';
 import { EnvOptions, ReleaseArtifactTaon } from '../../options';
@@ -174,6 +178,19 @@ export class $Generate extends BaseCli {
     //#endregion
   }
   //#endregion
+
+  fieldsWebsqlRegions() {
+    const fileAbsPath = crossPlatformPath(this.firstArg);
+    const content = Helpers.readFile(fileAbsPath);
+    const fixedRegions = UtilsTypescript.wrapContentClassFieldsDecoratorsWithRegion(
+      content,
+      `${TAGS.WEBSQL}`,
+    );
+    if(content !== fixedRegions) {
+      Helpers.writeFile(fileAbsPath, fixedRegions);
+    }
+    this._exit(0);
+  }
 }
 
 export default {

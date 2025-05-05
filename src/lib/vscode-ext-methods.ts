@@ -62,6 +62,17 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+      //#region GENERATE INDEX.TS
+      {
+        title: `${FRAMEWORK_NAME.toUpperCase()} generate class fields @websql regions`,
+        exec: `${FRAMEWORK_NAME} generate:fieldsWebsqlRegions %absolutePath%`,
+        options: {
+          titleWhenProcessing: 'generating index.ts',
+          showSuccessMessage: false,
+        },
+      },
+      //#endregion
+
       //#region CODEGEN SIMPLE/FULL
       {
         title: `${FRAMEWORK_NAME.toUpperCase()} code generator taon full example`,
