@@ -121,6 +121,10 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
                 //   label: 'Generate extended app.* files for taon app',
                 // },
                 {
+                  option: 'taon-repo_flat',
+                  label: 'Generate taon backend repository file',
+                },
+                {
                   option: 'dummy-angular-standalone-component',
                   label: 'Generate dummy Angular component structure',
                 },
