@@ -8,6 +8,9 @@ import { notAllowedAsPacakge } from '../../constants';
 import type { Project } from './project';
 //#endregion
 
+/**
+ * TODO refactor this - use immutable db
+ */
 // @ts-ignore TODO weird inheritance problem
 export class PackagesRecognition extends BaseFeatureForProject<Project> {
   //#region constructor
@@ -128,9 +131,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       ].filter(f => !f.startsWith(PREFIXES.RESTORE_NPM)),
     );
 
-    Helpers.writeJson(this.jsonPath, {
-      [config.array.isomorphicPackages]: recognizedPackages,
-    });
+    this.resolveAndAddIsomorphicLibsToMemory(recognizedPackages);
     this.coreContainer.packagesRecognition.resolveAndAddIsomorphicLibsToMemory(
       _.cloneDeep(recognizedPackages),
     );
@@ -158,6 +159,23 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region add isomorphic packages to file
+  addIsomorphicPackagesToFile(recognizedPackagesNewPackages: string[]) {
+    //#region @backendFunc
+    const alreadyExistsJson = Helpers.readJsonC(this.jsonPath) || {};
+    const alreadyExistsJsonArr =
+      alreadyExistsJson[config.array.isomorphicPackages] || [];
+
+    Helpers.writeJson(this.jsonPath, {
+      [config.array.isomorphicPackages]: Helpers.uniqArray(
+        alreadyExistsJsonArr.concat(recognizedPackagesNewPackages),
+      ),
+    });
+    //#endregion
+  }
+
+  //#endregion
+
   //#region resolve and add isomorphic libs to memory
   public resolveAndAddIsomorphicLibsToMemory(
     libsNames: string[],
@@ -172,6 +190,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     if (informAboutDiff) {
       const current =
         this.coreContainer.packagesRecognition.inMemoryIsomorphicLibs;
+
       const newAdded = libsNames.filter(l => !current.includes(l));
       for (const packageName of newAdded) {
         Helpers.info(

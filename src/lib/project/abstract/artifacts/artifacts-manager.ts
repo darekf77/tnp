@@ -195,6 +195,10 @@ export class ArtifactManager {
 
     this.project.taonJson.preservePropsFromPackageJson(); // TODO temporary remove
     this.project.taonJson.preserveOldTaonProps(); // TODO temporary remove
+    this.project.packagesRecognition.addIsomorphicPackagesToFile([
+      this.project.nameForNpmPackage,
+      this.project.name,
+    ]);
     this.project.taonJson.saveToDisk('init');
     await this.project.vsCodeHelpers.init();
     await this.project.linter.init();
@@ -333,11 +337,7 @@ export class ArtifactManager {
       const ngServeAppCommand = CommandConfig.from({
         name: `Angular (for Nodejs backend) frontend app`,
         cmd: this.buildWatchCmdForArtifact('angular-node-app', {
-          ports: {
-            ngNormalAppPort,
-            nodeBeAppPort,
-            ngWebsqlAppPort,
-          },
+          ports: { ngNormalAppPort, nodeBeAppPort, ngWebsqlAppPort },
         }),
         shouldBeActiveOrAlreadyBuild: [ngBuildLibCommand],
         goToNextCommandWhenOutput: {
@@ -351,14 +351,8 @@ export class ArtifactManager {
       const ngServeWebsqlAppCommand = CommandConfig.from({
         name: `Angular (for Websql backend) frontend app`,
         cmd: this.buildWatchCmdForArtifact('angular-node-app', {
-          build: {
-            websql: true,
-          },
-          ports: {
-            ngNormalAppPort,
-            nodeBeAppPort,
-            ngWebsqlAppPort,
-          },
+          build: { websql: true },
+          ports: { ngNormalAppPort, nodeBeAppPort, ngWebsqlAppPort },
         }),
         shouldBeActiveOrAlreadyBuild: [ngBuildLibCommand],
         goToNextCommandWhenOutput: {
@@ -631,18 +625,10 @@ export class ArtifactManager {
           true,
         );
         const errorOptions = {
-          tryAgain: {
-            name: 'Try again',
-          },
-          skipPackage: {
-            name: `Skip ${actionName} for this project`,
-          },
-          openInVscode: {
-            name: `Open in VSCode ... try release again`,
-          },
-          exit: {
-            name: 'Exit process',
-          },
+          tryAgain: { name: 'Try again' },
+          skipPackage: { name: `Skip ${actionName} for this project` },
+          openInVscode: { name: `Open in VSCode ... try release again` },
+          exit: { name: 'Exit process' },
         };
         const res = await UtilsTerminal.select<keyof typeof errorOptions>({
           choices: errorOptions,
