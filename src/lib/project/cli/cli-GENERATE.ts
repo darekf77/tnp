@@ -182,12 +182,13 @@ export class $Generate extends BaseCli {
   fieldsWebsqlRegions() {
     const fileAbsPath = crossPlatformPath(this.firstArg);
     const content = Helpers.readFile(fileAbsPath);
-    const fixedRegions = UtilsTypescript.wrapContentClassFieldsDecoratorsWithRegion(
+    const fixedRegions = UtilsTypescript.wrapContentClassMembersDecoratorsWithRegion(
       content,
       `${TAGS.WEBSQL}`,
     );
     if(content !== fixedRegions) {
       Helpers.writeFile(fileAbsPath, fixedRegions);
+      UtilsTypescript.formatFile(fileAbsPath);
     }
     this._exit(0);
   }
