@@ -121,9 +121,9 @@ export class $Generate extends BaseCli {
               if (
                 !_.isUndefined(frontendFiles.find(bigExt => f.endsWith(bigExt)))
               ) {
-                `${TAGS.COMMENT_REGION} ${TAGS.BROWSER}\n` +
-                  `export * from './${f.replace(path.extname(f), '')}';` +
-                  +`\n${TAGS.COMMENT_END_REGION}\n`;
+                // `${TAGS.COMMENT_REGION} ${TAGS.BROWSER}\n` +
+                `export * from './${f.replace(path.extname(f), '')}'; // ${TAGS.BROWSER}`;
+                // +`\n${TAGS.COMMENT_END_REGION}\n`;
               }
               if (
                 !_.isUndefined(
@@ -131,9 +131,9 @@ export class $Generate extends BaseCli {
                 )
               ) {
                 return (
-                  `${TAGS.COMMENT_REGION} ${TAGS.BACKEND}\n` +
-                  `export * from './${f.replace(path.extname(f), '')}';` +
-                  +`\n${TAGS.COMMENT_END_REGION}\n`
+                  // `${TAGS.COMMENT_REGION} ${TAGS.BACKEND}\n` +
+                  `export * from './${f.replace(path.extname(f), '')}'; // ${TAGS.BACKEND}`
+                  // +`\n${TAGS.COMMENT_END_REGION}\n`
                 );
               }
               return `export * from './${f.replace(path.extname(f), '')}';`;

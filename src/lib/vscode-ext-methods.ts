@@ -51,6 +51,17 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+      //#region GENERATE INDEX.TS
+      {
+        title: `${FRAMEWORK_NAME.toUpperCase()} generate index.ts`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% generated-index-exports_custom`,
+        options: {
+          titleWhenProcessing: 'generating index.ts',
+          showSuccessMessage: false,
+        },
+      },
+      //#endregion
+
       //#region CODEGEN SIMPLE/FULL
       {
         title: `${FRAMEWORK_NAME.toUpperCase()} code generator taon full example`,
@@ -220,16 +231,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       //   },
       // },
       //#endregion
-      //#region GENERATE INDEX.TS
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} GENERATE index.ts`,
-      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% generated-index-exports_custom`,
-      //   options: {
-      //     title: 'generating index.ts',
-      //     showSuccessMessage: false,
-      //   },
-      // },
-      //#endregion
+
       //#region WRAP FILE WITH @BROWSER TAG
       // {
       //   title: `${FRAMEWORK_NAME.toUpperCase()} WRAP FILE WITH @browser TAG`,
