@@ -197,11 +197,21 @@ export class ${contextName}_${timestamp}_${migrationName} extends Taon.Base.Migr
     }
 
     async up(queryRunner: QueryRunner): Promise<any> {
+       await queryRunner.startTransaction();
+      try {
       // do "something" in db
+        await queryRunner.commitTransaction();
+      } catch (error) {
+        console.error('Error in migration:', error);
+        await queryRunner.rollbackTransaction();
+      } finally {
+        await queryRunner.release();
+      }
     }
 
     async down(queryRunner: QueryRunner): Promise<any> {
       // revert this "something" in db
+      // queryRunner.clearDatabase()
     }
 }
       `;
