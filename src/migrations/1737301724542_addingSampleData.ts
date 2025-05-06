@@ -21,6 +21,7 @@ export class TaonProjectsContext_1737301724542_addingSampleData extends Taon
     return true;
   }
 
+  // @ts-ignore
   async up(queryRunner: QueryRunner): Promise<any> {
     // do "something" in db
     const environmentNames = [
@@ -47,6 +48,7 @@ export class TaonProjectsContext_1737301724542_addingSampleData extends Taon
     }
   }
 
+  // @ts-ignore
   async down(queryRunner: QueryRunner): Promise<any> {
     // revert this "something" in db
     this.repoEnv.clear();
