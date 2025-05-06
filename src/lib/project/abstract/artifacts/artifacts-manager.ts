@@ -197,7 +197,6 @@ export class ArtifactManager {
     this.project.taonJson.preserveOldTaonProps(); // TODO temporary remove
     this.project.packagesRecognition.addIsomorphicPackagesToFile([
       this.project.nameForNpmPackage,
-      this.project.name,
     ]);
     this.project.taonJson.saveToDisk('init');
     await this.project.vsCodeHelpers.init();
