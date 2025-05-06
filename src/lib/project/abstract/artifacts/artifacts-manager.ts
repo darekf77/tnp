@@ -204,6 +204,7 @@ export class ArtifactManager {
     await this.project.linter.init();
 
     if (this.project.framework.isStandaloneProject) {
+      await this.artifact.angularNodeApp.updatePortsInHosts(initOptions);
       await this.project.artifactsManager.globalHelper.branding.apply(
         !!initOptions.init.branding,
       );

@@ -48,26 +48,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   public readonly assetsFileListGenerator: AssetsFileListGenerator;
   public readonly assetsManager: AssetsManager;
 
-  async APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
-    buildOptions: Partial<EnvOptions>,
-  ): Promise<number> {
-    buildOptions = EnvOptions.from(buildOptions);
-    const key =
-      `${buildOptions.build.watch ? 'serve' : 'build'} ` +
-      `ng app (${buildOptions.build.websql ? 'websql' : 'normal'})`;
-    return await this.project.registerAndAssignPort(key, {
-      startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
-    });
-  }
-
-  async NODE_BACKEND_PORT_UNIQ_KEY(buildOptions: EnvOptions): Promise<number> {
-    buildOptions = EnvOptions.from(buildOptions);
-    const key = `node backend`;
-    return await this.project.registerAndAssignPort(key, {
-      startFrom: DEFAULT_PORT.SERVER_LOCALHOST,
-    });
-  }
-
   //#endregion
 
   //#region constructor
@@ -162,53 +142,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     const appDistOutBackendNodeAbsPath =
       this.getOutDirNodeBackendAppAbsPath(buildOptions);
 
-    // TODO @LAST this should be set externally
-    buildOptions.ports.ngNormalAppPort =
-      buildOptions.ports.ngNormalAppPort ||
-      (await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(buildOptions));
-
-    buildOptions.ports.ngWebsqlAppPort =
-      buildOptions.ports.ngWebsqlAppPort ||
-      (await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY({
-        ...buildOptions,
-        build: {
-          websql: true,
-        },
-      }));
-
     const fromFileBaseHref = Helpers.readFile(
       this.project.pathFor(tmpBaseHrefOverwriteRelPath),
     );
     buildOptions.build.baseHref = fromFileBaseHref;
-
-    const backendPort =
-      buildOptions.ports.nodeBeAppPort ||
-      (await this.NODE_BACKEND_PORT_UNIQ_KEY(buildOptions));
-
-    UtilsTypescript.setValueToVariableInTsFile(
-      this.project.pathFor('src/app.hosts.ts'),
-      'HOST_BACKEND_PORT',
-      backendPort,
-    );
-
-    // console.log(`
-
-    //   buildOptions.ports.ngWebsqlAppPort: ${buildOptions.ports.ngWebsqlAppPort}
-    //   buildOptions.ports.ngNormalAppPort: ${buildOptions.ports.ngNormalAppPort}
-
-    //   `);
-
-    UtilsTypescript.setValueToVariableInTsFile(
-      this.project.pathFor('src/app.hosts.ts'),
-      'CLIENT_DEV_WEBSQL_APP_PORT',
-      buildOptions.ports.ngWebsqlAppPort,
-    );
-
-    UtilsTypescript.setValueToVariableInTsFile(
-      this.project.pathFor('src/app.hosts.ts'),
-      'CLIENT_DEV_NORMAL_APP_PORT',
-      buildOptions.ports.ngNormalAppPort,
-    );
 
     const portAssignedToAppBuild: number = Number(
       buildOptions.build.websql
@@ -220,6 +157,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       await Helpers.killProcessByPort(portAssignedToAppBuild);
     }
 
+    //#region prepare angular command
     const outPutPathCommand = ` --output-path ${appDistOutBrowserAngularAbsPath} `;
 
     const angularBuildAppCmd = buildOptions.build.watch
@@ -239,6 +177,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         ` ${buildOptions.build.angularProd ? '--configuration production' : ''} ` +
         ` ${buildOptions.build.watch ? '--watch' : ''}` +
         ` ${outPutPathCommand} `;
+    //#endregion
 
     const angularTempProj = this.globalHelper.getProxyNgProj(buildOptions);
 
@@ -380,9 +319,83 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }
   //#endregion
 
+  //#region public methods
+
+  //#region public methods / update ports in hosts
+  public async updatePortsInHosts(buildOptions: EnvOptions): Promise<void> {
+    //#region @backendFunc
+    // TODO @LAST this should be set externally
+    buildOptions.ports.ngNormalAppPort =
+      buildOptions.ports.ngNormalAppPort ||
+      (await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(buildOptions));
+
+    buildOptions.ports.ngWebsqlAppPort =
+      buildOptions.ports.ngWebsqlAppPort ||
+      (await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+        buildOptions.clone({
+          build: {
+            websql: true,
+          },
+        }),
+      ));
+
+    buildOptions.ports.nodeBeAppPort =
+      buildOptions.ports.nodeBeAppPort ||
+      (await this.NODE_BACKEND_PORT_UNIQ_KEY(buildOptions));
+
+    UtilsTypescript.setValueToVariableInTsFile(
+      this.project.pathFor('src/app.hosts.ts'),
+      'HOST_BACKEND_PORT',
+      buildOptions.ports.nodeBeAppPort,
+    );
+
+    UtilsTypescript.setValueToVariableInTsFile(
+      this.project.pathFor('src/app.hosts.ts'),
+      'CLIENT_DEV_WEBSQL_APP_PORT',
+      buildOptions.ports.ngWebsqlAppPort,
+    );
+
+    UtilsTypescript.setValueToVariableInTsFile(
+      this.project.pathFor('src/app.hosts.ts'),
+      'CLIENT_DEV_NORMAL_APP_PORT',
+      buildOptions.ports.ngNormalAppPort,
+    );
+    //#endregion
+  }
+  //#endregion
+
+  //#region public methods / get ng server unique key
+  async APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+    buildOptions: Partial<EnvOptions>,
+  ): Promise<number> {
+    buildOptions = EnvOptions.from(buildOptions);
+    const key =
+      `${buildOptions.build.watch ? 'serve' : 'build'} ` +
+      `ng app (${buildOptions.build.websql ? 'websql' : 'normal'})`;
+    return await this.project.registerAndAssignPort(key, {
+      startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
+    });
+  }
+  //#endregion
+
+  //#region public methods / get node backend unique key
+  async NODE_BACKEND_PORT_UNIQ_KEY(buildOptions: EnvOptions): Promise<number> {
+    buildOptions = EnvOptions.from(buildOptions);
+    const key = `node backend`;
+    return await this.project.registerAndAssignPort(key, {
+      startFrom: DEFAULT_PORT.SERVER_LOCALHOST,
+    });
+  }
+  //#endregion
+
+  //#endregion
+
   //#region private methods
 
-  getStaticPagesClonedProjectLocation(releaseOptions: EnvOptions): string {
+  //#region private methods / get static pages cloned project location
+  private getStaticPagesClonedProjectLocation(
+    releaseOptions: EnvOptions,
+  ): string {
     //#region @backendFunc
     const staticPagesRepoBranch = releaseOptions.release.releaseType;
     const repoRoot = this.project.pathFor([
@@ -409,6 +422,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     return repoPath;
     //#endregion
   }
+  //#endregion
 
   //#region private methods / get out dir app
   /**
