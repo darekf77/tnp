@@ -7,6 +7,9 @@ import { EXPORT_TEMPLATE } from '../../../../../../../templates';
 import type { Project } from '../../../../../project';
 //#endregion
 
+/**
+ * TODO refactor and move to core project
+ */
 export function resolveBrowserPathToAssetFrom(
   projectTargetOrStandalone: Project,
   absolutePath: string,
@@ -214,6 +217,9 @@ ${'//#reg' + 'ion'}  ${project.name} controller
 class UserController extends Taon.Base.CrudController<User> {
   entityClassResolveFn = ()=> User;
   ${'//#reg' + 'ion'} @${'web' + 'sql'}
+  /**
+   * @deprecated use migrations instead
+   */
   async initExampleDbData(): Promise<void> {
     const superAdmin = new User();
     superAdmin.name = 'super-admin';
@@ -229,6 +235,9 @@ var MainContext = Taon.createContext(()=>({
   frontendHost,
   contextName: 'MainContext',
   contexts:{ BaseContext },
+  migrations: {
+    // PUT TAON MIGRATIONS HERE
+  },
   controllers: {
     UserController,
     // PUT TAON CONTROLLERS HERE

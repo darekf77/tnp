@@ -114,6 +114,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     //#region @backendFunc
 
     buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
+    await this.updatePortsInHosts(buildOptions); // QUICK_FIX second time update because of cloning env
+
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
     //#region prevent empty base href
@@ -194,6 +196,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     showInfoAngular();
 
     const isStandalone = this.project.framework.isStandaloneProject;
+    const projectBasePath = this.project.location;
 
     if (!shouldSkipBuild) {
       await angularTempProj.execute(angularBuildAppCmd, {
@@ -215,35 +218,14 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         },
         outputLineReplace: (line: string) => {
           //#region replace outut line for better debugging
-          if (isStandalone) {
-            return line.replace(`src/app/${this.project.name}/`, `./src/`);
-          } else {
-            line = line.trim();
-
-            if (line.search('src/app/') !== -1) {
-              line = line.replace('src/app/', './src/app/');
-              line = line.replace('././src/app/', './src/app/');
-            }
-
-            if (line.search(`src/app/${this.project.name}/libs/`) !== -1) {
-              const [__, ___, ____, _____, ______, moduleName] =
-                line.split('/');
-              return this.replaceLineInNgOutputProcess(
-                line.replace(
-                  `src/app/${this.project.name}/libs/${moduleName}/`,
-                  `${moduleName}/src/lib/`,
-                ),
-              );
-            }
-
-            if (line.search(`src/app/`) !== -1) {
-              const [__, ___, ____, moduleName] = line.split('/');
-              return this.replaceLineInNgOutputProcess(
-                line.replace(`src/app/${moduleName}/`, `${moduleName}/src/`),
-              );
-            }
-            return this.replaceLineInNgOutputProcess(line);
+          // console.log('LINE:', line);
+          if (line.includes('Warning:')) {
+            line = line.replace(projectBasePath + '/', './');
           }
+
+          line = line.replace(`src/app/${this.project.name}/`, `./src/`);
+
+          return line;
           //#endregion
         },
         //#endregion
@@ -360,6 +342,24 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       'CLIENT_DEV_NORMAL_APP_PORT',
       buildOptions.ports.ngNormalAppPort,
     );
+
+    this.project.writeFile(
+      'BUILD-INFO.md',
+      `
+# CURRENT BUILD INFO
+
+## NORMAL APP FRONTEND:
+http://localhost:${buildOptions.ports.ngNormalAppPort}
+
+- normal app node backend:
+http://localhost:${buildOptions.ports.nodeBeAppPort}
+
+## WEBSQL APP BACKEND/FRONTEND:
+http://localhost:${buildOptions.ports.ngWebsqlAppPort}
+
+
+      `,
+    );
     //#endregion
   }
   //#endregion
@@ -451,25 +451,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       `${config.folder.dist}-app${buildOptions.build.websql ? '-websql' : ''}`;
 
     return this.project.pathFor(outDirApp);
-  }
-  //#endregion
-
-  //#region private methods / replace line in output
-  private replaceLineInNgOutputProcess(line: string): string {
-    const beforeModule2 = crossPlatformPath(
-      path.join(
-        config.folder.dist,
-        this.project.name,
-        this.project.name,
-        `tmp-apps-for-${config.folder.dist}/${this.project.name}`,
-      ),
-    );
-
-    if (line.search(beforeModule2) !== -1) {
-      line = line.replace(beforeModule2 + '/', '');
-    }
-
-    return line;
   }
   //#endregion
 
