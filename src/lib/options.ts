@@ -238,7 +238,11 @@ class EnvOptionsRelease {
    */
   declare readonly resolvedNewVersion: string;
   /**
-   * skip tag and push after release
+   * skip npm publish
+   */
+  declare skipNpmPublish?: boolean;
+  /**
+   * skip git commit
    */
   declare skipTagGitPush?: boolean;
   /**

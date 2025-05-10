@@ -481,10 +481,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     Helpers.remove([releaseProjPath, 'firedev.jsonc']);
 
     if (allowedToNpmReleases.includes(releaseOptions.release.releaseType)) {
-      await projFromCompiled.releaseProcess.publishToNpm(
-        tmpProjNpmLibraryInNodeModulesAbsPath,
-        releaseOptions.release.autoReleaseUsingConfig,
-      );
+      if (!releaseOptions.release.skipNpmPublish) {
+        await projFromCompiled.releaseProcess.publishToNpm(
+          tmpProjNpmLibraryInNodeModulesAbsPath,
+          releaseOptions.release.autoReleaseUsingConfig,
+        );
+      }
     } else {
       if (releaseOptions.release.releaseType === 'local') {
         //#region local release
@@ -1111,7 +1113,9 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
     await Helpers.ncc(destCli, destCliMin, {
       minify,
-      // additionalExternals: [this.project.nameForNpmPackage],
+      additionalExternals: [
+        'typescript', // is not external
+      ],
     });
 
     // copy wasm file for dest
