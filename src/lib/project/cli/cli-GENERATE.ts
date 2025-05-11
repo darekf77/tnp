@@ -126,7 +126,7 @@ export class $Generate extends BaseCli {
                 !_.isUndefined(frontendFiles.find(bigExt => f.endsWith(bigExt)))
               ) {
                 // `${TAGS.COMMENT_REGION} ${TAGS.BROWSER}\n` +
-                `export * from './${f.replace(path.extname(f), '')}'; // ${TAGS.BROWSER}`;
+                return `export * from './${f.replace(path.extname(f), '')}'; // ${TAGS.BROWSER}`;
                 // +`\n${TAGS.COMMENT_END_REGION}\n`;
               }
               if (
@@ -182,11 +182,12 @@ export class $Generate extends BaseCli {
   fieldsWebsqlRegions() {
     const fileAbsPath = crossPlatformPath(this.firstArg);
     const content = Helpers.readFile(fileAbsPath);
-    const fixedRegions = UtilsTypescript.wrapContentClassMembersDecoratorsWithRegion(
-      content,
-      `${TAGS.WEBSQL}`,
-    );
-    if(content !== fixedRegions) {
+    const fixedRegions =
+      UtilsTypescript.wrapContentClassMembersDecoratorsWithRegion(
+        content,
+        `${TAGS.WEBSQL}`,
+      );
+    if (content !== fixedRegions) {
       Helpers.writeFile(fileAbsPath, fixedRegions);
       UtilsTypescript.formatFile(fileAbsPath);
     }
