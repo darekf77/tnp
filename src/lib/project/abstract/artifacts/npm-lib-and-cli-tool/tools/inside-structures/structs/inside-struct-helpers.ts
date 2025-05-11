@@ -96,11 +96,24 @@ export function recreateApp(project: Project) {
     path.join(project.location, config.folder.src, 'app', 'index.ts'),
   );
 
+  const globaScss = crossPlatformPath(
+    path.join(project.location, config.folder.src, 'global.scss'),
+  );
+
   if (
     !Helpers.exists(appFile)
     // && !Helpers.exists(appFolderWithIndex)
   ) {
     Helpers.writeFile(appFile, appfileTemplate(project));
+  }
+
+  if (
+    !Helpers.exists(globaScss)
+    // && !Helpers.exists(appFolderWithIndex)
+  ) {
+    const coreGlobalScss =
+      project.framework.coreProject.readFile('src/global.scss');
+    Helpers.writeFile(globaScss, coreGlobalScss);
   }
 
   if (
@@ -134,7 +147,7 @@ import { NgModule, inject, Injectable } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { VERSION } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { Taon, BaseContext } from 'taon/src';
+import { Taon, BaseContext, TAON_CONTEXT } from 'taon/src';
 import { Helpers, UtilsOs } from 'tnp-core/src';
 
 import {
@@ -194,6 +207,12 @@ ${'//#end' + 'region'}
 ${'//#reg' + 'ion'}  ${project.name} module
 ${'//#reg' + 'ion'} @${'bro' + 'wser'}
 @NgModule({
+  providers: [
+    {
+      provide: TAON_CONTEXT,
+      useValue: MainContext,
+    },
+  ],
   exports: [${componentName}],
   imports: [CommonModule],
   declarations: [${componentName}],

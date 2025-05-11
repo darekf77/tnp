@@ -60,10 +60,9 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
       this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
         initOptions,
       );
-    fileContent = fileContent.replace(
-      '<<<TO_REPLACE_BASENAME>>>',
-      frontendBaseHref,
-    );
+    fileContent = fileContent
+      .replace('<<<TO_REPLACE_BASENAME>>>', frontendBaseHref)
+      .replace('<<<TO_REPLACE_PROJ_NAME>>>', this.project.name);
     Helpers.writeFile(fileAbsPath, fileContent);
     //#endregion
   }
