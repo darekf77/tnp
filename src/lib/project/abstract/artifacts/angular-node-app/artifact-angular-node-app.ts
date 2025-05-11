@@ -149,6 +149,18 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     );
     buildOptions.build.baseHref = fromFileBaseHref;
 
+    this.project.writeFile(
+      'src/vars.scss',
+      `${THIS_IS_GENERATED_INFO_COMMENT}
+// current build base href
+$basename: '${buildOptions.build.baseHref}';
+$website_title: '${buildOptions.website.title}';
+$website_domain: '${buildOptions.website.domain}';
+$project_npm_name: '${this.project.nameForNpmPackage}';
+${THIS_IS_GENERATED_INFO_COMMENT}
+`,
+    );
+
     const portAssignedToAppBuild: number = Number(
       buildOptions.build.websql
         ? buildOptions.ports.ngWebsqlAppPort
@@ -219,8 +231,20 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         outputLineReplace: (line: string) => {
           //#region replace outut line for better debugging
           // console.log('LINE:', line);
+
           if (line.includes('Warning:')) {
             line = line.replace(projectBasePath + '/', './');
+          }
+
+          // TODO QUICK_FIXES for clean errors
+          if (
+            line.includes('styles.scss?ngGlobalStyle') ||
+            (line.includes('./src/styles.scss') &&
+              line.includes('/sass-loader/dist/cjs.js')) ||
+            (line.includes('HookWebpackError: Module build failed') &&
+              line.includes('/sass-loader/dist/cjs.js'))
+          ) {
+            return '';
           }
 
           line = line.replace(`src/app/${this.project.name}/`, `./src/`);
@@ -613,6 +637,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
       `,
     );
+
     //#endregion
   }
   //#endregion

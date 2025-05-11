@@ -618,6 +618,7 @@ yarn-error.log
 testem.log
 /typings
 app.hosts.ts
+/src/vars.scss
 ${frameworkBuildFolders
   .filter(c => !!c)
   .map(c => `/${c}`)
