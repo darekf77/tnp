@@ -216,8 +216,7 @@ class $Build extends BaseCli {
   async start() {
     // TODO add proper logic
     await this.project.build(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
         release: {
           targetArtifact: 'npm-lib-and-cli-tool',
         },
@@ -227,8 +226,7 @@ class $Build extends BaseCli {
       }),
     );
     await this.project.build(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
         release: {
           targetArtifact: 'angular-node-app',
         },
