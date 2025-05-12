@@ -252,7 +252,15 @@ export namespace Models {
      */
     isCoreProject: boolean;
     packageJsonOverride: Partial<PackageJson>;
-
+    /**
+     * Folders to remove after pulling from git.
+     * Usefull when you have some folders that are
+     * not needed in git but there just waiting to be deleted
+     * after pulling from git.
+     * This may be useful after refactor/moving huge
+     * folders around.
+     */
+    removeAfterPullingFromGit?: string[];
     /**
      * @deprecated
      */

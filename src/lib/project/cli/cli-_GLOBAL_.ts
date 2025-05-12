@@ -704,7 +704,6 @@ export class $Global extends BaseGlobalCommandLine<
   }
   //#endregion
 
-
   //#region clear
   async CLEAN() {
     await this.project.artifactsManager.artifact.npmLibAndCliTool.clearPartial();
@@ -1423,8 +1422,8 @@ ${this.project.children
     Helpers.taskStarted('Recreating... src/lib/models.ts');
     await recreate();
     Helpers.taskDone('Recreation done src/lib/models.ts');
-    Helpers.taskStarted('Watching for changes in src/lib/models.ts');
     if (this.params.watch) {
+      Helpers.taskStarted('Watching for changes in src/lib/models.ts');
       chokidar.watch(fileToWatch).on('change', () => {
         debounceRecreate();
       });

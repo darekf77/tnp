@@ -1,5 +1,5 @@
 //#region imports
-import { UtilsTerminal } from 'tnp-core/src';
+import { UtilsTerminal, _ } from 'tnp-core/src';
 import { BaseGit, Helpers } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../options';
@@ -83,6 +83,37 @@ export class Git extends BaseGit<Project> {
     //#endregion
   }
   //#endregion
+
+  protected async _afterPullProcessAction(
+    setOrigin: 'ssh' | 'http',
+  ): Promise<void> {
+    const paths = (this.project.taonJson.removeAfterPullingFromGit || [])
+      .map(folder => {
+        if (!_.isString(folder)) {
+          return;
+        }
+        if (folder.includes('..')) {
+          // prevent accessing parent folders
+          return;
+        }
+        return this.project.pathFor(folder);
+      })
+      .filter(f => !!f && Helpers.exists(f));
+
+    if (paths.length > 0) {
+      if (
+        await UtilsTerminal.confirm({
+          message: `[taon][after-pull-action] Do you want to remove old folders: ${paths.join(', ')}?`,
+        })
+      ) {
+        for (const folder of paths) {
+          Helpers.removeFolderIfExists(this.project.pathFor(folder));
+        }
+      }
+    }
+
+    await super._afterPullProcessAction(setOrigin);
+  }
 
   //#region OVERRIDE / automatically add all changes when pushing to git
   automaticallyAddAllChangesWhenPushingToGit() {

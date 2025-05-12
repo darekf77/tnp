@@ -303,6 +303,17 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region folders to remove after pulling from git
+  get removeAfterPullingFromGit(): string[] {
+    //#region @backendFunc
+    const data = this.data as Models.TaonJsonContainer;
+    return Array.isArray(data?.removeAfterPullingFromGit)
+      ? data?.removeAfterPullingFromGit
+      : [];
+    //#endregion
+  }
+  //#endregion
+
   //#region link to
   linkTo(destination: string): void {
     //#region @backendFunc
