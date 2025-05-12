@@ -186,10 +186,10 @@ export class $Link extends BaseCli {
 
         const inspect =
           globalName.endsWith('debug') || globalName.endsWith('inspect');
-        const inspectBrk =
+        const inspectBrk: boolean =
           globalName.endsWith('debug-brk') ||
           globalName.endsWith('inspect-brk');
-        const attachDebugParam = inspect
+        const attachDebugParam: '--inspect' | '--inspect-brk' | '' = inspect
           ? '--inspect'
           : inspectBrk
             ? '--inspect-brk'
@@ -227,7 +227,7 @@ export class $Link extends BaseCli {
   //#region write win 32 link files
   _writeWin32LinkFiles(options: {
     destinationGlobalLink: string;
-    attachDebugParam: string;
+    attachDebugParam: '--inspect' | '--inspect-brk' | '';
     project: Project;
     globalName: string;
     globalBinFolderPath: string;
@@ -251,14 +251,14 @@ case \`uname\` in
 esac
 
 if [ -x "$basedir/node" ]; then
-"$basedir/node" ${attachDebugParam} "$basedir/node_modules/${path.basename(
-          project.location,
-        )}/bin/${globalName}" "$@"
+"$basedir/node" ${attachDebugParam} "$basedir/node_modules/${
+          project.nameForNpmPackage
+        }/bin/${globalName}" "$@"
 ret=$?
 else
-node ${attachDebugParam} "$basedir/node_modules/${path.basename(
-          project.location,
-        )}/bin/${globalName}" "$@"
+node ${attachDebugParam} "$basedir/node_modules/${
+          project.nameForNpmPackage
+        }/bin/${globalName}" "$@"
 ret=$?
 fi
 exit $ret
@@ -271,7 +271,22 @@ exit $ret
       );
       Helpers.writeFile(
         destinationGlobalLinkPS1File,
-        `
+        attachDebugParam
+          ? `#!/usr/bin/env pwsh
+$ErrorActionPreference = 'Stop'
+
+$basedir = Split-Path $MyInvocation.MyCommand.Definition -Parent
+$exe = if ($PSVersionTable.PSVersion -lt "6.0" -or $IsWindows) { ".exe" } else { "" }
+
+$nodePath = if (Test-Path "$basedir/node$exe") { "$basedir/node$exe" } else { "node$exe" }
+$scriptToRun = "$basedir/node_modules/${
+              project.nameForNpmPackage
+            }/bin/${globalName}"
+
+$ret = & $nodePath ${`"${attachDebugParam}"`} $scriptToRun @args
+exit $ret
+`.trim() + '\n'
+          : `
 #!/usr/bin/env pwsh
 $basedir=Split-Path $MyInvocation.MyCommand.Definition -Parent
 
@@ -283,14 +298,14 @@ $exe=".exe"
 }
 $ret=0
 if (Test-Path "$basedir/node$exe") {
-& "$basedir/node$exe"  "$basedir/node_modules/${path.basename(
-          project.location,
-        )}/bin/${globalName}" $args
+& "$basedir/node$exe"  "$basedir/node_modules/${
+              project.nameForNpmPackage
+            }/bin/${globalName}" $args
 $ret=$LASTEXITCODE
 } else {
-& "node$exe"  "$basedir/node_modules/${path.basename(
-          project.location,
-        )}/bin/${globalName}" $args
+& "node$exe"  "$basedir/node_modules/${
+              project.nameForNpmPackage
+            }/bin/${globalName}" $args
 $ret=$LASTEXITCODE
 }
 exit $ret
@@ -314,9 +329,9 @@ SET "_prog=node"
 SET PATHEXT=%PATHEXT:;.JS;=;%
 )
 
-"%_prog%"  "%dp0%\\node_modules\\${path.basename(
-          project.location,
-        )}\\bin\\${globalName}" %*
+"%_prog%"  "%dp0%\\node_modules\\${
+          project.nameForNpmPackage
+        }\\bin\\${globalName}" %*
 ENDLOCAL
 EXIT /b %errorlevel%
 :find_dp0
