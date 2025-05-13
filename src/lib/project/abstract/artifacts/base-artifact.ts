@@ -111,6 +111,38 @@ export abstract class BaseArtifact<
     return false;
   }
 
+  //#region private methods / get static pages cloned project location
+  protected getStaticPagesClonedProjectLocation(
+    releaseOptions: EnvOptions,
+  ): string {
+    //#region @backendFunc
+    const staticPagesRepoBranch = releaseOptions.release.releaseType;
+    const repoRoot = this.project.pathFor([
+      `.${config.frameworkName}`,
+      this.currentArtifactName,
+    ]);
+    const repoName = `repo-${this.project.name}-for-${releaseOptions.release.releaseType}`;
+    const repoPath = crossPlatformPath([repoRoot, repoName]);
+    if (!Helpers.exists(repoPath)) {
+      Helpers.mkdirp(repoRoot);
+      Helpers.git.clone({
+        cwd: repoRoot,
+        url: this.project.git.remoteOriginUrl,
+        override: true,
+        destinationFolderName: repoName,
+      });
+    }
+    Helpers.git.resetHard(repoPath);
+    Helpers.git.checkout(repoPath, staticPagesRepoBranch, {
+      createBranchIfNotExists: true,
+      fetchBeforeCheckout: true,
+      switchBranchWhenExists: true,
+    });
+    return repoPath;
+    //#endregion
+  }
+  //#endregion
+
   //#region getters & methods / all resources
   protected get __allResources(): string[] {
     //#region @backendFunc

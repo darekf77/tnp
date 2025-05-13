@@ -13,8 +13,10 @@ import { BaseCli } from './base-cli';
 class $Docs extends BaseCli {
   public async _(): Promise<void> {
     await this.project.build(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
+        build: {
+          watch: false,
+        },
         release: {
           targetArtifact: 'docs-webapp',
         },
@@ -26,8 +28,7 @@ class $Docs extends BaseCli {
 
   async watch() {
     await this.project.build(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
         build: {
           watch: true,
         },

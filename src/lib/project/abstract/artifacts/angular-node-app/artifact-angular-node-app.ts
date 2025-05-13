@@ -295,9 +295,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
           exitOnError: false,
         });
       } catch (error) {}
-      Helpers.git.cleanRepoFromAnyFilesExceptDotGitFolder(
-        staticPagesProjLocation,
-      );
+      if (Helpers.exists([staticPagesProjLocation, config.file.taon_jsonc])) {
+        Helpers.git.cleanRepoFromAnyFilesExceptDotGitFolder(
+          staticPagesProjLocation,
+        );
+      }
       Helpers.writeFile([appDistOutBrowserAngularAbsPath, '.nojekyll'], '');
       Helpers.copy(appDistOutBrowserAngularAbsPath, staticPagesProjLocation);
       Helpers.git.revertFileChanges(staticPagesProjLocation, 'CNAME');
@@ -415,38 +417,6 @@ http://localhost:${buildOptions.ports.ngWebsqlAppPort}
   //#endregion
 
   //#region private methods
-
-  //#region private methods / get static pages cloned project location
-  private getStaticPagesClonedProjectLocation(
-    releaseOptions: EnvOptions,
-  ): string {
-    //#region @backendFunc
-    const staticPagesRepoBranch = releaseOptions.release.releaseType;
-    const repoRoot = this.project.pathFor([
-      `.${config.frameworkName}`,
-      this.currentArtifactName,
-    ]);
-    const repoName = `repo-${this.project.name}-for-${releaseOptions.release.releaseType}`;
-    const repoPath = crossPlatformPath([repoRoot, repoName]);
-    if (!Helpers.exists(repoPath)) {
-      Helpers.mkdirp(repoRoot);
-      Helpers.git.clone({
-        cwd: repoRoot,
-        url: this.project.git.remoteOriginUrl,
-        override: true,
-        destinationFolderName: repoName,
-      });
-    }
-    Helpers.git.resetHard(repoPath);
-    Helpers.git.checkout(repoPath, staticPagesRepoBranch, {
-      createBranchIfNotExists: true,
-      fetchBeforeCheckout: true,
-      switchBranchWhenExists: true,
-    });
-    return repoPath;
-    //#endregion
-  }
-  //#endregion
 
   //#region private methods / get out dir app
   /**
