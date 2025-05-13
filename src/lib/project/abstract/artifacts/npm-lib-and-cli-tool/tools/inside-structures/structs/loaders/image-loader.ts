@@ -7,7 +7,8 @@ export function imageLoader(
   pathToLoaderImageInAssets: string,
   preloader = false,
 ) {
-  return `
+  return (
+    `
 <style>
   .taon-image-pre-loader {
     display: block;
@@ -25,7 +26,9 @@ export function imageLoader(
   }
 </style>
 
-<img  src="${pathToLoaderImageInAssets}" ${preloader ? ID_LOADER_PRE_BOOTSTRAP : PRE_LOADER_NG_IF_INITED}  class="taon-image-${preloader ? 'pre' : 'ngbootstrap'}-loader">
+<img  src="${pathToLoaderImageInAssets.replace(/\/\/\//g, '/').replace(/\/\//g, '/')}` +
+    `" ${preloader ? ID_LOADER_PRE_BOOTSTRAP : PRE_LOADER_NG_IF_INITED}  class="taon-image-${preloader ? 'pre' : 'ngbootstrap'}-loader">
 
-  `;
+  `
+  );
 }

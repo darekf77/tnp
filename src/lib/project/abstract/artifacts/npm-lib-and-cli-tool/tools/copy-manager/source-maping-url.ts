@@ -58,7 +58,6 @@ export class SourceMappingUrl {
     //#region @backendFunc
     if (this.mappingLineIndex !== -1) {
       if (buildOptions.release.releaseType) {
-        // TODO links on windows sucks d
         this.contentLines[this.mappingLineIndex] =
           `${SourceMappingUrl.SOURCEMAPDES}${path.basename(this.absFilePath)}.map`;
       } else {

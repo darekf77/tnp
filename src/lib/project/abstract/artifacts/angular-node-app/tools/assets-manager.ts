@@ -9,19 +9,16 @@ const assetsFor = `${config.folder.assets}-for`;
 
 // @ts-ignore TODO weird inheritance problem
 export class AssetsManager extends BaseFeatureForProject<Project> {
-  copyExternalAssets(websql: boolean) {
+  copyExternalAssets(websql: boolean): void {
     //#region @backendFunc
 
-    this.project.packagesRecognition.allIsomorphicPackagesFromMemory
-      .filter(f => !f.startsWith('@'))
-      .map(pkgName => {
-        const sharedPath = this.project.nodeModules.pathFor(
-          crossPlatformPath([
-            pkgName,
-            config.folder.assets,
-            config.folder.shared,
-          ]),
-        );
+    this.project.packagesRecognition.allIsomorphicPackagesFromMemory.map(
+      pkgName => {
+        const sharedPath = this.project.nodeModules.pathFor([
+          pkgName,
+          config.folder.assets,
+          config.folder.shared,
+        ]);
 
         if (Helpers.exists(sharedPath)) {
           const destinations = [
@@ -30,7 +27,7 @@ export class AssetsManager extends BaseFeatureForProject<Project> {
               `tmp-src-${config.folder.dist}${websql ? '-websql' : ''}`,
               config.folder.assets,
               assetsFor,
-              path.basename(pkgName),
+              pkgName,
               config.folder.shared,
             ]),
 
@@ -39,7 +36,7 @@ export class AssetsManager extends BaseFeatureForProject<Project> {
               `tmp-src-app-${config.folder.dist}${websql ? '-websql' : ''}`,
               config.folder.assets,
               assetsFor,
-              path.basename(pkgName),
+              pkgName,
               config.folder.shared,
             ]),
 
@@ -48,7 +45,7 @@ export class AssetsManager extends BaseFeatureForProject<Project> {
               `tmp-source-${config.folder.dist}${websql ? '-websql' : ''}`,
               config.folder.assets,
               assetsFor,
-              path.basename(pkgName),
+              pkgName,
               config.folder.shared,
             ]),
           ];
@@ -58,60 +55,8 @@ export class AssetsManager extends BaseFeatureForProject<Project> {
             Helpers.copy(sharedPath, dest, { recursive: true });
           }
         }
-      });
-    this.project.packagesRecognition.allIsomorphicPackagesFromMemory
-      .filter(f => f.startsWith('@'))
-      .map(orgPkgName => {
-        const orgPackageRootName = path.dirname(orgPkgName).replace('@', '');
-        const realPathOrg = this.project.nodeModules.pathFor(
-          crossPlatformPath(path.dirname(orgPkgName)),
-        );
-
-        if (Helpers.exists(realPathOrg)) {
-          const sharedPath = crossPlatformPath([
-            fse.realpathSync(realPathOrg),
-            path.basename(orgPkgName),
-            config.folder.assets,
-            config.folder.shared,
-          ]);
-
-          if (Helpers.exists(sharedPath)) {
-            const destinations = [
-              crossPlatformPath([
-                this.project.location,
-                `tmp-src-${config.folder.dist}${websql ? '-websql' : ''}`,
-                config.folder.assets,
-                assetsFor,
-                `${orgPackageRootName}--${path.basename(orgPkgName)}`,
-                config.folder.shared,
-              ]),
-
-              crossPlatformPath([
-                this.project.location,
-                `tmp-src-app-${config.folder.dist}${websql ? '-websql' : ''}`,
-                config.folder.assets,
-                assetsFor,
-                `${orgPackageRootName}--${path.basename(orgPkgName)}`,
-                config.folder.shared,
-              ]),
-
-              crossPlatformPath([
-                this.project.location,
-                `tmp-source-${config.folder.dist}${websql ? '-websql' : ''}`,
-                config.folder.assets,
-                assetsFor,
-                `${orgPackageRootName}--${path.basename(orgPkgName)}`,
-                config.folder.shared,
-              ]),
-            ];
-            for (let index = 0; index < destinations.length; index++) {
-              const dest = destinations[index];
-              Helpers.removeFolderIfExists(dest);
-              Helpers.copy(sharedPath, dest, { recursive: true });
-            }
-          }
-        }
-      });
+      },
+    );
     //#endregion
   }
 }

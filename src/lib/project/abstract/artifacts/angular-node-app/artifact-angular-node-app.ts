@@ -80,6 +80,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       }
     }
 
+    this.assetsManager.copyExternalAssets(initOptions?.build.websql);
+
     const copyFromCoreAssets = (fileName: string) => {
       const coreSource = crossPlatformPath([
         this.project.ins.by(
@@ -207,7 +209,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
     showInfoAngular();
 
-    const isStandalone = this.project.framework.isStandaloneProject;
     const projectBasePath = this.project.location;
 
     if (!shouldSkipBuild) {

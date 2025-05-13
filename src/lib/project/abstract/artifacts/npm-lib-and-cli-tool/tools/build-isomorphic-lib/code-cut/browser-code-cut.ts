@@ -159,6 +159,7 @@ export class BrowserCodeCut {
 
   //#region private / methods & getters / init and save
   private initAndSaveAssetFile(remove = false): BrowserCodeCut {
+    // const debugFiles = ['assets/cutsmall.jpg'];
     //#region @backendFunc
     if (remove) {
       Helpers.removeIfExists(
@@ -172,6 +173,9 @@ export class BrowserCodeCut {
       );
     } else {
       // this is needed for json in src/lib or something
+      // if (this.absFileSourcePathBrowserOrWebsql.endsWith(debugFiles[0])) {
+      //   debugger;
+      // }
       const realAbsSourcePathFromSrc = fse.realpathSync(
         this.absSourcePathFromSrc,
       );
@@ -372,7 +376,10 @@ export class BrowserCodeCut {
     }
 
     if (isTsFile) {
-      if (!this.relativePath.startsWith('app/') && !this.relativePath.startsWith('app.')) {
+      if (
+        !this.relativePath.startsWith('app/') &&
+        !this.relativePath.startsWith('app.')
+      ) {
         fse.writeFileSync(
           this.absFileSourcePathBrowserOrWebsql,
           this.changeNpmNameToLocalLibNamePath(
@@ -509,22 +516,18 @@ export class BrowserCodeCut {
       }
     }
 
-    if (this.project.framework.isStandaloneProject) {
-      [this.project]
-        .filter(f => f.typeIs('isomorphic-lib'))
-        .forEach(c => {
-          const from = `src/assets/`;
-          const to = `${TO_REMOVE_TAG}assets/assets-for/${c.name}/`;
-          this.rawContentForBrowser = this.rawContentForBrowser.replace(
-            new RegExp(Helpers.escapeStringForRegEx(`/${from}`), 'g'),
-            to,
-          );
-          this.rawContentForBrowser = this.rawContentForBrowser.replace(
-            new RegExp(Helpers.escapeStringForRegEx(from), 'g'),
-            to,
-          );
-        });
-    }
+    (() => {
+      const from = `src/assets/`;
+      const to = `${TO_REMOVE_TAG}assets/assets-for/${this.project.nameForNpmPackage}/`;
+      this.rawContentForBrowser = this.rawContentForBrowser.replace(
+        new RegExp(Helpers.escapeStringForRegEx(`/${from}`), 'g'),
+        to,
+      );
+      this.rawContentForBrowser = this.rawContentForBrowser.replace(
+        new RegExp(Helpers.escapeStringForRegEx(from), 'g'),
+        to,
+      );
+    })();
 
     return this;
     //#endregion
@@ -772,7 +775,7 @@ export class BrowserCodeCut {
     return isAsset
       ? absDestinationPath.replace(
           '/assets/',
-          `/assets/assets-for/${this.project.name}/`,
+          `/assets/assets-for/${this.project.nameForNpmPackage}/`,
         )
       : absDestinationPath;
     //#endregion

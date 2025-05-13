@@ -682,9 +682,9 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     //#region @backendFunc
     specificFileRelativePath = specificFileRelativePath.replace(/^\//, '');
 
-    Helpers.log(
-      `Handle single file: ${specificFileRelativePath} for ${destination.location}`,
-    );
+    // Helpers.log(
+    //   `Handle single file: ${specificFileRelativePath} for ${destination.location}`,
+    // );
 
     if (this.notAllowedFiles.includes(specificFileRelativePath)) {
       return;
@@ -739,9 +739,9 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         `/${config.folder.dist}-nocutsrc/${specificFileRelativePath}`,
       );
       if (!Helpers.exists(newAbsOrgFilePathInDist)) {
-        Helpers.log(
-          `[copyto] New path does not exists or in browser | websql: ${newAbsOrgFilePathInDist}`,
-        );
+        // Helpers.log(
+        //   `[copyto] New path does not exists or in browser | websql: ${newAbsOrgFilePathInDist}`,
+        // );
       } else {
         absOrgFilePathInDist = newAbsOrgFilePathInDist;
       }

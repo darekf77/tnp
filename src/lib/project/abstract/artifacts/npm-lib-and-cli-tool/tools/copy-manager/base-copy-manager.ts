@@ -345,7 +345,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   /**
    * @returns if trus - skip futher processing
    */
-  protected contentReplaced(fileAbsolutePath: string): boolean {
+  protected contentReplaced(fileAbsolutePath: string): void {
     //#region @backendFunc
     // console.log('processing', fileAbsolutePath);
     if (
@@ -356,7 +356,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
         fileAbsolutePath.endsWith('.mjs.map')
       )
     ) {
-      return false;
+      return;
     }
     let contentOrg = Helpers.readFile(fileAbsolutePath) || '';
     const newContent = contentOrg.replace(
@@ -366,9 +366,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     if (newContent && contentOrg && newContent !== contentOrg) {
       Helpers.writeFile(fileAbsolutePath, newContent);
       // console.log(`[copy-manager] content replaced in ${fileAbsolutePath}`);
-      return true;
     }
-    return false;
     //#endregion
   }
 
@@ -376,11 +374,9 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   async asyncAction(event: IncCompiler.Change) {
     //#region @backendFunc
     const absoluteFilePath = crossPlatformPath(event.fileAbsolutePath);
-    if (this.contentReplaced(absoluteFilePath)) {
-      return;
-    }
-
     // console.log('async event '+ absoluteFilePath)
+    this.contentReplaced(absoluteFilePath);
+
     SourceMappingUrl.fixContent(absoluteFilePath, this.buildOptions);
 
     const outDir = config.folder.dist;
@@ -397,10 +393,10 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 
     const projectToCopyTo = this.projectToCopyTo;
 
-    Helpers.log(`ASYNC ACTION
-    absoluteFilePath: ${absoluteFilePath}
-    specificFileRelativePath: ${specificFileRelativePath}
-    `);
+    // Helpers.log(`ASYNC ACTION
+    // absoluteFilePath: ${absoluteFilePath}
+    // specificFileRelativePath: ${specificFileRelativePath}
+    // `);
 
     //     Helpers.log(`
     //     copyto project:
