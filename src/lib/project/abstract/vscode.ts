@@ -115,9 +115,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       if (!this.project.framework.isCoreProject) {
         this.project.removeFile(taonConfigSchemaJsonContainer);
       }
-    }
-
-    if (this.project.framework.isContainer) {
+    } else if (this.project.framework.isContainer) {
       const properSchema = {
         fileMatch: [`/${config.file.taon_jsonc}`],
         url: `./${taonConfigSchemaJsonContainer}`,

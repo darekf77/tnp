@@ -40,13 +40,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
    */
   projectSpecyficFiles() {
     //#region @backendFunc
-    let files = [
-      'index.js',
-      'index.d.ts',
-      'index.js.map',
-      taonConfigSchemaJsonStandalone,
-      taonConfigSchemaJsonContainer,
-    ];
+    let files = ['index.js', 'index.d.ts', 'index.js.map'];
 
     if (this.project.framework.isContainer) {
       return [taonConfigSchemaJsonContainer, 'eslint.config.js'];
@@ -55,6 +49,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
     if (this.project.framework.isStandaloneProject) {
       files = files
         .concat([
+          taonConfigSchemaJsonStandalone,
           'tsconfig.browser.json',
           'webpack.config.js',
           'run.js',
@@ -398,6 +393,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
                 browser: true,
                 dist: true,
                 'package-lock.json': true,
+                'tmp-*': true,
               };
 
               frameworkBuildFolders.forEach(f => {

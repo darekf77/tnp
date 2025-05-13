@@ -187,7 +187,7 @@ export class Docs extends BaseDebounceCompilerForProject<
     const project = this.project;
     this.initOptions({
       taskName: `DocsProviderFor${_.upperFirst(
-        _.camelCase(this.project.genericName),
+        _.camelCase(this.project.location),
       )}`,
       folderPath: project.location,
       ignoreFolderPatter: [
