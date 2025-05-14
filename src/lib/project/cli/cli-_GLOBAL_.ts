@@ -690,7 +690,78 @@ export class $Global extends BaseGlobalCommandLine<
 
   //#region sync core repositories
   async SYNC() {
+    const localTaonRepoPath = crossPlatformPath([
+      this.project.location,
+      '..',
+      'taon',
+    ]);
+    const isInsideTnpAndTaonDev =
+      this.project?.name === 'tnp' &&
+      this.project?.parent.name === 'taon-dev' &&
+      Helpers.exists(localTaonRepoPath);
+
+    if (isInsideTnpAndTaonDev) {
+      Helpers.info(`
+
+        You are inside taon-dev/tnp project.
+
+        `);
+    }
+
+    const updateTnpAndLocalTona =
+      isInsideTnpAndTaonDev &&
+      (await UtilsTerminal.confirm({
+        message: `Would you like to update tnp and ../taon (after sync command) ?`,
+        defaultValue: true,
+      }));
+
     this.ins.sync({ syncFromCommand: true });
+    if (updateTnpAndLocalTona) {
+      const isomorphicPackagesFile = config.file.tmpIsomorphicPackagesJson; // 'tmp-isomorphic-packages.json';
+      const currentFrameworkVersion = this.project.taonJson.frameworkVersion;
+      const pathToTaonContainerNodeModules = crossPlatformPath([
+        os.userInfo().homedir,
+        `.taon/taon/projects/container-${currentFrameworkVersion}/${config.folder.node_modules}`,
+      ]);
+      Helpers.taskStarted(`Syncing node_modules from taon container to tnp...`);
+
+      //#region copy from .taon to tnp
+      await Helpers.copyFolderOsNative(
+        pathToTaonContainerNodeModules,
+        this.project.nodeModules.path,
+        { removeDestination: true },
+      );
+      Helpers.copyFile(
+        crossPlatformPath([
+          pathToTaonContainerNodeModules,
+          `../${isomorphicPackagesFile}`,
+        ]),
+        this.project.pathFor(isomorphicPackagesFile),
+      );
+      //#endregion
+
+      Helpers.taskDone(`Done syncing node_modules from container to tnp...`);
+      Helpers.taskStarted(`Syncing node_modules from tnp to ../taon...`);
+
+      //#region copy from tnp to ../taon
+      await Helpers.copyFolderOsNative(
+        this.project.nodeModules.path,
+        crossPlatformPath(
+          `${localTaonRepoPath}/projects/container-${currentFrameworkVersion}/${config.folder.node_modules}`,
+        ),
+        { removeDestination: true },
+      );
+
+      Helpers.copyFile(
+        this.project.pathFor(isomorphicPackagesFile),
+        crossPlatformPath(
+          `${localTaonRepoPath}/projects/container-${currentFrameworkVersion}/${isomorphicPackagesFile}`,
+        ),
+      );
+      //#endregion
+
+      Helpers.taskDone(`Done syncing node_modules from tnp to ../taon...`);
+    }
     this._exit();
   }
   //#endregion
