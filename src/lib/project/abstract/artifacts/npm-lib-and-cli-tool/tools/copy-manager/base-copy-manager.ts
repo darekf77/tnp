@@ -418,7 +418,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   }
   //#endregion
 
-  readonly isStartFromScratch: boolean = true;
+  isStartFromScratch: boolean = true;
 
   //#region sync action
   async syncAction(
@@ -489,6 +489,9 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       //   }
       // }
       log.data('copy done...');
+    }
+    if (this.isStartFromScratch) {
+      this.isStartFromScratch = false;
     }
     this.updateTriggered();
     //#endregion
