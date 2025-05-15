@@ -10,28 +10,42 @@ git rm --cached path_to_submodule (no trailing slash).
 
 # trackable array
 ```ts
+
 class TrackedArray<T> extends Array<T> {
-    constructor(...args: any[]) {
-        super(...args);
+  constructor(...args: any[]) {
+    super(...args);
 
-        // Create a Proxy for the instance
-        return new Proxy(this, {
-            get(target, prop) {
-                // Intercept access to the 'push' method
-                if (prop === 'push') {
-                    return function (...args: any[]) {
-                        console.log('Array push called with:', args);
-                        debugger; // Add a debugger statement here for detailed inspection
-                        return Array.prototype.push.apply(target, args);
-                    };
-                }
+    const mutationMethods = [
+      'push', 'unshift', 'pop', 'shift', 'splice', 'sort', 'reverse', 'fill', 'copyWithin'
+    ];
 
-                // Default behavior for other properties
-                return target[prop];
-            }
-        });
-    }
+    return new Proxy(this, {
+      get(target, prop, receiver) {
+        if (mutationMethods.includes(prop as string)) {
+          return function (...args: any[]) {
+            console.log(`Array method "${String(prop)}" called with:`, args);
+            debugger;
+            return (Array.prototype as any)[prop].apply(target, args);
+          };
+        }
+
+        return Reflect.get(target, prop, receiver);
+      },
+      set(target, prop, value, receiver) {
+        if (
+          typeof prop === 'string' &&
+          (!isNaN(Number(prop)) || prop === 'length')
+        ) {
+          console.log(`Setting ${String(prop)} =`, value);
+          debugger;
+        }
+        return Reflect.set(target, prop, value, receiver);
+      }
+    });
+  }
 }
+
+
 
 function createTrackedArray<T>(existingArray: T[]): TrackedArray<T> {
     const trackedArray = new TrackedArray<T>();

@@ -264,7 +264,7 @@ export class BrowserCodeCut {
   //#region private / methods & getters / project own smart packages
   get projectOwnSmartPackages(): string[] {
     //#region @backendFunc
-    return [this.project.name, this.project.nameForNpmPackage];
+    return [this.project.nameForNpmPackage];
     //#endregion
   }
   //#endregion
@@ -518,7 +518,7 @@ export class BrowserCodeCut {
 
     (() => {
       const from = `src/assets/`;
-      const to = `${TO_REMOVE_TAG}assets/assets-for/${this.project.nameForNpmPackage}/`;
+      const to = `${TO_REMOVE_TAG}assets/assets-for/${this.project.nameForNpmPackage}/assets/`;
       this.rawContentForBrowser = this.rawContentForBrowser.replace(
         new RegExp(Helpers.escapeStringForRegEx(`/${from}`), 'g'),
         to,
@@ -557,6 +557,7 @@ export class BrowserCodeCut {
             .join('');
 
     const toReplaceFn = (relativeAssetPathPart: string) => {
+      // console.log({ relativeAssetPathPart });
       return [
         {
           from: `assets/assets-for/${relativeAssetPathPart}/`,
@@ -623,7 +624,7 @@ export class BrowserCodeCut {
       [this.project]
         .filter(f => f.typeIs('isomorphic-lib'))
         .forEach(c => {
-          const relative = c.name;
+          const relative = c.nameForNpmPackage;
           const cases = toReplaceFn(relative);
           for (let index = 0; index < cases.length; index++) {
             const { to, from, makeSureSlashAtBegin } = cases[index];
@@ -775,7 +776,7 @@ export class BrowserCodeCut {
     return isAsset
       ? absDestinationPath.replace(
           '/assets/',
-          `/assets/assets-for/${this.project.nameForNpmPackage}/`,
+          `/assets/assets-for/${this.project.nameForNpmPackage}/assets/`,
         )
       : absDestinationPath;
     //#endregion

@@ -26,6 +26,7 @@ import {
 } from '../../../../constants';
 import { EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
+import { AssetsManager } from '../angular-node-app/tools/assets-manager';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
 import { IncrementalBuildProcess } from './tools/build-isomorphic-lib/compilations/incremental-build-process';
@@ -74,6 +75,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   public readonly insideStructureLib: InsideStructuresLib;
   protected readonly indexAutogenProvider: IndexAutogenProvider;
   public readonly filesTemplatesBuilder: FilesTemplatesBuilder;
+  public readonly assetsManager: AssetsManager;
 
   //#endregion
 
@@ -91,11 +93,13 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     this.filesTemplatesBuilder = new FilesTemplatesBuilder(project);
     this.filesRecreator = new FilesRecreator(project);
     this.insideStructureLib = new InsideStructuresLib(project);
+    this.assetsManager = new AssetsManager(project);
   }
   //#endregion
   //#endregion
 
   //#region init partial
+
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
 
@@ -306,6 +310,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       });
       await incrementalBuildProcessWebsql.runTask({
         taskName: 'isomorphic compilation [WEBSQL]',
+        watch: buildOptions.build.watch,
+      });
+      await this.assetsManager.runTask({
         watch: buildOptions.build.watch,
       });
     }

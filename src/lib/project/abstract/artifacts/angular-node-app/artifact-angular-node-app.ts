@@ -46,7 +46,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
   public readonly insideStructureApp: InsideStructuresApp;
   public readonly assetsFileListGenerator: AssetsFileListGenerator;
-  public readonly assetsManager: AssetsManager;
 
   //#endregion
 
@@ -57,7 +56,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     this.angularFeBasenameManager = new AngularFeBasenameManager(project);
     this.insideStructureApp = new InsideStructuresApp(project);
     this.assetsFileListGenerator = new AssetsFileListGenerator(project);
-    this.assetsManager = new AssetsManager(project);
   }
   //#endregion
 
@@ -79,8 +77,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         await this.assetsFileListGenerator.start(initOptions.build.websql);
       }
     }
-
-    this.assetsManager.copyExternalAssets(initOptions?.build.websql);
 
     const copyFromCoreAssets = (fileName: string) => {
       const coreSource = crossPlatformPath([

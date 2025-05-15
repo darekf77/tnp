@@ -110,6 +110,7 @@ export class BrowserCompilation extends BackendCompilation {
       'tmp-src-',
       'tmp-source-',
     );
+
     Helpers.removeFolderIfExists(tmpSource);
     Helpers.mkdirp(tmpSource);
 
@@ -122,9 +123,6 @@ export class BrowserCompilation extends BackendCompilation {
     });
 
     this.codecut.files(relativePathesToProcess);
-    this.project.artifactsManager.artifact.angularNodeApp.assetsManager.copyExternalAssets(
-      this.buildOptions?.build.websql,
-    );
     // process.exit(0)
     //#endregion
   }
