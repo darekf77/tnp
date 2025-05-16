@@ -67,6 +67,12 @@ export class $Global extends BaseGlobalCommandLine<
     await this.ins.taonProjectsWorker.terminalUI.infoScreen();
   }
 
+  async detectPackages() {
+    this.project.removeFile(config.file.tmpIsomorphicPackagesJson);
+    await this.project.packagesRecognition.start('detecting packages');
+    this._exit();
+  }
+
   //#region kill process on port
   async killonport() {
     const port = parseInt(this.firstArg);

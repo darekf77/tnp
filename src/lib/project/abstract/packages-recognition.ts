@@ -136,7 +136,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       _.cloneDeep(recognizedPackages),
     );
     // Helpers.taskDone(`Search done. Watcher started...`);
-
+    this.addIsomorphicPackagesToFile(recognizedPackages);
     fse.watch(this.jsonPath, (eventType, filename) => {
       if (filename) {
         try {
