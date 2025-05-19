@@ -581,27 +581,34 @@ export class $Global extends BaseGlobalCommandLine<
       Project.ins.by('container').location,
       '..',
     ]);
-    const folders = Helpers.foldersFrom(toReinstallCoreContainers, {
+    const foldersAbsPaths = Helpers.foldersFrom(toReinstallCoreContainers, {
       recursive: false,
     })
       .filter(f => path.basename(f).startsWith('container'))
       .filter(f => {
         const project = this.ins.From(f) as Project;
-        return project && project.framework.frameworkVersionAtLeast('v18');
+        return (
+          project &&
+          project.framework.frameworkVersionAtLeast('v18') &&
+          !project.nodeModules.empty
+        );
       });
 
-    const projectsFolders = await UtilsTerminal.multiselect({
-      question: `Select core containers to reinstall`,
-      choices: folders.map(f => {
-        return {
-          name: path.basename(f),
-          value: f,
-        };
-      }),
-    });
+    const projectsFoldersAbsPaths =
+      foldersAbsPaths.length === 1
+        ? foldersAbsPaths
+        : await UtilsTerminal.multiselect({
+            question: `Select core containers to reinstall`,
+            choices: foldersAbsPaths.map(absFolderPath => {
+              return {
+                name: path.basename(absFolderPath),
+                value: absFolderPath,
+              };
+            }),
+          });
 
-    for (let index = 0; index < projectsFolders.length; index++) {
-      const project = this.ins.From(projectsFolders[index]) as Project;
+    for (let index = 0; index < projectsFoldersAbsPaths.length; index++) {
+      const project = this.ins.From(projectsFoldersAbsPaths[index]) as Project;
       await project.nodeModules.reinstall();
     }
     Helpers.info(`Done reinstalling core containers`);
