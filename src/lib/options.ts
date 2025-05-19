@@ -486,6 +486,17 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     this.config = _.merge(this.config, _.cloneDeep(override.config));
 
     this.container = _.merge(new EnvOptionsContainer(), this.container);
+    if (_.isString(this.container.only) && this.container.only.includes(',')) {
+      this.container.only = this.container.only.split(',');
+    }
+    this.container.only =
+      (_.isString(this.container.only)
+        ? [this.container.only]
+        : this.container.only) || [];
+
+    if (!_.isArray(this.container.only)) {
+      this.container.only = [];
+    }
 
     this.ports = _.merge(new EnvOptionsPorts(), this.ports);
     this.init = _.merge(new EnvOptionsInit(), this.init);

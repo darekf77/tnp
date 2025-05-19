@@ -205,16 +205,29 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         )
         .filter(d => d.framework.isStandaloneProject);
 
+      if (releaseOptions.container.only.length > 0) {
+        children = children.filter(c => {
+          return releaseOptions.container.only.includes(c.name);
+        });
+      }
+
+      const endIndex = children.findIndex(
+        c => c.name === releaseOptions.container.end,
+      );
+      if (endIndex !== -1) {
+        children = children.filter((c, i) => {
+          return i <= endIndex;
+        });
+      }
+
       const startIndex = children.findIndex(
         c => c.name === releaseOptions.container.start,
       );
-      // console.log('start index', startIndex);
-      children = children.filter((c, i) => {
-        if (startIndex === -1) {
-          return true;
-        }
-        return i >= startIndex;
-      });
+      if (startIndex !== -1) {
+        children = children.filter((c, i) => {
+          return i >= startIndex;
+        });
+      }
     }
 
     // console.log('after sorting ',children.map(c => c.name));

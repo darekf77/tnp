@@ -445,16 +445,29 @@ export class ArtifactManager {
         proj => proj.nameForNpmPackage,
       );
 
+if (options.container.only.length > 0) {
+      children = children.filter(c => {
+        return options.container.only.includes(c.name);
+      });
+    }
+
+    const endIndex = this.project.children.findIndex(
+      c => c.name === options.container.end,
+    );
+    if (endIndex !== -1) {
+      children = children.filter((c, i) => {
+        return i <= endIndex;
+      });
+    }
     const startIndex = this.project.children.findIndex(
       c => c.name === options.container.start,
     );
-    // console.log('start index', startIndex);
+    if (startIndex !== -1) {
     children = children.filter((c, i) => {
-      if (startIndex === -1) {
-        return true;
-      }
-      return i >= startIndex;
+            return i >= startIndex;
     });
+}
+
     for (const child of children) {
       await child.artifactsManager.build(options);
     }
