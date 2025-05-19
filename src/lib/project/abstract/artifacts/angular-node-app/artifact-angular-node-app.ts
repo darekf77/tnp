@@ -111,8 +111,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }> {
     //#region @backendFunc
 
-    buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
-    await this.updatePortsInHosts(buildOptions); // QUICK_FIX second time update because of cloning env
+    buildOptions = await this.project.artifactsManager.init(
+      EnvOptions.from(buildOptions),
+    );
 
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 

@@ -168,7 +168,9 @@ export default { commands };
   }> {
     //#region @backendFunc
 
-    buildOptions = await this.initPartial(EnvOptions.fromBuild(buildOptions));
+    buildOptions = await this.project.artifactsManager.init(
+      EnvOptions.fromBuild(buildOptions),
+    );
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
     const tmpVscodeProjPath = this.getTmpVscodeProjPath(

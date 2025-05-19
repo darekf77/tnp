@@ -90,7 +90,7 @@ class $Release extends BaseCli {
   }
   //#endregion
 
-  //#region auto release / auto
+  //#region auto release / auto clear
   async autoClear(): Promise<void> {
     await this.project.clear();
     await this.project.release(

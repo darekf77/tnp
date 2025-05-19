@@ -160,7 +160,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region add isomorphic packages to file
-  addIsomorphicPackagesToFile(recognizedPackagesNewPackages: string[]) {
+  addIsomorphicPackagesToFile(recognizedPackagesNewPackages: string[]): void {
     //#region @backendFunc
     const alreadyExistsJson = Helpers.readJsonC(this.jsonPath) || {};
     const alreadyExistsJsonArr =

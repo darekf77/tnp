@@ -102,11 +102,11 @@ export class ArtifactManager {
    * struct current project only
    * struct() <=> init() with struct flag
    */
-  async struct(initOptions: EnvOptions): Promise<void> {
+  async struct(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
     initOptions.purpose = 'only structure init';
     initOptions.init.struct = true;
-    await this.init(initOptions);
+    return await this.init(initOptions);
     //#endregion
   }
 
@@ -121,7 +121,7 @@ export class ArtifactManager {
   //#endregion
 
   //#region init
-  async init(initOptions: EnvOptions): Promise<void> {
+  async init(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
     //#region prevent not requested framework version
     if (this.project.framework.frameworkVersionLessThan('v18')) {
@@ -195,10 +195,10 @@ export class ArtifactManager {
 
     this.project.taonJson.preservePropsFromPackageJson(); // TODO temporary remove
     this.project.taonJson.preserveOldTaonProps(); // TODO temporary remove
+    this.project.taonJson.saveToDisk('init');
     this.project.packagesRecognition.addIsomorphicPackagesToFile([
       this.project.nameForNpmPackage,
     ]);
-    this.project.taonJson.saveToDisk('init');
     await this.project.vsCodeHelpers.init();
     await this.project.linter.init();
 
@@ -209,67 +209,46 @@ export class ArtifactManager {
       );
     }
 
-    if (config.frameworkName === 'tnp') {
-      // TODO QUICK_FIX
-      const { isCoreContainer, coreContainerFromNodeModules } =
-        this.project.framework.containerDataFromNodeModulesLink;
-
-      const isIncorrectLinkToNodeModules =
-        !!coreContainerFromNodeModules &&
-        this.project.taonJson.frameworkVersion !==
-          coreContainerFromNodeModules.taonJson.frameworkVersion;
-
-      if (
-        isCoreContainer &&
-        isIncorrectLinkToNodeModules &&
-        this.project.nodeModules.isLink
-      ) {
-        try {
-          Helpers.info(
-            `Unlinking incorrect node_modules link from ${this.project.name}`,
-          );
-          fse.unlinkSync(this.project.nodeModules.path);
-        } catch (error) {}
-      }
-    }
+    this.artifact.npmLibAndCliTool.unlinkNodeModulesWhenTnp();
 
     if (
       !initOptions.release.targetArtifact ||
       initOptions.release.targetArtifact === 'docs-webapp'
     ) {
-      await this.artifact.docsWebapp.initPartial(initOptions);
+      initOptions = await this.artifact.docsWebapp.initPartial(initOptions);
     }
     if (
       !initOptions.release.targetArtifact ||
       initOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
     ) {
-      await this.artifact.npmLibAndCliTool.initPartial(initOptions);
+      initOptions =
+        await this.artifact.npmLibAndCliTool.initPartial(initOptions);
     }
     if (
       !initOptions.release.targetArtifact ||
       initOptions.release.targetArtifact === 'angular-node-app'
     ) {
-      await this.artifact.angularNodeApp.initPartial(initOptions);
+      initOptions = await this.artifact.angularNodeApp.initPartial(initOptions);
     }
     if (
       !initOptions.release.targetArtifact ||
       initOptions.release.targetArtifact === 'electron-app'
     ) {
-      await this.artifact.electronApp.initPartial(initOptions);
+      initOptions = await this.artifact.electronApp.initPartial(initOptions);
     }
     if (
       !initOptions.release.targetArtifact ||
       initOptions.release.targetArtifact === 'mobile-app'
     ) {
-      await this.artifact.mobileApp.initPartial(initOptions);
+      initOptions = await this.artifact.mobileApp.initPartial(initOptions);
     }
     if (
       !initOptions.release.targetArtifact ||
       initOptions.release.targetArtifact === 'vscode-plugin'
     ) {
-      await this.artifact.vscodePlugin.initPartial(initOptions);
+      initOptions = await this.artifact.vscodePlugin.initPartial(initOptions);
     }
-
+    return initOptions;
     //#endregion
   }
 
@@ -445,7 +424,7 @@ export class ArtifactManager {
         proj => proj.nameForNpmPackage,
       );
 
-if (options.container.only.length > 0) {
+    if (options.container.only.length > 0) {
       children = children.filter(c => {
         return options.container.only.includes(c.name);
       });
@@ -463,10 +442,10 @@ if (options.container.only.length > 0) {
       c => c.name === options.container.start,
     );
     if (startIndex !== -1) {
-    children = children.filter((c, i) => {
-            return i >= startIndex;
-    });
-}
+      children = children.filter((c, i) => {
+        return i >= startIndex;
+      });
+    }
 
     for (const child of children) {
       await child.artifactsManager.build(options);

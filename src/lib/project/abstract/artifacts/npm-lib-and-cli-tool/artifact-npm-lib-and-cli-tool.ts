@@ -108,7 +108,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         initOptions.init.struct ? '(without packages install)' : ''
       } `,
     );
-
     await this.filesRecreator.init();
 
     this.filesRecreator.vscode.settings.toogleHideOrShowDeps();
@@ -181,7 +180,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       return;
     }
 
-    buildOptions = await this.initPartial(EnvOptions.fromBuild(buildOptions));
+    buildOptions = await this.project.artifactsManager.init(
+      EnvOptions.fromBuild(buildOptions),
+    );
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
     const packageName = this.project.nameForNpmPackage;
@@ -598,6 +599,33 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#endregion
   }
 
+  //#endregion
+
+  //#region unlink node_modules when tnp
+  public unlinkNodeModulesWhenTnp(): void {
+    //#region @backendFunc
+    let shouldUnlinkNodeModules = false;
+    if (config.frameworkName === 'tnp') {
+      // TODO QUICK_FIX
+      const { isCoreContainer, coreContainerFromNodeModules } =
+        this.project.framework.containerDataFromNodeModulesLink;
+
+      const isIncorrectLinkToNodeModules =
+        !!coreContainerFromNodeModules &&
+        this.project.taonJson.frameworkVersion !==
+          coreContainerFromNodeModules.taonJson.frameworkVersion;
+
+      shouldUnlinkNodeModules =
+        isCoreContainer &&
+        isIncorrectLinkToNodeModules &&
+        this.project.nodeModules.isLink;
+    }
+
+    if (shouldUnlinkNodeModules) {
+      this.project.nodeModules.unlinkNodeModulesWhenLinked();
+    }
+    //#endregion
+  }
   //#endregion
 
   //#region private methods

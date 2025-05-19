@@ -45,7 +45,9 @@ export class ArtifactElectronApp extends BaseArtifact<
     electronDistOutAppPathWebsql: string;
   }> {
     //#region @backendFunc
-    buildOptions = await this.initPartial(EnvOptions.from(buildOptions));
+    buildOptions = await this.project.artifactsManager.init(
+      EnvOptions.from(buildOptions),
+    );
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
     if (buildOptions.build.watch) {
@@ -85,16 +87,16 @@ export class ArtifactElectronApp extends BaseArtifact<
       Helpers.info('Release build of electron app');
       if (buildOptions.release.releaseType) {
         if (!buildOptions.release.releaseType) {
-          await this.initPartial(
-            EnvOptions.fromBuild(
-              buildOptions.clone({
-                build: {
-                  baseHref: baseHrefElectron,
-                },
-                purpose: 'before building electron app init',
-              }),
-            ),
-          );
+          // await this.initPartial(
+          //   EnvOptions.fromBuild(
+          //     buildOptions.clone({
+          //       build: {
+          //         baseHref: baseHrefElectron,
+          //       },
+          //       purpose: 'before building electron app init',
+          //     }),
+          //   ),
+          // );
           // const tempGeneratedCiReleaseProject =
           //   await this.__createTempCiReleaseProject(buildOptions);
           // await tempGeneratedCiReleaseProject.build(buildOptions);

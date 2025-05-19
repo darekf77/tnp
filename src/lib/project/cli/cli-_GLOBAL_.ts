@@ -1634,6 +1634,28 @@ ${this.project.children
   }
   //#endregion
 
+  isLinkNodeModules() {
+    console.log(this.project.nodeModules.isLink);
+    this._exit();
+  }
+
+  linkNodeModulesFromCoreContainer() {
+    const coreContainer = this.project.ins.by(
+      'container',
+      this.firstArg as any,
+    );
+    if (!coreContainer) {
+      Helpers.error(
+        `Please specify proper container version in argument`,
+        false,
+        true,
+      );
+    }
+    this.project.nodeModules.unlinkNodeModulesWhenLinked();
+    coreContainer.nodeModules.linkToProject(this.project as any);
+    this._exit();
+  }
+
   imports() {
     const imports = UtilsTypescript.recognizeImportsFromFile(
       this.project.pathFor(this.firstArg),
