@@ -283,11 +283,9 @@ export class ArtifactManager {
   };
 
   async build(buildOptions: EnvOptions): Promise<void> {
-    await this.init(buildOptions.clone({ build: { watch: false } }));
-
     if (!buildOptions.release.targetArtifact) {
       //#region  build Menu
-
+      await this.init(buildOptions.clone({ build: { watch: false } }));
       const processManager = new BaseProcessManger(this.project as any);
 
       const ngBuildLibCommand = CommandConfig.from({
