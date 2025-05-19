@@ -56,7 +56,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     //#region @backendFunc
     envConfigFromParams = EnvOptions.from(envConfigFromParams);
 
-    this.makeSureEnvHasProperStructure();
+    this.makeSureEnvironmentExists();
 
     const configResult = await this.envOptionsResolve(envConfigFromParams);
     configResult.applyFieldsFrom(envConfigFromParams);
@@ -106,12 +106,14 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     );
 
     try {
-      env = require(
-        this.project.pathFor(
-          `environments/${artifactName}/` +
-            `env.${artifactName}.${environmentName}${envNum === undefined ? '' : envNum}.ts`,
-        ),
-      )?.default;
+      this.modifyTsconfigForTsNodeRequire(() => {
+        env = require(
+          this.project.pathFor(
+            `environments/${artifactName}/` +
+              `env.${artifactName}.${environmentName}${envNum === undefined ? '' : envNum}.ts`,
+          ),
+        )?.default;
+      });
     } catch (error) {
       // TODO QUICK_FIX @UNCOMMENT @LAST
       if (this.project.framework.isCoreProject) {
@@ -140,10 +142,11 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     //#region @backendFunc
 
     Helpers.taskStarted(`Reading environment config for ${this.project.name}`);
+    let configStandaloneEnv: EnvOptions;
     try {
-      var configStandaloneEnv: EnvOptions = require(
-        this.absPathToEnvTs,
-      )?.default;
+      this.modifyTsconfigForTsNodeRequire(() => {
+        configStandaloneEnv = require(this.absPathToEnvTs)?.default;
+      });
     } catch (error) {
       // TODO QUICK_FIX @UNCOMMENT @LAST
       if (this.project.framework.isCoreProject) {
@@ -263,13 +266,8 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   }
   //#endregion
 
-  //#region make sure config is proper for ts-node
-  /**
-   * TODO THIS IS QUICK_FIX
-   */
-  private makeSureEnvHasProperStructure(): void {
-    //#region @backend
-
+  makeSureEnvironmentExists(): void {
+    //#region @backendFunc
     if (!this.project.hasFolder(environments)) {
       const coreEnv = this.project.ins
         .by('isomorphic-lib')
@@ -295,6 +293,17 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
 
       UtilsTypescript.formatFile(this.absPathToEnvTs);
     }
+    //#endregion
+  }
+
+  //#region make sure config is proper for ts-node
+  /**
+   * TODO THIS IS QUICK_FIX
+   */
+  private async modifyTsconfigForTsNodeRequire(
+    callback: () => void,
+  ): Promise<void> {
+    //#region @backend
 
     //#region BIG QUICK_FIX for READING ENV.ts @LAST
     // console.log(`checking tsconfig.json for ${this.project.genericName}`);
@@ -313,37 +322,40 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     };
     const tsconfigPath = this.project.pathFor('tsconfig.json');
     const json: typeof template = this.project.readJson('tsconfig.json');
-    if (!json) {
+    const orgJson = json;
+    if (json) {
+      json.compilerOptions = json.compilerOptions || ({} as any);
+      json.include = json.include || [];
+
+      if (json.compilerOptions?.module !== 'CommonJS') {
+        json.compilerOptions.module = 'CommonJS';
+      }
+      if (json.compilerOptions?.moduleResolution !== 'Node') {
+        json.compilerOptions.moduleResolution = 'Node';
+      }
+
+      if (!json.compilerOptions?.esModuleInterop) {
+        json.compilerOptions.esModuleInterop = true;
+      }
+
+      if (json.compilerOptions?.rootDir !== './') {
+        json.compilerOptions.rootDir = './';
+      }
+
+      if (!json.include.includes('environments/**/*.ts')) {
+        json.include.push('environments/**/*.ts');
+      }
+      if (!json.include.includes('env.ts')) {
+        json.include.push('env.ts');
+      }
+
+      Helpers.writeJson(tsconfigPath, json);
+    } else {
       Helpers.writeJson(tsconfigPath, template);
       Helpers.info(`tsconfig.json created for ${tsconfigPath} project`);
-      return;
     }
-    json.compilerOptions = json.compilerOptions || ({} as any);
-    json.include = json.include || [];
-
-    if (json.compilerOptions?.module !== 'CommonJS') {
-      json.compilerOptions.module = 'CommonJS';
-    }
-    if (json.compilerOptions?.moduleResolution !== 'Node') {
-      json.compilerOptions.moduleResolution = 'Node';
-    }
-
-    if (!json.compilerOptions?.esModuleInterop) {
-      json.compilerOptions.esModuleInterop = true;
-    }
-
-    if (json.compilerOptions?.rootDir !== './') {
-      json.compilerOptions.rootDir = './';
-    }
-
-    if (!json.include.includes('environments/**/*.ts')) {
-      json.include.push('environments/**/*.ts');
-    }
-    if (!json.include.includes('env.ts')) {
-      json.include.push('env.ts');
-    }
-
-    Helpers.writeJson(tsconfigPath, json);
+    callback();
+    Helpers.writeJson(tsconfigPath, orgJson || {});
     // Helpers.info(`tsconfig.json update for ${tsconfigPath} project`);
     //#endregion
     //#endregion
