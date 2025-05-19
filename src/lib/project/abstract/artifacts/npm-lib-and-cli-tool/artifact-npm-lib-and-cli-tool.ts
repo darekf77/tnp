@@ -298,7 +298,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       `);
     //#endregion
 
-    if (!buildOptions.build.watch && buildOptions.release.releaseType) {
+    if (
+      !buildOptions.build.watch &&
+      buildOptions.release.releaseType &&
+      buildOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
+    ) {
       this.__cutReleaseCodeFromSrc(buildOptions);
     }
 
@@ -366,7 +370,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     }
     //#endregion
 
-    if (!buildOptions.build.watch && buildOptions.release.releaseType) {
+    if (
+      !buildOptions.build.watch &&
+      buildOptions.release.releaseType &&
+      buildOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
+    ) {
       this.__restoreCuttedReleaseCodeFromSrc(buildOptions);
     }
 
