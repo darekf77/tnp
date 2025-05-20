@@ -152,11 +152,11 @@ export class ArtifactManager {
     if (!initOptions.isCiProcess) {
       // do some fixing on dev machine
       // TODO QUICK_FIX
-      if (this.project.framework.isStandaloneProject) {
-        try {
-          this.project.remove(`app`, true);
-        } catch (error) {}
-      }
+      // if (this.project.framework.isStandaloneProject) {
+      //   try {
+      //     this.project.remove(`app`, true);
+      //   } catch (error) {}
+      // }
 
       try {
         this.project.run(`git rm -f .vscode/launch.json`).sync();
