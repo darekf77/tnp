@@ -113,7 +113,7 @@ export class PackageJSON extends BasePackageJson {
       for (const key of showFirst) {
         delete sorted[key];
       }
-      const destinationObject = {
+      const destinationObject: PackageJson = {
         ...showFirst.reduce((acc, key) => {
           acc[key] = this.data[key];
           return acc;
@@ -121,9 +121,34 @@ export class PackageJSON extends BasePackageJson {
         ...sorted,
       };
 
+      destinationObject.scripts = destinationObject.scripts || {};
+      const scriptsCommands = [
+        'taon init',
+        'taon start',
+        'taon build:lib',
+        'taon build:watch:lib',
+        'taon build:watch:app',
+        'taon build:watch:electron',
+        'taon docs',
+        'taon docs:watch',
+        'taon clear',
+        'taon release',
+        'taon release:auto',
+        'taon release:install:locally',
+        'taon migration:create',
+        'taon migration:run',
+        'taon migration:revert',
+        'taon vscode:temp:show',
+        'taon vscode:temp:hide',
+      ];
+
+      for (const command of scriptsCommands) {
+        destinationObject.scripts[command] = command;
+      }
+
       destinationObject.bin = this.recreateBin();
 
-      this.data = destinationObject;
+      this.data = destinationObject as any;
     }
     super.saveToDisk();
     //#endregion
