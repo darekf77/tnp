@@ -20,6 +20,8 @@ try {
     transpileOnly: true,
     compilerOptions: {
       skipLibCheck: true,
+      module: 'NodeNext',
+      moduleResolution: 'NodeNext',
     },
   });
 } catch (error) {}
@@ -106,14 +108,12 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     );
 
     try {
-      this.modifyTsconfigForTsNodeRequire(() => {
-        env = require(
-          this.project.pathFor(
-            `environments/${artifactName}/` +
-              `env.${artifactName}.${environmentName}${envNum === undefined ? '' : envNum}.ts`,
-          ),
-        )?.default;
-      });
+      env = require(
+        this.project.pathFor(
+          `environments/${artifactName}/` +
+            `env.${artifactName}.${environmentName}${envNum === undefined ? '' : envNum}.ts`,
+        ),
+      )?.default;
     } catch (error) {
       // TODO QUICK_FIX @UNCOMMENT @LAST
       if (this.project.framework.isCoreProject) {
@@ -144,9 +144,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     Helpers.taskStarted(`Reading environment config for ${this.project.name}`);
     let configStandaloneEnv: EnvOptions;
     try {
-      this.modifyTsconfigForTsNodeRequire(() => {
-        configStandaloneEnv = require(this.absPathToEnvTs)?.default;
-      });
+      configStandaloneEnv = require(this.absPathToEnvTs)?.default;
     } catch (error) {
       // TODO QUICK_FIX @UNCOMMENT @LAST
       if (this.project.framework.isCoreProject) {
@@ -295,72 +293,6 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     }
     //#endregion
   }
-
-  //#region make sure config is proper for ts-node
-  /**
-   * TODO THIS IS QUICK_FIX
-   */
-  private async modifyTsconfigForTsNodeRequire(
-    callback: () => void,
-  ): Promise<void> {
-    //#region @backend
-
-    //#region BIG QUICK_FIX for READING ENV.ts @LAST
-    // console.log(`checking tsconfig.json for ${this.project.genericName}`);
-    const template = {
-      compilerOptions: {
-        // module: 'NodeNext',
-        // moduleResolution: 'NodeNext',
-        module: 'CommonJS',
-        moduleResolution: 'Node',
-        esModuleInterop: true,
-        strictNullChecks: false,
-        rootDir: './',
-        paths: {},
-      },
-      include: ['environments/**/*.ts', 'env.ts'],
-    };
-    const tsconfigPath = this.project.pathFor('tsconfig.json');
-    const json: typeof template = this.project.readJson('tsconfig.json');
-    const orgJson = json;
-    if (json) {
-      json.compilerOptions = json.compilerOptions || ({} as any);
-      json.include = json.include || [];
-
-      if (json.compilerOptions?.module !== 'CommonJS') {
-        json.compilerOptions.module = 'CommonJS';
-      }
-      if (json.compilerOptions?.moduleResolution !== 'Node') {
-        json.compilerOptions.moduleResolution = 'Node';
-      }
-
-      if (!json.compilerOptions?.esModuleInterop) {
-        json.compilerOptions.esModuleInterop = true;
-      }
-
-      if (json.compilerOptions?.rootDir !== './') {
-        json.compilerOptions.rootDir = './';
-      }
-
-      if (!json.include.includes('environments/**/*.ts')) {
-        json.include.push('environments/**/*.ts');
-      }
-      if (!json.include.includes('env.ts')) {
-        json.include.push('env.ts');
-      }
-
-      Helpers.writeJson(tsconfigPath, json);
-    } else {
-      Helpers.writeJson(tsconfigPath, template);
-      Helpers.info(`tsconfig.json created for ${tsconfigPath} project`);
-    }
-    callback();
-    Helpers.writeJson(tsconfigPath, orgJson || {});
-    // Helpers.info(`tsconfig.json update for ${tsconfigPath} project`);
-    //#endregion
-    //#endregion
-  }
-  //#endregion
 
   private get absPathToEnvTs(): string {
     return crossPlatformPath([this.project.location, envTs]);
