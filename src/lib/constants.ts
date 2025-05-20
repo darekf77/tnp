@@ -4,9 +4,9 @@ import { CoreModels, os } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { crossPlatformPath, path, Utils } from 'tnp-core/src';
 
+import { CURRENT_PACKAGE_VERSION } from './build-info._auto-generated_';
 import { ReleaseArtifactTaon, ReleaseType } from './options';
 import type { Project } from './project/abstract/project';
-
 //#endregion
 
 export const DUMMY_LIB = '@lib';
@@ -15,7 +15,7 @@ export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
 } = {
   manual: ['npm-lib-and-cli-tool'],
-  local: ['npm-lib-and-cli-tool',  'vscode-plugin'],
+  local: ['npm-lib-and-cli-tool', 'vscode-plugin'],
   cloud: [],
   'static-pages': ['angular-node-app', 'docs-webapp'],
 };
@@ -51,7 +51,8 @@ export const COMPILATION_COMPLETE_LIB_NG_BUILD =
 export const COMPILATION_COMPLETE_APP_NG_SERVE = 'Compiled successfully';
 
 // TODO get this from cli, global
-export const DEFAULT_FRAMEWORK_VERSION = 'v19' as CoreModels.FrameworkVersion;
+export const DEFAULT_FRAMEWORK_VERSION =
+  `v${CURRENT_PACKAGE_VERSION.split('.')[0]}` as CoreModels.FrameworkVersion;
 
 export let taonRepoPathUserInUserDir: string =
   //#region @backend
