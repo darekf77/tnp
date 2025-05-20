@@ -100,20 +100,33 @@ export function recreateApp(project: Project) {
     path.join(project.location, config.folder.src, 'global.scss'),
   );
 
-  if (
-    !Helpers.exists(appFile)
-    // && !Helpers.exists(appFolderWithIndex)
-  ) {
-    Helpers.writeFile(appFile, appfileTemplate(project));
-  }
+  if (!project.framework.isCoreProject) {
+    if (
+      !Helpers.exists(appFile)
+      // && !Helpers.exists(appFolderWithIndex)
+    ) {
+      Helpers.writeFile(appFile, appfileTemplate(project));
+    } else {
+      const content = Helpers.readFile(appFile);
+      const fixedContent = fixCoreContent(content, project);
+      Helpers.writeFile(appFile, fixedContent);
+    }
 
-  if (
-    !Helpers.exists(globaScss)
-    // && !Helpers.exists(appFolderWithIndex)
-  ) {
-    const coreGlobalScss =
-      project.framework.coreProject.readFile('src/global.scss');
-    Helpers.writeFile(globaScss, coreGlobalScss);
+    if (
+      !Helpers.exists(globaScss)
+      // && !Helpers.exists(appFolderWithIndex)
+    ) {
+      const coreGlobalScss =
+        project.framework.coreProject.readFile('src/global.scss');
+      Helpers.writeFile(globaScss, coreGlobalScss);
+    }
+
+    if (
+      !Helpers.exists(appElectornFile)
+      // && !Helpers.exists(appFolderWithIndex) // TODO @QUESTION why not to remove this
+    ) {
+      Helpers.writeFile(appElectornFile, appElectronTemplate(project));
+    }
   }
 
   if (
@@ -123,279 +136,43 @@ export function recreateApp(project: Project) {
     project.artifactsManager.artifact.angularNodeApp.writePortsToFile();
   }
 
-  if (
-    !Helpers.exists(appElectornFile)
-    // && !Helpers.exists(appFolderWithIndex) // TODO @QUESTION why not to remove this
-  ) {
-    Helpers.writeFile(appElectornFile, appElectronTemplate(project));
-  }
-
   //#endregion
   //#endregion
 }
 
-export function appfileTemplate(project: Project) {
+export function appfileTemplate(project: Project): string {
   //#region @backendFunc
-  const componentName = `${_.upperFirst(_.camelCase(project.name))}Component`;
-  const moduleName = `${_.upperFirst(_.camelCase(project.name))}Module`;
 
   // TODO quick fix for @ browser remover
-  return `
-${'//#reg' + 'ion'} imports
-import { CommonModule } from '@angular/common';
-import { NgModule, inject, Injectable } from '@angular/core';
-import { Component, OnInit } from '@angular/core';
-import { VERSION } from '@angular/core';
-import { Observable, map } from 'rxjs';
-import { Taon, BaseContext, TAON_CONTEXT } from 'taon/src';
-import { Helpers, UtilsOs } from 'tnp-core/src';
+  const content = project.framework.coreProject.readFile('src/app.ts');
 
-import {
-  HOST_BACKEND_PORT,
-  CLIENT_DEV_WEBSQL_APP_PORT,
-  CLIENT_DEV_NORMAL_APP_PORT,
-} from './app.hosts';
-${'//#end' + 'region'}
-
-console.log('hello world');
-console.log('Your server will start on port '+ HOST_BACKEND_PORT);
-const host = 'http://localhost:' + HOST_BACKEND_PORT;
-const frontendHost =
-  'http://localhost:' +
-  (Helpers.isWebSQL ? CLIENT_DEV_WEBSQL_APP_PORT : CLIENT_DEV_NORMAL_APP_PORT);
-
-${'//#reg' + 'ion'} ${project.name} component
-${'//#reg' + 'ion'} @${'bro' + 'wser'}
-@Component({
-  selector: 'app-${project.name}',
-  ${project.framework.frameworkVersionAtLeast('v19') ? 'standalone: false,' : ''}
-  template: \`hello from ${project.name}<br>
-    Angular version: {{ angularVersion }}<br>
-    <br>
-    users from backend
-    <ul>
-      <li *ngFor="let user of (users$ | async)"> {{ user | json }} </li>
-    </ul>
-  \`,
-  styles: [\` body { margin: 0px !important; } \`],
-})
-export class ${componentName} {
-  angularVersion = VERSION.full + \` mode: \${UtilsOs.isRunningInWebSQL() ? ' (websql)' : '(normal)'}\`;
-  userApiService = inject(UserApiService);
-  readonly users$: Observable<User[]> = this.userApiService.getAll();
-}
-${'//#end' + 'region'}
-${'//#end' + 'region'}
-
-${'//#reg' + 'ion'}  ${project.name} api service
-${'//#reg' + 'ion'} @${'bro' + 'wser'}
-@Injectable({
-  providedIn:'root'
-})
-export class UserApiService {
-  userController = Taon.inject(()=> MainContext.getClass(UserController))
-  getAll() {
-    return this.userController.getAll()
-      .received
-      .observable
-      .pipe(map(r => r.body.json));
-  }
-}
-${'//#end' + 'region'}
-${'//#end' + 'region'}
-
-${'//#reg' + 'ion'}  ${project.name} module
-${'//#reg' + 'ion'} @${'bro' + 'wser'}
-@NgModule({
-  providers: [
-    {
-      provide: TAON_CONTEXT,
-      useValue: MainContext,
-    },
-  ],
-  exports: [${componentName}],
-  imports: [CommonModule],
-  declarations: [${componentName}],
-})
-export class ${moduleName} { }
-${'//#end' + 'region'}
-${'//#end' + 'region'}
-
-${'//#reg' + 'ion'}  ${project.name} entity
-@Taon.Entity({ className: 'User' })
-class User extends Taon.Base.AbstractEntity {
-  ${'//#reg' + 'ion'} @${'web' + 'sql'}
-  @Taon.Orm.Column.String()
-  ${'//#end' + 'region'}
-  name?: string;
-}
-${'//#end' + 'region'}
-
-${'//#reg' + 'ion'}  ${project.name} controller
-@Taon.Controller({ className: 'UserController' })
-class UserController extends Taon.Base.CrudController<User> {
-  entityClassResolveFn = ()=> User;
-  ${'//#reg' + 'ion'} @${'web' + 'sql'}
-  /**
-   * @deprecated use migrations instead
-   */
-  async initExampleDbData(): Promise<void> {
-    const superAdmin = new User();
-    superAdmin.name = 'super-admin';
-    await this.db.save(superAdmin);
-  }
-  ${'//#end' + 'region'}
-}
-${'//#end' + 'region'}
-
-${'//#reg' + 'ion'}  ${project.name} context
-var MainContext = Taon.createContext(()=>({
-  host,
-  frontendHost,
-  contextName: 'MainContext',
-  contexts:{ BaseContext },
-  migrations: {
-    // PUT TAON MIGRATIONS HERE
-  },
-  controllers: {
-    UserController,
-    // PUT TAON CONTROLLERS HERE
-  },
-  entities: {
-    User,
-    // PUT TAON ENTITIES HERE
-  },
-  database: true,
-  // disabledRealtime: true,
-}));
-${'//#end' + 'region'}
-
-async function start() {
-
-  await MainContext.initialize();
-
-  if (Taon.isBrowser) {
-    const users = (await MainContext.getClassInstance(UserController).getAll().received)
-      .body?.json;
-    console.log({
-      'users from backend': users,
-    });
-  }
-}
-
-export default start;
-
-
-
-
-
-
-`.trim();
+  return fixCoreContent(content, project);
   //#endregion
 }
 
-export function appElectronTemplate(project: Project) {
+export function fixCoreContent(appTsContent: string, project: Project): string {
+  const coreName = _.upperFirst(_.camelCase(project.name));
+  const coreNameKebab = _.kebabCase(project.name);
+  return appTsContent
+    .replace(
+      new RegExp(
+        `IsomorphicLibV${project.framework.frameworkVersion.replace('v', '')}`,
+        'g',
+      ),
+      `${coreName}`,
+    )
+    .replace(
+      new RegExp(
+        `isomorphic-lib-v${project.framework.frameworkVersion.replace('v', '')}`,
+        'g',
+      ),
+      `${coreNameKebab}`,
+    );
+}
+
+export function appElectronTemplate(project: Project): string {
   //#region @backendFunc
-  return `
-import { CLIENT_DEV_NORMAL_APP_PORT, CLIENT_DEV_WEBSQL_APP_PORT } from './app.hosts';
-import {
-path,
-${'//#reg' + 'ion'} @${'back' + 'end'}
-fse
-${'//#end' + 'region'}
-} from 'tnp-core/src';
-${'//#reg' + 'ion'} @${'back' + 'end'}
-import { app, BrowserWindow, screen } from 'electron';
-import start from './app';
-
-let win: BrowserWindow | null = null;
-const args = process.argv.slice(1);
-const serve = args.some(val => val === '--serve');
-const websql = args.some(val => val === '--websql');
-
-function createWindow(): BrowserWindow {
-
-const size = screen.getPrimaryDisplay().workAreaSize;
-
-// Create the browser window.
-win = new BrowserWindow({
-  x: 0,
-  y: 0,
-  autoHideMenuBar: true,
-  width: size.width * (3/4),
-  height: size.height * (3/4),
-  webPreferences: {
-    nodeIntegration: true,
-    allowRunningInsecureContent: (serve),
-    contextIsolation: false,
-  },
-});
-
-if (serve) {
-  const debug = require('electron-debug');
-  debug();
-  win.webContents.openDevTools();
-
-  require('electron-reloader')(module);
-  win.loadURL('http://localhost:' + (websql ? CLIENT_DEV_WEBSQL_APP_PORT : CLIENT_DEV_NORMAL_APP_PORT));
-} else {
-  // Path when running electron executable
-  let pathIndex = './index.html';
-
-  if (fse.existsSync(path.join(__dirname, '../dist/index.html'))) {
-    // Path when running electron in local folder
-    pathIndex = '../dist/index.html';
-  }
-
-  const url = new URL(path.join('file:', __dirname, pathIndex));
-  win.loadURL(url.href);
-}
-
-// Emitted when the window is closed.
-win.on('closed', () => {
-  // Dereference the window object, usually you would store window
-  // in an array if your app supports multi windows, this is the time
-  // when you should delete the corresponding element.
-  win = null;
-});
-
-return win;
-}
-
-async function startElectron() {
-  await start();
-  try {
-    // This method will be called when Electron has finished
-    // initialization and is ready to create browser windows.
-    // Some APIs can only be used after this event occurs.
-    // Added 400 ms to fix the black background issue while using transparent window. More detais at https://github.com/electron/electron/issues/15947
-    // app.on('ready', () => setTimeout(createWindow, 400));
-    setTimeout(createWindow, 400)
-
-    // Quit when all windows are closed.
-    app.on('window-all-closed', () => {
-      // On OS X it is common for applications and their menu bar
-      // to stay active until the user quits explicitly with Cmd + Q
-      if (process.platform !== 'darwin') {
-        app.quit();
-      }
-    });
-
-    app.on('activate', () => {
-      // On OS X it's common to re-create a window in the app when the
-      // dock icon is clicked and there are no other windows open.
-      if (win === null) {
-        createWindow();
-      }
-    });
-
-  } catch (e) {
-    // Catch Error
-    throw e;
-  }
-}
-
-startElectron();
-${'//#end' + 'region'}  `;
+  const content = project.framework.coreProject.readFile('src/app.electron.ts');
+  return content;
   //#endregion
 }

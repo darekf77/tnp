@@ -90,7 +90,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
   //#endregion
 
   //#region init vscode
-  initVscode() {
+  initVscode(): void {
     //#region @backendFunc
     this.vscode.settings.hideOrShowFilesInVscode(true);
     //#endregion

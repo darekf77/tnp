@@ -37,6 +37,7 @@ export class InsideStructAngular13App extends BaseInsideStruct {
           'app/src/app/app.component.ts',
           // 'app/src/app/app.module.ts',
           'app/src/environments/environment.prod.ts',
+          'app/src/environments/environment.dev.ts',
           'app/src/environments/environment.ts',
           'app/src/app',
           'app/src/environments',

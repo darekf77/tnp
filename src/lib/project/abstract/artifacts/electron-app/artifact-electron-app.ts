@@ -39,8 +39,29 @@ export class ArtifactElectronApp extends BaseArtifact<
     return initOptions;
   }
 
-  //#region build
   async buildPartial(buildOptions: EnvOptions): Promise<{
+    electronDistOutAppPath: string;
+    electronDistOutAppPathWebsql: string;
+  }> {
+    await this.artifacts.angularNodeApp.buildPartial(
+      buildOptions.clone({
+        release: {
+          targetArtifact: 'electron-app',
+        },
+      }),
+    );
+    return {
+      electronDistOutAppPath: this.__getElectronAppRelativePath({
+        websql: buildOptions.build.websql,
+      }),
+      electronDistOutAppPathWebsql: this.__getElectronAppRelativePath({
+        websql: true,
+      }),
+    };
+  }
+
+  //#region old build
+  async oldBuild(buildOptions: EnvOptions): Promise<{
     electronDistOutAppPath: string;
     electronDistOutAppPathWebsql: string;
   }> {

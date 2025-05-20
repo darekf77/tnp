@@ -26,18 +26,9 @@ export namespace Models {
   //#endregion
 
   //#region site option
-  /**
-   * @deprecated
-   */
   export type NewSiteOptions = {
-    type?: CoreModels.NewFactoryType;
     name?: string;
     cwd?: string;
-    basedOn?: string;
-    version?: CoreModels.FrameworkVersion;
-    skipInit?: boolean;
-    alsoBasedOn?: string[];
-    siteProjectMode?: 'strict' | 'dependency';
   };
   //#endregion
 

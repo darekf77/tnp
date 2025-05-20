@@ -20,135 +20,58 @@ import {
 } from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions } from '../../options';
-import type { Project } from '../abstract/project';
+import { Project } from '../abstract/project';
 import { TaonJson } from '../abstract/taonJson';
 
 import { BaseCli } from './base-cli';
 //#endregion
 
-// @ts-ignore TODO weird inheritance problem
-export class $New extends BaseCli {
-  public async _() {
-    await this._containerStandaloneFromArgs(this.args.join(' '));
-  }
-
-  //#region error messages
-  private _errorMsgCreateProject() {
-    Helpers.log(chalk.green(`Good examples:`));
-    Helpers.log(
-      `\t${chalk.gray(`${config.frameworkName} new`)} ${chalk.gray(
-        'mySuperLib',
-      )}`,
-    );
-    Helpers.error(chalk.red(`Please use example above.`), false, true);
-  }
-  //#endregion
-
-  //#region fix options
-  private _fixOptions_create(options: Models.NewSiteOptions) {
-    if (_.isNil(options)) {
-      options = {} as any;
-    }
-
-    if (_.isNil(options.version)) {
-      options.version = DEFAULT_FRAMEWORK_VERSION; // OK
-    }
-
-    if (_.isNil(options.skipInit)) {
-      options.skipInit = true;
-    }
-
-    if (!_.isArray(options.alsoBasedOn)) {
-      options.alsoBasedOn = [];
-    }
-
-    return options;
-  }
-  //#endregion
-
-  //#region container / standalone
-  public async _containerStandaloneFromArgs(args: string) {
-    const argv = args.split(' ');
-
-    if (!_.isArray(argv) || argv.length < 1) {
-      Helpers.error(
-        `Top few argument for ${chalk.black('init')} parameter.`,
-        true,
-      );
-      this._errorMsgCreateProject();
-    }
-    const {
-      basedOn,
-      version,
-      skipInit,
-    }: {
-      basedOn: string;
-      version: CoreModels.FrameworkVersion;
-      skipInit?: boolean;
-    } = require('minimist')(args.split(' '));
-
-    // if (basedOn) {
-    //   Helpers.error(`To create workspace site use command: `
-    //     + `${config.frameworkName} new: site name - of - workspace - site`
-    //     + `--basedOn relativePathToBaselineWorkspace`, false, true);
-    // }
-    const type = 'isomorphic-lib' as any;
-    const name = argv[0];
-
+export class $New extends BaseCommandLineFeature<
+  {
+    // TODO
+  },
+  // @ts-ignore TODO weird inheritance problem
+  Project
+> {
+  public async _(): Promise<void> {
     await this._createContainersOrStandalone({
-      type,
-      name,
+      name: this.firstArg,
       cwd: this.cwd,
-      basedOn: void 0,
-      version:
-        _.isString(version) && version.startsWith('v') ? version : void 0,
-      skipInit,
     });
 
     this._exit();
   }
-  //#endregion
-
-  //#region add remote to standalone
-  private _addRemoteToStandalone(appProj: Project) {
-    if (appProj.framework.isStandaloneProject) {
-      const lastContainer = appProj.parent;
-      const ADDRESS_GITHUB_SSH_PARENT = lastContainer?.git?.originURL;
-      const newRemote = ADDRESS_GITHUB_SSH_PARENT?.replace(
-        `${lastContainer.name}.git`,
-        `${appProj.name}.git`,
-      );
-      if (newRemote) {
-        try {
-          appProj
-            .run('git remote add origin ' + newRemote, {
-              output: false,
-              silence: true,
-            })
-            .sync();
-          appProj
-            .run('git add --all . && git commit -m "first"', {
-              output: false,
-              silence: true,
-            })
-            .sync();
-        } catch (error) {}
-      }
-    }
-  }
-  //#endregion
 
   //#region init containers
   private async _initContainersAndApps(
     cwd: string,
     nameFromArgs: string,
-    version: CoreModels.FrameworkVersion,
-  ) {
+  ): Promise<{
+    containers: Project[];
+    firstContainer: Project;
+    lastContainer: Project;
+    lastIsBrandNew: boolean;
+    appProj: Project;
+    containersAndProjFromArgName: string[];
+    preOrgs: string;
+  }> {
+    //#region resolve variables
+
     nameFromArgs = nameFromArgs.replace('./', '');
     nameFromArgs = nameFromArgs.replace('.\\', '');
     nameFromArgs = nameFromArgs.replace(/\/$/, '');
     nameFromArgs = nameFromArgs.replace(/\\$/, '');
     nameFromArgs = nameFromArgs.replace(/\\$/g, '/');
+    const orgArgName = nameFromArgs;
+    const shouldBeOrganization = (containerName: string): boolean => {
+      return !_.isUndefined(
+        orgArgName.split('/').find(f => {
+          return f.includes('@') || f.replace('@', '') === containerName;
+        }),
+      );
+    };
+
+    nameFromArgs = nameFromArgs.replace(/\@/g, '');
 
     /**
      * examples:
@@ -184,9 +107,15 @@ export class $New extends BaseCli {
         ? _.last(allProjectFromArgs) // last org proj
         : _.first(allProjectFromArgs); // standalone proj
 
+    //#endregion
+
+    // debugger;
+
+    //#region check if name is allowed
     const notAllowedNameForApp = notAllowedProjectNames.find(
       a => a === lastProjectFromArgName,
     );
+
     if (!!notAllowedNameForApp) {
       Helpers.error(
         `
@@ -194,7 +123,7 @@ export class $New extends BaseCli {
        Name ${chalk.bold(notAllowedNameForApp)} is not allowed.
 
        Use different name: ${chalk.bold(
-         crossPlatformPath(path.dirname(allProjectFromArgs.join('/'))).replace(
+         crossPlatformPath(allProjectFromArgs.join('/')).replace(
            notAllowedNameForApp,
            'my-app-or-something-else',
          ),
@@ -205,12 +134,13 @@ export class $New extends BaseCli {
         true,
       );
     }
+    //#endregion
 
     let firstContainer: Project;
     let lastContainer: Project;
     let lastIsBrandNew = false;
 
-    const grandpa = this.ins.From(cwd) as Project;
+    const grandpa = Project.ins.From(cwd) as Project;
     const containers: Project[] = [
       ...(grandpa && grandpa.framework.isContainer ? [grandpa] : []),
     ];
@@ -221,17 +151,12 @@ export class $New extends BaseCli {
         allProjectFromArgs.length - 1,
       );
       let tmpCwd = cwd;
-      let parentContainer = this.ins.From(cwd) as Project;
+      let parentContainer = Project.ins.From(cwd) as Project;
       let currentContainer: Project;
       do {
         const folder = foldersToRecreate.shift();
         const isLastContainer = foldersToRecreate.length === 0;
         const currentContainerPath = path.join(tmpCwd, folder);
-        // console.log(`
-
-        // RUN for ${currentContainerPath}
-
-        // `)
         const isBrandNew = !Helpers.exists(currentContainerPath);
         if (isBrandNew) {
           Helpers.mkdirp(currentContainerPath);
@@ -246,63 +171,23 @@ export class $New extends BaseCli {
           config.file.taon_jsonc,
         );
 
-        let monorepo = false;
         if (!Helpers.exists(packageJsonPath)) {
-          if (isLastContainer && isBrandNew && !parentContainer) {
-            const displayNameForLastContainerBeforeApp =
-              hasAtLeastOneContainersFromArgs
-                ? chalk.italic(
-                    `${
-                      autoCreateNormalContainersPathName
-                        ? autoCreateNormalContainersPathName + '/'
-                        : ''
-                    }`,
-                  ) +
-                  `${chalk.italic.red(
-                    path.basename(
-                      path.dirname(standaloneOrOrgWithStanalonePathName),
-                    ),
-                  )}` +
-                  chalk.italic(`/${lastProjectFromArgName}`)
-                : chalk.italic(standaloneOrOrgWithStanalonePathName);
-
-            //             Helpers.info(`
-
-            //  ${chalk.bold(
-            //    'SMART CONTAINERS',
-            //  )} - can be used to publish npm organization packages ex. @org/package-name
-            //  ${chalk.bold(
-            //    'NORMAL CONTAINERS',
-            //  )} - are just a wrapper for other project for easy
-            //  git pull/push or children packages release. Normal container can wrap "standalone" or "smart container" projects.
-
-            //              `);
-
-            monorepo = await Helpers.questionYesNo(
-              `Do you want container ${displayNameForLastContainerBeforeApp} be monorepo ?`,
-            );
-          }
-          const smartContainerBuildTarget =
-            hasAtLeastOneContainersFromArgs &&
-            path.basename(currentContainerPath) ===
-              _.first(lastProjectFromArgName.split('/'))
-              ? lastProjectFromArgName
-              : void 0;
-
           Helpers.writeJson(packageJsonPath, {
             name: path.basename(currentContainerPath),
             version: '0.0.0',
           } as PackageJson);
 
           Helpers.writeJson(taonJsoncPath, {
-            version: version || DEFAULT_FRAMEWORK_VERSION,
+            version: DEFAULT_FRAMEWORK_VERSION,
             type: 'container' as any,
-            monorepo,
-            smartContainerBuildTarget,
+            monorepo: true,
+            organization: shouldBeOrganization(
+              path.basename(path.dirname(taonJsoncPath)),
+            ),
           } as Partial<Models.TaonJsonContainer>);
         }
 
-        currentContainer = this.ins.From(currentContainerPath) as Project;
+        currentContainer = Project.ins.From(currentContainerPath) as Project;
         containers.push(currentContainer);
 
         if (parentContainer?.framework.isContainer) {
@@ -337,6 +222,7 @@ export class $New extends BaseCli {
       } while (foldersToRecreate.length > 0);
     }
 
+    //#region init create standalone project or container child
     let appProj: Project;
 
     const appLocation = lastContainer
@@ -352,12 +238,12 @@ export class $New extends BaseCli {
     packageJson.setVersion('0.0.0');
     packageJson.setName(path.basename(lastProjectFromArgName));
 
-    const taonJson = new TaonJson(this.project.ins.From(packageJson.cwd), {});
+    const taonJson = new TaonJson(Project.ins.From(packageJson.cwd), {});
     taonJson.setType('isomorphic-lib');
-    taonJson.setFrameworkVersion(version || DEFAULT_FRAMEWORK_VERSION);
+    taonJson.setFrameworkVersion(DEFAULT_FRAMEWORK_VERSION);
     taonJson.overridePackageJsonManager.setIsPrivate(true);
-
-    appProj = this.ins.From(appLocation) as Project;
+    Project.ins.unload(appLocation);
+    appProj = Project.ins.From(appLocation) as Project;
     if (!hasAtLeastOneContainersFromArgs) {
       lastContainer = appProj.parent;
     }
@@ -376,6 +262,7 @@ export class $New extends BaseCli {
       }
     }
     appProj.artifactsManager.globalHelper.__addSourcesFromCore();
+    //#endregion
 
     // console.log({
 
@@ -391,8 +278,6 @@ export class $New extends BaseCli {
         purpose: 'initing new app',
       }),
     );
-
-    appProj.artifactsManager.globalHelper.__replaceSourceForStandalone();
 
     if (lastContainer) {
       lastContainer.linkedProjects.addLinkedProject(lastProjectFromArgName);
@@ -420,17 +305,49 @@ export class $New extends BaseCli {
   }
   //#endregion
 
+  //#region add remote to sta1ndalone
+  private _addRemoteToStandalone(appProj: Project): void {
+    if (appProj.framework.isStandaloneProject) {
+      const lastContainer = appProj.parent;
+      const ADDRESS_GITHUB_SSH_PARENT = lastContainer?.git?.originURL;
+      const newRemote = ADDRESS_GITHUB_SSH_PARENT?.replace(
+        `${lastContainer.name}.git`,
+        `${appProj.name}.git`,
+      );
+      if (newRemote) {
+        try {
+          appProj
+            .run('git remote add origin ' + newRemote, {
+              output: false,
+              silence: true,
+            })
+            .sync();
+          appProj
+            .run('git add --all . && git commit -m "first"', {
+              output: false,
+              silence: true,
+            })
+            .sync();
+        } catch (error) {}
+      }
+    }
+  }
+  //#endregion
+
   //#region create container or standalone
-  public async _createContainersOrStandalone(options: Models.NewSiteOptions) {
-    let { name: nameFromArgs, cwd, version } = this._fixOptions_create(options);
+  public async _createContainersOrStandalone(
+    options: Models.NewSiteOptions,
+  ): Promise<void> {
+    let { name: nameFromArgs, cwd } = options;
     const { appProj, containers, lastContainer, lastIsBrandNew } =
-      await this._initContainersAndApps(cwd, nameFromArgs, version);
+      await this._initContainersAndApps(cwd, nameFromArgs);
 
     Helpers.writeFile(
       [appProj.location, 'README.md'],
       `#  ${appProj.name}
 
-       I am standalone project.
+Hello from Standalone Project
+
        `,
     );
 
@@ -439,7 +356,7 @@ export class $New extends BaseCli {
         'README.md',
         `# @${lastContainer.name}
 
-       This smart container is perfect for publishing organizaiton npm pacakges
+Hello from Container Project
 
        `,
       );
@@ -457,16 +374,6 @@ export class $New extends BaseCli {
     }
 
     Helpers.info(`DONE CREATING ${nameFromArgs}`);
-    //     Helpers.info(`
-
-    //     DONE CREATING ${containersAndProjFromArgName.join('/')}
-
-    // ${chalk.green('To start developing taon\'s backend/frontend apps/libs execute command:')}
-
-    // cd ${preOrgs + '/' + (cleanDisplaName.includes('/') ? _.first(cleanDisplaName.split('/')) : cleanDisplaName)
-    //       } && taon start ${_.last(containersAndProjFromArgName)} --websql
-
-    //     `);
   }
   //#endregion
 }

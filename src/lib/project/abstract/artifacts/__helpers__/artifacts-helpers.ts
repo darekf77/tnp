@@ -13,7 +13,6 @@ import { Branding } from './branding';
  * Global helper for artifacts
  */
 export class ArtifactsGlobalHelper {
-  protected readonly FOLDER_SRC_FOR_STANDALONE: string = `${config.folder.src}-for-standalone`;
   public readonly branding: Branding;
 
   constructor(private project: Project) {
@@ -55,7 +54,9 @@ export class ArtifactsGlobalHelper {
   //#region get proxy projects
   targetProjFor(childProjectName: string): Project {
     //#region @backendFunc
-    return this.project.ins.From(this.__getProxyProjPath(childProjectName)) as any;
+    return this.project.ins.From(
+      this.__getProxyProjPath(childProjectName),
+    ) as any;
     //#endregion
   }
   //#endregion
@@ -84,59 +85,11 @@ export class ArtifactsGlobalHelper {
   //#region add sources from core
   __addSourcesFromCore(): void {
     //#region @backend
-    const corePath = this.project.framework.coreProject.location;
+    const corePath = this.project.framework.coreProject.pathFor('src');
+    const dest = this.project.pathFor('src');
 
-    const srcInCore = path.join(corePath, config.folder.src);
-    const srcForStandAloenInCore = path.join(
-      corePath,
-      this.FOLDER_SRC_FOR_STANDALONE,
-    );
-
-    const dest = path.join(this.project.location, config.folder.src);
-    const destForStandalone = path.join(
-      this.project.location,
-      this.FOLDER_SRC_FOR_STANDALONE,
-    );
-
-    if (Helpers.exists(srcInCore)) {
-      Helpers.copy(srcInCore, dest, { recursive: true, overwrite: true });
-    }
-
-    if (Helpers.exists(srcForStandAloenInCore)) {
-      Helpers.copy(srcForStandAloenInCore, destForStandalone, {
-        recursive: true,
-        overwrite: true,
-      });
-    }
-    //#endregion
-  }
-  //#endregion
-
-  //#region replace source for standalone
-  __replaceSourceForStandalone(): void {
-    //#region @backend
-    const folderName = config.folder.src;
-    const orgSource = path.join(this.project.location, folderName);
-    Helpers.removeFolderIfExists(orgSource);
-    const standalone = path.join(
-      this.project.location,
-      this.FOLDER_SRC_FOR_STANDALONE,
-    );
-    if (Helpers.exists(standalone)) {
-      Helpers.move(standalone, orgSource);
-    }
-    //#endregion
-  }
-  //#endregion
-
-  //#region remove source for standalone
-  __removeStandaloneSources() {
-    //#region @backend
-    const standalone = path.join(
-      this.project.location,
-      this.FOLDER_SRC_FOR_STANDALONE,
-    );
-    Helpers.removeFolderIfExists(standalone);
+    Helpers.copy(corePath, dest, { recursive: true, overwrite: true });
+    debugger;
     //#endregion
   }
   //#endregion
