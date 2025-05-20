@@ -133,16 +133,14 @@ class $Build extends BaseCli {
   //#region other build commands / watch build electron normal app
   async watchElectron(websql = false) {
     await this.project.build(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
+        release: {
+          targetArtifact: 'electron-app',
+        },
         build: {
           websql,
           watch: true,
         },
-        release: {
-          targetArtifact: 'electron-app',
-        },
-
         finishCallback: () => this._exit(),
       }),
     );

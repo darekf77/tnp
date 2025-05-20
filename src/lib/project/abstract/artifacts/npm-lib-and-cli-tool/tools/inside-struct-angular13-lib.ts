@@ -42,6 +42,7 @@ export class InsideStructAngular13Lib extends BaseInsideStruct {
           'lib/src/app/app.component.ts',
           // 'lib/src/app/app.module.ts',
           'lib/src/environments/environment.prod.ts',
+          'app/src/environments/environment.dev.ts',
           'lib/src/environments/environment.ts',
           'lib/src/app',
           'lib/src/environments',
