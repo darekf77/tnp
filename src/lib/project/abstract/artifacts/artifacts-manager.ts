@@ -158,6 +158,14 @@ export class ArtifactManager {
       //   } catch (error) {}
       // }
 
+      // TODO QUICK_FIX when somehow linked node_modules to dist
+      // make electron use node_modules from dist no from ./node_modules
+      try {
+        fse.unlinkSync(
+          this.project.pathFor(`dist/${config.folder.node_modules}`),
+        );
+      } catch (error) {}
+
       try {
         this.project.run(`git rm -f .vscode/launch.json`).sync();
       } catch (error) {}
