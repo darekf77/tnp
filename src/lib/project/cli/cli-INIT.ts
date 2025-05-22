@@ -29,11 +29,14 @@ export class $Init extends BaseCli {
   //#endregion
 
   //#region init
-  public async _() {
+  public async _(struct = false, recursiveAction = false): Promise<void> {
     await this.project.init(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
         purpose: 'cli init',
+        recursiveAction,
+        init: {
+          struct,
+        },
         finishCallback: () => {
           console.log('DONE!');
           this._exit();
@@ -43,29 +46,24 @@ export class $Init extends BaseCli {
   }
   //#endregion
 
+  async all(): Promise<void> {
+    await this._(false, true);
+  }
+
   //#region struct
-  async struct() {
-    await this.project.init(
-      EnvOptions.from({
-        ...this.params,
-        purpose: 'cli struct init',
-        init: {
-          struct: true,
-        },
-        finishCallback: () => this._exit(),
-      }),
-    );
+  async struct(): Promise<void> {
+    await this._(true);
   }
   //#endregion
 
-  async templatesBuilder() {
+  async templatesBuilder(): Promise<void> {
     await this.project.artifactsManager.artifact.npmLibAndCliTool.filesTemplatesBuilder.rebuild(
       this.params,
     );
     this._exit();
   }
 
-  vscode() {
+  vscode(): void {
     this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode();
   }
 

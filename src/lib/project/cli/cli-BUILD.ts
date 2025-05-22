@@ -20,21 +20,25 @@ class $Build extends BaseCli {
   //#endregion
 
   //#region  _
-  public async _(): Promise<void> {
+  public async _(recursiveAction = false): Promise<void> {
     await this.project.build(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
+        recursiveAction,
         finishCallback: () => this._exit(),
       }),
     );
   }
   //#endregion
 
+  async all(): Promise<void> {
+    await this._(true);
+  }
+
   //#region watch build interactive mode
   /**
    * display console menu
    */
-  async watch() {
+  async watch(): Promise<void> {
     await this.project.build(
       this.params.clone({
         build: {
@@ -227,6 +231,30 @@ class $Build extends BaseCli {
       this.params.clone({
         release: {
           targetArtifact: 'angular-node-app',
+        },
+        build: {
+          watch: true,
+        },
+      }),
+    );
+  }
+
+  async startElectron() {
+    // TODO add proper logic
+    await this.project.build(
+      this.params.clone({
+        release: {
+          targetArtifact: 'npm-lib-and-cli-tool',
+        },
+        build: {
+          watch: true,
+        },
+      }),
+    );
+    await this.project.build(
+      this.params.clone({
+        release: {
+          targetArtifact: 'electron-app',
         },
         build: {
           watch: true,

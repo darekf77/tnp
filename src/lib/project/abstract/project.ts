@@ -142,7 +142,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     }
     if (this.framework.isContainer) {
       await this.artifactsManager.init(initOptions);
-      await this.artifactsManager.initAllChildren(initOptions);
+      if (initOptions.recursiveAction) {
+        await this.artifactsManager.initAllChildren(initOptions);
+      }
     }
 
     if (!initOptions.build.watch) {
@@ -161,7 +163,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     if (this.framework.isContainer) {
       buildOptions.build.watch = false; // there is no need to watch for container ever
       await this.artifactsManager.build(buildOptions);
-      await this.artifactsManager.buildAllChildren(buildOptions);
+      if (buildOptions.recursiveAction) {
+        await this.artifactsManager.buildAllChildren(buildOptions);
+      }
     }
 
     if (!buildOptions.build.watch && !!buildOptions.release.targetArtifact) {

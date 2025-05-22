@@ -75,14 +75,6 @@ export class Git extends BaseGit<Project> {
   }
   //#endregion
 
-  //#region OVERRIDE / before pull action
-  protected async _beforePullProcessAction(setOrigin: 'ssh' | 'http') {
-    //#region @backendFunc
-    await super._beforePullProcessAction(setOrigin);
-    // await Helpers.killAllNodeExceptCurrentProcess();
-    //#endregion
-  }
-  //#endregion
 
   protected async _afterPullProcessAction(
     setOrigin: 'ssh' | 'http',

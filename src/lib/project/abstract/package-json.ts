@@ -98,7 +98,7 @@ export class PackageJSON extends BasePackageJson {
       }
       this.data.name = this.project.nameForNpmPackage;
       this.data.version = versionToPreserve;
-      this.data.main = 'dist/app.electron.js';
+      this.data.main = 'dist/app.electron.js'; // fix for electron
       const showFirst = [
         'name',
         'version',

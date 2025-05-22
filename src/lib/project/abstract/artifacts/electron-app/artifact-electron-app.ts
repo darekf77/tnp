@@ -27,16 +27,13 @@ export class ArtifactElectronApp extends BaseArtifact<
   }
 
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
-    if (
-      this.project.framework.isStandaloneProject &&
-      initOptions.release.releaseType
-    ) {
-      this.project.packageJson.setMainProperty(
-        'dist/app.electron.js',
-        'update main for electron',
-      );
-    }
-    return initOptions;
+    return await this.artifacts.angularNodeApp.initPartial(
+      initOptions.clone({
+        release: {
+          targetArtifact: this.currentArtifactName
+        },
+      }),
+    );
   }
 
   async buildPartial(buildOptions: EnvOptions): Promise<{
@@ -46,7 +43,7 @@ export class ArtifactElectronApp extends BaseArtifact<
     await this.artifacts.angularNodeApp.buildPartial(
       buildOptions.clone({
         release: {
-          targetArtifact: 'electron-app',
+          targetArtifact: this.currentArtifactName,
         },
       }),
     );

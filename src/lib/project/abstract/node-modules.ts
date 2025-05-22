@@ -97,7 +97,9 @@ export class NodeModules extends BaseNodeModules {
       `);
       }
       //#endregion
-
+      options.generateYarnOrPackageJsonLock = true;
+      options.removeYarnOrPackageJsonLock = false;
+      options.skipRemovingNodeModules = true;
       await super.reinstall(options);
 
       //#region after npm install taon things
