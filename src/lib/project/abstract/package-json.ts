@@ -1,4 +1,5 @@
 import { gt, gte, valid } from 'semver';
+import { scriptsCommands } from 'tnp/src';
 import { config } from 'tnp-config/src';
 import {
   CoreModels,
@@ -122,28 +123,11 @@ export class PackageJSON extends BasePackageJson {
       };
 
       destinationObject.scripts = destinationObject.scripts || {};
-      const scriptsCommands = [
-        'taon init',
-        'taon start',
-        'taon build:lib',
-        'taon build:watch:lib',
-        'taon build:watch:app',
-        'taon build:watch:electron',
-        'taon docs',
-        'taon docs:watch',
-        'taon clear',
-        'taon release',
-        'taon release:auto',
-        'taon release:install:locally',
-        'taon migration:create',
-        'taon migration:run',
-        'taon migration:revert',
-        'taon vscode:temp:show',
-        'taon vscode:temp:hide',
-      ];
+      if (this.project.taonJson.type === 'isomorphic-lib') {
 
-      for (const command of scriptsCommands) {
-        destinationObject.scripts[command] = command;
+        for (const command of scriptsCommands) {
+          destinationObject.scripts[command] = command;
+        }
       }
 
       destinationObject.bin = this.recreateBin();

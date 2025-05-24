@@ -24,6 +24,26 @@ export const taonIgnore = '@taon' + '-' + 'ignore';
 
 export const DEBUG_WORD = 'Debug/Start';
 
+export const scriptsCommands = [
+  'taon init',
+  'taon start',
+  'taon build:lib',
+  'taon build:watch:lib',
+  'taon build:watch:app',
+  'taon build:watch:electron',
+  'taon docs',
+  'taon docs:watch',
+  'taon clear',
+  'taon release',
+  'taon release:auto',
+  'taon release:install:locally',
+  'taon migration:create',
+  'taon migration:run',
+  'taon migration:revert',
+  'taon vscode:temp:show',
+  'taon vscode:temp:hide',
+];
+
 export const THIS_IS_GENERATED_STRING = `THIS FILE IS GENERATED - DO NOT MODIFY`;
 export const THIS_IS_GENERATED_INFO_COMMENT = `// ${THIS_IS_GENERATED_STRING}`;
 

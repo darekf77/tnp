@@ -1,4 +1,4 @@
-import { OVERRIDE_FROM_TNP } from 'tnp/src';
+import { OVERRIDE_FROM_TNP, scriptsCommands } from 'tnp/src';
 import { config } from 'tnp-config/src';
 import { CoreModels, path } from 'tnp-core/src';
 import { Helpers, _ } from 'tnp-core/src';
@@ -137,6 +137,13 @@ export class TaonJson extends BaseFeatureForProject<Project> {
         ...sorted,
         packageJsonOverride,
       };
+
+      scriptsCommands.forEach(command => {
+        delete ((destinationObject.packageJsonOverride || {}).scripts || {})[
+          command
+        ];
+      });
+
       this.project.writeJsonC(config.file.taon_jsonc, destinationObject);
     }
 
