@@ -3,7 +3,7 @@ import { config } from 'tnp-config/src';
 import { chalk, fse, json5, path, _, os } from 'tnp-core/src';
 import { Utils } from 'tnp-core/src';
 import { crossPlatformPath } from 'tnp-core/src';
-import { BaseVscodeHelpers, Helpers } from 'tnp-helpers/src';
+import { BaseVscodeHelpers, Helpers, UtilsVSCode } from 'tnp-helpers/src';
 
 import {
   DEBUG_WORD,
@@ -26,19 +26,51 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   extends BaseVscodeHelpers<Project>
 {
   async init(): Promise<void> {
-    this.recreateJsonSchemas();
-    this.project.vsCodeHelpers.recreateExtensions();
-    this.project.vsCodeHelpers.recreateWindowTitle();
-    this.project.vsCodeHelpers.saveLaunchJson();
-    this.project.vsCodeHelpers.saveTasksJson();
-  }
+    this.recreateExtensions();
+    this.saveLaunchJson();
+    this.saveTasksJson();
 
-  //#region recreate jsonc schema
-  recreateJsonSchemas(): void {
+    // modyfing settings.json
     this.recreateJsonSchemaForDocs();
     this.recreateJsonSchemaForTaon();
+    this.recreateWindowTitle({ save: false });
+    this.saveColorsForWindow();
+    this.saveCurrentSettings();
   }
-  //#endregion
+
+  private saveColorsForWindow(checkingParent: boolean = false): void {
+    //#region @backendFunc
+
+    const parentIsOrg = this.project.parent?.taonJson.isOrganization;
+    if (parentIsOrg) {
+      this.project.parent.vsCodeHelpers.saveColorsForWindow(true);
+    }
+    const parentSettings =
+      parentIsOrg && this.project.parent.vsCodeHelpers.currentSettingsValue;
+
+    if (_.isNil(this.currentSettingsValue['workbench.colorCustomizations'])) {
+      this.currentSettingsValue['workbench.colorCustomizations'] = {
+        'activityBar.background': `${UtilsVSCode.generateFancyColor()}`,
+      };
+    }
+    this.currentSettingsValue['workbench.colorCustomizations'][
+      'statusBar.background'
+    ] = `${
+      parentIsOrg
+        ? parentSettings['workbench.colorCustomizations'][
+            'statusBar.background'
+          ]
+        : this.currentSettingsValue['workbench.colorCustomizations'][
+            'statusBar.background'
+          ] || UtilsVSCode.generateFancyColor()
+    }`;
+
+    this.currentSettingsValue['workbench.colorCustomizations'][
+      'statusBar.debuggingBackground'
+    ] = `#15d8ff`; // nice blue for debugging
+
+    //#endregion
+  }
 
   //#region recreate jsonc schema for docs
   public recreateJsonSchemaForDocs(): void {
@@ -53,9 +85,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     const currentSchemas: {
       fileMatch: string[];
       url: string;
-    }[] =
-      this.project.getValueFromJSONC(this.settingsJson, `['json.schemas']`) ||
-      [];
+    }[] = _.get(this.currentSettingsValue, `['json.schemas']`) || [];
 
     const toDeleteIndex = currentSchemas
       .filter(
@@ -72,11 +102,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     currentSchemas.push(properSchema);
 
-    this.project.setValueToJSONC(
-      this.settingsJson,
-      '["json.schemas"]',
-      currentSchemas,
-    );
+    _.set(this.currentSettingsValue, '["json.schemas"]', currentSchemas);
     //#endregion
   }
   //#endregion
@@ -87,9 +113,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     let currentSchemas: {
       fileMatch: string[];
       url: string;
-    }[] =
-      this.project.getValueFromJSONC(this.settingsJson, `['json.schemas']`) ||
-      [];
+    }[] = _.get(this.currentSettingsValue, `['json.schemas']`) || [];
 
     const toDeleteIndex = currentSchemas
       .filter(
@@ -130,11 +154,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     this.project.removeFile('taon-config.schema.json'); // QUICK_FIX
 
-    this.project.setValueToJSONC(
-      this.settingsJson,
-      '["json.schemas"]',
-      currentSchemas,
-    );
+    _.set(this.currentSettingsValue, '["json.schemas"]', currentSchemas);
     //#endregion
   }
   //#endregion
@@ -412,57 +432,9 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   //#endregion
 
   //#region open in vscode
-  public openInVscode() {
+  public openInVscode(): void {
     //#region @backendFunc
-    this.filesRecreatorCodeWorkspace();
     this.project.run(`code ${this.project.location}`).sync();
-    //#endregion
-  }
-  //#endregion
-
-  //#region recreate settings worksapce
-  filesRecreatorCodeWorkspace() {
-    //#region @backendFunc
-    const configSettings = {};
-
-    try {
-      const settings = json5.parse(
-        Helpers.readFile(
-          path.join(this.project.location, '.vscode', 'settings.json'),
-        ),
-      );
-      // console.log(settings)
-      Object.keys(settings)
-        .filter(key => {
-          const isWorkbenchKey = key.startsWith('workbench');
-          // console.log(`${key} ${start}`)
-          return isWorkbenchKey;
-        })
-        .forEach(key => {
-          configSettings[key] = settings[key];
-        });
-    } catch (err) {
-      // console.log(err)
-    }
-
-    const packaedDistChildrensFolder = path.join(
-      this.project.location,
-      config.folder.dist,
-    );
-    if (!fse.existsSync(packaedDistChildrensFolder)) {
-      Helpers.mkdirp(packaedDistChildrensFolder);
-    }
-    configSettings['terminal.integrated.cwd'] = '${workspaceFolder}';
-
-    const codeworkspacefilepath = path.join(
-      this.project.location,
-      `tmp.code-workspace`,
-    );
-    Helpers.removeFileIfExists(codeworkspacefilepath);
-    // fse.writeJSONSync(codeworkspacefilepath, codeWorkspace, {
-    //   encoding: 'utf8',
-    //   spaces: 2
-    // });
     //#endregion
   }
   //#endregion
