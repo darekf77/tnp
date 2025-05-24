@@ -120,8 +120,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     //#region prevent empty base href
     if (!_.isUndefined(buildOptions.build.baseHref)) {
       Helpers.error(
-        `Build baseHref only can be specify when` +
-          ` build lib code:
+        `Build baseHref only can be specify when build lib code:
 
       try commands:
       ${config.frameworkName} build:lib --base-href ` +
@@ -137,8 +136,12 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     const dockerBackendFrontendAppDistOutPath: string = void 0; // TODO implement
 
+    const angularTempProj = this.globalHelper.getProxyNgProj(buildOptions);
+
     const appDistOutBrowserAngularAbsPath =
-      this.getOutDirAngularBrowserAppAbsPath(buildOptions);
+      buildOptions.release.targetArtifact === 'electron-app'
+        ? angularTempProj.pathFor('dist')
+        : this.getOutDirAngularBrowserAppAbsPath(buildOptions);
 
     const appDistOutBackendNodeAbsPath =
       this.getOutDirNodeBackendAppAbsPath(buildOptions);
@@ -191,8 +194,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         ` ${buildOptions.build.watch ? '--watch' : ''}` +
         ` ${outPutPathCommand} `;
     //#endregion
-
-    const angularTempProj = this.globalHelper.getProxyNgProj(buildOptions);
 
     const showInfoAngular = () => {
       Helpers.logInfo(`
@@ -437,7 +438,7 @@ http://localhost:${buildOptions.ports.ngWebsqlAppPort}
    */
   getOutDirAngularBrowserAppAbsPath(buildOptions: EnvOptions): string {
     let outDirApp =
-      `.${config.frameworkName}/${this.currentArtifactName}/` +
+      `.${config.frameworkName}/${buildOptions.release.targetArtifact}/` +
       `${buildOptions.release.releaseType ? buildOptions.release.releaseType : 'development'}/` +
       `${config.folder.browser}/` +
       `${config.folder.dist}-app${buildOptions.build.websql ? '-websql' : ''}`;

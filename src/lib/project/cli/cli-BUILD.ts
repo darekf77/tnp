@@ -263,11 +263,16 @@ class $Build extends BaseCli {
     );
   }
 
+  async cleanStartElectron() {
+    await this.project.clear(this.params);
+    await this.startElectron();
+  }
+
   /**
    * @deprecated
    */
   async startClean() {
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.clearPartial();
+    await this.project.clear(this.params);
     await this.start();
   }
   //#endregion

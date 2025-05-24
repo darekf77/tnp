@@ -494,6 +494,16 @@ export class ArtifactManager {
 
     let releaseOutput: ReleasePartialOutput;
 
+    const npmLibBUild = async (options: EnvOptions): Promise<void> => {
+      await this.artifact.npmLibAndCliTool.buildPartial(
+        options.clone({
+          build: {
+            watch: false,
+          },
+        }),
+      );
+    };
+
     if (
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'docs-webapp'
@@ -512,9 +522,7 @@ export class ArtifactManager {
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'angular-node-app'
     ) {
-      await this.artifact.npmLibAndCliTool.buildPartial(
-        EnvOptions.fromRelease(releaseOptions),
-      );
+      await npmLibBUild(releaseOptions);
       releaseOutput =
         await this.artifact.angularNodeApp.releasePartial(releaseOptions);
     }
@@ -522,12 +530,8 @@ export class ArtifactManager {
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'electron-app'
     ) {
-      await this.artifact.npmLibAndCliTool.buildPartial(
-        EnvOptions.fromRelease(releaseOptions),
-      );
-      await this.artifact.angularNodeApp.buildPartial(
-        EnvOptions.fromRelease(releaseOptions),
-      );
+      await npmLibBUild(releaseOptions);
+
       releaseOutput =
         await this.artifact.electronApp.releasePartial(releaseOptions);
     }
@@ -535,9 +539,7 @@ export class ArtifactManager {
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'mobile-app'
     ) {
-      await this.artifact.npmLibAndCliTool.buildPartial(
-        EnvOptions.fromRelease(releaseOptions),
-      );
+      await npmLibBUild(releaseOptions);
       releaseOutput =
         await this.artifact.mobileApp.releasePartial(releaseOptions);
     }
@@ -545,9 +547,7 @@ export class ArtifactManager {
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'vscode-plugin'
     ) {
-      await this.artifact.npmLibAndCliTool.buildPartial(
-        EnvOptions.fromRelease(releaseOptions),
-      );
+      await npmLibBUild(releaseOptions);
       releaseOutput =
         await this.artifact.vscodePlugin.releasePartial(releaseOptions);
     }

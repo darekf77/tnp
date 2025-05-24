@@ -302,7 +302,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     if (
       !buildOptions.build.watch &&
       buildOptions.release.releaseType &&
-      buildOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
+      buildOptions.release.targetArtifact === this.currentArtifactName
     ) {
       this.__cutReleaseCodeFromSrc(buildOptions);
     }
@@ -374,7 +374,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     if (
       !buildOptions.build.watch &&
       buildOptions.release.releaseType &&
-      buildOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
+      buildOptions.release.targetArtifact === this.currentArtifactName
     ) {
       this.__restoreCuttedReleaseCodeFromSrc(buildOptions);
     }

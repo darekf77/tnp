@@ -1,6 +1,14 @@
+import { Configuration as ElectronBuilderConfig } from 'electron-builder';
 import { config } from 'tnp-config/src';
-import { crossPlatformPath } from 'tnp-core/src';
-import { Helpers, UtilsQuickFixes } from 'tnp-helpers/src';
+import {
+  crossPlatformPath,
+  fse,
+  path,
+  Utils,
+  UtilsString,
+  UtilsTerminal,
+} from 'tnp-core/src';
+import { Helpers, UtilsQuickFixes, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
   ReleaseArtifactTaonNames,
@@ -14,7 +22,6 @@ import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 export class ArtifactElectronApp extends BaseArtifact<
   {
     electronDistOutAppPath: string;
-    electronDistOutAppPathWebsql: string;
   },
   ReleasePartialOutput
 > {
@@ -30,7 +37,7 @@ export class ArtifactElectronApp extends BaseArtifact<
     return await this.artifacts.angularNodeApp.initPartial(
       initOptions.clone({
         release: {
-          targetArtifact: this.currentArtifactName
+          targetArtifact: this.currentArtifactName,
         },
       }),
     );
@@ -38,223 +45,148 @@ export class ArtifactElectronApp extends BaseArtifact<
 
   async buildPartial(buildOptions: EnvOptions): Promise<{
     electronDistOutAppPath: string;
-    electronDistOutAppPathWebsql: string;
-  }> {
-    await this.artifacts.angularNodeApp.buildPartial(
-      buildOptions.clone({
-        release: {
-          targetArtifact: this.currentArtifactName,
-        },
-      }),
-    );
-    return {
-      electronDistOutAppPath: this.__getElectronAppRelativePath({
-        websql: buildOptions.build.websql,
-      }),
-      electronDistOutAppPathWebsql: this.__getElectronAppRelativePath({
-        websql: true,
-      }),
-    };
-  }
-
-  //#region old build
-  async oldBuild(buildOptions: EnvOptions): Promise<{
-    electronDistOutAppPath: string;
-    electronDistOutAppPathWebsql: string;
   }> {
     //#region @backendFunc
-    buildOptions = await this.project.artifactsManager.init(
-      EnvOptions.from(buildOptions),
-    );
-    const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
-
-    if (buildOptions.build.watch) {
-      await this.project.tryKillAllElectronInstances(); // TODO QUICK_FIX
-    }
-
-    const baseHrefElectron = '';
-    if (!this.project.framework.isStandaloneProject) {
-      Helpers.error(
-        `Electron apps compilation only for standalone projects`,
-        false,
-        true,
+    const { appDistOutBrowserAngularAbsPath } =
+      await this.artifacts.angularNodeApp.buildPartial(
+        buildOptions.clone({
+          build: {
+            pwa: {
+              disableServiceWorker: true,
+            },
+            // baseHref: `./`,
+          },
+          release: {
+            targetArtifact: this.currentArtifactName,
+          },
+        }),
       );
-    }
 
-    const elecProj = this.project.ins.From(
-      this.project.pathFor([
-        `tmp-apps-for-${config.folder.dist}${
-          buildOptions.build.websql ? '-websql' : ''
-        }`,
-        this.project.name,
-      ]),
+    const proxyProj = this.project.ins.From(
+      path.dirname(appDistOutBrowserAngularAbsPath),
     );
-    Helpers.info('Starting electron ...');
 
-    if (buildOptions.build.watch) {
-      if (!shouldSkipBuild) {
-        elecProj
-          .run(
-            `npm-run  electron . --serve ${
-              buildOptions.build.websql ? '--websql' : ''
-            }`,
-          )
-          .async();
-      }
-    } else {
-      Helpers.info('Release build of electron app');
-      if (buildOptions.release.releaseType) {
-        if (!buildOptions.release.releaseType) {
-          // await this.initPartial(
-          //   EnvOptions.fromBuild(
-          //     buildOptions.clone({
-          //       build: {
-          //         baseHref: baseHrefElectron,
-          //       },
-          //       purpose: 'before building electron app init',
-          //     }),
-          //   ),
-          // );
-          // const tempGeneratedCiReleaseProject =
-          //   await this.__createTempCiReleaseProject(buildOptions);
-          // await tempGeneratedCiReleaseProject.build(buildOptions);
-          return;
-        }
+    const nutPackage = '@nut-tree-fork/nut-js';
+    Helpers.setValueToJSON(
+      proxyProj.pathFor('electron/package.json'),
+      'dependencies',
+      {
+        [nutPackage]: this.project.packageJson.dependencies[nutPackage],
+      },
+    );
 
-        // if (!this.pathExists(`tmp-apps-for-dist/${this.name}/electron/compiled/app.electron.js`)) {
-        //   // await this.build(buildOptions.clone({
-        //   //   buildForRelease: false,
-        //   //   watch: false
-        //   // }))
-        // } else {
+    await Helpers.ncc(
+      proxyProj.pathFor('electron/main.js'),
+      proxyProj.pathFor('electron/index.js'),
+      {
+        additionalExternals: [nutPackage],
+        strategy: 'electron-app',
+      },
+    );
 
-        const elecProj = this.project.ins.From(
-          this.project.pathFor([
-            `tmp-apps-for-dist${buildOptions.build.websql ? '-websql' : ''}`,
-            this.project.name,
-          ]),
-        );
-        // Helpers.createSymLink(this.nodeModules.path, elecProj.pathFor(`electron/${config.folder.node_modules}`));
-        // elecProj.run('code .').sync();
-        const wasmfileSource = crossPlatformPath([
-          this.project.ins.by(
-            'isomorphic-lib',
-            this.project.framework.frameworkVersion,
-          ).location,
-          'app/src/assets/sql-wasm.wasm',
-        ]);
-        const wasmfileDest = crossPlatformPath([
-          elecProj.location,
-          'electron',
-          'sql-wasm.wasm',
-        ]);
-        Helpers.copyFile(wasmfileSource, wasmfileDest);
+    proxyProj.run(`cd electron && npm install`).sync();
 
-        Helpers.info('Building lib...');
-        await this.buildPartial(
-          buildOptions.clone({
-            release: {
-              targetArtifact: 'angular-node-app',
-            },
-            build: {
-              watch: false,
-              baseHref: baseHrefElectron,
-              pwa: {
-                disableServiceWorker: true,
-              },
-            },
-            copyToManager: {
-              skip: true,
-            },
-            finishCallback: () => {},
-          }),
-        );
-        Helpers.info('Build lib done.. building now electron app...');
+    const electronDistOutAppPath = this.project.pathFor([
+      `.${config.frameworkName}`,
+      this.currentArtifactName,
+      // 'release',
+      `release-${new Date().getTime()}`, // to avoid asar lock in os
+      this.project.packageJson.version,
+    ]);
 
-        // Helpers.pressKeyAndContinue()
-        if (!shouldSkipBuild) {
-          elecProj.run('npm-run ng build angular-electron').sync();
-        }
-        // await this.build(buildOptions.clone({
-        //   buildType: 'app',
-        //   targetApp: 'pwa',
-        //   watch: false,
-        //   baseHref: baseHrefElectron,
-        //   disableServiceWorker: true,
-        //   skipCopyManager: true,
-        //   buildAngularAppForElectron: true,
-        //   finishCallback: () => { }
-        // }));
+    const electronConfigPath = proxyProj.pathFor(`electron-builder.json`);
 
-        const indexHtmlPath = elecProj.pathFor(['dist', 'index.html']);
-        // console.log({
-        //   indexHtmlPath
-        // })
-        Helpers.writeFile(
-          indexHtmlPath,
-          Helpers.readFile(indexHtmlPath)
-            .replace(`<base href="/">`, '<base href="./">')
-            .replace(`<base href="/">`, '<base href="./">')
-            .replace(/\/assets\//g, 'assets/'),
-        );
-        Helpers.replaceLinesInFile(indexHtmlPath, line => {
-          if (line.search(`rel="manifest"`) !== -1) {
-            return '';
-          }
-          return line;
-        });
-        // <base href="/">
-        const indexJSPath = crossPlatformPath([
-          elecProj.location,
-          'electron',
-          'index.js',
-        ]);
-        if (!shouldSkipBuild) {
-          await Helpers.ncc(
-            crossPlatformPath([elecProj.location, 'electron', 'main.js']),
-            indexJSPath,
-            { strategy: 'electron-app' },
-          );
-        }
-        Helpers.writeFile(
-          indexJSPath,
-          UtilsQuickFixes.replaceSQLliteFaultyCode(
-            Helpers.readFile(indexJSPath),
-          )
-            .split('\n')
-            .map(line => line.replace(/\@removeStart.*\@removeEnd/g, ''))
-            .join('\n'),
-        );
+    const electronConfig = Helpers.readJson(
+      electronConfigPath,
+    ) as UtilsTypescript.DeepWritable<ElectronBuilderConfig>;
+    electronConfig.directories.output = electronDistOutAppPath;
 
-        // elecProj.run(`npm-run ncc build electron/main.js -o electron/bundled  --no-cache  --external electron `).sync();
-        // await Helpers.questionYesNo('Would you like to do check out?');
-        elecProj.run(`npm-run electron-builder build --publish=never`).sync();
-        this.project.openLocation(
-          this.__getElectronAppRelativePath({
-            websql: buildOptions.build.websql,
-          }),
-        );
-      } else {
-        // TODO
-      }
-      buildOptions.finishCallback && buildOptions.finishCallback();
-    }
+    Helpers.writeJson(electronConfigPath, electronConfig);
+    let electronConfigFile = Helpers.readFile(electronConfigPath);
+    electronConfigFile = electronConfigFile.replace(
+      new RegExp(Utils.escapeStringForRegEx('assets/'), 'g'),
+      `dist/assets/assets-for/${this.project.nameForNpmPackage}/assets/`,
+    );
+    Helpers.writeFile(electronConfigPath, electronConfigFile);
 
+    //#region Copy wasm file
+    const wasmfileSource = crossPlatformPath([
+      this.project.ins.by(
+        'isomorphic-lib',
+        this.project.framework.frameworkVersion,
+      ).location,
+      'app/src/assets/sql-wasm.wasm',
+    ]);
+    const wasmfileDest = crossPlatformPath([
+      proxyProj.location,
+      'electron',
+      'sql-wasm.wasm',
+    ]);
+    Helpers.copyFile(wasmfileSource, wasmfileDest);
+    //#endregion
+
+    //#region modify index.html
+    const indexHtmlPath = proxyProj.pathFor(['dist', 'index.html']);
+
+    Helpers.writeFile(
+      indexHtmlPath,
+      Helpers.readFile(indexHtmlPath),
+      // Helpers.readFile(indexHtmlPath).replace(
+      //   `<base href="/">`,
+      //   '<base href="./">',
+      // ),
+      // .replace(`<base href="/">`, '<base href="./">'),
+      // .replace(/\/assets\//g, 'assets/'),
+    );
+
+    // Helpers.replaceLinesInFile(indexHtmlPath, line => {
+    //   if (line.search(`rel="manifest"`) !== -1) {
+    //     return '';
+    //   }
+    //   return line;
+    // });
+    //#endregion
+
+    proxyProj
+      .run(
+        `npm-run electron-builder build --publish=never  --arm64 --x64 --win`,
+      )
+      .sync();
+
+    return {
+      electronDistOutAppPath: electronDistOutAppPath,
+    };
     //#endregion
   }
-  //#endregion
 
-  async releasePartial(releaseOptions): Promise<ReleasePartialOutput> {
+  async releasePartial(
+    releaseOptions: EnvOptions,
+  ): Promise<ReleasePartialOutput> {
     releaseOptions = this.updateResolvedVersion(releaseOptions);
+
+    const projectsReposToPushAndTag: string[] = [this.project.location];
+
+    const { electronDistOutAppPath } = await this.buildPartial(releaseOptions);
+    let releaseProjPath: string;
+
+    if (releaseOptions.release.releaseType === 'local') {
+      const localReleaseOutputBasePath = this.project.pathFor([
+        config.folder.local_release,
+        this.currentArtifactName,
+        `${this.project.name}-latest`,
+      ]);
+      Helpers.remove(localReleaseOutputBasePath);
+      Helpers.copy(electronDistOutAppPath, localReleaseOutputBasePath);
+      releaseProjPath = localReleaseOutputBasePath;
+    }
+
+    projectsReposToPushAndTag.push(electronDistOutAppPath);
 
     return {
       resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
-    } as any; // TODO implement
+      projectsReposToPushAndTag: [this.project.location],
+      releaseProjPath,
+      releaseType: releaseOptions.release.releaseType,
+    };
   }
-
-  //#region getters & methods / get electron app relative path
-  __getElectronAppRelativePath({ websql }: { websql: boolean }) {
-    return `tmp-build/electron-app-dist${websql ? '-websql' : ''}`;
-  }
-  //#endregion
 }

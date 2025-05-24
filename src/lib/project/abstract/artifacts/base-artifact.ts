@@ -104,8 +104,13 @@ export abstract class BaseArtifact<
       return releaseOptions.release.skipBuildingArtifacts;
     }
     if (_.isArray(releaseOptions.release.skipBuildingArtifacts)) {
-      return releaseOptions.release.skipBuildingArtifacts.includes(
-        this.currentArtifactName,
+      return (
+        releaseOptions.release.skipBuildingArtifacts.includes(
+          this.currentArtifactName,
+        ) ||
+        releaseOptions.release.skipBuildingArtifacts.includes(
+          releaseOptions.release.targetArtifact,
+        )
       );
     }
     return false;

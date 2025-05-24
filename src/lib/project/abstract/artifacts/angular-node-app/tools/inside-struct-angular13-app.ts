@@ -1,6 +1,6 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { crossPlatformPath, path, _, CoreModels } from 'tnp-core/src';
+import { crossPlatformPath, path, _, CoreModels, fse } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../../../../options';
@@ -60,6 +60,7 @@ export class InsideStructAngular13App extends BaseInsideStruct {
           'app/electron-builder.json',
           'app/angular.webpack.js',
           'app/electron/main.js',
+          'app/electron/index.js',
           `app/electron/${config.file.package_json}`,
           'app/karma.conf.js',
           'app/package-lock.json',
@@ -508,25 +509,13 @@ ${appComponentFile}
                 `/electron/compiled`,
               ),
             );
-            Helpers.remove(compileTs);
+            try {
+              fse.unlinkSync(compileTs);
+            } catch (error) {
+              Helpers.remove(compileTs);
+            }
             Helpers.createSymLink(electronBackend, compileTs);
 
-            const electronConfigPath = crossPlatformPath(
-              path.join(
-                project.location,
-                replacement(tmpProjectsStandalone),
-                `/electron-builder.json`,
-              ),
-            );
-
-            const electronConfig = Helpers.readJson(electronConfigPath);
-            electronConfig.directories.output =
-              `../../` +
-              `${this.project.artifactsManager.artifact.electronApp.__getElectronAppRelativePath(
-                { websql: this.initOptions.build.websql },
-              )}/`;
-
-            Helpers.writeJson(electronConfigPath, electronConfig);
             const packageJson = new BasePackageJson({
               cwd: crossPlatformPath(
                 path.join(
