@@ -262,7 +262,11 @@ export class Docs extends BaseDebounceCompilerForProject<
           });
         });
 
-      if (this.initialParams.docsOutFolder && !this.initialParams.ciBuild) {
+      if (
+        this.initialParams.docsOutFolder &&
+        !this.isWatchCompilation &&
+        !this.initialParams.ciBuild
+      ) {
         await UtilsHttp.startHttpServer(
           this.outDocsDistFolderAbs,
           this.initialParams.port,
