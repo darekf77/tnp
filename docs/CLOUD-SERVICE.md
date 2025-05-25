@@ -32,12 +32,12 @@ By default, each Taon command checks if a working and healthy local Taon service
   <tr>
     <td><b>Manage Domains</b><br>(cloud)</td>
     <td> 
-      - display all domains that are assigned for server public ip
-      - (in future - deep service integration with providers that will let you skip learning about redirecting/assigning domains - just buy/configure domain from here!)
+      - display all domains that are assigned for server public ip<br>
+      - (in future - deep service integration with providers that will let you skip learning about redirecting/assigning domains => just buy/configure domain from here!)
     </td>
     <td> 
-      - manage /etc/host file
-      - create fake domains to temporary simulate  real service
+      - manage /etc/host file<br>
+      - create fake domains for temporary simulation of real service/website
     </td>
   </tr>
   <tr>
