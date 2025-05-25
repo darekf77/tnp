@@ -1,7 +1,14 @@
 ## Create new project
 ```bash
+# create single standalone project
 tnp new my-standalone-project
-tnp new my-organization/main-entry-project
+
+# create container with on standalone project
+tnp new my-projects-container/my-project
+
+# create folder/container my-container-org and mark it as organization
+tnp new @my-container-org/my-project
+
 ```
 
 ## Build & Release artifacts
@@ -22,25 +29,61 @@ Supported artifacts by tnp cli:
 Single easy to remember build command
 
 ```bash 
-tnp build
-tnp b
+tnp build:lib # "ng build"  form npm lib and whole /src
+tnp bl
 
-tnp build:watch
-tnp bw
+tnp build:watch:lib # "ng build --watch"  form npm lib and whole /src
+tnp bwl
+
+# REMEMBER: lib build command but be executed before each app/electron build
+
+tnp build:watch:app # "ng serve" for website apps
+tnp bwa
+
+tnp build:watch:electron # "ng serve" for electron apps
+tnp bwe
+
 ```
+#### Scenario 1: developing website/npm library
+first terminal
+```bash
+taon build:watch:lib # or taon bwl
+```
+second terminal (wait for this command until lib build finish)
+```bash
+taon build:watch:app # or taon bwa
+```
+
+#### Scenario 2: developing electron app/npm library
+first terminal
+```bash
+taon build:watch:lib # or taon bwl
+```
+second terminal (wait for this command until lib build finish)
+```bash
+taon build:watch:electron # or taon bwe
+```
+
+#### Scenario 3: developing vscode extension/npm library
+first terminal
+```bash
+taon build:watch:lib # or taon bwl
+```
+Each start of VSCode debugger recreates menu options 
+
 
 ### Release process
 
 Single easy to remember release command
 
 ```bash
-# show menu
+# show release menu
 tnp release
 tnp r
 
-# repeat last release process based on created config
-tnp release:last
-tnp rl
+# release all stuff from taon.jsonc autoReleaseConfigAllowedItems
+tnp auto:release
+tnp ar
 ```
 
 
@@ -49,7 +92,7 @@ Similar command to npm link for tnp projects
 ```bash
 # - link local lib/cli development build as global cli tool
 # - link local repo cli as global cli tools
-tnp  link
+tnp link
 ```
 
 ## Migrations (for databases)
