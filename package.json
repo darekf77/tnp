@@ -19,7 +19,8 @@
     "taon migration:run": "taon migration:run",
     "taon migration:revert": "taon migration:revert",
     "taon vscode:temp:show": "taon vscode:temp:show",
-    "taon vscode:temp:hide": "taon vscode:temp:hide"
+    "taon vscode:temp:hide": "taon vscode:temp:hide",
+    "mkdocs": "mkdocs"
   },
   "license": "MIT",
   "author": "Dariusz Filipiak",
@@ -159,7 +160,7 @@
     "diff": "~4.0.2",
     "dockerode": "~4.0.5",
     "electron": "30.0.1",
-    "electron-builder": "24.13.3",
+    "electron-builder": "~26.0.12",
     "electron-debug": "3.2.0",
     "element-resize-detector": "~1.2.4",
     "enquirer": "2.4.1",

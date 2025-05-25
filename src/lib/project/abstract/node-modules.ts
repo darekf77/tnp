@@ -366,13 +366,17 @@ export class NodeModules extends BaseNodeModules {
       }
   )[] {
     return [
-      'tnp-models',
+      'tnp-models', // TODO remove
       'tnp-helpers',
-      'tnp-db',
+      'tnp-db', // TODO remove
       'tnp-core',
-      'tnp-cli',
-      'tnp-config',
-      'tnp-tools',
+      'tnp-cli', // TODO remove
+      'tnp-config', // TODO remove
+      'tnp-tools', // TODO remove
+      'taon',
+      'taon-ui',
+      'taon-typeorm',
+      'taon-storage',
       // "better-sqlite3",
       // "any-project-cli",
       'node-cli-test',
@@ -383,10 +387,7 @@ export class NodeModules extends BaseNodeModules {
       'lodash-walk-object',
       'typescript-class-helpers',
       'background-worker-process',
-      'taon-storage',
-      'taon-storage',
       '@ngtools/webpack',
-      'taon-typeorm',
       'portfinder',
       'socket.io-client',
       'socket.io',
