@@ -20,7 +20,7 @@
     "taon migration:revert": "taon migration:revert",
     "taon vscode:temp:show": "taon vscode:temp:show",
     "taon vscode:temp:hide": "taon vscode:temp:hide",
-    "mkdocs": "mkdocs"
+    "mkdocs": "python3 -m mkdocs"
   },
   "license": "MIT",
   "author": "Dariusz Filipiak",
@@ -312,6 +312,7 @@
     "taon-storage": "~19.0.0",
     "taon-type-sql": "~19.0.0",
     "taon-typeorm": "~19.0.0",
+    "taon-ui": "~19.0.2",
     "task.js": "^0.1.5",
     "threads": "1.7.0",
     "tnp": "~19.0.1",

@@ -11,68 +11,49 @@ By default, each Taon command checks if a working and healthy local Taon service
 **Taon UI Console** – basically, it’s everything you would ever need for deploying and managing your remote projects through SSH. No need for a browser UI, no distractions, security concerns. 
 
 ## Behavior - on server vs on localhost
-
-
 <table>
   <tr>
-    <th style="font-weight:normal;">Function</th>
-    <th><u>Remote Server</u></th>
-    <th><u>Localhost</u></th>
+    <th style="font-weight: normal">Manager</th>
+    <th><u>Projects</u></th>
+    <th><u>Domains</u></th>
+    <th><u>Ports</u></th>
+    <th><u>Deployments</u></th>
+    <th><u>Environments</u></th>
   </tr>
   <tr>
-    <td><b>Manage Projects</b><br>(cloud)</td>
-    <td> 
-      -||-
-    </td>
-    <td> 
-      discover/monitor/change/deploy/remove your
-    git project
-    </td>
-  </tr>
-  <tr>
-    <td><b>Manage Domains</b><br>(cloud)</td>
-    <td> 
-      - display all domains that are assigned for server public ip<br>
-      - (in future - deep service integration with providers that will let you skip learning about redirecting/assigning domains => just buy/configure domain from here!)
-    </td>
-    <td> 
-      - manage /etc/host file<br>
+    <td>Localhost</td>
+    <td>discover / monitor / change / deploy / remove your git projects</td>
+    <td>
+      - manage /etc/host file<br />
       - create fake domains for temporary simulation of real service/website
     </td>
-  </tr>
-  <tr>
-    <td><b>Manage Ports</b><br>(cloud)</td>
-    <td> 
-      -||-
-    </td>
-    <td> 
-      - assign automatically ports to projects when starting local build (no more --port needed, everything )<br>
-      - project from same location use the same ports everytime to avoid confusion <br>
+    <td>
+      - assign automatically ports to projects when starting local build (no
+      more --port needed, everything )<br />
+      - project from same location use the same ports everytime to avoid
+      confusion <br />
       - for: projects, services, dockers
     </td>
-  </tr>
-  <tr>
-    <td><b>Manage Deployments</b><br>(cloud)</td>
-    <td> 
-      - main place where you can specify quickly what to
-      deploy and where<br>
-      - deploy projects/artifacts<br>
-      - deploy groups of projects/artifacts<br>
+    <td>
+      - main place where you can specify quickly what to deploy and where<br />
+      - deploy projects/artifacts<br />
+      - deploy groups of projects/artifacts<br />
     </td>
-    <td> 
-      - local cloud has the same functionality, but of 
-      course stuff is only available inside your local
-      network
-    </td>
-  </tr>
-  <tr>
-    <td><b>Manage Environments</b><br>(cloud)</td>
-    <td> 
-      -||-
-    </td>
-    <td> 
+    <td>
       modify/preview environment assigned for each deployed project artifact
     </td>
   </tr>
+  <tr>
+    <td>Cloud</td>
+    <td>-||-</td>
+    <td>
+      - display all domains that are assigned for server public ip<br />
+      - (in future - deep service integration with providers that will let you
+      skip learning about redirecting/assigning domains => just buy/configure
+      domain from here!)
+    </td>
+    <td>-||-</td>
+    <td>-||-</td>
+    <td>-||-</td>
+  </tr>
 </table>
-
