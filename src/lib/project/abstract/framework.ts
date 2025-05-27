@@ -302,6 +302,14 @@ export class Framework extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  get tmpLocalProjectFullPath(): string {
+    return this.project.pathFor([
+      this.getTempProjectNameForCopyTo(),
+      config.folder.node_modules,
+      this.project.nameForNpmPackage,
+    ]);
+  }
+
   async global(globalPackageName: string, packageOnly = false) {
     //#region @backendFunc
     const oldContainer = this.project.ins.by('container', 'v1') as Project;

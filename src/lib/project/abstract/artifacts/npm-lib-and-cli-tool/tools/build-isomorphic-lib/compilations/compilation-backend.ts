@@ -15,7 +15,7 @@ import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 //#endregion
 
-export class BackendCompilation extends IncCompiler.Base {
+export class BackendCompilation {
   //#region static
   static counter = 1;
   //#endregion
@@ -30,19 +30,6 @@ export class BackendCompilation extends IncCompiler.Base {
     return 'tsconfig.browser.json';
   }
 
-  get cwd() {
-    //#region @backendFunc
-    return this.project.location;
-    //#endregion
-  }
-
-  public get absPathTmpSrcDistFolder() {
-    //#region @backendFunc
-    if (_.isString(this.srcFolder) && _.isString(this.cwd)) {
-      return crossPlatformPath(path.join(this.cwd, this.srcFolder));
-    }
-    //#endregion
-  }
   //#endregion
 
   //#region constructor
@@ -50,38 +37,54 @@ export class BackendCompilation extends IncCompiler.Base {
   constructor(
     public buildOptions: EnvOptions,
     /**
-     * Output folder
-     * Ex. dist
-     */
-    public outFolder: CoreModels.OutFolder,
-    /**
      * Source location
      * Ex. src | components
      */
     public srcFolder: string,
     public project: Project,
-  ) {
-    super({
-      folderPath: crossPlatformPath([project.location, srcFolder]),
-      notifyOnFileUnlink: true,
-      followSymlinks: true,
-      taskName: 'BackendCompilation',
-    });
+  ) {}
+  //#endregion
+  //#endregion
+
+  /**
+   * @deprecated remove
+   */
+  async start({ taskName }): Promise<void> {
+    //#region @backendFunc
+    await this.syncAction(
+      Helpers.getFilesFrom([this.project.location, this.srcFolder], {
+        recursive: true,
+        followSymlinks: false,
+      }),
+    );
+    //#endregion
   }
-  //#endregion
-  //#endregion
+
+  /**
+   * @deprecated remove
+   */
+  async startAndWatch(options?: any): Promise<void> {
+    //#region @backendFunc
+    await this.start(options);
+    //#endregion
+  }
 
   //#region methods / sync action
   async syncAction(filesPathes: string[]) {
     //#region @backendFunc
-    const outDistPath = crossPlatformPath(path.join(this.cwd, this.outFolder));
+    const outDistPath = crossPlatformPath(
+      path.join(this.project.location, config.folder.dist),
+    );
     // Helpers.System.Operations.tryRemoveDir(outDistPath)
+    try {
+      fse.unlinkSync(outDistPath);
+    } catch (error) {}
     if (!fse.existsSync(outDistPath)) {
       fse.mkdirpSync(outDistPath);
     }
     await this.libCompilation(this.buildOptions, {
-      cwd: this.cwd,
-      outDir: this.outFolder as any,
+      cwd: this.project.location,
+      outDir: config.folder.dist as any,
       generateDeclarations: true,
     });
     //#endregion
@@ -140,7 +143,9 @@ export class BackendCompilation extends IncCompiler.Base {
 
       // commandDts = `${tsExe} --emitDeclarationOnly  ${params.join(' ')}`;
       params[1] = ` --outDir ${nocutsrcFolder}`;
-      commandMaps = `${tsExe} ${params.join(' ').replace('--noEmitOnError true', '--noEmitOnError false')} `;
+      commandMaps = `${tsExe} ${params
+        .join(' ')
+        .replace('--noEmitOnError true', '--noEmitOnError false')} `;
       return {
         commandJs,
         commandMaps,
@@ -193,7 +198,9 @@ export class BackendCompilation extends IncCompiler.Base {
 
     Helpers.info(`
 
-Starting (${buildOptions.build.watch ? 'watch' : 'normal'}) backend TypeScript build....
+Starting (${
+      buildOptions.build.watch ? 'watch' : 'normal'
+    }) backend TypeScript build....
 
     `);
     const additionalReplace = (line: string) => {

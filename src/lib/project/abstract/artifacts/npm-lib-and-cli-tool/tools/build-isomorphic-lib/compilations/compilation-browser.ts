@@ -1,7 +1,7 @@
 //#region imports
 import { IncCompiler } from 'incremental-compiler/src';
 import { JSON10 } from 'json10/src';
-import { config } from 'tnp-config/src';
+import { config, extForSassLikeFiles } from 'tnp-config/src';
 import { TAGS } from 'tnp-config/src';
 import {
   _,
@@ -13,36 +13,19 @@ import {
 } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { Models } from '../../../../../../../models';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 import { CodeCut } from '../code-cut/code-cut';
 import { codeCuttFn } from '../code-cut/cut-fn';
-
-import { BackendCompilation } from './compilation-backend';
 //#endregion
 
-export class BrowserCompilation extends BackendCompilation {
-  /**
-   * @deprecated
-   */
-  private static instances = {} as { [websql: string]: BrowserCompilation };
-
+export class BrowserCompilation extends IncCompiler.Base {
   //#region fields & getters
-  compilerName = 'Browser standard compiler';
-  public codecut: CodeCut;
+  protected compilerName = 'Browser standard compiler';
+  public codecutNORMAL: CodeCut;
+  public codecutWEBSQL: CodeCut;
 
-  /**
-   * ex: <project-path>/tmp-src-dist
-   */
-  public get absPathTmpSrcDistFolder() {
-    //#region @backendFunc
-    if (_.isString(this.sourceOutBrowser) && _.isString(this.cwd)) {
-      return crossPlatformPath(path.join(this.cwd, this.sourceOutBrowser));
-    }
-    //#endregion
-  }
-  get customCompilerName() {
+  get customCompilerName(): string {
     //#region @backendFunc
     return `Browser compilation`;
     //#endregion
@@ -51,49 +34,38 @@ export class BrowserCompilation extends BackendCompilation {
   //#endregion
 
   //#region constructor
+  readonly sourceOutBrowserWEBSQL: string;
+  readonly sourceOutBrowserNORMAL: string;
+  readonly absPathTmpSrcDistFolderWEBSQL: string;
+  readonly absPathTmpSrcDistFolderNORMAL: string;
   //#region @backend
   constructor(
     public project: Project,
     /**
      * tmp-src-for-(dist)-browser
      */
-    protected sourceOutBrowser: string,
-    /**
-     * browser-for-(dist|projectName)
-     */
-    outFolder: CoreModels.OutFolder,
-    location: string,
-    public backendOutFolder: string,
+
+    protected srcFolder: string,
     public buildOptions: EnvOptions,
   ) {
-    super(buildOptions, outFolder, location, project);
-    BrowserCompilation.instances[String(!!buildOptions.build.websql)] = this;
+    super({
+      folderPath: crossPlatformPath([project.location, srcFolder]),
+      notifyOnFileUnlink: true,
+      followSymlinks: true,
+      taskName: 'BrowserCompilation',
+    });
+
+    this.project = project;
     this.compilerName = this.customCompilerName;
 
-    Helpers.log(
-      `[BrowserCompilation][constructor]
-
-    compilationProject.genericName: ${project?.genericName}
-    compilationProject.type: ${project?.type}
-    ENV?: ${!!this.buildOptions}
-
-    cwd: ${this.project.location}
-    sourceOut: ${sourceOutBrowser}
-    location: ${location}
-    backendOut: ${backendOutFolder}
-
-    `,
-      1,
+    this.sourceOutBrowserWEBSQL = `tmp-src-dist-websql`;
+    this.sourceOutBrowserNORMAL = `tmp-src-dist`;
+    this.absPathTmpSrcDistFolderWEBSQL = crossPlatformPath(
+      path.join(this.project.location || '', this.sourceOutBrowserWEBSQL || ''),
     );
-
-    Helpers.log(`\n\nbuildOptions: ${JSON10.stringify(buildOptions)}\n\n`, 2);
-
-    // console.log('SOURCE OUT', sourceOut)
-    // console.log('OUT FOLDER', outFolder)
-    // console.log('LOCATION', location)
-    // console.log('MODULE NAME', moduleName)
-    // console.log(Helpers.terminalLine())
-    // this.project = cwdProject.ins.From(this.cwd) as Project;
+    this.absPathTmpSrcDistFolderNORMAL = crossPlatformPath(
+      path.join(this.project.location || '', this.sourceOutBrowserNORMAL || ''),
+    );
   }
   //#endregion
   //#endregion
@@ -103,51 +75,109 @@ export class BrowserCompilation extends BackendCompilation {
   //#region methods / sync action
   async syncAction(absFilesFromSrc: string[]) {
     //#region @backendFunc
-    Helpers.removeFolderIfExists(this.absPathTmpSrcDistFolder);
-    Helpers.mkdirp(this.absPathTmpSrcDistFolder);
-
-    const tmpSource = this.absPathTmpSrcDistFolder.replace(
-      'tmp-src-',
-      'tmp-source-',
-    );
-
-    Helpers.removeFolderIfExists(tmpSource);
-    Helpers.mkdirp(tmpSource);
-
-    this.initCodeCut();
-    this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting();
-
-    const filesBase = crossPlatformPath(path.join(this.cwd, this.srcFolder));
-    const relativePathesToProcess = absFilesFromSrc.map(absFilePath => {
-      return absFilePath.replace(`${filesBase}/`, '');
+    const buildOptForNormal = this.buildOptions.clone({
+      build: {
+        websql: false,
+      },
     });
 
-    this.codecut.files(relativePathesToProcess);
+    this.codecutNORMAL = new CodeCut(
+      this.absPathTmpSrcDistFolderNORMAL,
+      {
+        replacements: [
+          [TAGS.BACKEND_FUNC, `return (void 0);`],
+          TAGS.BACKEND as any,
+          TAGS.WEBSQL_ONLY as any,
+          [TAGS.WEBSQL_FUNC, `return (void 0);`],
+          TAGS.WEBSQL as any,
+          [TAGS.CUT_CODE_IF_TRUE, codeCuttFn(true)],
+          [TAGS.CUT_CODE_IF_FALSE, codeCuttFn(false)],
+        ].filter(f => !!f),
+        env: buildOptForNormal,
+      },
+      this.project,
+      buildOptForNormal,
+    );
+
+    const buildOptForWebsql = this.buildOptions.clone({
+      build: {
+        websql: true,
+      },
+    });
+    this.codecutWEBSQL = new CodeCut(
+      this.absPathTmpSrcDistFolderWEBSQL,
+      {
+        replacements: [
+          [TAGS.BACKEND_FUNC, `return (void 0);`],
+          TAGS.BACKEND as any,
+          [TAGS.CUT_CODE_IF_TRUE, codeCuttFn(true)],
+          [TAGS.CUT_CODE_IF_FALSE, codeCuttFn(false)],
+        ].filter(f => !!f),
+        env: buildOptForWebsql,
+      },
+      this.project,
+      buildOptForWebsql,
+    );
+
+    const tmpSource = this.project.pathFor('tmp-source-dist');
+    Helpers.removeFolderIfExists(this.absPathTmpSrcDistFolderWEBSQL);
+    Helpers.removeFolderIfExists(this.absPathTmpSrcDistFolderNORMAL);
+    Helpers.mkdirp(this.absPathTmpSrcDistFolderNORMAL);
+    Helpers.mkdirp(this.absPathTmpSrcDistFolderWEBSQL);
+    Helpers.mkdirp(tmpSource);
+    Helpers.removeFolderIfExists(tmpSource);
+
+    this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting();
+
+    const filesBase = crossPlatformPath(
+      path.join(this.project.location, this.srcFolder),
+    );
+    const relativePathesToProcess = absFilesFromSrc.map(absFilePath => {
+      const relativePath = absFilePath.replace(`${filesBase}/`, '');
+      const isScssOrSass = extForSassLikeFiles.includes(
+        path.extname(path.basename(relativePath)),
+      );
+      if (isScssOrSass) {
+        const destScss = this.sassDestFor(relativePath);
+        Helpers.copyFile(absFilePath, destScss);
+      }
+      return relativePath;
+    });
+
+    this.codecutNORMAL.files(relativePathesToProcess);
+    this.codecutWEBSQL.files(relativePathesToProcess);
     // process.exit(0)
     //#endregion
   }
   //#endregion
 
+  private sassDestFor(relativePath: string): string {
+    //#region @backendFunc
+    const destScss = this.project.pathFor(
+      `dist/${path.extname(path.basename(relativePath)).replace('.', '')}/${relativePath}`,
+    );
+    return destScss;
+    //#endregion
+  }
+
   //#region methods / async action
   async asyncAction(event: IncCompiler.Change) {
-    //#region @backendFunc
-    // console.log('ASYNC ACTION CODE CUT ', event.fileAbsolutePath);
-    if (!this.codecut) {
+    if (!this.codecutWEBSQL || !this.codecutNORMAL) {
       // TODO QUICK - but I thin it make sense => there is not backedn compilation for websql
       return;
     }
+    this.asyncActionFor(event, false);
+    this.asyncActionFor(event, true);
+  }
 
-    if (!this.buildOptions.build.websql) {
-      // TODO QUICK_FIX QUICK_DIRTY_FIX
-      const websqlInstance =
-        BrowserCompilation.instances[String(!this.buildOptions.build.websql)];
-      await websqlInstance.asyncAction(event);
-    }
+  async asyncActionFor(event: IncCompiler.Change, websql: boolean) {
+    //#region @backendFunc
+    // console.log('ASYNC ACTION CODE CUT ', event.fileAbsolutePath);
 
     const absoluteFilePath = crossPlatformPath(event.fileAbsolutePath);
     const relativeFilePath = crossPlatformPath(
       absoluteFilePath.replace(
-        `${crossPlatformPath(path.join(this.cwd, this.srcFolder))}/`,
+        `${crossPlatformPath(path.join(this.project.location, this.srcFolder))}/`,
         '',
       ),
     );
@@ -155,107 +185,140 @@ export class BrowserCompilation extends BackendCompilation {
       return;
     }
 
-    const destinationFilePath = crossPlatformPath(
-      path.join(this.cwd, this.sourceOutBrowser, relativeFilePath),
-    );
-    const destinationFileBackendPath = crossPlatformPath(
-      path.join(
-        this.cwd,
-        this.sourceOutBrowser.replace('tmp-src', 'tmp-source'),
-        relativeFilePath,
-      ),
-    );
+    //#region handle backend & scss files
+    if (!websql) {
+      //#region backend file
+      (() => {
+        const destinationFileBackendPath = crossPlatformPath([
+          this.project.location,
+          'tmp-source-dist',
+          relativeFilePath,
+        ]);
 
-    if (event.eventName === 'unlinkDir') {
-      Helpers.removeFolderIfExists(destinationFilePath);
-      Helpers.removeFolderIfExists(destinationFileBackendPath);
-    } else {
-      if (event.eventName === 'unlink') {
-        if (relativeFilePath.startsWith(`${config.folder.assets}/`)) {
-          this.codecut.files([relativeFilePath], true);
+        if (event.eventName === 'unlinkDir') {
+          Helpers.removeFolderIfExists(destinationFileBackendPath);
         } else {
-          Helpers.removeFileIfExists(destinationFilePath);
-          Helpers.removeFileIfExists(destinationFileBackendPath);
-        }
-      } else {
-        if (fse.existsSync(absoluteFilePath)) {
-          //#region mkdirp basedir
-          if (!fse.existsSync(path.dirname(destinationFilePath))) {
-            fse.mkdirpSync(path.dirname(destinationFilePath));
-          }
-          if (!fse.existsSync(path.dirname(destinationFileBackendPath))) {
-            fse.mkdirpSync(path.dirname(destinationFileBackendPath));
-          }
-          //#endregion
+          if (event.eventName === 'unlink') {
+            if (relativeFilePath.startsWith(`${config.folder.assets}/`)) {
+              // nothing
+            } else {
+              Helpers.removeFileIfExists(destinationFileBackendPath);
+            }
+          } else {
+            if (fse.existsSync(absoluteFilePath)) {
+              //#region mkdirp basedir
+              if (!fse.existsSync(path.dirname(destinationFileBackendPath))) {
+                fse.mkdirpSync(path.dirname(destinationFileBackendPath));
+              }
+              //#endregion
 
-          //#region remove deist if directory
-          if (
-            fse.existsSync(destinationFilePath) &&
-            fse.lstatSync(destinationFilePath).isDirectory()
-          ) {
-            fse.removeSync(destinationFilePath);
+              //#region remove deist if directory
+              if (
+                fse.existsSync(destinationFileBackendPath) &&
+                fse.lstatSync(destinationFileBackendPath).isDirectory()
+              ) {
+                fse.removeSync(destinationFileBackendPath);
+              }
+              //#endregion
+            }
           }
-          if (
-            fse.existsSync(destinationFileBackendPath) &&
-            fse.lstatSync(destinationFileBackendPath).isDirectory()
-          ) {
-            fse.removeSync(destinationFileBackendPath);
-          }
-          //#endregion
-
-          this.codecut.files([relativeFilePath]);
         }
-      }
+      })();
+      //#endregion
+
+      //#region scss file
+      (() => {
+        const isScssOrSass = extForSassLikeFiles.includes(
+          path.extname(path.basename(relativeFilePath)),
+        );
+        if (!isScssOrSass) {
+          return;
+        }
+        const destinationFileScssPath = this.sassDestFor(relativeFilePath);
+
+        if (event.eventName === 'unlinkDir') {
+          Helpers.removeFolderIfExists(destinationFileScssPath);
+        } else {
+          if (event.eventName === 'unlink') {
+            if (relativeFilePath.startsWith(`${config.folder.assets}/`)) {
+              // nothing
+            } else {
+              Helpers.removeFileIfExists(destinationFileScssPath);
+            }
+          } else {
+            if (fse.existsSync(absoluteFilePath)) {
+              //#region mkdirp basedir
+              if (!fse.existsSync(path.dirname(destinationFileScssPath))) {
+                fse.mkdirpSync(path.dirname(destinationFileScssPath));
+              }
+              //#endregion
+
+              //#region remove deist if directory
+              if (
+                fse.existsSync(destinationFileScssPath) &&
+                fse.lstatSync(destinationFileScssPath).isDirectory()
+              ) {
+                fse.removeSync(destinationFileScssPath);
+              }
+              //#endregion
+              Helpers.copyFile(absoluteFilePath, destinationFileScssPath);
+            }
+          }
+        }
+      })();
+      //#endregion
     }
     //#endregion
-  }
-  //#endregion
 
-  //#region methods / init code cut
-  initCodeCut() {
-    //#region @backendFunc
-    // console.log('inside')
+    //#region browser file
+    (() => {
+      const destinationFilePath = crossPlatformPath(
+        path.join(
+          this.project.location,
+          websql ? this.sourceOutBrowserWEBSQL : this.sourceOutBrowserNORMAL,
+          relativeFilePath,
+        ),
+      );
 
-    const compilationProject: Project = this.project;
-    if (!compilationProject) {
-      return;
-    }
-    // console.log('here1')
+      if (event.eventName === 'unlinkDir') {
+        Helpers.removeFolderIfExists(destinationFilePath);
+      } else {
+        if (event.eventName === 'unlink') {
+          if (relativeFilePath.startsWith(`${config.folder.assets}/`)) {
+            websql
+              ? this.codecutWEBSQL.files([relativeFilePath], true)
+              : this.codecutNORMAL.files([relativeFilePath], true);
+          } else {
+            Helpers.removeFileIfExists(destinationFilePath);
+          }
+        } else {
+          if (fse.existsSync(absoluteFilePath)) {
+            //#region mkdirp basedir
+            if (!fse.existsSync(path.dirname(destinationFilePath))) {
+              fse.mkdirpSync(path.dirname(destinationFilePath));
+            }
+            //#endregion
 
-    let project: Project = this.project;
-    // if (env) {
-    //   project = this.cwdProject.ins.From(env.currentProjectLocation);
-    // }
+            //#region remove deist if directory
+            if (
+              fse.existsSync(destinationFilePath) &&
+              fse.lstatSync(destinationFilePath).isDirectory()
+            ) {
+              fse.removeSync(destinationFilePath);
+            }
+            //#endregion
 
-    if (compilationProject.framework.isStandaloneProject) {
-      project = compilationProject;
-    }
+            if (websql) {
+              this.codecutWEBSQL.files([relativeFilePath]);
+            } else {
+              this.codecutNORMAL.files([relativeFilePath]);
+            }
+          }
+        }
+      }
+    })();
+    //#endregion
 
-    const replacements = [];
-
-    replacements.push([TAGS.BACKEND_FUNC, `return (void 0);`]);
-    replacements.push(TAGS.BACKEND as any);
-
-    if (!this.buildOptions.build.websql) {
-      replacements.push(TAGS.WEBSQL_ONLY as any);
-      replacements.push([TAGS.WEBSQL_FUNC, `return (void 0);`]);
-      replacements.push(TAGS.WEBSQL as any);
-    }
-
-    replacements.push([TAGS.CUT_CODE_IF_TRUE, codeCuttFn(true)]);
-    replacements.push([TAGS.CUT_CODE_IF_FALSE, codeCuttFn(false)]);
-
-    this.codecut = new CodeCut(
-      this.absPathTmpSrcDistFolder,
-      {
-        replacements: replacements.filter(f => !!f),
-        env: this.buildOptions.clone(),
-      },
-      project,
-      compilationProject,
-      this.buildOptions,
-      this.sourceOutBrowser,
-    );
     //#endregion
   }
   //#endregion

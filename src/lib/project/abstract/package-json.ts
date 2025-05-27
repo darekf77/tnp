@@ -124,13 +124,18 @@ export class PackageJSON extends BasePackageJson {
 
       destinationObject.scripts = destinationObject.scripts || {};
       if (this.project.taonJson.type === 'isomorphic-lib') {
-
         for (const command of scriptsCommands) {
           destinationObject.scripts[command] = command;
         }
       }
 
       destinationObject.bin = this.recreateBin();
+
+      destinationObject.exports = {
+        '.': {
+          style: './scss/index.scss',
+        },
+      };
 
       this.data = destinationObject as any;
     }

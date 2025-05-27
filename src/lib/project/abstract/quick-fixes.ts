@@ -5,7 +5,12 @@ import { path, _, crossPlatformPath } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 import { Helpers, BaseQuickFixes } from 'tnp-helpers/src';
 
-import { folder_shared_folder_info, tempSourceFolder, THIS_IS_GENERATED_INFO_COMMENT, THIS_IS_GENERATED_STRING } from '../../constants';
+import {
+  folder_shared_folder_info,
+  tempSourceFolder,
+  THIS_IS_GENERATED_INFO_COMMENT,
+  THIS_IS_GENERATED_STRING,
+} from '../../constants';
 import type { Project } from '../abstract/project';
 //#endregion
 
@@ -199,17 +204,60 @@ Object.defineProperty(document.body.style, 'transform', {
     ) {
       (() => {
         if (this.project.framework.isStandaloneProject) {
-          const indexTs = crossPlatformPath(
-            path.join(this.project.location, config.folder.src, 'lib/index.ts'),
-          );
-          if (!Helpers.exists(indexTs)) {
-            Helpers.writeFile(
-              indexTs,
-              `
-            export function helloWorldFrom${_.upperFirst(_.camelCase(this.project.name))}() { }
-            `.trimLeft(),
+          (() => {
+            const indexTs = crossPlatformPath(
+              path.join(
+                this.project.location,
+                config.folder.src,
+                'lib/index.ts',
+              ),
             );
-          }
+            if (!Helpers.exists(indexTs)) {
+              Helpers.writeFile(
+                indexTs,
+                `
+              export function helloWorldFrom${_.upperFirst(_.camelCase(this.project.name))}() { }
+              `.trimLeft(),
+              );
+            }
+          })();
+          (() => {
+            const indexTs = crossPlatformPath(
+              path.join(
+                this.project.location,
+                config.folder.src,
+                'lib/index.scss',
+              ),
+            );
+            if (!Helpers.exists(indexTs)) {
+              Helpers.writeFile(
+                indexTs,
+                `
+// EXPORT SCSS STYLES FOR THIS LIBRARY IN THIS FILE
+              `.trimLeft(),
+              );
+            }
+          })();
+
+          (() => {
+            const indexTs = crossPlatformPath(
+              path.join(
+                this.project.location,
+                config.folder.src,
+                'index.scss',
+              ),
+            );
+            if (!Helpers.exists(indexTs)) {
+              Helpers.writeFile(
+                indexTs,
+                `
+// EXPORT SCSS STYLES FOR THIS APP or LIBRARY IN THIS FILE
+@use './lib/index.scss' as *;
+
+              `.trimLeft(),
+              );
+            }
+          })();
         }
       })();
 

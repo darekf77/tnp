@@ -5,7 +5,6 @@ import { path, crossPlatformPath } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { getBrowserVerPath } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
@@ -20,7 +19,6 @@ export class IncrementalBuildProcess {
   protected backendCompilation: BackendCompilation;
   // protected browserCompilations: BrowserCompilation[];
   protected browserCompilationStandalone: BrowserCompilation;
-  protected browserCompilationSmartContainer: BrowserCompilation;
 
   //#region constructor
   //#region @backend
@@ -33,8 +31,7 @@ export class IncrementalBuildProcess {
     );
 
     //#region init variables
-    const outFolder = config.folder.dist as any;
-    const location = config.folder.src;
+    const srcFolder = config.folder.src;
 
     Helpers.log(
       `[incremental-build-process]  this.project.grandpa: ${this.project.grandpa?.genericName} `,
@@ -51,8 +48,7 @@ export class IncrementalBuildProcess {
 
     this.backendCompilation = new BackendCompilation(
       buildOptions,
-      outFolder,
-      location,
+      srcFolder,
       project,
     );
 
@@ -69,29 +65,9 @@ export class IncrementalBuildProcess {
     //#endregion
 
     if (project.framework.isStandaloneProject) {
-      let browserOutFolder = getBrowserVerPath(this.buildOptions.build.websql);
       this.browserCompilationStandalone = new BrowserCompilation(
         this.project,
-        `tmp-src-${outFolder}${this.buildOptions.build.websql ? '-websql' : ''}`,
-        browserOutFolder as any,
-        location,
-        outFolder,
-        buildOptions,
-      );
-    } else {
-      let browserOutFolder = getBrowserVerPath(this.buildOptions.build.websql);
-
-      if (this.buildOptions.release.releaseType) {
-        browserOutFolder = crossPlatformPath(
-          path.join(outFolder, browserOutFolder),
-        );
-      }
-      this.browserCompilationSmartContainer = new BrowserCompilation(
-        this.project,
-        `tmp-src-${outFolder}-${browserOutFolder}`,
-        browserOutFolder as any,
-        location,
-        outFolder,
+        srcFolder,
         buildOptions,
       );
     }
@@ -102,28 +78,31 @@ export class IncrementalBuildProcess {
   //#region  methods
   protected browserTaksName(taskName: string, bc: BrowserCompilation) {
     //#region @backendFunc
-    return `browser ${taskName} in ${path.basename(bc.absPathTmpSrcDistFolder)}`;
+    return `browser ${taskName} in ${path.basename(this.project.location)}`;
     //#endregion
   }
 
   protected backendTaskName(taskName) {
     //#region @backendFunc
-    return `${taskName} in ${path.basename(this.backendCompilation.absPathTmpSrcDistFolder)}`;
+    return `${taskName} in ${path.basename(this.project.location)}`;
     //#endregion
   }
 
   private recreateBrowserLinks(bc: BrowserCompilation) {
     //#region @backendFunc
-    const outDistPath = crossPlatformPath(path.join(bc.cwd, bc.outFolder));
-    Helpers.log(`recreateBrowserLinks: outDistPath: ${outDistPath}`);
-    Helpers.removeFolderIfExists(outDistPath);
-    const targetOut = crossPlatformPath(
-      path.join(bc.cwd, bc.backendOutFolder, bc.outFolder),
-    );
-    Helpers.log(`recreateBrowserLinks: targetOut: ${targetOut}`);
-    Helpers.createSymLink(targetOut, outDistPath, {
-      continueWhenExistedFolderDoesntExists: true,
-    });
+    // TODO does not make sense anymore ?
+    // const outDistPath = crossPlatformPath(
+    //   path.join(bc.project.location, 'dist'),
+    // );
+    // Helpers.log(`recreateBrowserLinks: outDistPath: ${outDistPath}`);
+    // Helpers.removeFolderIfExists(outDistPath);
+    // const targetOut = crossPlatformPath(
+    //   path.join(bc.project.location, bc.backendOutFolder, 'dist'),
+    // );
+    // Helpers.log(`recreateBrowserLinks: targetOut: ${targetOut}`);
+    // Helpers.createSymLink(targetOut, outDistPath, {
+    //   continueWhenExistedFolderDoesntExists: true,
+    // });
     //#endregion
   }
 
@@ -157,16 +136,6 @@ export class IncrementalBuildProcess {
           this.recreateBrowserLinks(this.browserCompilationStandalone);
         },
       });
-    } else {
-      await this.browserCompilationSmartContainer.start({
-        taskName: this.browserTaksName(
-          taskName,
-          this.browserCompilationSmartContainer,
-        ),
-        afterInitCallBack: () => {
-          this.recreateBrowserLinks(this.browserCompilationSmartContainer);
-        },
-      });
     }
 
     if (this.backendCompilation) {
@@ -198,16 +167,6 @@ export class IncrementalBuildProcess {
         ),
         afterInitCallBack: () => {
           this.recreateBrowserLinks(this.browserCompilationStandalone);
-        },
-      });
-    } else {
-      await this.browserCompilationSmartContainer.startAndWatch({
-        taskName: this.browserTaksName(
-          taskName,
-          this.browserCompilationSmartContainer,
-        ),
-        afterInitCallBack: () => {
-          this.recreateBrowserLinks(this.browserCompilationSmartContainer);
         },
       });
     }

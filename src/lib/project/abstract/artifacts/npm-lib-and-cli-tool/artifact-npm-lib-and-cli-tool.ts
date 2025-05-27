@@ -210,21 +210,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#region init incremental process
     const incrementalBuildProcess = new IncrementalBuildProcess(
       this.project,
-      buildOptions.clone({
-        build: {
-          websql: false,
-        },
-      }),
-    );
-
-    const incrementalBuildProcessWebsql = new IncrementalBuildProcess(
-      this.project,
-      buildOptions.clone({
-        build: {
-          websql: true,
-          genOnlyClientCode: true,
-        },
-      }),
+      buildOptions,
     );
     //#endregion
 
@@ -311,10 +297,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     if (!shouldSkipBuild) {
       await incrementalBuildProcess.runTask({
         taskName: 'isomorphic compilation',
-        watch: buildOptions.build.watch,
-      });
-      await incrementalBuildProcessWebsql.runTask({
-        taskName: 'isomorphic compilation [WEBSQL]',
         watch: buildOptions.build.watch,
       });
       await this.assetsManager.runTask({

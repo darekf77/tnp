@@ -23,13 +23,7 @@ export class CodeCut {
      * it may be not available for global, for all compilation
      */
     private project: Project,
-    /**
-     * same as project for standalone isomorphic-lib
-     * @deprecated
-     */
-    private compilationProject: Project,
     private buildOptions: EnvOptions,
-    public sourceOutBrowser: string,
   ) {}
   //#endregion
   //#endregion
@@ -60,7 +54,7 @@ export class CodeCut {
     //#endregion
   }
 
-  file(relativePathToFile: string, remove: boolean = false) {
+  file(relativePathToFile: string, remove: boolean = false): void {
     // console.log('CUT: ', relativePathToFile);
     //#region @backendFunc
     if (!this.isAllowedPathForSave(relativePathToFile)) {

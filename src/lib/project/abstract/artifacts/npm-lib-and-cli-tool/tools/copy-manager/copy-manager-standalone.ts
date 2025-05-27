@@ -1,5 +1,5 @@
 import { config, PREFIXES } from 'tnp-config/src';
-import { crossPlatformPath, glob, path, _ } from 'tnp-core/src';
+import { crossPlatformPath, glob, path, _, fse } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
 import { THIS_IS_GENERATED_INFO_COMMENT } from '../../../../../../constants';
@@ -78,6 +78,16 @@ export class CopyManagerStandalone extends CopyManager {
   //#region recreate temp proj
   recreateTempProj() {
     //#region @backendFunc
+    try {
+      // QUICK_FIX remove old temp proj
+      fse.unlinkSync(
+        crossPlatformPath([
+          this.project.framework.tmpLocalProjectFullPath,
+          config.file.package_json,
+        ]),
+      );
+    } catch (error) {}
+    Helpers.removeSymlinks(this.localTempProjPath); // QUICK_FIX remove symlinks
     Helpers.remove(this.localTempProjPath);
     Helpers.writeFile([this.localTempProjPath, config.file.package_json], {
       name: path.basename(this.localTempProjPath),

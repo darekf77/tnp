@@ -71,16 +71,11 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     config.folder.source,
     config.folder.node_modules,
     config.folder.tempSrcDist,
-    config.file.package_json,
     ...CopyMangerHelpers.browserwebsqlFolders.map(currentBrowserFolder => {
       return crossPlatformPath(
         path.join(currentBrowserFolder, config.folder.src),
       );
     }),
-    // probably is not needed -> I ma not using dist for node_modules
-    crossPlatformPath(
-      path.join(config.folder.client, config.file.package_json),
-    ),
     //#endregion
   ];
 
@@ -204,138 +199,6 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   }
   //#endregion
 
-  //#endregion
-
-  //#region generate source copy in
-  public generateSourceCopyIn(
-    destinationLocation: string,
-    options?: Models.GenerateProjectCopyOpt,
-  ): boolean {
-    //#region @backendFunc
-    destinationLocation = crossPlatformPath(destinationLocation);
-    //#region fix options
-    if (_.isUndefined(options)) {
-      options = {} as any;
-    }
-    if (_.isUndefined(options.filterForReleaseDist)) {
-      options.filterForReleaseDist = true;
-    }
-    if (_.isUndefined(options.forceCopyPackageJSON)) {
-      options.forceCopyPackageJSON = false;
-    }
-    if (_.isUndefined(options.ommitSourceCode)) {
-      options.ommitSourceCode = false;
-    }
-    if (_.isUndefined(options.override)) {
-      options.override = true;
-    }
-    if (_.isUndefined(options.showInfo)) {
-      options.showInfo = true;
-    }
-    if (_.isUndefined(options.regenerateProjectChilds)) {
-      options.regenerateProjectChilds = false;
-    }
-    if (_.isUndefined(options.useTempLocation)) {
-      options.useTempLocation = true;
-    }
-
-    if (_.isUndefined(options.regenerateOnlyCoreProjects)) {
-      options.regenerateOnlyCoreProjects = true;
-    }
-    //#endregion
-
-    const { override, showInfo } = options;
-
-    const sourceLocation = this.project.location;
-    //#region modify package.json for generated
-    var packageJson: PackageJson = fse.readJsonSync(
-      path.join(sourceLocation, config.file.package_json),
-      {
-        encoding: 'utf8',
-      },
-    );
-    //#endregion
-
-    //#region execute copy
-    if (fse.existsSync(destinationLocation)) {
-      if (override) {
-        Helpers.tryRemoveDir(destinationLocation);
-        Helpers.mkdirp(destinationLocation);
-      } else {
-        if (showInfo) {
-          Helpers.warn(
-            `Destination for project "${this.project.name}" already exists, only: source copy`,
-          );
-        }
-      }
-    }
-
-    CopyMangerHelpers.executeCopy(
-      sourceLocation,
-      destinationLocation,
-      options,
-      this.project,
-    );
-    //#endregion
-
-    //#region handle additional package.json markings
-    if (this.project.framework.isContainer || options.forceCopyPackageJSON) {
-      const packageJsonLocation = crossPlatformPath(
-        path.join(destinationLocation, config.file.package_json),
-      );
-      // console.log(`packageJsonLocation: ${ packageJsonLocation } `)
-      // console.log('packageJson', packageJson)
-      fse.writeJsonSync(packageJsonLocation, packageJson, {
-        spaces: 2,
-        encoding: 'utf8',
-      });
-      // console.log(`packageJsonLocation saved: ${ packageJsonLocation } `)
-    }
-    //#endregion
-
-    if (showInfo) {
-      //#region show info about generation
-      let dir = path.basename(path.dirname(destinationLocation));
-      if (fse.existsSync(path.dirname(path.dirname(destinationLocation)))) {
-        dir = `${path.basename(
-          path.dirname(path.dirname(destinationLocation)),
-        )}/${dir}`;
-      }
-      Helpers.log(
-        `Source of project "${this.project.genericName}" generated in ${dir} /(< here >) `,
-      );
-      //#endregion
-    }
-
-    //#region recrusive execution for childrens
-    if (options.regenerateProjectChilds && this.project.framework.isContainer) {
-      let childs = this.project.children.filter(
-        f => !['lib', 'app'].includes(path.basename(f.location)),
-      );
-
-      if (options.regenerateOnlyCoreProjects) {
-        if (this.project.framework.isCoreProject) {
-          if (this.project.framework.isContainer) {
-            childs = this.project.children.filter(c => c.name === 'workspace');
-          }
-        } else {
-          childs = [];
-        }
-      }
-
-      childs.forEach(c => {
-        // console.log('GENERATING CHILD ' + c.genericName)
-        c.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.generateSourceCopyIn(
-          crossPlatformPath(path.join(destinationLocation, c.name)),
-          options,
-        );
-      });
-    }
-    //#endregion
-
-    return true;
-    //#endregion
-  }
   //#endregion
 
   updateTriggered = _.debounce(() => {
@@ -598,6 +461,34 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       ) {
         this.replaceIndexDtsForEntryProjectIndex(destination);
       }
+
+      //#region copy/link package.json
+      const destPackageInNodeModules = crossPlatformPath([
+        destination.location,
+        config.folder.node_modules,
+        this.rootPackageName,
+      ]);
+
+      const packageJsonInDest = crossPlatformPath([
+        destPackageInNodeModules,
+        config.file.package_json,
+      ]);
+
+      try {
+        fse.unlinkSync(packageJsonInDest);
+      } catch (e) {}
+      if (this.isWatchCompilation && !isTempLocalProj) {
+        Helpers.createSymLink(
+          this.project.pathFor(config.file.package_json),
+          packageJsonInDest,
+        );
+      } else {
+        Helpers.copyFile(
+          this.project.pathFor(config.file.package_json),
+          packageJsonInDest,
+        );
+      }
+      //#endregion
 
       // TODO not working werid tsc issue with browser/index
       // {const projectOudBorwserSrc = path.join(destination.location,

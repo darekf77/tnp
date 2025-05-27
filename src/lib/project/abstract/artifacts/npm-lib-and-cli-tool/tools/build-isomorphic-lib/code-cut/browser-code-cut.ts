@@ -110,12 +110,11 @@ export class BrowserCodeCut {
 
     this.debug = debugFile.some(d => this.relativePath.endsWith(d));
 
-    this.absoluteBackendDestFilePath = crossPlatformPath(
-      path.join(
-        this.absPathTmpSrcDistFolder.replace('tmp-src', 'tmp-source'),
-        this.relativePath, // .replace('-websql', '') // backend is ONE
-      ),
-    );
+    this.absoluteBackendDestFilePath = crossPlatformPath([
+      this.project.location,
+      'tmp-source-dist',
+      this.relativePath,
+    ]);
 
     // console.log('RELATIVE ', this.relativePath)
 
