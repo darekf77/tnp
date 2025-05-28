@@ -149,13 +149,7 @@ class EnvOptionsBuild {
    * default for organizaion main target: '/<project-name-or-overwritten>/'
    * default for organizaion main other targets: '/<project-name-or-overwritten>/-/<other-target-name>/'
    */
-  get baseHref(): string {
-    return this._baseHref;
-  }
-  set baseHref(v) {
-    this._baseHref = crossPlatformPath(v);
-  }
-  declare private _baseHref: string;
+  declare baseHref: string;
   declare skipBuildForRelease?: boolean;
   declare websql: boolean;
   /**
@@ -503,6 +497,9 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     this.build = this.build || ({} as any);
     this.build.pwa = _.merge(new EnvOptionsBuildPwa(), this.build?.pwa);
     this.build = _.merge(new EnvOptionsBuild(), this.build);
+    if (_.isString(this.build.baseHref)) {
+      this.build.baseHref = crossPlatformPath(this.build.baseHref);
+    }
 
     if (_.isBoolean(this['websql'])) {
       // QUICK FIX
