@@ -131,11 +131,13 @@ export class PackageJSON extends BasePackageJson {
 
       destinationObject.bin = this.recreateBin();
 
-      destinationObject.exports = {
-        '.': {
-          style: './scss/index.scss',
-        },
-      };
+      // TODO this causes issues with export js
+      delete destinationObject.exports;
+      // destinationObject.exports = {
+      //   '.': {
+      //     style: './scss/index.scss',
+      //   },
+      // };
 
       this.data = destinationObject as any;
     }
