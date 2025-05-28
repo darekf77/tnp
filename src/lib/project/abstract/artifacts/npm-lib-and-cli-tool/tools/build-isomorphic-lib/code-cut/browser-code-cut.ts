@@ -564,6 +564,14 @@ export class BrowserCodeCut {
           makeSureSlashAtBegin: true,
         },
         {
+          from: ` '/assets/assets-for/${relativeAssetPathPart}/`,
+          to: ` '${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
+        },
+        {
+          from: ` "/assets/assets-for/${relativeAssetPathPart}/`,
+          to: ` "${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
+        },
+        {
           from: `src="/assets/assets-for/${relativeAssetPathPart}/`,
           to: `src="${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
         },
@@ -578,6 +586,10 @@ export class BrowserCodeCut {
         {
           from: `[href]="'/assets/assets-for/${relativeAssetPathPart}/`,
           to: `[href]="'${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
+        },
+        {
+          from: `url(/assets/assets-for/${relativeAssetPathPart}/`,
+          to: `url(${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
         },
         {
           from: `url('/assets/assets-for/${relativeAssetPathPart}/`,
@@ -619,36 +631,33 @@ export class BrowserCodeCut {
       }[];
     };
 
-    if (this.project.framework.isStandaloneProject) {
-      [this.project]
-        .filter(f => f.typeIs('isomorphic-lib'))
-        .forEach(c => {
-          const relative = c.nameForNpmPackage;
-          const cases = toReplaceFn(relative);
-          for (let index = 0; index < cases.length; index++) {
-            const { to, from, makeSureSlashAtBegin } = cases[index];
-            if (makeSureSlashAtBegin) {
-              this.rawContentForAPPONLYBrowser =
-                this.rawContentForAPPONLYBrowser.replace(
-                  new RegExp(Helpers.escapeStringForRegEx(`/${from}`), 'g'),
-                  `/${to}`,
-                );
+    (() => {
+      const nameForNpmPackage = this.project.nameForNpmPackage;
+      const cases = toReplaceFn(nameForNpmPackage);
+      for (let index = 0; index < cases.length; index++) {
+        const { to, from, makeSureSlashAtBegin } = cases[index];
+        if (makeSureSlashAtBegin) {
+          this.rawContentForAPPONLYBrowser =
+            this.rawContentForAPPONLYBrowser.replace(
+              new RegExp(Helpers.escapeStringForRegEx(`/${from}`), 'g'),
+              `/${to}`,
+            );
 
-              this.rawContentForAPPONLYBrowser =
-                this.rawContentForAPPONLYBrowser.replace(
-                  new RegExp(Helpers.escapeStringForRegEx(from), 'g'),
-                  `/${to}`,
-                );
-            } else {
-              this.rawContentForAPPONLYBrowser =
-                this.rawContentForAPPONLYBrowser.replace(
-                  new RegExp(Helpers.escapeStringForRegEx(from), 'g'),
-                  to,
-                );
-            }
-          }
-        });
-    }
+          this.rawContentForAPPONLYBrowser =
+            this.rawContentForAPPONLYBrowser.replace(
+              new RegExp(Helpers.escapeStringForRegEx(from), 'g'),
+              `/${to}`,
+            );
+        } else {
+          this.rawContentForAPPONLYBrowser =
+            this.rawContentForAPPONLYBrowser.replace(
+              new RegExp(Helpers.escapeStringForRegEx(from), 'g'),
+              to,
+            );
+        }
+      }
+    })();
+
     //#endregion
   }
   //#endregion
