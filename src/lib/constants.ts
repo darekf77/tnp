@@ -15,7 +15,7 @@ export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
 } = {
   manual: ['npm-lib-and-cli-tool'],
-  local: ['npm-lib-and-cli-tool', 'vscode-plugin'],
+  local: ['npm-lib-and-cli-tool', 'vscode-plugin', 'electron-app'],
   cloud: [],
   'static-pages': ['angular-node-app', 'docs-webapp'],
 };

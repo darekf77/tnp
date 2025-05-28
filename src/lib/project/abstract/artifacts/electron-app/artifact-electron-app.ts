@@ -45,8 +45,10 @@ export class ArtifactElectronApp extends BaseArtifact<
 
   async buildPartial(buildOptions: EnvOptions): Promise<{
     electronDistOutAppPath: string;
+    proxyProj: Project;
   }> {
     //#region @backendFunc
+
     const { appDistOutBrowserAngularAbsPath } =
       await this.artifacts.angularNodeApp.buildPartial(
         buildOptions.clone({
@@ -54,17 +56,42 @@ export class ArtifactElectronApp extends BaseArtifact<
             pwa: {
               disableServiceWorker: true,
             },
-            // baseHref: `./`,
+            baseHref: buildOptions.release.releaseType ? `./` : void 0,
           },
           release: {
             targetArtifact: this.currentArtifactName,
           },
         }),
       );
-
     const proxyProj = this.project.ins.From(
       path.dirname(appDistOutBrowserAngularAbsPath),
     );
+
+    const electronDistOutAppPath = this.project.pathFor([
+      `.${config.frameworkName}`,
+      this.currentArtifactName,
+      // 'release',
+      `release-${new Date().getTime()}`, // to avoid asar lock in os
+      this.project.packageJson.version,
+    ]);
+
+    return {
+      electronDistOutAppPath,
+      proxyProj,
+    };
+    //#endregion
+  }
+
+  async releasePartial(
+    releaseOptions: EnvOptions,
+  ): Promise<ReleasePartialOutput> {
+    //#region @backendFunc
+    releaseOptions = this.updateResolvedVersion(releaseOptions);
+
+    const projectsReposToPushAndTag: string[] = [this.project.location];
+
+    const { electronDistOutAppPath, proxyProj } =
+      await this.buildPartial(releaseOptions);
 
     const nutPackage = '@nut-tree-fork/nut-js';
     Helpers.setValueToJSON(
@@ -86,20 +113,23 @@ export class ArtifactElectronApp extends BaseArtifact<
 
     proxyProj.run(`cd electron && npm install`).sync();
 
-    const electronDistOutAppPath = this.project.pathFor([
-      `.${config.frameworkName}`,
-      this.currentArtifactName,
-      // 'release',
-      `release-${new Date().getTime()}`, // to avoid asar lock in os
-      this.project.packageJson.version,
-    ]);
-
     const electronConfigPath = proxyProj.pathFor(`electron-builder.json`);
 
     const electronConfig = Helpers.readJson(
       electronConfigPath,
     ) as UtilsTypescript.DeepWritable<ElectronBuilderConfig>;
     electronConfig.directories.output = electronDistOutAppPath;
+    electronConfig.appId =
+      `${releaseOptions.website.domain.split('.').reverse().join('.')}` +
+      `.${this.project.nameForNpmPackage}`;
+    electronConfig.productName = this.project.nameForNpmPackage;
+
+    Helpers.info(`
+
+      AppId: ${electronConfig.appId}
+      ProductName: ${electronConfig.productName}
+
+      `);
 
     Helpers.writeJson(electronConfigPath, electronConfig);
     let electronConfigFile = Helpers.readFile(electronConfigPath);
@@ -147,32 +177,15 @@ export class ArtifactElectronApp extends BaseArtifact<
     // });
     //#endregion
 
-    proxyProj
-      .run(
-        `npm-run electron-builder build --publish=never  --arm64 --x64 --win`,
-      )
-      .sync();
+    proxyProj.run(`npm-run electron-builder build --publish=never`).sync();
 
-    return {
-      electronDistOutAppPath: electronDistOutAppPath,
-    };
-    //#endregion
-  }
-
-  async releasePartial(
-    releaseOptions: EnvOptions,
-  ): Promise<ReleasePartialOutput> {
-    releaseOptions = this.updateResolvedVersion(releaseOptions);
-
-    const projectsReposToPushAndTag: string[] = [this.project.location];
-
-    const { electronDistOutAppPath } = await this.buildPartial(releaseOptions);
     let releaseProjPath: string;
 
     if (releaseOptions.release.releaseType === 'local') {
       const localReleaseOutputBasePath = this.project.pathFor([
         config.folder.local_release,
         this.currentArtifactName,
+        `${process.platform}`,
         `${this.project.name}-latest`,
       ]);
       Helpers.remove(localReleaseOutputBasePath);
@@ -181,12 +194,12 @@ export class ArtifactElectronApp extends BaseArtifact<
     }
 
     projectsReposToPushAndTag.push(electronDistOutAppPath);
-
     return {
       resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
       projectsReposToPushAndTag: [this.project.location],
       releaseProjPath,
       releaseType: releaseOptions.release.releaseType,
     };
+    //#endregion
   }
 }

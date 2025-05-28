@@ -114,9 +114,9 @@ class $Build extends BaseCli {
   //#region other build commands / watch build normal app
   async watchApp(websql = false) {
     await this.project.build(
-      EnvOptions.from({
-        ...this.params,
+      this.params.clone({
         build: {
+          watch: true,
           websql,
         },
         release: {
@@ -148,6 +148,43 @@ class $Build extends BaseCli {
         finishCallback: () => this._exit(),
       }),
     );
+  }
+
+  /**
+   * JUST FOR TESTING PURPOSES
+   */
+  async electron(websql = false) {
+    // await this.project.artifactsManager.artifact.npmLibAndCliTool.buildPartial(
+    //   this.params.clone({
+    //     build: {
+    //       pwa: {
+    //         disableServiceWorker: true,
+    //       },
+    //       baseHref: `./`,
+    //     },
+    //     copyToManager: {
+    //       skip: true,
+    //     },
+    //     release: {
+    //       targetArtifact: 'electron-app',
+    //     },
+    //   }),
+    // );
+
+    // await this.project.build(
+    //   this.params.clone({
+    //     release: {
+    //       targetArtifact: 'electron-app',
+    //       releaseType: 'local',
+    //     },
+    //     build: {
+    //       websql,
+    //       watch: false,
+    //     },
+    //     finishCallback: () => this._exit(),
+    //   }),
+    // );
+    // this._exit();
   }
   //#endregion
 

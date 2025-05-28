@@ -530,7 +530,22 @@ export class ArtifactManager {
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'electron-app'
     ) {
-      await npmLibBUild(releaseOptions);
+      await npmLibBUild(
+        releaseOptions.clone({
+          build: {
+            pwa: {
+              disableServiceWorker: true,
+            },
+            baseHref: `./`,
+          },
+          copyToManager: {
+            skip: true,
+          },
+          release: {
+            targetArtifact: 'electron-app',
+          },
+        }),
+      );
 
       releaseOutput =
         await this.artifact.electronApp.releasePartial(releaseOptions);

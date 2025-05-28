@@ -118,7 +118,11 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
     //#region prevent empty base href
-    if (!_.isUndefined(buildOptions.build.baseHref)) {
+    if (
+      !_.isUndefined(buildOptions.build.baseHref) &&
+      !buildOptions.release.releaseType &&
+      !buildOptions.build.watch
+    ) {
       Helpers.error(
         `Build baseHref only can be specify when build lib code:
 
@@ -149,13 +153,19 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     const fromFileBaseHref = Helpers.readFile(
       this.project.pathFor(tmpBaseHrefOverwriteRelPath),
     );
-    buildOptions.build.baseHref = fromFileBaseHref;
+    buildOptions.build.baseHref = buildOptions.build.baseHref
+      ? buildOptions.build.baseHref
+      : fromFileBaseHref;
 
     this.project.writeFile(
       'src/vars.scss',
       `${THIS_IS_GENERATED_INFO_COMMENT}
-// current build base href
-$basename: '${buildOptions.build.baseHref}';
+// CORE ASSETS BASENAME - use it only for asset from core container
+$basename: '${
+        buildOptions.build.baseHref?.startsWith('./')
+          ? buildOptions.build.baseHref.replace('./', '/')
+          : buildOptions.build.baseHref
+      }';
 $website_title: '${buildOptions.website.title}';
 $website_domain: '${buildOptions.website.domain}';
 $project_npm_name: '${this.project.nameForNpmPackage}';
@@ -175,6 +185,9 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
     //#region prepare angular command
     const outPutPathCommand = ` --output-path ${appDistOutBrowserAngularAbsPath} `;
+    const baseHrefCommand = buildOptions.build.baseHref
+      ? ` --base-href ${buildOptions.build.baseHref} `
+      : '';
 
     const angularBuildAppCmd = buildOptions.build.watch
       ? `${this.NPM_RUN_NG_COMMAND} serve ${
@@ -192,7 +205,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         }` +
         ` ${buildOptions.build.angularProd ? '--configuration production' : ''} ` +
         ` ${buildOptions.build.watch ? '--watch' : ''}` +
-        ` ${outPutPathCommand} `;
+        ` ${outPutPathCommand} ${baseHrefCommand}`;
     //#endregion
 
     const showInfoAngular = () => {
