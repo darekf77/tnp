@@ -160,5 +160,8 @@
   "eslint.migration.2_x": "off",
   "cSpell.words": [
     "Initing"
-  ]
+  ],
+  "files.watcherExclude": {
+    "local_release/**": true
+  }
 }

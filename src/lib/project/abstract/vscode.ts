@@ -38,6 +38,17 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     this.saveCurrentSettings();
   }
 
+  saveCurrentSettings(): void {
+    //#region @backendFunc
+    // TODO QUCIK_FIX for asar that can be deleted because of vscode watcher
+    this.currentSettingsValue['files.watcherExclude'] = {
+      'local_release/**': true,
+    };
+
+    super.saveCurrentSettings();
+    //#endregion
+  }
+
   private saveColorsForWindow(checkingParent: boolean = false): void {
     //#region @backendFunc
 
