@@ -7,7 +7,9 @@ import { InsideStructElectronApp } from './inside-struct-electron-app';
 
 export class InsideStructuresElectron extends InsideStructuresProcess {
   private insideStructAngular13AppNormal: InsideStructElectronApp;
-  private insideStructAngular13AppWebsql: InsideStructElectronApp;
+
+  // TODO for now WebSQL is not supported in Electron, but it could be added later
+  // private insideStructAngular13AppWebsql: InsideStructElectronApp;
 
   //#region api / recreate
   public async init(initOptions: EnvOptions): Promise<void> {
@@ -21,14 +23,14 @@ export class InsideStructuresElectron extends InsideStructuresProcess {
       this.project,
       optionsNormal,
     );
-    this.insideStructAngular13AppWebsql = new InsideStructElectronApp(
-      this.project,
-      optionsWebsql,
-    );
+    // this.insideStructAngular13AppWebsql = new InsideStructElectronApp(
+    //   this.project,
+    //   optionsWebsql,
+    // );
 
     const structs: BaseInsideStruct[] = [
       this.insideStructAngular13AppNormal,
-      this.insideStructAngular13AppWebsql,
+      // this.insideStructAngular13AppWebsql,
     ];
 
     await this.process(structs, initOptions);
