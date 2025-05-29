@@ -46,6 +46,11 @@ export class $Init extends BaseCli {
   }
   //#endregion
 
+  async clearInit() {
+    await this.project.clear();
+    await this._();
+  }
+
   async all(): Promise<void> {
     await this._(false, true);
   }

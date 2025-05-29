@@ -3,8 +3,8 @@ import { config } from 'tnp-config/src';
 import { _, crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { EXPORT_TEMPLATE } from '../../../../../../../templates';
-import type { Project } from '../../../../../project';
+import { EXPORT_TEMPLATE } from '../../../../../../templates';
+import type { Project } from '../../../../project';
 //#endregion
 
 /**

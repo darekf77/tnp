@@ -20,17 +20,25 @@ export class ArtifactsGlobalHelper {
   }
 
   //#region angular proj proxy path
-  public __angularProjProxyPath(options: {
+  public angularProjProxyPath(options: {
     websql: boolean;
-    type: 'app' | 'lib';
+    targetArtifact: EnvOptions['release']['targetArtifact'];
   }): string {
     //#region @backendFunc
-    const { websql, type } = options;
+    const { websql, targetArtifact: type } = options;
     const project = this.project;
-    const pref = type === 'app' ? 'apps' : 'libs';
+    const pref = (
+      [
+        'angular-node-app',
+        'electron-app',
+      ] as EnvOptions['release']['targetArtifact'][]
+    ).includes(type)
+      ? 'apps'
+      : 'libs';
+
     const tmpProjectsStandalone = `tmp-${pref}-for-${config.folder.dist}${
       websql ? '-websql' : ''
-    }/${project.name}`;
+    }${type === 'electron-app' ? '-electron' : ''}/${project.name}`;
     return tmpProjectsStandalone;
 
     //#endregion
@@ -64,15 +72,15 @@ export class ArtifactsGlobalHelper {
   //#region get proxy ng projects
   getProxyNgProj(
     buildOptions: EnvOptions,
-    type: 'app' | 'lib' = 'app',
+    targetArtifact: EnvOptions['release']['targetArtifact'],
   ): Project {
     //#region @backendFunc
     const projPath = crossPlatformPath(
       path.join(
         this.project.location,
-        this.project.artifactsManager.globalHelper.__angularProjProxyPath({
+        this.project.artifactsManager.globalHelper.angularProjProxyPath({
           websql: buildOptions.build.websql,
-          type,
+          targetArtifact: targetArtifact,
         }),
       ),
     );

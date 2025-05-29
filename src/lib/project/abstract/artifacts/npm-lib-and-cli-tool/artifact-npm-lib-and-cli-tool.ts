@@ -36,7 +36,7 @@ import {
   FilesTemplatesBuilder,
 } from './tools/files-recreation';
 import { IndexAutogenProvider } from './tools/index-autogen-provider';
-import { InsideStructuresLib } from './tools/inside-structures/inside-structures';
+import { InsideStructuresLib } from './tools/inside-struct-lib';
 import { CypressTestRunner } from './tools/test-runner/cypress-test-runner';
 import { JestTestRunner } from './tools/test-runner/jest-test-runner';
 import { MochaTestRunner } from './tools/test-runner/mocha-test-runner';
@@ -222,7 +222,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
             websql: false,
           },
         }),
-        'lib',
+        'npm-lib-and-cli-tool',
       );
 
     const proxyProjectWebsql =
@@ -232,7 +232,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
             websql: true,
           },
         }),
-        'lib',
+        'npm-lib-and-cli-tool',
       );
     Helpers.log(`
 

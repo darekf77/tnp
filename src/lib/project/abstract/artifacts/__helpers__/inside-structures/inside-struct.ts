@@ -1,6 +1,6 @@
 import { CoreModels } from 'tnp-core/src';
 
-import type { Project } from '../../../../project';
+import type { Project } from '../../../project';
 
 export type InsideStructureData = {
   replacement?: Function;

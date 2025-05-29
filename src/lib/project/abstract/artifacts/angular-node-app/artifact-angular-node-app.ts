@@ -22,11 +22,10 @@ import {
 import { EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
-import { InsideStructuresApp } from '../npm-lib-and-cli-tool/tools/inside-structures/inside-structures';
+import { InsideStructuresElectron } from '../electron-app/tools/inside-struct-electron';
 
-import { AssetsFileListGenerator } from './tools/assets-list-file-generator';
-import { AssetsManager } from './tools/assets-manager';
 import { AngularFeBasenameManager } from './tools/basename-manager';
+import { InsideStructuresApp } from './tools/inside-struct-app';
 import { MigrationHelper } from './tools/migrations-helper';
 
 //#endregion
@@ -45,7 +44,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   public readonly angularFeBasenameManager: AngularFeBasenameManager;
 
   public readonly insideStructureApp: InsideStructuresApp;
-  public readonly assetsFileListGenerator: AssetsFileListGenerator;
+  public readonly insideStructureElectron: InsideStructuresElectron;
 
   //#endregion
 
@@ -55,7 +54,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     this.migrationHelper = new MigrationHelper(project);
     this.angularFeBasenameManager = new AngularFeBasenameManager(project);
     this.insideStructureApp = new InsideStructuresApp(project);
-    this.assetsFileListGenerator = new AssetsFileListGenerator(project);
+    this.insideStructureElectron = new InsideStructuresElectron(project);
   }
   //#endregion
 
@@ -64,19 +63,12 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     //#region @backendFunc
 
     initOptions = await this.project.environmentConfig.update(initOptions);
-    await this.insideStructureApp.init(initOptions);
-    this.fixAppTsFile();
-
-    // Build assets file for app in app build mode
-    if (this.project.framework.isStandaloneProject) {
-      if (initOptions.build.watch) {
-        await this.assetsFileListGenerator.startAndWatch(
-          initOptions.build.websql,
-        );
-      } else {
-        await this.assetsFileListGenerator.start(initOptions.build.websql);
-      }
+    if (initOptions.release.targetArtifact === 'electron-app') {
+      await this.insideStructureElectron.init(initOptions);
+    } else {
+      await this.insideStructureApp.init(initOptions);
     }
+    this.fixAppTsFile();
 
     const copyFromCoreAssets = (fileName: string) => {
       const coreSource = crossPlatformPath([
@@ -140,7 +132,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     const dockerBackendFrontendAppDistOutPath: string = void 0; // TODO implement
 
-    const angularTempProj = this.globalHelper.getProxyNgProj(buildOptions);
+    const angularTempProj = this.globalHelper.getProxyNgProj(
+      buildOptions,
+      buildOptions.release.targetArtifact,
+    );
 
     const appDistOutBrowserAngularAbsPath =
       buildOptions.release.targetArtifact === 'electron-app'
@@ -462,11 +457,12 @@ http://localhost:${options.ngWebsqlAppPort}
         ngNormalAppPort,
       );
 
-      UtilsTypescript.setValueToVariableInTsFile(
-        this.project.pathFor('src/app.hosts.ts'),
-        'CLIENT_DEV_WEBSQL_ELECTRON_PORT_' + (i + 1),
-        ngWebsqlElectronPort,
-      );
+      // TODO electron websql not supported yet
+      // UtilsTypescript.setValueToVariableInTsFile(
+      //   this.project.pathFor('src/app.hosts.ts'),
+      //   'CLIENT_DEV_WEBSQL_ELECTRON_PORT_' + (i + 1),
+      //   ngWebsqlElectronPort,
+      // );
 
       UtilsTypescript.setValueToVariableInTsFile(
         this.project.pathFor('src/app.hosts.ts'),
@@ -503,7 +499,7 @@ ${contexts.join('\n')}
     const key =
       `ng ${buildOptions.release.targetArtifact === 'electron-app' ? 'electron' : 'app'}` +
       ` (${buildOptions.build.websql ? 'websql' : 'normal'})` +
-      `${num ? ` # context=${num}` : ''}`;
+      ` # context=${num || 1} `;
     return await this.project.registerAndAssignPort(key, {
       startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
     });
@@ -710,12 +706,19 @@ export const HOST_BACKEND_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'HOST_BA
 export const CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_NORMAL_APP_PORT_1'};
 export const CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_WEBSQL_APP_PORT_1'};
 export const CLIENT_DEV_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_NORMAL_ELECTRON_PORT_1'};
-export const CLIENT_DEV_WEBSQL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_WEBSQL_ELECTRON_PORT_1'};
+// electron websql not supported yet
+// export const CLIENT_DEV_WEBSQL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_WEBSQL_ELECTRON_PORT_1'};
 export const HOST_URL${n ? `_${n}` : ''} = 'http://localhost:' + HOST_BACKEND_PORT${n ? `_${n}` : ''};
 export const FRONTEND_HOST_URL${n ? `_${n}` : ''} =
   'http://localhost:' +
   (isWebSQLMode ? CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} : CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''});
-      `;
+export const FRONTEND_HOST_URL_ELECTRON${n ? `_${n}` : ''} = 'http://localhost:' + CLIENT_DEV_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''}
+// electron websql not supported yet
+// export const FRONTEND_HOST_URL_ELECTRON${n ? `_${n}` : ''} =
+//  'http://localhost:' +
+//  (isWebSQLMode ? CLIENT_DEV_WEBSQL_ELECTRON_PORT${n ? `_${n}` : ''} : CLIENT_DEV_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''});
+
+  `;
     };
     Helpers.writeFile(
       appHostsFile,

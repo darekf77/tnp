@@ -61,7 +61,7 @@ export async function start(
       il: 'release:install:locally',
       cil: 'release:clear:install:locally',
       'install:locally': 'release:install:locally',
-      cinit: 'init:clear:init',
+      cinit: 'init:clearInit',
       app: 'build:watchApp', // should be console menu
       ba: 'build:app',
       b: 'build',

@@ -5,71 +5,68 @@ import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../../../../options';
 import type { Project } from '../../../project';
-import { InsideStruct } from '../../npm-lib-and-cli-tool/tools/inside-structures/inside-struct';
-import { BaseInsideStruct } from '../../npm-lib-and-cli-tool/tools/inside-structures/structs/base-inside-struct';
-import { resolvePathToAsset as transformConfigLoaderPathToAssets } from '../../npm-lib-and-cli-tool/tools/inside-structures/structs/inside-struct-helpers';
-import { imageLoader as getImageLoaderHtml } from '../../npm-lib-and-cli-tool/tools/inside-structures/structs/loaders/image-loader';
-import { getLoader } from '../../npm-lib-and-cli-tool/tools/inside-structures/structs/loaders/loaders';
+import { InsideStruct } from '../../__helpers__/inside-structures/inside-struct';
+import { BaseInsideStruct } from '../../__helpers__/inside-structures/structs/base-inside-struct';
+import { resolvePathToAsset } from '../../__helpers__/inside-structures/structs/inside-struct-helpers';
+import { imageLoader } from '../../__helpers__/inside-structures/structs/loaders/image-loader';
+import { getLoader } from '../../__helpers__/inside-structures/structs/loaders/loaders';
 
 //#endregion
 
-export class InsideStructAngular13App extends BaseInsideStruct {
-  constructor(project: Project, initOptions: EnvOptions) {
-    super(project, initOptions);
-    //#region @backend
-    if (
-      !project.framework.frameworkVersionAtLeast('v4') ||
-      project.typeIsNot('isomorphic-lib')
-    ) {
-      return;
-    }
+export class InsideStructAngularApp extends BaseInsideStruct {
+  isElectron = false;
+  relativePaths(): string[] {
+    return [
+      //#region releative pathes from core project
+      'app/src/app/app.component.html',
+      'app/src/app/app.component.scss',
+      // 'app/src/app/app.component.spec.ts', -> something better needed
+      'app/src/app/app.component.ts',
+      // 'app/src/app/app.module.ts',
+      'app/src/environments/environment.prod.ts',
+      'app/src/environments/environment.dev.ts',
+      'app/src/environments/environment.ts',
+      'app/src/app',
+      'app/src/environments',
+      'app/src/favicon.ico',
+      'app/src/index.html',
+      'app/src/main.ts',
+      'app/src/polyfills.ts',
+      'app/src/styles.scss',
+      'app/src/jestGlobalMocks.ts',
+      'app/src/setupJest.ts',
+      // 'app/src/test.ts',  // node needed for jest test - (but the don' work wit symlinks)
+      'app/src/manifest.webmanifest',
+      'app/ngsw-config.json',
+      'app/.browserslistrc',
+      'app/.editorconfig',
+      'app/.gitignore',
+      // 'app/README.md',
+      'app/angular.json',
+      'app/jest.config.js',
+      'app/karma.conf.js',
+      'app/package-lock.json',
+      `app/${config.file.package_json}`,
+      'app/tsconfig.app.json',
+      'app/tsconfig.json',
+      'app/tsconfig.spec.json',
+      //#endregion
+    ];
+  }
+
+  insideStruct(): InsideStruct {
+    //#region @backendFunc
+    const project = this.project;
     const tmpProjectsStandalone =
       `tmp-apps-for-${config.folder.dist}` +
-      `${this.initOptions.build.websql ? '-websql' : ''}/${project.name}`;
+      `${this.initOptions.build.websql ? '-websql' : ''}` +
+      `${this.isElectron ? '-electron' : ''}/${project.name}`;
+
+    console.log(`tmpProjectsStandalone`, tmpProjectsStandalone);
 
     const result = InsideStruct.from(
       {
-        relateivePathesFromContainer: [
-          //#region releative pathes from core project
-          'app/src/app/app.component.html',
-          'app/src/app/app.component.scss',
-          // 'app/src/app/app.component.spec.ts', -> something better needed
-          'app/src/app/app.component.ts',
-          // 'app/src/app/app.module.ts',
-          'app/src/environments/environment.prod.ts',
-          'app/src/environments/environment.dev.ts',
-          'app/src/environments/environment.ts',
-          'app/src/app',
-          'app/src/environments',
-          'app/src/favicon.ico',
-          'app/src/index.html',
-          'app/src/main.ts',
-          'app/src/polyfills.ts',
-          'app/src/styles.scss',
-          'app/src/jestGlobalMocks.ts',
-          'app/src/setupJest.ts',
-          // 'app/src/test.ts',  // node needed for jest test - (but the don' work wit symlinks)
-          'app/src/manifest.webmanifest',
-          'app/ngsw-config.json',
-          'app/.browserslistrc',
-          'app/.editorconfig',
-          'app/.gitignore',
-          // 'app/README.md',
-          'app/angular.json',
-          'app/jest.config.js',
-          'app/electron-builder.json',
-          'app/angular.webpack.js',
-          'app/electron/main.js',
-          'app/electron/index.js',
-          `app/electron/${config.file.package_json}`,
-          'app/karma.conf.js',
-          'app/package-lock.json',
-          `app/${config.file.package_json}`,
-          'app/tsconfig.app.json',
-          'app/tsconfig.json',
-          'app/tsconfig.spec.json',
-          //#endregion
-        ],
+        relateivePathesFromContainer: this.relativePaths(),
         projectType: project.type,
         frameworkVersion: project.framework.frameworkVersion,
         pathReplacements: [
@@ -149,7 +146,7 @@ ${appModuleFile}
 
             const enableServiceWorker =
               this.initOptions.release.releaseType &&
-              !initOptions.build.pwa.disableServiceWorker;
+              !this.initOptions.build.pwa.disableServiceWorker;
 
             if (enableServiceWorker) {
               // TODO it will colide with ng serve ?
@@ -244,9 +241,9 @@ ${appComponentFile}
               appMainFile = appMainFile.replace(
                 `require('sql.js');`,
                 `(arg: any) => {
-                console.error('This should not be available in non-sql mode');
-                return void 0;
-              };`,
+              console.error('This should not be available in non-sql mode');
+              return void 0;
+            };`,
               );
             }
 
@@ -293,11 +290,11 @@ ${appComponentFile}
               if (loaderIsImage) {
                 const pathToAsset =
                   frontendBaseHref +
-                  transformConfigLoaderPathToAssets(this.project, loaderData);
+                  resolvePathToAsset(this.project, loaderData);
 
                 appHtmlFile = appHtmlFile.replace(
                   '<!-- <<<TO_REPLACE_LOADER>>> -->',
-                  getImageLoaderHtml(pathToAsset, false),
+                  imageLoader(pathToAsset, false),
                 );
               } else {
                 const loaderToReplace = getLoader(
@@ -356,11 +353,11 @@ ${appComponentFile}
               if (loaderIsImage) {
                 const pathToAsset =
                   frontendBaseHref +
-                  transformConfigLoaderPathToAssets(this.project, loaderData);
+                  resolvePathToAsset(this.project, loaderData);
 
                 indexHtmlFile = indexHtmlFile.replace(
                   '<!-- <<<TO_REPLACE_LOADER>>> -->',
-                  getImageLoaderHtml(pathToAsset, true),
+                  imageLoader(pathToAsset, true),
                 );
               } else {
                 const loaderToReplace = getLoader(
@@ -492,48 +489,67 @@ ${appComponentFile}
           })();
           //#endregion
 
-          //#region electron
-          (() => {
-            const electronBackend = crossPlatformPath(
-              path.join(project.location, replacement(config.folder.dist)),
-            );
+          if (this.isElectron) {
+            //#region electron
+            (() => {
+              const electronBackend = crossPlatformPath(
+                path.join(project.location, replacement(config.folder.dist)),
+              );
 
-            if (!Helpers.exists(electronBackend)) {
-              Helpers.mkdirp(electronBackend);
-            }
+              if (!Helpers.exists(electronBackend)) {
+                Helpers.mkdirp(electronBackend);
+              }
 
-            const compileTs = crossPlatformPath(
-              path.join(
-                project.location,
-                replacement(tmpProjectsStandalone),
-                `/electron/compiled`,
-              ),
-            );
-            try {
-              fse.unlinkSync(compileTs);
-            } catch (error) {
-              Helpers.remove(compileTs);
-            }
-            Helpers.createSymLink(electronBackend, compileTs);
-
-            const packageJson = new BasePackageJson({
-              cwd: crossPlatformPath(
+              const compileTs = crossPlatformPath(
                 path.join(
                   project.location,
                   replacement(tmpProjectsStandalone),
-                  `/${config.file.package_json}`,
+                  `/electron/compiled`,
                 ),
-              ),
-            });
+              );
+              try {
+                fse.unlinkSync(compileTs);
+              } catch (error) {
+                Helpers.remove(compileTs);
+              }
+              Helpers.createSymLink(electronBackend, compileTs);
 
-            packageJson.setName(this.project.name);
+              const packageJson = new BasePackageJson({
+                cwd: crossPlatformPath(
+                  path.join(
+                    project.location,
+                    replacement(tmpProjectsStandalone),
+                    `/${config.file.package_json}`,
+                  ),
+                ),
+              });
 
-            if (this.initOptions.release.releaseType) {
-              packageJson.setMainProperty('electron/index.js');
-            }
-            packageJson.setVersion(this.project.packageJson.version);
-          })();
-          //#endregion
+              packageJson.setName(this.project.name);
+
+              if (this.initOptions.release.releaseType) {
+                packageJson.setMainProperty('electron/index.js');
+              }
+              packageJson.setVersion(this.project.packageJson.version);
+            })();
+            //#endregion
+
+            (() => {
+              const appModuleFilePath = path.join(
+                project.location,
+                replacement(tmpProjectsStandalone),
+                `/src/index.html`,
+              );
+
+              let indexHtmlFile = Helpers.readFile(appModuleFilePath);
+
+              indexHtmlFile = indexHtmlFile.replace(
+                '<link rel="manifest" href="manifest.webmanifest">',
+                '',
+              );
+
+              Helpers.writeFile(appModuleFilePath, indexHtmlFile);
+            })();
+          }
 
           //#region rebuild manifest + index.html
           await (async () => {
@@ -737,8 +753,7 @@ ${appComponentFile}
       },
       project,
     );
-
-    this.struct = result;
+    return result;
     //#endregion
   }
 }

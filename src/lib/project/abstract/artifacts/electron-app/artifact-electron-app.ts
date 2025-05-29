@@ -19,12 +19,15 @@ import {
 import type { Project } from '../../project';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
+import { InsideStructuresElectron } from './tools/inside-struct-electron';
+
 export class ArtifactElectronApp extends BaseArtifact<
   {
     electronDistOutAppPath: string;
   },
   ReleasePartialOutput
 > {
+
   constructor(project: Project) {
     super(project, 'electron-app');
   }
@@ -34,13 +37,14 @@ export class ArtifactElectronApp extends BaseArtifact<
   }
 
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
-    return await this.artifacts.angularNodeApp.initPartial(
+    const result = await this.artifacts.angularNodeApp.initPartial(
       initOptions.clone({
         release: {
           targetArtifact: this.currentArtifactName,
         },
       }),
     );
+    return result;
   }
 
   async buildPartial(buildOptions: EnvOptions): Promise<{

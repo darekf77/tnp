@@ -7,26 +7,61 @@ import { PackageJson } from 'type-fest';
 import { Models } from '../../../../../models';
 import { EnvOptions } from '../../../../../options';
 import type { Project } from '../../../project';
-
-import { InsideStruct } from './inside-structures/inside-struct';
-import { BaseInsideStruct } from './inside-structures/structs/base-inside-struct';
+import { InsideStruct } from '../../__helpers__/inside-structures/inside-struct';
+import { BaseInsideStruct } from '../../__helpers__/inside-structures/structs/base-inside-struct';
 import {
   recreateApp,
   recreateIndex,
-} from './inside-structures/structs/inside-struct-helpers';
+} from '../../__helpers__/inside-structures/structs/inside-struct-helpers';
 
 //#endregion
 
-export class InsideStructAngular13Lib extends BaseInsideStruct {
-  constructor(project: Project, initOptions: EnvOptions) {
-    super(project, initOptions);
-    //#region @backend
-    if (
-      !project.framework.frameworkVersionAtLeast('v3') ||
-      project.typeIsNot('isomorphic-lib')
-    ) {
-      return;
-    }
+export class InsideStructAngularLib extends BaseInsideStruct {
+  relativePaths(): string[] {
+    return [
+      //#region files to copy from core isomorphic lib
+      'lib/src/app/app.component.html',
+      'lib/src/app/app.component.scss',
+      // 'lib/src/app/app.component.spec.ts', // not working -> something better needed
+      'lib/src/app/app.component.ts',
+      // 'lib/src/app/app.module.ts',
+      'lib/src/environments/environment.prod.ts',
+
+      'lib/src/environments/environment.ts',
+      'lib/src/app',
+      'lib/src/environments',
+      'lib/src/favicon.ico',
+      'lib/src/index.html',
+      'lib/src/main.ts',
+      'lib/src/polyfills.ts',
+      'lib/src/styles.scss',
+      // 'lib/src/test.ts', // node needed for jest test - (but the don' work wit symlinks)
+      'lib/.browserslistrc',
+      'lib/.editorconfig',
+      'lib/.gitignore',
+      // 'app/README.md',
+      'lib/angular.json',
+      'lib/karma.conf.js',
+      'lib/package-lock.json',
+      'lib/package.json',
+      'lib/tsconfig.app.json',
+      'lib/tsconfig.json',
+      'lib/tsconfig.spec.json',
+      'lib/projects/my-lib/src',
+      'lib/projects/my-lib/tsconfig.spec.json',
+      'lib/projects/my-lib/tsconfig.lib.prod.json',
+      'lib/projects/my-lib/tsconfig.lib.json',
+      'lib/projects/my-lib/README.md',
+      'lib/projects/my-lib/package.json',
+      'lib/projects/my-lib/ng-package.json',
+      'lib/projects/my-lib/karma.conf.js',
+      //#endregion
+    ];
+  }
+
+  insideStruct(): InsideStruct {
+    //#region @backendFunc
+    const project = this.project;
     const tmpProjectsStandalone =
       `tmp-libs-for-${config.folder.dist}` +
       `${this.initOptions.build.websql ? '-websql' : ''}/${project.name}`;
@@ -34,45 +69,7 @@ export class InsideStructAngular13Lib extends BaseInsideStruct {
     const result = InsideStruct.from(
       {
         //#region pathes from container codere isomrophic lib
-        relateivePathesFromContainer: [
-          //#region files to copy from core isomorphic lib
-          'lib/src/app/app.component.html',
-          'lib/src/app/app.component.scss',
-          // 'lib/src/app/app.component.spec.ts', // not working -> something better needed
-          'lib/src/app/app.component.ts',
-          // 'lib/src/app/app.module.ts',
-          'lib/src/environments/environment.prod.ts',
-
-          'lib/src/environments/environment.ts',
-          'lib/src/app',
-          'lib/src/environments',
-          'lib/src/favicon.ico',
-          'lib/src/index.html',
-          'lib/src/main.ts',
-          'lib/src/polyfills.ts',
-          'lib/src/styles.scss',
-          // 'lib/src/test.ts', // node needed for jest test - (but the don' work wit symlinks)
-          'lib/.browserslistrc',
-          'lib/.editorconfig',
-          'lib/.gitignore',
-          // 'app/README.md',
-          'lib/angular.json',
-          'lib/karma.conf.js',
-          'lib/package-lock.json',
-          'lib/package.json',
-          'lib/tsconfig.app.json',
-          'lib/tsconfig.json',
-          'lib/tsconfig.spec.json',
-          'lib/projects/my-lib/src',
-          'lib/projects/my-lib/tsconfig.spec.json',
-          'lib/projects/my-lib/tsconfig.lib.prod.json',
-          'lib/projects/my-lib/tsconfig.lib.json',
-          'lib/projects/my-lib/README.md',
-          'lib/projects/my-lib/package.json',
-          'lib/projects/my-lib/ng-package.json',
-          'lib/projects/my-lib/karma.conf.js',
-          //#endregion
-        ],
+        relateivePathesFromContainer: this.relativePaths(),
         //#endregion
         projectType: project.type,
         frameworkVersion: project.framework.frameworkVersion,
@@ -272,7 +269,7 @@ export * from './lib';
       },
       project,
     );
-    this.struct = result as any;
+    return result;
     //#endregion
   }
 }
