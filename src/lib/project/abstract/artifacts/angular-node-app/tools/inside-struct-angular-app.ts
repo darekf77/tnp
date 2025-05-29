@@ -62,8 +62,6 @@ export class InsideStructAngularApp extends BaseInsideStruct {
       `${this.initOptions.build.websql ? '-websql' : ''}` +
       `${this.isElectron ? '-electron' : ''}/${project.name}`;
 
-    console.log(`tmpProjectsStandalone`, tmpProjectsStandalone);
-
     const result = InsideStruct.from(
       {
         relateivePathesFromContainer: this.relativePaths(),
