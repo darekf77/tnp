@@ -168,20 +168,27 @@ class EnvOptionsBuild {
 
 //#region env options / ports
 class EnvOptionsPorts {
-  /**
-   * override port for angular ng serve in normal mode
-   */
-  declare ngNormalAppPort?: number;
-
-  /**
-   * override port for angular ng serve in websql mode
-   */
-  declare ngWebsqlAppPort?: number;
-
-  /**
-   * override port for nodejs backend server
-   */
-  declare nodeBeAppPort?: number;
+  // TODO not needed ?
+  // /**
+  //  * override port for angular ng serve in normal mode
+  //  */
+  // declare ngNormalAppPort?: number;
+  // /**
+  //  * override port for angular ng serve in websql mode
+  //  */
+  // declare ngWebsqlAppPort?: number;
+  // /**
+  //  * override port for angular ng serve in normal mode
+  //  */
+  // declare ngNormalElectronPort?: number;
+  // /**
+  //  * override port for angular ng serve in websql mode
+  //  */
+  // declare ngWebsqlElectronPort?: number;
+  // /**
+  //  * override port for nodejs backend server
+  //  */
+  // declare nodeBeAppPort?: number;
 }
 //#endregion
 
@@ -441,6 +448,9 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   declare recursiveAction?: boolean;
   declare isCiProcess?: boolean;
   declare container: Partial<EnvOptionsContainer>;
+  /**
+   * @deprecated everything automatically handled by taon
+   */
   declare ports: Partial<EnvOptionsPorts>;
   declare release: Partial<EnvOptionsRelease>;
   declare init: Partial<EnvOptionsInit>;

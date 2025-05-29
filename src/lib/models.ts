@@ -137,6 +137,14 @@ export namespace Models {
     overrideNpmName?: string;
 
     /**
+     * Number of contexts for this project. (default 2)
+     * Number can't be less than 2.
+     * This property tells taon how many ports/variables needs to be assigned
+     * inside app.hosts.ts
+     */
+    numberOfContexts?: number;
+
+    /**
      * it override name of project when is inside container that
      * is organization.
      *

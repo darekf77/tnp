@@ -173,11 +173,8 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 `,
     );
 
-    const portAssignedToAppBuild: number = Number(
-      buildOptions.build.websql
-        ? buildOptions.ports.ngWebsqlAppPort
-        : buildOptions.ports.ngNormalAppPort,
-    );
+    const portAssignedToAppBuild: number =
+      await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(buildOptions);
 
     if (buildOptions.build.watch) {
       await Helpers.killProcessByPort(portAssignedToAppBuild);
@@ -344,56 +341,146 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   //#region public methods / update ports in hosts
   public async updatePortsInHosts(buildOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
-    // TODO @LAST this should be set externally
-    buildOptions.ports.ngNormalAppPort =
-      buildOptions.ports.ngNormalAppPort ||
-      (await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(buildOptions));
+    let contexts: string[] = [];
+    type ContextOptions = {
+      num: number;
+      nodeBeAppPort?: number;
+      ngWebsqlAppPort?: number;
+      ngWebsqlElectronPort?: number;
+      ngNormalAppPort?: number;
+      ngNormalElectronPort?: number;
+    };
 
-    buildOptions.ports.ngWebsqlAppPort =
-      buildOptions.ports.ngWebsqlAppPort ||
-      (await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+    const contextTemplate = (options: ContextOptions): string => {
+      return `
+## CONTEXT ${options.num}:
+- backend ${options.num}:
+http://localhost:${options.ngNormalAppPort}
+- normal app node backend:
+http://localhost:${options.nodeBeAppPort}
+- websql app backend/frontend:
+http://localhost:${options.ngWebsqlAppPort}
+
+      `;
+    };
+
+    for (let i = 0; i < this.project.taonJson.numberOfContexts; i++) {
+      const nodeBeAppPort = await this.NODE_BACKEND_PORT_UNIQ_KEY(
+        buildOptions.clone({
+          build: {
+            websql: false,
+          },
+          release: {
+            targetArtifact: 'angular-node-app',
+          },
+        }),
+        i + 1,
+      );
+      const ngWebsqlAppPort = await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
         buildOptions.clone({
           build: {
             websql: true,
           },
+          release: {
+            targetArtifact: 'angular-node-app',
+          },
         }),
-      ));
+        {
+          num: i + 1,
+        },
+      );
+      const ngNormalAppPort = await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+        buildOptions.clone({
+          build: {
+            websql: false,
+          },
+          release: {
+            targetArtifact: 'angular-node-app',
+          },
+        }),
+        {
+          num: i + 1,
+        },
+      );
 
-    buildOptions.ports.nodeBeAppPort =
-      buildOptions.ports.nodeBeAppPort ||
-      (await this.NODE_BACKEND_PORT_UNIQ_KEY(buildOptions));
+      const ngWebsqlElectronPort =
+        await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+          buildOptions.clone({
+            build: {
+              websql: true,
+            },
+            release: {
+              targetArtifact: 'electron-app',
+            },
+          }),
+          {
+            num: i + 1,
+          },
+        );
 
-    UtilsTypescript.setValueToVariableInTsFile(
-      this.project.pathFor('src/app.hosts.ts'),
-      'HOST_BACKEND_PORT',
-      buildOptions.ports.nodeBeAppPort,
-    );
+      const ngNormalElectronPort =
+        await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+          buildOptions.clone({
+            build: {
+              websql: false,
+            },
+            release: {
+              targetArtifact: 'electron-app',
+            },
+          }),
+          {
+            num: i + 1,
+          },
+        );
 
-    UtilsTypescript.setValueToVariableInTsFile(
-      this.project.pathFor('src/app.hosts.ts'),
-      'CLIENT_DEV_WEBSQL_APP_PORT',
-      buildOptions.ports.ngWebsqlAppPort,
-    );
+      contexts.push(
+        contextTemplate({
+          num: i + 1,
+          nodeBeAppPort,
+          ngWebsqlAppPort,
+          ngWebsqlElectronPort,
+          ngNormalAppPort,
+          ngNormalElectronPort,
+        }),
+      );
 
-    UtilsTypescript.setValueToVariableInTsFile(
-      this.project.pathFor('src/app.hosts.ts'),
-      'CLIENT_DEV_NORMAL_APP_PORT',
-      buildOptions.ports.ngNormalAppPort,
-    );
+      UtilsTypescript.setValueToVariableInTsFile(
+        this.project.pathFor('src/app.hosts.ts'),
+        'HOST_BACKEND_PORT_' + (i + 1),
+        nodeBeAppPort,
+      );
+
+      UtilsTypescript.setValueToVariableInTsFile(
+        this.project.pathFor('src/app.hosts.ts'),
+        'CLIENT_DEV_WEBSQL_APP_PORT_' + (i + 1),
+        ngWebsqlAppPort,
+      );
+
+      UtilsTypescript.setValueToVariableInTsFile(
+        this.project.pathFor('src/app.hosts.ts'),
+        'CLIENT_DEV_NORMAL_APP_PORT_' + (i + 1),
+        ngNormalAppPort,
+      );
+
+      UtilsTypescript.setValueToVariableInTsFile(
+        this.project.pathFor('src/app.hosts.ts'),
+        'CLIENT_DEV_WEBSQL_ELECTRON_PORT_' + (i + 1),
+        ngWebsqlElectronPort,
+      );
+
+      UtilsTypescript.setValueToVariableInTsFile(
+        this.project.pathFor('src/app.hosts.ts'),
+        'CLIENT_DEV_NORMAL_ELECTRON_PORT_' + (i + 1),
+        ngNormalElectronPort,
+      );
+    }
 
     this.project.writeFile(
       'BUILD-INFO.md',
       `
 # CURRENT BUILD INFO
 
-## NORMAL APP FRONTEND:
-http://localhost:${buildOptions.ports.ngNormalAppPort}
-
-- normal app node backend:
-http://localhost:${buildOptions.ports.nodeBeAppPort}
-
-## WEBSQL APP BACKEND/FRONTEND:
-http://localhost:${buildOptions.ports.ngWebsqlAppPort}
+${contexts.join('\n')}
 
 
       `,
@@ -405,21 +492,32 @@ http://localhost:${buildOptions.ports.ngWebsqlAppPort}
   //#region public methods / get ng server unique key
   async APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
     buildOptions: Partial<EnvOptions>,
+    options?: {
+      num?: number;
+    },
   ): Promise<number> {
+    //#region @backendFunc
+    options = options || ({} as any);
+    const { num } = options;
     buildOptions = EnvOptions.from(buildOptions);
     const key =
-      `${buildOptions.build.watch ? 'serve' : 'build'} ` +
-      `ng app (${buildOptions.build.websql ? 'websql' : 'normal'})`;
+      `ng ${buildOptions.release.targetArtifact === 'electron-app' ? 'electron' : 'app'}` +
+      ` (${buildOptions.build.websql ? 'websql' : 'normal'})` +
+      `${num ? ` # context=${num}` : ''}`;
     return await this.project.registerAndAssignPort(key, {
       startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
     });
+    //#endregion
   }
   //#endregion
 
   //#region public methods / get node backend unique key
-  async NODE_BACKEND_PORT_UNIQ_KEY(buildOptions: EnvOptions): Promise<number> {
+  async NODE_BACKEND_PORT_UNIQ_KEY(
+    buildOptions: EnvOptions,
+    num?: Number,
+  ): Promise<number> {
     buildOptions = EnvOptions.from(buildOptions);
-    const key = `node backend`;
+    const key = `node backend${num ? ` (${num})` : ''}`;
     return await this.project.registerAndAssignPort(key, {
       startFrom: DEFAULT_PORT.SERVER_LOCALHOST,
     });
@@ -605,14 +703,37 @@ http://localhost:${buildOptions.ports.ngWebsqlAppPort}
     const appHostsFile = crossPlatformPath(
       path.join(this.project.location, config.folder.src, 'app.hosts.ts'),
     );
+    const numOfContexts = this.project.taonJson.numberOfContexts;
+    const tempalte = (n?: number) => {
+      return `
+export const HOST_BACKEND_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'HOST_BACKEND_PORT_1'};
+export const CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_NORMAL_APP_PORT_1'};
+export const CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_WEBSQL_APP_PORT_1'};
+export const CLIENT_DEV_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_NORMAL_ELECTRON_PORT_1'};
+export const CLIENT_DEV_WEBSQL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_WEBSQL_ELECTRON_PORT_1'};
+export const HOST_URL${n ? `_${n}` : ''} = 'http://localhost:' + HOST_BACKEND_PORT${n ? `_${n}` : ''};
+export const FRONTEND_HOST_URL${n ? `_${n}` : ''} =
+  'http://localhost:' +
+  (isWebSQLMode ? CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} : CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''});
+      `;
+    };
     Helpers.writeFile(
       appHostsFile,
       `
 ${THIS_IS_GENERATED_INFO_COMMENT}
+let isWebSQLMode: boolean = false;
+//#${'reg' + 'ion'} @${'bac' + 'kend'}
+isWebSQLMode = false;
+//#${'end' + 'reg' + 'ion'}
 
-export const HOST_BACKEND_PORT = undefined;
-export const CLIENT_DEV_NORMAL_APP_PORT = undefined;
-export const CLIENT_DEV_WEBSQL_APP_PORT = undefined;
+//#${'reg' + 'ion'} @${'web' + 'sql' + 'Only'}
+isWebSQLMode = true;
+//#${'end' + 'reg' + 'ion'}
+
+${_.times(numOfContexts, i => {
+  return tempalte(i + 1);
+}).join('\n')}
+${tempalte()}
 
 ${THIS_IS_GENERATED_INFO_COMMENT}
 

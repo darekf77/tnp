@@ -299,86 +299,101 @@ export class ArtifactManager {
   async build(buildOptions: EnvOptions): Promise<void> {
     if (!buildOptions.release.targetArtifact) {
       //#region  build Menu
-      await this.init(buildOptions.clone({ build: { watch: false } }));
-      const processManager = new BaseProcessManger(this.project as any);
+      // TODO for unified build menu is not efficient enouth
+      Helpers.error(
+        `
 
-      const ngBuildLibCommand = CommandConfig.from({
-        name: `Isomorphic Nodejs/Angular library`,
-        cmd: this.buildWatchCmdForArtifact('npm-lib-and-cli-tool'),
-        goToNextCommandWhenOutput: {
-          stdoutContains: COMPILATION_COMPLETE_LIB_NG_BUILD,
-        },
-      });
+        Please use commands:
 
-      const ngNormalAppPort =
-        await this.artifact.angularNodeApp.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
-          buildOptions.clone({ build: { websql: false } }),
-        );
-
-      const ngWebsqlAppPort =
-        await this.artifact.angularNodeApp.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
-          buildOptions.clone({ build: { websql: true } }),
-        );
-
-      const nodeBeAppPort =
-        await this.artifact.angularNodeApp.NODE_BACKEND_PORT_UNIQ_KEY(
-          buildOptions.clone(),
-        );
-
-      const ngServeAppCommand = CommandConfig.from({
-        name: `Angular (for Nodejs backend) frontend app`,
-        cmd: this.buildWatchCmdForArtifact('angular-node-app', {
-          ports: { ngNormalAppPort, nodeBeAppPort, ngWebsqlAppPort },
-        }),
-        shouldBeActiveOrAlreadyBuild: [ngBuildLibCommand],
-        goToNextCommandWhenOutput: {
-          stdoutContains: COMPILATION_COMPLETE_APP_NG_SERVE,
-        },
-        headerMessageWhenActive:
-          `Normal Angular App is running on ` +
-          `http://localhost:${ngNormalAppPort}`,
-      });
-
-      const ngServeWebsqlAppCommand = CommandConfig.from({
-        name: `Angular (for Websql backend) frontend app`,
-        cmd: this.buildWatchCmdForArtifact('angular-node-app', {
-          build: { websql: true },
-          ports: { ngNormalAppPort, nodeBeAppPort, ngWebsqlAppPort },
-        }),
-        shouldBeActiveOrAlreadyBuild: [ngBuildLibCommand],
-        goToNextCommandWhenOutput: {
-          stdoutContains: COMPILATION_COMPLETE_APP_NG_SERVE,
-        },
-        headerMessageWhenActive:
-          `Websql Angular App is running on ` +
-          `http://localhost:${ngWebsqlAppPort}`,
-      });
-
-      const documenationCommand = CommandConfig.from({
-        name: `Documentation (mkdocs, compodoc, typedoc)`,
-        cmd: this.buildWatchCmdForArtifact('docs-webapp'),
-        headerMessageWhenActive:
-          `Documentation is running on http://localhost:` +
-          `${await this.artifact.docsWebapp.DOCS_ARTIFACT_PORT_UNIQ_KEY(
-            EnvOptions.from(buildOptions),
-          )}`,
-      });
-
-      await processManager.init({
-        watch: !!buildOptions.build.watch,
-        header: `
-
-        Build process for ${this.project.name}
+        ${config.frameworkName} build:watch:lib
+        ${config.frameworkName} build:watch:app
+        ${config.frameworkName} build:watch:electron
+        ${config.frameworkName} docs:watch
 
         `,
-        title: `Select what do you want to build ${buildOptions.build.watch ? 'in watch mode' : ''}?`,
-        commands: [
-          ngBuildLibCommand,
-          ngServeAppCommand,
-          ngServeWebsqlAppCommand,
-          documenationCommand,
-        ],
-      });
+        false,
+        true,
+      );
+      // await this.init(buildOptions.clone({ build: { watch: false } }));
+      // const processManager = new BaseProcessManger(this.project as any);
+
+      // const ngBuildLibCommand = CommandConfig.from({
+      //   name: `Isomorphic Nodejs/Angular library`,
+      //   cmd: this.buildWatchCmdForArtifact('npm-lib-and-cli-tool'),
+      //   goToNextCommandWhenOutput: {
+      //     stdoutContains: COMPILATION_COMPLETE_LIB_NG_BUILD,
+      //   },
+      // });
+
+      // const ngNormalAppPort =
+      //   await this.artifact.angularNodeApp.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+      //     buildOptions.clone({ build: { websql: false } }),
+      //   );
+
+      // const ngWebsqlAppPort =
+      //   await this.artifact.angularNodeApp.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+      //     buildOptions.clone({ build: { websql: true } }),
+      //   );
+
+      // const nodeBeAppPort =
+      //   await this.artifact.angularNodeApp.NODE_BACKEND_PORT_UNIQ_KEY(
+      //     buildOptions.clone(),
+      //   );
+
+      // const ngServeAppCommand = CommandConfig.from({
+      //   name: `Angular (for Nodejs backend) frontend app`,
+      //   cmd: this.buildWatchCmdForArtifact('angular-node-app', {
+      //     ports: { ngNormalAppPort, nodeBeAppPort, ngWebsqlAppPort },
+      //   }),
+      //   shouldBeActiveOrAlreadyBuild: [ngBuildLibCommand],
+      //   goToNextCommandWhenOutput: {
+      //     stdoutContains: COMPILATION_COMPLETE_APP_NG_SERVE,
+      //   },
+      //   headerMessageWhenActive:
+      //     `Normal Angular App is running on ` +
+      //     `http://localhost:${ngNormalAppPort}`,
+      // });
+
+      // const ngServeWebsqlAppCommand = CommandConfig.from({
+      //   name: `Angular (for Websql backend) frontend app`,
+      //   cmd: this.buildWatchCmdForArtifact('angular-node-app', {
+      //     build: { websql: true },
+      //     ports: { ngNormalAppPort, nodeBeAppPort, ngWebsqlAppPort },
+      //   }),
+      //   shouldBeActiveOrAlreadyBuild: [ngBuildLibCommand],
+      //   goToNextCommandWhenOutput: {
+      //     stdoutContains: COMPILATION_COMPLETE_APP_NG_SERVE,
+      //   },
+      //   headerMessageWhenActive:
+      //     `Websql Angular App is running on ` +
+      //     `http://localhost:${ngWebsqlAppPort}`,
+      // });
+
+      // const documenationCommand = CommandConfig.from({
+      //   name: `Documentation (mkdocs, compodoc, typedoc)`,
+      //   cmd: this.buildWatchCmdForArtifact('docs-webapp'),
+      //   headerMessageWhenActive:
+      //     `Documentation is running on http://localhost:` +
+      //     `${await this.artifact.docsWebapp.DOCS_ARTIFACT_PORT_UNIQ_KEY(
+      //       EnvOptions.from(buildOptions),
+      //     )}`,
+      // });
+
+      // await processManager.init({
+      //   watch: !!buildOptions.build.watch,
+      //   header: `
+
+      //   Build process for ${this.project.name}
+
+      //   `,
+      //   title: `Select what do you want to build ${buildOptions.build.watch ? 'in watch mode' : ''}?`,
+      //   commands: [
+      //     ngBuildLibCommand,
+      //     ngServeAppCommand,
+      //     ngServeWebsqlAppCommand,
+      //     documenationCommand,
+      //   ],
+      // });
       //#endregion
     } else {
       //#region partial build

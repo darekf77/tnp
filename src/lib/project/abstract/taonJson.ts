@@ -310,6 +310,19 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region framework version
+  get numberOfContexts(): number {
+    //#region @backendFunc
+    const data = this.data as Models.TaonJsonStandalone;
+    const value = Math.floor(Math.abs(Number(data.numberOfContexts || 2)));
+    if (isNaN(value) || value < 2) {
+      return 2;
+    }
+    return value;
+    //#endregion
+  }
+  //#endregion
+
   //#region folders to remove after pulling from git
   get removeAfterPullingFromGit(): string[] {
     //#region @backendFunc
