@@ -25,13 +25,17 @@ import type { ReleaseProcess } from './release-process';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode';
 //#endregion
+let frameworkName = '';
+//#region @backend
+frameworkName = global.frameworkName;
+//#endregion
 
 // @ts-ignore TODO weird inheritance problem
 export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#region static
 
   //#region static / instance of resolve
-  static ins = new TaonProjectResolve(Project, config.frameworkName);
+  static ins = new TaonProjectResolve(Project, frameworkName);
   //#endregion
 
   //#endregion
