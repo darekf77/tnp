@@ -352,6 +352,12 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     return res;
   }
 
+  public static fromModule(moduleOptions: Partial<EnvOptions>): EnvOptions {
+    const cloned = _.cloneDeep(moduleOptions);
+    delete cloned['default'];
+    return EnvOptions.from(cloned as any);
+  }
+
   public static fromRelease(releaseOptions: Partial<EnvOptions>): EnvOptions {
     const buildOptions = EnvOptions.from(releaseOptions as any);
     buildOptions.build.watch = false;
@@ -463,6 +469,10 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   declare readonly name?: CoreModels.EnvironmentNameTaon; // generated
   declare readonly currentProjectName?: string;
   declare readonly currentProjectType?: CoreModels.LibType;
+  /**
+   * is angular in production mode (available only on fe)
+   */
+  declare readonly angularProd?: boolean;
   declare readonly buildInfo?: {
     // number?: number; // count commits takes time
     hash?: string;

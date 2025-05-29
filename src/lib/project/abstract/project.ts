@@ -31,7 +31,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#region static
 
   //#region static / instance of resolve
-  static ins = new TaonProjectResolve(Project, global.frameworkName);
+  static ins = new TaonProjectResolve(Project, config.frameworkName);
   //#endregion
 
   //#endregion
