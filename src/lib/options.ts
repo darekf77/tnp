@@ -354,8 +354,9 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 
   public static fromModule(moduleOptions: Partial<EnvOptions>): EnvOptions {
     const cloned = _.cloneDeep(moduleOptions);
-    delete cloned['default'];
-    return EnvOptions.from(cloned as any);
+    // delete cloned['default'];
+    const result = EnvOptions.from(cloned as any);
+    return result;
   }
 
   public static fromRelease(releaseOptions: Partial<EnvOptions>): EnvOptions {
