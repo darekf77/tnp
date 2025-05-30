@@ -697,16 +697,37 @@ ${contexts.join('\n')}
     const numOfContexts = this.project.taonJson.numberOfContexts;
     const tempalte = (n?: number) => {
       return `
+/**
+ * Your context backend port
+ */
 export const HOST_BACKEND_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'HOST_BACKEND_PORT_1'};
+/**
+ * Angular website url with normal/nodejs backend
+ */
 export const CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_NORMAL_APP_PORT_1'};
+/**
+ * Angular website url with websql backend
+ */
 export const CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_WEBSQL_APP_PORT_1'};
+/**
+ * Electron/angular website url for electron app purpose (ipc backend)
+ */
 export const CLIENT_DEV_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_NORMAL_ELECTRON_PORT_1'};
 // electron websql not supported yet
 // export const CLIENT_DEV_WEBSQL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_WEBSQL_ELECTRON_PORT_1'};
+/**
+ * Backend url - use as "host" inside your context
+ */
 export const HOST_URL${n ? `_${n}` : ''} = 'http://localhost:' + HOST_BACKEND_PORT${n ? `_${n}` : ''};
+/**
+ * Frontend host url - use as "frontendHost" inside your context
+ */
 export const FRONTEND_HOST_URL${n ? `_${n}` : ''} =
   'http://localhost:' +
   (isWebSQLMode ? CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} : CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''});
+/**
+ * Frontend electron host url - use in app.electron.ts with win.loadURL(FRONTEND_HOST_URL_ELECTRON);
+ */
 export const FRONTEND_HOST_URL_ELECTRON${n ? `_${n}` : ''} = 'http://localhost:' + CLIENT_DEV_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''}
 // electron websql not supported yet
 // export const FRONTEND_HOST_URL_ELECTRON${n ? `_${n}` : ''} =
