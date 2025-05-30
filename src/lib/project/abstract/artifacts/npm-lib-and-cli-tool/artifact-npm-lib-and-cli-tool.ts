@@ -435,9 +435,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     this.copyEssentialFilesTo([tmpProjNpmLibraryInNodeModulesAbsPath]);
 
     this.packResource(tmpProjNpmLibraryInNodeModulesAbsPath);
-    this.createClientVersionAsCopyOfBrowser(
-      tmpProjNpmLibraryInNodeModulesAbsPath,
-    );
 
     this.fixPackageJsonForRelease(
       releaseProjPath,
