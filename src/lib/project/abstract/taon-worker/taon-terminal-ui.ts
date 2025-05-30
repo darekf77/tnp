@@ -19,9 +19,23 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
   protected async header(): Promise<void> {
     //#region @backendFunc
     // return super.header();
-    const consoleLogoPath = this.worker.ins
-      .by('container', DEFAULT_FRAMEWORK_VERSION)
-      .pathFor('../../__images/logo/logo-console.png');
+    let consoleLogoPath: string;
+    let currentVersion = Number(DEFAULT_FRAMEWORK_VERSION.replace('v', ''));
+    while (true) {
+      try {
+        consoleLogoPath = this.worker.ins
+          .by('container', `v${currentVersion}` as any)
+          .pathFor('../../__images/logo/logo-console.png');
+        break;
+      } catch (error) {
+        currentVersion--;
+        if (currentVersion < 18) {
+          throw new Error(
+            '[taon] Could not find console logo image for any version',
+          );
+        }
+      }
+    }
 
     // console.log({ logoLight });
     const pngStringify = require('console-png');
