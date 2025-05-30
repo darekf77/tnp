@@ -57,15 +57,4 @@ export class InsideStruct {
     ][] = [],
     public endAction?: InsideStructEndAction,
   ) {}
-
-  public get coreContainer() {
-    //#region @backendFunc
-    return this.project.ins.by(
-      this.projectType,
-      this.frameworkVersion,
-    ) as Project;
-    //#endregion
-  }
-
-  recreate(outFolder: CoreModels.OutFolder = 'dist') {}
 }

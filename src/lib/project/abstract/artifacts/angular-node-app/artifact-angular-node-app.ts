@@ -347,16 +347,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     };
 
     const contextTemplate = (options: ContextOptions): string => {
-      return `
-## CONTEXT ${options.num}:
-- backend ${options.num}:
-http://localhost:${options.ngNormalAppPort}
-- normal app node backend:
-http://localhost:${options.nodeBeAppPort}
-- websql app backend/frontend:
-http://localhost:${options.ngWebsqlAppPort}
-
-      `;
+      return `## CONTEXT ${options.num}:
+- backend http://localhost:${options.nodeBeAppPort}
+- normal app node backend http://localhost:${options.ngNormalAppPort}
+- websql app backend/frontend http://localhost:${options.ngWebsqlAppPort}
+`;
     };
 
     for (let i = 0; i < this.project.taonJson.numberOfContexts; i++) {
@@ -473,13 +468,13 @@ http://localhost:${options.ngWebsqlAppPort}
 
     this.project.writeFile(
       'BUILD-INFO.md',
-      `
-# CURRENT BUILD INFO
+      `# CURRENT BUILD INFO
+
+Project name: **${this.project.name}** <br>
+Project npm name: **${this.project.nameForNpmPackage}**
 
 ${contexts.join('\n')}
-
-
-      `,
+`,
     );
     //#endregion
   }

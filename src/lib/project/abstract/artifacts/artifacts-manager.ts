@@ -225,42 +225,45 @@ export class ArtifactManager {
 
     this.artifact.npmLibAndCliTool.unlinkNodeModulesWhenTnp();
 
-    if (
-      !initOptions.release.targetArtifact ||
-      initOptions.release.targetArtifact === 'docs-webapp'
-    ) {
-      initOptions = await this.artifact.docsWebapp.initPartial(initOptions);
-    }
-    if (
-      !initOptions.release.targetArtifact ||
-      initOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
-    ) {
-      initOptions =
-        await this.artifact.npmLibAndCliTool.initPartial(initOptions);
-    }
-    if (
-      !initOptions.release.targetArtifact ||
-      initOptions.release.targetArtifact === 'angular-node-app'
-    ) {
-      initOptions = await this.artifact.angularNodeApp.initPartial(initOptions);
-    }
-    if (
-      !initOptions.release.targetArtifact ||
-      initOptions.release.targetArtifact === 'electron-app'
-    ) {
-      initOptions = await this.artifact.electronApp.initPartial(initOptions);
-    }
-    if (
-      !initOptions.release.targetArtifact ||
-      initOptions.release.targetArtifact === 'mobile-app'
-    ) {
-      initOptions = await this.artifact.mobileApp.initPartial(initOptions);
-    }
-    if (
-      !initOptions.release.targetArtifact ||
-      initOptions.release.targetArtifact === 'vscode-plugin'
-    ) {
-      initOptions = await this.artifact.vscodePlugin.initPartial(initOptions);
+    if (this.project.framework.isStandaloneProject) {
+      if (
+        !initOptions.release.targetArtifact ||
+        initOptions.release.targetArtifact === 'docs-webapp'
+      ) {
+        initOptions = await this.artifact.docsWebapp.initPartial(initOptions);
+      }
+      if (
+        !initOptions.release.targetArtifact ||
+        initOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
+      ) {
+        initOptions =
+          await this.artifact.npmLibAndCliTool.initPartial(initOptions);
+      }
+      if (
+        !initOptions.release.targetArtifact ||
+        initOptions.release.targetArtifact === 'angular-node-app'
+      ) {
+        initOptions =
+          await this.artifact.angularNodeApp.initPartial(initOptions);
+      }
+      if (
+        !initOptions.release.targetArtifact ||
+        initOptions.release.targetArtifact === 'electron-app'
+      ) {
+        initOptions = await this.artifact.electronApp.initPartial(initOptions);
+      }
+      if (
+        !initOptions.release.targetArtifact ||
+        initOptions.release.targetArtifact === 'mobile-app'
+      ) {
+        initOptions = await this.artifact.mobileApp.initPartial(initOptions);
+      }
+      if (
+        !initOptions.release.targetArtifact ||
+        initOptions.release.targetArtifact === 'vscode-plugin'
+      ) {
+        initOptions = await this.artifact.vscodePlugin.initPartial(initOptions);
+      }
     }
     return initOptions;
     //#endregion

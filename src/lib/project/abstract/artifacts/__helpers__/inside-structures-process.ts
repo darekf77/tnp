@@ -63,7 +63,7 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
       if (struct?.relateivePathesFromContainer) {
         [...struct.relateivePathesFromContainer].forEach(f => {
           const orgPath = crossPlatformPath(
-            Helpers.resolve(path.join(struct.coreContainer.location, f)),
+            Helpers.resolve(path.join(struct.project.framework.coreProject.location, f)),
           );
           const destPath = clearUnexistedLinks(
             crossPlatformPath([this.project.location, replacement(f)]),
@@ -125,10 +125,7 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
 
       //#region execute end function
       if (_.isFunction(struct?.endAction)) {
-        await Helpers.runSyncOrAsync({
-          functionFn: struct.endAction,
-          arrayOfParams: [opt],
-        });
+        await struct.endAction(opt);
       }
       //#endregion
     }
