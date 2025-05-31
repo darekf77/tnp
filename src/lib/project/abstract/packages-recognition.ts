@@ -53,9 +53,9 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     await this.coreContainer.nodeModules.makeSureInstalled();
     let recognizedPackages = [];
     Helpers.taskStarted(
-      `[${this.project.genericName}]` +
-        ` Searching isomorphic packages for ${this.coreContainer.genericName}...` +
-        +` reason "${reasonToSearchPackages}"`,
+      `[${this.project.genericName}]\n` +
+        ` Searching isomorphic packages for ${this.coreContainer.genericName}...\n` +
+        (reasonToSearchPackages ? ` reason "${reasonToSearchPackages}"` : ''),
     );
 
     //#region recreate json if not exists
