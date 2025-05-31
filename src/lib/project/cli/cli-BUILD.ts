@@ -170,7 +170,6 @@ class $Build extends BaseCli {
     //     },
     //   }),
     // );
-
     // await this.project.build(
     //   this.params.clone({
     //     release: {

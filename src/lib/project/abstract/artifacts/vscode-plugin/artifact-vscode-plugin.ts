@@ -43,6 +43,9 @@ export class ArtifactVscodePlugin extends BaseArtifact<
   //#region init partial
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
+    if (!initOptions.release.targetArtifact) {
+      initOptions.release.targetArtifact = 'vscode-plugin';
+    }
     if (!this.project.framework.isStandaloneProject) {
       return initOptions;
     }

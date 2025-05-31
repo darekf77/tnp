@@ -61,6 +61,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   //#region init partial
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
+    if (!initOptions.release.targetArtifact) {
+      initOptions.release.targetArtifact = 'angular-node-app';
+    }
 
     initOptions = await this.project.environmentConfig.update(initOptions);
     if (initOptions.release.targetArtifact === 'electron-app') {
@@ -102,10 +105,24 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     dockerBackendFrontendAppDistOutPath: string;
   }> {
     //#region @backendFunc
-
+    const orgParams = buildOptions.clone();
     buildOptions = await this.project.artifactsManager.init(
       EnvOptions.from(buildOptions),
     );
+
+    if (buildOptions.build.watch) {
+      this.project.environmentConfig.watchAndRecreate(async () => {
+        await this.project.environmentConfig.update(
+          orgParams.clone({
+            release: {
+              targetArtifact: buildOptions.release.targetArtifact,
+              envName: '__',
+            },
+          }),
+          true,
+        );
+      });
+    }
 
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 

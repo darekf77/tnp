@@ -179,10 +179,26 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     if (!this.project.framework.isStandaloneProject) {
       return;
     }
+    const orgParams = buildOptions.clone();
 
     buildOptions = await this.project.artifactsManager.init(
       EnvOptions.fromBuild(buildOptions),
     );
+
+    if (buildOptions.build.watch) {
+      this.project.environmentConfig.watchAndRecreate(async () => {
+        await this.project.environmentConfig.update(
+          orgParams.clone({
+            release: {
+              targetArtifact: buildOptions.release.targetArtifact,
+              envName: '__',
+            },
+          }),
+          true,
+        );
+      });
+    }
+
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
     const packageName = this.project.nameForNpmPackage;

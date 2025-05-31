@@ -27,7 +27,6 @@ export class ArtifactElectronApp extends BaseArtifact<
   },
   ReleasePartialOutput
 > {
-
   constructor(project: Project) {
     super(project, 'electron-app');
   }
@@ -37,13 +36,10 @@ export class ArtifactElectronApp extends BaseArtifact<
   }
 
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
-    const result = await this.artifacts.angularNodeApp.initPartial(
-      initOptions.clone({
-        release: {
-          targetArtifact: this.currentArtifactName,
-        },
-      }),
-    );
+    if (!initOptions.release.targetArtifact) {
+      initOptions.release.targetArtifact = 'electron-app';
+    }
+    const result = await this.artifacts.angularNodeApp.initPartial(initOptions);
     return result;
   }
 

@@ -470,10 +470,6 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   declare readonly name?: CoreModels.EnvironmentNameTaon; // generated
   declare readonly currentProjectName?: string;
   declare readonly currentProjectType?: CoreModels.LibType;
-  /**
-   * is angular in production mode (available only on fe)
-   */
-  declare readonly angularProd?: boolean;
   declare readonly buildInfo?: {
     // number?: number; // count commits takes time
     hash?: string;
@@ -526,6 +522,7 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
       // QUICK FIX
       this.build.websql = this['websql'];
       delete this['websql'];
+      delete override['websql'];
     }
 
     this.loading = this.loading || ({} as any);
