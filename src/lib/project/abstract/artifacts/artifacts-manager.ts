@@ -224,45 +224,38 @@ export class ArtifactManager {
     }
 
     this.artifact.npmLibAndCliTool.unlinkNodeModulesWhenTnp();
+    const targetArtifact = initOptions.release.targetArtifact;
 
     if (this.project.framework.isStandaloneProject) {
-      if (
-        !initOptions.release.targetArtifact ||
-        initOptions.release.targetArtifact === 'docs-webapp'
-      ) {
-        initOptions = await this.artifact.docsWebapp.initPartial(initOptions);
+      if (!targetArtifact || targetArtifact === 'docs-webapp') {
+        initOptions = await this.artifact.docsWebapp.initPartial(
+          initOptions,
+        );
       }
-      if (
-        !initOptions.release.targetArtifact ||
-        initOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
-      ) {
-        initOptions =
-          await this.artifact.npmLibAndCliTool.initPartial(initOptions);
+      if (!targetArtifact || targetArtifact === 'npm-lib-and-cli-tool') {
+        initOptions = await this.artifact.npmLibAndCliTool.initPartial(
+          initOptions,
+        );
       }
-      if (
-        !initOptions.release.targetArtifact ||
-        initOptions.release.targetArtifact === 'angular-node-app'
-      ) {
-        initOptions =
-          await this.artifact.angularNodeApp.initPartial(initOptions);
+      if (!targetArtifact || targetArtifact === 'angular-node-app') {
+        initOptions = await this.artifact.angularNodeApp.initPartial(
+          initOptions,
+        );
       }
-      if (
-        !initOptions.release.targetArtifact ||
-        initOptions.release.targetArtifact === 'electron-app'
-      ) {
-        initOptions = await this.artifact.electronApp.initPartial(initOptions);
+      if (!targetArtifact || targetArtifact === 'electron-app') {
+        initOptions = await this.artifact.electronApp.initPartial(
+          initOptions,
+        );
       }
-      if (
-        !initOptions.release.targetArtifact ||
-        initOptions.release.targetArtifact === 'mobile-app'
-      ) {
-        initOptions = await this.artifact.mobileApp.initPartial(initOptions);
+      if (!targetArtifact || targetArtifact === 'mobile-app') {
+        initOptions = await this.artifact.mobileApp.initPartial(
+          initOptions,
+        );
       }
-      if (
-        !initOptions.release.targetArtifact ||
-        initOptions.release.targetArtifact === 'vscode-plugin'
-      ) {
-        initOptions = await this.artifact.vscodePlugin.initPartial(initOptions);
+      if (!targetArtifact || targetArtifact === 'vscode-plugin') {
+        initOptions = await this.artifact.vscodePlugin.initPartial(
+          initOptions,
+        );
       }
     }
     return initOptions;
@@ -404,37 +397,37 @@ export class ArtifactManager {
         !buildOptions.release.targetArtifact ||
         buildOptions.release.targetArtifact === 'docs-webapp'
       ) {
-        await this.artifact.docsWebapp.buildPartial(buildOptions);
+        await this.artifact.docsWebapp.buildPartial(buildOptions.clone());
       }
       if (
         !buildOptions.release.targetArtifact ||
         buildOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
       ) {
-        await this.artifact.npmLibAndCliTool.buildPartial(buildOptions);
+        await this.artifact.npmLibAndCliTool.buildPartial(buildOptions.clone());
       }
       if (
         !buildOptions.release.targetArtifact ||
         buildOptions.release.targetArtifact === 'angular-node-app'
       ) {
-        await this.artifact.angularNodeApp.buildPartial(buildOptions);
+        await this.artifact.angularNodeApp.buildPartial(buildOptions.clone());
       }
       if (
         !buildOptions.release.targetArtifact ||
         buildOptions.release.targetArtifact === 'electron-app'
       ) {
-        await this.artifact.electronApp.buildPartial(buildOptions);
+        await this.artifact.electronApp.buildPartial(buildOptions.clone());
       }
       if (
         !buildOptions.release.targetArtifact ||
         buildOptions.release.targetArtifact === 'mobile-app'
       ) {
-        await this.artifact.mobileApp.buildPartial(buildOptions);
+        await this.artifact.mobileApp.buildPartial(buildOptions.clone());
       }
       if (
         !buildOptions.release.targetArtifact ||
         buildOptions.release.targetArtifact === 'vscode-plugin'
       ) {
-        await this.artifact.vscodePlugin.buildPartial(buildOptions);
+        await this.artifact.vscodePlugin.buildPartial(buildOptions.clone());
       }
       //#endregion
     }

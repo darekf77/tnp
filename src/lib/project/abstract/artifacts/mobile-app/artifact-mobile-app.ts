@@ -16,8 +16,11 @@ export class ArtifactMobileApp extends BaseArtifact<
     return void 0; // TODO implement
   }
 
-  async initPartial(options: EnvOptions): Promise<EnvOptions> {
-    return options;
+  async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
+    if (!initOptions.release.targetArtifact) {
+      initOptions.release.targetArtifact = 'mobile-app'
+    }
+    return initOptions;
   }
   async buildPartial(buildOptions: EnvOptions): Promise<{
     androidMobileAppApkPath: string;

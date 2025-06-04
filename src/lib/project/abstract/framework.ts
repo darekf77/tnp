@@ -1,5 +1,12 @@
 //#region imports
-import { config } from 'tnp-config/src';
+import {
+  backendNodejsOnlyFiles,
+  config,
+  extAllowedToExportAndReplaceTSJSCodeFiles,
+  frontendFiles,
+  notNeededForExportFiles,
+  TAGS,
+} from 'tnp-config/src';
 import {
   CoreModels,
   crossPlatformPath,
@@ -308,6 +315,57 @@ export class Framework extends BaseFeatureForProject<Project> {
       config.folder.node_modules,
       this.project.nameForNpmPackage,
     ]);
+  }
+
+  generateIndexTs(relativePath: string = '') {
+    //#region @backendFunc
+    const absPath = relativePath
+      ? this.project.pathFor(relativePath)
+      : this.project.location;
+    const folders = [
+      ...Helpers.foldersFrom(absPath).map(f => path.basename(f)),
+      ...Helpers.filesFrom(absPath, false).map(f => path.basename(f)),
+    ]
+      .filter(f => !['index.ts'].includes(f))
+      .filter(f => !f.startsWith('.'))
+      .filter(f => !f.startsWith('_'))
+      .filter(f =>
+        _.isUndefined(notNeededForExportFiles.find(e => f.endsWith(e))),
+      )
+      .filter(
+        f =>
+          path.extname(f) === '' ||
+          !_.isUndefined(
+            extAllowedToExportAndReplaceTSJSCodeFiles.find(a => f.endsWith(a)),
+          ),
+      );
+    Helpers.writeFile(
+      crossPlatformPath([absPath, config.file.index_ts]),
+      folders
+        .map(f => {
+          if (
+            !_.isUndefined(frontendFiles.find(bigExt => f.endsWith(bigExt)))
+          ) {
+            // `${TAGS.COMMENT_REGION} ${TAGS.BROWSER}\n` +
+            return `export * from './${f.replace(path.extname(f), '')}'; // ${TAGS.BROWSER}`;
+            // +`\n${TAGS.COMMENT_END_REGION}\n`;
+          }
+          if (
+            !_.isUndefined(
+              backendNodejsOnlyFiles.find(bigExt => f.endsWith(bigExt)),
+            )
+          ) {
+            return (
+              // `${TAGS.COMMENT_REGION} ${TAGS.BACKEND}\n` +
+              `export * from './${f.replace(path.extname(f), '')}'; // ${TAGS.BACKEND}`
+              // +`\n${TAGS.COMMENT_END_REGION}\n`
+            );
+          }
+          return `export * from './${f.replace(path.extname(f), '')}';`;
+        })
+        .join('\n') + '\n',
+    );
+    //#endregion
   }
 
   async global(globalPackageName: string, packageOnly = false) {

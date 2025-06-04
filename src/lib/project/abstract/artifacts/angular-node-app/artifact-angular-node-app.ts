@@ -61,6 +61,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   //#region init partial
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
+    if (!initOptions.release.targetArtifact) {
+      initOptions.release.targetArtifact = 'angular-node-app';
+    }
 
     initOptions = await this.project.environmentConfig.update(initOptions);
     if (initOptions.release.targetArtifact === 'electron-app') {

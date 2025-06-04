@@ -110,6 +110,8 @@ export const DEFAULT_PORT = {
   SERVER_LOCALHOST: 4100,
 };
 
+export const tmpVscodeProj = `tmp-vscode-proj`;
+
 export const tmpBuildPort = 'tmp-build-port';
 export const tmpBaseHrefOverwriteRelPath = 'tmp-base-href-overwrite';
 
@@ -238,6 +240,8 @@ export const notAllowedProjectNames = [
   'docs',
   'environments',
   'env',
+  'projects',
+  'plugins',
   '_',
   'taon',
   'taon-simple-org',

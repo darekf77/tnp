@@ -394,6 +394,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
                 dist: true,
                 'package-lock.json': true,
                 'tmp-*': true,
+                'src/lib/env/**/*.*': true,
               };
 
               frameworkBuildFolders.forEach(f => {
@@ -623,6 +624,7 @@ ${frameworkBuildFolders
 /**/BUILD-INFO.md
 ${this.project.framework.isStandaloneProject ? `/${config.folder.testsEnvironments}` : ''}
 /src/lib/lib-info.md
+/src/lib/env/**/*.*
 /src/migrations/migrations-info.md
 /src/tests/mocha-tests-info.md
 /src/assets/shared/shared_folder_info.txt

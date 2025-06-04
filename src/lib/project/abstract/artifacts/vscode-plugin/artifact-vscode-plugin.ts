@@ -10,7 +10,7 @@ import {
 } from 'tnp-core/src';
 import { Helpers, UtilsQuickFixes } from 'tnp-helpers/src';
 
-import { DEFAULT_PORT } from '../../../../constants';
+import { DEFAULT_PORT, tmpVscodeProj } from '../../../../constants';
 import { Models } from '../../../../models';
 import {
   ReleaseArtifactTaonNames,
@@ -43,6 +43,9 @@ export class ArtifactVscodePlugin extends BaseArtifact<
   //#region init partial
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
+    if (!initOptions.release.targetArtifact) {
+      initOptions.release.targetArtifact = 'vscode-plugin';
+    }
     if (!this.project.framework.isStandaloneProject) {
       return initOptions;
     }
@@ -289,7 +292,7 @@ local VSCode instance.
   //#region private methods / get tmp vscode proj path (for any build)
   public getTmpVscodeProjPath(releaseType?: ReleaseType): string {
     const tmpVscodeProjPath = this.project.pathFor(
-      `${this.project.vsCodeHelpers.vscodeTempProjFolderName}/${
+      `${tmpVscodeProj}/${
         releaseType ? 'release' + releaseType : 'development'
       }/${this.project.name}`,
     );

@@ -1,15 +1,27 @@
 //#region imports
+import { incrementalWatcher } from 'incremental-compiler/src';
 import { walk } from 'lodash-walk-object/src';
+import { from } from 'rxjs';
 import { config } from 'tnp-config/src';
-import { chalk, CoreModels, crossPlatformPath, fse } from 'tnp-core/src';
+import { chalk, CoreModels, crossPlatformPath, fse, Utils } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { BaseFeatureForProject, UtilsTypescript } from 'tnp-helpers/src';
 import { Helpers } from 'tnp-helpers/src';
 import { register } from 'ts-node';
 
-import { DUMMY_LIB, environments, envTs } from '../../../../../constants';
-import { EnvOptions, ReleaseArtifactTaon } from '../../../../../options';
+import {
+  DUMMY_LIB,
+  environments,
+  envTs,
+  THIS_IS_GENERATED_INFO_COMMENT,
+  THIS_IS_GENERATED_STRING,
+} from '../../../../../constants';
+import {
+  EnvOptions,
+  ReleaseArtifactTaon,
+  ReleaseArtifactTaonNamesArr,
+} from '../../../../../options';
 import type { Project } from '../../../project';
 
 //#endregion
@@ -53,18 +65,63 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   }
   //#endregion
 
-  //#region api / update
-  public async update(envConfigFromParams: EnvOptions): Promise<EnvOptions> {
+  async watchAndRecreate(onChange: () => any): Promise<void> {
     //#region @backendFunc
+    if (this.project.framework.isStandaloneProject) {
+      const watcher = await incrementalWatcher(
+        [
+          this.project.pathFor(`environments/**/*.ts`),
+          this.project.pathFor(`env.ts`),
+        ],
+        {
+          name: 'Environment Config Watcher',
+          ignoreInitial: true,
+          followSymlinks: false,
+        },
+      );
+      watcher.on('all', async (event, filePath) => {
+        onChange();
+      });
+    }
+
+    //#endregion
+  }
+
+  //#region api / update
+  public async update(
+    envConfigFromParams: EnvOptions,
+    options?: {
+      fromWatcher?: boolean;
+      saveEnvToLibEnv?: boolean;
+    },
+  ): Promise<EnvOptions> {
+    //#region @backendFunc
+    options = options || {};
+    Helpers.taskStarted(
+      `${options.fromWatcher ? '(watcher) ' : ''}Updating environment config `,
+    );
     envConfigFromParams = EnvOptions.from(envConfigFromParams);
 
     this.makeSureEnvironmentExists();
 
-    const configResult = await this.envOptionsResolve(envConfigFromParams);
+    const configResult = await this.envOptionsResolve(
+      envConfigFromParams,
+      options.fromWatcher,
+    );
     configResult.applyFieldsFrom(envConfigFromParams);
 
     this.updateGeneratedValues(configResult);
-    this.saveEnvironmentConfig(configResult);
+    if (options.saveEnvToLibEnv) {
+      if (!options.fromWatcher) {
+        this.project.remove(`src/lib/env`);
+      }
+      this.saveEnvironmentConfig(configResult);
+    }
+
+    Helpers.taskDone(
+      `${options.fromWatcher ? '(watcher) ' : ''}Done updating environment config `,
+    );
+
     return configResult;
     //#endregion
   }
@@ -75,14 +132,21 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   //#region private methods
 
   //#region private methods / env options resolve
-  private envOptionsResolve(envOptions: EnvOptions): EnvOptions {
+  private envOptionsResolve(
+    envOptions: EnvOptions,
+    fromWatcher = false,
+  ): EnvOptions {
     //#region @backendFunc
+    if (!envOptions.release.envName) {
+      envOptions.release.envName = '__';
+    }
     if (envOptions.release.envName && envOptions.release.targetArtifact) {
       const envConfigForArtifactAndEnvironment = EnvOptions.from(
         this.project.environmentConfig.getEnvFor(
           envOptions.release.targetArtifact,
           envOptions.release.envName,
           envOptions.release.envNumber,
+          fromWatcher,
         ),
       );
       return envConfigForArtifactAndEnvironment;
@@ -99,21 +163,23 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     artifactName: ReleaseArtifactTaon,
     environmentName: CoreModels.EnvironmentNameTaon,
     envNum: number = undefined,
+    fromWatcher = false,
   ): Partial<EnvOptions> {
     //#region @backendFunc
     let env: Partial<EnvOptions>;
-    Helpers.taskStarted(
-      `Reading environment config for ` +
-        `${artifactName}/${environmentName}/${envNum || ''}`,
-    );
+    // Helpers.taskStarted(
+    //   `${fromWatcher ? '(watcher) ' : ''}Reading environment config for ` +
+    //     `${artifactName}/${environmentName}/${envNum || ''}`,
+    // );
 
     try {
-      env = require(
-        this.project.pathFor(
-          `environments/${artifactName}/` +
-            `env.${artifactName}.${environmentName}${envNum === undefined ? '' : envNum}.ts`,
-        ),
-      )?.default;
+      const pathToEnvTs = this.project.pathFor(
+        `environments/${artifactName}/` +
+          `env.${artifactName}.${environmentName}${envNum === undefined ? '' : envNum}.ts`,
+      );
+
+      UtilsTypescript.clearRequireCacheRecursive(pathToEnvTs);
+      env = require(pathToEnvTs)?.default;
     } catch (error) {
       // TODO QUICK_FIX @UNCOMMENT @LAST
       if (this.project.framework.isCoreProject) {
@@ -128,10 +194,10 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
         `,
       );
     }
-    Helpers.taskDone(
-      `Reading environment config for ` +
-        `${artifactName}/${environmentName}/${envNum || ''}`,
-    );
+    // Helpers.taskDone(
+    //   `${fromWatcher ? '(watcher) ' : ''}Done reading environment config for ` +
+    //     `${artifactName}/${environmentName}/${envNum || ''}`,
+    // );
     return env;
     //#endregion
   }
@@ -141,9 +207,10 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   private getEnvMain(): Partial<EnvOptions> {
     //#region @backendFunc
 
-    Helpers.taskStarted(`Reading environment config for ${this.project.name}`);
+    // Helpers.taskStarted(`Reading environment config for ${this.project.name}`);
     let configStandaloneEnv: EnvOptions;
     try {
+      UtilsTypescript.clearRequireCacheRecursive(this.absPathToEnvTs);
       configStandaloneEnv = require(this.absPathToEnvTs)?.default;
     } catch (error) {
       // TODO QUICK_FIX @UNCOMMENT @LAST
@@ -157,9 +224,9 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
         `,
       );
     }
-    Helpers.taskDone(
-      `Done reading environment config for ${this.project.name}`,
-    );
+    // Helpers.taskDone(
+    //   `Done reading environment config for ${this.project.name}`,
+    // );
 
     if (!configStandaloneEnv) {
       Helpers.throw(`Please provide default export in ${this.absPathToEnvTs}`);
@@ -230,36 +297,42 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   //#endregion
 
   //#region private methods / save config workspace
-  private saveEnvironmentConfig(projectConfig: EnvOptions): void {
+  private saveEnvironmentConfig(projectEnvConfig: EnvOptions): void {
     //#region @backendFunc
 
-    const tmpEnvironmentPath = path.join(
-      this.project.location,
-      config.file.tnpEnvironment_json,
-    );
-    const tmpEnvironmentPathBrowser = path.join(
-      this.project.location,
-      'tmp-environment-for-browser.json',
-    );
+    const artifactsThatNeedBrowserBackendEnvConfigs =
+      ReleaseArtifactTaonNamesArr.filter(f => f !== 'docs-webapp');
+    for (const targetArtifact of artifactsThatNeedBrowserBackendEnvConfigs) {
+      if (this.project.framework.isStandaloneProject) {
+        const backendConfigFileName = `env.${targetArtifact}.ts`;
+        const backendConstants: string[] = [];
 
-    if (
-      this.project.framework.isStandaloneProject ||
-      this.project.framework.isContainer
-    ) {
-      Helpers.writeJson(tmpEnvironmentPath, projectConfig);
-      const clonedConfig = _.cloneDeep(projectConfig);
-      // console.log(JSON.stringify(clonedConfig))
-      walk.Object(clonedConfig, (val, path, newValue) => {
-        if (_.last(path.split('.')).startsWith('$')) {
-          newValue(null);
-        }
-      });
-      Helpers.writeJson(tmpEnvironmentPathBrowser, clonedConfig);
-      Helpers.info(
-        `Config saved in project ${chalk.bold(this.project.pathFor('tsconfig.json'))}
-      ${tmpEnvironmentPath}`,
-      );
+        walk.Object(
+          projectEnvConfig,
+          (val, lodashPath, newValue) => {
+            if (!_.isObject(val)) {
+              backendConstants.push(
+                `export const ENV_` +
+                  `${_.snakeCase(targetArtifact).toUpperCase()}_` +
+                  `${_.snakeCase(lodashPath).replace(/\ /g, '_').toUpperCase()} ` +
+                  `= ${_.isString(val) ? `'${val}'` : val}`,
+              );
+            }
+          },
+          { walkGetters: false },
+        );
+
+        this.project.writeFile(
+          `src/lib/env/${backendConfigFileName}`,
+          `${THIS_IS_GENERATED_INFO_COMMENT}
+${backendConstants.join('\n')}
+${THIS_IS_GENERATED_INFO_COMMENT}`,
+        );
+      }
     }
+
+    this.project.framework.generateIndexTs('src/lib/env');
+
     //#endregion
   }
   //#endregion

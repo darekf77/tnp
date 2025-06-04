@@ -112,7 +112,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     this.filesRecreator.vscode.settings.toogleHideOrShowDeps();
 
-    initOptions = await this.project.environmentConfig.update(initOptions);
+    initOptions = await this.project.environmentConfig.update(initOptions, {
+      saveEnvToLibEnv: true,
+    });
     // const updatedConfig =
     // if (updatedConfig) {
     //   initOptions = updatedConfig;
@@ -179,10 +181,26 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     if (!this.project.framework.isStandaloneProject) {
       return;
     }
+    const orgParams = buildOptions.clone();
 
     buildOptions = await this.project.artifactsManager.init(
       EnvOptions.fromBuild(buildOptions),
     );
+
+    if (buildOptions.build.watch) {
+      this.project.environmentConfig.watchAndRecreate(async () => {
+        await this.project.environmentConfig.update(
+          orgParams.clone({
+            release: {
+              targetArtifact: buildOptions.release.targetArtifact,
+              envName: '__',
+            },
+          }),
+          { fromWatcher: true, saveEnvToLibEnv: true },
+        );
+      });
+    }
+
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
     const packageName = this.project.nameForNpmPackage;

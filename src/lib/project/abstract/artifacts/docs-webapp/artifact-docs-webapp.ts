@@ -36,6 +36,9 @@ export class ArtifactDocsWebapp extends BaseArtifact<
   }
 
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
+    if (!initOptions.release.targetArtifact) {
+      initOptions.release.targetArtifact = 'docs-webapp';
+    }
     await this.docs.initializeWatchers(initOptions);
     await this.docs.init();
     return initOptions;
@@ -45,7 +48,9 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     docsWebappDistOutPath: string;
     combinedDocsHttpServerUrl: Url;
   }> {
-    buildOptions = await this.project.artifactsManager.init(EnvOptions.from(buildOptions));
+    buildOptions = await this.project.artifactsManager.init(
+      EnvOptions.from(buildOptions),
+    );
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
     const combinedDocsHttpServerUrl: Url = void 0; // TODO implement
     const docsWebappDistOutPath: string = buildOptions.build.overrideOutputPath

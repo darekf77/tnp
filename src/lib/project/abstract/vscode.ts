@@ -11,6 +11,7 @@ import {
   taonConfigSchemaJsonStandalone,
   taonConfigSchemaJsonContainer,
   THIS_IS_GENERATED_INFO_COMMENT,
+  tmpVscodeProj,
 } from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions } from '../../options';
@@ -170,10 +171,6 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   }
   //#endregion
 
-  get vscodeTempProjFolderName() {
-    return `tmp-vscode-proj`;
-  }
-
   private get vscodePluginDevPreLaunchTask() {
     //#region vscode update package.json
     return {
@@ -246,7 +243,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     //#region template vscode config
     const vscodeProjDevPath =
-      `${this.vscodeTempProjFolderName}` + `/development/${this.project.name}`;
+      `${tmpVscodeProj}` + `/development/${this.project.name}`;
     const templatesVscodeExConfig = [
       {
         name: 'Debug/Start Vscode Plugin',
