@@ -255,15 +255,7 @@ export * from './lib';
             Helpers.writeJson(ngPackageJson, json);
           })();
 
-          // (() => {
-          //   let json = Helpers.readFile(libPackageJson); // dist is on porpose
-          //   json = json.replace(`"${this.project.name}"`, `"${this.project.name}/`
-          //     + `${this.websql ? config.folder.websql : config.folder.browser}"`);
-
-          //   Helpers.writeJson(libPackageJson, JSON.parse(json));
-          // })();
-
-          recreateApp(project);
+          recreateApp(project, this.initOptions);
           recreateIndex(project);
         },
       },

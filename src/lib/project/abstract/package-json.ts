@@ -1,5 +1,4 @@
 import { gt, gte, valid } from 'semver';
-import { scriptsCommands } from 'tnp/src';
 import { config } from 'tnp-config/src';
 import {
   CoreModels,
@@ -18,6 +17,7 @@ import {
 } from 'tnp-helpers/src';
 import { PackageJson, PackageJson as PackageJsonType } from 'type-fest';
 
+import { scriptsCommands } from '../../constants';
 import { EnvOptions } from '../../options';
 
 import type { Project } from './project';

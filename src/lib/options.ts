@@ -251,6 +251,10 @@ class EnvOptionsRelease {
    */
   declare skipResolvingGitChanges?: boolean;
   /**
+   * skip cuting @ n o t F o r N p m tags
+   */
+  declare skipCodeCutting?: boolean;
+  /**
    * release artifact name
    * for example: "angular-node-app"
    */

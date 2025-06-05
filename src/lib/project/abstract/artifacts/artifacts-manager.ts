@@ -512,6 +512,7 @@ export class ArtifactManager {
             watch: false,
           },
           release: {
+            skipCodeCutting: true,
             targetArtifact: 'npm-lib-and-cli-tool',
           },
         }),

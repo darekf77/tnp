@@ -155,22 +155,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       ? buildOptions.build.baseHref
       : fromFileBaseHref;
 
-    this.project.writeFile(
-      'src/vars.scss',
-      `${THIS_IS_GENERATED_INFO_COMMENT}
-// CORE ASSETS BASENAME - use it only for asset from core container
-$basename: '${
-        buildOptions.build.baseHref?.startsWith('./')
-          ? buildOptions.build.baseHref.replace('./', '/')
-          : buildOptions.build.baseHref
-      }';
-$website_title: '${buildOptions.website.title}';
-$website_domain: '${buildOptions.website.domain}';
-$project_npm_name: '${this.project.nameForNpmPackage}';
-${THIS_IS_GENERATED_INFO_COMMENT}
-`,
-    );
-
     const portAssignedToAppBuild: number =
       await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(buildOptions);
 

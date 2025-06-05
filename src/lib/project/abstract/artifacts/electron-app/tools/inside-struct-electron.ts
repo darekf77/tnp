@@ -1,5 +1,4 @@
-import { EnvOptions } from 'tnp/src';
-
+import { EnvOptions } from '../../../../../options';
 import { BaseInsideStruct } from '../../__helpers__/inside-structures/structs/base-inside-struct';
 import { InsideStructuresProcess } from '../../__helpers__/inside-structures-process';
 

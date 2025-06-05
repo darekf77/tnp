@@ -3,6 +3,8 @@ import { config } from 'tnp-config/src';
 import { _, crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
+import { THIS_IS_GENERATED_INFO_COMMENT } from '../../../../../../constants';
+import { EnvOptions } from '../../../../../../options';
 import { EXPORT_TEMPLATE } from '../../../../../../templates';
 import type { Project } from '../../../../project';
 //#endregion
@@ -76,7 +78,7 @@ export function recreateIndex(project: Project) {
   //#endregion
 }
 
-export function recreateApp(project: Project) {
+export function recreateApp(project: Project, initOptions: EnvOptions): void {
   //#region @backendFunc
   //#region when app.ts or app is not available is not
 
@@ -127,6 +129,23 @@ export function recreateApp(project: Project) {
     ) {
       Helpers.writeFile(appElectornFile, appElectronTemplate(project));
     }
+
+    // TODO QUICK_FIX this will work in app - only if app is build with same base-href
+    project.writeFile(
+      'src/vars.scss',
+      `${THIS_IS_GENERATED_INFO_COMMENT}
+// CORE ASSETS BASENAME - use it only for asset from core container
+$basename: '${
+        initOptions.build.baseHref?.startsWith('./')
+          ? initOptions.build.baseHref.replace('./', '/')
+          : initOptions.build.baseHref
+      }';
+$website_title: '${initOptions.website.title}';
+$website_domain: '${initOptions.website.domain}';
+$project_npm_name: '${project.nameForNpmPackage}';
+${THIS_IS_GENERATED_INFO_COMMENT}
+`,
+    );
   }
 
   if (
