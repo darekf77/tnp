@@ -18,6 +18,13 @@ import { BaseCli } from './base-cli';
 
 // @ts-ignore TODO weird inheritance problem
 class $Release extends BaseCli {
+  async __initialize__(): Promise<void> {
+    await super.__initialize__();
+    if (this.project.framework.isStandaloneProject) {
+      await this.project.nodeModules.makeSureInstalled();
+    }
+  }
+
   //#region _
   public async _() {
     await this.project.releaseProcess.displayReleaseProcessMenu(this.params);

@@ -511,6 +511,9 @@ export class ArtifactManager {
           build: {
             watch: false,
           },
+          release: {
+            targetArtifact: 'npm-lib-and-cli-tool',
+          },
         }),
       );
     };
