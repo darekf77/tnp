@@ -1,6 +1,4 @@
 //#region imports
-import { EndpointContext } from 'taon/src';
-import { config } from 'tnp-config/src';
 import { _, fse, UtilsTerminal } from 'tnp-core/src';
 import { BaseCliWorker, Helpers } from 'tnp-helpers/src';
 

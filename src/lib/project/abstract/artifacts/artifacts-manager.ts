@@ -240,17 +240,33 @@ export class ArtifactManager {
         initOptions =
           await this.artifact.npmLibAndCliTool.initPartial(initOptions);
       }
-      if (!targetArtifact || targetArtifact === 'angular-node-app') {
+      if (
+        !targetArtifact ||
+        targetArtifact === 'npm-lib-and-cli-tool' ||
+        targetArtifact === 'angular-node-app'
+      ) {
         initOptions =
           await this.artifact.angularNodeApp.initPartial(initOptions);
       }
-      if (!targetArtifact || targetArtifact === 'electron-app') {
+      if (
+        !targetArtifact ||
+        targetArtifact === 'npm-lib-and-cli-tool' ||
+        targetArtifact === 'electron-app'
+      ) {
         initOptions = await this.artifact.electronApp.initPartial(initOptions);
       }
-      if (!targetArtifact || targetArtifact === 'mobile-app') {
+      if (
+        !targetArtifact ||
+        targetArtifact === 'npm-lib-and-cli-tool' ||
+        targetArtifact === 'mobile-app'
+      ) {
         initOptions = await this.artifact.mobileApp.initPartial(initOptions);
       }
-      if (!targetArtifact || targetArtifact === 'vscode-plugin') {
+      if (
+        !targetArtifact ||
+        targetArtifact === 'npm-lib-and-cli-tool' ||
+        targetArtifact === 'vscode-plugin'
+      ) {
         initOptions = await this.artifact.vscodePlugin.initPartial(initOptions);
       }
     }
