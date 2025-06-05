@@ -80,7 +80,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       const local = 'local' as ReleaseType;
       const staticPages = 'static-pages' as ReleaseType;
       const priovider =
-        _.upperFirst(_.first(this.project.git.remoteProvider.split('.'))) ||
+        _.upperFirst(_.first(this.project.git.remoteProvider?.split('.'))) ||
         'unknow';
 
       // const { actionResult } =
