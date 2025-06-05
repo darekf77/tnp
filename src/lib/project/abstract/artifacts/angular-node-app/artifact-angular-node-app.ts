@@ -333,8 +333,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     const contextTemplate = (options: ContextOptions): string => {
       return `## CONTEXT ${options.num}:
-- backend http://localhost:${options.nodeBeAppPort}
-- normal app node backend http://localhost:${options.ngNormalAppPort}
+- nodejs backend http://localhost:${options.nodeBeAppPort}
+- normal frontend app for nodejs backend http://localhost:${options.ngNormalAppPort}
 - websql app backend/frontend http://localhost:${options.ngWebsqlAppPort}
 `;
     };
