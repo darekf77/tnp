@@ -64,8 +64,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     if (!initOptions.release.targetArtifact) {
       initOptions.release.targetArtifact = 'angular-node-app';
     }
-
-    initOptions = await this.project.environmentConfig.update(initOptions);
     if (initOptions.release.targetArtifact === 'electron-app') {
       await this.insideStructureElectron.init(initOptions);
     } else {

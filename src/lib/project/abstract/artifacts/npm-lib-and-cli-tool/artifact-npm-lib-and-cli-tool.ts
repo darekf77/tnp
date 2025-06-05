@@ -112,9 +112,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     this.filesRecreator.vscode.settings.toogleHideOrShowDeps();
 
-    initOptions = await this.project.environmentConfig.update(initOptions, {
-      saveEnvToLibEnv: true,
-    });
     // const updatedConfig =
     // if (updatedConfig) {
     //   initOptions = updatedConfig;

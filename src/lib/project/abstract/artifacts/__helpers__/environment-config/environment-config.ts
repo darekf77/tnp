@@ -104,6 +104,12 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
 
     this.makeSureEnvironmentExists();
 
+    if (options.saveEnvToLibEnv) {
+      if (!options.fromWatcher) {
+        this.project.remove(`src/lib/env`);
+      }
+    }
+
     const configResult = await this.envOptionsResolve(
       envConfigFromParams,
       options.fromWatcher,
@@ -111,11 +117,23 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     configResult.applyFieldsFrom(envConfigFromParams);
 
     this.updateGeneratedValues(configResult);
-    if (options.saveEnvToLibEnv) {
-      if (!options.fromWatcher) {
-        this.project.remove(`src/lib/env`);
+
+    if (options.saveEnvToLibEnv && this.project.framework.isStandaloneProject) {
+      for (const targetArtifact of ReleaseArtifactTaonNamesArr) {
+        const toApplyWithTarget = configResult.clone({
+          release: {
+            targetArtifact,
+          },
+        });
+        const configResultForTarget = await this.envOptionsResolve(
+          toApplyWithTarget,
+          options.fromWatcher,
+        );
+
+        this.saveEnvironmentConfig(configResultForTarget);
       }
-      this.saveEnvironmentConfig(configResult);
+
+      this.project.framework.generateIndexTs('src/lib/env');
     }
 
     Helpers.taskDone(
@@ -148,7 +166,14 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
           envOptions.release.envNumber,
           fromWatcher,
         ),
-      );
+      ).clone({
+        // must be reapplied after cloning
+        release: {
+          targetArtifact: envOptions.release.targetArtifact,
+          envName: envOptions.release.envName,
+          envNumber: envOptions.release.envNumber,
+        },
+      });
       return envConfigForArtifactAndEnvironment;
     } else {
       const mainConfig = EnvOptions.from(this.getEnvMain());
@@ -300,38 +325,32 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   private saveEnvironmentConfig(projectEnvConfig: EnvOptions): void {
     //#region @backendFunc
 
-    const artifactsThatNeedBrowserBackendEnvConfigs =
-      ReleaseArtifactTaonNamesArr.filter(f => f !== 'docs-webapp');
-    for (const targetArtifact of artifactsThatNeedBrowserBackendEnvConfigs) {
-      if (this.project.framework.isStandaloneProject) {
-        const backendConfigFileName = `env.${targetArtifact}.ts`;
-        const backendConstants: string[] = [];
+    if (this.project.framework.isStandaloneProject) {
+      const backendConfigFileName = `env.${projectEnvConfig.release.targetArtifact}.ts`;
+      const backendConstants: string[] = [];
 
-        walk.Object(
-          projectEnvConfig,
-          (val, lodashPath, newValue) => {
-            if (!_.isObject(val)) {
-              backendConstants.push(
-                `export const ENV_` +
-                  `${_.snakeCase(targetArtifact).toUpperCase()}_` +
-                  `${_.snakeCase(lodashPath).replace(/\ /g, '_').toUpperCase()} ` +
-                  `= ${_.isString(val) ? `'${val}'` : val}`,
-              );
-            }
-          },
-          { walkGetters: false },
-        );
+      walk.Object(
+        projectEnvConfig,
+        (val, lodashPath, newValue) => {
+          if (!_.isObject(val)) {
+            backendConstants.push(
+              `export const ENV_` +
+                `${_.snakeCase(projectEnvConfig.release.targetArtifact).toUpperCase()}_` +
+                `${_.snakeCase(lodashPath).replace(/\ /g, '_').toUpperCase()} ` +
+                `= ${_.isString(val) ? `'${val}'` : val}`,
+            );
+          }
+        },
+        { walkGetters: false },
+      );
 
-        this.project.writeFile(
-          `src/lib/env/${backendConfigFileName}`,
-          `${THIS_IS_GENERATED_INFO_COMMENT}
+      this.project.writeFile(
+        `src/lib/env/${backendConfigFileName}`,
+        `${THIS_IS_GENERATED_INFO_COMMENT}
 ${backendConstants.join('\n')}
 ${THIS_IS_GENERATED_INFO_COMMENT}`,
-        );
-      }
+      );
     }
-
-    this.project.framework.generateIndexTs('src/lib/env');
 
     //#endregion
   }

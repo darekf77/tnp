@@ -144,6 +144,12 @@ export class ArtifactManager {
     }
     //#endregion
 
+    initOptions = await this.project.environmentConfig.update(initOptions, {
+      saveEnvToLibEnv:
+        initOptions.release.targetArtifact === 'npm-lib-and-cli-tool' ||
+        !initOptions.release.targetArtifact,
+    });
+
     // TODO QUICK_FIX change env to something else
     Helpers.removeFileIfExists(
       path.join(this.project.location, config.file.tnpEnvironment_json),
@@ -228,34 +234,24 @@ export class ArtifactManager {
 
     if (this.project.framework.isStandaloneProject) {
       if (!targetArtifact || targetArtifact === 'docs-webapp') {
-        initOptions = await this.artifact.docsWebapp.initPartial(
-          initOptions,
-        );
+        initOptions = await this.artifact.docsWebapp.initPartial(initOptions);
       }
       if (!targetArtifact || targetArtifact === 'npm-lib-and-cli-tool') {
-        initOptions = await this.artifact.npmLibAndCliTool.initPartial(
-          initOptions,
-        );
+        initOptions =
+          await this.artifact.npmLibAndCliTool.initPartial(initOptions);
       }
       if (!targetArtifact || targetArtifact === 'angular-node-app') {
-        initOptions = await this.artifact.angularNodeApp.initPartial(
-          initOptions,
-        );
+        initOptions =
+          await this.artifact.angularNodeApp.initPartial(initOptions);
       }
       if (!targetArtifact || targetArtifact === 'electron-app') {
-        initOptions = await this.artifact.electronApp.initPartial(
-          initOptions,
-        );
+        initOptions = await this.artifact.electronApp.initPartial(initOptions);
       }
       if (!targetArtifact || targetArtifact === 'mobile-app') {
-        initOptions = await this.artifact.mobileApp.initPartial(
-          initOptions,
-        );
+        initOptions = await this.artifact.mobileApp.initPartial(initOptions);
       }
       if (!targetArtifact || targetArtifact === 'vscode-plugin') {
-        initOptions = await this.artifact.vscodePlugin.initPartial(
-          initOptions,
-        );
+        initOptions = await this.artifact.vscodePlugin.initPartial(initOptions);
       }
     }
     return initOptions;
