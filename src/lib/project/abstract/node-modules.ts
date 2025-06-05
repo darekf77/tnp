@@ -481,9 +481,13 @@ export class NodeModules extends BaseNodeModules {
         `temp-location-${this.project.name}`,
       ]);
 
-      Helpers.move(folderToMove, folderTemp);
+      Helpers.move(folderToMove, folderTemp, {
+        purpose: `Moving own "${this.project.nameForNpmPackage}" package to temp location`,
+      });
       await actionwhenNotInNodeModules();
-      Helpers.move(folderTemp, folderToMove);
+      Helpers.move(folderTemp, folderToMove, {
+        purpose: `Restoring own "${this.project.nameForNpmPackage}" package after action`,
+      });
     }
     //#endregion
   }

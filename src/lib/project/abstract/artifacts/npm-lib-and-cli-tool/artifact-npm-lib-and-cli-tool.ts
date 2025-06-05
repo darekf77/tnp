@@ -680,12 +680,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   ): Promise<void> {
     //#region cli
     if (releaseOptions.release.cli.includeNodeModules) {
-      await this.project.nodeModules.removeOwnPackage(async () => {
-        await this.backendIncludeNodeModulesInCompilation(
-          releaseAbsPath,
-          releaseOptions.release.cli.minify,
-        );
-      });
+      // await this.project.nodeModules.removeOwnPackage(async () => {
+      await this.backendIncludeNodeModulesInCompilation(
+        releaseAbsPath,
+        releaseOptions.release.cli.minify,
+      );
+      // });
     }
 
     const reservedNames = ['reservedExpSec', 'reservedExpOne'];
