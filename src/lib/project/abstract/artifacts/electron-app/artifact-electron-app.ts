@@ -20,6 +20,7 @@ import type { Project } from '../../project';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
 import { InsideStructuresElectron } from './tools/inside-struct-electron';
+import { PackageJson } from 'type-fest';
 
 export class ArtifactElectronApp extends BaseArtifact<
   {
@@ -176,6 +177,14 @@ export class ArtifactElectronApp extends BaseArtifact<
     //   return line;
     // });
     //#endregion
+
+    const electronPackageJson = proxyProj.pathFor(`package.json`);
+    const electronPackageJsonContent = Helpers.readJson(
+      electronPackageJson,
+    ) as PackageJson;
+    electronPackageJsonContent.dependencies = {};
+    electronPackageJsonContent.devDependencies = this.project.packageJson.dependencies || {};
+    Helpers.writeJson(electronPackageJson, electronPackageJsonContent);
 
     proxyProj.run(`npm-run electron-builder build --publish=never`).sync();
 
