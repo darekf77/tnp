@@ -234,6 +234,7 @@ Object.defineProperty(document.body.style, 'transform', {
                 indexTs,
                 `
 // EXPORT SCSS STYLES FOR THIS LIBRARY IN THIS FILE
+// @forward './my-scss-file.scss'; # => it is similar to export * from './my-scss-file.scss' in TypeScript
               `.trimLeft(),
               );
             }
@@ -252,7 +253,7 @@ Object.defineProperty(document.body.style, 'transform', {
                 indexTs,
                 `
 // EXPORT SCSS STYLES FOR THIS APP or LIBRARY IN THIS FILE
-@use './lib/index.scss' as *;
+@forward './lib/index.scss';
 
               `.trimLeft(),
               );
