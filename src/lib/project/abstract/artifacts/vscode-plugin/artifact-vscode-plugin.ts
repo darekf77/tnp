@@ -98,64 +98,30 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     );
 
     //#region recreate app.vscode.js
+
     const relativeAppVscodeJsPath = crossPlatformPath('src/app.vscode.ts');
     if (!this.project.hasFile(relativeAppVscodeJsPath)) {
+      const coreName = _.upperFirst(_.camelCase(this.project.name));
+      const coreNameKebab = _.kebabCase(this.project.name);
+      const contentOrgVscode =
+        this.project.framework.coreProject.readFile('src/app.vscode.ts');
       this.project.writeFile(
         relativeAppVscodeJsPath,
-        `import { Utils } from 'tnp-core/src';
-import { CommandType, executeCommand } from 'tnp-helpers/src';
-import type { ExtensionContext } from 'vscode';
-
-const group = '${_.startCase(this.project.name)} CLI essentials';
-
-export const commands: CommandType[] = (
-  [
-    {
-      title: 'hello world',
-    },
-    {
-      title: 'hey!',
-    },
-  ] as CommandType[]
-).map(c => {
-  if (!c.command) {
-    c.command = \`extension.\${Utils.camelize(c.title)}\`;
-  }
-  if (!c.group) {
-    c.group = group;
-  }
-  return c;
-});
-
-export function activate(context: ExtensionContext) {
-  for (let index = 0; index < commands.length; index++) {
-    const {
-      title = '',
-      command = '',
-      exec = '',
-      options,
-      isDefaultBuildCommand,
-    } = commands[index];
-    const sub = executeCommand(
-      title,
-      command,
-      exec,
-      options,
-      isDefaultBuildCommand,
-      context,
-    );
-    if (sub) {
-      context.subscriptions.push(sub);
-    }
-  }
-}
-
-export function deactivate() {}
-
-export default { commands };
-
-
-        `,
+        contentOrgVscode
+          .replace(
+            new RegExp(
+              `IsomorphicLibV${this.project.framework.frameworkVersion.replace('v', '')}`,
+              'g',
+            ),
+            `${coreName}`,
+          )
+          .replace(
+            new RegExp(
+              `isomorphic-lib-v${this.project.framework.frameworkVersion.replace('v', '')}`,
+              'g',
+            ),
+            `${coreNameKebab}`,
+          ),
       );
     }
     //#endregion
