@@ -136,9 +136,9 @@ export function recreateApp(project: Project, initOptions: EnvOptions): void {
       `${THIS_IS_GENERATED_INFO_COMMENT}
 // CORE ASSETS BASENAME - use it only for asset from core container
 $basename: '${
-        initOptions.build.baseHref?.startsWith('./')
+        (initOptions.build.baseHref?.startsWith('./')
           ? initOptions.build.baseHref.replace('./', '/')
-          : initOptions.build.baseHref
+          : initOptions.build.baseHref) || '/'
       }';
 $website_title: '${initOptions.website.title}';
 $website_domain: '${initOptions.website.domain}';
