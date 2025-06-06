@@ -1633,10 +1633,21 @@ ${this.project.children
 
   //#region wrapper for ng
   ng() {
-    Helpers.run(`npx -p @angular/cli ng ${this.argsWithParams}`, {
-      output: true,
-      silence: false,
-    }).sync();
+    // check if for example v18 in args
+    const latest = 'latest';
+    const version = this.args.find(arg => arg.startsWith('v')) || latest;
+    let argsWithParams = this.argsWithParams;
+    if (version !== latest) {
+      this.args = this.args.filter(arg => !arg.startsWith('v'));
+      argsWithParams = this.argsWithParams.replace(version, '');
+    }
+    Helpers.run(
+      `npx -p @angular/cli@${version.replace('v', '').replace('@', '')} ng ${argsWithParams}`,
+      {
+        output: true,
+        silence: false,
+      },
+    ).sync();
     this._exit();
   }
   //#endregion
