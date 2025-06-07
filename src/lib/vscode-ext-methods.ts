@@ -3,12 +3,19 @@ import { CommandType } from 'tnp-helpers/src';
 
 export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
   //#region @backendFunc
-  const group = `${FRAMEWORK_NAME.toUpperCase()} CLI essentials`;
+  const toolName = `${FRAMEWORK_NAME.toUpperCase()} CLI `;
+  const group = `${toolName}`;
+  const groupGENERATE = `${toolName} generate`;
+  const groupRefactor = `${toolName} refactor`;
+  // const groupTempFiles = `${toolName} temporary files`;
+  // const groupOpen = `${toolName} open`;
+
   return (
     [
       //#region CREATE MIGRATION
       {
-        title: `${FRAMEWORK_NAME.toUpperCase()} create migration`,
+        group: groupGENERATE,
+        title: `new migration`,
         exec: `${FRAMEWORK_NAME} migration:create %migrationname%`,
         options: {
           titleWhenProcessing: `taon is adding new migration..`,
@@ -21,9 +28,10 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         },
       },
       //#endregion
+
       //#region MAGIC COPY AND RENAME
       {
-        title: `${FRAMEWORK_NAME.toUpperCase()} magic copy and rename`,
+        title: `magic copy and rename`,
         exec: `${FRAMEWORK_NAME} copy:and:rename '%rules%'`,
         options: {
           titleWhenProcessing: `taon is magically renaming files and folders..`,
@@ -41,7 +49,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
 
       //#region OPEN CORE CONTAINER
       {
-        title: `${FRAMEWORK_NAME.toUpperCase()} open core container`,
+        title: `open core container`,
         exec: `${FRAMEWORK_NAME} open:core:container`,
         options: {
           titleWhenProcessing: 'opening core container',
@@ -51,9 +59,22 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+      //#region OPEN CORE PROJECT
+      {
+        title: `open core project`,
+        exec: `${FRAMEWORK_NAME} open:core:project`,
+        options: {
+          title: 'opening core project',
+          findNearestProject: true,
+          showSuccessMessage: false,
+        },
+      },
+      //#endregion
+
       //#region GENERATE INDEX.TS
       {
-        title: `${FRAMEWORK_NAME.toUpperCase()} generate index.ts`,
+        group: groupGENERATE,
+        title: `index.ts`,
         exec: `${FRAMEWORK_NAME} generate %absolutePath% generated-index-exports_custom`,
         options: {
           titleWhenProcessing: 'generating index.ts',
@@ -64,7 +85,8 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
 
       //#region GENERATE INDEX.TS
       {
-        title: `${FRAMEWORK_NAME.toUpperCase()} generate class fields @websql regions`,
+        group: groupRefactor,
+        title: `class fields @websql regions`,
         exec: `${FRAMEWORK_NAME} generate:fieldsWebsqlRegions %absolutePath%`,
         options: {
           titleWhenProcessing: 'generating index.ts',
@@ -73,24 +95,10 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region CODEGEN SIMPLE/FULL
+      //#region taon example
       {
-        title: `${FRAMEWORK_NAME.toUpperCase()} code generator taon full example`,
-        exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-full %entity%`,
-        options: {
-          titleWhenProcessing: 'generating taon code',
-          showSuccessMessage: false,
-          resolveVariables: [
-            {
-              variable: 'entity',
-              placeholder: `my-entity`,
-              encode: true,
-            },
-          ],
-        },
-      },
-      {
-        title: `${FRAMEWORK_NAME.toUpperCase()} code generator taon simple example`,
+        group: groupGENERATE,
+        title: `taon example (api-service, controller, entity, repository)`,
         exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-simple %entity%`,
         options: {
           titleWhenProcessing: 'generating taon code',
@@ -105,439 +113,144 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         },
       },
       //#endregion
-      //#region CODE GEN.
+
+      //#region WRAP FILE WITH @BROWSER TAG
       {
-        title: `${FRAMEWORK_NAME.toUpperCase()} code generator - select -`,
-        exec: `${FRAMEWORK_NAME} generate %absolutePath% %moduleName% %entity%`,
-        //  exec: `tnp generate %absolutePath% %moduleName% %entity%`,
+        group: groupRefactor,
+        title: `wrap file with @browser TAG`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% wrap-with-browser-regions_custom`,
         options: {
-          titleWhenProcessing: 'generating taon code',
+          title: 'wrapping file with @browser',
+          showSuccessMessage: false,
+        },
+      },
+      //#endregion
+
+      //#region generate taon backend repository file
+      {
+        group: groupGENERATE,
+        title: `taon .repository.ts file`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-repo_flat  %entity%`,
+        options: {
+          titleWhenProcessing: 'generating taon backend repository file',
+          showSuccessMessage: false,
           resolveVariables: [
-            {
-              variable: 'moduleName',
-              options: [
-                // {
-                //   option: 'app-extended_flat',
-                //   label: 'Generate extended app.* files for taon app',
-                // },
-                {
-                  option: 'taon-repo_flat',
-                  label: 'Generate taon backend repository file',
-                },
-                {
-                  option: 'dummy-angular-standalone-component',
-                  label: 'Generate dummy Angular component structure',
-                },
-                {
-                  option: 'dummy-angular-module',
-                  label: 'Generate dummy Angular module/component structure',
-                },
-                {
-                  option: 'dummy-angular-lazy-module',
-                  label:
-                    'Generate dummy Angular lazy routing module/component structure',
-                },
-                {
-                  option: 'dummy-angular-lazy-module-container',
-                  label:
-                    'Generate dummy Angular lazy routing module/container structure',
-                },
-                // {
-                //   option: 'taon-backend-frontend-module',
-                //   label: 'Generate Taon backend/frontend module structure',
-                // },
-                {
-                  option: 'ngrx-feature-container-module',
-                  label: 'Generate NgRx container module structure',
-                },
-                {
-                  option: 'ngrx-feature-container-module-for-lazy-routing',
-                  label:
-                    'Generate NgRx container module structure for lazy routing',
-                },
-                // {
-                //   option: 'generated-index-exports_custom',
-                //   label: 'Generate in index.ts typescript exports from folders',
-                //   skipNextVariableResolve: true
-                // },
-                // {
-                //   option: 'wrap-with-browser-regions_custom',
-                //   label: 'Wrap file with @browser regions',
-                //   skipNextVariableResolve: true,
-                // },
-              ],
-            },
-            { variable: 'entity', placeholder: `my-entity-name`, encode: true },
+            { variable: 'entity', placeholder: `my-component`, encode: true },
           ],
         },
       },
       //#endregion
 
-      //#region old commands
-      //#region OPEN ROUTES FILE
+      //#region generate taon flat app structure
       // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} open routes file`,
-      //   exec: `${FRAMEWORK_NAME} open:routes`,
-      //   options: { title: 'open vscode routes', showSuccessMessage: false },
+      //   option: 'app-extended_flat',
+      //   label: 'Generate extended app.* files for taon app',
       // },
-      //#endregion
-      //#region OPEN DB FILE
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} open database file`,
-      //   exec: `${FRAMEWORK_NAME} open:db`,
-      //   options: { title: 'open vscode db file', showSuccessMessage: false },
-      // },
-      //#endregion
-      //#region TEMP FILES SHOW
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} TEMP FILES => SHOW`,
-      //   exec: `${FRAMEWORK_NAME} vscode:temp:show`,
-      //   options: {
-      //     title: 'show temporary files',
-      //     findNearestProject: true,
-      //     debug: true,
-      //     cancellable: false,
-      //     showSuccessMessage: false,
-      //   },
-      // },
-      //#endregion
-      //#region TEMP FILES HIDE
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} TEMP FILES => HIDE`,
-      //   exec: `${FRAMEWORK_NAME} vscode:temp:hide`,
-      //   options: {
-      //     title: 'hide temporary files',
-      //     debug: true,
-      //     findNearestProject: true,
-      //     cancellable: false,
-      //     showSuccessMessage: false,
-      //   },
-      // },
-      //#endregion
-      //#region OPEN CORE PROJECT
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} OPEN CORE PROJECT`,
-      //   exec: `${FRAMEWORK_NAME} open:core:project`,
-      //   options: {
-      //     title: 'opening core project',
-      //     findNearestProject: true,
-      //     showSuccessMessage: false,
-      //   },
-      // },
-      //#endregion
-      //#region CLEAR ALL AND INIT
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} CLEAR ALL AND INIT`,
-      //   exec: [`${FRAMEWORK_NAME} clean`, `${FRAMEWORK_NAME} init`],
-      //   options: {
-      //     title: 'clear and init project',
-      //     findNearestProject: true,
-      //     askBeforeExecute: true,
-      //   },
-      // },
-      //#endregion
-      //#region GIT COMMIT/PUSH UPDATE
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} GIT COMMIT/PUSH UPDATE`,
-      //   exec: `${FRAMEWORK_NAME} push`,
-      //   options: {
-      //     title: 'quick git commit and push',
-      //     findNearestProjectWithGitRoot: true,
-      //   },
-      // },
+      {
+        group: groupGENERATE,
+        title: `taon flat app structure`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% app-extended_flat %entity%`,
+        options: {
+          titleWhenProcessing: 'generating taon flat app structure',
+          showSuccessMessage: false,
+          resolveVariables: [
+            { variable: 'entity', placeholder: `my-component`, encode: true },
+          ],
+        },
+      },
       //#endregion
 
-      //#region WRAP FILE WITH @BROWSER TAG
+      //#region generate dummy angular component structure
       // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} WRAP FILE WITH @browser TAG`,
-      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% wrap-with-browser-regions_custom`,
-      //   options: {
-      //     title: 'wrapping file with @browser',
-      //     showSuccessMessage: false,
-      //   },
+      //   option: 'dummy-angular-standalone-component',
+      //   label: 'Generate dummy Angular component structure',
       // },
+      {
+        group: groupGENERATE,
+        title: `angular component structure`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-standalone-component %entity%`,
+        options: {
+          titleWhenProcessing: 'generating dummy angular component structure',
+          showSuccessMessage: false,
+          resolveVariables: [
+            { variable: 'entity', placeholder: `my-component`, encode: true },
+          ],
+        },
+      },
       //#endregion
-      //#region GENERATE taon minimal
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} code gen taon minimal`,
-      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-minimal %entity%`,
-      //   options: {
-      //     title: 'generating taon code',
-      //     showSuccessMessage: false,
-      //     resolveVariables: [
-      //       { variable: 'entity', placeholder: `my-entity`, encode: true },
-      //     ],
-      //   },
-      // },
-      //#endregion
-      //#region GENERATE taon minimal
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} CODE GEN. taon minimal=>full`,
-      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-minimal-to-full %entity%`,
-      //   options: {
-      //     title: 'generating taon code',
-      //     showSuccessMessage: false,
-      //     // resolveVariables: [
-      //     //   {
-      //     //     variable: 'entity',
-      //     //     placeholder: `my-entity`,
-      //     //     encode: true,
-      //     //   },
-      //     // ],
-      //   },
-      // },
-      //#endregion
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} OPEN workspace`,
-      //   exec: `${FRAMEWORK_NAME} open:workspace`,
-      //   options: {
-      //     title: 'open vscode workspace',
-      //     findNearestProjectType: 'workspace',
-      //     showSuccessMessage: false
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} INIT project`,
-      //   exec: `${FRAMEWORK_NAME} init`,
-      //   options: {
-      //     title: 'init project temporary files',
-      //     findNearestProject: true,
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} OPEN ALL WORKSPACE CHILDS`,
-      //   exec: `${FRAMEWORK_NAME} open:workspace:childs`,
-      //   options: {
-      //     title: 'open vscode workspace childs',
-      //     findNearestProjectType: 'workspace',
-      //     showSuccessMessage: false
-      //   }
-      // },
 
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} RELEASE PROJECT`,
-      //   exec: `${FRAMEWORK_NAME} release`,
-      //   options: {
-      //     title: 'release project',
-      //     findNearestProject: true
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} RESET PROJECT`,
-      //   exec: `${FRAMEWORK_NAME} reset`,
-      //   options: {
-      //     title: 'remove project temporary files',
-      //     findNearestProject: true,
-      //     cancellable: false,
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} TEMP FILES ALL WORKSPACE CHILDS - show`,
-      //   exec: 'tnp filesshowall',
-      //   options: {
-      //     title: `${FRAMEWORK_NAME} temporary files`,
-      //     findNearestProject: true,
-      //     cancellable: false,
-      //     showSuccessMessage: false
-      //   }
-      // },
-      // {
-      //   title:`${FRAMEWORK_NAME.toUpperCase()} FILES ALL WORKSPACE CHILDS - hide`,
-      //   exec: `${FRAMEWORK_NAME} fileshideall`,
-      //   options: {
-      //     title: 'hide temporary files',
-      //     findNearestProject: true,
-      //     cancellable: false,
-      //     showSuccessMessage: false
-      //   }
-      // },
-      // {
-      //   title: 'FIREDEV BUILD dist',
-      //   exec: 'tnp build:dist',
-      //   options: {
-      //     title: 'distribution build',
-      //     findNearestProject: true
-      //   }
-      // },
-      // {
-      //   title: 'FIREDEV STATIC REBUILD AND START',
-      //   exec: 'tnp static:build:dist && tnp start',
-      //   options: {
-      //     findNearestProjectType: 'workspace',
-      //   }
-      // },
-      // {
-      //   title: 'FIREDEV STATIC REBUILD PROD AND START',
-      //   exec: 'tnp static:build:dist:prod && tnp start',
-      //   options: {
-      //     findNearestProjectType: 'workspace',
-      //   }
-      // },
-      // {
-      //   title: 'FIREDEV STATIC START workspace',
-      //   exec: 'tnp start',
-      //   options: {
-      //     findNearestProjectType: 'workspace',
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} STATIC BUILD`,
-      //   exec: `${FRAMEWORK_NAME} static:build:dist`,
-      //   options: {
-      //     title: 'static (for workspace) distribution build',
-      //     findNearestProject: true,
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} STATIC BUILD PROD`,
-      //   exec: `${FRAMEWORK_NAME} static:build:dist:prod`,
-      //   options: {
-      //     title: 'static (for workspace) distribution production build',
-      //     findNearestProject: true,
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} PACKAGE.JSON hide deps`,
-      //   exec: `${FRAMEWORK_NAME} deps:hide`,
-      //   options: {
-      //     title: 'package.json hide dependencies',
-      //     findNearestProject: true,
-      //     cancellable: false,
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} PACKAGE.JSON show deps`,
-      //   exec: `${FRAMEWORK_NAME} deps:show`,
-      //   options: {
-      //     title: 'package.json show dependencies',
-      //     findNearestProject: true,
-      //     cancellable: false,
-      //   }
-      // },
-      //  {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} NEW LOGIC-UI MODULE`,
-      //   exec: `${FRAMEWORK_NAME} new model %name% %realtivePath%`,
-      //   options: {
-      //     title: 'craete new logic-ui model',
-      //     findNearestProject: true,
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} NEW UI MODULE`,
-      //   exec: `${FRAMEWORK_NAME} new model %name% %realtivePath%`,
-      //   options: {
-      //     title: 'craete new logic-ui model',
-      //     findNearestProject: true,
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} QUICK GIT reset hard and pull`,
-      //   exec: `${FRAMEWORK_NAME} ${camelize('$GIT_QUICK_RESET_HARD_AND_PULL')}`,
-      //   options: {
-      //     title: 'quick git reset and pull',
-      //     findNearestProjectWithGitRoot: true,
-      //     askBeforeExecute: true,
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} AUTOUPDATE`,
-      //   exec: `${FRAMEWORK_NAME} vscode:ext`,
-      //   options: {
-      //     title: 'taon vscode extension autoupdate',
-      //     reloadAfterSuccesFinish: true,
-      //     cancellable: false,
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} NEW PREVIEW FOR UI MODULE`,
-      //   exec: `${FRAMEWORK_NAME} new model %name% %realtivePath%`,
-      //   options: {
-      //     title: 'craete new logic-ui model',
-      //     findNearestProject: true,
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} OPEN baseline`,
-      //   exec: `${FRAMEWORK_NAME} open:baseline`,
-      //   options: {
-      //     title: 'open baseline for site',
-      //     findNearestProject: true,
-      //     showSuccessMessage: false
-      //   }
-      // },
-      // {
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} RUN DEFAULT BUILD`,
-      //   exec: `${FRAMEWORK_NAME} default:build`,
-      //   isDefaultBuildCommand: true,
-      //   hideContextMenu: true,
-      //   options: {
-      //     progressLocation: 'statusbar',
-      //     title: 'FIREDEV RUN DEFAULT BUILD',
-      //     cancellable: true,
-      //     findNearestProject: true,
-      //   }
-      // },
-      // {
-      //   hideContextMenu: true,
-      //   title: `${FRAMEWORK_NAME.toUpperCase()} STOP DEFAULT BUILD`,
-      //   exec: `${FRAMEWORK_NAME} stop:default:build`,
-      //   options: {
-      //     title: 'FIREDEV DEFAULT BUILD',
-      //     showSuccessMessage: true,
-      //     cancellable: false,
-      //     findNearestProject: true,
-      //   }
-      // }
-      // {
-      //   title: 'FIREDEV: TEST EXT',
-      //   exec: 'tnp show:loop:messages --max 6 --tnpShowProgress',
-      //   options: {
-      //     cancellable: false,
-      //     title: 'Testing progress'
-      //   }
-      // },
-      // {
-      //   title: 'FIREDEV: show version',
-      //   exec: 'tnp version',
-      //   options: {
-      //     syncProcess: true,
-      //     title: 'Show version of taon'
-      //   }
-      // },
+      //#region generate dummy angular module structure
+      {
+        group: groupGENERATE,
+        title: `angular module structure`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-module %entity%`,
+        options: {
+          titleWhenProcessing: 'generating dummy angular module structure',
+          showSuccessMessage: false,
+          resolveVariables: [
+            { variable: 'entity', placeholder: `my-component`, encode: true },
+          ],
+        },
+      },
+      //#endregion
 
-      // only for tests
-      // {
-      //   title: 'FIREDEV TEST nearest project',
-      //   exec: 'tnp processcwd',
-      //   options: {
-      //     findNearestProject: true,
-      //     syncProcess: true
-      //   }
-      // },
-      // {
-      //   title: 'FIREDEV TEST nearest project with git root',
-      //   exec: 'tnp processcwd',
-      //   options: {
-      //     findNearestProjectWithGitRoot: true,
-      //     syncProcess: true
-      //   }
-      // },
-      // {
-      //   title: 'FIREDEV TEST nearest project workspace',
-      //   exec: 'tnp processcwd',
-      //   options: {
-      //     findNearestProjectType: 'container',
-      //     syncProcess: true
-      //   }
-      // },
-      // {
-      //   title: 'FIREDEV TEST nearest project workspace with git root',
-      //   exec: 'tnp processcwd',
-      //   options: {
-      //     findNearestProjectTypeWithGitRoot: 'workspace',
-      //     syncProcess: true
-      //   }
-      // }
+      //#region generate dummy angular lazy module structure
+      {
+        group: groupGENERATE,
+        title: `angular lazy module structure`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-lazy-module %entity%`,
+        options: {
+          titleWhenProcessing: 'generating dummy angular lazy module structure',
+          showSuccessMessage: false,
+          resolveVariables: [
+            { variable: 'entity', placeholder: `my-component`, encode: true },
+          ],
+        },
+      },
+      //#endregion
+
+      //#region generate dummy angular lazy module container structure
+      {
+        group: groupGENERATE,
+        title: `angular lazy module container structure`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-lazy-module-container %entity%`,
+        options: {
+          titleWhenProcessing:
+            'generating dummy angular lazy module container structure',
+          showSuccessMessage: false,
+          resolveVariables: [
+            { variable: 'entity', placeholder: `my-component`, encode: true },
+          ],
+        },
+      },
+      //#endregion
+
+      //#region temp files show
+      {
+        title: `show vscode temporary files`,
+        exec: `${FRAMEWORK_NAME} vscode:temp:show`,
+        options: {
+          title: 'show temporary files',
+          findNearestProject: true,
+          debug: true,
+          cancellable: false,
+          showSuccessMessage: false,
+        },
+      },
+      //#endregion
+
+      //#region temp files hide
+      {
+        title: `hide vscode temporary files`,
+        exec: `${FRAMEWORK_NAME} vscode:temp:hide`,
+        options: {
+          title: 'hide temporary files',
+          debug: true,
+          findNearestProject: true,
+          cancellable: false,
+          showSuccessMessage: false,
+        },
+      },
       //#endregion
     ] as CommandType[]
   ).map(c => {
