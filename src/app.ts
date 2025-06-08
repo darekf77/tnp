@@ -102,6 +102,7 @@ class UserController extends Taon.Base.CrudController<User> {
 //#region  tnp context
 var MainContext = Taon.createContext(() => ({
   host,
+  appId: 'dev.tnp.app',
   frontendHost,
   useIpcWhenElectron: true,
   contextName: 'MainContext',

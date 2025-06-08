@@ -24,6 +24,7 @@ if (!Helpers.exists(path.dirname(taonProjectsWorkerDatabaseLocation))) {
 
 export const TaonProjectsContextTemplate = Taon.createContextTemplate(() => ({
   contextName: 'TaonProjectsContext',
+  appId: 'dev.taon.projects.worker',
   contexts: { BaseContext },
   controllers: { TaonProjectsController },
   entities: { TaonProject, TaonBuild, TaonEnv },
