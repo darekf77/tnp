@@ -83,6 +83,25 @@ export class TaonJson extends BaseFeatureForProject<Project> {
       delete data[prop];
     }
 
+    if (!this.appId) {
+      const mainConfig = EnvOptions.from(
+        this.project.environmentConfig.getEnvMain(),
+      );
+      this.appId = Utils.uniqArray(
+        (
+          `${mainConfig.website.domain
+            .replace(this.project.nameForNpmPackage, '')
+            .replace(this.project.name, '')
+            .split('.')
+            .reverse()
+            .join('.')}` +
+          `.${this.project.nameForNpmPackage
+            .replace(/\@/g, '')
+            .replace(/\//g, '.')}`
+        ).split('.'),
+      ).join('.');
+    }
+
     this.saveToDisk('preserve old taon props');
   }
 
@@ -129,30 +148,6 @@ export class TaonJson extends BaseFeatureForProject<Project> {
       }
       if (!packageJsonOverride.description) {
         packageJsonOverride.description = `Description for ${this.project.name}. Hello world!`;
-      }
-
-      if (
-        this.data.type === 'isomorphic-lib' ||
-        this.data.type === 'container'
-      ) {
-        if (!this.appId) {
-          const mainConfig = EnvOptions.from(
-            this.project.environmentConfig.getEnvMain(),
-          );
-          this.appId = Utils.uniqArray(
-            (
-              `${mainConfig.website.domain
-                .replace(this.project.nameForNpmPackage, '')
-                .replace(this.project.name, '')
-                .split('.')
-                .reverse()
-                .join('.')}` +
-              `.${this.project.nameForNpmPackage
-                .replace(/\@/g, '')
-                .replace(/\//g, '.')}`
-            ).split('.'),
-          ).join('.');
-        }
       }
 
       delete sorted.packageJsonOverride;
