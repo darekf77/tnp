@@ -1,3 +1,4 @@
+//#region imports
 import { Configuration as ElectronBuilderConfig } from 'electron-builder';
 import { config } from 'tnp-config/src';
 import {
@@ -9,6 +10,7 @@ import {
   UtilsTerminal,
 } from 'tnp-core/src';
 import { Helpers, UtilsQuickFixes, UtilsTypescript } from 'tnp-helpers/src';
+import { PackageJson } from 'type-fest';
 
 import {
   ReleaseArtifactTaonNames,
@@ -20,7 +22,7 @@ import type { Project } from '../../project';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
 import { InsideStructuresElectron } from './tools/inside-struct-electron';
-import { PackageJson } from 'type-fest';
+//#endregion
 
 export class ArtifactElectronApp extends BaseArtifact<
   {
@@ -203,7 +205,18 @@ export class ArtifactElectronApp extends BaseArtifact<
         `${this.project.name}-latest`,
       ]);
       Helpers.remove(localReleaseOutputBasePath);
-      Helpers.copy(electronDistOutAppPath, localReleaseOutputBasePath);
+      Helpers.getFilesFrom(electronDistOutAppPath, {
+        recursive: false,
+      })
+        .filter(f => f.endsWith('.zip'))
+        .forEach(zipFile => {
+          const fileName = path.basename(zipFile);
+          const destZipFile = crossPlatformPath([
+            localReleaseOutputBasePath,
+            fileName,
+          ]);
+          Helpers.copyFile(zipFile, destZipFile);
+        });
       releaseProjPath = localReleaseOutputBasePath;
     }
 
