@@ -11,6 +11,7 @@ import { Helpers } from 'tnp-helpers/src';
 import { register } from 'ts-node';
 
 import {
+  coreRequiredEnvironments,
   DUMMY_LIB,
   environments,
   envTs,
@@ -229,7 +230,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   //#endregion
 
   //#region private methods / get env main
-  private getEnvMain(): Partial<EnvOptions> {
+  public getEnvMain(): Partial<EnvOptions> {
     //#region @backendFunc
 
     // Helpers.taskStarted(`Reading environment config for ${this.project.name}`);
@@ -292,7 +293,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     envOptions.currentProjectName = this.project.name;
 
     // @ts-expect-error overriding readonly property
-    envOptions.currentProjectType = this.project.type;
+    envOptions.appId = this.project.taonJson.appId;
 
     if (this.project.framework.isStandaloneProject) {
       // TODO I think this is not needed anymore - or something better is needed
@@ -383,6 +384,27 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
 
       UtilsTypescript.formatFile(this.absPathToEnvTs);
     }
+
+    for (const artifactName of ReleaseArtifactTaonNamesArr) {
+      for (const envName of coreRequiredEnvironments) {
+        const relativePathToArtifacEnv = crossPlatformPath([
+          environments,
+          artifactName,
+          `env.${artifactName}.${envName}.ts`,
+        ]);
+        const absPathToArtifactEnv = this.project.pathFor(
+          relativePathToArtifacEnv,
+        );
+        if (!fse.existsSync(absPathToArtifactEnv)) {
+          const coreProjectArtifactPath =
+            this.project.framework.coreProject.pathFor(
+              relativePathToArtifacEnv,
+            );
+          Helpers.copyFile(coreProjectArtifactPath, absPathToArtifactEnv);
+        }
+      }
+    }
+
     //#endregion
   }
 

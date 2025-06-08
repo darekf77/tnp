@@ -121,8 +121,9 @@ export class ArtifactElectronApp extends BaseArtifact<
     ) as UtilsTypescript.DeepWritable<ElectronBuilderConfig>;
     electronConfig.directories.output = electronDistOutAppPath;
     electronConfig.appId =
+      releaseOptions.appId ||
       `${releaseOptions.website.domain.split('.').reverse().join('.')}` +
-      `.${this.project.nameForNpmPackage}`;
+        `.${this.project.nameForNpmPackage}`;
     electronConfig.productName = this.project.nameForNpmPackage;
 
     Helpers.info(`
@@ -183,10 +184,14 @@ export class ArtifactElectronApp extends BaseArtifact<
       electronPackageJson,
     ) as PackageJson;
     electronPackageJsonContent.dependencies = {};
-    electronPackageJsonContent.devDependencies = this.project.packageJson.dependencies || {};
+    electronPackageJsonContent.devDependencies =
+      this.project.packageJson.dependencies || {};
     Helpers.writeJson(electronPackageJson, electronPackageJsonContent);
 
     proxyProj.run(`npm-run electron-builder build --publish=never`).sync();
+
+    // proxyProj.run(`npm-run electron-forge package`).sync();
+    // process.exit(0);
 
     let releaseProjPath: string;
 

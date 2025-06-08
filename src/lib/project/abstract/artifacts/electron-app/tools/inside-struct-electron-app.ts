@@ -16,6 +16,7 @@ export class InsideStructElectronApp extends InsideStructAngularApp {
     return [
       ...paths,
       'app/electron-builder.json',
+      'app/forge.config.js',
       'app/angular.webpack.js',
       'app/electron/main.js',
       'app/electron/index.js',

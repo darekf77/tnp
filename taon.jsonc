@@ -16,6 +16,8 @@
     // "magic-renamer",
   ],
 
+  "appId": "dev.taon.cli.tnp",
+
   "autoReleaseConfigAllowedItems": [
     {
       "artifactName": "npm-lib-and-cli-tool",
@@ -30,12 +32,14 @@
 
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
+    "description": "Description for tnp. Hello world!",
     "license": "MIT",
+
     "private": false,
 
     "scripts": {
       "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     },
-    "sideEffects": false,
-  },
+    "sideEffects": false
+  }
 }

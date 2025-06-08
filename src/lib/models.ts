@@ -137,6 +137,12 @@ export namespace Models {
     overrideNpmName?: string;
 
     /**
+     * Application ID for standalone project.
+     * This is used to identify the application inside application stores,
+     */
+    appId?: string;
+
+    /**
      * Number of contexts for this project. (default 2)
      * Number can't be less than 2.
      * This property tells taon how many ports/variables needs to be assigned

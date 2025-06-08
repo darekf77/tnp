@@ -474,6 +474,7 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   declare readonly name?: CoreModels.EnvironmentNameTaon; // generated
   declare readonly currentProjectName?: string;
   declare readonly currentProjectType?: CoreModels.LibType;
+  declare readonly appId?: string;
   declare readonly buildInfo?: {
     // number?: number; // count commits takes time
     hash?: string;
@@ -626,3 +627,96 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   //#endregion
 }
 //#endregion
+
+/**
+ * Purpose of this dummy is to have all properties
+ * when generating environments
+ */
+export const EnvOptionsDummyWithAllProps = EnvOptions.from({
+  paths: {},
+  config: {},
+  purpose: null,
+  recursiveAction: null,
+  isCiProcess: null,
+  container: {
+    end: null,
+    only: null,
+    start: null,
+  },
+  ports: {},
+  release: {
+    resolvedNewVersion: null,
+    targetArtifact: null,
+    releaseVersionBumpType: null,
+    envName: null,
+    envNumber: null,
+    installLocally: null,
+    cli: {
+      minify: null,
+      includeNodeModules: null,
+      uglify: null,
+      obscure: null,
+      compress: null,
+    },
+    releaseType: null,
+    lib: {
+      removeDts: null,
+      obscureFileByFile: null,
+      uglifyFileByFile: null,
+      includeSourceMaps: null,
+      compress: null,
+      doNotIncludeLibFiles: null,
+    },
+    autoReleaseUsingConfig: null,
+    skipNpmPublish: null,
+    skipTagGitPush: null,
+    skipResolvingGitChanges: null,
+    skipCodeCutting: null,
+    skipBuildingArtifacts: null,
+  },
+  init: {
+    branding: null,
+    struct: null,
+  },
+  build: {
+    angularProd: null,
+    websql: null,
+    pwa: {
+      disableServiceWorker: null,
+      name: null,
+      short_name: null,
+      start_url: null,
+    },
+    overrideOutputPath: null,
+    baseHref: null,
+    skipBuildForRelease: null,
+    watch: null,
+    genOnlyClientCode: null,
+  },
+  loading: {
+    afterAngularBootstrap: {
+      loader: null,
+      background: null,
+    },
+    preAngularBootstrap: {
+      loader: null,
+      background: null,
+    },
+  },
+  copyToManager: {
+    copyToLocations: null,
+    copyToProjects: null,
+    skip: null,
+  },
+  website: {
+    domain: null,
+    title: null,
+    useDomain: null,
+  },
+  currentProjectName: null,
+  currentProjectType: null,
+  buildInfo: {
+    hash: null,
+    date: null,
+  },
+});

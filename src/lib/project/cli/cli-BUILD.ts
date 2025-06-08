@@ -154,6 +154,25 @@ class $Build extends BaseCli {
    * JUST FOR TESTING PURPOSES
    */
   async electron(websql = false) {
+    // await this.project.release(
+    //   this.params.clone({
+    //     release: {
+    //       skipNpmPublish: true,
+    //       skipCodeCutting: true,
+    //       skipTagGitPush: true,
+    //       skipResolvingGitChanges: true,
+    //       targetArtifact: 'electron-app',
+    //       releaseType: 'local',
+    //       envName: '__',
+    //     },
+    //     build: {
+    //       websql,
+    //       watch: false,
+    //     },
+    //     finishCallback: () => this._exit(),
+    //   }),
+    // );
+
     // await this.project.artifactsManager.artifact.npmLibAndCliTool.buildPartial(
     //   this.params.clone({
     //     build: {

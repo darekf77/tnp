@@ -274,6 +274,11 @@ export const envTs = 'env.ts';
 
 export const environments = 'environments';
 
+export const coreRequiredEnvironments = [
+  '__',
+  'prod',
+] as CoreModels.EnvironmentNameTaon[];
+
 //#region methods & getters / get browser ver path
 /**
  * @deprecated

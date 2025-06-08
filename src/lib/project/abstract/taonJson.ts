@@ -1,6 +1,6 @@
-import { OVERRIDE_FROM_TNP, scriptsCommands } from 'tnp/src';
+import { EnvOptions, OVERRIDE_FROM_TNP, scriptsCommands } from 'tnp/src';
 import { config } from 'tnp-config/src';
-import { CoreModels, path } from 'tnp-core/src';
+import { CoreModels, os, path } from 'tnp-core/src';
 import { Helpers, _ } from 'tnp-core/src';
 import { Utils } from 'tnp-core/src';
 import { BaseFeatureForProject, BasePackageJson } from 'tnp-helpers/src';
@@ -123,7 +123,38 @@ export class TaonJson extends BaseFeatureForProject<Project> {
       this.project.writeJsonC(config.file.taon_jsonc, this.data);
     } else {
       const sorted = Utils.sortKeys(_.cloneDeep(this.data)) as typeof this.data;
-      const packageJsonOverride = sorted.packageJsonOverride;
+      const packageJsonOverride = sorted.packageJsonOverride || {};
+      if (!packageJsonOverride.author) {
+        packageJsonOverride.author = _.startCase(os.userInfo().username);
+      }
+      if (!packageJsonOverride.description) {
+        packageJsonOverride.description = `Description for ${this.project.name}. Hello world!`;
+      }
+
+      if (
+        this.data.type === 'isomorphic-lib' ||
+        this.data.type === 'container'
+      ) {
+        if (!this.appId) {
+          const mainConfig = EnvOptions.from(
+            this.project.environmentConfig.getEnvMain(),
+          );
+          this.appId = Utils.uniqArray(
+            (
+              `${mainConfig.website.domain
+                .replace(this.project.nameForNpmPackage, '')
+                .replace(this.project.name, '')
+                .split('.')
+                .reverse()
+                .join('.')}` +
+              `.${this.project.nameForNpmPackage
+                .replace(/\@/g, '')
+                .replace(/\//g, '.')}`
+            ).split('.'),
+          ).join('.');
+        }
+      }
+
       delete sorted.packageJsonOverride;
       const showFirst = ['type', 'version', 'dependenciesNamesForNpmLib'];
       for (const key of showFirst) {
@@ -306,6 +337,22 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   get frameworkVersion(): CoreModels.FrameworkVersion | undefined {
     //#region @backendFunc
     return this.data?.version;
+    //#endregion
+  }
+  //#endregion
+
+  //#region app id
+  get appId(): string {
+    //#region @backendFunc
+    return (this.data as Models.TaonJsonStandalone)?.appId;
+    //#endregion
+  }
+
+  set appId(value: string) {
+    //#region @backend
+    const data = this.data as Models.TaonJsonStandalone;
+    data.appId = value;
+    this.saveToDisk('updating appId');
     //#endregion
   }
   //#endregion
