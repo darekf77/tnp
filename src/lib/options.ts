@@ -635,88 +635,104 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 export const EnvOptionsDummyWithAllProps = EnvOptions.from({
   paths: {},
   config: {},
-  purpose: null,
-  recursiveAction: null,
-  isCiProcess: null,
+  purpose: '-' as any,
+  recursiveAction: '-' as any,
+  isCiProcess: '-' as any,
   container: {
-    end: null,
-    only: null,
-    start: null,
+    end: '-' as any,
+    only: '-' as any,
+    start: '-' as any,
   },
   ports: {},
   release: {
-    resolvedNewVersion: null,
-    targetArtifact: null,
-    releaseVersionBumpType: null,
-    envName: null,
-    envNumber: null,
-    installLocally: null,
+    resolvedNewVersion: '-' as any,
+    targetArtifact: '-' as any,
+    releaseVersionBumpType: '-' as any,
+    envName: '-' as any,
+    envNumber: '-' as any,
+    installLocally: '-' as any,
     cli: {
-      minify: null,
-      includeNodeModules: null,
-      uglify: null,
-      obscure: null,
-      compress: null,
+      minify: '-' as any,
+      includeNodeModules: '-' as any,
+      uglify: '-' as any,
+      obscure: '-' as any,
+      compress: '-' as any,
     },
-    releaseType: null,
+    releaseType: '-' as any,
     lib: {
-      removeDts: null,
-      obscureFileByFile: null,
-      uglifyFileByFile: null,
-      includeSourceMaps: null,
-      compress: null,
-      doNotIncludeLibFiles: null,
+      removeDts: '-' as any,
+      obscureFileByFile: '-' as any,
+      uglifyFileByFile: '-' as any,
+      includeSourceMaps: '-' as any,
+      compress: '-' as any,
+      doNotIncludeLibFiles: '-' as any,
     },
-    autoReleaseUsingConfig: null,
-    skipNpmPublish: null,
-    skipTagGitPush: null,
-    skipResolvingGitChanges: null,
-    skipCodeCutting: null,
-    skipBuildingArtifacts: null,
+    autoReleaseUsingConfig: '-' as any,
+    skipNpmPublish: '-' as any,
+    skipTagGitPush: '-' as any,
+    skipResolvingGitChanges: '-' as any,
+    skipCodeCutting: '-' as any,
+    skipBuildingArtifacts: '-' as any,
   },
   init: {
-    branding: null,
-    struct: null,
+    branding: '-' as any,
+    struct: '-' as any,
   },
   build: {
-    angularProd: null,
-    websql: null,
+    angularProd: '-' as any,
+    websql: '-' as any,
     pwa: {
-      disableServiceWorker: null,
-      name: null,
-      short_name: null,
-      start_url: null,
+      disableServiceWorker: '-' as any,
+      name: '-' as any,
+      short_name: '-' as any,
+      start_url: '-' as any,
     },
-    overrideOutputPath: null,
-    baseHref: null,
-    skipBuildForRelease: null,
-    watch: null,
-    genOnlyClientCode: null,
+    overrideOutputPath: '-' as any,
+    baseHref: '-' as any,
+    skipBuildForRelease: '-' as any,
+    watch: '-' as any,
+    genOnlyClientCode: '-' as any,
   },
   loading: {
     afterAngularBootstrap: {
-      loader: null,
-      background: null,
+      loader: '-' as any,
+      background: '-' as any,
     },
     preAngularBootstrap: {
-      loader: null,
-      background: null,
+      loader: '-' as any,
+      background: '-' as any,
     },
   },
   copyToManager: {
-    copyToLocations: null,
-    copyToProjects: null,
-    skip: null,
+    copyToLocations: '-' as any,
+    copyToProjects: '-' as any,
+    skip: '-' as any,
   },
   website: {
-    domain: null,
-    title: null,
-    useDomain: null,
-  },
-  currentProjectName: null,
-  currentProjectType: null,
-  buildInfo: {
-    hash: null,
-    date: null,
+    domain: '-' as any,
+    title: '-' as any,
+    useDomain: '-' as any,
   },
 });
+
+const allPathsEnvConfig = [];
+
+walk.Object(
+  EnvOptionsDummyWithAllProps,
+  (value, lodashPath) => {
+    if (Array.isArray(value)) {
+      allPathsEnvConfig.push(lodashPath);
+    } else {
+      if (
+        !_.isObject(value) &&
+        !_.isFunction(value) &&
+        !lodashPath.includes('[') // it is array
+      ) {
+        allPathsEnvConfig.push(lodashPath);
+      }
+    }
+  },
+  { walkGetters: false },
+);
+
+export { allPathsEnvConfig };

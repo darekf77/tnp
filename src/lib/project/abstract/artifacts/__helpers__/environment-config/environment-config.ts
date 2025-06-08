@@ -19,6 +19,7 @@ import {
   THIS_IS_GENERATED_STRING,
 } from '../../../../../constants';
 import {
+  allPathsEnvConfig,
   EnvOptions,
   ReleaseArtifactTaon,
   ReleaseArtifactTaonNamesArr,
@@ -329,21 +330,35 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     if (this.project.framework.isStandaloneProject) {
       const backendConfigFileName = `env.${projectEnvConfig.release.targetArtifact}.ts`;
       const backendConstants: string[] = [];
+      const pathsWithValues = [];
 
       walk.Object(
         projectEnvConfig,
         (val, lodashPath, newValue) => {
           if (!_.isObject(val)) {
+            pathsWithValues.push(lodashPath);
             backendConstants.push(
               `export const ENV_` +
                 `${_.snakeCase(projectEnvConfig.release.targetArtifact).toUpperCase()}_` +
                 `${_.snakeCase(lodashPath).replace(/\ /g, '_').toUpperCase()} ` +
-                `= ${_.isString(val) ? `'${val}'` : val}`,
+                `= ${_.isString(val) ? `'${val}'` : val};`,
             );
           }
         },
         { walkGetters: false },
       );
+
+      // console.log({ allPathsEnvConfig, pathsWithValues });
+      for (const setUndefinedLodashPath of allPathsEnvConfig) {
+        if (!pathsWithValues.includes(setUndefinedLodashPath)) {
+          backendConstants.push(
+            `export const ENV_` +
+              `${_.snakeCase(projectEnvConfig.release.targetArtifact).toUpperCase()}_` +
+              `${_.snakeCase(setUndefinedLodashPath).replace(/\ /g, '_').toUpperCase()} ` +
+              `= undefined;`,
+          );
+        }
+      }
 
       this.project.writeFile(
         `src/lib/env/${backendConfigFileName}`,
