@@ -123,6 +123,7 @@ export class ArtifactManager {
   //#region init
   async init(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
+
     //#region prevent not requested framework version
     if (this.project.framework.frameworkVersionLessThan('v18')) {
       // TODO QUICK_FIX @REMOVE
@@ -143,6 +144,10 @@ export class ArtifactManager {
       );
     }
     //#endregion
+
+    if (!initOptions.init.struct) {
+      await this.project.nodeModules.makeSureInstalled();
+    }
 
     initOptions = await this.project.environmentConfig.update(initOptions, {
       saveEnvToLibEnv:
@@ -180,25 +185,6 @@ export class ArtifactManager {
       try {
         this.project.run(`git rm -f .vscode/launch-backup.json`).sync();
       } catch (error) {}
-    }
-
-    if (
-      (this.project.framework.isContainer ||
-        this.project.framework.isStandaloneProject) &&
-      this.project.framework.frameworkVersionLessThan('v18')
-    ) {
-      Helpers.warn(`
-
-        Project from this location is not supported
-
-        ${this.project.location}
-
-
-        `);
-      await UtilsTerminal.pressAnyKeyToContinueAsync({
-        message: 'Press any key to continue',
-      });
-      return;
     }
 
     // if organization project - children should have the same framework version

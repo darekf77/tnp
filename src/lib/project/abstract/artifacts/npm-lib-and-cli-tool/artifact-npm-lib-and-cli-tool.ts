@@ -122,10 +122,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       this.filesTemplatesBuilder.rebuild(initOptions);
     }
 
-    if (!initOptions.init.struct) {
-      await this.project.nodeModules.makeSureInstalled();
-    }
-
     if (this.project.framework.isStandaloneProject) {
       this.project.quickFixes.addMissingSrcFolderToEachProject();
       this.project.quickFixes.missingAngularLibFiles();
