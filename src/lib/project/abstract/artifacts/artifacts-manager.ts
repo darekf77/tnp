@@ -202,6 +202,8 @@ export class ArtifactManager {
     this.project.taonJson.preservePropsFromPackageJson(); // TODO temporary remove
     this.project.taonJson.preserveOldTaonProps(); // TODO temporary remove
     this.project.taonJson.saveToDisk('init');
+    this.project.environmentConfig.updateGeneratedValues(initOptions);
+    
     this.project.packagesRecognition.addIsomorphicPackagesToFile([
       this.project.nameForNpmPackage,
     ]);

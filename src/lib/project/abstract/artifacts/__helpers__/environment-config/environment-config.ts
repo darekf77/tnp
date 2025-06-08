@@ -278,7 +278,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   //#endregion
 
   //#region private methods / update generated values
-  private updateGeneratedValues(envOptions: EnvOptions): void {
+  public updateGeneratedValues(envOptions: EnvOptions): void {
     //#region @backendFunc
     if (this.project.git.isInsideGitRepo && envOptions.release.targetArtifact) {
       // @ts-expect-error overriding readonly property
