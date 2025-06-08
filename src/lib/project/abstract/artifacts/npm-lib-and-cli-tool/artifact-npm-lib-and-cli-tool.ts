@@ -485,6 +485,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     Helpers.remove([releaseProjPath, config.file.taon_jsonc]);
     Helpers.remove([releaseProjPath, 'firedev.jsonc']);
+    Helpers.remove([releaseProjPath, 'client']);
 
     if (allowedToNpmReleases.includes(releaseOptions.release.releaseType)) {
       if (!releaseOptions.release.skipNpmPublish) {
@@ -628,7 +629,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#region @backendFunc
     const folderToFix = [
       config.folder.browser,
-      config.folder.client,
       config.folder.websql,
     ];
 
