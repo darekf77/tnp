@@ -13,13 +13,13 @@ import type { Project } from '../../../project';
  */ // @ts-ignore TODO weird inheritance problem
 export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
   public readonly rootBaseHref: string = '/';
-  private get baseHrefForGhPages() {
+  public get baseHrefForGhPages(): string {
     return this.project.name;
   }
 
-  private resolveBaseHrefForProj(initOptions: EnvOptions) {
+  private resolveBaseHrefForProj(envOptions: EnvOptions): string {
     //#region @backendFunc
-    const overrideBaseHref: string = initOptions.build.baseHref;
+    const overrideBaseHref: string = envOptions.build.baseHref;
     let baseHref = this.rootBaseHref;
 
     if (overrideBaseHref === '') {
@@ -28,8 +28,8 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
       if (overrideBaseHref) {
         baseHref = overrideBaseHref;
       } else {
-        if (initOptions.release.releaseType) {
-          if (initOptions.website.useDomain) {
+        if (envOptions.release.releaseType) {
+          if (envOptions.website.useDomain) {
             baseHref = this.rootBaseHref;
           } else {
             baseHref = `/${this.baseHrefForGhPages}/`;
@@ -42,9 +42,9 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
     //#endregion
   }
 
-  getBaseHref(initOptions: EnvOptions) {
+  getBaseHref(envOptions: EnvOptions): string {
     //#region @backendFunc
-    let baseHref = this.resolveBaseHrefForProj(initOptions);
+    let baseHref = this.resolveBaseHrefForProj(envOptions);
 
     // baseHref = baseHref.endsWith('/') ? baseHref : (baseHref + '/');
     // baseHref = baseHref.startsWith('/') ? baseHref : ('/' + baseHref);

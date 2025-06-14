@@ -15,9 +15,14 @@ export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
 } = {
   manual: ['npm-lib-and-cli-tool'],
-  local: ['npm-lib-and-cli-tool', 'vscode-plugin', 'electron-app'],
+  local: ['electron-app', 'npm-lib-and-cli-tool', 'vscode-plugin'],
   cloud: [],
-  'static-pages': ['angular-node-app', 'docs-webapp'],
+  'static-pages': [
+    'angular-node-app',
+    'docs-webapp',
+    'electron-app',
+    'vscode-plugin',
+  ],
 };
 
 export const taonIgnore = '@taon' + '-' + 'ignore';
@@ -111,106 +116,12 @@ export const DEFAULT_PORT = {
 };
 
 export const tmpVscodeProj = `tmp-vscode-proj`;
+export const tmpAppsForDist = `tmp-apps-for-dist`;
+export const tmpAppsForDistWebsql = `${tmpAppsForDist}-websql`;
+export const tmpAppsForDistElectron = `${tmpAppsForDist}-electron`;
 
 export const tmpBuildPort = 'tmp-build-port';
 export const tmpBaseHrefOverwriteRelPath = 'tmp-base-href-overwrite';
-
-/**
- *
- * Ports for:
-    max = max instances = max container childs = 20;
-    n = folder process build number (searches for new port always)
-    index = container project index (can't exceeds max)
-
-    build process service 4100 = 4100 + n
-
-    standalone server 4500 = 4100  + 400 + n
-    containers servers 4600 = 4100  + 500 + n * max + index
-
-    standalone ng serve normal 4300 = 4100  + 200 + n
-    standalone ng serve websql 4400 = 4100  + 300 + n
-
-    container ng serve normal 4800 = 4100  + 700 + n + max + index
-    container ng serve websql 4900 = 4100  + 800 + n + max + index
- *
- * @param basePort 4100 + n
- * @returns
- */
-export class PortUtils {
-  static instance(basePort: number) {
-    return new PortUtils(basePort);
-  }
-
-  private readonly n: number;
-  constructor(private basePort: number) {
-    this.n = (basePort - (basePort % 1000)) / 1000;
-  }
-
-  /**
-   * max container  childs
-   */
-  private max = 20;
-
-  calculatePortForElectronDebugging(project: Project): number {
-    if (!project.framework.isStandaloneProject) {
-      return;
-    }
-    return 9876 + this.n;
-  }
-
-  calculateServerPortFor(project: Project): number {
-    //#region @backendFunc
-    if (project.framework.isContainer) {
-      return;
-    }
-
-    if (project.framework.isStandaloneProject) {
-      return this.calculateForStandaloneServer();
-    }
-    //#endregion
-  }
-
-  calculateClientPortFor(
-    project: Project,
-    { websql }: { websql: boolean },
-  ): number {
-    //#region @backendFunc
-    if (project.framework.isContainer) {
-      return;
-    }
-
-    if (project.framework.isStandaloneProject) {
-      return this.calculateForStandaloneClient({ websql });
-    }
-    //#endregion
-  }
-
-  private calculateForStandaloneServer() {
-    const clientStandalonePort = this.basePort + 400 + this.n;
-    return clientStandalonePort;
-  }
-
-  private calculateForContainerServer(index: number) {
-    const clientSmartContainerChildPort =
-      this.basePort + 500 + this.n * this.max + index;
-    // console.log({ clientSmartContainerChildPort })
-    return clientSmartContainerChildPort;
-  }
-
-  private calculateForStandaloneClient({ websql }: { websql: boolean }) {
-    const clientPort = this.basePort + (websql ? 300 : 200) + this.n;
-    return clientPort;
-  }
-
-  private calculateForContainerClient(
-    index: number,
-    { websql }: { websql: boolean },
-  ) {
-    const clientPort =
-      this.basePort + (websql ? 800 : 700) + this.n * this.max + index;
-    return clientPort;
-  }
-}
 
 export const frameworkBuildFolders = Utils.uniqArray([
   'firedev',

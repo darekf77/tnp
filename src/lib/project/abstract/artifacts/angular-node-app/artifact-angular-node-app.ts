@@ -14,7 +14,6 @@ import {
 import {
   COMPILATION_COMPLETE_APP_NG_SERVE,
   DEFAULT_PORT,
-  PortUtils,
   THIS_IS_GENERATED_INFO_COMMENT,
   tmpBaseHrefOverwriteRelPath,
   tmpBuildPort,
@@ -264,6 +263,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     //#region @backendFunc
     releaseOptions = this.updateResolvedVersion(releaseOptions);
     const projectsReposToPushAndTag: string[] = [this.project.location];
+    const projectsReposToPush: string[] = [];
 
     const { appDistOutBrowserAngularAbsPath, appDistOutBackendNodeAbsPath } =
       await this.buildPartial(
@@ -274,30 +274,21 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           // },
         }),
       );
+    let releaseProjPath: string = appDistOutBackendNodeAbsPath;
+
+    releaseOptions.release.skipStaticPagesVersioning = _.isUndefined(
+      releaseOptions.release.skipStaticPagesVersioning,
+    )
+      ? true
+      : releaseOptions.release.skipStaticPagesVersioning;
 
     if (releaseOptions.release.releaseType === 'static-pages') {
-      const staticPagesProjLocation =
-        this.getStaticPagesClonedProjectLocation(releaseOptions);
-      try {
-        await Helpers.git.pullCurrentBranch(staticPagesProjLocation, {
-          // @ts-ignore TODO @REMOVE
-          exitOnError: false,
-        });
-      } catch (error) {}
-      if (Helpers.exists([staticPagesProjLocation, config.file.taon_jsonc])) {
-        Helpers.git.cleanRepoFromAnyFilesExceptDotGitFolder(
-          staticPagesProjLocation,
-        );
-      }
-      Helpers.writeFile([appDistOutBrowserAngularAbsPath, '.nojekyll'], '');
-      Helpers.copy(appDistOutBrowserAngularAbsPath, staticPagesProjLocation);
-      Helpers.git.revertFileChanges(staticPagesProjLocation, 'CNAME');
-
-      Helpers.info(`Static pages release done: ${staticPagesProjLocation}`);
-
-      if (!releaseOptions.release.skipTagGitPush) {
-        projectsReposToPushAndTag.unshift(staticPagesProjLocation);
-      }
+      const releaseData = await this.staticPagesDeploy(
+        appDistOutBrowserAngularAbsPath,
+        releaseOptions,
+      );
+      releaseProjPath = releaseData.releaseProjPath;
+      projectsReposToPush.push(...releaseData.projectsReposToPush);
     }
 
     return {
@@ -305,6 +296,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       releaseProjPath: appDistOutBrowserAngularAbsPath,
       releaseType: releaseOptions.release.releaseType,
       projectsReposToPushAndTag,
+      projectsReposToPush,
     };
     //#endregion
   }

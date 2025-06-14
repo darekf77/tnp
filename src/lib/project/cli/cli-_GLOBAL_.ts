@@ -58,6 +58,7 @@ import type { TaonProjectResolve } from '../abstract/project-resolve';
 export class $Global extends BaseGlobalCommandLine<
   {
     watch?: boolean;
+    w?: boolean;
   },
   // @ts-ignore TODO weird inheritance problem
   Project,
@@ -1445,7 +1446,7 @@ ${this.project.children
     await recreate();
     Helpers.taskDone('Recreation done src/lib/models.ts');
     Helpers.taskStarted('Watching for changes in src/lib/models.ts');
-    if (this.params.watch) {
+    if (this.params.watch || this.params.w) {
       chokidar.watch(fileToWatch).on('change', () => {
         debounceRecreate();
       });
@@ -1520,7 +1521,7 @@ ${this.project.children
     Helpers.taskStarted('Recreating... src/lib/models.ts');
     await recreate();
     Helpers.taskDone('Recreation done src/lib/models.ts');
-    if (this.params.watch) {
+    if (this.params.watch || this.params.w) {
       Helpers.taskStarted('Watching for changes in src/lib/models.ts');
       chokidar.watch(fileToWatch).on('change', () => {
         debounceRecreate();

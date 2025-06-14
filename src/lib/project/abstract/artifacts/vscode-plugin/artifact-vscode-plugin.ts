@@ -36,7 +36,10 @@ export class ArtifactVscodePlugin extends BaseArtifact<
 
   //#region clear partial
   async clearPartial(clearOption: EnvOptions) {
-    return void 0; // TODO implement
+    [this.project.pathFor('tmp-vscode-proj')].forEach(f => {
+      Helpers.removeSymlinks(f);
+      Helpers.removeFolderIfExists(f);
+    });
   }
   //#endregion
 
@@ -62,9 +65,13 @@ export class ArtifactVscodePlugin extends BaseArtifact<
         main: `./out/${initOptions.release.releaseType ? 'extension.js' : 'app.vscode.js'}`,
         categories: ['Other'],
         activationEvents: ['*'],
-        displayName: `${this.project.name}-vscode-ext`,
-        publisher: 'taon-dev-local',
-        description: '',
+        displayName:
+          this.project.packageJson.displayName ||
+          `${this.project.name}-vscode-ext`,
+        publisher: this.project.packageJson.publisher || 'taon-dev-local',
+        description:
+          this.project.packageJson.dependencies ||
+          `Description of ${this.project.nameForNpmPackage} extension`,
         engines: {
           vscode: '^1.30.0',
         },
@@ -204,33 +211,47 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     let releaseProjPath: string;
     let releaseType: ReleaseType = releaseOptions.release.releaseType;
     releaseOptions = this.updateResolvedVersion(releaseOptions);
+    let projectsReposToPushAndTag: string[] = [this.project.location];
+    let projectsReposToPush: string[] = [];
 
     const { vscodeVsixOutPath } = await this.buildPartial(
       EnvOptions.fromRelease(releaseOptions),
     );
 
     if (releaseOptions.release.releaseType === 'local') {
-      const localReleaseOutputBasePath = this.project.pathFor([
-        config.folder.local_release,
-        this.currentArtifactName,
-        `${this.project.name}-latest`,
-      ]);
-      Helpers.remove(localReleaseOutputBasePath);
-      Helpers.copyFile(
-        vscodeVsixOutPath,
-        crossPlatformPath([localReleaseOutputBasePath, this.extensionVsixName]),
-      );
-      Helpers.writeFile(
-        crossPlatformPath([localReleaseOutputBasePath, 'README.md']),
-        `# Installation
+      //#region local release
+      const releaseData = await this.localReleaseDeploy(
+        path.dirname(vscodeVsixOutPath),
+        releaseOptions,
+        {
+          copyOnlyExtensions: ['.vsix'],
+          createReadme: `# Installation
 
 Right click on the file **${path.basename(this.extensionVsixName)}**
 and select "Install Extension VSIX" to install it in your
 local VSCode instance.
 
 `,
+        },
       );
-      releaseProjPath = localReleaseOutputBasePath;
+
+      projectsReposToPushAndTag.push(...releaseData.projectsReposToPushAndTag);
+      releaseProjPath = releaseData.releaseProjPath;
+      //#endregion
+    }
+    if (releaseOptions.release.releaseType === 'static-pages') {
+      //#region local release
+      const releaseData = await this.staticPagesDeploy(
+        path.dirname(vscodeVsixOutPath),
+        releaseOptions,
+        {
+          copyOnlyExtensions: ['.vsix'],
+        },
+      );
+
+      projectsReposToPush.push(...releaseData.projectsReposToPush);
+      releaseProjPath = releaseData.releaseProjPath;
+      //#endregion
     }
     if (releaseOptions.release.releaseType === 'manual') {
       // TODO release to microsoft store or serve with place to put assets
@@ -247,7 +268,8 @@ local VSCode instance.
       resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
       releaseProjPath,
       releaseType,
-      projectsReposToPushAndTag: [this.project.location],
+      projectsReposToPushAndTag,
+      projectsReposToPush,
     };
     //#endregion
   }

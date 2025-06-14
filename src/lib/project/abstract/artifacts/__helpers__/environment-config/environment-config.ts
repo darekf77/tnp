@@ -205,6 +205,17 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
           `env.${artifactName}.${environmentName}${envNum === undefined ? '' : envNum}.ts`,
       );
 
+      // TODO QUICK_FIX
+      if (!fse.existsSync(pathToEnvTs)) {
+        Helpers.copyFile(
+          crossPlatformPath([
+            path.dirname(pathToEnvTs),
+            `env.${artifactName}.${CoreModels.EnvironmentName.__}.ts`,
+          ]),
+          pathToEnvTs,
+        );
+      }
+
       UtilsTypescript.clearRequireCacheRecursive(pathToEnvTs);
       env = require(pathToEnvTs)?.default;
     } catch (error) {

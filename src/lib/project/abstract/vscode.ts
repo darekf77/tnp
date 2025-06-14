@@ -7,7 +7,6 @@ import { BaseVscodeHelpers, Helpers, UtilsVSCode } from 'tnp-helpers/src';
 
 import {
   DEBUG_WORD,
-  PortUtils,
   taonConfigSchemaJsonStandalone,
   taonConfigSchemaJsonContainer,
   THIS_IS_GENERATED_INFO_COMMENT,
@@ -28,7 +27,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 {
   async init(): Promise<void> {
     this.recreateExtensions();
-    this.saveLaunchJson();
+    await this.saveLaunchJson();
     this.saveTasksJson();
 
     // modyfing settings.json
@@ -231,7 +230,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   }
 
   //#region save launch.json
-  public saveLaunchJson(basePort: number = 4100): void {
+  public async saveLaunchJson(): Promise<void> {
     //#region @backendFunc
     if (!this.project.framework.isStandaloneProject) {
       return;
@@ -296,8 +295,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       clientProject: Project,
       workspaceLevel: boolean,
     ) => {
-      const backendPort =
-        PortUtils.instance(basePort).calculateServerPortFor(serverChild);
+      // const backendPort = 4000;
       clientProject.artifactsManager.artifact.angularNodeApp.writePortsToFile();
       const startServerTemplate = {
         type: 'node',
@@ -305,7 +303,9 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
         name: `${DEBUG_WORD} Server`,
         program: '${workspaceFolder}/run.js',
         cwd: void 0,
-        args: [`port=${backendPort}`],
+        args: [
+          // `port=${backendPort}`
+        ],
         outFiles: this.outFiles,
         sourceMapPathOverrides: this.sourceMapPathOverrides,
         // "outFiles": ["${workspaceFolder}/dist/**/*.js"], becouse of this debugging inside node_moudles
@@ -328,17 +328,17 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       } else {
         startServerTemplate.name = `${startServerTemplate.name} '${serverChild.name}' for '${clientProject.name}'`;
       }
-      startServerTemplate.args.push(
-        `--ENVoverride=${encodeURIComponent(
-          JSON.stringify(
-            {
-              clientProjectName: clientProject.name,
-            } as Partial<EnvOptions>,
-            null,
-            4,
-          ),
-        )} `,
-      );
+      // startServerTemplate.args.push(
+      //   `--ENVoverride=${encodeURIComponent(
+      //     JSON.stringify(
+      //       {
+      //         clientProjectName: clientProject.name,
+      //       } as Partial<EnvOptions>,
+      //       null,
+      //       4,
+      //     ),
+      //   )} `,
+      // );
       return startServerTemplate;
     };
     //#endregion
@@ -374,17 +374,18 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     configurations.push(templateForServer(this.project, this.project, false));
     // configurations.push(startNgServeTemplate(9000, void 0, false));
-    configurations.push(
-      startElectronServeTemplate(
-        PortUtils.instance(basePort).calculatePortForElectronDebugging(
-          this.project,
-        ),
-      ),
+    // const key =;
+    const portForElectronDebugging = await this.project.registerAndAssignPort(
+      `electron debugging port`,
+      {
+        startFrom: 9876,
+      },
     );
-    compounds.push({
-      name: `${DEBUG_WORD} (Server + Electron)`,
-      configurations: [...configurations.map(c => c.name)],
-    });
+    configurations.push(startElectronServeTemplate(portForElectronDebugging));
+    // compounds.push({
+    //   name: `${DEBUG_WORD} (Server + Electron)`,
+    //   configurations: [...configurations.map(c => c.name)],
+    // });
     configurations.push(templateAttachProcess);
 
     configurations.push(...templatesVscodeExConfig);

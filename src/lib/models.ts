@@ -187,6 +187,13 @@ export namespace Models {
     peerDependenciesNamesForNpmLib: string[];
 
     /**
+     * Electron native dependencies that can be bundled into single index.js
+     * backend file with esbuild/ncc - BUT can be installed inside node_modules
+     * and later shipped with whole node_modules folder into electron app.
+     */
+    electronNativeDependencies: string[];
+
+    /**
      * so I can release same npm lib
      * with different name
      * @deprecated does not make sense

@@ -12,6 +12,7 @@ import {
 import { Helpers, UtilsQuickFixes, UtilsTypescript } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
+import { tmpAppsForDistElectron } from '../../../../constants';
 import {
   ReleaseArtifactTaonNames,
   ReleaseArtifactTaonNamesArr,
@@ -34,10 +35,16 @@ export class ArtifactElectronApp extends BaseArtifact<
     super(project, 'electron-app');
   }
 
+  //#region clear partial
   async clearPartial(options: EnvOptions): Promise<void> {
-    return void 0; // TODO implement
+    [this.project.pathFor(tmpAppsForDistElectron)].forEach(f => {
+      Helpers.removeSymlinks(f);
+      Helpers.removeFolderIfExists(f);
+    });
   }
+  //#endregion
 
+  //#region init partial
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     if (!initOptions.release.targetArtifact) {
       initOptions.release.targetArtifact = 'electron-app';
@@ -45,7 +52,9 @@ export class ArtifactElectronApp extends BaseArtifact<
     const result = await this.artifacts.angularNodeApp.initPartial(initOptions);
     return result;
   }
+  //#endregion
 
+  //#region build partial
   async buildPartial(buildOptions: EnvOptions): Promise<{
     electronDistOutAppPath: string;
     proxyProj: Project;
@@ -84,7 +93,9 @@ export class ArtifactElectronApp extends BaseArtifact<
     };
     //#endregion
   }
+  //#endregion
 
+  //#region release partial
   async releasePartial(
     releaseOptions: EnvOptions,
   ): Promise<ReleasePartialOutput> {
@@ -92,30 +103,50 @@ export class ArtifactElectronApp extends BaseArtifact<
     releaseOptions = this.updateResolvedVersion(releaseOptions);
 
     const projectsReposToPushAndTag: string[] = [this.project.location];
+    const projectsReposToPush: string[] = [];
 
     const { electronDistOutAppPath, proxyProj } =
       await this.buildPartial(releaseOptions);
 
-    const nutPackage = '@nut-tree-fork/nut-js';
-    Helpers.setValueToJSON(
-      proxyProj.pathFor('electron/package.json'),
-      'dependencies',
-      {
-        [nutPackage]: this.project.packageJson.dependencies[nutPackage],
-      },
-    );
+    //#region set native dependencies
+    const electronNativeDeps = this.project.taonJson.electronNativeDependencies;
 
+    for (const nativeDepName of electronNativeDeps) {
+      const version = this.project.packageJson.dependencies[nativeDepName];
+      if (version) {
+        Helpers.logInfo(
+          `Setting native dependency ${nativeDepName} to version ${version}`,
+        );
+        Helpers.setValueToJSON(
+          proxyProj.pathFor('electron/package.json'),
+          'dependencies',
+          {
+            [nativeDepName]:
+              this.project.packageJson.dependencies[nativeDepName],
+          },
+        );
+      } else {
+        Helpers.warn(
+          `Native dependency ${nativeDepName} not found in taon package.json dependencies`,
+        );
+      }
+    }
+    //#endregion
+
+    //#region bundling backend node_modules
     await Helpers.ncc(
       proxyProj.pathFor('electron/main.js'),
       proxyProj.pathFor('electron/index.js'),
       {
-        additionalExternals: [nutPackage],
+        additionalExternals: electronNativeDeps,
         strategy: 'electron-app',
       },
     );
+    //#endregion
 
     proxyProj.run(`cd electron && npm install`).sync();
 
+    //#region modify electron-builder.json
     const electronConfigPath = proxyProj.pathFor(`electron-builder.json`);
 
     const electronConfig = Helpers.readJson(
@@ -142,6 +173,7 @@ export class ArtifactElectronApp extends BaseArtifact<
       `dist/assets/assets-for/${this.project.nameForNpmPackage}/assets/`,
     );
     Helpers.writeFile(electronConfigPath, electronConfigFile);
+    //#endregion
 
     //#region Copy wasm file
     const wasmfileSource = crossPlatformPath([
@@ -181,6 +213,7 @@ export class ArtifactElectronApp extends BaseArtifact<
     // });
     //#endregion
 
+    //#region modify package.json
     const electronPackageJson = proxyProj.pathFor(`package.json`);
     const electronPackageJsonContent = Helpers.readJson(
       electronPackageJson,
@@ -189,6 +222,7 @@ export class ArtifactElectronApp extends BaseArtifact<
     electronPackageJsonContent.devDependencies =
       this.project.packageJson.dependencies || {};
     Helpers.writeJson(electronPackageJson, electronPackageJsonContent);
+    //#endregion
 
     proxyProj.run(`npm-run electron-builder build --publish=never`).sync();
 
@@ -198,35 +232,43 @@ export class ArtifactElectronApp extends BaseArtifact<
     let releaseProjPath: string;
 
     if (releaseOptions.release.releaseType === 'local') {
-      const localReleaseOutputBasePath = this.project.pathFor([
-        config.folder.local_release,
-        this.currentArtifactName,
-        `${process.platform}`,
-        `${this.project.name}-latest`,
-      ]);
-      Helpers.remove(localReleaseOutputBasePath);
-      Helpers.getFilesFrom(electronDistOutAppPath, {
-        recursive: false,
-      })
-        .filter(f => f.endsWith('.zip'))
-        .forEach(zipFile => {
-          const fileName = path.basename(zipFile);
-          const destZipFile = crossPlatformPath([
-            localReleaseOutputBasePath,
-            fileName,
-          ]);
-          Helpers.copyFile(zipFile, destZipFile);
-        });
-      releaseProjPath = localReleaseOutputBasePath;
+      //#region local release
+      const releaseData = await this.localReleaseDeploy(
+        electronDistOutAppPath,
+        releaseOptions,
+        {
+          copyOnlyExtensions: ['.zip'],
+          distinctArchitecturePrefix: { platform: process.platform },
+        },
+      );
+      projectsReposToPushAndTag.push(...releaseData.projectsReposToPushAndTag);
+      releaseProjPath = releaseData.releaseProjPath;
+      //#endregion
+    }
+    if (releaseOptions.release.releaseType === 'static-pages') {
+      //#region static pages release
+      const releaseData = await this.staticPagesDeploy(
+        electronDistOutAppPath,
+        releaseOptions,
+        {
+          copyOnlyExtensions: ['.zip'],
+          distinctArchitecturePrefix: { platform: process.platform },
+        },
+      );
+      projectsReposToPush.push(...releaseData.projectsReposToPush);
+      releaseProjPath = releaseData.releaseProjPath;
+      //#endregion
     }
 
     projectsReposToPushAndTag.push(electronDistOutAppPath);
     return {
       resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
-      projectsReposToPushAndTag: [this.project.location],
+      projectsReposToPushAndTag,
+      projectsReposToPush,
       releaseProjPath,
       releaseType: releaseOptions.release.releaseType,
     };
     //#endregion
   }
+  //#endregion
 }

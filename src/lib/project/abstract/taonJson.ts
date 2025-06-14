@@ -222,6 +222,21 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region dependencies names for npm lib
+  /**
+   * deps to inlculde in npm lib
+   * (relative paths to files or folders)
+   */
+  get electronNativeDependencies(): string[] {
+    //#region @backendFunc
+    let res = (this.data as Models.TaonJsonStandalone)
+      ?.electronNativeDependencies;
+
+    return res || [];
+    //#endregion
+  }
+  //#endregion
+
   //#region peerDependencies names for npm lib
   /**
    * Peer deps to inlculde in npm lib

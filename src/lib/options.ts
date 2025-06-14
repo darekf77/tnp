@@ -247,6 +247,11 @@ class EnvOptionsRelease {
    */
   declare skipTagGitPush?: boolean;
   /**
+   * Useful if you just want to release static pages
+   * without any versioning
+   */
+  declare skipStaticPagesVersioning?: boolean;
+  /**
    * skip git commit
    */
   declare skipResolvingGitChanges?: boolean;
@@ -277,6 +282,21 @@ class EnvOptionsRelease {
    * quick automatic release of lib
    */
   declare autoReleaseUsingConfig: boolean;
+
+  /**
+   * Tell when to override (html,js,css) static pages files
+   * when releasing new version
+   * Example:
+   * - for docs on "static pages" you just want one docs version for major release
+   * - for electron apps on "static pages" you want to have an version for each minor or patch release
+   */
+  declare overrideStaticPagesReleaseType: CoreModels.ReleaseVersionType;
+
+  /**
+   * Separated repository for static pages releases
+   */
+  declare staticPagesCustomRepoUrl?: string;
+
   declare envName: CoreModels.EnvironmentNameTaon;
   /**
    * undefined - prod

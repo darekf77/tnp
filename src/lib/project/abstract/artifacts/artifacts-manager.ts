@@ -203,7 +203,7 @@ export class ArtifactManager {
     this.project.taonJson.preserveOldTaonProps(); // TODO temporary remove
     this.project.taonJson.saveToDisk('init');
     this.project.environmentConfig.updateGeneratedValues(initOptions);
-    
+
     this.project.packagesRecognition.addIsomorphicPackagesToFile([
       this.project.nameForNpmPackage,
     ]);
@@ -537,6 +537,12 @@ export class ArtifactManager {
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'angular-node-app'
     ) {
+      if (releaseOptions.release.releaseType === 'static-pages') {
+        releaseOptions.build.baseHref =
+          this.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
+            releaseOptions,
+          );
+      }
       await npmLibBUild(releaseOptions);
       releaseOutput =
         await this.artifact.angularNodeApp.releasePartial(releaseOptions);
@@ -589,6 +595,23 @@ export class ArtifactManager {
           releaseOutput.releaseProjPath,
           `Check ${chalk.bold('bundle')} before tagging/pushing`,
         );
+      }
+
+      releaseOutput.projectsReposToPush = releaseOutput.projectsReposToPush || [];
+
+      for (const repoAbsPath of releaseOutput.projectsReposToPush) {
+        if (!releaseOptions.release.autoReleaseUsingConfig) {
+          await this.project.releaseProcess.checkBundleQuestion(
+            repoAbsPath,
+            `Check ${chalk.bold('project repo')} before pushing`,
+          );
+        }
+        await Helpers.git.tagAndPushToGitRepo(repoAbsPath, {
+          newVersion: releaseOutput.resolvedNewVersion,
+          autoReleaseUsingConfig: releaseOptions.release.autoReleaseUsingConfig,
+          isCiProcess: releaseOptions.isCiProcess,
+          skipTag: true,
+        });
       }
 
       for (const repoAbsPath of releaseOutput.projectsReposToPushAndTag) {

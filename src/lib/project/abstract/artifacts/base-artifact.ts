@@ -2,7 +2,7 @@
 import { RegionRemover } from 'isomorphic-region-loader/src';
 import { config, extAllowedToReplace, TAGS } from 'tnp-config/src';
 import { CoreModels, _, crossPlatformPath, glob, path } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
 
 import {
   ReleaseArtifactTaon,
@@ -21,6 +21,7 @@ import type { ArtifactNpmLibAndCliTool } from './npm-lib-and-cli-tool';
 import type { ArtifactVscodePlugin } from './vscode-plugin';
 //#endregion
 
+//#region artifact process object
 export type IArtifactProcessObj = {
   angularNodeApp: ArtifactAngularNodeApp;
   npmLibAndCliTool: ArtifactNpmLibAndCliTool;
@@ -29,7 +30,9 @@ export type IArtifactProcessObj = {
   docsWebapp: ArtifactDocsWebapp;
   vscodePlugin: ArtifactVscodePlugin;
 };
+//#endregion
 
+//#region release partial output
 export interface ReleasePartialOutput {
   /**
    * Compiled output path for the artifact
@@ -41,7 +44,15 @@ export interface ReleasePartialOutput {
    * and ready to be released with new version
    */
   projectsReposToPushAndTag?: string[];
+  projectsReposToPush?: string[];
   resolvedNewVersion?: string;
+}
+//#endregion
+
+//#region platform arch type
+export interface PlatformArchType {
+  platform?: NodeJS.Platform;
+  arch?: 'arm64' | 'x64';
 }
 
 export abstract class BaseArtifact<
@@ -89,6 +100,7 @@ export abstract class BaseArtifact<
   abstract clearPartial(options: EnvOptions): Promise<void>;
   //#endregion
 
+  //#region update resolved version
   protected updateResolvedVersion(releaseOptions: EnvOptions): EnvOptions {
     // @ts-ignore
     releaseOptions.release.resolvedNewVersion =
@@ -98,7 +110,9 @@ export abstract class BaseArtifact<
 
     return releaseOptions;
   }
+  //#endregion
 
+  //#region should skip  build
   protected shouldSkipBuild(releaseOptions: EnvOptions): boolean {
     if (_.isBoolean(releaseOptions.release.skipBuildingArtifacts)) {
       return releaseOptions.release.skipBuildingArtifacts;
@@ -115,24 +129,29 @@ export abstract class BaseArtifact<
     }
     return false;
   }
+  //#endregion
 
   //#region private methods / get static pages cloned project location
   protected getStaticPagesClonedProjectLocation(
     releaseOptions: EnvOptions,
   ): string {
     //#region @backendFunc
-    const staticPagesRepoBranch = releaseOptions.release.releaseType;
+    const staticPagesRepoBranch = `${releaseOptions.release.releaseType}-${this.currentArtifactName}`;
     const repoRoot = this.project.pathFor([
       `.${config.frameworkName}`,
       this.currentArtifactName,
     ]);
     const repoName = `repo-${this.project.name}-for-${releaseOptions.release.releaseType}`;
     const repoPath = crossPlatformPath([repoRoot, repoName]);
+    const repoUrl = releaseOptions.release.staticPagesCustomRepoUrl
+      ? releaseOptions.release.staticPagesCustomRepoUrl
+      : this.project.git.remoteOriginUrl;
+
     if (!Helpers.exists(repoPath)) {
       Helpers.mkdirp(repoRoot);
       Helpers.git.clone({
         cwd: repoRoot,
-        url: this.project.git.remoteOriginUrl,
+        url: repoUrl,
         override: true,
         destinationFolderName: repoName,
       });
@@ -227,6 +246,238 @@ export abstract class BaseArtifact<
         // rawContent = this.replaceRegionsWith(rawContent, ['@notFor'+'Npm']);
         Helpers.writeFile(absolutePath, rawContent);
       });
+    //#endregion
+  }
+  //#endregion
+
+  protected getDistinctArchitecturePrefix(
+    options?: boolean | PlatformArchType,
+    includeDashEnTheEnd = false,
+  ): string {
+    //#region @backendFunc
+    options = options || {};
+    if (typeof options === 'boolean' && options) {
+      return `${process.platform}-${process.arch}${includeDashEnTheEnd ? '-' : ''}`;
+    }
+
+    options = options as PlatformArchType;
+    if (options.arch || options.platform) {
+      return (
+        [options.platform, options.arch].filter(f => !!f).join('-') +
+        `${includeDashEnTheEnd ? '-' : ''}`
+      );
+    }
+    return '';
+    //#endregion
+  }
+
+  //#region local release deploy
+  async localReleaseDeploy(
+    outputFromBuildAbsPath: string,
+    releaseOptions: EnvOptions,
+    options?: {
+      /**
+       * Example extensions: ['.zip', '.vsix']
+       */
+      copyOnlyExtensions?: string[];
+      createReadme?: string;
+      distinctArchitecturePrefix?: boolean | PlatformArchType;
+    },
+  ): Promise<
+    Pick<ReleasePartialOutput, 'releaseProjPath' | 'projectsReposToPushAndTag'>
+  > {
+    //#region @backendFunc
+    let releaseProjPath: string;
+    const projectsReposToPushAndTag: string[] = [this.project.location];
+
+    const architecturePrefix = this.getDistinctArchitecturePrefix(
+      options.distinctArchitecturePrefix,
+      false,
+    );
+
+    const localReleaseOutputBasePath = this.project.pathFor([
+      config.folder.local_release,
+      this.currentArtifactName,
+      `${this.project.name}-latest`,
+      architecturePrefix,
+    ]);
+    Helpers.remove(localReleaseOutputBasePath);
+    if (options.copyOnlyExtensions) {
+      const zips = Helpers.getFilesFrom(outputFromBuildAbsPath, {
+        recursive: false,
+      }).filter(f =>
+        options.copyOnlyExtensions.some(
+          ext => path.extname(f).replace('.', '') === ext.replace('.', ''),
+        ),
+      );
+
+      for (const zipFile of zips) {
+        const fileName = path.basename(zipFile);
+        const destZipFile = crossPlatformPath([
+          localReleaseOutputBasePath,
+          fileName,
+        ]);
+        Helpers.copyFile(zipFile, destZipFile);
+        if (await UtilsZip.splitFile(destZipFile)) {
+          Helpers.removeIfExists(destZipFile);
+        }
+      }
+    } else {
+      Helpers.copy(outputFromBuildAbsPath, localReleaseOutputBasePath, {
+        recursive: true,
+        overwrite: true,
+        copySymlinksAsFiles: true,
+      });
+    }
+
+    if (options.createReadme) {
+      Helpers.writeFile(
+        crossPlatformPath([localReleaseOutputBasePath, 'README.md']),
+        options.createReadme,
+      );
+    }
+
+    releaseProjPath = localReleaseOutputBasePath;
+
+    return {
+      releaseProjPath,
+      projectsReposToPushAndTag,
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region static pages deploy
+  async staticPagesDeploy(
+    outputFromBuildAbsPath: string,
+    releaseOptions: EnvOptions,
+    options?: {
+      /**
+       * Example extensions: ['.zip', '.vsix']
+       */
+      copyOnlyExtensions?: string[];
+      createReadme?: string;
+      distinctArchitecturePrefix?: boolean | PlatformArchType;
+    },
+  ): Promise<
+    Pick<ReleasePartialOutput, 'releaseProjPath' | 'projectsReposToPush'>
+  > {
+    //#region @backendFunc
+    options = options || {};
+    const architecturePrefix = this.getDistinctArchitecturePrefix(
+      options.distinctArchitecturePrefix,
+    );
+    const projectsReposToPush: string[] = [];
+    let releaseProjPath: string;
+    const staticPagesProjLocation =
+      this.getStaticPagesClonedProjectLocation(releaseOptions);
+
+    try {
+      await Helpers.git.pullCurrentBranch(staticPagesProjLocation, {
+        // @ts-ignore TODO @REMOVE
+        exitOnError: false,
+      });
+    } catch (error) {}
+    if (Helpers.exists([staticPagesProjLocation, config.file.taon_jsonc])) {
+      Helpers.git.cleanRepoFromAnyFilesExceptDotGitFolder(
+        staticPagesProjLocation,
+      );
+    }
+
+    Helpers.writeFile([outputFromBuildAbsPath, '.nojekyll'], '');
+    const destinationStaticPagesLocationRepoAbsPath = releaseOptions.release
+      .skipStaticPagesVersioning
+      ? staticPagesProjLocation
+      : crossPlatformPath([
+          staticPagesProjLocation,
+          'version',
+          this.project.packageJson
+            .getVersionFor(
+              releaseOptions.release.overrideStaticPagesReleaseType || 'patch',
+            )
+            ?.toString(),
+          architecturePrefix,
+        ]);
+    if (options.copyOnlyExtensions) {
+      Helpers.getFilesFrom(outputFromBuildAbsPath, {
+        recursive: false,
+      })
+        .filter(f =>
+          options.copyOnlyExtensions.some(
+            ext => path.extname(f).replace('.', '') === ext.replace('.', ''),
+          ),
+        )
+        .forEach(zipFile => {
+          const fileName = path.basename(zipFile);
+          const destZipFile = crossPlatformPath([
+            destinationStaticPagesLocationRepoAbsPath,
+            fileName,
+          ]);
+          Helpers.copyFile(zipFile, destZipFile);
+        });
+    } else {
+      Helpers.copy(
+        outputFromBuildAbsPath,
+        destinationStaticPagesLocationRepoAbsPath,
+      );
+    }
+
+    if (!releaseOptions.release.skipStaticPagesVersioning) {
+      const versions = Helpers.foldersFrom(
+        [staticPagesProjLocation, 'version'],
+        {
+          recursive: false,
+        },
+      );
+      Helpers.writeFile(
+        [staticPagesProjLocation, 'index.html'],
+        `
+        <html>
+        <head>
+          <title>Versions</title>
+        </head>
+        <body>
+          <h1>${_.startCase(releaseOptions.release.targetArtifact)} ` +
+          `versions for ${this.project.nameForNpmPackage}</h1>
+          <ul>
+            ${versions
+              .map(version => {
+                return (
+                  `<li><a href="version/` +
+                  `${path.basename(version)}${architecturePrefix ? `/${architecturePrefix}` : ''}">` +
+                  `${path.basename(version)}${architecturePrefix ? `/${architecturePrefix}` : ''}</a></li>`
+                );
+              })
+              .join('')}
+          </ul>
+
+        </body>
+        </html>
+        `,
+      );
+
+      UtilsTypescript.formatFile([staticPagesProjLocation, 'index.html']);
+    }
+
+    Helpers.git.revertFileChanges(staticPagesProjLocation, 'CNAME');
+
+    if (options.createReadme) {
+      Helpers.writeFile(
+        crossPlatformPath([staticPagesProjLocation, 'README.md']),
+        options.createReadme,
+      );
+    }
+
+    Helpers.info(`Static pages release done: ${staticPagesProjLocation}`);
+
+    releaseProjPath = staticPagesProjLocation;
+    if (!releaseOptions.release.skipTagGitPush) {
+      projectsReposToPush.unshift(staticPagesProjLocation);
+    }
+    return {
+      projectsReposToPush,
+      releaseProjPath,
+    };
     //#endregion
   }
   //#endregion

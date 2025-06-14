@@ -3,6 +3,7 @@ import { config } from 'tnp-config/src';
 import { crossPlatformPath, path, _, CoreModels, fse } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 
+import { tmpAppsForDist } from '../../../../../constants';
 import { EnvOptions } from '../../../../../options';
 import type { Project } from '../../../project';
 import { InsideStruct } from '../../__helpers__/inside-structures/inside-struct';
@@ -58,7 +59,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
     //#region @backendFunc
     const project = this.project;
     const tmpProjectsStandalone =
-      `tmp-apps-for-${config.folder.dist}` +
+      tmpAppsForDist +
       `${this.initOptions.build.websql ? '-websql' : ''}` +
       `${this.isElectron ? '-electron' : ''}/${project.name}`;
 
