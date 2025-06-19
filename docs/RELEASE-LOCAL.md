@@ -41,8 +41,12 @@
     <td><b>electron app</b><br>(local/repo)</td>
     <td>
     💡 App needed for local development/projects management<br>
-    🔲  - release app installer (or executable) into: <br>
+    🔲  - release app installer (or executable) into: 
     <u>repo-folder/local_release/electron-app/(win/mac/linux)/project-name</u>  <br>
+    <br>
+    Don't forget to remove gatekeeper after 
+    downloading/unpacking your app (on MacOS ARM)<br>
+    <code>xattr -d com.apple.quarantine YourApp.app</code>
     </td>
   </tr>
   <tr>

@@ -41,6 +41,10 @@ Take advantage of github pages (or similar solution) in a best possible way.
     <td>
      ⌛ - publish zipped (also with source code) electron app installer to <br>
        <i>static_pages_branch/assets/electron-app/version-X-X-X</i> <br>
+        <br>
+    Don't forget to remove gatekeeper after 
+    downloading/unpacking your app (on MacOS ARM)<br>
+    <code>xattr -d com.apple.quarantine YourApp.app</code>
     </td>
   </tr>
   <tr>
