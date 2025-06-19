@@ -318,7 +318,7 @@ export abstract class BaseArtifact<
           fileName,
         ]);
         Helpers.copyFile(zipFile, destZipFile);
-        if (await UtilsZip.splitFile(destZipFile)) {
+        if (await UtilsZip.splitFile7Zip(destZipFile)) {
           Helpers.removeIfExists(destZipFile);
         }
       }
@@ -399,22 +399,25 @@ export abstract class BaseArtifact<
           architecturePrefix,
         ]);
     if (options.copyOnlyExtensions) {
-      Helpers.getFilesFrom(outputFromBuildAbsPath, {
+      const zips = Helpers.getFilesFrom(outputFromBuildAbsPath, {
         recursive: false,
-      })
-        .filter(f =>
-          options.copyOnlyExtensions.some(
-            ext => path.extname(f).replace('.', '') === ext.replace('.', ''),
-          ),
-        )
-        .forEach(zipFile => {
-          const fileName = path.basename(zipFile);
-          const destZipFile = crossPlatformPath([
-            destinationStaticPagesLocationRepoAbsPath,
-            fileName,
-          ]);
-          Helpers.copyFile(zipFile, destZipFile);
-        });
+      }).filter(f =>
+        options.copyOnlyExtensions.some(
+          ext => path.extname(f).replace('.', '') === ext.replace('.', ''),
+        ),
+      );
+
+      for (const zipFile of zips) {
+        const fileName = path.basename(zipFile);
+        const destZipFile = crossPlatformPath([
+          destinationStaticPagesLocationRepoAbsPath,
+          fileName,
+        ]);
+        Helpers.copyFile(zipFile, destZipFile);
+        if (await UtilsZip.splitFile7Zip(destZipFile)) {
+          Helpers.removeIfExists(destZipFile);
+        }
+      }
     } else {
       Helpers.copy(
         outputFromBuildAbsPath,
