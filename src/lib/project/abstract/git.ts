@@ -99,8 +99,8 @@ export class Git extends BaseGit<Project> {
         })
       ) {
         for (const folder of paths) {
-          Helpers.removeSymlinks(this.project.pathFor(folder));
-          Helpers.removeFolderIfExists(this.project.pathFor(folder));
+          Helpers.removeSymlinks(folder);
+          Helpers.removeFolderIfExists(folder);
         }
       }
     }
