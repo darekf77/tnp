@@ -1307,6 +1307,55 @@ ${this.project.children
     ).sync();
     this._exit();
   }
+
+  gif(): void {
+    const cwdToProcess = path.isAbsolute(this.firstArg)
+      ? path.dirname(this.firstArg)
+      : this.cwd;
+    const basenameToProcess = path.basename(this.firstArg);
+    const gifDownloadPath = crossPlatformPath([
+      os.userInfo().homedir,
+      'Downloads',
+      'gif-from-videos',
+      basenameToProcess.replace(path.extname(basenameToProcess), '.gif'),
+    ]);
+    const palleteBasename = `${_.kebabCase(path.basename(gifDownloadPath))}-palette.png`;
+    Helpers.removeFileIfExists([cwdToProcess, palleteBasename]);
+    const quality = `fps=10,scale=960`;
+    Helpers.info(`Preparing gif from video (creating palette)...`);
+    Helpers.run(
+      `ffmpeg -i ${basenameToProcess} -vf "${quality}:-1:flags=lanczos,palettegen"` +
+        ` ${palleteBasename} `,
+      {
+        output: true,
+        cwd: cwdToProcess,
+      },
+    ).sync();
+    Helpers.info(`Preparing gif from video (creating video)...`);
+    Helpers.run(
+      `ffmpeg -i ${basenameToProcess} -i ` +
+        ` ${palleteBasename}  -filter_complex ` +
+        `"${quality}:-1:flags=lanczos[x];[x][1:v]paletteuse" ${path.basename(gifDownloadPath)}`,
+      {
+        output: true,
+        cwd: cwdToProcess,
+      },
+    ).sync();
+
+    Helpers.removeFileIfExists(gifDownloadPath);
+    Helpers.move(
+      crossPlatformPath([cwdToProcess, path.basename(gifDownloadPath)]),
+      gifDownloadPath,
+    );
+
+    Helpers.taskDone(`Done creating gif from video:
+
+      ${gifDownloadPath}
+
+      `);
+    Helpers.openFolderInFileExploer(path.dirname(gifDownloadPath));
+    this._exit();
+  }
   //#endregion
 
   //#region not for npm / kill zscaller
