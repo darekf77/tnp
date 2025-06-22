@@ -1,5 +1,5 @@
 import { CoreModels, _ } from 'tnp-core/src';
-import { PackageJson } from 'type-fest';
+import { PackageJson } from 'tnp-helpers/src';
 
 import type { ReleaseType } from './options';
 import type { Project } from './project/abstract/project';

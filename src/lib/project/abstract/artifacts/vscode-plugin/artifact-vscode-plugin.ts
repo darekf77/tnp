@@ -161,7 +161,9 @@ export class ArtifactVscodePlugin extends BaseArtifact<
       buildOptions.release.releaseType,
     );
     const extProj = this.project.ins.From(tmpVscodeProjPath);
-    const vscodeVsixOutPath: string = extProj.pathFor(this.extensionVsixName);
+    const vscodeVsixOutPath: string = extProj.pathFor(
+      this.extensionVsixNameFrom(buildOptions),
+    );
     const destExtensionJs = this.getDestExtensionJs(
       buildOptions.release.releaseType,
     );
@@ -246,7 +248,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
           copyOnlyExtensions: ['.vsix'],
           createReadme: `# Installation
 
-Right click on the file **${path.basename(this.extensionVsixName)}**
+Right click on the file **${path.basename(this.extensionVsixNameFrom(releaseOptions))}**
 and select "Install Extension VSIX" to install it in your
 local VSCode instance.
 
@@ -322,8 +324,10 @@ local VSCode instance.
   //#endregion
 
   //#region private methods / extension vsix name
-  private get extensionVsixName(): string {
-    return `${this.project.name}-${this.project.packageJson.version}.vsix`;
+  private extensionVsixNameFrom(initOptions: EnvOptions): string {
+    return `${this.project.name}-${
+      initOptions.release.resolvedNewVersion || this.project.packageJson.version
+    }.vsix`;
   }
   //#endregion
 
@@ -346,11 +350,12 @@ local VSCode instance.
 
   //#region private methods / create vscode package
   async createVscePackage({
+    releaseOptions,
     showInfo = true,
     args = '',
-  }: { showInfo?: boolean; args?: string } = {}) {
+  }: { releaseOptions?: EnvOptions; showInfo?: boolean; args?: string } = {}) {
     //#region @backendFunc
-    const vsixPackageName = this.extensionVsixName;
+    const vsixPackageName = this.extensionVsixNameFrom(releaseOptions);
     try {
       await Helpers.actionWrapper(
         () => {
