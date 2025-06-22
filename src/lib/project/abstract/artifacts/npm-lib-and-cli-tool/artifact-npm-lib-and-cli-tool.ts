@@ -627,10 +627,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     newVersion: string,
   ): void {
     //#region @backendFunc
-    const folderToFix = [
-      config.folder.browser,
-      config.folder.websql,
-    ];
+    const folderToFix = [config.folder.browser, config.folder.websql];
 
     for (const folder of folderToFix) {
       const folderAbsPath = crossPlatformPath([releaseProjPath, folder]);
@@ -1153,10 +1150,16 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     const destCli = crossPlatformPath([releaseAbsLocation, 'index.js']);
     const destCliMin = crossPlatformPath([releaseAbsLocation, 'cli.js']);
 
-    await Helpers.ncc(destCli, destCliMin, {
+    await Helpers.bundleCodeIntoSingleFile(destCli, destCliMin, {
       minify,
       additionalExternals: [
         'typescript', // is not external
+        ...this.project.taonJson.additionalExternalsFor('npm-lib-and-cli-tool'),
+      ],
+      additionalReplaceWithNothing: [
+        ...this.project.taonJson.additionalReplaceWithNothingFor(
+          'npm-lib-and-cli-tool',
+        ),
       ],
     });
 

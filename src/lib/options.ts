@@ -71,8 +71,15 @@ export const ReleaseTypeNames = Object.freeze({
 export type ReleaseType =
   (typeof ReleaseTypeNames)[keyof typeof ReleaseTypeNames];
 
-export const ReleaseTypeNamesArr: ReleaseType[] =
+export const ReleaseTypeNamesArr: (ReleaseType)[] =
   Object.values(ReleaseTypeNames);
+
+export const Development = 'development';
+export const ReleaseTypeWithDevelopmentArr: (ReleaseType | 'development')[] = [
+  ...ReleaseTypeNamesArr,
+  Development,
+];
+
 //#endregion
 
 //#region env options

@@ -1,6 +1,6 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { UtilsTerminal, _, chalk, fse, path } from 'tnp-core/src';
+import { Utils, UtilsTerminal, _, chalk, fse, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseProcessManger, CommandConfig } from 'tnp-helpers/src';
 
@@ -591,15 +591,20 @@ export class ArtifactManager {
     //#region tag and push
     if (!releaseOptions.release.skipTagGitPush) {
       if (!releaseOptions.release.autoReleaseUsingConfig) {
+        Helpers.info(`Checking ${releaseOutput.releaseProjPath} ..`);
         await this.project.releaseProcess.checkBundleQuestion(
           releaseOutput.releaseProjPath,
           `Check ${chalk.bold('bundle')} before tagging/pushing`,
         );
       }
 
-      releaseOutput.projectsReposToPush = releaseOutput.projectsReposToPush || [];
+      releaseOutput.projectsReposToPush =
+        releaseOutput.projectsReposToPush || [];
 
-      for (const repoAbsPath of releaseOutput.projectsReposToPush) {
+      for (const repoAbsPath of Utils.uniqArray(
+        releaseOutput.projectsReposToPush,
+      )) {
+        Helpers.info(`Checking ${repoAbsPath} ..`);
         if (!releaseOptions.release.autoReleaseUsingConfig) {
           await this.project.releaseProcess.checkBundleQuestion(
             repoAbsPath,
@@ -614,8 +619,11 @@ export class ArtifactManager {
         });
       }
 
-      for (const repoAbsPath of releaseOutput.projectsReposToPushAndTag) {
+      for (const repoAbsPath of Utils.uniqArray(
+        releaseOutput.projectsReposToPushAndTag,
+      )) {
         if (!releaseOptions.release.autoReleaseUsingConfig) {
+          Helpers.info(`Checking ${repoAbsPath} ..`);
           await this.project.releaseProcess.checkBundleQuestion(
             repoAbsPath,
             `Check ${chalk.bold('project repo')} before tagging/pushing`,

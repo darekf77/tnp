@@ -172,7 +172,6 @@ class $Build extends BaseCli {
     //     finishCallback: () => this._exit(),
     //   }),
     // );
-
     // await this.project.artifactsManager.artifact.npmLibAndCliTool.buildPartial(
     //   this.params.clone({
     //     build: {
@@ -189,7 +188,6 @@ class $Build extends BaseCli {
     //     },
     //   }),
     // );
-
     // await this.project.build(
     //   this.params.clone({
     //     release: {
@@ -339,33 +337,34 @@ class $Build extends BaseCli {
    */
   async mkdocs() {
     const mkdocsActions = {
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
-      /* */
+      //#region @notForNpm
+      SELECT_COMMAND: {
+        name: '< select command >',
+      },
+      // BUILD_DEPLY_DOCS_TAON: {
+      //   name: 'Build & deply docs for www.taon.dev',
+      //   value: {
+      //     command: `python -m mkdocs build --site-dir ../../taon-projects/www-taon-dev/docs/documentation`,
+      //     action: async () => {
+      //       const taonProjWww = this.ins.From([
+      //         this.cwd,
+      //         '../../taon-projects/www-taon-dev',
+      //       ]);
+      //       if (await Helpers.questionYesNo('Push and commit docs update ?')) {
+      //         taonProjWww.git.addAndCommit('docs: update');
+      //         await taonProjWww.git.pushCurrentBranch();
+      //       }
+      //     },
+      //   },
+      // },
+      // BUILD_DOCS_TAON: {
+      //   name: 'Build docs for www.taon.dev',
+      //   value: {
+      //     command: `python -m mkdocs build --site-dir ../../taon-projects/www-taon-dev/${TEMP_DOCS}`,
+      //     action: void 0,
+      //   },
+      // },
+      //#endregion
 
       SERVE_DOCS_TAON: {
         name: 'Serve docs for www.taon.dev on 8000',

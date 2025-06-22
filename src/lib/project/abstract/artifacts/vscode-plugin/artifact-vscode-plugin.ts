@@ -10,13 +10,18 @@ import {
 } from 'tnp-core/src';
 import { Helpers, UtilsQuickFixes } from 'tnp-helpers/src';
 
-import { DEFAULT_PORT, tmpVscodeProj } from '../../../../constants';
+import {
+  DEFAULT_PORT,
+  iconVscode128Basename,
+  tmpVscodeProj,
+} from '../../../../constants';
 import { Models } from '../../../../models';
 import {
   ReleaseArtifactTaonNames,
   ReleaseArtifactTaonNamesArr,
   EnvOptions,
   ReleaseType,
+  Development,
 } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
@@ -61,7 +66,9 @@ export class ArtifactVscodePlugin extends BaseArtifact<
       crossPlatformPath([tmpVscodeProjPath, config.file.package_json]),
       {
         name: this.project.name,
-        version: this.project.packageJson.version,
+        version:
+          initOptions.release.resolvedNewVersion ||
+          this.project.packageJson.version,
         main: `./out/${initOptions.release.releaseType ? 'extension.js' : 'app.vscode.js'}`,
         categories: ['Other'],
         activationEvents: ['*'],
@@ -69,8 +76,9 @@ export class ArtifactVscodePlugin extends BaseArtifact<
           this.project.packageJson.displayName ||
           `${this.project.name}-vscode-ext`,
         publisher: this.project.packageJson.publisher || 'taon-dev-local',
+        icon: `${iconVscode128Basename}`,
         description:
-          this.project.packageJson.dependencies ||
+          this.project.packageJson.description ||
           `Description of ${this.project.nameForNpmPackage} extension`,
         engines: {
           vscode: '^1.30.0',
@@ -169,8 +177,9 @@ export class ArtifactVscodePlugin extends BaseArtifact<
       //   .async();
     } else {
       if (buildOptions.release.releaseType) {
+        await this.project.artifactsManager.globalHelper.branding.generateLogoFroVscodeLocations();
         if (!shouldSkipBuild) {
-          await Helpers.ncc(
+          await Helpers.bundleCodeIntoSingleFile(
             crossPlatformPath([
               tmpVscodeProjPath,
               config.folder.dist,
@@ -179,6 +188,16 @@ export class ArtifactVscodePlugin extends BaseArtifact<
             destExtensionJs,
             {
               strategy: 'vscode-ext',
+              additionalExternals: [
+                ...this.project.taonJson.additionalExternalsFor(
+                  'vscode-plugin',
+                ),
+              ],
+              additionalReplaceWithNothing: [
+                ...this.project.taonJson.additionalReplaceWithNothingFor(
+                  'vscode-plugin',
+                ),
+              ],
             },
           );
         }
@@ -281,7 +300,7 @@ local VSCode instance.
   public getTmpVscodeProjPath(releaseType?: ReleaseType): string {
     const tmpVscodeProjPath = this.project.pathFor(
       `${tmpVscodeProj}/${
-        releaseType ? 'release' + releaseType : 'development'
+        releaseType ? releaseType : Development
       }/${this.project.name}`,
     );
     return tmpVscodeProjPath;

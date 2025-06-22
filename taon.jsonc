@@ -7,13 +7,42 @@
     "ora",
     "progress",
     "open",
+    // by default in singleFileBundlingExternals
     "ts-node",
     // "webpack",
+    // by default in singleFileBundlingExternals
     "typescript",
+    // by default in singleFileBundlingExternals
     "esbuild",
+    "sharp",
     // "rxjs",
     // "tslib",
     // "magic-renamer",
+  ],
+
+  "singleFileBundlingExternals": [
+    // electron is replaced by default
+    // {
+    //   "packageName": "electron",
+    //   "artifactName": "npm-lib-and-cli-tool",
+    //   "replaceWithNothing": true,
+    // },
+    {
+      "description": "Image manipulations",
+      "packageName": "sharp",
+    },
+    {
+      "description": "Global cli progressbar",
+      "packageName": "progress",
+    },
+    {
+      "description": "Open urls in browser",
+      "packageName": "open",
+    },
+    {
+      "description": "Ora terminal spinner",
+      "packageName": "ora",
+    },
   ],
 
   "appId": "dev.taon.cli.tnp",
@@ -40,6 +69,6 @@
     "scripts": {
       "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     },
-    "sideEffects": false
-  }
+    "sideEffects": false,
+  },
 }

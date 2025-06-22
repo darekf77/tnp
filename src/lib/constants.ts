@@ -25,6 +25,8 @@ export const ALLOWED_TO_RELEASE: {
   ],
 };
 
+export const iconVscode128Basename = 'icon-vscode.png';
+
 export const taonIgnore = '@taon' + '-' + 'ignore';
 
 export const DEBUG_WORD = 'Debug/Start';

@@ -194,6 +194,36 @@ export namespace Models {
     electronNativeDependencies: string[];
 
     /**
+     * Provide externals for bundling ts code into single .js file
+     * (external packages that are not going to be bundled)
+     */
+    singleFileBundlingExternals: {
+      /**
+       * Description of external package
+       * - why it is external
+       * - what is it used for
+       * etc.
+       */
+      description: string;
+      packageName: string;
+      /**
+       * replace with nothing require('packageName') - if still is somewhere
+       * is final code
+       */
+      replaceWithNothing?: boolean;
+      /**
+       * Without artifact name - all artifacts will use this pacakge as external
+       */
+      artifactName?:
+        | 'npm-lib-and-cli-tool'
+        | 'angular-node-app'
+        | 'electron-app'
+        | 'mobile-app'
+        | 'vscode-plugin'
+        | 'docs-webapp';
+    }[];
+
+    /**
      * so I can release same npm lib
      * with different name
      * @deprecated does not make sense

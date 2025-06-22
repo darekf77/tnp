@@ -6,6 +6,8 @@ import { _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
+import { iconVscode128Basename } from '../../../../constants';
+import { ReleaseTypeWithDevelopmentArr } from '../../../../options';
 import type { Project } from '../../project';
 //#endregion
 
@@ -154,37 +156,110 @@ export class Branding extends BaseFeatureForProject<Project> {
     };
 
     // TODO implement for sharp for taon branding
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-  
+    //#region @notForNpm
+    try {
+      const favicons = require('favicons');
+      const response = await favicons.favicons(sourceLogoPng, configuration);
+
+      // console.log(response.images); // Array of { name: string, contents: <buffer> }
+      // console.log(response.files); // Array of { name: string, contents: <string> }
+      // console.log(response.html); // Array of strings (html elements)
+
+      Helpers.mkdirp(dest);
+      await Promise.all(
+        response.images.map(async image => {
+          await fse.writeFile(path.join(dest, image.name), image.contents);
+        }),
+      );
+      await Promise.all(
+        response.files.map(async file => {
+          await fse.writeFile(path.join(dest, file.name), file.contents);
+        }),
+      );
+
+      await fse.writeFile(
+        path.join(dest, htmlBasename),
+        response.html.join('\n'),
+      );
+    } catch (error) {
+      console.log(error.message); // Error description e.g. "An unknownn error has occurred"
+    }
+    //#endregion
 
     Helpers.log(`Project ${proj.genericName} branding ended`);
+    //#endregion
+  }
+  //#endregion
+
+  //#region create logo for vscode plugin release
+  async createPngIconsFromPngLogo(
+    absPathToLogoPng: string,
+    absPathDestinationVscodeLogoPng: string,
+  ): Promise<void> {
+    //#region @backendFunc
+    try {
+      const sharePackageName = 'sharp';
+      const sharp = require(sharePackageName) as typeof import('sharp');
+      // Ensure input file exists
+      if (!Helpers.exists(absPathToLogoPng)) {
+        throw new Error(
+          `[${config.frameworkName}/branding] Logo file does not exist at: ${absPathToLogoPng}`,
+        );
+      }
+
+      // Ensure destination directory exists
+      const destDir = path.dirname(absPathDestinationVscodeLogoPng);
+      if (!Helpers.exists(destDir)) {
+        await Helpers.mkdirp(destDir);
+      }
+
+      // Resize to 128x128 and save
+      await sharp(absPathToLogoPng)
+        .resize(128, 128)
+        .png()
+        .toFile(absPathDestinationVscodeLogoPng);
+
+      console.log(`✅ Logo created at: ${absPathDestinationVscodeLogoPng}`);
+    } catch (error) {
+      console.error(`❌ Failed to create logo:`, error);
+      throw error;
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region generate logo for vscode locations
+  async generateLogoFroVscodeLocations(): Promise<void> {
+    //#region @backendFunc
+    Helpers.taskStarted('Creating vscode icons');
+    const destinationDirnames = ReleaseTypeWithDevelopmentArr.map(
+      releaseType => {
+        return this.project.pathFor([
+          'tmp-vscode-proj',
+          releaseType,
+          this.project.name,
+        ]);
+      },
+    );
+
+    let firstPath: string;
+    for (const destinationDirnameAbsPath of destinationDirnames) {
+      const destinationIconAbsPath = crossPlatformPath([
+        destinationDirnameAbsPath,
+        iconVscode128Basename,
+      ]);
+      if (firstPath) {
+        Helpers.copyFile(firstPath, destinationIconAbsPath);
+      } else {
+        await this.createPngIconsFromPngLogo(
+          this.project.pathFor('logo.png'),
+          destinationIconAbsPath,
+        );
+        firstPath = destinationIconAbsPath;
+      }
+      Helpers.logInfo(`Updated icon ${destinationIconAbsPath}`);
+    }
+    Helpers.taskDone('Vscode icons created');
     //#endregion
   }
   //#endregion

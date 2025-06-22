@@ -134,11 +134,17 @@ export class ArtifactElectronApp extends BaseArtifact<
     //#endregion
 
     //#region bundling backend node_modules
-    await Helpers.ncc(
+    await Helpers.bundleCodeIntoSingleFile(
       proxyProj.pathFor('electron/main.js'),
       proxyProj.pathFor('electron/index.js'),
       {
-        additionalExternals: electronNativeDeps,
+        additionalExternals: [
+          ...electronNativeDeps,
+          ...this.project.taonJson.additionalExternalsFor('electron-app'),
+        ],
+        additionalReplaceWithNothing: [
+          ...this.project.taonJson.additionalReplaceWithNothingFor('electron-app'),
+        ],
         strategy: 'electron-app',
       },
     );

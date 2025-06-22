@@ -18,7 +18,7 @@ import {
   tmpBaseHrefOverwriteRelPath,
   tmpBuildPort,
 } from '../../../../constants';
-import { EnvOptions, ReleaseType } from '../../../../options';
+import { Development, EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 import { InsideStructuresElectron } from '../electron-app/tools/inside-struct-electron';
@@ -503,7 +503,7 @@ ${contexts.join('\n')}
   getOutDirNodeBackendAppAbsPath(buildOptions: EnvOptions): string {
     let outDirApp =
       `.${config.frameworkName}/${this.currentArtifactName}/` +
-      `${buildOptions.release.releaseType ? buildOptions.release.releaseType : 'development'}/` +
+      `${buildOptions.release.releaseType ? buildOptions.release.releaseType : Development}/` +
       `backend/` +
       `${config.folder.dist}-app${buildOptions.build.websql ? '-websql' : ''}`;
 
@@ -518,7 +518,7 @@ ${contexts.join('\n')}
   getOutDirAngularBrowserAppAbsPath(buildOptions: EnvOptions): string {
     let outDirApp =
       `.${config.frameworkName}/${buildOptions.release.targetArtifact}/` +
-      `${buildOptions.release.releaseType ? buildOptions.release.releaseType : 'development'}/` +
+      `${buildOptions.release.releaseType ? buildOptions.release.releaseType : Development}/` +
       `${config.folder.browser}/` +
       `${config.folder.dist}-app${buildOptions.build.websql ? '-websql' : ''}`;
 

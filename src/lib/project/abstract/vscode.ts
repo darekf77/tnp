@@ -13,7 +13,7 @@ import {
   tmpVscodeProj,
 } from '../../constants';
 import { Models } from '../../models';
-import { EnvOptions } from '../../options';
+import { Development, EnvOptions } from '../../options';
 
 import type { Project } from './project';
 //#endregion
@@ -242,7 +242,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     //#region template vscode config
     const vscodeProjDevPath =
-      `${tmpVscodeProj}` + `/development/${this.project.name}`;
+      `${tmpVscodeProj}` + `/${Development}/${this.project.name}`;
     const templatesVscodeExConfig = [
       {
         name: 'Debug/Start Vscode Plugin',

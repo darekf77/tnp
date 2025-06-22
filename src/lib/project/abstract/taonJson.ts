@@ -1,4 +1,3 @@
-import { EnvOptions, OVERRIDE_FROM_TNP, scriptsCommands } from 'tnp/src';
 import { config } from 'tnp-config/src';
 import { CoreModels, os, path } from 'tnp-core/src';
 import { Helpers, _ } from 'tnp-core/src';
@@ -6,7 +5,9 @@ import { Utils } from 'tnp-core/src';
 import { BaseFeatureForProject, BasePackageJson } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
+import { OVERRIDE_FROM_TNP, scriptsCommands } from '../../constants';
 import { Models } from '../../models';
+import { ReleaseArtifactTaon, EnvOptions } from '../../options';
 
 import type { Project } from './project';
 
@@ -221,6 +222,45 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     //#endregion
   }
   //#endregion
+
+  additionalExternalsFor(artifactName: ReleaseArtifactTaon): string[] {
+    //#region @backendFunc
+    let res =
+      (this.data as Models.TaonJsonStandalone)?.singleFileBundlingExternals ||
+      [];
+
+    if (!_.isArray(res)) {
+      return [];
+    }
+
+    return (
+      res
+        .filter(f => _.isObject(f) && !Array.isArray(f))
+        .filter(c => !c.artifactName || c.artifactName === artifactName)
+        .map(c => c.packageName) || []
+    );
+    //#endregion
+  }
+
+  additionalReplaceWithNothingFor(artifactName: ReleaseArtifactTaon): string[] {
+    //#region @backendFunc
+    let res =
+      (this.data as Models.TaonJsonStandalone)?.singleFileBundlingExternals ||
+      [];
+
+    if (!_.isArray(res)) {
+      return [];
+    }
+
+    return (
+      res
+        .filter(f => _.isObject(f) && !Array.isArray(f))
+        .filter(f => f.replaceWithNothing)
+        .filter(c => !c.artifactName || c.artifactName === artifactName)
+        .map(c => c.packageName) || []
+    );
+    //#endregion
+  }
 
   //#region dependencies names for npm lib
   /**

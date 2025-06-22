@@ -5,7 +5,7 @@ import { config } from 'tnp-config/src';
 import { crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 
-import { EnvOptions, ReleaseType } from '../../../../options';
+import { Development, EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
@@ -154,7 +154,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
       `${
         buildOptions.release.releaseType
           ? buildOptions.release.releaseType
-          : 'development'
+          : Development
       }/` +
       this.project.packageJson.version;
 
