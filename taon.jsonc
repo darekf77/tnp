@@ -20,6 +20,17 @@
     // "magic-renamer",
   ],
 
+  "appId": "dev.taon.cli.tnp",
+
+  "autoReleaseConfigAllowedItems": [
+    {
+      "artifactName": "npm-lib-and-cli-tool",
+    },
+  ],
+
+  "isUsingOwnNodeModulesInsteadCoreContainer": true,
+
+  "resources": [],
   "singleFileBundlingExternals": [
     // electron is replaced by default
     // {
@@ -44,17 +55,6 @@
       "packageName": "ora",
     },
   ],
-
-  "appId": "dev.taon.cli.tnp",
-
-  "autoReleaseConfigAllowedItems": [
-    {
-      "artifactName": "npm-lib-and-cli-tool",
-    },
-  ],
-
-  "isUsingOwnNodeModulesInsteadCoreContainer": true,
-  "resources": [],
 
   // TODO remove when all things updated
   "usesItsOwnNodeModules": true,
