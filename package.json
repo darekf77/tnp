@@ -357,8 +357,9 @@
     "yup": "~1.0.0-beta.8",
     "zone.js": "~0.13.0"
   },
-  "description": "Description for tnp. Hello world!",
+  "description": "Development version of taon.dev vscode plugin",
   "main": "dist/app.electron.js",
+  "publisher": "taon-dev",
   "sideEffects": false,
   "bin": {
     "t": "bin/t",

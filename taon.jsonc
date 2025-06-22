@@ -61,10 +61,11 @@
 
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
-    "description": "Description for tnp. Hello world!",
+    "description": "Development version of taon.dev vscode plugin",
     "license": "MIT",
-
     "private": false,
+
+    "publisher": "taon-dev",
 
     "scripts": {
       "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
