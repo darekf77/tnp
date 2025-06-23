@@ -67,6 +67,7 @@ export class Branding extends BaseFeatureForProject<Project> {
   async apply(force = false): Promise<void> {
     //#region @backendFunc
     if (this.project.typeIsNot('isomorphic-lib')) {
+      console.error(`Branding is only available for isomorphic-lib projects`);
       return;
     }
     const proj = this.project;
@@ -92,16 +93,14 @@ export class Branding extends BaseFeatureForProject<Project> {
 
     const dest = this.path;
 
-    if (Helpers.exists(crossPlatformPath([dest, htmlBasename]))) {
-      Helpers.log(`Branding already generated for ${proj.genericName}.`);
-      return;
-    } else {
-      if (!force) {
+    if (!force) {
+      if (Helpers.exists(crossPlatformPath([dest, htmlBasename]))) {
+        Helpers.info(`Branding already generated for ${proj.genericName}.`);
         return;
       }
     }
 
-    let pathIcons = `/${['assets', 'assets-for', proj.name, ...generatedPwa].join('/')}`;
+    let pathIcons = `/${['assets', 'assets-for', proj.name, 'assets', ...generatedPwa].join('/')}`;
 
     const configuration = {
       path: pathIcons, // Path for overriding default icons path. `string`

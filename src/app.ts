@@ -39,6 +39,7 @@ const frontendHost =
       }
     `,
   ],
+  standalone: false,
 })
 export class TnpComponent {
   angularVersion = VERSION.full + ` mode: ${UtilsOs.isRunningInWebSQL() ? ' (websql)' : '(normal)'}`;

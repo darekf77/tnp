@@ -134,3 +134,12 @@ tnp tu
 tnp e2e
 tnp e2e:watch
 ```
+
+## Branding
+
+Recreate favicons, pwa assets from logo.png
+
+```bash
+tnp branding
+
+```

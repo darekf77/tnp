@@ -26,6 +26,7 @@ import { BaseCli } from './base-cli';
  */ // @ts-ignore TODO weird inheritance problem
 export class $Branding extends BaseCli {
   public async _(): Promise<void> {
+    Helpers.info(`Branding assets...`);
     await this.project.artifactsManager.globalHelper.branding.apply(true);
     this._exit();
   }
