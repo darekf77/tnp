@@ -3,7 +3,6 @@
   "version": "v19",
 
   "dependenciesNamesForNpmLib": [
-    // "favicons": "~7.1.2", // favicons generator! - has node gyp dep
     "ora",
     "progress",
     "open",
@@ -15,6 +14,7 @@
     // by default in singleFileBundlingExternals
     "esbuild",
     "sharp",
+    "favicons",
     // "rxjs",
     // "tslib",
     // "magic-renamer",
@@ -53,6 +53,10 @@
     {
       "description": "Ora terminal spinner",
       "packageName": "ora",
+    },
+    {
+      "description": "Favicons/pwa assets generator",
+      "packageName": "favicons",
     },
   ],
 
