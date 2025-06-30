@@ -2,6 +2,7 @@
 import GLOBAL from './cli-_GLOBAL_';
 import BRANDING from './cli-BRANDING';
 import BUILD from './cli-BUILD';
+import DOCKER from './cli-DOCKER';
 import DOCS from './cli-DOCS';
 import GENERATE from './cli-GENERATE';
 import INIT from './cli-INIT';
@@ -29,6 +30,7 @@ export default [
   REFACTOR,
   VERSION,
   GENERATE,
+  DOCKER,
 ];
 
 //#endregion

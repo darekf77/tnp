@@ -11,6 +11,10 @@ import type { Project } from './project/abstract/project';
 
 export const DUMMY_LIB = '@lib';
 
+export const DOCKER_COMPOSE_FILE_NAME = 'docker-compose.yml';
+export const DOCKER_FOLDER = 'docker';
+export const  BASE_TEMP_DOCKER_FOLDER = 'tmp-docker';
+
 export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
 } = {
