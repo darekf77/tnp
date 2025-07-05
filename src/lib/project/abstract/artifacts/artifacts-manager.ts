@@ -219,6 +219,7 @@ export class ArtifactManager {
 
     this.artifact.npmLibAndCliTool.unlinkNodeModulesWhenTnp();
     const targetArtifact = initOptions.release.targetArtifact;
+    this.project.docker.rebuildBaseFiles();
 
     if (this.project.framework.isStandaloneProject) {
       if (!targetArtifact || targetArtifact === 'docs-webapp') {

@@ -40,6 +40,10 @@
     // },
     {
       "description": "Image manipulations",
+      "packageName": "favicons",
+    },
+    {
+      "description": "Image manipulations",
       "packageName": "sharp",
     },
     {

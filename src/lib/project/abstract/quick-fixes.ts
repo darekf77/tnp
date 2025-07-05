@@ -90,6 +90,7 @@ import './jestGlobalMocks';
 `.trim() + '\n',
         );
 
+        return;
         Helpers.writeFile(
           crossPlatformPath([
             this.project.location,
@@ -97,11 +98,11 @@ import './jestGlobalMocks';
             'jestGlobalMocks.ts',
           ]),
           `
-Object.defineProperty(window, 'CSS', {value: null});
+Object.defineProperty(${'win' + 'dow'}, 'CSS', {value: null});
 Object.defineProperty(document, 'doctype', {
   value: '<!DOCTYPE html>'
 });
-Object.defineProperty(window, 'getComputedStyle', {
+Object.defineProperty(${'win' + 'dow'}, 'getComputedStyle', {
   value: () => {
     return {
       display: 'none',
@@ -242,11 +243,7 @@ Object.defineProperty(document.body.style, 'transform', {
 
           (() => {
             const indexTs = crossPlatformPath(
-              path.join(
-                this.project.location,
-                config.folder.src,
-                'index.scss',
-              ),
+              path.join(this.project.location, config.folder.src, 'index.scss'),
             );
             if (!Helpers.exists(indexTs)) {
               Helpers.writeFile(

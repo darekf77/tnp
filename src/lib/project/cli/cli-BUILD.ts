@@ -243,12 +243,28 @@ class $Build extends BaseCli {
   async app() {
     await this.project.build(
       this.params.clone({
+        build: {
+          watch: false,
+        },
+        release: {
+          targetArtifact: 'npm-lib-and-cli-tool',
+        },
+      }),
+    );
+    await this.project.build(
+      this.params.clone({
         release: {
           targetArtifact: 'angular-node-app',
+          releaseType: 'manual',
+        },
+        build: {
+          watch: false,
+          angularSsr: true,
         },
         finishCallback: () => this._exit(),
       }),
     );
+    this._exit();
   }
 
   /**

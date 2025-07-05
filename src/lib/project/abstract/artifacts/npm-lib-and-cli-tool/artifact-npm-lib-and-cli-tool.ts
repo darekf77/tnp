@@ -524,8 +524,18 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#region clear partial
   async clearPartial(options?: EnvOptions): Promise<void> {
     // TODO make it better
-    rimraf.sync(this.project.pathFor('dist') + '*');
-    rimraf.sync(this.project.pathFor('tmp') + '*');
+    try {
+      rimraf.sync(this.project.pathFor('dist') + '*');
+    } catch (error) {
+
+    }
+    try {
+      rimraf.sync(this.project.pathFor('tmp') + '*');
+    } catch (error) {
+
+    }
+
+
   }
   /**
    * TODO
