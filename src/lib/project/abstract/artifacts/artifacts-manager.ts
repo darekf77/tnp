@@ -160,7 +160,7 @@ export class ArtifactManager {
       path.join(this.project.location, config.file.tnpEnvironment_json),
     );
 
-    if (!initOptions.isCiProcess) {
+    if (!initOptions.isCiProcess && !this.project.framework.isCoreProject) {
       // do some fixing on dev machine
       // TODO QUICK_FIX
       // if (this.project.framework.isStandaloneProject) {
@@ -182,6 +182,7 @@ export class ArtifactManager {
       } catch (error) {}
       this.project.removeFile('.vscode/launch-backup.json');
       this.project.removeFile('.vscode/run-org.js');
+      this.project.remove('src/docker', true);
       try {
         this.project.run(`git rm -f .vscode/launch-backup.json`).sync();
       } catch (error) {}
