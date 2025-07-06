@@ -31,6 +31,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
       'app/src/environments',
       'app/src/favicon.ico',
       'app/src/index.html',
+      'app/src/sqljs-loader.ts',
       'app/src/main.ts',
       'app/src/polyfills.ts',
       'app/src/styles.scss',
@@ -120,45 +121,61 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           //#endregion
         ],
         endAction: async ({ replacement }) => {
+          //#region @backendFunc
+
           //#region action after recreating/updating inside strcut
-
-          //#region replace app.module.ts
           (() => {
-            const appModuleFilePath = path.join(
-              project.location,
-              replacement(tmpProjectsStandalone),
-              `/src/app/app.module.ts`,
-            );
-
-            let appModuleFile = Helpers.readFile(appModuleFilePath);
-
-            const moduleName =
-              _.upperFirst(_.camelCase(project.name)) + 'Module';
-            appModuleFile = `
-import { ${moduleName} } from './${this.project.name}/app';
-${appModuleFile}
-`;
-            appModuleFile = appModuleFile.replace(
-              '//<<<TO_REPLACE_MODULE>>>',
-              `${moduleName},`,
-            );
-
-            const enableServiceWorker =
-              this.initOptions.release.releaseType &&
-              !this.initOptions.build.pwa.disableServiceWorker;
-
-            if (enableServiceWorker) {
-              // TODO it will colide with ng serve ?
-              appModuleFile = appModuleFile.replace(
-                new RegExp(
-                  Helpers.escapeStringForRegEx('//distReleaseOnly'),
-                  'g',
-                ),
-                '',
+            [`/src/app/app.module.ts`].forEach(appModuleFileRelative => {
+              const appModuleFilePath = path.join(
+                project.location,
+                replacement(tmpProjectsStandalone),
+                appModuleFileRelative,
               );
-            }
 
-            Helpers.writeFile(appModuleFilePath, appModuleFile);
+              let appModuleFile = Helpers.readFile(appModuleFilePath);
+
+              const moduleName =
+                _.upperFirst(_.camelCase(project.name)) + 'Module';
+              appModuleFile = `
+  import { ${moduleName} } from './${this.project.name}/app';
+  ${appModuleFile}
+  `;
+              appModuleFile = appModuleFile.replace(
+                '//<<<TO_REPLACE_MODULE>>>',
+                `${moduleName},`,
+              );
+
+              appModuleFile = appModuleFile.replace(
+                `${'import'} { TaonAdminModeConfigurationModule } from 'taon';`,
+                `${'import'} { TaonAdminModeConfigurationModule } from 'taon/${
+                  this.initOptions.build.websql
+                    ? config.folder.websql
+                    : config.folder.browser
+                }';`,
+              );
+
+              // const enableServiceWorker =
+              //   !this.initOptions.build.angularSsr &&
+              //   this.initOptions.release.releaseType &&
+              //   !this.initOptions.build.pwa.disableServiceWorker;
+
+              const enableServiceWorker =
+                this.initOptions.release.releaseType &&
+                !this.initOptions.build.pwa.disableServiceWorker;
+
+              if (enableServiceWorker) {
+                // TODO it will colide with ng serve ?
+                appModuleFile = appModuleFile.replace(
+                  new RegExp(
+                    Helpers.escapeStringForRegEx('//distReleaseOnly'),
+                    'g',
+                  ),
+                  '',
+                );
+              }
+
+              Helpers.writeFile(appModuleFilePath, appModuleFile);
+            });
           })();
           //#endregion
 
@@ -203,65 +220,49 @@ ${appComponentFile}
           })();
           //#endregion
 
-          //#region replace app.module.ts
+          //#region replace sqljs-loader.ts
           (() => {
-            const appComponentFilePath = path.join(
-              project.location,
-              replacement(tmpProjectsStandalone),
-              `/src/app/app.module.ts`,
-            );
-
-            let appModuleFile = Helpers.readFile(appComponentFilePath);
-
-            appModuleFile = appModuleFile.replace(
-              `${'import'} { TaonAdminModeConfigurationModule } from 'taon';`,
-              `${'import'} { TaonAdminModeConfigurationModule } from 'taon/${
-                this.initOptions.build.websql
-                  ? config.folder.websql
-                  : config.folder.browser
-              }';`,
-            );
-
-            Helpers.writeFile(appComponentFilePath, appModuleFile);
-          })();
-          //#endregion
-
-          //#region replace main.ts websql things
-          (() => {
-            const appMainFilePath = path.join(
-              project.location,
-              replacement(tmpProjectsStandalone),
-              `/src/main.ts`,
-            );
-
-            let appMainFile = Helpers.readFile(appMainFilePath);
-
-            if (!this.initOptions.build.websql) {
-              appMainFile = appMainFile.replace(
-                `require('sql.js');`,
-                `(arg: any) => {
-              console.error('This should not be available in non-sql mode');
-              return void 0;
-            };`,
+            ['/src/sqljs-loader.ts'].forEach(mainTsFileRelative => {
+              const appMainFilePath = path.join(
+                project.location,
+                replacement(tmpProjectsStandalone),
+                mainTsFileRelative,
               );
-            }
 
-            appMainFile = appMainFile.replace(
-              `${'import'} { Helpers } from 'tnp-core';`,
-              `${'import'} { Helpers } from 'tnp-core/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
-            );
+              this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.replaceBaseHrefInFile(
+                appMainFilePath,
+                this.initOptions,
+              );
 
-            appMainFile = appMainFile.replace(
-              `${'import'} { TaonAdmin } from 'taon';`,
-              `${'import'} { TaonAdmin } from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
-            );
+              let appMainFile = Helpers.readFile(appMainFilePath);
 
-            appMainFile = appMainFile.replace(
-              `${'import'} { Stor } from 'taon-storage';`,
-              `${'import'} { Stor } from 'taon-storage/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
-            );
+              if (!this.initOptions.build.websql) {
+                appMainFile = appMainFile.replace(
+                  `${'req' + 'uire'}('sql.js');`,
+                  `(arg: any) => {
+                console.error('This should not be available in non-sql mode');
+                return void 0;
+              };`,
+                );
+              }
 
-            Helpers.writeFile(appMainFilePath, appMainFile);
+              appMainFile = appMainFile.replace(
+                `${'import'} { Helpers } from 'tnp-core';`,
+                `${'import'} { Helpers } from 'tnp-core/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
+              );
+
+              appMainFile = appMainFile.replace(
+                `${'import'} { TaonAdmin } from 'taon';`,
+                `${'import'} { TaonAdmin } from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
+              );
+
+              appMainFile = appMainFile.replace(
+                `${'import'} { Stor } from 'taon-storage';`,
+                `${'import'} { Stor } from 'taon-storage/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
+              );
+
+              Helpers.writeFile(appMainFilePath, appMainFile);
+            });
           })();
           //#endregion
 
@@ -313,24 +314,28 @@ ${appComponentFile}
 
             //#region LOADERS & BACKGROUNDS REPLACEMENT / replace app.component.ts body  background color
             (() => {
-              const appModuleFilePath = path.join(
+              const appComponentAbsFilePath = path.join(
                 project.location,
                 replacement(tmpProjectsStandalone),
                 `/src/app/app.component.ts`,
               );
 
-              let appScssFile = Helpers.readFile(appModuleFilePath);
+              let appComponentFileContent = Helpers.readFile(
+                appComponentAbsFilePath,
+              );
 
               const bgColor =
                 this.initOptions.loading.afterAngularBootstrap.background;
 
-              if (bgColor) {
-                appScssFile = appScssFile.replace(
-                  'TAON_TO_REPLACE_COLOR',
-                  bgColor,
-                );
-              }
-              Helpers.writeFile(appModuleFilePath, appScssFile);
+              appComponentFileContent = appComponentFileContent.replace(
+                'TAON_TO_REPLACE_COLOR',
+                bgColor || '',
+              );
+
+              Helpers.writeFile(
+                appComponentAbsFilePath,
+                appComponentFileContent,
+              );
             })();
             //#endregion
 
@@ -378,7 +383,7 @@ ${appComponentFile}
                 : '';
               indexHtmlFile = indexHtmlFile.replace(
                 'TAON_TO_REPLACE_COLOR',
-                bgColorStyle,
+                bgColorStyle || '',
               );
 
               Helpers.writeFile(appModuleFilePath, indexHtmlFile);
@@ -410,20 +415,6 @@ ${appComponentFile}
               `<title>${titleToReplace}</title>`,
             );
             Helpers.writeFile(indexHtmlFilePath, indexHtmlFile);
-          })();
-          //#endregion
-
-          //#region replace main.ts
-          (() => {
-            const mainFilePath = path.join(
-              project.location,
-              replacement(tmpProjectsStandalone),
-              `/src/main.ts`,
-            );
-            this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.replaceBaseHrefInFile(
-              mainFilePath,
-              this.initOptions,
-            );
           })();
           //#endregion
 

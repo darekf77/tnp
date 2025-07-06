@@ -164,6 +164,7 @@ class EnvOptionsBuild {
    */
   declare watch: boolean;
   declare angularProd: boolean;
+  // declare angularSsr: boolean;
 
   /**
    * Do not generate backend code
@@ -707,6 +708,7 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
   },
   build: {
     angularProd: '-' as any,
+    // angularSsr: '-' as any,
     websql: '-' as any,
     pwa: {
       disableServiceWorker: '-' as any,

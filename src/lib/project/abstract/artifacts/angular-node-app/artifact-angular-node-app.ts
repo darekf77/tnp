@@ -159,6 +159,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       await Helpers.killProcessByPort(portAssignedToAppBuild);
     }
 
+    // await this.project.docker.runTask({
+    //   watch: buildOptions.build.watch,
+    //   initialParams: {
+    //     envOptions: buildOptions,
+    //   },
+    // });
+
     //#region prepare angular command
     const outPutPathCommand = ` --output-path ${appDistOutBrowserAngularAbsPath} `;
     const baseHrefCommand = buildOptions.build.baseHref
@@ -178,6 +185,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           buildOptions.release.targetArtifact === 'electron-app'
             ? 'angular-electron'
             : 'app'
+          // : buildOptions.build.angularSsr
+          //   ? 'ssr'
         }` +
         ` ${buildOptions.build.angularProd ? '--configuration production' : ''} ` +
         ` ${buildOptions.build.watch ? '--watch' : ''}` +
@@ -519,7 +528,7 @@ ${contexts.join('\n')}
     let outDirApp =
       `.${config.frameworkName}/${buildOptions.release.targetArtifact}/` +
       `${buildOptions.release.releaseType ? buildOptions.release.releaseType : Development}/` +
-      `${config.folder.browser}/` +
+      `angular-app/` +
       `${config.folder.dist}-app${buildOptions.build.websql ? '-websql' : ''}`;
 
     return this.project.pathFor(outDirApp);

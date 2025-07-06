@@ -174,6 +174,52 @@ export class Framework extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region fix core content
+  fixCoreContent = (appTsContent: string): string => {
+    const project = this.project;
+    const coreName = _.upperFirst(_.camelCase(project.name));
+    const coreNameKebab = _.kebabCase(project.name);
+    return appTsContent
+      .replace(
+        new RegExp(
+          `IsomorphicLibV${project.framework.frameworkVersion.replace('v', '')}`,
+          'g',
+        ),
+        `${coreName}`,
+      )
+      .replace(
+        new RegExp(
+          `isomorphic-lib-v${project.framework.frameworkVersion.replace('v', '')}`,
+          'g',
+        ),
+        `${coreNameKebab}`,
+      );
+  };
+  //#endregion
+
+  //#region recreate from core project
+  recreateFromCoreProject = (
+    fileRelativePath: string | string[],
+    differentPathInCoreProject: string | string[] = '',
+  ): void => {
+    //#region @backendFunc
+    const project = this.project;
+    fileRelativePath = crossPlatformPath(fileRelativePath);
+    if (!project.hasFile(fileRelativePath)) {
+      const coreProject = project.framework.coreProject;
+      const filePathSource = coreProject.pathFor(
+        differentPathInCoreProject
+          ? differentPathInCoreProject
+          : fileRelativePath,
+      );
+      const sourceContent = Helpers.readFile(filePathSource);
+      const fixedContent = this.fixCoreContent(sourceContent);
+      project.writeFile(fileRelativePath, fixedContent);
+    }
+    //#endregion
+  };
+  //#endregion
+
   public frameworkVersionLessThanOrEqual(
     version: CoreModels.FrameworkVersion,
   ): boolean {

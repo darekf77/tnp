@@ -50,78 +50,24 @@ export class QuickFixes extends BaseQuickFixes<Project> {
         const dest = path.join(this.project.location, dirName, 'tsconfig.json');
         Helpers.copyFile(tsconfigBrowserPath, dest);
 
-        Helpers.writeJson(
-          crossPlatformPath([
-            this.project.location,
-            dirName,
-            'tsconfig.spec.json',
-          ]),
-          {
-            extends: './tsconfig.json',
-            compilerOptions: {
-              outDir: './out-tsc/spec',
-              types: ['jest', 'node'],
-            },
-            files: ['src/polyfills.ts'],
-            include: [
-              'lib/**/*.spec.ts',
-              'lib/**/*.d.ts',
-              'app/**/*.spec.ts',
-              'app/**/*.d.ts',
-            ],
-          },
+        this.project.framework.recreateFromCoreProject(
+          [dirName, 'tsconfig.spec.json'],
+          'app/tsconfig.spec-for-unit.json',
         );
 
-        Helpers.writeFile(
-          crossPlatformPath([this.project.location, dirName, 'jest.config.js']),
-          `
-module.exports = {
-preset: "jest-preset-angular",
-setupFilesAfterEnv: ["<rootDir>/setupJest.ts"],
-reporters: ["default", "jest-junit"],
-};`.trim() + '\n',
+        this.project.framework.recreateFromCoreProject(
+          [dirName, 'jest.config.js'],
+          'app/jest.config.js',
         );
 
-        Helpers.writeFile(
-          crossPlatformPath([this.project.location, dirName, 'setupJest.ts']),
-          `
-import 'jest-preset-angular/setup-jest';
-import './jestGlobalMocks';
-`.trim() + '\n',
+        this.project.framework.recreateFromCoreProject(
+          [dirName, 'setupJest.ts'],
+          'app/src/setupJest.ts',
         );
 
-        Helpers.writeFile(
-          crossPlatformPath([
-            this.project.location,
-            dirName,
-            'jestGlobalMocks.ts',
-          ]),
-          `
-Object.defineProperty(window, 'CSS', {value: null});
-Object.defineProperty(document, 'doctype', {
-  value: '<!DOCTYPE html>'
-});
-Object.defineProperty(window, 'getComputedStyle', {
-  value: () => {
-    return {
-      display: 'none',
-      appearance: ['-webkit-appearance']
-    };
-  }
-});
-/**
- * ISSUE: https://github.com/angular/material2/issues/7101
- * Workaround for JSDOM missing transform property
- */
-Object.defineProperty(document.body.style, 'transform', {
-  value: () => {
-    return {
-      enumerable: true,
-      configurable: true,
-    };
-  },
-});
-`.trim() + '\n',
+        this.project.framework.recreateFromCoreProject(
+          [dirName, 'jestGlobalMocks.ts'],
+          'app/src/jestGlobalMocks.ts',
         );
       });
     })();
@@ -242,11 +188,7 @@ Object.defineProperty(document.body.style, 'transform', {
 
           (() => {
             const indexTs = crossPlatformPath(
-              path.join(
-                this.project.location,
-                config.folder.src,
-                'index.scss',
-              ),
+              path.join(this.project.location, config.folder.src, 'index.scss'),
             );
             if (!Helpers.exists(indexTs)) {
               Helpers.writeFile(

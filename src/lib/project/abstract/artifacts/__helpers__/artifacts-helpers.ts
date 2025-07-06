@@ -7,6 +7,7 @@ import { EnvOptions } from '../../../../options';
 import type { Project } from '../../project';
 
 import { Branding } from './branding';
+import { DockerHelper } from './docker-helper';
 //#endregion
 
 /**
@@ -14,9 +15,11 @@ import { Branding } from './branding';
  */
 export class ArtifactsGlobalHelper {
   public readonly branding: Branding;
+  public readonly docker: DockerHelper;
 
   constructor(private project: Project) {
     this.branding = new Branding(project);
+    // this.docker = new DockerHelper(project); /// TODO @UNCOMMENT when docker is ready
   }
 
   //#region angular proj proxy path

@@ -337,6 +337,14 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //   return this.environmentConfig.config;
   // }
 
+  get docker() {
+    return this.artifactsManager.globalHelper.docker;
+  }
+
+  get branding() {
+    return this.artifactsManager.globalHelper.branding;
+  }
+
   //#region taon relative projects paths
   /**
    * @deprecated
