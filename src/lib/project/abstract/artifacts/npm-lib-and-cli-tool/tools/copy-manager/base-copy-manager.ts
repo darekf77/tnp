@@ -88,7 +88,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   get sourcePathToLink() {
     //#region @backendFunc
     const sourceToLink = crossPlatformPath(
-      path.join(this.project.location, config.folder.src),
+      path.join(this.project.location, config.folder.src, config.folder.lib),
     );
     return sourceToLink;
     //#endregion
