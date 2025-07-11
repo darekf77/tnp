@@ -95,8 +95,6 @@ export function recreateApp(project: Project, initOptions: EnvOptions): void {
   //#region @backendFunc
 
   if (!project.framework.isCoreProject) {
-    // project.docker.rebuildBaseFiles();
-
     project.framework.recreateFromCoreProject([config.folder.src, 'app.ts']);
 
     project.framework.recreateFromCoreProject([

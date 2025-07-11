@@ -26,6 +26,7 @@ import { InsideStructuresElectron } from '../electron-app/tools/inside-struct-el
 import { AngularFeBasenameManager } from './tools/basename-manager';
 import { InsideStructuresApp } from './tools/inside-struct-app';
 import { MigrationHelper } from './tools/migrations-helper';
+import { DockerHelper } from '../__helpers__/docker-helper';
 
 //#endregion
 
@@ -34,14 +35,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     appDistOutBrowserAngularAbsPath: string;
     appDistOutBackendNodeAbsPath: string;
     angularNgServeAddress: URL;
-    dockerBackendFrontendAppDistOutPath: string;
   },
   ReleasePartialOutput
 > {
   //#region fields & getters
   public readonly migrationHelper: MigrationHelper;
   public readonly angularFeBasenameManager: AngularFeBasenameManager;
-
+  public readonly docker: DockerHelper;
   public readonly insideStructureApp: InsideStructuresApp;
   public readonly insideStructureElectron: InsideStructuresElectron;
 
@@ -54,6 +54,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     this.angularFeBasenameManager = new AngularFeBasenameManager(project);
     this.insideStructureApp = new InsideStructuresApp(project);
     this.insideStructureElectron = new InsideStructuresElectron(project);
+    this.docker = new DockerHelper(project);
   }
   //#endregion
 
@@ -69,6 +70,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       await this.insideStructureApp.init(initOptions);
     }
     this.fixAppTsFile();
+
+    await this.project.docker.runTask({
+      watch: initOptions.build.watch,
+      initialParams: {
+        envOptions: initOptions,
+      },
+    });
 
     const copyFromCoreAssets = (fileName: string) => {
       const coreSource = crossPlatformPath([
@@ -99,7 +107,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     appDistOutBrowserAngularAbsPath: string;
     appDistOutBackendNodeAbsPath: string;
     angularNgServeAddress: URL;
-    dockerBackendFrontendAppDistOutPath: string;
   }> {
     //#region @backendFunc
 
@@ -130,7 +137,16 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     }
     //#endregion
 
-    const dockerBackendFrontendAppDistOutPath: string = void 0; // TODO implement
+    const appDistOutBackendNodeAbsPath =
+      this.getOutDirNodeBackendAppAbsPath(buildOptions);
+
+    if (
+      buildOptions.release.releaseType === 'local' ||
+      buildOptions.release.releaseType === 'manual'
+    ) {
+      debugger;
+      // await Helpers.bundleCodeIntoSingleFile()
+    }
 
     const angularTempProj = this.globalHelper.getProxyNgProj(
       buildOptions,
@@ -141,9 +157,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       buildOptions.release.targetArtifact === 'electron-app'
         ? angularTempProj.pathFor('dist')
         : this.getOutDirAngularBrowserAppAbsPath(buildOptions);
-
-    const appDistOutBackendNodeAbsPath =
-      this.getOutDirNodeBackendAppAbsPath(buildOptions);
 
     const fromFileBaseHref = Helpers.readFile(
       this.project.pathFor(tmpBaseHrefOverwriteRelPath),
@@ -158,13 +171,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     if (buildOptions.build.watch) {
       await Helpers.killProcessByPort(portAssignedToAppBuild);
     }
-
-    // await this.project.docker.runTask({
-    //   watch: buildOptions.build.watch,
-    //   initialParams: {
-    //     envOptions: buildOptions,
-    //   },
-    // });
 
     //#region prepare angular command
     const outPutPathCommand = ` --output-path ${appDistOutBrowserAngularAbsPath} `;
@@ -259,7 +265,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       angularNgServeAddress: new URL(
         `http://localhost:${portAssignedToAppBuild}`,
       ),
-      dockerBackendFrontendAppDistOutPath,
     };
     //#endregion
   }
@@ -298,6 +303,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       );
       releaseProjPath = releaseData.releaseProjPath;
       projectsReposToPush.push(...releaseData.projectsReposToPush);
+    }
+
+    if (releaseOptions.release.releaseType === 'local') {
+      debugger;
     }
 
     return {
