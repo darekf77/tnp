@@ -92,6 +92,10 @@ trim_trailing_whitespace = false
     //#region @backendFunc
     const files = this.lintFiles;
     const settingsToOverride = {
+      '[markdown]': {
+        'editor.defaultFormatter': 'esbenp.prettier-vscode',
+        'editor.formatOnSave': false,
+      },
       '[typescriptreact]': {
         'editor.defaultFormatter': 'esbenp.prettier-vscode',
         'editor.formatOnSave': false,
