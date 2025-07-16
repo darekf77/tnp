@@ -156,13 +156,13 @@ export class $Link extends BaseCli {
       Helpers.writeFile(pathDebugLink, this._templateBin(true));
       countLinkInPackageJsonBin.push(pathDebugLink);
 
-      const startBackendFile = Helpers.path.create(
+      const cliTsFile = Helpers.path.create(
         project.location,
         config.folder.src,
-        config.file.start_backend_ts,
+        config.file.cli_ts,
       );
-      if (!Helpers.exists(startBackendFile)) {
-        Helpers.writeFile(startBackendFile, this._templateCliTs());
+      if (!Helpers.exists(cliTsFile)) {
+        this.project.framework.recreateFromCoreProject('src/cli.ts');
       }
     }
 
@@ -366,22 +366,6 @@ EXIT /b
   }
   //#endregion
 
-  //#region template  cli.js
-  _templateCliTs() {
-    return `import { Helpers } from 'tnp-helpers/src';
-
-  export async function run([]) {
-    console.log('Hello from', require('path').basename(process.argv[1]))
-    const command = args.shift() as any;
-    if (command === 'test') {
-      Helpers.clearConsole();
-      console.log('waiting for nothing...')
-      process.stdin.resume();
-    }
-    this._exit();
-    }`;
-  }
-  //#endregion
 }
 
 export default {
