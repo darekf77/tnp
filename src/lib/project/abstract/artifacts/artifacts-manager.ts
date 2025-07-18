@@ -182,7 +182,7 @@ export class ArtifactManager {
       } catch (error) {}
       this.project.removeFile('.vscode/launch-backup.json');
       this.project.removeFile('.vscode/run-org.js');
-      this.project.remove('src/docker', true);
+      // this.project.remove('src/docker', true);
       try {
         this.project.run(`git rm -f .vscode/launch-backup.json`).sync();
       } catch (error) {}

@@ -184,7 +184,11 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     releaseOptions = EnvOptions.from(releaseOptions);
 
     await this.npmHelpers.checkProjectReadyForNpmRelease();
-    if (releaseOptions.release.targetArtifact === 'npm-lib-and-cli-tool') {
+    if (
+      releaseOptions.release.targetArtifact === 'npm-lib-and-cli-tool' &&
+      releaseOptions.release.releaseType !== 'local' &&
+      releaseOptions.release.releaseType !== 'static-pages'
+    ) {
       await this.npmHelpers.makeSureLoggedInToNpmRegistry();
     }
 

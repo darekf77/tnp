@@ -30,7 +30,7 @@ export class $Open extends BaseCli {
     if (!path.isAbsolute(pathToFolder)) {
       pathToFolder = this.project.pathFor(pathToFolder);
     }
-    Helpers.openFolderInFileExploer(pathToFolder);
+    Helpers.openFolderInFileExplorer(pathToFolder);
     this._exit();
   }
 
@@ -103,7 +103,7 @@ export class $Open extends BaseCli {
       if (fileName.endsWith('.json')) {
         Helpers.run(`code ${pathToTHing}`, { biggerBuffer: false }).sync();
       } else {
-        Helpers.openFolderInFileExploer(pathToTHing);
+        Helpers.openFolderInFileExplorer(pathToTHing);
       }
     };
 

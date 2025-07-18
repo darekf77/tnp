@@ -198,23 +198,45 @@ export class Framework extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region recreate from core project
-  recreateFromCoreProject = (
-    fileRelativePath: string | string[],
-    differentPathInCoreProject: string | string[] = '',
-  ): void => {
+
+  recreateFromCoreProject = (options: {
+    fileRelativePath?: string | string[];
+    /**
+     * if will override **fileRelativePath** with different path
+     * to get file from core project
+     * By default this helper will copy file from core project to this project:
+     * <path-to-core-project><fileRelativePath>
+     * <this-project><fileRelativePath>
+     */
+    relativePathInCoreProject?: string | string[];
+    customDestinationLocation?: string | string[];
+  }): void => {
     //#region @backendFunc
+    let {
+      fileRelativePath,
+      customDestinationLocation,
+      relativePathInCoreProject,
+    } = options || {};
+    customDestinationLocation = crossPlatformPath(customDestinationLocation);
     const project = this.project;
     fileRelativePath = crossPlatformPath(fileRelativePath);
-    if (!project.hasFile(fileRelativePath)) {
+    if (
+      (_.isString(fileRelativePath) && !project.hasFile(fileRelativePath)) ||
+      customDestinationLocation
+    ) {
       const coreProject = project.framework.coreProject;
       const filePathSource = coreProject.pathFor(
-        differentPathInCoreProject
-          ? differentPathInCoreProject
+        relativePathInCoreProject
+          ? relativePathInCoreProject
           : fileRelativePath,
       );
       const sourceContent = Helpers.readFile(filePathSource);
       const fixedContent = this.fixCoreContent(sourceContent);
-      project.writeFile(fileRelativePath, fixedContent);
+      if (customDestinationLocation) {
+        Helpers.writeFile(customDestinationLocation, fixedContent);
+      } else {
+        project.writeFile(fileRelativePath, fixedContent);
+      }
     }
     //#endregion
   };

@@ -187,11 +187,18 @@ export namespace Models {
     peerDependenciesNamesForNpmLib: string[];
 
     /**
-     * Electron native dependencies that can be bundled into single index.js
+     * Electron native dependencies that can't be bundled into single index.js
      * backend file with esbuild/ncc - BUT can be installed inside node_modules
      * and later shipped with whole node_modules folder into electron app.
      */
     electronNativeDependencies: string[];
+
+    /**
+     * NodeJS backend app native dependencies that can't be bundled into single index.js
+     * backend file with esbuild/ncc - BUT can be installed inside node_modules
+     * and later shipped with whole node_modules folder into backend docker.
+     */
+    nodeJsBackendNativeDependencies: string[];
 
     /**
      * Provide externals for bundling ts code into single .js file
