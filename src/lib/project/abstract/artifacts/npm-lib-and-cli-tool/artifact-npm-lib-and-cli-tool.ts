@@ -110,8 +110,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     );
     await this.filesRecreator.init();
 
-    this.filesRecreator.vscode.settings.toogleHideOrShowDeps();
-
     // const updatedConfig =
     // if (updatedConfig) {
     //   initOptions = updatedConfig;
