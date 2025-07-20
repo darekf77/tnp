@@ -372,6 +372,10 @@ class EnvOptionsRelease {
    */
   declare skipTagGitPush?: boolean;
   /**
+   * skip release question
+   */
+  declare skipReleaseQuestion?: boolean;
+  /**
    * Useful if you just want to release static pages
    * without any versioning
    */
@@ -824,6 +828,7 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
     autoReleaseUsingConfig: '-' as any,
     skipNpmPublish: '-' as any,
     skipTagGitPush: '-' as any,
+    skipReleaseQuestion: '-' as any,
     skipResolvingGitChanges: '-' as any,
     skipCodeCutting: '-' as any,
     skipBuildingArtifacts: '-' as any,

@@ -25,7 +25,7 @@ export const ALLOWED_TO_RELEASE: {
     'electron-app',
     'npm-lib-and-cli-tool',
     'vscode-plugin',
-    // 'angular-node-app',
+    'angular-node-app',
   ],
   cloud: [],
   'static-pages': [

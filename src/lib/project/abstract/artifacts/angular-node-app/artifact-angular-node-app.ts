@@ -105,6 +105,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   //#endregion
 
   //#region build partial
+
   async buildPartial(buildOptions: EnvOptions): Promise<{
     appDistOutBrowserAngularAbsPath: string;
     appDistOutBackendNodeAbsPath: string;
@@ -146,78 +147,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       buildOptions.release.releaseType === 'local' ||
       buildOptions.release.releaseType === 'manual'
     ) {
-      //#region create backend app
-      await Helpers.bundleCodeIntoSingleFile(
-        this.project.pathFor('dist/app.js'),
-        crossPlatformPath([appDistOutBackendNodeAbsPath, 'dist/app.js']),
-        {
-          minify: buildOptions.release.nodeBackendApp.minify,
-          strategy: 'node-app',
-          additionalExternals: [
-            ...this.project.taonJson.additionalExternalsFor('angular-node-app'),
-          ],
-          additionalReplaceWithNothing: [
-            ...this.project.taonJson.additionalReplaceWithNothingFor(
-              'angular-node-app',
-            ),
-          ],
-        },
-      );
-
-      const copyToBackendBundle = [
-        'run.js',
-        'README.md',
-        'dist/lib/build-info._auto-generated_.js',
-      ];
-
-      for (const relativePathBundleBackend of copyToBackendBundle) {
-        Helpers.copyFile(
-          this.project.pathFor(relativePathBundleBackend),
-          crossPlatformPath([
-            appDistOutBackendNodeAbsPath,
-            relativePathBundleBackend,
-          ]),
-        );
-      }
-
-      const nodeJsAppNativeDeps =
-        this.project.taonJson.getNativeDepsFor('angular-node-app');
-      const dependenciesNodeJsApp = {};
-
-      for (const nativeDepName of nodeJsAppNativeDeps) {
-        const version = this.project.packageJson.dependencies[nativeDepName];
-        if (version) {
-          Helpers.logInfo(
-            `Setting native dependency ${nativeDepName} to version ${version}`,
-          );
-          dependenciesNodeJsApp[nativeDepName] =
-            this.project.packageJson.dependencies[nativeDepName];
-        } else {
-          Helpers.warn(
-            `Native dependency ${nativeDepName} not found in taon package.json dependencies`,
-          );
-        }
-      }
-
-      Helpers.writeJson(
-        [appDistOutBackendNodeAbsPath, config.file.package_json],
-        {
-          name: this.project.packageJson.name,
-          version: this.project.packageJson.version,
-          dependencies: dependenciesNodeJsApp,
-        } as PackageJson,
-      );
-
-      this.project.framework.recreateFileFromCoreProject({
-        relativePathInCoreProject:
-          'docker-templates/backend-app-node/Dockerfile',
-        customDestinationLocation: [appDistOutBackendNodeAbsPath, 'Dockerfile'],
-      });
-
-      UtilsOs.openFolderInVSCode(appDistOutBackendNodeAbsPath);
-      await UtilsTerminal.pressAnyKeyToContinueAsync();
-      // TODO @LAST
-      //#endregion
+      await this.buildBackend(buildOptions, appDistOutBackendNodeAbsPath);
     }
 
     const angularTempProj = this.globalHelper.getProxyNgProj(
@@ -249,6 +179,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     const baseHrefCommand = buildOptions.build.baseHref
       ? ` --base-href ${buildOptions.build.baseHref} `
       : '';
+
+    if (!buildOptions.build.watch) {
+      Helpers.remove(appDistOutBrowserAngularAbsPath);
+    }
 
     const angularBuildAppCmd = buildOptions.build.watch
       ? `${this.NPM_RUN_NG_COMMAND} serve ${
@@ -331,6 +265,16 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       });
     }
 
+    if (!buildOptions.build.watch) {
+      this.project.framework.recreateFileFromCoreProject({
+        relativePathInCoreProject: 'docker-templates/frontend-nginx/Dockerfile',
+        customDestinationLocation: [
+          appDistOutBrowserAngularAbsPath,
+          'Dockerfile',
+        ],
+      });
+    }
+
     return {
       appDistOutBackendNodeAbsPath,
       appDistOutBrowserAngularAbsPath,
@@ -340,6 +284,90 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     };
     //#endregion
   }
+
+  private async buildBackend(
+    buildOptions: EnvOptions,
+    appDistOutBackendNodeAbsPath,
+  ): Promise<void> {
+    //#region @backendFunc
+    Helpers.remove(appDistOutBackendNodeAbsPath);
+    await Helpers.bundleCodeIntoSingleFile(
+      this.project.pathFor('dist/app.js'),
+      crossPlatformPath([appDistOutBackendNodeAbsPath, 'dist/app.js']),
+      {
+        minify: buildOptions.release.nodeBackendApp.minify,
+        strategy: 'node-app',
+        additionalExternals: [
+          ...this.project.taonJson.additionalExternalsFor('angular-node-app'),
+        ],
+        additionalReplaceWithNothing: [
+          ...this.project.taonJson.additionalReplaceWithNothingFor(
+            'angular-node-app',
+          ),
+        ],
+      },
+    );
+
+    const copyToBackendBundle = [
+      'run.js',
+      'README.md',
+      'dist/lib/build-info._auto-generated_.js',
+    ];
+
+    for (const relativePathBundleBackend of copyToBackendBundle) {
+      Helpers.copyFile(
+        this.project.pathFor(relativePathBundleBackend),
+        crossPlatformPath([
+          appDistOutBackendNodeAbsPath,
+          relativePathBundleBackend,
+        ]),
+      );
+    }
+
+    const nodeJsAppNativeDeps =
+      this.project.taonJson.getNativeDepsFor('angular-node-app');
+    const dependenciesNodeJsApp = {};
+
+    for (const nativeDepName of nodeJsAppNativeDeps) {
+      const version = this.project.packageJson.dependencies[nativeDepName];
+      if (version) {
+        Helpers.logInfo(
+          `Setting native dependency ${nativeDepName} to version ${version}`,
+        );
+        dependenciesNodeJsApp[nativeDepName] =
+          this.project.packageJson.dependencies[nativeDepName];
+      } else {
+        Helpers.warn(
+          `Native dependency ${nativeDepName} not found in taon package.json dependencies`,
+        );
+      }
+    }
+
+    Helpers.writeJson(
+      [appDistOutBackendNodeAbsPath, config.file.package_json],
+      {
+        name: this.project.packageJson.name,
+        version: this.project.packageJson.version,
+        dependencies: dependenciesNodeJsApp,
+      } as PackageJson,
+    );
+
+    this.project.framework.recreateFileFromCoreProject({
+      relativePathInCoreProject: 'docker-templates/backend-app-node/Dockerfile',
+      customDestinationLocation: [appDistOutBackendNodeAbsPath, 'Dockerfile'],
+    });
+
+    this.project.framework.recreateFileFromCoreProject({
+      relativePathInCoreProject: 'app/src/assets/sql-wasm.wasm',
+      customDestinationLocation: [
+        appDistOutBackendNodeAbsPath,
+        'dist/sql-wasm.wasm',
+      ],
+    });
+
+    //#endregion
+  }
+
   //#endregion
 
   //#region release partial
@@ -360,7 +388,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           // },
         }),
       );
-    let releaseProjPath: string = appDistOutBackendNodeAbsPath;
+    let releaseProjPath: string = appDistOutBrowserAngularAbsPath;
 
     releaseOptions.release.skipStaticPagesVersioning = _.isUndefined(
       releaseOptions.release.skipStaticPagesVersioning,
@@ -375,11 +403,26 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       );
       releaseProjPath = releaseData.releaseProjPath;
       projectsReposToPush.push(...releaseData.projectsReposToPush);
+    } else if (releaseOptions.release.releaseType === 'local') {
+      const localReleaseOutputBasePath = this.project.pathFor([
+        config.folder.local_release,
+        this.currentArtifactName,
+        `${this.project.name}-latest`,
+      ]);
+      Helpers.copy(appDistOutBrowserAngularAbsPath, [
+        localReleaseOutputBasePath,
+        path.basename(appDistOutBrowserAngularAbsPath),
+      ]);
+      Helpers.copy(appDistOutBackendNodeAbsPath, [
+        localReleaseOutputBasePath,
+        path.basename(appDistOutBackendNodeAbsPath),
+      ]);
+      releaseProjPath = localReleaseOutputBasePath;
     }
 
     return {
       resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
-      releaseProjPath: appDistOutBrowserAngularAbsPath,
+      releaseProjPath,
       releaseType: releaseOptions.release.releaseType,
       projectsReposToPushAndTag,
       projectsReposToPush,
@@ -601,8 +644,7 @@ ${contexts.join('\n')}
     let outDirApp =
       `.${config.frameworkName}/${this.currentArtifactName}/` +
       `${buildOptions.release.releaseType ? buildOptions.release.releaseType : Development}/` +
-      `backend/` +
-      `${config.folder.dist}-app${buildOptions.build.websql ? '-websql' : ''}`;
+      `backend-app${buildOptions.build.websql ? '-websql' : ''}`;
 
     return this.project.pathFor(outDirApp);
   }
@@ -616,8 +658,7 @@ ${contexts.join('\n')}
     let outDirApp =
       `.${config.frameworkName}/${buildOptions.release.targetArtifact}/` +
       `${buildOptions.release.releaseType ? buildOptions.release.releaseType : Development}/` +
-      `angular-app/` +
-      `${config.folder.dist}-app${buildOptions.build.websql ? '-websql' : ''}`;
+      `angular-app${buildOptions.build.websql ? '-websql' : ''}`;
 
     return this.project.pathFor(outDirApp);
   }

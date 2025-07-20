@@ -259,8 +259,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
           children: this.framework.isContainer,
         },
         skipQuestionToUser:
-          this.framework.isStandaloneProject &&
-          releaseOptions.release.autoReleaseUsingConfig,
+          (this.framework.isStandaloneProject &&
+            releaseOptions.release.autoReleaseUsingConfig) ||
+          releaseOptions.release.skipReleaseQuestion,
       }))
     ) {
       return;

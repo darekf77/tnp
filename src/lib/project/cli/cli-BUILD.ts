@@ -241,27 +241,32 @@ class $Build extends BaseCli {
    * @deprecated
    */
   async app() {
-    await this.project.build(
+    // await this.project.build(
+    //   this.params.clone({
+    //     build: {
+    //       watch: false,
+    //     },
+    //     release: {
+    //       targetArtifact: 'npm-lib-and-cli-tool',
+    //     },
+    //   }),
+    // );
+    await this.project.release(
       this.params.clone({
-        build: {
-          watch: false,
+        copyToManager: {
+          skip: true,
         },
         release: {
-          targetArtifact: 'npm-lib-and-cli-tool',
-        },
-      }),
-    );
-    await this.project.build(
-      this.params.clone({
-        release: {
+          skipNpmPublish: true,
+          skipTagGitPush: true,
+          skipReleaseQuestion: true,
           targetArtifact: 'angular-node-app',
-          releaseType: 'manual',
+          releaseType: 'local',
         },
         build: {
           watch: false,
           // angularSsr: true,
         },
-        finishCallback: () => this._exit(),
       }),
     );
     this._exit();

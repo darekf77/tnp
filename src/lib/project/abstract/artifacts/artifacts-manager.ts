@@ -483,6 +483,8 @@ export class ArtifactManager {
     autoReleaseProcess = false,
   ): Promise<void> {
     //#region @backendFunc
+
+    //#region handle autorelease
     if (!autoReleaseProcess && releaseOptions.release.autoReleaseUsingConfig) {
       const autoReleaseConfigAllowedItems =
         this.project.taonJson.autoReleaseConfigAllowedItems;
@@ -500,12 +502,14 @@ export class ArtifactManager {
       }
       return;
     }
+    //#endregion
 
     releaseOptions =
       await this.project.environmentConfig.update(releaseOptions);
 
     let releaseOutput: ReleasePartialOutput;
 
+    //#region npm build helper
     const npmLibBUild = async (options: EnvOptions): Promise<void> => {
       await this.artifact.npmLibAndCliTool.buildPartial(
         options.clone({
@@ -519,7 +523,9 @@ export class ArtifactManager {
         }),
       );
     };
+    //#endregion
 
+    //#region docs app
     if (
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'docs-webapp'
@@ -527,6 +533,9 @@ export class ArtifactManager {
       releaseOutput =
         await this.artifact.docsWebapp.releasePartial(releaseOptions);
     }
+    //#endregion
+
+    //#region npm lib and cli tool
     if (
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
@@ -534,6 +543,9 @@ export class ArtifactManager {
       releaseOutput =
         await this.artifact.npmLibAndCliTool.releasePartial(releaseOptions);
     }
+    //#endregion
+
+    //#region angular-node-app
     if (
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'angular-node-app'
@@ -548,6 +560,9 @@ export class ArtifactManager {
       releaseOutput =
         await this.artifact.angularNodeApp.releasePartial(releaseOptions);
     }
+    //#endregion
+
+    //#region electron app
     if (
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'electron-app'
@@ -572,6 +587,9 @@ export class ArtifactManager {
       releaseOutput =
         await this.artifact.electronApp.releasePartial(releaseOptions);
     }
+    //#endregion
+
+    //#region mobile app
     if (
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'mobile-app'
@@ -580,6 +598,9 @@ export class ArtifactManager {
       releaseOutput =
         await this.artifact.mobileApp.releasePartial(releaseOptions);
     }
+    //#endregion
+
+    //#region vscode plugin
     if (
       !releaseOptions.release.targetArtifact ||
       releaseOptions.release.targetArtifact === 'vscode-plugin'
@@ -588,6 +609,7 @@ export class ArtifactManager {
       releaseOutput =
         await this.artifact.vscodePlugin.releasePartial(releaseOptions);
     }
+    //#endregion
 
     //#region tag and push
     if (!releaseOptions.release.skipTagGitPush) {
