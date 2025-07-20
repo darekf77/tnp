@@ -225,57 +225,57 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
   additionalExternalsFor(artifactName: ReleaseArtifactTaon): string[] {
     //#region @backendFunc
-    let res =
-      (this.data as Models.TaonJsonStandalone)?.singleFileBundlingExternals ||
-      [];
-
-    if (!_.isArray(res)) {
-      return [];
-    }
-
-    return (
-      res
-        .filter(f => _.isObject(f) && !Array.isArray(f))
-        .filter(c => !c.artifactName || c.artifactName === artifactName)
-        .map(c => c.packageName) || []
-    );
-    //#endregion
-  }
-
-  additionalReplaceWithNothingFor(artifactName: ReleaseArtifactTaon): string[] {
-    //#region @backendFunc
-    let res =
-      (this.data as Models.TaonJsonStandalone)?.singleFileBundlingExternals ||
-      [];
-
-    if (!_.isArray(res)) {
-      return [];
-    }
-
-    return (
-      res
-        .filter(f => _.isObject(f) && !Array.isArray(f))
-        .filter(f => f.replaceWithNothing)
-        .filter(c => !c.artifactName || c.artifactName === artifactName)
-        .map(c => c.packageName) || []
-    );
-    //#endregion
-  }
-
-  //#region dependencies names for npm lib
-  /**
-   * deps to inlculde in npm lib
-   * (relative paths to files or folders)
-   */
-  get electronNativeDependencies(): string[] {
-    //#region @backendFunc
-    let res = (this.data as Models.TaonJsonStandalone)
-      ?.electronNativeDependencies;
+    let res = (
+      this.data as Models.TaonJsonStandalone
+    )?.singleFileBundlingPackages
+      ?.filter(c => {
+        return (
+          c.isExternalFor === '*' || c.isExternalFor.includes(artifactName)
+        );
+      })
+      .map(c => c.packageName);
 
     return res || [];
     //#endregion
   }
-  //#endregion
+
+  public additionalReplaceWithNothingFor(
+    artifactName: ReleaseArtifactTaon,
+  ): string[] {
+    //#region @backendFunc
+    let res = (
+      this.data as Models.TaonJsonStandalone
+    )?.singleFileBundlingPackages
+      ?.filter(c => {
+        return (
+          c.replaceWithNothing === '*' ||
+          (Array.isArray(c.replaceWithNothing) &&
+            c.replaceWithNothing.includes(artifactName))
+        );
+      })
+      .map(c => c.packageName);
+
+    return res || [];
+    //#endregion
+  }
+
+  public getNativeDepsFor(artifactName: ReleaseArtifactTaon): string[] {
+    //#region @backendFunc
+    let res = (
+      this.data as Models.TaonJsonStandalone
+    )?.singleFileBundlingPackages
+      ?.filter(c => {
+        return (
+          c.includeInBundleNodeModules === '*' ||
+          (Array.isArray(c.includeInBundleNodeModules) &&
+            c.includeInBundleNodeModules.includes(artifactName))
+        );
+      })
+      .map(c => c.packageName);
+
+    return res || [];
+    //#endregion
+  }
 
   //#region peerDependencies names for npm lib
   /**
@@ -322,9 +322,6 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     const data = this.data as Models.TaonJsonStandalone;
     //#region @backendFunc
     let res = data?.isUsingOwnNodeModulesInsteadCoreContainer;
-    if (!res) {
-      res = data?.usesItsOwnNodeModules;
-    }
     return !!res;
     //#endregion
   }

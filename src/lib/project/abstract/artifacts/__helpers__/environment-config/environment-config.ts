@@ -217,6 +217,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       }
 
       UtilsTypescript.clearRequireCacheRecursive(pathToEnvTs);
+      // @ts-ignore
       env = require(pathToEnvTs)?.default;
     } catch (error) {
       // TODO QUICK_FIX @UNCOMMENT @LAST

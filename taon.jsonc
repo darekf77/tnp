@@ -6,12 +6,12 @@
     "ora",
     "progress",
     "open",
-    // by default in singleFileBundlingExternals
+    // by default in singleFileBundlingPackages
     "ts-node",
     // "webpack",
-    // by default in singleFileBundlingExternals
+    // by default in singleFileBundlingPackages
     "typescript",
-    // by default in singleFileBundlingExternals
+    // by default in singleFileBundlingPackages
     "esbuild",
     "sharp",
     "favicons",
@@ -31,7 +31,7 @@
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
 
   "resources": [],
-  "singleFileBundlingExternals": [
+  "singleFileBundlingPackages": [
     // electron is replaced by default
     // {
     //   "packageName": "electron",
@@ -63,9 +63,6 @@
       "packageName": "favicons",
     },
   ],
-
-  // TODO remove when all things updated
-  "usesItsOwnNodeModules": true,
 
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",

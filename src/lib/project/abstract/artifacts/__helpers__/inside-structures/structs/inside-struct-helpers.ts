@@ -95,19 +95,17 @@ export function recreateApp(project: Project, initOptions: EnvOptions): void {
   //#region @backendFunc
 
   if (!project.framework.isCoreProject) {
-    // project.docker.rebuildBaseFiles();
+    project.framework.recreateFileFromCoreProject({
+      fileRelativePath: [config.folder.src, 'app.ts'],
+    });
 
-    project.framework.recreateFromCoreProject([config.folder.src, 'app.ts']);
+    project.framework.recreateFileFromCoreProject({
+      fileRelativePath: [config.folder.src, 'global.scss'],
+    });
 
-    project.framework.recreateFromCoreProject([
-      config.folder.src,
-      'global.scss',
-    ]);
-
-    project.framework.recreateFromCoreProject([
-      config.folder.src,
-      'app.electron.ts',
-    ]);
+    project.framework.recreateFileFromCoreProject({
+      fileRelativePath: [config.folder.src, 'app.electron.ts'],
+    });
 
     //#region recreate vars.scss file
     // TODO QUICK_FIX this will work in app - only if app is build with same base-href

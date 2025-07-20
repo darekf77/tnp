@@ -2,7 +2,9 @@
 import { BaseContext, Taon } from 'taon/src';
 import { config } from 'tnp-config/src';
 import { crossPlatformPath, path, _ } from 'tnp-core/src';
+import { UtilsOs, UtilsTerminal } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
+import { PackageJson } from 'type-fest';
 import {
   createSourceFile,
   isClassDeclaration,
@@ -20,6 +22,7 @@ import {
 } from '../../../../constants';
 import { Development, EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
+import { DockerHelper } from '../__helpers__/docker-helper';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 import { InsideStructuresElectron } from '../electron-app/tools/inside-struct-electron';
 
@@ -34,14 +37,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     appDistOutBrowserAngularAbsPath: string;
     appDistOutBackendNodeAbsPath: string;
     angularNgServeAddress: URL;
-    dockerBackendFrontendAppDistOutPath: string;
   },
   ReleasePartialOutput
 > {
   //#region fields & getters
   public readonly migrationHelper: MigrationHelper;
   public readonly angularFeBasenameManager: AngularFeBasenameManager;
-
+  public readonly docker: DockerHelper;
   public readonly insideStructureApp: InsideStructuresApp;
   public readonly insideStructureElectron: InsideStructuresElectron;
 
@@ -54,6 +56,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     this.angularFeBasenameManager = new AngularFeBasenameManager(project);
     this.insideStructureApp = new InsideStructuresApp(project);
     this.insideStructureElectron = new InsideStructuresElectron(project);
+    this.docker = new DockerHelper(project);
   }
   //#endregion
 
@@ -69,6 +72,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       await this.insideStructureApp.init(initOptions);
     }
     this.fixAppTsFile();
+
+    // await this.project.docker.runTask({
+    //   watch: initOptions.build.watch,
+    //   initialParams: {
+    //     envOptions: initOptions,
+    //   },
+    // });
 
     const copyFromCoreAssets = (fileName: string) => {
       const coreSource = crossPlatformPath([
@@ -99,7 +109,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     appDistOutBrowserAngularAbsPath: string;
     appDistOutBackendNodeAbsPath: string;
     angularNgServeAddress: URL;
-    dockerBackendFrontendAppDistOutPath: string;
   }> {
     //#region @backendFunc
 
@@ -130,7 +139,86 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     }
     //#endregion
 
-    const dockerBackendFrontendAppDistOutPath: string = void 0; // TODO implement
+    const appDistOutBackendNodeAbsPath =
+      this.getOutDirNodeBackendAppAbsPath(buildOptions);
+
+    if (
+      buildOptions.release.releaseType === 'local' ||
+      buildOptions.release.releaseType === 'manual'
+    ) {
+      //#region create backend app
+      await Helpers.bundleCodeIntoSingleFile(
+        this.project.pathFor('dist/app.js'),
+        crossPlatformPath([appDistOutBackendNodeAbsPath, 'dist/app.js']),
+        {
+          minify: buildOptions.release.nodeBackendApp.minify,
+          strategy: 'node-app',
+          additionalExternals: [
+            ...this.project.taonJson.additionalExternalsFor('angular-node-app'),
+          ],
+          additionalReplaceWithNothing: [
+            ...this.project.taonJson.additionalReplaceWithNothingFor(
+              'angular-node-app',
+            ),
+          ],
+        },
+      );
+
+      const copyToBackendBundle = [
+        'run.js',
+        'README.md',
+        'dist/lib/build-info._auto-generated_.js',
+      ];
+
+      for (const relativePathBundleBackend of copyToBackendBundle) {
+        Helpers.copyFile(
+          this.project.pathFor(relativePathBundleBackend),
+          crossPlatformPath([
+            appDistOutBackendNodeAbsPath,
+            relativePathBundleBackend,
+          ]),
+        );
+      }
+
+      const nodeJsAppNativeDeps =
+        this.project.taonJson.getNativeDepsFor('angular-node-app');
+      const dependenciesNodeJsApp = {};
+
+      for (const nativeDepName of nodeJsAppNativeDeps) {
+        const version = this.project.packageJson.dependencies[nativeDepName];
+        if (version) {
+          Helpers.logInfo(
+            `Setting native dependency ${nativeDepName} to version ${version}`,
+          );
+          dependenciesNodeJsApp[nativeDepName] =
+            this.project.packageJson.dependencies[nativeDepName];
+        } else {
+          Helpers.warn(
+            `Native dependency ${nativeDepName} not found in taon package.json dependencies`,
+          );
+        }
+      }
+
+      Helpers.writeJson(
+        [appDistOutBackendNodeAbsPath, config.file.package_json],
+        {
+          name: this.project.packageJson.name,
+          version: this.project.packageJson.version,
+          dependencies: dependenciesNodeJsApp,
+        } as PackageJson,
+      );
+
+      this.project.framework.recreateFileFromCoreProject({
+        relativePathInCoreProject:
+          'docker-templates/backend-app-node/Dockerfile',
+        customDestinationLocation: [appDistOutBackendNodeAbsPath, 'Dockerfile'],
+      });
+
+      UtilsOs.openFolderInVSCode(appDistOutBackendNodeAbsPath);
+      await UtilsTerminal.pressAnyKeyToContinueAsync();
+      // TODO @LAST
+      //#endregion
+    }
 
     const angularTempProj = this.globalHelper.getProxyNgProj(
       buildOptions,
@@ -141,9 +229,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       buildOptions.release.targetArtifact === 'electron-app'
         ? angularTempProj.pathFor('dist')
         : this.getOutDirAngularBrowserAppAbsPath(buildOptions);
-
-    const appDistOutBackendNodeAbsPath =
-      this.getOutDirNodeBackendAppAbsPath(buildOptions);
 
     const fromFileBaseHref = Helpers.readFile(
       this.project.pathFor(tmpBaseHrefOverwriteRelPath),
@@ -158,13 +243,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     if (buildOptions.build.watch) {
       await Helpers.killProcessByPort(portAssignedToAppBuild);
     }
-
-    // await this.project.docker.runTask({
-    //   watch: buildOptions.build.watch,
-    //   initialParams: {
-    //     envOptions: buildOptions,
-    //   },
-    // });
 
     //#region prepare angular command
     const outPutPathCommand = ` --output-path ${appDistOutBrowserAngularAbsPath} `;
@@ -259,7 +337,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       angularNgServeAddress: new URL(
         `http://localhost:${portAssignedToAppBuild}`,
       ),
-      dockerBackendFrontendAppDistOutPath,
     };
     //#endregion
   }
@@ -423,19 +500,30 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       UtilsTypescript.setValueToVariableInTsFile(
         this.project.pathFor('src/app.hosts.ts'),
         'HOST_BACKEND_PORT_' + (i + 1),
-        nodeBeAppPort,
+        this.prefixVarTemplate('HOST_BACKEND_PORT', i + 1) + nodeBeAppPort,
+        {
+          useRawStringValue: true,
+        },
       );
 
       UtilsTypescript.setValueToVariableInTsFile(
         this.project.pathFor('src/app.hosts.ts'),
         'CLIENT_DEV_WEBSQL_APP_PORT_' + (i + 1),
-        ngWebsqlAppPort,
+        this.prefixVarTemplate('CLIENT_DEV_WEBSQL_APP_PORT', i + 1) +
+          ngWebsqlAppPort,
+        {
+          useRawStringValue: true,
+        },
       );
 
       UtilsTypescript.setValueToVariableInTsFile(
         this.project.pathFor('src/app.hosts.ts'),
         'CLIENT_DEV_NORMAL_APP_PORT_' + (i + 1),
-        ngNormalAppPort,
+        this.prefixVarTemplate('CLIENT_DEV_NORMAL_APP_PORT', i + 1) +
+          ngNormalAppPort,
+        {
+          useRawStringValue: true,
+        },
       );
 
       // TODO electron websql not supported yet
@@ -675,6 +763,14 @@ ${contexts.join('\n')}
   //#endregion
 
   //#region private methods / write ports to file
+
+  protected prefixVarTemplate(varName: string, n: number | undefined): string {
+    return (
+      `nodeENV['${varName}${n ? `_${n}` : ''}'] || ` +
+      `argsENV['${varName}${n ? `_${n}` : ''}'] || `
+    );
+  }
+
   public writePortsToFile(): void {
     // #region @backend
     const appHostsFile = crossPlatformPath(
@@ -682,19 +778,23 @@ ${contexts.join('\n')}
     );
     const numOfContexts = this.project.taonJson.numberOfContexts;
     const tempalte = (n?: number) => {
-      return `
+      return (
+        `
 /**
  * Your context backend port
  */
-export const HOST_BACKEND_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'HOST_BACKEND_PORT_1'};
+export const HOST_BACKEND_PORT${n ? `_${n}` : ''} = ` +
+        `${this.prefixVarTemplate('HOST_BACKEND_PORT', n) + (n ? `undefined` : 'HOST_BACKEND_PORT_1')};
 /**
  * Angular website url with normal/nodejs backend
  */
-export const CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_NORMAL_APP_PORT_1'};
+export const CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''} = ` +
+        `${this.prefixVarTemplate('CLIENT_DEV_NORMAL_APP_PORT', n) + (n ? `undefined` : 'CLIENT_DEV_NORMAL_APP_PORT_1')};
 /**
  * Angular website url with websql backend
  */
-export const CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_WEBSQL_APP_PORT_1'};
+export const CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} = ` +
+        `${this.prefixVarTemplate('CLIENT_DEV_WEBSQL_APP_PORT', n) + (n ? `undefined` : 'CLIENT_DEV_WEBSQL_APP_PORT_1')};
 /**
  * Electron/angular website url for electron app purpose (ipc backend)
  */
@@ -704,13 +804,12 @@ export const CLIENT_DEV_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefin
 /**
  * Backend url - use as "host" inside your context
  */
-export const HOST_URL${n ? `_${n}` : ''} = 'http://localhost:' + HOST_BACKEND_PORT${n ? `_${n}` : ''};
+export const HOST_URL${n ? `_${n}` : ''} =  ${this.prefixVarTemplate('HOST_URL', n)} ('http://localhost:' + HOST_BACKEND_PORT${n ? `_${n}` : ''});
 /**
  * Frontend host url - use as "frontendHost" inside your context
  */
-export const FRONTEND_HOST_URL${n ? `_${n}` : ''} =
-  'http://localhost:' +
-  (isWebSQLMode ? CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} : CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''});
+export const FRONTEND_HOST_URL${n ? `_${n}` : ''} = ${this.prefixVarTemplate('FRONTEND_HOST_URL', n)}  ( 'http://localhost:' +
+  (isWebSQLMode ? CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} : CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''}));
 /**
  * Frontend electron host url - use in app.electron.ts with win.loadURL(FRONTEND_HOST_URL_ELECTRON);
  */
@@ -720,7 +819,8 @@ export const FRONTEND_HOST_URL_ELECTRON${n ? `_${n}` : ''} = 'http://localhost:'
 //  'http://localhost:' +
 //  (isWebSQLMode ? CLIENT_DEV_WEBSQL_ELECTRON_PORT${n ? `_${n}` : ''} : CLIENT_DEV_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''});
 
-  `;
+  `
+      );
     };
     Helpers.writeFile(
       appHostsFile,
@@ -734,6 +834,23 @@ isWebSQLMode = false;
 //#${'reg' + 'ion'} @${'web' + 'sql' + 'Only'}
 isWebSQLMode = true;
 //#${'end' + 'reg' + 'ion'}
+
+const nodeENV = (()=> {
+  let env: any;
+  //#${'reg' + 'ion'} @${'bac' + 'kend'}
+  env = process.env || {};
+  //#${'endr' + 'egion'}
+  return env || {};
+})();
+
+const argsENV = (()=> {
+  let env: any;
+  //#${'reg' + 'ion'} @${'bac' + 'kend'}
+  env = require('minimist')(process.argv);
+  //#${'endr' + 'egion'}
+  return env || {};
+})();
+
 
 ${_.times(numOfContexts, i => {
   return tempalte(i + 1);

@@ -13,13 +13,20 @@ export const DUMMY_LIB = '@lib';
 
 export const DOCKER_COMPOSE_FILE_NAME = 'docker-compose.yml';
 export const DOCKER_FOLDER = 'docker';
-export const  BASE_TEMP_DOCKER_FOLDER = 'tmp-docker';
+export const BASE_TEMP_DOCKER_FOLDER = 'tmp-docker';
+
+export const DOCKER_TEMPLATES = 'docker-templates';
 
 export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
 } = {
   manual: ['npm-lib-and-cli-tool'],
-  local: ['electron-app', 'npm-lib-and-cli-tool', 'vscode-plugin'],
+  local: [
+    'electron-app',
+    'npm-lib-and-cli-tool',
+    'vscode-plugin',
+    // 'angular-node-app',
+  ],
   cloud: [],
   'static-pages': [
     'angular-node-app',

@@ -109,7 +109,8 @@ export class ArtifactElectronApp extends BaseArtifact<
       await this.buildPartial(releaseOptions);
 
     //#region set native dependencies
-    const electronNativeDeps = this.project.taonJson.electronNativeDependencies;
+    const electronNativeDeps =
+      this.project.taonJson.getNativeDepsFor('electron-app');
 
     for (const nativeDepName of electronNativeDeps) {
       const version = this.project.packageJson.dependencies[nativeDepName];
@@ -143,7 +144,9 @@ export class ArtifactElectronApp extends BaseArtifact<
           ...this.project.taonJson.additionalExternalsFor('electron-app'),
         ],
         additionalReplaceWithNothing: [
-          ...this.project.taonJson.additionalReplaceWithNothingFor('electron-app'),
+          ...this.project.taonJson.additionalReplaceWithNothingFor(
+            'electron-app',
+          ),
         ],
         strategy: 'electron-app',
       },

@@ -613,6 +613,31 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     if (shouldUnlinkNodeModules) {
       this.project.nodeModules.unlinkNodeModulesWhenLinked();
     }
+
+    //#region TODO LAST TEST THIS ON WINDOWS
+    // if (
+    //   !Helpers.isSymlinkFileExitedOrUnexisted(this.project.nodeModules.path)
+    // ) {
+    //   Helpers.taskStarted('Checking if node_modules folder is correct...');
+    //   const minDepsLength = Object.keys(
+    //     this.project.npmHelpers.packageJson.allDependencies,
+    //   ).length;
+
+    //   const notFullyInstalled =
+    //     Helpers.findChildren(this.project.nodeModules.path, c => c).length <
+    //     minDepsLength + 1;
+
+    //   if (notFullyInstalled) {
+    //     try {
+    //       Helpers.info(`Removing incorrect node_modules folder...`);
+    //       Helpers.removeSymlinks(this.project.nodeModules.path);
+    //       Helpers.remove(this.project.nodeModules.path, true);
+    //     } catch (error) {}
+    //   }
+    //   Helpers.taskDone('Checking if node_modules folder is correct DONE...');
+    // }
+    //#endregion
+
     //#endregion
   }
   //#endregion

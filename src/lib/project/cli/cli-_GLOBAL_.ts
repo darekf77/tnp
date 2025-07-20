@@ -1353,7 +1353,7 @@ ${this.project.children
       ${gifDownloadPath}
 
       `);
-    Helpers.openFolderInFileExploer(path.dirname(gifDownloadPath));
+    Helpers.openFolderInFileExplorer(path.dirname(gifDownloadPath));
     this._exit();
   }
   //#endregion

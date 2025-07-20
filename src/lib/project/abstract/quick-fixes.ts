@@ -50,25 +50,25 @@ export class QuickFixes extends BaseQuickFixes<Project> {
         const dest = path.join(this.project.location, dirName, 'tsconfig.json');
         Helpers.copyFile(tsconfigBrowserPath, dest);
 
-        this.project.framework.recreateFromCoreProject(
-          [dirName, 'tsconfig.spec.json'],
-          'app/tsconfig.spec-for-unit.json',
-        );
+        this.project.framework.recreateFileFromCoreProject({
+          fileRelativePath: [dirName, 'tsconfig.spec.json'],
+          relativePathInCoreProject: 'app/tsconfig.spec-for-unit.json',
+        });
 
-        this.project.framework.recreateFromCoreProject(
-          [dirName, 'jest.config.js'],
-          'app/jest.config.js',
-        );
+        this.project.framework.recreateFileFromCoreProject({
+          fileRelativePath: [dirName, 'jest.config.js'],
+          relativePathInCoreProject: 'app/jest.config.js',
+        });
 
-        this.project.framework.recreateFromCoreProject(
-          [dirName, 'setupJest.ts'],
-          'app/src/setupJest.ts',
-        );
+        this.project.framework.recreateFileFromCoreProject({
+          fileRelativePath: [dirName, 'setupJest.ts'],
+          relativePathInCoreProject: 'app/src/setupJest.ts',
+        });
 
-        this.project.framework.recreateFromCoreProject(
-          [dirName, 'jestGlobalMocks.ts'],
-          'app/src/jestGlobalMocks.ts',
-        );
+        this.project.framework.recreateFileFromCoreProject({
+          fileRelativePath: [dirName, 'jestGlobalMocks.ts'],
+          relativePathInCoreProject: 'app/src/jestGlobalMocks.ts',
+        });
       });
     })();
 

@@ -130,6 +130,17 @@ export namespace Models {
     releaseType?: ReleaseType;
   }
 
+  export type TaonArtifactInclude =
+    | (
+        | 'npm-lib-and-cli-tool'
+        | 'angular-node-app'
+        | 'electron-app'
+        | 'mobile-app'
+        | 'vscode-plugin'
+        | 'docs-webapp'
+      )[]
+    | '*'; // for each artifact
+
   export interface TaonJsonStandalone extends TaonJsonCommon {
     /**
      * override npm name for build/relese
@@ -187,17 +198,10 @@ export namespace Models {
     peerDependenciesNamesForNpmLib: string[];
 
     /**
-     * Electron native dependencies that can be bundled into single index.js
-     * backend file with esbuild/ncc - BUT can be installed inside node_modules
-     * and later shipped with whole node_modules folder into electron app.
+     * Provide information about external packages for single file
+     * bundling process
      */
-    electronNativeDependencies: string[];
-
-    /**
-     * Provide externals for bundling ts code into single .js file
-     * (external packages that are not going to be bundled)
-     */
-    singleFileBundlingExternals: {
+    singleFileBundlingPackages: {
       /**
        * Description of external package
        * - why it is external
@@ -205,22 +209,29 @@ export namespace Models {
        * etc.
        */
       description: string;
+      /**
+       * Name of package that is external
+       */
       packageName: string;
+
+      /**
+       * Specify for which artifacts this package is external
+       */
+      isExternalFor?: TaonArtifactInclude;
+
       /**
        * replace with nothing require('packageName') - if still is somewhere
        * is final code
        */
-      replaceWithNothing?: boolean;
+      replaceWithNothing?: TaonArtifactInclude;
+
       /**
-       * Without artifact name - all artifacts will use this pacakge as external
+       * only for native stuff that can't be minified
+       * and needs to be included in bundle.
+       * Taon will perform npm install for all
+       * packages marked with this
        */
-      artifactName?:
-        | 'npm-lib-and-cli-tool'
-        | 'angular-node-app'
-        | 'electron-app'
-        | 'mobile-app'
-        | 'vscode-plugin'
-        | 'docs-webapp';
+      includeInBundleNodeModules?: TaonArtifactInclude;
     }[];
 
     /**
@@ -234,12 +245,6 @@ export namespace Models {
      * Project is using own node_modules instead of core container
      */
     isUsingOwnNodeModulesInsteadCoreContainer?: boolean;
-
-    /**
-     * @deprecated
-     * use isUsingOwnNodeModulesInsteadCoreContainer
-     */
-    usesItsOwnNodeModules?: boolean;
 
     /**
      * generate src/lib/index._auto-generated_.ts with

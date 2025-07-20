@@ -162,7 +162,9 @@ export class $Link extends BaseCli {
         config.file.cli_ts,
       );
       if (!Helpers.exists(cliTsFile)) {
-        this.project.framework.recreateFromCoreProject('src/cli.ts');
+        this.project.framework.recreateFileFromCoreProject({
+          fileRelativePath: 'src/cli.ts',
+        });
       }
     }
 
@@ -365,7 +367,6 @@ EXIT /b
     `;
   }
   //#endregion
-
 }
 
 export default {

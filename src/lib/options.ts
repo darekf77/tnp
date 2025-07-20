@@ -1,9 +1,12 @@
+import type axiosType from 'axios';
 import { walk } from 'lodash-walk-object/src';
 import { config } from 'tnp-config/src';
 import { Helpers } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
 
+import { DOCKER_TEMPLATES } from './constants';
 import { Models } from './models';
+import type { Project } from './project/abstract/project';
 
 //#region release artifact taon
 /**
@@ -71,7 +74,7 @@ export const ReleaseTypeNames = Object.freeze({
 export type ReleaseType =
   (typeof ReleaseTypeNames)[keyof typeof ReleaseTypeNames];
 
-export const ReleaseTypeNamesArr: (ReleaseType)[] =
+export const ReleaseTypeNamesArr: ReleaseType[] =
   Object.values(ReleaseTypeNames);
 
 export const Development = 'development';
@@ -102,11 +105,11 @@ class EnvOptionsBuildPwa {
 //#region env options / build / cli
 class EnvOptionsBuildCli {
   /**
-   * using ncc
+   * using esbuild (default false)
    */
   declare minify: boolean;
   /**
-   * using ncc
+   *  using esbuild (default false)
    */
   declare includeNodeModules: boolean;
   /**
@@ -123,6 +126,13 @@ class EnvOptionsBuildCli {
   declare obscure: boolean;
 }
 //#endregion
+
+class EnvOptionsNodeBackendApp {
+  /**
+   * using esbuild
+   */
+  declare minify: boolean;
+}
 
 //#region env options / build / cli
 class EnvOptionsBuildLib {
@@ -171,6 +181,113 @@ class EnvOptionsBuild {
    */
   declare genOnlyClientCode: boolean;
   declare pwa: Partial<EnvOptionsBuildPwa>;
+}
+//#endregion
+
+//#region env options / docker
+
+export const dockerBackendAppNode = {
+  name: 'backend-app-node',
+  skipStartInDevMode: true,
+  pathToProjectWithDockerfile: (project: Project) => {
+    //#region @backendFunc
+    return project.ins
+      .by('isomorphic-lib')
+      .pathFor([DOCKER_TEMPLATES, 'backend-app-node']);
+    //#endregion
+  },
+} as TaonDockerContainerConfig;
+
+export const dockerFrontendNginx = {
+  name: 'frontend-nginx',
+  skipStartInDevMode: true,
+  pathToProjectWithDockerfile: (project: Project) => {
+    //#region @backendFunc
+    return project.ins
+      .by('isomorphic-lib')
+      .pathFor([DOCKER_TEMPLATES, 'frontend-nginx']);
+    //#endregion
+  },
+} as TaonDockerContainerConfig;
+
+export const dockerDatabaseMysql = {
+  name: 'database-mysql',
+  pathToProjectWithDockerfile: (project: Project) => {
+    //#region @backendFunc
+    return project.ins
+      .by('isomorphic-lib')
+      .pathFor([DOCKER_TEMPLATES, 'database-mysql']);
+    //#endregion
+  },
+  healthCheck: async ({ axios, env }) => {
+    //#region @backendFunc
+    const res = await axios.get(`http://localhost:${env.HEALTH_PORT}/health`);
+    return res.data === 'OK';
+    //#endregion
+  },
+} as TaonDockerContainerConfig<{
+  MYSQL_ROOT_PASSWORD: string;
+  MYSQL_DATABASE: string;
+  MYSQL_USER: string;
+  MYSQL_PASSWORD: string;
+  readonly HEALTH_PORT: number;
+}>;
+
+const taonBuiltinDockerImages = {
+  'backend-app-node': dockerBackendAppNode,
+  'frontend-nginx': dockerFrontendNginx,
+  'database-mysql': dockerDatabaseMysql,
+};
+
+export const taonBuildInImages = Object.values(
+  taonBuiltinDockerImages,
+) as TaonDockerContainerConfig[];
+
+export interface TaonDockerContainerConfig<ENV = {}> {
+  /**
+   * name for container - should be unique
+   */
+  name: string;
+  /**
+   * based on image name or function that return path to dockerfile
+   */
+  pathToProjectWithDockerfile?: (opt?: {
+    project?: Project;
+    env?: ENV;
+  }) => string;
+  /**
+   * if true container wont start in dev mode
+   * (ng serve, debug js mode on localhost etc.)
+   */
+  skipStartInDevMode?: boolean;
+  /**
+   * if wait unit healthy is true
+   * then healthCheck function is required
+   * and it will be called to check if container is healthy
+   */
+  healthCheck?: (opt?: {
+    axios?: typeof axiosType;
+    project?: Project;
+    env?: ENV;
+  }) => Promise<boolean>;
+  waitUnitHealthy?: boolean;
+  overrideDotEnv?: { [key in keyof ENV]: string | number | boolean };
+}
+
+/**
+ * Each taon context will get mysql mariadb instead
+ * sqljs file database when using docker
+ */
+class EnvOptionsDocker {
+  declare skipStartInOrder?: boolean;
+  /**
+   * each taon context will use sql.js file database
+   */
+  declare skipUsingMysqlDb?: boolean;
+  declare additionalContainer: (
+    | Partial<TaonDockerContainerConfig<any>>
+    | keyof typeof taonBuiltinDockerImages
+  )[];
 }
 //#endregion
 
@@ -313,6 +430,7 @@ class EnvOptionsRelease {
   declare envNumber: number | undefined;
 
   declare cli: Partial<EnvOptionsBuildCli>;
+  declare nodeBackendApp: Partial<EnvOptionsNodeBackendApp>;
   declare lib: Partial<EnvOptionsBuildLib>;
   /**
    * after release install locally
@@ -491,6 +609,7 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
    * @deprecated everything automatically handled by taon
    */
   declare ports: Partial<EnvOptionsPorts>;
+  declare docker: Partial<EnvOptionsDocker>;
   declare release: Partial<EnvOptionsRelease>;
   declare init: Partial<EnvOptionsInit>;
   declare build: Partial<EnvOptionsBuild>;
@@ -573,6 +692,10 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     this.release = this.release || ({} as any);
 
     this.release.cli = _.merge(new EnvOptionsBuildCli(), this.release?.cli);
+    this.release.nodeBackendApp = _.merge(
+      new EnvOptionsNodeBackendApp(),
+      this.release?.nodeBackendApp,
+    );
     this.release.lib = _.merge(new EnvOptionsBuildLib(), this.release?.lib);
     this.release = _.merge(new EnvOptionsRelease(), this.release);
 
@@ -606,7 +729,7 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   //#region save to file
   public saveToFile(absFilePath: string): void {
     //#region @backendFunc
-    EnvOptions.saveToFile(this, absFilePath);
+    EnvOptions.saveToFile(this as any, absFilePath);
     //#endregion
   }
   //#endregion
@@ -686,6 +809,9 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
       obscure: '-' as any,
       compress: '-' as any,
     },
+    nodeBackendApp: {
+      minify: '-' as any,
+    },
     releaseType: '-' as any,
     lib: {
       removeDts: '-' as any,
@@ -705,6 +831,11 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
   init: {
     branding: '-' as any,
     struct: '-' as any,
+  },
+  docker: {
+    additionalContainer: '-' as any,
+    skipStartInOrder: '-' as any,
+    skipUsingMysqlDb: '-' as any,
   },
   build: {
     angularProd: '-' as any,

@@ -12,7 +12,11 @@ import {
 } from 'tnp-helpers/src';
 
 import { DOCKER_COMPOSE_FILE_NAME, DOCKER_FOLDER } from '../../../../constants';
-import { EnvOptions } from '../../../../options';
+import {
+  Development,
+  EnvOptions,
+  ReleaseArtifactTaonNames,
+} from '../../../../options';
 import { Project } from '../../project';
 //#endregion
 
@@ -25,6 +29,20 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
   }, // @ts-ignore TODO weird inheritance problem
   Project
 > {
+  //#region private methods / get out dir app
+  /**
+   * Absolute path to the output directory for the app
+   */
+  getOutDirDockersRelease(buildOptions: EnvOptions): string {
+    let outDirApp =
+      `.${config.frameworkName}/${ReleaseArtifactTaonNames.ANGULAR_NODE_APP}/` +
+      `${buildOptions.release.releaseType ? buildOptions.release.releaseType : Development}/` +
+      `dockers-to-build`;
+
+    return this.project.pathFor(outDirApp);
+  }
+  //#endregion
+
   //#region constructor
   constructor(project: Project) {
     super(project, {
@@ -50,28 +68,37 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
 
   //#region rebuild base files
   public rebuildBaseFiles(): void {
-    return; // TODO @UNCOMMENT when docker is ready
     //#region @backendFunc
-    this.project.framework.recreateFromCoreProject([
-      config.folder.src,
-      DOCKER_FOLDER,
-      '.env',
-    ]);
-    this.project.framework.recreateFromCoreProject([
-      config.folder.src,
-      DOCKER_FOLDER,
-      DOCKER_COMPOSE_FILE_NAME,
-    ]);
-    this.project.framework.recreateFromCoreProject([
-      config.folder.src,
-      DOCKER_FOLDER,
-      'hello-world/Dockerfile',
-    ]);
-    this.project.framework.recreateFromCoreProject([
-      config.folder.src,
-      DOCKER_FOLDER,
-      'hello-world/index.js',
-    ]);
+    return;
+    this.project.framework.recreateFileFromCoreProject({
+      fileRelativePath: [config.folder.src, DOCKER_FOLDER, '.env'],
+    });
+    this.project.framework.recreateFileFromCoreProject({
+      fileRelativePath: [
+        config.folder.src,
+        DOCKER_FOLDER,
+        DOCKER_COMPOSE_FILE_NAME,
+      ],
+    });
+    this.project.framework.recreateFileFromCoreProject({
+      fileRelativePath: [
+        config.folder.src,
+        DOCKER_FOLDER,
+        'hello-world/Dockerfile',
+      ],
+    });
+    this.project.framework.recreateFileFromCoreProject({
+      fileRelativePath: [
+        config.folder.src,
+        DOCKER_FOLDER,
+        'hello-world/index.js',
+      ],
+    });
+
+    const dockerFolder = this.getOutDirDockersRelease(this.envOptions);
+    Helpers.mkdirp(dockerFolder);
+    console.log(`Rebuilding docker files in ${dockerFolder}`);
+
     //#endregion
   }
   //#endregion
@@ -83,10 +110,9 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
     Helpers.taskStarted(`Rebuilding docker environment`);
     if (!asyncEvent) {
       this.rebuildBaseFiles();
-      console.log('changeOfFiles', changeOfFiles);
-      console.log('env release', this.envOptions.release);
+      // console.log('changeOfFiles', changeOfFiles);
+      // console.log('env release', this.envOptions.release);
     }
-    process.exit(0); // TODO: remove this line when docker is ready
     Helpers.taskDone(`Rebuilding docker environment Done`);
     //#endregion
   }
@@ -101,7 +127,6 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
     asyncEvent: boolean;
   }): void {
     //#region @backendFunc
-
     this.rebuild(changeOfFiles, asyncEvent);
     //#endregion
   }
