@@ -126,6 +126,8 @@ export const DEFAULT_PORT = {
   DIST_SERVER_DOCS: 4000,
   APP_BUILD_LOCALHOST: 4200,
   SERVER_LOCALHOST: 4100,
+  DEBUGGING_CLI_TOOL: 9222,
+  DEBUGGING_ELECTRON: 9888,
 };
 
 export const tmpVscodeProj = `tmp-vscode-proj`;

@@ -11,6 +11,7 @@ import {
   taonConfigSchemaJsonContainer,
   THIS_IS_GENERATED_INFO_COMMENT,
   tmpVscodeProj,
+  DEFAULT_PORT,
 } from '../../constants';
 import { Models } from '../../models';
 import { Development, EnvOptions } from '../../options';
@@ -277,16 +278,18 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     //#endregion
 
     //#region template attach process
-    const templateAttachProcess = {
+    const templateAttachProcess = (
+      debuggingPort: number = DEFAULT_PORT.DEBUGGING_CLI_TOOL,
+    ) => ({
       type: 'node',
       request: 'attach',
       name: 'Attach to global cli tool',
       autoAttachChildProcesses: false, // TODO probably no need for now
-      port: 9229,
+      port: debuggingPort,
       skipFiles: ['<node_internals>/**'],
       outFiles: this.outFiles,
       sourceMapPathOverrides: this.sourceMapPathOverrides,
-    };
+    });
     //#endregion
 
     //#region tempalte start normal nodejs server
@@ -386,7 +389,15 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     //   name: `${DEBUG_WORD} (Server + Electron)`,
     //   configurations: [...configurations.map(c => c.name)],
     // });
-    configurations.push(templateAttachProcess);
+
+    const portForCliDebugging = await this.project.registerAndAssignPort(
+      `cli debugging port`,
+      {
+        startFrom: 9229,
+      },
+    );
+
+    configurations.push(templateAttachProcess(portForCliDebugging));
 
     configurations.push(...templatesVscodeExConfig);
 
@@ -402,6 +413,12 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       // c.outFiles = ['${workspaceFolder}/dist/**/*.js', '!**/node_modules/**'];
       delete c.outFiles;
       delete c.sourceMapPathOverrides;
+      if (c.name === `${DEBUG_WORD} Electron`) {
+        c.runtimeArgs[2] = `--remote-debugging-port=${DEFAULT_PORT.DEBUGGING_ELECTRON}`; // 9876
+      }
+      if (c.request === 'attach') {
+        c.port = DEFAULT_PORT.DEBUGGING_CLI_TOOL;
+      }
     });
 
     this.project.writeFile(
