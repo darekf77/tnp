@@ -199,13 +199,13 @@ export const dockerBackendAppNode = {
 } as TaonDockerContainerConfig;
 
 export const dockerFrontendNginx = {
-  name: 'frontend-nginx',
+  name: 'frontend-app-node',
   skipStartInDevMode: true,
   pathToProjectWithDockerfile: (project: Project) => {
     //#region @backendFunc
     return project.ins
       .by('isomorphic-lib')
-      .pathFor([DOCKER_TEMPLATES, 'frontend-nginx']);
+      .pathFor([DOCKER_TEMPLATES, 'frontend-app-node']);
     //#endregion
   },
 } as TaonDockerContainerConfig;
@@ -235,7 +235,7 @@ export const dockerDatabaseMysql = {
 
 const taonBuiltinDockerImages = {
   'backend-app-node': dockerBackendAppNode,
-  'frontend-nginx': dockerFrontendNginx,
+  'frontend-app': dockerFrontendNginx,
   'database-mysql': dockerDatabaseMysql,
 };
 
@@ -783,6 +783,7 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 }
 //#endregion
 
+//#region dummy for generating environments
 /**
  * Purpose of this dummy is to have all properties
  * when generating environments
@@ -901,3 +902,5 @@ walk.Object(
 );
 
 export { allPathsEnvConfig };
+
+//#endregion

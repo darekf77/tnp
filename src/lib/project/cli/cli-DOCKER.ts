@@ -13,6 +13,16 @@ class $Docker extends BaseCli {
     console.log(`Hello from taon Docker CLI!`);
     this._exit();
   }
+
+  async compose() {
+    const isUp = this.firstArg?.toLowerCase() === 'up';
+    const isDown = this.firstArg?.toLowerCase() === 'down';
+    if (isUp) {
+    }
+    if (isDown) {
+
+    }
+  }
 }
 
 export default {

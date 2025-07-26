@@ -240,7 +240,7 @@ class $Build extends BaseCli {
   /**
    * @deprecated
    */
-  async app() {
+  async releaseApp() {
     // await this.project.build(
     //   this.params.clone({
     //     build: {

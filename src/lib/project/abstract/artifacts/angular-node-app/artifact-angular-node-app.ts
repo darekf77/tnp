@@ -1,9 +1,9 @@
 //#region imports
 import { BaseContext, Taon } from 'taon/src';
 import { config } from 'tnp-config/src';
-import { crossPlatformPath, path, _ } from 'tnp-core/src';
+import { crossPlatformPath, path, _, UtilsYaml } from 'tnp-core/src';
 import { UtilsOs, UtilsTerminal } from 'tnp-core/src';
-import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
+import { Helpers, UtilsTypescript, DockerComposeFile } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 import {
   createSourceFile,
@@ -267,7 +267,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     if (!buildOptions.build.watch) {
       this.project.framework.recreateFileFromCoreProject({
-        relativePathInCoreProject: 'docker-templates/frontend-nginx/Dockerfile',
+        relativePathInCoreProject:
+          'docker-templates/angular-app-node/Dockerfile',
         customDestinationLocation: [
           appDistOutBrowserAngularAbsPath,
           'Dockerfile',
@@ -375,6 +376,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     releaseOptions: EnvOptions,
   ): Promise<ReleasePartialOutput> {
     //#region @backendFunc
+
+    //#region update resolved variables
     releaseOptions = this.updateResolvedVersion(releaseOptions);
     const projectsReposToPushAndTag: string[] = [this.project.location];
     const projectsReposToPush: string[] = [];
@@ -395,15 +398,19 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     )
       ? true
       : releaseOptions.release.skipStaticPagesVersioning;
+    //#endregion
 
     if (releaseOptions.release.releaseType === 'static-pages') {
+      //#region static pages release
       const releaseData = await this.staticPagesDeploy(
         appDistOutBrowserAngularAbsPath,
         releaseOptions,
       );
       releaseProjPath = releaseData.releaseProjPath;
       projectsReposToPush.push(...releaseData.projectsReposToPush);
+      //#endregion
     } else if (releaseOptions.release.releaseType === 'local') {
+      //#region local release
       const localReleaseOutputBasePath = this.project.pathFor([
         config.folder.local_release,
         this.currentArtifactName,
@@ -418,6 +425,44 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         path.basename(appDistOutBackendNodeAbsPath),
       ]);
       releaseProjPath = localReleaseOutputBasePath;
+
+      //#region handle docker-compose files
+      (() => {
+        const dockerComposeRelativePath = 'docker-templates/docker-compose.yml';
+        const dockerComposeDestPath = crossPlatformPath([
+          localReleaseOutputBasePath,
+          path.basename(dockerComposeRelativePath),
+        ]);
+
+        this.project.framework.recreateFileFromCoreProject({
+          relativePathInCoreProject: dockerComposeRelativePath,
+          customDestinationLocation: dockerComposeDestPath,
+        });
+        const dockerComposeFile = UtilsYaml.readYamlAsJson<DockerComposeFile>(
+          dockerComposeDestPath,
+        );
+
+        console.log('dockerComposeFile:', dockerComposeFile);
+      })();
+
+      (() => {
+        const startJsRelativePath = 'docker-templates/start.js';
+        const startJsDestPath = crossPlatformPath([
+          localReleaseOutputBasePath,
+          path.basename(startJsRelativePath),
+        ]);
+
+        this.project.framework.recreateFileFromCoreProject({
+          relativePathInCoreProject: startJsRelativePath,
+          customDestinationLocation: startJsDestPath,
+        });
+      })();
+
+      //#endregion
+
+      // TODO @LAST add env variables to docker-compose file
+
+      //#endregion
     }
 
     return {
@@ -644,7 +689,7 @@ ${contexts.join('\n')}
     let outDirApp =
       `.${config.frameworkName}/${this.currentArtifactName}/` +
       `${buildOptions.release.releaseType ? buildOptions.release.releaseType : Development}/` +
-      `backend-app${buildOptions.build.websql ? '-websql' : ''}`;
+      `backend-app${buildOptions.build.websql ? '-websql' : '-node'}`;
 
     return this.project.pathFor(outDirApp);
   }
@@ -658,7 +703,7 @@ ${contexts.join('\n')}
     let outDirApp =
       `.${config.frameworkName}/${buildOptions.release.targetArtifact}/` +
       `${buildOptions.release.releaseType ? buildOptions.release.releaseType : Development}/` +
-      `angular-app${buildOptions.build.websql ? '-websql' : ''}`;
+      `angular-app${buildOptions.build.websql ? '-websql' : '-node'}`;
 
     return this.project.pathFor(outDirApp);
   }
@@ -880,6 +925,9 @@ const nodeENV = (()=> {
   let env: any;
   //#${'reg' + 'ion'} @${'bac' + 'kend'}
   env = process.env || {};
+  //#${'endr' + 'egion'}
+  //#${'reg' + 'ion'} @${'bro' + 'wser'}
+  env = globalThis['ENV'] || {};
   //#${'endr' + 'egion'}
   return env || {};
 })();
