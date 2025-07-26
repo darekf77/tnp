@@ -145,55 +145,6 @@ export const frameworkBuildFolders = Utils.uniqArray([
   .filter(f => !!f)
   .map(f => `.${f}`);
 
-export const notAllowedProjectNames = [
-  // TODO add all npm package names from core container
-  'copyto',
-  'app',
-  'apps',
-  'libs',
-  'lib',
-  'src',
-  'bin',
-  'source',
-  'migrations',
-  'assets',
-  'assets-for',
-  'browser',
-  'websql',
-  'compiled',
-  'docs',
-  'environments',
-  'env',
-  'projects',
-  'plugins',
-  '_',
-  'taon',
-  'taon-simple-org',
-  'taon-storage',
-  'taon-type-sql',
-  'taon-typeorm',
-  'incremental-compiler',
-  'isomorphic-region-loader',
-  'json10',
-  'json10-writer',
-  'lodash-walk-object',
-  'magic-renamer',
-  'ng-talkback',
-  'ng2-logger',
-  'ng2-rest',
-  'ng2-rest-swagger-generator',
-  'node-cli-tester',
-  'record-replay-req-res-scenario',
-  'static-columns',
-  'tnp',
-  'tnp-config',
-  'tnp-core',
-  'tnp-helpers',
-  'tnp-models',
-  'typescript-class-helpers',
-  'vpn-split',
-];
-
 export const envTs = 'env.ts';
 
 export const environments = 'environments';

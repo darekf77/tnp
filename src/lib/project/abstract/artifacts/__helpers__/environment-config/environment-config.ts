@@ -296,7 +296,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     if (this.project.git.isInsideGitRepo && envOptions.release.targetArtifact) {
       // @ts-expect-error overriding readonly property
       envOptions.buildInfo = {
-        // number: this.project.git.countComits(),
+        // number: this.project.git.countCommits(),
         date: this.project.git.lastCommitDate(),
         hash: this.project.git.lastCommitHash(),
       };

@@ -411,7 +411,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#endregion
 
   //#region info
-  async info(): Promise<void> {
+  async info(): Promise<string> {
     //#region @backendFunc
     const children = (this.children || [])
       .map(c => '- ' + c.genericName)
@@ -425,7 +425,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       .map(c => '- ' + c.genericName)
       .join('\n');
 
-    console.info(`
+    return (`
 
     name: ${this.name}
     basename: ${this.basename}
@@ -454,7 +454,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     grandpa name: ${this.grandpa && this.grandpa.name}
     git origin: ${this.git.originURL}
     git branch name: ${this.git.currentBranchName}
-    git commits number: ${this.git.countComits()}
+    git commits number: ${this.git.countCommits()}
 
     location: ${this.location}
 

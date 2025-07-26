@@ -178,13 +178,23 @@ export class ArtifactManager {
       } catch (error) {}
 
       try {
-        this.project.run(`git rm -f .vscode/launch.json`).sync();
+        this.project
+          .run(`git rm -f .vscode/launch.json`, {
+            output: false,
+            silence: true,
+          })
+          .sync();
       } catch (error) {}
       this.project.removeFile('.vscode/launch-backup.json');
       this.project.removeFile('.vscode/run-org.js');
       this.project.remove('src/docker', true);
       try {
-        this.project.run(`git rm -f .vscode/launch-backup.json`).sync();
+        this.project
+          .run(`git rm -f .vscode/launch-backup.json`, {
+            output: false,
+            silence: true,
+          })
+          .sync();
       } catch (error) {}
     }
 

@@ -1,5 +1,6 @@
 //#region imports
 import { config } from 'tnp-config/src';
+import { notAllowedProjectNames } from 'tnp-config/src';
 import {
   CoreModels,
   _,
@@ -16,7 +17,6 @@ import {
   DEFAULT_FRAMEWORK_VERSION,
   MESSAGES,
   TEMP_DOCS,
-  notAllowedProjectNames,
 } from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions } from '../../options';
