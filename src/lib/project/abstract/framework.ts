@@ -15,9 +15,11 @@ import {
   Helpers,
   chalk,
   fse,
+  Utils,
 } from 'tnp-core/src';
-import { BaseFeatureForProject } from 'tnp-helpers/src';
+import { BaseFeatureForProject, UtilsTypescript } from 'tnp-helpers/src';
 
+import { Models } from '../../models';
 import { EnvOptions } from '../../options';
 
 import type { Project } from './project';
@@ -252,6 +254,7 @@ export class Framework extends BaseFeatureForProject<Project> {
   };
   //#endregion
 
+  //#region framework version less than or equal
   public frameworkVersionLessThanOrEqual(
     version: CoreModels.FrameworkVersion,
   ): boolean {
@@ -262,6 +265,7 @@ export class Framework extends BaseFeatureForProject<Project> {
     );
     //#endregion
   }
+  //#endregion
 
   //#region framework version less than
   public frameworkVersionLessThan(
@@ -387,6 +391,7 @@ export class Framework extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region tmp local project full path
   get tmpLocalProjectFullPath(): string {
     return this.project.pathFor([
       this.getTempProjectNameForCopyTo(),
@@ -394,7 +399,9 @@ export class Framework extends BaseFeatureForProject<Project> {
       this.project.nameForNpmPackage,
     ]);
   }
+  //#endregion
 
+  //#region generate index.ts
   generateIndexTs(relativePath: string = '') {
     //#region @backendFunc
     const absPath = relativePath
@@ -445,7 +452,9 @@ export class Framework extends BaseFeatureForProject<Project> {
     );
     //#endregion
   }
+  //#endregion
 
+  //#region global
   async global(globalPackageName: string, packageOnly = false) {
     //#region @backendFunc
     const oldContainer = this.project.ins.by('container', 'v1') as Project;
@@ -471,4 +480,65 @@ export class Framework extends BaseFeatureForProject<Project> {
     );
     //#endregion
   }
+  //#endregion
+
+  /**
+   * @returns by default it will always return at least one context
+   */
+  //#region detected contexts
+  public getAllDetectedContextsNames(): string[] {
+    return this.getAllDetectedTaonContexts()
+      .map((f, i) =>
+        (f?.contextName || `UnnamedContext${i}`)
+          .replace('.sqlite', '')
+          .replace('db-', ''),
+      )
+      .sort((a, b) => a.localeCompare(b));
+  }
+
+  /**
+   * @returns by default it will always return at least one context
+   */
+  public getAllDetectedTaonContexts(): Models.TaonContext[] {
+    const detectedContexts = [...this._allDetectedNestedContexts()];
+    return detectedContexts.length > 0
+      ? detectedContexts
+      : [
+          {
+            contextName: 'NoContextDetected',
+            fileRelativePath: '',
+          },
+        ];
+  }
+
+  private _allDetectedNestedContexts(): Models.TaonContext[] {
+    //#region @backendFunc
+    const basePath = this.project.pathFor([config.folder.src]);
+    const filesForContext = Helpers.filesFrom(
+      this.project.pathFor([config.folder.src]),
+      true,
+    ).filter(
+      f =>
+        path.basename(f) === 'app.ts' ||
+        f.endsWith('.worker.ts') ||
+        f.endsWith('.context.ts'),
+    );
+
+    const detectedDatabaseFiles = filesForContext.reduce((a, absPathToFile) => {
+      return a.concat(
+        UtilsTypescript.getTaonContextsNamesFromFile(absPathToFile).map(
+          contextName => {
+            return {
+              contextName: contextName,
+              fileRelativePath: absPathToFile.replace(`${basePath}/`, ''),
+            };
+          },
+        ),
+      );
+    }, [] as Models.TaonContext[]);
+    return detectedDatabaseFiles;
+    //#endregion
+  }
+
+  //#endregion
 }

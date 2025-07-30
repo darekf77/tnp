@@ -1,9 +1,10 @@
 //#region imports
 import { BaseContext, Taon } from 'taon/src';
 import { config } from 'tnp-config/src';
-import { crossPlatformPath, path, _ } from 'tnp-core/src';
+import { crossPlatformPath, path, _, UtilsYaml } from 'tnp-core/src';
 import { UtilsOs, UtilsTerminal } from 'tnp-core/src';
-import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
+import { Helpers, UtilsTypescript, DockerComposeFile } from 'tnp-helpers/src';
+import { UtilsDotFile } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 import {
   createSourceFile,
@@ -17,6 +18,7 @@ import {
   COMPILATION_COMPLETE_APP_NG_SERVE,
   DEFAULT_PORT,
   THIS_IS_GENERATED_INFO_COMMENT,
+  THIS_IS_GENERATED_STRING,
   tmpBaseHrefOverwriteRelPath,
   tmpBuildPort,
 } from '../../../../constants';
@@ -267,7 +269,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     if (!buildOptions.build.watch) {
       this.project.framework.recreateFileFromCoreProject({
-        relativePathInCoreProject: 'docker-templates/frontend-nginx/Dockerfile',
+        relativePathInCoreProject:
+          'docker-templates/angular-app-node/Dockerfile',
         customDestinationLocation: [
           appDistOutBrowserAngularAbsPath,
           'Dockerfile',
@@ -324,9 +327,19 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       );
     }
 
-    const nodeJsAppNativeDeps =
-      this.project.taonJson.getNativeDepsFor('angular-node-app');
-    const dependenciesNodeJsApp = {};
+    const nodeJsAppNativeDeps = [
+      ...this.project.taonJson.getNativeDepsFor('angular-node-app'),
+      'lodash',
+      'minimist',
+      'fs-extra',
+      'sql.js',
+    ];
+
+    const dependenciesNodeJsApp =
+      this.project.framework.coreProject.getValueFromJSON(
+        'docker-templates/backend-app-node/package.json',
+        'dependencies',
+      );
 
     for (const nativeDepName of nodeJsAppNativeDeps) {
       const version = this.project.packageJson.dependencies[nativeDepName];
@@ -375,6 +388,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     releaseOptions: EnvOptions,
   ): Promise<ReleasePartialOutput> {
     //#region @backendFunc
+
+    //#region update resolved variables
     releaseOptions = this.updateResolvedVersion(releaseOptions);
     const projectsReposToPushAndTag: string[] = [this.project.location];
     const projectsReposToPush: string[] = [];
@@ -395,15 +410,21 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     )
       ? true
       : releaseOptions.release.skipStaticPagesVersioning;
+    //#endregion
 
     if (releaseOptions.release.releaseType === 'static-pages') {
+      //#region static pages release
       const releaseData = await this.staticPagesDeploy(
         appDistOutBrowserAngularAbsPath,
         releaseOptions,
       );
       releaseProjPath = releaseData.releaseProjPath;
       projectsReposToPush.push(...releaseData.projectsReposToPush);
+      //#endregion
     } else if (releaseOptions.release.releaseType === 'local') {
+      //#region local release
+
+      //#region copy to local release folder
       const localReleaseOutputBasePath = this.project.pathFor([
         config.folder.local_release,
         this.currentArtifactName,
@@ -418,6 +439,181 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         path.basename(appDistOutBackendNodeAbsPath),
       ]);
       releaseProjPath = localReleaseOutputBasePath;
+
+      const dependenciesNodeJsApp =
+        this.project.framework.coreProject.getValueFromJSON(
+          'docker-templates/angular-app-node/package.json',
+          'dependencies',
+        );
+
+      Helpers.setValueToJSON(
+        [
+          localReleaseOutputBasePath,
+          path.basename(appDistOutBrowserAngularAbsPath),
+          config.file.package_json,
+        ],
+        'dependencies',
+        dependenciesNodeJsApp,
+      );
+
+      Helpers.setValueToJSON(
+        [
+          localReleaseOutputBasePath,
+          path.basename(appDistOutBrowserAngularAbsPath),
+          config.file.package_json,
+        ],
+        'name',
+        path.basename(appDistOutBrowserAngularAbsPath),
+      );
+
+      Helpers.setValueToJSON(
+        [
+          localReleaseOutputBasePath,
+          path.basename(appDistOutBackendNodeAbsPath),
+          config.file.package_json,
+        ],
+        'name',
+        path.basename(appDistOutBackendNodeAbsPath),
+      );
+
+      Helpers.setValueToJSON(
+        [
+          localReleaseOutputBasePath,
+          path.basename(appDistOutBrowserAngularAbsPath),
+          config.file.package_json,
+        ],
+        'version',
+        releaseOptions.release.resolvedNewVersion,
+      );
+
+      Helpers.setValueToJSON(
+        [
+          localReleaseOutputBasePath,
+          path.basename(appDistOutBackendNodeAbsPath),
+          config.file.package_json,
+        ],
+        'version',
+        releaseOptions.release.resolvedNewVersion,
+      );
+      //#endregion
+
+      //#region handle docker-compose files
+
+      const dockerComposeRelativePath = 'docker-templates/docker-compose.yml';
+      const dockerComposeYmlDestPath = crossPlatformPath([
+        localReleaseOutputBasePath,
+        path.basename(dockerComposeRelativePath),
+      ]);
+
+      this.project.framework.recreateFileFromCoreProject({
+        relativePathInCoreProject: dockerComposeRelativePath,
+        customDestinationLocation: dockerComposeYmlDestPath,
+      });
+
+      (() => {
+        const startJsRelativePath = 'docker-templates/start.ts';
+        const startJsDestPath = crossPlatformPath([
+          localReleaseOutputBasePath,
+          path.basename(startJsRelativePath),
+        ]);
+
+        this.project.framework.recreateFileFromCoreProject({
+          relativePathInCoreProject: startJsRelativePath,
+          customDestinationLocation: startJsDestPath,
+        });
+      })();
+
+      (() => {
+        const startJsRelativePath =
+          'docker-templates/angular-app-node/index.js';
+        const startJsDestPath = crossPlatformPath([
+          localReleaseOutputBasePath,
+          'angular-app-node/index.js',
+        ]);
+
+        this.project.framework.recreateFileFromCoreProject({
+          relativePathInCoreProject: startJsRelativePath,
+          customDestinationLocation: startJsDestPath,
+        });
+      })();
+
+      //#endregion
+      const contextsNames =
+        this.project.framework.getAllDetectedContextsNames();
+
+      const useDomain = releaseOptions.website.useDomain;
+      const domain = releaseOptions.website.domain;
+
+      for (let i = 0; i < contextsNames.length; i++) {
+        const index = i + 1; // start from 1
+        const contextName = contextsNames[index];
+        const portBackendRelease = await this.project.registerAndAssignPort(
+          `docker release ${releaseOptions.release.releaseType} backend port for ${contextName} (n=${index})`,
+        );
+
+        const portFrontendRelease = await this.project.registerAndAssignPort(
+          `docker release ${releaseOptions.release.releaseType} frontend port for ${contextName} (n=${index})`,
+        );
+
+        UtilsDotFile.setValuesKeysFromObject(
+          [localReleaseOutputBasePath, '.env'],
+          {
+            [`HOST_BACKEND_PORT_${index}`]: portBackendRelease,
+            [`HOST_URL_${index}`]: useDomain
+              ? domain
+              : `http://localhost:${portBackendRelease}`,
+            [`FRONTEND_NORMAL_APP_PORT_${index}`]: portFrontendRelease,
+            [`FRONTEND_HOST_URL_${index}`]: useDomain
+              ? domain
+              : `http://localhost:${portFrontendRelease}`,
+          },
+        );
+      }
+
+      UtilsDotFile.setValueToDotFile(
+        [localReleaseOutputBasePath, '.env'],
+        (
+          _.camelCase(this.project.parent?.name) +
+          '-' +
+          _.camelCase(this.project.name) +
+          '-' +
+          `release-type-${releaseOptions.release.releaseType}`
+        ).toLowerCase(),
+
+        'COMPOSE_PROJECT_NAME',
+      );
+
+      const allValues = UtilsDotFile.getValuesKeysAsJsonObject([
+        localReleaseOutputBasePath,
+        '.env',
+      ]);
+      const dockerComposeFile = UtilsYaml.readYamlAsJson<DockerComposeFile>(
+        dockerComposeYmlDestPath,
+      );
+      Object.values(dockerComposeFile.services).forEach(c => {
+        const all = _.cloneDeep(allValues) as Record<string, string>;
+        for (const key of Object.keys(all)) {
+          all[key] = `\${${key}}`;
+        }
+        c.environment = all;
+      });
+
+      UtilsYaml.writeJsonToYaml(dockerComposeYmlDestPath, dockerComposeFile);
+
+      const dockerComposeYmlFileContent = Helpers.readFile(
+        dockerComposeYmlDestPath,
+      );
+      Helpers.writeFile(
+        dockerComposeYmlDestPath,
+        `# ${THIS_IS_GENERATED_STRING}
+# FRONTEND APP can ONLY READ VARIABLES THAT START WITH "FRONTEND_", "PUIBLIC_" or "HOST_"
+${dockerComposeYmlFileContent}
+# ${THIS_IS_GENERATED_STRING}`,
+      );
+
+      Helpers.taskDone(`Local release done!`);
+
+      //#endregion
     }
 
     return {
@@ -460,7 +656,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 `;
     };
 
-    for (let i = 0; i < this.project.taonJson.numberOfContexts; i++) {
+    const numberOfContexts =
+      this.project.framework.getAllDetectedTaonContexts().length;
+    for (let i = 0; i < numberOfContexts; i++) {
       const nodeBeAppPort = await this.NODE_BACKEND_PORT_UNIQ_KEY(
         buildOptions.clone({
           build: {
@@ -551,8 +749,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
       UtilsTypescript.setValueToVariableInTsFile(
         this.project.pathFor('src/app.hosts.ts'),
-        'CLIENT_DEV_WEBSQL_APP_PORT_' + (i + 1),
-        this.prefixVarTemplate('CLIENT_DEV_WEBSQL_APP_PORT', i + 1) +
+        'FRONTEND_WEBSQL_APP_PORT_' + (i + 1),
+        this.prefixVarTemplate('FRONTEND_WEBSQL_APP_PORT', i + 1) +
           ngWebsqlAppPort,
         {
           useRawStringValue: true,
@@ -561,8 +759,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
       UtilsTypescript.setValueToVariableInTsFile(
         this.project.pathFor('src/app.hosts.ts'),
-        'CLIENT_DEV_NORMAL_APP_PORT_' + (i + 1),
-        this.prefixVarTemplate('CLIENT_DEV_NORMAL_APP_PORT', i + 1) +
+        'FRONTEND_NORMAL_APP_PORT_' + (i + 1),
+        this.prefixVarTemplate('FRONTEND_NORMAL_APP_PORT', i + 1) +
           ngNormalAppPort,
         {
           useRawStringValue: true,
@@ -572,13 +770,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       // TODO electron websql not supported yet
       // UtilsTypescript.setValueToVariableInTsFile(
       //   this.project.pathFor('src/app.hosts.ts'),
-      //   'CLIENT_DEV_WEBSQL_ELECTRON_PORT_' + (i + 1),
+      //   'FRONTEND_WEBSQL_ELECTRON_PORT_' + (i + 1),
       //   ngWebsqlElectronPort,
       // );
 
       UtilsTypescript.setValueToVariableInTsFile(
         this.project.pathFor('src/app.hosts.ts'),
-        'CLIENT_DEV_NORMAL_ELECTRON_PORT_' + (i + 1),
+        'FRONTEND_NORMAL_ELECTRON_PORT_' + (i + 1),
         ngNormalElectronPort,
       );
     }
@@ -644,7 +842,7 @@ ${contexts.join('\n')}
     let outDirApp =
       `.${config.frameworkName}/${this.currentArtifactName}/` +
       `${buildOptions.release.releaseType ? buildOptions.release.releaseType : Development}/` +
-      `backend-app${buildOptions.build.websql ? '-websql' : ''}`;
+      `backend-app${buildOptions.build.websql ? '-websql' : '-node'}`;
 
     return this.project.pathFor(outDirApp);
   }
@@ -658,7 +856,7 @@ ${contexts.join('\n')}
     let outDirApp =
       `.${config.frameworkName}/${buildOptions.release.targetArtifact}/` +
       `${buildOptions.release.releaseType ? buildOptions.release.releaseType : Development}/` +
-      `angular-app${buildOptions.build.websql ? '-websql' : ''}`;
+      `angular-app${buildOptions.build.websql ? '-websql' : '-node'}`;
 
     return this.project.pathFor(outDirApp);
   }
@@ -817,56 +1015,85 @@ ${contexts.join('\n')}
     const appHostsFile = crossPlatformPath(
       path.join(this.project.location, config.folder.src, 'app.hosts.ts'),
     );
-    const numOfContexts = this.project.taonJson.numberOfContexts;
+    const filesWithContexts = {} as { [fileRelativePath: string]: string[] };
+    const taonContexts = this.project.framework.getAllDetectedTaonContexts();
+    // console.log({ taonContexts });
+    for (const context of taonContexts) {
+      if (!filesWithContexts[context.fileRelativePath]) {
+        filesWithContexts[context.fileRelativePath] = [];
+      }
+      filesWithContexts[context.fileRelativePath].push(context.contextName);
+    }
+    let counter = 0;
+
     const tempalte = (n?: number) => {
       return (
         `
 /**
  * Your context backend port
+ * ${!n ? '@deprecated use HOST_BACKEND_PORT_n instead' : ''}
  */
 export const HOST_BACKEND_PORT${n ? `_${n}` : ''} = ` +
         `${this.prefixVarTemplate('HOST_BACKEND_PORT', n) + (n ? `undefined` : 'HOST_BACKEND_PORT_1')};
 /**
  * Angular website url with normal/nodejs backend
+ * ${!n ? '@deprecated use FRONTEND_NORMAL_APP_PORT_n instead' : ''}
  */
-export const CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''} = ` +
-        `${this.prefixVarTemplate('CLIENT_DEV_NORMAL_APP_PORT', n) + (n ? `undefined` : 'CLIENT_DEV_NORMAL_APP_PORT_1')};
+export const FRONTEND_NORMAL_APP_PORT${n ? `_${n}` : ''} = ` +
+        `${this.prefixVarTemplate('FRONTEND_NORMAL_APP_PORT', n) + (n ? `undefined` : 'FRONTEND_NORMAL_APP_PORT_1')};
+
+/**
+ * @deprecated use FRONTEND_NORMAL_APP_PORT instead
+*/
+export const CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''} = FRONTEND_NORMAL_APP_PORT${n ? `_${n}` : ''};
+
 /**
  * Angular website url with websql backend
+ * ${!n ? '@deprecated use FRONTEND_WEBSQL_APP_PORT_n instead' : ''}
  */
-export const CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} = ` +
-        `${this.prefixVarTemplate('CLIENT_DEV_WEBSQL_APP_PORT', n) + (n ? `undefined` : 'CLIENT_DEV_WEBSQL_APP_PORT_1')};
+export const FRONTEND_WEBSQL_APP_PORT${n ? `_${n}` : ''} = ` +
+        `${this.prefixVarTemplate('FRONTEND_WEBSQL_APP_PORT', n) + (n ? `undefined` : 'FRONTEND_WEBSQL_APP_PORT_1')};
+
+/**
+ * @deprecated use FRONTEND_WEBSQL_APP_PORT instead
+*/
+export const CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} = FRONTEND_WEBSQL_APP_PORT${n ? `_${n}` : ''};
+
 /**
  * Electron/angular website url for electron app purpose (ipc backend)
  */
-export const CLIENT_DEV_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_NORMAL_ELECTRON_PORT_1'};
+export const FRONTEND_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'FRONTEND_NORMAL_ELECTRON_PORT_1'};
 // electron websql not supported yet
-// export const CLIENT_DEV_WEBSQL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'CLIENT_DEV_WEBSQL_ELECTRON_PORT_1'};
+// export const FRONTEND_WEBSQL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined` : 'FRONTEND_WEBSQL_ELECTRON_PORT_1'};
 /**
  * Backend url - use as "host" inside your context
+ * ${!n ? '@deprecated use HOST_URL_n instead' : ''}
  */
 export const HOST_URL${n ? `_${n}` : ''} =  ${this.prefixVarTemplate('HOST_URL', n)} ('http://localhost:' + HOST_BACKEND_PORT${n ? `_${n}` : ''});
 /**
  * Frontend host url - use as "frontendHost" inside your context
+ * ${!n ? '@deprecated use FRONTEND_HOST_URL_n instead' : ''}
  */
 export const FRONTEND_HOST_URL${n ? `_${n}` : ''} = ${this.prefixVarTemplate('FRONTEND_HOST_URL', n)}  ( 'http://localhost:' +
-  (isWebSQLMode ? CLIENT_DEV_WEBSQL_APP_PORT${n ? `_${n}` : ''} : CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''}));
+  (isWebSQLMode ? FRONTEND_WEBSQL_APP_PORT${n ? `_${n}` : ''} : FRONTEND_NORMAL_APP_PORT${n ? `_${n}` : ''}));
 /**
  * Frontend electron host url - use in app.electron.ts with win.loadURL(FRONTEND_HOST_URL_ELECTRON);
  */
-export const FRONTEND_HOST_URL_ELECTRON${n ? `_${n}` : ''} = 'http://localhost:' + CLIENT_DEV_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''}
+export const FRONTEND_HOST_URL_ELECTRON${n ? `_${n}` : ''} = 'http://localhost:' + FRONTEND_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''}
 // electron websql not supported yet
 // export const FRONTEND_HOST_URL_ELECTRON${n ? `_${n}` : ''} =
 //  'http://localhost:' +
-//  (isWebSQLMode ? CLIENT_DEV_WEBSQL_ELECTRON_PORT${n ? `_${n}` : ''} : CLIENT_DEV_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''});
+//  (isWebSQLMode ? FRONTEND_WEBSQL_ELECTRON_PORT${n ? `_${n}` : ''} : FRONTEND_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''});
 
   `
       );
     };
+    const depecationMessage = `\n/** @deprecated avoid using HOST_CONFIG inside library code (src/lib/**) */\n`;
     Helpers.writeFile(
       appHostsFile,
       `
 ${THIS_IS_GENERATED_INFO_COMMENT}
+${'imp' + 'ort'} { APP_ID } from '${'./lib/build-info._auto-generated_'}';
 let isWebSQLMode: boolean = false;
 //#${'reg' + 'ion'} @${'bac' + 'kend'}
 isWebSQLMode = false;
@@ -881,6 +1108,9 @@ const nodeENV = (()=> {
   //#${'reg' + 'ion'} @${'bac' + 'kend'}
   env = process.env || {};
   //#${'endr' + 'egion'}
+  //#${'reg' + 'ion'} @${'bro' + 'wser'}
+  env = globalThis['ENV'] || {};
+  //#${'endr' + 'egion'}
   return env || {};
 })();
 
@@ -893,10 +1123,42 @@ const argsENV = (()=> {
 })();
 
 
-${_.times(numOfContexts, i => {
+${_.times(taonContexts.length, i => {
   return tempalte(i + 1);
 }).join('\n')}
 ${tempalte()}
+
+export const HOST_CONFIG = {
+${Object.keys(filesWithContexts)
+  .sort((a, b) => a.localeCompare(b))
+  .map((contextFileName, index) => {
+    const contextsInFile = (filesWithContexts[contextFileName] || []).sort(
+      (a, b) => a.localeCompare(b),
+    );
+    const markAsDepecated = contextFileName.startsWith('lib/');
+    return `
+    ${markAsDepecated ? depecationMessage : `\n/** Relative file path for context */\n`}
+    '${contextFileName}' : {
+${contextsInFile
+  .map((contextName, i) => {
+    ++counter;
+
+    return `
+${markAsDepecated ? depecationMessage : `\n/** Name of context (var, let, const variable) inside *.ts file. */\n`}
+        '${contextName}': {
+         ${markAsDepecated ? depecationMessage : ''}
+         host: HOST_URL_${counter},
+         ${markAsDepecated ? depecationMessage : ''}
+         frontendHost: FRONTEND_HOST_URL_${counter},
+         ${markAsDepecated ? depecationMessage : ''}
+         appId: APP_ID,
+        }`;
+  })
+  .map(c => c.trimStart())
+  .join(',\n')}}`;
+  })
+  .join(',\n')}
+}
 
 ${THIS_IS_GENERATED_INFO_COMMENT}
 

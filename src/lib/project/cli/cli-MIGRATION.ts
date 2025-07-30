@@ -19,7 +19,6 @@ import { BaseCli } from './base-cli';
 class $Migration extends BaseCli {
   //#region migration console menu
 
-
   public async _() {
     await this._displayMenu();
   }
@@ -89,7 +88,7 @@ class $Migration extends BaseCli {
         .sort((a, b) => {
           return b.value - a.value;
         });
-      const detectedContexts = this._allDetectedDatabases();
+      const detectedContexts = this.project.framework.getAllDetectedContextsNames();
       console.info(`
 
       Detected databases that can be reverted:
@@ -109,42 +108,6 @@ ${detectedContexts.map(db => `- ${db}`).join('\n')}
   }
   //#endregion
 
-  //#region private methods
-  private _allDetectedDatabases() {
-    const detectedDatabaseFiles = Helpers.filesFrom(this.project.location)
-      .map(f => path.basename(f))
-      .filter(f => f.startsWith('db-') && f.endsWith('.sqlite'));
-    return detectedDatabaseFiles;
-  }
-
-  private _allDetectedNestedContexts() {
-    const detectedDatabaseFiles = Helpers.filesFrom(
-      this.project.pathFor([config.folder.src]),
-      true,
-    )
-      .filter(
-        f =>
-          path.basename(f) === 'app.ts' ||
-          f.endsWith('.worker.ts') ||
-          f.endsWith('.context.ts'),
-      )
-      .reduce((a, b) => {
-        return a.concat(UtilsTypescript.getTaonContextsNamesFromFile(b));
-      }, []);
-    return detectedDatabaseFiles;
-  }
-
-  private _allDetectedContexts(): string[] {
-    const detectedContexts = [
-      ...this._allDetectedNestedContexts(),
-      ...this._allDetectedDatabases().map(f =>
-        f.replace('.sqlite', '').replace('db-', ''),
-      ),
-    ];
-    return Utils.uniqArray(detectedContexts);
-  }
-  //#endregion
-
   //#region create
   async create(migrationName?: string) {
     console.info(`
@@ -158,7 +121,7 @@ ${detectedContexts.map(db => `- ${db}`).join('\n')}
       Helpers.error(`Migration name (as parameter) is required.`, false, true);
     }
     const migrationFileName = `${timestamp}_${migrationName}.ts`;
-    const detectedContexts = this._allDetectedContexts();
+    const detectedContexts = this.project.framework.getAllDetectedContextsNames();
 
     if (detectedContexts.length === 0) {
       Helpers.error(
@@ -270,7 +233,7 @@ export class ${contextName}_${timestamp}_${migrationName} extends Taon.Base.Migr
   //#region detect contexts
   contexts() {
     Helpers.taskStarted('Detecting contexts...');
-    const detectedContexts = this._allDetectedContexts();
+    const detectedContexts = this.project.framework.getAllDetectedContextsNames();
     Helpers.taskDone(`
 
     Detected contexts:

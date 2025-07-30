@@ -5,9 +5,9 @@ const env: Partial<EnvOptions> = {
     domain: 'cli.taon.dev',
   },
   docker: {
-    containers: [
+    additionalContainer: [
       // 'backend-app-node',
-      // 'frontend-nginx',
+      // 'frontend-app',
       // dockerDatabaseMysql,
     ],
   },

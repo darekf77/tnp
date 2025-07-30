@@ -15,6 +15,7 @@
     "esbuild",
     "sharp",
     "favicons",
+    "sql.js",
     // "rxjs",
     // "tslib",
     // "magic-renamer",
@@ -61,6 +62,10 @@
     {
       "description": "Favicons/pwa assets generator",
       "packageName": "favicons",
+    },
+    {
+      "description": "SQL.js - SQLite in browser or node",
+      "packageName": "sql.js",
     },
   ],
 

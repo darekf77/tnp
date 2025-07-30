@@ -128,7 +128,10 @@ trim_trailing_whitespace = false
         'editor.defaultFormatter': 'esbenp.prettier-vscode',
         'editor.formatOnSave': false,
       },
-
+      '[dockercompose]': {
+        'editor.defaultFormatter': "esbenp.prettier-vscode",
+        'editor.formatOnSave': false,
+      },
       'editor.rulers': [80, 120],
       'eslint.migration.2_x': 'off',
       'eslint.enable': true,

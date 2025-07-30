@@ -4,14 +4,14 @@
     "mdfiles": [
       {
         "magicRenameRules": "taon -> tnp",
-        "packageNameWithPath": "tnp-helpers/GIT-COMMANDS.md",
+        "packageNameWithPath": "tnp-helpers/BASE-HELPERS-COMMANDS.md",
       },
     ],
     "projects": [
       {
         "packageNameWithPath": [
           "tnp/docs/COMMANDS.md",
-          "tnp-helpers/GIT-COMMANDS.md",
+          "tnp-helpers/BASE-HELPERS-COMMANDS.md",
         ],
         "overrideTitle": "ALL_COMMANDS",
       },

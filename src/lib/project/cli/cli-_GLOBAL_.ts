@@ -1702,11 +1702,14 @@ ${this.project.children
   }
   //#endregion
 
+  //#region are linked node_modules
   isLinkNodeModules() {
     console.log(this.project.nodeModules.isLink);
     this._exit();
   }
+  //#endregion
 
+  //#region link node_modules from core container
   linkNodeModulesFromCoreContainer() {
     const coreContainer = this.project.ins.by(
       'container',
@@ -1723,12 +1726,26 @@ ${this.project.children
     coreContainer.nodeModules.linkToProject(this.project as any);
     this._exit();
   }
+  //#endregion
 
+  //#region recognize imports from file
   imports() {
     const imports = UtilsTypescript.recognizeImportsFromFile(
       this.project.pathFor(this.firstArg),
     );
     console.log(imports);
+    this._exit();
+  }
+  //#endregion
+
+  contexts() {
+    Helpers.taskStarted(`Detecting contexts...`);
+    const contexts = this.project.framework.getAllDetectedTaonContexts();
+    console.log(`Detected contexts: ${contexts.length} `);
+    for (const context of contexts) {
+      console.log(`- ${context.contextName} (${context.fileRelativePath})`);
+    }
+    Helpers.taskDone(`Contexts detected`);
     this._exit();
   }
 }

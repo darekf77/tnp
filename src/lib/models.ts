@@ -83,6 +83,11 @@ export namespace Models {
   }
   //#endregion
 
+  export class TaonContext {
+    contextName: string;
+    fileRelativePath: string;
+  }
+
   //#region taon json
   export interface TaonAutoReleaseItem {
     artifactName:
