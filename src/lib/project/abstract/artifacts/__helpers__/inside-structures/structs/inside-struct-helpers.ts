@@ -125,20 +125,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 `,
     );
     //#endregion
-
-    //#region recreate app.hosts.ts file
-    (() => {
-      const appHostsFile = crossPlatformPath(
-        path.join(project.location, config.folder.src, 'app.hosts.ts'),
-      );
-      if (
-        !Helpers.exists(appHostsFile)
-        // && !Helpers.exists(appFolderWithIndex) // TODO @QUESTION why not to remove this
-      ) {
-        project.artifactsManager.artifact.angularNodeApp.writePortsToFile();
-      }
-    })();
-    //#endregion
   }
 
   //#endregion

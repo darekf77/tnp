@@ -218,11 +218,20 @@ export class ArtifactManager {
     this.project.packagesRecognition.addIsomorphicPackagesToFile([
       this.project.nameForNpmPackage,
     ]);
+    if (this.project.framework.isStandaloneProject) {
+      this.project.artifactsManager.artifact.angularNodeApp.appHostsRecreateHelper.runTask(
+        {
+          watch: initOptions.build.watch,
+          initialParams: {
+            envOptions: initOptions,
+          },
+        },
+      );
+    }
     await this.project.vsCodeHelpers.init();
     await this.project.linter.init();
 
     if (this.project.framework.isStandaloneProject) {
-      await this.artifact.angularNodeApp.updatePortsInHosts(initOptions);
       await this.project.artifactsManager.globalHelper.branding.apply(
         !!initOptions.init.branding,
       );

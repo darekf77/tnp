@@ -511,17 +511,22 @@ export class Framework extends BaseFeatureForProject<Project> {
         ];
   }
 
+  contextFilter(relativePath: string): boolean {
+    return (
+      relativePath === 'app.ts' ||
+      relativePath.endsWith('.worker.ts') ||
+      relativePath.endsWith('.context.ts')
+    );
+  }
+
   private _allDetectedNestedContexts(): Models.TaonContext[] {
     //#region @backendFunc
     const basePath = this.project.pathFor([config.folder.src]);
-    const filesForContext = Helpers.filesFrom(
-      this.project.pathFor([config.folder.src]),
-      true,
-    ).filter(
-      f =>
-        path.basename(f) === 'app.ts' ||
-        f.endsWith('.worker.ts') ||
-        f.endsWith('.context.ts'),
+    const filesForContext = Helpers.filesFrom(basePath, true).filter(
+      absPath => {
+        const relativePath = absPath.replace(`${basePath}/`, '');
+        return this.contextFilter(relativePath);
+      },
     );
 
     const detectedDatabaseFiles = filesForContext.reduce((a, absPathToFile) => {

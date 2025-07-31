@@ -299,7 +299,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       workspaceLevel: boolean,
     ) => {
       // const backendPort = 4000;
-      clientProject.artifactsManager.artifact.angularNodeApp.writePortsToFile();
+
       const startServerTemplate = {
         type: 'node',
         request: 'launch',
