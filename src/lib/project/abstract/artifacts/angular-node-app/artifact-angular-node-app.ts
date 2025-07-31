@@ -276,6 +276,15 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           'Dockerfile',
         ],
       });
+
+      this.project.framework.recreateFileFromCoreProject({
+        relativePathInCoreProject:
+          'docker-templates/angular-app-node/nginx.conf',
+        customDestinationLocation: [
+          appDistOutBrowserAngularAbsPath,
+          'nginx.conf',
+        ],
+      });
     }
 
     return {
@@ -440,32 +449,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       ]);
       releaseProjPath = localReleaseOutputBasePath;
 
-      const dependenciesNodeJsApp =
-        this.project.framework.coreProject.getValueFromJSON(
-          'docker-templates/angular-app-node/package.json',
-          'dependencies',
-        );
-
-      Helpers.setValueToJSON(
-        [
-          localReleaseOutputBasePath,
-          path.basename(appDistOutBrowserAngularAbsPath),
-          config.file.package_json,
-        ],
-        'dependencies',
-        dependenciesNodeJsApp,
-      );
-
-      Helpers.setValueToJSON(
-        [
-          localReleaseOutputBasePath,
-          path.basename(appDistOutBrowserAngularAbsPath),
-          config.file.package_json,
-        ],
-        'name',
-        path.basename(appDistOutBrowserAngularAbsPath),
-      );
-
       Helpers.setValueToJSON(
         [
           localReleaseOutputBasePath,
@@ -474,16 +457,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         ],
         'name',
         path.basename(appDistOutBackendNodeAbsPath),
-      );
-
-      Helpers.setValueToJSON(
-        [
-          localReleaseOutputBasePath,
-          path.basename(appDistOutBrowserAngularAbsPath),
-          config.file.package_json,
-        ],
-        'version',
-        releaseOptions.release.resolvedNewVersion,
       );
 
       Helpers.setValueToJSON(
@@ -523,27 +496,15 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         });
       })();
 
-      (() => {
-        const startJsRelativePath =
-          'docker-templates/angular-app-node/index.js';
-        const startJsDestPath = crossPlatformPath([
-          localReleaseOutputBasePath,
-          'angular-app-node/index.js',
-        ]);
-
-        this.project.framework.recreateFileFromCoreProject({
-          relativePathInCoreProject: startJsRelativePath,
-          customDestinationLocation: startJsDestPath,
-        });
-      })();
-
       //#endregion
+
       const contextsNames =
         this.project.framework.getAllDetectedContextsNames();
 
       const useDomain = releaseOptions.website.useDomain;
       const domain = releaseOptions.website.domain;
 
+      //#region create one env file for all docker containers
       for (let i = 0; i < contextsNames.length; i++) {
         const index = i + 1; // start from 1
         const contextName = contextsNames[index];
@@ -582,11 +543,14 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
         'COMPOSE_PROJECT_NAME',
       );
+      //#endregion
 
       const allValues = UtilsDotFile.getValuesKeysAsJsonObject([
         localReleaseOutputBasePath,
         '.env',
       ]);
+
+      //#region update docker-compose file with env variables
       const dockerComposeFile = UtilsYaml.readYamlAsJson<DockerComposeFile>(
         dockerComposeYmlDestPath,
       );
@@ -610,6 +574,26 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 ${dockerComposeYmlFileContent}
 # ${THIS_IS_GENERATED_STRING}`,
       );
+      //#endregion
+
+      //#region update index.html with env variables
+      (() => {
+        const indexHtmlFromAngularAppPath = crossPlatformPath([
+          localReleaseOutputBasePath,
+          path.basename(appDistOutBrowserAngularAbsPath),
+          'index.html',
+        ]);
+
+        const envScript = `<script>
+        window.ENV = ${JSON.stringify(allValues, null, 2)};
+      </script>`;
+
+        let html = Helpers.readFile(indexHtmlFromAngularAppPath);
+        // Inject before </head> if found
+        html = html.replace(/<\/head>/i, `${envScript}\n</head>`);
+        Helpers.writeFile(indexHtmlFromAngularAppPath, html);
+      })();
+      //#endregion
 
       Helpers.taskDone(`Local release done!`);
 
