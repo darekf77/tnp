@@ -223,6 +223,12 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         });
       }
 
+      if (releaseOptions.container.skip.length > 0) {
+        children = children.filter(c => {
+          return !releaseOptions.container.skip.includes(c.name);
+        });
+      }
+
       const endIndex = children.findIndex(
         c => c.name === releaseOptions.container.end,
       );
@@ -425,7 +431,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       .map(c => '- ' + c.genericName)
       .join('\n');
 
-    return (`
+    return `
 
     name: ${this.name}
     basename: ${this.basename}
@@ -467,7 +473,7 @@ ${linkedProjects}
     git children (${(this.git.gitChildren || []).length}):
 ${gitChildren}
 
-    `);
+    `;
 
     //#endregion
   }
