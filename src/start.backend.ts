@@ -37,6 +37,15 @@ export async function start(
     await ProjectClass.ins.taonProjectsWorker.startDetachedIfNeedsToBeStarted();
   }
 
+  // TODO @LAST
+  // process.on('unhandledRejection', (reason, promise) => {
+  //   console.error('🔥 Unhandled Rejection at:', promise, 'reason:', reason);
+  //   debugger;
+  //   if (reason instanceof Error) {
+  //     console.error(reason.stack);
+  //   }
+  // });
+
   new BaseStartConfig({
     ProjectClass: ProjectClass as any,
     functionsOrClasses: BaseStartConfig.prepareArgs(cliClassArr),
