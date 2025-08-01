@@ -200,6 +200,11 @@ export class $New extends BaseCommandLineFeature<
         if (isLastContainer && isBrandNew && !parentContainer) {
           try {
             currentContainer.run('git init').sync();
+            try {
+              if (currentContainer.git.currentBranchName !== 'master') {
+                currentContainer.run('git checkout -b master').sync();
+              }
+            } catch (error) {}
           } catch (error) {
             Helpers.warn(
               `Not able to git init inside: ${currentContainer?.location}`,
@@ -255,6 +260,11 @@ export class $New extends BaseCommandLineFeature<
       try {
         if (!appProj.parent?.isMonorepo) {
           appProj.run('git init').sync();
+          try {
+            if (appProj.git.currentBranchName !== 'master') {
+              appProj.run('git checkout -b master').sync();
+            }
+          } catch (error) {}
         }
       } catch (error) {
         console.log(error);
