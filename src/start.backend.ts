@@ -154,6 +154,8 @@ export async function start(
       vsce: 'vscode:vsce',
       vts: 'vscode:temp:show',
       vth: 'vscode:temp:hide',
+      hide: 'vscode:temp:hide',
+      show: 'vscode:temp:show',
       //#endregion
     },
   });
