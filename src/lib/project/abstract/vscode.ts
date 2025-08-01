@@ -285,7 +285,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       request: 'attach',
       name: 'Attach to global cli tool',
       autoAttachChildProcesses: false, // TODO probably no need for now
-      port: debuggingPort,
+      // port: debuggingPort,
       skipFiles: ['<node_internals>/**'],
       outFiles: this.outFiles,
       sourceMapPathOverrides: this.sourceMapPathOverrides,
