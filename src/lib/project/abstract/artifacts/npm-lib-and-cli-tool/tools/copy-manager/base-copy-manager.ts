@@ -11,7 +11,7 @@ import { PackageJson } from 'type-fest';
 
 import { TO_REMOVE_TAG } from '../../../../../../constants';
 import { Models } from '../../../../../../models';
-import { EnvOptions } from '../../../../../../options';
+import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../../../../../options';
 import type { Project } from '../../../../project';
 
 import { CopyMangerHelpers } from './copy-manager-helpers';
@@ -535,6 +535,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
     isBrowser: boolean,
     isForCliDebuggerToWork: boolean,
     filePath: string,
+    releaseType: ReleaseType,
   ): string;
 
   abstract initalFixForDestination(destination: Project): void;

@@ -3,7 +3,7 @@ import { crossPlatformPath, glob, path, _, fse } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
 import { THIS_IS_GENERATED_INFO_COMMENT } from '../../../../../../constants';
-import { EnvOptions, ReleaseArtifactTaon } from '../../../../../../options';
+import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../../../../../options';
 import type { Project } from '../../../../project';
 
 import { CopyManager } from './copy-manager';
@@ -221,6 +221,7 @@ export class CopyManagerStandalone extends CopyManager {
     isBrowser: boolean,
     isForLaunchJsonDebugging: boolean,
     absFilePath: string,
+    releaseType: ReleaseType,
   ): string {
     //#region @backendFunc
     if (
@@ -262,7 +263,12 @@ export class CopyManagerStandalone extends CopyManager {
       }
     }
 
-    content = this.sourceMapContentFix(content, isBrowser, absFilePath);
+    content = this.sourceMapContentFix(
+      content,
+      isBrowser,
+      absFilePath,
+      releaseType,
+    );
 
     return content;
     //#endregion
@@ -274,7 +280,7 @@ export class CopyManagerStandalone extends CopyManager {
     content: string,
     isBrowser: boolean,
     absFilePath: string,
-    releaseType?: ReleaseArtifactTaon,
+    releaseType: ReleaseType,
   ) {
     //#region @backendFunc
     /**
@@ -910,6 +916,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         isForBrowser,
         false,
         absMapFilePathInLocalProjNodeModulesPackage,
+        this.buildOptions.release.releaseType,
       );
 
       Helpers.writeFile(
@@ -951,6 +958,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         isForBrowser,
         true,
         monitoredOutDirFileToReplaceBack,
+        this.buildOptions.release.releaseType,
       );
 
       Helpers.writeFile(monitoredOutDirFileToReplaceBack, fixedContentCLIDebug);
