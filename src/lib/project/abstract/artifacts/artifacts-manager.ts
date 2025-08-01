@@ -475,7 +475,7 @@ export class ArtifactManager {
 
     if (options.container.skip.length > 0) {
       children = children.filter(c => {
-        return !options.container.only.includes(c.name);
+        return !options.container.skip.includes(c.name);
       });
     }
 
