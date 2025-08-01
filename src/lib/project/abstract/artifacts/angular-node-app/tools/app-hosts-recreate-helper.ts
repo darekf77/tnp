@@ -80,7 +80,7 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
     this.writePortsToFile();
     await this.updatePortsInHosts(this.envOptions);
 
-    Helpers.taskDone(`Rebuilding docker environment Done`);
+    Helpers.taskDone(`Rebuilding app.hosts.ts Done`);
     //#endregion
   }
   async action({
