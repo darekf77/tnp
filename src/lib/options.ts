@@ -486,6 +486,10 @@ class EnvOptionsContainer {
    */
   declare only?: string | string[];
   /**
+   * skip specified projects
+   */
+  declare skip?: string | string[];
+  /**
    * end release on project
    */
   declare end?: string;
@@ -663,6 +667,18 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 
     if (!_.isArray(this.container.only)) {
       this.container.only = [];
+    }
+
+    if (_.isString(this.container.skip) && this.container.skip.includes(',')) {
+      this.container.skip = this.container.skip.split(',');
+    }
+    this.container.skip =
+      (_.isString(this.container.skip)
+        ? [this.container.skip]
+        : this.container.skip) || [];
+
+    if (!_.isArray(this.container.skip)) {
+      this.container.skip = [];
     }
 
     this.ports = _.merge(new EnvOptionsPorts(), this.ports);

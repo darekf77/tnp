@@ -473,6 +473,12 @@ export class ArtifactManager {
       });
     }
 
+    if (options.container.skip.length > 0) {
+      children = children.filter(c => {
+        return !options.container.only.includes(c.name);
+      });
+    }
+
     const endIndex = this.project.children.findIndex(
       c => c.name === options.container.end,
     );
