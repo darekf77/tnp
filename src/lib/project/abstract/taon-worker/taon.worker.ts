@@ -87,7 +87,9 @@ export class TaonProjectsWorker extends BaseCliWorker<
       }
       try {
         const { stdout } = await execAsync(
-          `docker inspect --format='{{json .State.Health.Status}}' traefik`,
+          process.platform === 'win32'
+            ? `docker inspect --format="{{json .State.Health.Status}}" traefik`
+            : `docker inspect --format='{{json .State.Health.Status}}' traefik`,
         );
 
         const status = stdout.trim().replace(/"/g, '');
@@ -98,6 +100,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
           return true;
         }
       } catch (error) {
+        // console.error(error);
         if (options.waitUntilHealthy) {
           console.log('Traefik is not healthy yet, waiting...');
         } else {

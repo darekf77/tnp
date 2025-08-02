@@ -2,6 +2,7 @@
 import GLOBAL from './cli-_GLOBAL_';
 import BRANDING from './cli-BRANDING';
 import BUILD from './cli-BUILD';
+import CLOUD from './cli-CLOUD';
 import DOCKER from './cli-DOCKER';
 import DOCS from './cli-DOCS';
 import GENERATE from './cli-GENERATE';
@@ -22,6 +23,7 @@ export default [
   INIT,
   RELEASE,
   OPEN,
+  CLOUD,
   BRANDING,
   VSCODE,
   NEW,
