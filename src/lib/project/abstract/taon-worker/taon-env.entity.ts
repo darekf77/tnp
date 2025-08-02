@@ -1,12 +1,14 @@
 import { Taon } from 'taon/src';
-
-export type TaonEnvType = 'dev' | 'prod' | 'test' | 'stage';
+import { CoreModels } from 'tnp-core/src';
 
 @Taon.Entity({
   className: 'TaonEnv',
 })
 export class TaonEnv extends Taon.Base.AbstractEntity {
-  static from(obj: { name: string; type: TaonEnvType }): TaonEnv {
+  static from(obj: {
+    name: string;
+    type: CoreModels.EnvironmentNameTaon;
+  }): TaonEnv {
     return new TaonEnv().clone(obj);
   }
 
@@ -14,7 +16,7 @@ export class TaonEnv extends Taon.Base.AbstractEntity {
   //#region @websql
   @Taon.Orm.Column.String()
   //#endregion
-  type: TaonEnvType;
+  type: CoreModels.EnvironmentNameTaon;
   //#endregion
 
   //#region fields / name

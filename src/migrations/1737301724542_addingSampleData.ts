@@ -1,10 +1,8 @@
 import { Taon } from 'taon/src';
 import { QueryRunner } from 'taon-typeorm/src';
+import { CoreModels } from 'tnp-core/src';
 
-import {
-  TaonEnv,
-  TaonEnvType,
-} from '../lib/project/abstract/taon-worker/taon-env.entity';
+import { TaonEnv } from '../lib/project/abstract/taon-worker/taon-env.entity';
 
 @Taon.Migration({
   className: 'TaonProjectsContext_1737301724542_addingSampleData',
@@ -42,7 +40,7 @@ export class TaonProjectsContext_1737301724542_addingSampleData extends Taon
       await this.repoEnv.save(
         TaonEnv.from({
           name: envName,
-          type: envName.replace(/[0-9]/g, '') as TaonEnvType,
+          type: envName.replace(/[0-9]/g, '') as CoreModels.EnvironmentNameTaon,
         }),
       );
     }

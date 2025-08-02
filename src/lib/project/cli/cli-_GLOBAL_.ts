@@ -1738,6 +1738,7 @@ ${this.project.children
   }
   //#endregion
 
+  //#region detect contexts
   contexts() {
     Helpers.taskStarted(`Detecting contexts...`);
     const contexts = this.project.framework.getAllDetectedTaonContexts();
@@ -1748,6 +1749,7 @@ ${this.project.children
     Helpers.taskDone(`Contexts detected`);
     this._exit();
   }
+  //#endregion
 }
 
 export default {

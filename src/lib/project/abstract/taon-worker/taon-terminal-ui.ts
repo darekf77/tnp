@@ -16,7 +16,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
   //#endregion
 
   //#region methods / header
-  protected async header(): Promise<void> {
+  async header(): Promise<void> {
     //#region @backendFunc
     // return super.header();
     let consoleLogoPath: string;
@@ -60,6 +60,16 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
 
     return {
       ...this.chooseAction,
+      enableCloud: {
+        name: `${this.worker.cloudIsEnabled ? `Disable` : `Enable`} Cloud`,
+        action: async () => {
+          if (this.worker.cloudIsEnabled) {
+            await this.worker.disableCloud();
+          } else {
+            await this.worker.enableCloud();
+          }
+        },
+      },
       projects: {
         name: 'Manage Taon Projects',
         action: async () => {
