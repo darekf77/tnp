@@ -65,6 +65,53 @@ export class TaonProjectsWorker extends BaseCliWorker<
   }
   //#endregion
 
+  //#region methods / get worker terminal actions
+  async checkIfTreafikIsRunning(options?: {
+    waitUntilHealthy?: boolean;
+    maxTries?: number;
+  }): Promise<boolean> {
+    //#region @backendFunc
+    let tries = 0;
+    options = options || {};
+    if (options.waitUntilHealthy) {
+      options.maxTries = options.maxTries || 10;
+    }
+    const execAsync = promisify(child_process.exec);
+    while (true) {
+      tries++;
+      if (options.maxTries && tries > options.maxTries) {
+        console.log(
+          `Traefik is not running or not healthy after ${tries} tries`,
+        );
+        return false;
+      }
+      try {
+        const { stdout } = await execAsync(
+          `docker inspect --format='{{json .State.Health.Status}}' traefik`,
+        );
+
+        const status = stdout.trim().replace(/"/g, '');
+        console.log('Traefik health:', status);
+
+        if (status === 'healthy') {
+          console.log('✅ Traefik is ready');
+          return true;
+        }
+      } catch (error) {
+        if (options.waitUntilHealthy) {
+          console.log('Traefik is not healthy yet, waiting...');
+        } else {
+          console.log('Traefik is not running or not healthy');
+          return false;
+        }
+      }
+
+      await UtilsTerminal.wait(1);
+    }
+    //#endregion
+  }
+  //#endregion
+
   //#region methods / start traefik
   protected async startTraefik(): Promise<boolean> {
     //#region @backendFunc
@@ -83,29 +130,17 @@ export class TaonProjectsWorker extends BaseCliWorker<
     });
 
     // Wait until container health becomes healthy
-    while (true) {
-      const { stdout } = await execAsync(
-        `docker inspect --format='{{json .State.Health.Status}}' traefik`,
-      );
+    const isHealthy = await this.checkIfTreafikIsRunning({
+      waitUntilHealthy: true,
+    });
 
-      const status = stdout.trim().replace(/"/g, '');
-      console.log('Traefik health:', status);
-
-      if (status === 'healthy') {
-        console.log('✅ Traefik is ready');
-        break;
-      }
-
-      await UtilsTerminal.wait(1);
-    }
-    return true;
+    return isHealthy;
     //#endregion
   }
-
   //#endregion
 
   //#region methods / stop traefik
-  protected async stopTraefik(): Promise<boolean> {
+  async stopTraefik(): Promise<boolean> {
     //#region @backendFunc
     console.log('Stopping Traefik...');
     const execAsync = promisify(child_process.exec);
@@ -117,9 +152,15 @@ export class TaonProjectsWorker extends BaseCliWorker<
       return false;
     }
 
-    await execAsync(`docker compose stop traefik`, {
-      cwd: pathToCompose,
-    });
+    try {
+      await execAsync(`docker compose -f traefik-compose.yml down`, {
+        cwd: pathToCompose,
+      });
+    } catch (error) {
+      Helpers.error(error, true, true);
+      Helpers.warn('Error stopping Traefik:');
+      return false;
+    }
 
     // docker compose rm -f traefik
     // docker compose down --remove-orphans

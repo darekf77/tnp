@@ -1,6 +1,7 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { Helpers, UtilsTerminal, _, fse } from 'tnp-core/src';
+import { Helpers, UtilsTerminal, _, chalk, fse } from 'tnp-core/src';
+import { UtilsOs } from 'tnp-core/src';
 import { BaseCliWorkerTerminalUI } from 'tnp-helpers/src';
 
 import { DEFAULT_FRAMEWORK_VERSION } from '../../../constants';
@@ -58,14 +59,28 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
   getWorkerTerminalActions() {
     //#region @backendFunc
 
-    return {
-      ...this.chooseAction,
+    const myActions = {
       enableCloud: {
-        name: `${this.worker.cloudIsEnabled ? `Disable` : `Enable`} Cloud`,
+        name: '',
         action: async () => {
           if (this.worker.cloudIsEnabled) {
-            await this.worker.disableCloud();
+            if (
+              await UtilsTerminal.confirm({
+                message: `Are you sure you want to disable cloud?`,
+              })
+            ) {
+              Helpers.logInfo(`Disabling cloud...`);
+              await this.worker.disableCloud();
+            }
           } else {
+            Helpers.info(`${chalk.bold('Enabling cloud...')}
+
+            port 80 will redirect to port 443
+            port 443 will be used for https connections
+
+            Use deployments to deploy your projects.
+
+              `);
             await this.worker.enableCloud();
           }
         },
@@ -104,7 +119,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
           });
         },
       },
-      previewPorts: {
+      environments: {
         name: 'Manage Environments',
         action: async () => {
           console.log('hello world');
@@ -116,9 +131,33 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
           await UtilsTerminal.pressAnyKeyToContinueAsync();
         },
       },
+    };
+
+    if (this.worker.cloudIsEnabled) {
+      myActions.enableCloud.name = 'Disable Cloud';
+    } else {
+      myActions.enableCloud.name =
+        'Enable Cloud (add possibility of deploying projects)';
+      delete myActions.deployments;
+      delete myActions.environments;
+      delete myActions.projects;
+    }
+
+    return {
+      ...this.chooseAction,
+      ...myActions,
       ...super.getWorkerTerminalActions({ chooseAction: false }),
     };
     //#endregion
   }
   //#endregion
+
+  async infoScreen(options?: { exitIsOnlyReturn?: boolean }): Promise<void> {
+    const isDockerRunning = await UtilsOs.isDockerAvailable();
+    if (isDockerRunning) {
+      Helpers.logInfo(`Docker is running.. checking if Traefik is enabled...`);
+      this.worker.cloudIsEnabled = await this.worker.checkIfTreafikIsRunning();
+    }
+    await super.infoScreen(options);
+  }
 }
