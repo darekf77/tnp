@@ -189,7 +189,7 @@ export const FRONTEND_HOST_URL_ELECTRON${n ? `_${n}` : ''} = 'http://localhost:'
       appHostsFile,
       `
 ${THIS_IS_GENERATED_INFO_COMMENT}
-${'imp' + 'ort'} { APP_ID } from '${'./lib/build-info._auto-generated_'}';
+${'imp' + 'ort'} { APP_ID, BUILD_BASE_HREF } from '${'./lib/build-info._auto-generated_'}';
 let isWebSQLMode: boolean = false;
 //#${'reg' + 'ion'} @${'bac' + 'kend'}
 isWebSQLMode = false;
@@ -243,9 +243,9 @@ ${contextsInFile
 ${markAsDepecated ? depecationMessage : `\n/** Name of context (var, let, const variable) inside *.ts file. */\n`}
         '${contextName}': {
          ${markAsDepecated ? depecationMessage : ''}
-         host: HOST_URL_${counter},
+         host: HOST_URL_${counter} + BUILD_BASE_HREF,
          ${markAsDepecated ? depecationMessage : ''}
-         frontendHost: FRONTEND_HOST_URL_${counter},
+         frontendHost: FRONTEND_HOST_URL_${counter} + BUILD_BASE_HREF,
          ${markAsDepecated ? depecationMessage : ''}
          appId: APP_ID,
         }`;

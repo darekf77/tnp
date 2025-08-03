@@ -1114,6 +1114,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         `${THIS_IS_GENERATED_INFO_COMMENT}
 export const BUILD_FRAMEWORK_CLI_NAME = '${config.frameworkName}';
 export const APP_ID = '${initOptions.appId}';
+export const BUILD_BASE_HREF = '${initOptions.build?.baseHref || ''}';
 export const PROJECT_NPM_NAME = '${this.project.nameForNpmPackage}';
 export const CURRENT_PACKAGE_VERSION = '${
           initOptions.release.releaseType &&

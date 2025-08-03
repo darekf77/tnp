@@ -683,11 +683,30 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 
     this.ports = _.merge(new EnvOptionsPorts(), this.ports);
     this.init = _.merge(new EnvOptionsInit(), this.init);
+
     this.build = this.build || ({} as any);
     this.build.pwa = _.merge(new EnvOptionsBuildPwa(), this.build?.pwa);
     this.build = _.merge(new EnvOptionsBuild(), this.build);
+
+    if (
+      _.isString(this['base-href']) &&
+      this['base-href'] &&
+      this['base-href'] !== '/'
+    ) {
+      // QUICK FIX
+      this.build.baseHref = this['base-href'];
+      delete this['base-href'];
+      delete override['base-href'];
+    }
+
     if (_.isString(this.build.baseHref)) {
       this.build.baseHref = crossPlatformPath(this.build.baseHref);
+      if (!this.build.baseHref.startsWith('/')) {
+        this.build.baseHref = `/${this.build.baseHref}`;
+      }
+      if (!this.build.baseHref.endsWith('/')) {
+        this.build.baseHref = `${this.build.baseHref}/`;
+      }
     }
 
     if (_.isBoolean(this['websql'])) {

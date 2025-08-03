@@ -191,25 +191,31 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       Helpers.remove(appDistOutBrowserAngularAbsPath);
     }
 
+    const serveCommand =
+      `${this.NPM_RUN_NG_COMMAND} serve ${
+        buildOptions.release.targetArtifact === 'electron-app'
+          ? 'angular-electron'
+          : 'app'
+      } ` +
+      ` ${`--port=${portAssignedToAppBuild}`} ${
+        buildOptions.build.angularProd ? '--prod' : ''
+      }`;
+
+    const angularBuildCommand =
+      `${this.NPM_RUN_NG_COMMAND} build ${
+        buildOptions.release.targetArtifact === 'electron-app'
+          ? 'angular-electron'
+          : 'app'
+        // : buildOptions.build.angularSsr
+        //   ? 'ssr'
+      }` +
+      ` ${buildOptions.build.angularProd ? '--configuration production' : ''} ` +
+      ` ${buildOptions.build.watch ? '--watch' : ''}` +
+      ` ${outPutPathCommand} ${baseHrefCommand}`;
+
     const angularBuildAppCmd = buildOptions.build.watch
-      ? `${this.NPM_RUN_NG_COMMAND} serve ${
-          buildOptions.release.targetArtifact === 'electron-app'
-            ? 'angular-electron'
-            : 'app'
-        } ` +
-        ` ${`--port=${portAssignedToAppBuild}`} ${
-          buildOptions.build.angularProd ? '--prod' : ''
-        }`
-      : `${this.NPM_RUN_NG_COMMAND} build ${
-          buildOptions.release.targetArtifact === 'electron-app'
-            ? 'angular-electron'
-            : 'app'
-          // : buildOptions.build.angularSsr
-          //   ? 'ssr'
-        }` +
-        ` ${buildOptions.build.angularProd ? '--configuration production' : ''} ` +
-        ` ${buildOptions.build.watch ? '--watch' : ''}` +
-        ` ${outPutPathCommand} ${baseHrefCommand}`;
+      ? serveCommand
+      : angularBuildCommand;
     //#endregion
 
     const showInfoAngular = () => {
