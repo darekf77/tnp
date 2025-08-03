@@ -221,7 +221,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     const showInfoAngular = () => {
       Helpers.logInfo(`
 
-  ANGULAR BUILD APP COMMAND: ${angularBuildAppCmd}
+  ARTIFACT ${buildOptions.release.targetArtifact} BUILD COMMAND: ${angularBuildAppCmd}
 
   inside: ${angularTempProj.location}
 
