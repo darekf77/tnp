@@ -100,7 +100,7 @@ export class Branding extends BaseFeatureForProject<Project> {
       }
     }
 
-    let pathIcons = `/${['assets', 'assets-for', proj.name, 'assets', ...generatedPwa].join('/')}`;
+    let pathIcons = `/${['assets', 'assets-for', proj.nameForNpmPackage, 'assets', ...generatedPwa].join('/')}`;
 
     const configuration = {
       path: pathIcons, // Path for overriding default icons path. `string`
