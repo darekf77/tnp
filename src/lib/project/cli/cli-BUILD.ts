@@ -107,7 +107,18 @@ class $Build extends BaseCli {
 
   //#region other build commands / watch build websql app
   async watchAppWebsql() {
-    await this.watchApp(true);
+    await this.project.build(
+      this.params.clone({
+        build: {
+          watch: true,
+          websql: true,
+        },
+        release: {
+          targetArtifact: 'angular-node-app',
+        },
+        finishCallback: () => this._exit(),
+      }),
+    );
   }
   //#endregion
 
@@ -117,7 +128,6 @@ class $Build extends BaseCli {
       this.params.clone({
         build: {
           watch: true,
-          websql,
         },
         release: {
           targetArtifact: 'angular-node-app',
