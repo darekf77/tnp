@@ -20,7 +20,10 @@ export const DOCKER_TEMPLATES = 'docker-templates';
 export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
 } = {
-  manual: ['npm-lib-and-cli-tool'],
+  manual: [
+    'npm-lib-and-cli-tool',
+    //  'angular-node-app' @LAST
+  ],
   local: [
     'electron-app',
     'npm-lib-and-cli-tool',

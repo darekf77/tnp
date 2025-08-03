@@ -435,15 +435,25 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       releaseProjPath = releaseData.releaseProjPath;
       projectsReposToPush.push(...releaseData.projectsReposToPush);
       //#endregion
-    } else if (releaseOptions.release.releaseType === 'local') {
+    } else if (
+      releaseOptions.release.releaseType === 'local' ||
+      releaseOptions.release.releaseType === 'manual'
+    ) {
       //#region local release
 
       //#region copy to local release folder
-      const localReleaseOutputBasePath = this.project.pathFor([
-        config.folder.local_release,
-        this.currentArtifactName,
-        `${this.project.name}-latest`,
-      ]);
+      const localReleaseOutputBasePath =
+        releaseOptions.release.releaseType === 'local'
+          ? this.project.pathFor([
+              config.folder.local_release,
+              this.currentArtifactName,
+              `${this.project.name}-latest`,
+            ])
+          : this.project.pathFor([
+              `.${config.frameworkName}`,
+              'release-manual',
+              this.currentArtifactName,
+            ]);
       Helpers.copy(appDistOutBrowserAngularAbsPath, [
         localReleaseOutputBasePath,
         path.basename(appDistOutBrowserAngularAbsPath),
@@ -565,6 +575,40 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           all[key] = `\${${key}}`;
         }
         c.environment = all;
+
+        // @TODO @LAST
+        // if (c.container_name.startsWith('angular-app-node')) {
+        //   const treafikLabelsFE = [
+        //     'traefik.enable=true',
+        //     `traefik.http.routers.angular.rule=Host(\`${releaseOptions.website.domain}\`)`,
+        //     'traefik.http.routers.angular.entrypoints=websecure',
+        //     'traefik.http.routers.angular.tls.certresolver=myresolver',
+        //     'traefik.http.services.angular.loadbalancer.server.port=80',
+        //   ];
+        //   const treafikLabelsFEObject: Record<string, string> = {};
+        //   treafikLabelsFE.forEach(label => {
+        //     const [key, value] = label.split('=');
+        //     treafikLabelsFEObject[key] = value;
+        //   });
+        //   c.labels = treafikLabelsFEObject;
+        // }
+        // if (c.container_name.startsWith('backend-app-node')) {
+        //   const treafikLabelsBE = [
+        //     'traefik.enable=true',
+        //     `traefik.http.routers.backend.rule=Host(\`${releaseOptions.website.domain}\`) && PathPrefix(\`/api\`)`,
+        //     'traefik.http.routers.backend.entrypoints=websecure',
+        //     'traefik.http.routers.backend.tls.certresolver=myresolver',
+        //     'traefik.http.services.backend.loadbalancer.server.port=${HOST_BACKEND_PORT_1}',
+        //     'traefik.http.middlewares.strip-api.stripprefix.prefixes=/api',
+        //     'traefik.http.routers.backend.middlewares=strip-api',
+        //   ];
+        //   const treafikLabelsBEObject: Record<string, string> = {};
+        //   treafikLabelsBE.forEach(label => {
+        //     const [key, value] = label.split('=');
+        //     treafikLabelsBEObject[key] = value;
+        //   });
+        //   c.labels = treafikLabelsBEObject;
+        // }
       });
 
       UtilsYaml.writeJsonToYaml(dockerComposeYmlDestPath, dockerComposeFile);
@@ -600,7 +644,11 @@ ${dockerComposeYmlFileContent}
       })();
       //#endregion
 
-      Helpers.taskDone(`Local release done!`);
+      if (releaseOptions.release.releaseType === 'local') {
+        Helpers.taskDone(`Local release done!`);
+      } else if (releaseOptions.release.releaseType === 'manual') {
+        Helpers.taskDone(`Manual release done!`);
+      }
 
       //#endregion
     }
