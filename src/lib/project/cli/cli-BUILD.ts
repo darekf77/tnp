@@ -23,6 +23,9 @@ class $Build extends BaseCli {
   public async _(recursiveAction = false): Promise<void> {
     await this.project.build(
       this.params.clone({
+        release: {
+          targetArtifact: 'npm-lib-and-cli-tool',
+        },
         recursiveAction,
         finishCallback: () => this._exit(),
       }),
