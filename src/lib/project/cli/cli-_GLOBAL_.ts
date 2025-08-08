@@ -101,6 +101,17 @@ export class $Global extends BaseGlobalCommandLine<
   }
   //#endregion
 
+   //#region kill all node
+  async killAllJava() {
+    //#region @backendFunc
+    Helpers.info('Killing all java processes...');
+    await UtilsProcess.killAllJava()
+    Helpers.info('DONE KILL ALL JAVA PROCESSES');
+    this._exit();
+    //#endregion
+  }
+  //#endregion
+
   //#region fork
   async fork() {
     const argv = this.args;
