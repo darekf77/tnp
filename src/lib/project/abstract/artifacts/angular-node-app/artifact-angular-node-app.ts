@@ -15,6 +15,7 @@ import {
 } from 'typescript';
 
 import {
+  ACTIVE_CONTEXT,
   COMPILATION_COMPLETE_APP_NG_SERVE,
   DEFAULT_PORT,
   THIS_IS_GENERATED_INFO_COMMENT,
@@ -559,7 +560,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           '-' +
           _.camelCase(this.project.name) +
           '-' +
-          `release-type-${releaseOptions.release.releaseType}`
+          `release-type-${releaseOptions.release.releaseType}` +
+          `--env--${
+            !releaseOptions.release.envName ||
+            releaseOptions.release.envName === '__'
+              ? 'default'
+              : releaseOptions.release.envName
+          }${releaseOptions.release.envNumber || ''}`
         ).toLowerCase(),
 
         'COMPOSE_PROJECT_NAME',
@@ -575,46 +582,92 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       const dockerComposeFile = UtilsYaml.readYamlAsJson<DockerComposeFile>(
         dockerComposeYmlDestPath,
       );
-      Object.values(dockerComposeFile.services).forEach(c => {
+
+      const backendTemplapteObj =
+        dockerComposeFile.services['backend-app-node'];
+      delete dockerComposeFile.services['backend-app-node'];
+
+      for (let i = 0; i < contextsNames.length; i++) {
+        const index = i + 1; // start from 1
+        const contextName = contextsNames[i];
+        const ctxBackend = _.cloneDeep(backendTemplapteObj);
+        const newKey =
+          `backend-app-node--${contextName}--${index}`.toLowerCase();
+        const treafikKeyBackend = _.kebabCase(
+          `${this.project.name}-${newKey}--` +
+            `${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`,
+        );
+
+        const treafikLabelsBE = [
+          `traefik.enable=true`,
+          `traefik.http.routers.${treafikKeyBackend}.rule=Host(\`${releaseOptions.website.domain}\`) && PathPrefix(\`/api/CTX/\`)`,
+          `traefik.http.routers.${treafikKeyBackend}.entrypoints=websecure`,
+          // `traefik.http.routers.${treafikKeyBackend}.tls.certresolver=myresolver`,
+          `traefik.http.services.${treafikKeyBackend}.loadbalancer.server.port=$\{HOST_BACKEND_PORT_1\}`,
+
+          // only when sripping prefix
+          // 'traefik.http.middlewares.strip-api.stripprefix.prefixes=/api',
+          // 'traefik.http.routers.backend.middlewares=strip-api',
+        ];
+        const treafikLabelsBEObject: Record<string, string> = {};
+        treafikLabelsBE.forEach(label => {
+          const [key, value] = label.split('=');
+          treafikLabelsBEObject[key] = value;
+        });
+        ctxBackend.labels = { ...ctxBackend.labels, ...treafikLabelsBEObject };
+        ctxBackend.container_name = newKey;
         const all = _.cloneDeep(allValues) as Record<string, string>;
         for (const key of Object.keys(all)) {
           all[key] = `\${${key}}`;
         }
-        c.environment = all;
+        ctxBackend.environment = all;
+        ctxBackend.environment[ACTIVE_CONTEXT] = contextName;
+        (() => {
+          const keyLoadBalancerServerPort = `traefik.http.services.${treafikKeyBackend}.loadbalancer.server.port`;
+          const loadBalancerValue =
+            ctxBackend.labels[keyLoadBalancerServerPort];
+          ctxBackend.labels[keyLoadBalancerServerPort] =
+            loadBalancerValue?.replace('1', index.toString());
+        })();
 
-        // @TODO @LAST
-        // if (c.container_name.startsWith('angular-app-node')) {
-        //   const treafikLabelsFE = [
-        //     'traefik.enable=true',
-        //     `traefik.http.routers.angular.rule=Host(\`${releaseOptions.website.domain}\`)`,
-        //     'traefik.http.routers.angular.entrypoints=websecure',
-        //     'traefik.http.routers.angular.tls.certresolver=myresolver',
-        //     'traefik.http.services.angular.loadbalancer.server.port=80',
-        //   ];
-        //   const treafikLabelsFEObject: Record<string, string> = {};
-        //   treafikLabelsFE.forEach(label => {
-        //     const [key, value] = label.split('=');
-        //     treafikLabelsFEObject[key] = value;
-        //   });
-        //   c.labels = treafikLabelsFEObject;
-        // }
-        // if (c.container_name.startsWith('backend-app-node')) {
-        //   const treafikLabelsBE = [
-        //     'traefik.enable=true',
-        //     `traefik.http.routers.backend.rule=Host(\`${releaseOptions.website.domain}\`) && PathPrefix(\`/api\`)`,
-        //     'traefik.http.routers.backend.entrypoints=websecure',
-        //     'traefik.http.routers.backend.tls.certresolver=myresolver',
-        //     'traefik.http.services.backend.loadbalancer.server.port=${HOST_BACKEND_PORT_1}',
-        //     'traefik.http.middlewares.strip-api.stripprefix.prefixes=/api',
-        //     'traefik.http.routers.backend.middlewares=strip-api',
-        //   ];
-        //   const treafikLabelsBEObject: Record<string, string> = {};
-        //   treafikLabelsBE.forEach(label => {
-        //     const [key, value] = label.split('=');
-        //     treafikLabelsBEObject[key] = value;
-        //   });
-        //   c.labels = treafikLabelsBEObject;
-        // }
+        (() => {
+          const httpRouterBackendPortKey = `traefik.http.routers.${treafikKeyBackend}.rule`;
+          const loadBalancerValue = ctxBackend.labels[httpRouterBackendPortKey];
+          ctxBackend.labels[httpRouterBackendPortKey] =
+            loadBalancerValue?.replace('CTX', contextName);
+        })();
+        dockerComposeFile.services[newKey] = ctxBackend;
+      }
+
+      Object.values(dockerComposeFile.services).forEach(c => {
+        if (c.container_name.startsWith('angular-app-node')) {
+          //#region set traefik labels for frontend app
+          const all = _.cloneDeep(allValues) as Record<string, string>;
+          for (const key of Object.keys(all)) {
+            all[key] = `\${${key}}`;
+          }
+          c.environment = all;
+
+          const newKey = `angular-app-node--${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
+          const treafikKeyFronend = _.kebabCase(
+            `${this.project.name}-${newKey}`,
+          );
+
+          const treafikLabelsFE = [
+            `traefik.enable=true`,
+            `traefik.http.routers.${treafikKeyFronend}.rule=Host(\`${releaseOptions.website.domain}\`)`,
+            `traefik.http.routers.${treafikKeyFronend}.entrypoints=websecure`,
+            // `traefik.http.routers.${treafikKeyFronend}.tls.certresolver=myresolver`,
+            `traefik.http.services.${treafikKeyFronend}.loadbalancer.server.port=80`,
+          ];
+          const treafikLabelsFEObject: Record<string, string> = {};
+          treafikLabelsFE.forEach(label => {
+            const [key, value] = label.split('=');
+            treafikLabelsFEObject[key] = value;
+          });
+          c.labels = treafikLabelsFEObject;
+          //#endregion
+        }
       });
 
       UtilsYaml.writeJsonToYaml(dockerComposeYmlDestPath, dockerComposeFile);

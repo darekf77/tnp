@@ -218,6 +218,7 @@ const argsENV = (()=> {
   return env || {};
 })();
 
+const ACTIVE_CONTEXT: string | null = nodeENV['ACTIVE_CONTEXT'] || argsENV['ACTIVE_CONTEXT'] || null;
 
 ${_.times(this.lastTaonContexts.length, i => {
   return tempalte(i + 1);
@@ -242,6 +243,10 @@ ${contextsInFile
     return `
 ${markAsDepecated ? depecationMessage : `\n/** Name of context (var, let, const variable) inside *.ts file. */\n`}
         '${contextName}': {
+        ${markAsDepecated ? depecationMessage : ''}
+         activeContext: ACTIVE_CONTEXT,
+        ${markAsDepecated ? depecationMessage : ''}
+         contextName: '${contextName}',
          ${markAsDepecated ? depecationMessage : ''}
          host: HOST_URL_${counter} + BUILD_BASE_HREF,
          ${markAsDepecated ? depecationMessage : ''}

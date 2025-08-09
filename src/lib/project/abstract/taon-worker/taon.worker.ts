@@ -74,7 +74,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
     let tries = 0;
     options = options || {};
     if (options.waitUntilHealthy) {
-      options.maxTries = options.maxTries || 10;
+      options.maxTries = options.maxTries || 50;
     }
     const execAsync = promisify(child_process.exec);
     while (true) {
@@ -93,7 +93,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
         );
 
         const status = stdout.trim().replace(/"/g, '');
-        console.log('Traefik health:', status);
+        Helpers.logInfo(`Traefik health: ${status}`);
 
         if (status === 'healthy') {
           console.log('✅ Traefik is ready');
