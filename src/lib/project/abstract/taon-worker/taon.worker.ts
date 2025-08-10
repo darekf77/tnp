@@ -74,7 +74,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
     let tries = 0;
     options = options || {};
     if (options.waitUntilHealthy) {
-      options.maxTries = options.maxTries || 10;
+      options.maxTries = options.maxTries || 50;
     }
     const execAsync = promisify(child_process.exec);
     while (true) {
@@ -115,15 +115,57 @@ export class TaonProjectsWorker extends BaseCliWorker<
   }
   //#endregion
 
+  protected reverseProxyNetworkName = 'traefik-net';
+
+  //#region methods / delete traefik network
+  async deleteTraefikNetwork(): Promise<void> {
+    //#region @backendFunc
+
+    try {
+      child_process.execSync(
+        `docker network rm ${this.reverseProxyNetworkName}`,
+        { stdio: 'inherit' },
+      );
+      console.log(`🗑️  Network deleted: ${this.reverseProxyNetworkName}`);
+    } catch (error: any) {
+      console.log(
+        `ℹ️ Network '${this.reverseProxyNetworkName}' probably does not exist, skipping.`,
+      );
+    }
+    //#endregion
+  }
+  //#endregion
+
+  async makeSureTraefikNetworkCreated(): Promise<void> {
+    //#region @backendFunc
+    try {
+      child_process.execSync(
+        `docker network create ${this.reverseProxyNetworkName}`,
+        {
+          stdio: 'inherit',
+        },
+      );
+      console.log(`✅ Network created: ${this.reverseProxyNetworkName}`);
+    } catch (error: any) {
+      console.log(
+        `ℹ️ Network '${this.reverseProxyNetworkName}' probably already exists, skipping.`,
+      );
+    }
+    //#endregion
+  }
+
   //#region methods / start traefik
   protected async startTraefik(): Promise<boolean> {
     //#region @backendFunc
-const isOsWithGraphicalInterface =
+
+    await this.makeSureTraefikNetworkCreated();
+
+    const isOsWithGraphicalInterface =
       UtilsOs.isRunningInOsWithGraphicsCapableEnvironment();
 
     console.log(
       `🚀 Starting Traefik ${isOsWithGraphicalInterface ? 'DEV' : 'PROD'}...`,
-);
+    );
     const execAsync = promisify(child_process.exec);
     // Start traefik in detached mode
     const pathToCompose = this.ins
@@ -134,12 +176,12 @@ const isOsWithGraphicalInterface =
     }
 
     await execAsync(
-`docker compose -f ` +
+      `docker compose -f ` +
         ` traefik-compose${isOsWithGraphicalInterface ? '.local-dev' : ''}.yml up -d traefik`,
-{
-      cwd: pathToCompose,
-    },
-);
+      {
+        cwd: pathToCompose,
+      },
+    );
 
     // Wait until container health becomes healthy
     const isHealthy = await this.checkIfTreafikIsRunning({
@@ -155,6 +197,9 @@ const isOsWithGraphicalInterface =
   async stopTraefik(): Promise<boolean> {
     //#region @backendFunc
     console.log('Stopping Traefik...');
+
+    await this.deleteTraefikNetwork();
+
     const execAsync = promisify(child_process.exec);
     // Start traefik in detached mode
     const pathToCompose = this.ins

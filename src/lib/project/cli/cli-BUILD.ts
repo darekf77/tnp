@@ -274,7 +274,7 @@ class $Build extends BaseCli {
           skipTagGitPush: true,
           skipReleaseQuestion: true,
           targetArtifact: 'angular-node-app',
-          releaseType: 'local',
+          releaseType: 'manual',
         },
         build: {
           watch: false,

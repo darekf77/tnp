@@ -17,13 +17,12 @@ export const BASE_TEMP_DOCKER_FOLDER = 'tmp-docker';
 
 export const DOCKER_TEMPLATES = 'docker-templates';
 
+export const ACTIVE_CONTEXT = 'ACTIVE_CONTEXT';
+
 export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
 } = {
-  manual: [
-    'npm-lib-and-cli-tool',
-    //  'angular-node-app' @LAST
-  ],
+  manual: ['npm-lib-and-cli-tool', 'angular-node-app'],
   local: [
     'electron-app',
     'npm-lib-and-cli-tool',

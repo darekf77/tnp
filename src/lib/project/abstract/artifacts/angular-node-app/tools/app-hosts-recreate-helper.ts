@@ -72,8 +72,8 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
     //   console.log('SYNC EVNET changeOfFiles', changeOfFiles);
     // }
     const taonContexts = this.project.framework.getAllDetectedTaonContexts();
-    if(_.isEqual(taonContexts,this.lastTaonContexts)) {
-      Helpers.logInfo(`No need for taon context update in app.hosts `)
+    if (_.isEqual(taonContexts, this.lastTaonContexts)) {
+      Helpers.logInfo(`No need for taon context update in app.hosts `);
       return;
     }
     this.lastTaonContexts = taonContexts;
@@ -96,7 +96,7 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
       return this.project.framework.contextFilter(relativePath);
     });
     if (changeOfFiles.length === 0) {
-      Helpers.logInfo(`No file detected that affects app.hosts.ts`)
+      Helpers.logInfo(`No file detected that affects app.hosts.ts`);
       return;
     }
     await this.rebuild(changeOfFiles, asyncEvent);
@@ -165,12 +165,12 @@ export const FRONTEND_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined
  * Backend url - use as "host" inside your context
  * ${!n ? '@deprecated use HOST_URL_n instead' : ''}
  */
-export const HOST_URL${n ? `_${n}` : ''} =  ${this.prefixVarTemplate('HOST_URL', n)} ('http://localhost:' + HOST_BACKEND_PORT${n ? `_${n}` : ''});
+export const HOST_URL${n ? `_${n}` : ''} =  ${this.prefixVarTemplate('HOST_URL', n, true)} ('http://localhost:' + HOST_BACKEND_PORT${n ? `_${n}` : ''});
 /**
  * Frontend host url - use as "frontendHost" inside your context
  * ${!n ? '@deprecated use FRONTEND_HOST_URL_n instead' : ''}
  */
-export const FRONTEND_HOST_URL${n ? `_${n}` : ''} = ${this.prefixVarTemplate('FRONTEND_HOST_URL', n)}  ( 'http://localhost:' +
+export const FRONTEND_HOST_URL${n ? `_${n}` : ''} = ${this.prefixVarTemplate('FRONTEND_HOST_URL', n, true)}  ( 'http://localhost:' +
   (isWebSQLMode ? FRONTEND_WEBSQL_APP_PORT${n ? `_${n}` : ''} : FRONTEND_NORMAL_APP_PORT${n ? `_${n}` : ''}));
 /**
  * Frontend electron host url - use in app.electron.ts with win.loadURL(FRONTEND_HOST_URL_ELECTRON);
@@ -204,6 +204,11 @@ const nodeENV = (()=> {
   //#${'reg' + 'ion'} @${'bac' + 'kend'}
   env = process.env || {};
   //#${'endr' + 'egion'}
+  return env || {};
+})();
+
+const windowENV = (()=> {
+  let env: any;
   //#${'reg' + 'ion'} @${'bro' + 'wser'}
   env = globalThis['ENV'] || {};
   //#${'endr' + 'egion'}
@@ -218,6 +223,25 @@ const argsENV = (()=> {
   return env || {};
 })();
 
+const transformURL = (url: string): string => {
+  if (!url) {
+    return url;
+  }
+  //#${'reg' + 'ion'} @${'bac' + 'kend'}
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  return 'http://' + url; // by default backend is http
+  //#${'endr' + 'egion'}
+  //#${'reg' + 'ion'} @${'bro' + 'wser'}
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  return globalThis?.location?.protocol + '//' + url;
+  //#${'endr' + 'egion'}
+};
+
+const ACTIVE_CONTEXT: string | null = nodeENV['ACTIVE_CONTEXT'] || argsENV['ACTIVE_CONTEXT'] || windowENV['ACTIVE_CONTEXT'] || null;
 
 ${_.times(this.lastTaonContexts.length, i => {
   return tempalte(i + 1);
@@ -242,8 +266,16 @@ ${contextsInFile
     return `
 ${markAsDepecated ? depecationMessage : `\n/** Name of context (var, let, const variable) inside *.ts file. */\n`}
         '${contextName}': {
+        ${markAsDepecated ? depecationMessage : ''}
+         activeContext: ACTIVE_CONTEXT,
+        ${markAsDepecated ? depecationMessage : ''}
+         contextName: '${contextName}',
+        ${markAsDepecated ? depecationMessage : ''}
+         hostPortNumber: Number(HOST_BACKEND_PORT_${counter}),
          ${markAsDepecated ? depecationMessage : ''}
          host: HOST_URL_${counter} + BUILD_BASE_HREF,
+          ${markAsDepecated ? depecationMessage : ''}
+         frontendHostPortNumber: Number(FRONTEND_NORMAL_APP_PORT_${counter}),
          ${markAsDepecated ? depecationMessage : ''}
          frontendHost: FRONTEND_HOST_URL_${counter} + BUILD_BASE_HREF,
          ${markAsDepecated ? depecationMessage : ''}
@@ -267,10 +299,15 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   //#endregion
 
   //#region prefix var template
-  protected prefixVarTemplate(varName: string, n: number | undefined): string {
+  protected prefixVarTemplate(
+    varName: string,
+    n: number | undefined,
+    isURL = false,
+  ): string {
     return (
-      `nodeENV['${varName}${n ? `_${n}` : ''}'] || ` +
-      `argsENV['${varName}${n ? `_${n}` : ''}'] || `
+      `${isURL ? 'transformURL' : ''}(nodeENV['${varName}${n ? `_${n}` : ''}']) || ` +
+      `${isURL ? 'transformURL' : ''}(windowENV['${varName}${n ? `_${n}` : ''}']) || ` +
+      `${isURL ? 'transformURL' : ''}(argsENV['${varName}${n ? `_${n}` : ''}']) || `
     );
   }
   //#endregion
