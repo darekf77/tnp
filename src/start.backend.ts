@@ -31,7 +31,18 @@ export async function start(
   if (
     !global.skipCoreCheck &&
     _.isUndefined(
-      argsv.find(a => a.startsWith('startCliService') || a === 'cloud'),
+      argsv.find(
+        a =>
+          a.startsWith('startCliService') ||
+          a.startsWith('kill') ||
+          a.startsWith('reinstall') ||
+          a.startsWith('push') ||
+          a.startsWith('pul') ||
+          a.startsWith('mp3') ||
+          a.startsWith('mp4') ||
+          a.startsWith('dedupe') ||
+          a === 'cloud',
+      ),
     ) // for workers
   ) {
     // console.log('starting projects workers...');
