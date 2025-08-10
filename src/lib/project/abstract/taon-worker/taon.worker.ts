@@ -93,7 +93,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
         );
 
         const status = stdout.trim().replace(/"/g, '');
-        console.log('Traefik health:', status);
+        Helpers.logInfo(`Traefik health: ${status}`);
 
         if (status === 'healthy') {
           console.log('✅ Traefik is ready');
@@ -118,7 +118,12 @@ export class TaonProjectsWorker extends BaseCliWorker<
   //#region methods / start traefik
   protected async startTraefik(): Promise<boolean> {
     //#region @backendFunc
-    console.log('🚀 Starting Traefik...');
+const isOsWithGraphicalInterface =
+      UtilsOs.isRunningInOsWithGraphicsCapableEnvironment();
+
+    console.log(
+      `🚀 Starting Traefik ${isOsWithGraphicalInterface ? 'DEV' : 'PROD'}...`,
+);
     const execAsync = promisify(child_process.exec);
     // Start traefik in detached mode
     const pathToCompose = this.ins
@@ -128,9 +133,13 @@ export class TaonProjectsWorker extends BaseCliWorker<
       return false;
     }
 
-    await execAsync(`docker compose -f traefik-compose.yml up -d traefik`, {
+    await execAsync(
+`docker compose -f ` +
+        ` traefik-compose${isOsWithGraphicalInterface ? '.local-dev' : ''}.yml up -d traefik`,
+{
       cwd: pathToCompose,
-    });
+    },
+);
 
     // Wait until container health becomes healthy
     const isHealthy = await this.checkIfTreafikIsRunning({
