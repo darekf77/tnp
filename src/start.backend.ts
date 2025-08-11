@@ -169,6 +169,7 @@ export async function start(
       vth: 'vscode:temp:hide',
       hide: 'vscode:temp:hide',
       show: 'vscode:temp:show',
+      simulate: 'simulateDomain',
       //#endregion
     },
   });

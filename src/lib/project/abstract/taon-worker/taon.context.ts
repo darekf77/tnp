@@ -1,7 +1,7 @@
 //#region imports
 import { BaseContext, Taon } from 'taon/src';
 import { config } from 'tnp-config/src';
-import { os } from 'tnp-core/src';
+import { os, UtilsOs } from 'tnp-core/src';
 import { crossPlatformPath, Helpers, path } from 'tnp-core/src';
 
 import { MIGRATIONS_CLASSES_FOR_TaonProjectsContext } from '../../../../migrations';
@@ -14,7 +14,7 @@ import { TaonProjectsController } from './taon.controller';
 
 //#region @backend
 const taonProjectsWorkerDatabaseLocation = crossPlatformPath([
-  os.userInfo().homedir,
+  UtilsOs.getRealHomeDir(),
   `.taon/databases-for-services/taon-projects-worker.sqlite`,
 ]);
 if (!Helpers.exists(path.dirname(taonProjectsWorkerDatabaseLocation))) {

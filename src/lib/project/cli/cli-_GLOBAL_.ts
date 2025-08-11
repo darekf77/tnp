@@ -14,7 +14,7 @@ import {
   frontendFiles,
   notNeededForExportFiles,
 } from 'tnp-config/src';
-import { psList } from 'tnp-core/src';
+import { psList, UtilsOs } from 'tnp-core/src';
 import {
   chokidar,
   dateformat,
@@ -727,7 +727,7 @@ export class $Global extends BaseGlobalCommandLine<
     const isomorphicPackagesFile = config.file.tmpIsomorphicPackagesJson; // 'tmp-isomorphic-packages.json';
     const currentFrameworkVersion = this.project.taonJson.frameworkVersion;
     const pathToTaonContainerNodeModules = crossPlatformPath([
-      os.userInfo().homedir,
+      UtilsOs.getRealHomeDir(),
       `.taon/taon/projects/container-${currentFrameworkVersion}/${config.folder.node_modules}`,
     ]);
     Helpers.taskStarted(`Syncing node_modules from taon container to tnp...`);
@@ -1276,7 +1276,7 @@ ${this.project.children
    */
   MP3(args) {
     const downloadPath = crossPlatformPath([
-      os.userInfo().homedir,
+      UtilsOs.getRealHomeDir(),
       'Downloads',
       'mp3-from-websites',
     ]);
@@ -1299,7 +1299,7 @@ ${this.project.children
   //#region not for npm / mp4
   MP4(args) {
     const downloadPath = crossPlatformPath([
-      os.userInfo().homedir,
+      UtilsOs.getRealHomeDir(),
       'Downloads',
       'mp4-from-websites',
     ]);
@@ -1321,7 +1321,7 @@ ${this.project.children
       : this.cwd;
     const basenameToProcess = path.basename(this.firstArg);
     const gifDownloadPath = crossPlatformPath([
-      os.userInfo().homedir,
+      UtilsOs.getRealHomeDir(),
       'Downloads',
       'gif-from-videos',
       basenameToProcess.replace(path.extname(basenameToProcess), '.gif'),
