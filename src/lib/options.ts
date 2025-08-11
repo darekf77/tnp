@@ -493,6 +493,11 @@ class EnvOptionsContainer {
    * end release on project
    */
   declare end?: string;
+  /**
+   * skip just released projects (last commit starts with 'release: ')
+   * and only release projects with new changes
+   */
+  declare skipReleased?: boolean;
 }
 //#endregion
 
@@ -833,6 +838,7 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
     end: '-' as any,
     only: '-' as any,
     start: '-' as any,
+    skipReleased: '-' as any,
   },
   ports: {},
   release: {

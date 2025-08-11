@@ -246,6 +246,13 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
           return i >= startIndex;
         });
       }
+      
+      if (releaseOptions.container.skipReleased) {
+        children = children.filter((c, i) => {
+          const lastCommitMessage = c?.git?.lastCommitMessage()?.trim();
+          return !lastCommitMessage?.startsWith('release: ');
+        });
+      }
     }
 
     // console.log('after sorting ',children.map(c => c.name));
