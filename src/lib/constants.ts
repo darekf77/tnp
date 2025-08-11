@@ -1,7 +1,7 @@
 //#region imports
 import { config } from 'tnp-config/src';
 import { CoreModels, os } from 'tnp-core/src';
-import { _ } from 'tnp-core/src';
+import { _, UtilsOs } from 'tnp-core/src';
 import { crossPlatformPath, path, Utils } from 'tnp-core/src';
 
 import { CURRENT_PACKAGE_VERSION } from './build-info._auto-generated_';
@@ -97,7 +97,7 @@ export const DEFAULT_FRAMEWORK_VERSION =
 export let taonRepoPathUserInUserDir: string =
   //#region @backend
   path.join(
-    crossPlatformPath(os.homedir()),
+    UtilsOs.getRealHomeDir(),
     `.${config.frameworkNames.productionFrameworkName}`,
     config.frameworkNames.productionFrameworkName,
   );

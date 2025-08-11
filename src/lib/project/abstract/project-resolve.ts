@@ -3,7 +3,7 @@ import { config } from 'tnp-config/src';
 import { LibTypeArr } from 'tnp-config/src';
 import { child_process, fse, os, requiredForDev } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
-import { CLI } from 'tnp-core/src';
+import { CLI, UtilsOs } from 'tnp-core/src';
 import { Helpers, BaseProjectResolver } from 'tnp-helpers/src';
 
 import {
@@ -273,7 +273,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     //#region @backendFunc
     const projectsInUserFolder = crossPlatformPath(
       path.join(
-        crossPlatformPath(os.homedir()),
+        UtilsOs.getRealHomeDir(),
         `.${config.frameworkNames.productionFrameworkName}`,
         config.frameworkNames.productionFrameworkName,
         'projects',
