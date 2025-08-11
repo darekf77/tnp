@@ -1757,6 +1757,24 @@ ${this.project.children
     this._exit();
   }
   //#endregion
+
+  messagesTest() {
+    console.log('-----1');
+    Helpers.log(`Helpers.log`);
+    Helpers.info(`Helpers.info`);
+    Helpers.error(`Helpers.error`, true, true);
+    Helpers.warn(`Helpers.warn`);
+    Helpers.success(`Helpers.success`);
+    Helpers.taskStarted(`Helpers.taskStarted`);
+    Helpers.taskDone(`Helpers.taskDone`);
+    console.log('-----2');
+    Helpers.logInfo(`Helpers.logInfo`);
+    Helpers.logError(`Helpers.logError`, true, true);
+    Helpers.logWarn(`Helpers.logWarn`);
+    Helpers.logSuccess(`Helpers.logSuccess`);
+    console.log('-----3');
+    this._exit();
+  }
 }
 
 export default {

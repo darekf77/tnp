@@ -5,7 +5,7 @@ import { chalk, Helpers, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { BaseStartConfig } from 'tnp-helpers/src';
 
-import cliClassArr from './lib/project/cli/index';
+import cliClassArr from './project/cli/index';
 
 //#endregion
 
@@ -24,7 +24,7 @@ export async function start(
   config.frameworkName = frameworkName;
 
   // Helpers.log(`ins start, mode: "${mode}"`);
-  const ProjectClass = (await import('./lib/project/abstract/project')).Project;
+  const ProjectClass = (await import('./project/abstract/project')).Project;
   ProjectClass.ins.initialCheck();
 
   // console.log(argsv);

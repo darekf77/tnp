@@ -1,7 +1,7 @@
 export { config } from 'tnp-config/src';
 //#region @backend
-export { start } from './start.backend';
-import { start } from './start.backend';
+export { start } from './lib/start';
+import { start } from './lib/start';
 export * from './global-typings';
 export * from './lib';
 export default start;
