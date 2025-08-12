@@ -923,7 +923,13 @@ ${dockerComposeYmlFileContent}
     const componentTemplate =
       [`\n//#re`, `gion  ${this.project.name} component `].join('') +
       ['\n//#re', 'gion @bro', 'wser'].join('') +
-      `\n@Component({ template: 'hello world fromr ${this.project.name}' })` +
+      `\n@Component({
+      standalone: false,
+      template: \`
+
+      hello world fromr ${this.project.name}
+
+      \` })` +
       `\nexport class ${newComponentName} {}` +
       ['\n//#endre', 'gion'].join('') +
       ['\n//#endre', 'gion'].join('');
