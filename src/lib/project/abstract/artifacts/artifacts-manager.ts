@@ -1,6 +1,14 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { Utils, UtilsTerminal, _, chalk, fse, path } from 'tnp-core/src';
+import {
+  Utils,
+  UtilsTerminal,
+  _,
+  chalk,
+  crossPlatformPath,
+  fse,
+  path,
+} from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseProcessManger, CommandConfig } from 'tnp-helpers/src';
 
@@ -146,6 +154,35 @@ export class ArtifactManager {
     //#endregion
 
     if (!initOptions.init.struct) {
+      //#region prevent incorrect node_modules with tnp dev mode
+      if (config.frameworkName === 'tnp') {
+        let node_modules_path = this.project.nodeModules.path;
+        let node_modules_real_path = this.project.nodeModules.realPath;
+        if (node_modules_path !== node_modules_real_path) {
+          const containerName = path.basename(
+            path.dirname(node_modules_real_path),
+          );
+          const properRelativeNodeModulesPath = crossPlatformPath(
+            path.resolve(
+              config.dirnameForTnp,
+              this.project.ins.taonProjectsRelative,
+              containerName,
+              config.folder.node_modules,
+            ),
+          );
+          if (node_modules_real_path !== properRelativeNodeModulesPath) {
+            console.warn(`
+    (DEV MODE TNP) DETECTED NODE_MODULES LINK NOT FROM PROPER CONTAINER
+    fixing/linking proper node_modules path
+              `);
+            try {
+              fse.unlinkSync(node_modules_path);
+            } catch (error) {}
+          }
+        }
+      }
+      //#endregion
+
       await this.project.nodeModules.makeSureInstalled();
     }
 

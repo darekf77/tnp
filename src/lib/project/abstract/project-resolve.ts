@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-config/src';
+import { config, urlRepoTaonContainers } from 'tnp-config/src';
 import { LibTypeArr } from 'tnp-config/src';
 import { child_process, fse, os, requiredForDev } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
@@ -271,14 +271,12 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   //#region projects in user folder
   private get projectsInUserFolder() {
     //#region @backendFunc
-    const projectsInUserFolder = crossPlatformPath(
-      path.join(
-        UtilsOs.getRealHomeDir(),
-        `.${config.frameworkNames.productionFrameworkName}`,
-        config.frameworkNames.productionFrameworkName,
-        'projects',
-      ),
-    );
+    const projectsInUserFolder = crossPlatformPath([
+      UtilsOs.getRealHomeDir(),
+      `.${config.frameworkNames.productionFrameworkName}`,
+      'taon-containers',
+      'projects',
+    ]);
     return projectsInUserFolder;
     //#endregion
   }
@@ -307,7 +305,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       }).sync();
     } catch (error) {
       Helpers.error(
-        `[${config.frameworkName} Not able to reset origin of taon repo: ${config.urlRepoTaon} in: ${cwd}`,
+        `[${config.frameworkName} Not able to reset origin of taon repo: ${urlRepoTaonContainers} in: ${cwd}`,
         false,
         true,
       );
@@ -321,7 +319,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     } catch (error) {
       Helpers.log(error);
       Helpers.error(
-        `[${config.frameworkName} Not able to checkout master branch for :${config.urlRepoTaon} in: ${cwd}`,
+        `[${config.frameworkName} Not able to checkout master branch for :${urlRepoTaonContainers} in: ${cwd}`,
         false,
         true,
       );
@@ -339,7 +337,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       Helpers.log(error);
       Helpers.error(
         `[${config.frameworkName} Not able to pull master branch for :` +
-          `${config.urlRepoTaon} in: ${crossPlatformPath(cwd)}`,
+          `${urlRepoTaonContainers} in: ${crossPlatformPath(cwd)}`,
         false,
         true,
       );
@@ -362,7 +360,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       } catch (error) {
         console.log(error);
         Helpers.warn(
-          `[${config.frameworkName} Not ablt to checkout latest tag of taon framework: ${config.urlRepoTaon} in: ${cwd}`,
+          `[${config.frameworkName} Not ablt to checkout latest tag of taon framework: ${urlRepoTaonContainers} in: ${cwd}`,
           false,
         );
       }
@@ -375,7 +373,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     } catch (error) {
       console.log(error);
       Helpers.warn(
-        `[${config.frameworkName} Not ablt to pull latest tag of taon framework: ${config.urlRepoTaon} in: ${cwd}`,
+        `[${config.frameworkName} Not ablt to pull latest tag of taon framework: ${urlRepoTaonContainers} in: ${cwd}`,
         false,
       );
     }
@@ -432,14 +430,14 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       }
 
       try {
-        child_process.execSync(`git clone ${config.urlRepoTaon}`, {
+        child_process.execSync(`git clone ${urlRepoTaonContainers}`, {
           cwd: path.dirname(taonRepoPathUserInUserDir),
           stdio: [0, 1, 2],
         });
         Helpers.remove(morhiVscode);
       } catch (error) {
         Helpers.error(
-          `[${config.frameworkName}][config] Not able to clone repository: ${config.urlRepoTaon} in:
+          `[${config.frameworkName}][config] Not able to clone repository: ${urlRepoTaonContainers} in:
        ${taonRepoPathUserInUserDir}`,
           false,
           true,
@@ -508,8 +506,11 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   //#endregion
 
   //#region taon relative projects paths
-  private get taonProjectsRelative() {
-    return `../taon/projects`;
+  /**
+   * only for tnp dev mode cli
+   */
+  public get taonProjectsRelative(): string {
+    return `../taon-containers`;
   }
   //#endregion
 

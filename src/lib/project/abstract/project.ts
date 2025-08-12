@@ -246,7 +246,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
           return i >= startIndex;
         });
       }
-      
+
       if (releaseOptions.container.skipReleased) {
         children = children.filter((c, i) => {
           const lastCommitMessage = c?.git?.lastCommitMessage()?.trim();
@@ -370,10 +370,11 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   get tnpCurrentCoreContainer(): Project {
     return this.ins.From(
       this.pathFor(
-        `../taon/projects/container-${this.framework.frameworkVersion}`,
+        `${this.ins.taonProjectsRelative}/container-${this.framework.frameworkVersion}`,
       ),
     );
   }
+
   //#endregion
 
   //#region name
