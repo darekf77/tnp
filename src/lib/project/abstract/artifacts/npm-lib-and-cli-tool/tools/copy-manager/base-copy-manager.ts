@@ -116,8 +116,8 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   //#region getters / project to copy to
   /**
    * when building from scratch:
-   * taon - uses ~/.taon/taon/projects/container-vXX
-   * tnp - uses ../taon/projects/container-vXX
+   * taon - uses ~/.taon/taon-containers/container-vXX
+   * tnp - uses ../taon-containers/container-vXX
    *
    * but when tnp is in deep refactor I need to use taon to build tnp
    * and force taon to recognize core container from node_modules link

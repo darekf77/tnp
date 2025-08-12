@@ -96,11 +96,11 @@ export const DEFAULT_FRAMEWORK_VERSION =
 
 export let taonRepoPathUserInUserDir: string =
   //#region @backend
-  path.join(
+  crossPlatformPath([
     UtilsOs.getRealHomeDir(),
     `.${config.frameworkNames.productionFrameworkName}`,
-    config.frameworkNames.productionFrameworkName,
-  );
+    'taon-containers',
+ ] );
 //#endregion
 ('');
 

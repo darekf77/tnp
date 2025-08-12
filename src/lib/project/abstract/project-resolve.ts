@@ -35,7 +35,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     this.taonProjectsWorker = new TaonProjectsWorker(
       'taon-projects',
       `${cliToolName} ${
-        'startCliServiceTaonProjectsWorker --skipCoreCheck'
+        'startCliServiceTaonProjectsWorker'
         // as keyof $Global
       }`,
       this,
@@ -275,7 +275,6 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       UtilsOs.getRealHomeDir(),
       `.${config.frameworkNames.productionFrameworkName}`,
       'taon-containers',
-      'projects',
     ]);
     return projectsInUserFolder;
     //#endregion
@@ -328,8 +327,9 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     //#region pull master with tags
     try {
+      Helpers.git.meltActionCommits(cwd);
       Helpers.run(
-        `git reset --hard HEAD~20 && git reset --hard && git clean -df && git pull --tags origin master`,
+        `git reset --hard HEAD~2 && git reset --hard && git clean -df && git pull --tags origin master`,
         { cwd, output: false },
       ).sync();
       Helpers.log('DONE PULLING MASTER');
@@ -410,8 +410,9 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     }
     const morhiVscode = crossPlatformPath([
       path.dirname(taonRepoPathUserInUserDir),
-      'taon/.vscode',
+      'taon-projects/.vscode',
     ]);
+
 
     if (!fse.existsSync(taonRepoPathUserInUserDir) && !global.skipCoreCheck) {
       if (!fse.existsSync(path.dirname(taonRepoPathUserInUserDir))) {
