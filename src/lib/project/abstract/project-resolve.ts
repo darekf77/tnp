@@ -345,38 +345,43 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     //#endregion
 
     //#region checkout lastest tag
-    // TODO  SPLIT TO SEPARATED CONTAINERS
-    const tagToCheckout = this.taonTagToCheckoutForCurrentCliVersion(cwd);
-    const currentBranch = Helpers.git.currentBranchName(cwd);
-    Helpers.taskStarted(
-      `Checking out lastest tag ${tagToCheckout} for taon framework...`,
-    );
-    if (currentBranch !== tagToCheckout) {
-      try {
-        Helpers.run(
-          `git reset --hard && git clean -df && git checkout ${tagToCheckout}`,
-          { cwd },
-        ).sync();
-      } catch (error) {
-        console.log(error);
-        Helpers.warn(
-          `[${config.frameworkName} Not ablt to checkout latest tag of taon framework: ${urlRepoTaonContainers} in: ${cwd}`,
-          false,
-        );
-      }
-    }
+    // TODO remove ? taon-containers gonna be constantly update and
+    // no need for checking out specific tag
+
+    // const tagToCheckout = this.taonTagToCheckoutForCurrentCliVersion(cwd);
+    // const currentBranch = Helpers.git.currentBranchName(cwd);
+    // Helpers.taskStarted(
+    //   `Checking out lastest tag ${tagToCheckout} for taon framework...`,
+    // );
+    // if (currentBranch !== tagToCheckout) {
+    //   try {
+    //     Helpers.run(
+    //       `git reset --hard && git clean -df && git checkout ${tagToCheckout}`,
+    //       { cwd },
+    //     ).sync();
+    //   } catch (error) {
+    //     console.log(error);
+    //     Helpers.warn(
+    //       `[${config.frameworkName} Not ablt to checkout latest tag of taon framework: ${urlRepoTaonContainers} in: ${cwd}`,
+    //       false,
+    //     );
+    //   }
+    // }
     //#endregion
 
     //#region pull latest tag
-    try {
-      Helpers.run(`git pull origin ${tagToCheckout}`, { cwd }).sync();
-    } catch (error) {
-      console.log(error);
-      Helpers.warn(
-        `[${config.frameworkName} Not ablt to pull latest tag of taon framework: ${urlRepoTaonContainers} in: ${cwd}`,
-        false,
-      );
-    }
+    // TODO remove ? taon-containers gonna be constantly update and
+    // no need for checking out specific tag
+
+    // try {
+    //   Helpers.run(`git pull origin ${tagToCheckout}`, { cwd }).sync();
+    // } catch (error) {
+    //   console.log(error);
+    //   Helpers.warn(
+    //     `[${config.frameworkName} Not ablt to pull latest tag of taon framework: ${urlRepoTaonContainers} in: ${cwd}`,
+    //     false,
+    //   );
+    // }
     //#endregion
 
     //#region remove vscode folder

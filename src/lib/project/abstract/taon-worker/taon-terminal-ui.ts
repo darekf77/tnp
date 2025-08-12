@@ -26,7 +26,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       try {
         consoleLogoPath = this.worker.ins
           .by('container', `v${currentVersion}` as any)
-          .pathFor('../../__images/logo/logo-console.png');
+          .pathFor('../__images/logo/logo-console.png');
         break;
       } catch (error) {
         currentVersion--;
