@@ -1,5 +1,5 @@
 //#region imports
-import { UtilsTerminal, _ } from 'tnp-core/src';
+import { UtilsTerminal, _, path } from 'tnp-core/src';
 import { BaseGit, Helpers } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../options';
@@ -75,11 +75,10 @@ export class Git extends BaseGit<Project> {
   }
   //#endregion
 
-
   protected async _afterPullProcessAction(
     setOrigin: 'ssh' | 'http',
   ): Promise<void> {
-    const paths = (this.project.taonJson.removeAfterPullingFromGit || [])
+    const absPaths = (this.project.taonJson.removeAfterPullingFromGit || [])
       .map(folder => {
         if (!_.isString(folder)) {
           return;
@@ -92,15 +91,22 @@ export class Git extends BaseGit<Project> {
       })
       .filter(f => !!f && Helpers.exists(f));
 
-    if (paths.length > 0) {
+    if (absPaths.length > 0) {
       if (
         await UtilsTerminal.confirm({
-          message: `[taon][after-pull-action] Do you want to remove old folders: ${paths.join(', ')}?`,
+          message: `[taon][after-pull-action] Do you want to remove old folders: ${absPaths.join(', ')}?`,
         })
       ) {
-        for (const folder of paths) {
-          Helpers.removeSymlinks(folder);
-          Helpers.removeFolderIfExists(folder);
+        for (let index = 0; index < absPaths.length; index++) {
+          const folderAbsPath = absPaths[index];
+          Helpers.taskStarted(
+            `(${index + 1}/${absPaths.length}) Removing old folder: ${path.basename(folderAbsPath)}`,
+          );
+          Helpers.removeSymlinks(folderAbsPath);
+          Helpers.removeFolderIfExists(folderAbsPath);
+          Helpers.taskDone(
+            `(${index + 1}/${absPaths.length}) Removed old folder ${path.basename(folderAbsPath)} done.`,
+          );
         }
       }
     }
