@@ -20,6 +20,10 @@
         "overrideTitle": "Additional Commands",
       },
       {
+        "packageNameWithPath": "tnp/docs/DATA-TRANSPORT-LAYER.md",
+        "overrideTitle": "Data Transport Layer",
+      },
+      {
         "packageNameWithPath": [
           "tnp/docs/CI-CD.md",
           "tnp/docs/RELEASE-MANUAL.md",
