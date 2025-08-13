@@ -10,7 +10,12 @@ import {
   chalk,
 } from 'tnp-core/src';
 import { UtilsOs, UtilsTerminal } from 'tnp-core/src';
-import { Helpers, UtilsTypescript, DockerComposeFile } from 'tnp-helpers/src';
+import {
+  Helpers,
+  UtilsTypescript,
+  DockerComposeFile,
+  UtilsZip,
+} from 'tnp-helpers/src';
 import { UtilsDotFile } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 import {
@@ -453,7 +458,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       releaseOptions.release.releaseType === 'local' ||
       releaseOptions.release.releaseType === 'manual'
     ) {
-      //#region local release
+      //#region local/manual release
 
       //#region copy to local release folder
       const localReleaseOutputBasePath =
@@ -767,8 +772,18 @@ ${dockerComposeYmlFileContent}
         // Helpers.run
         // localReleaseOutputBasePath
         // TODO @LAST automatic compose up/down
+        const zipFileAbsPath = await UtilsZip.zipDir(localReleaseOutputBasePath, {
+          overrideIfZipFileExists: true,
+        });
 
-        Helpers.taskDone(`Manual release done!`);
+        Helpers.taskDone(`
+
+          Manual release done!
+
+          Zip file ready for taon cloud deployment
+          ${zipFileAbsPath}
+
+          `);
       }
 
       //#endregion
