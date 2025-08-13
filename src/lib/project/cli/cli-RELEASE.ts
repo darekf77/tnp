@@ -163,21 +163,36 @@ class $Release extends BaseCli {
   //#region install locally
   async installLocally() {
     //#region @backendFunc
-    const options = ReleaseArtifactTaonNamesArr.reverse().reduce((a, b) => {
-      return {
-        ...a,
-        ...{
-          [b]: {
-            name: b,
-          },
-        },
-      };
-    }, {});
+    const allowedArtifacts: ReleaseArtifactTaon[] = ['vscode-plugin'];
 
-    const option = await UtilsTerminal.select<ReleaseArtifactTaon>({
-      choices: options,
-      question: 'What you wanna build/install locally ?',
-    });
+    const options = {
+      ['_']: {
+        name: '< Select artifact to build/install locally >',
+      },
+      ...ReleaseArtifactTaonNamesArr.reverse().reduce((a, b) => {
+        return {
+          ...a,
+          ...{
+            [b]: {
+              disabled: !allowedArtifacts.includes(b as ReleaseArtifactTaon),
+              name: b,
+            },
+          },
+        };
+      }, {}),
+    };
+
+    let option: ReleaseArtifactTaon;
+    while (true) {
+      option = await UtilsTerminal.select<ReleaseArtifactTaon>({
+        choices: options,
+        question: 'What you wanna build/install locally ?',
+      });
+      if (option && option !== ('_' as any)) {
+        console.log({ option });
+        break;
+      }
+    }
 
     const skipLibBuild = await UtilsTerminal.confirm({
       message: 'Skip library build ?',
