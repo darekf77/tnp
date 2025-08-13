@@ -15,6 +15,7 @@ import { BaseCliWorker, Helpers } from 'tnp-helpers/src';
 import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
 import type { TaonProjectResolve } from '../project-resolve';
 
+import { DeploymentsWorker } from './deployments/deployments.worker';
 import { TaonTerminalUI } from './taon-terminal-ui';
 import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
@@ -32,6 +33,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
   workerContextTemplate = TaonProjectsContextTemplate as any; // TODO for some reason as any is nessesary
   controllerClass = TaonProjectsController;
 
+  public deploymentsWorker: DeploymentsWorker;
   //#region constructor
   constructor(
     /**
@@ -45,6 +47,12 @@ export class TaonProjectsWorker extends BaseCliWorker<
     public readonly ins: TaonProjectResolve,
   ) {
     super(serviceID, startCommand, CURRENT_PACKAGE_VERSION);
+    //#region @backend
+    this.deploymentsWorker = new DeploymentsWorker(
+      'taon-project-deployments-worker',
+      `${global.frameworkName} cloud:deployments`,
+    );
+    //#endregion
   }
   //#endregion
 
@@ -59,6 +67,11 @@ export class TaonProjectsWorker extends BaseCliWorker<
     await this.ins.portsWorker.startDetachedIfNeedsToBeStarted({
       useCurrentWindowForDetach: true,
     });
+
+    // await this.deploymentsWorker.startDetachedIfNeedsToBeStarted({
+    //   useCurrentWindowForDetach: true,
+    // });
+
     Helpers.taskDone(`Ports manager started !`);
     await super.startNormallyInCurrentProcess();
     //#endregion

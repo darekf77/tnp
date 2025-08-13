@@ -1,5 +1,4 @@
-import { _, isElevated, UtilsNetwork } from 'tnp-core/src';
-import { UtilsTerminal } from 'tnp-core/src';
+import { _, isElevated, UtilsNetwork, UtilsTerminal } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
@@ -12,6 +11,11 @@ class $Cloud extends BaseCli {
   async _(): Promise<void> {
     await this.project.ins.taonProjectsWorker.cliStartProcedure(this.params);
     // await this.ins.taonProjectsWorker.cliStartProcedure(this.params);
+  }
+
+  async deployments(): Promise<void> {
+    // UtilsTerminal.drawBigText('Deployments');
+    await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
   }
 }
 

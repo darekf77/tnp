@@ -189,7 +189,7 @@ class $Release extends BaseCli {
         question: 'What you wanna build/install locally ?',
       });
       if (option && option !== ('_' as any)) {
-        console.log({ option });
+        // console.log({ option });
         break;
       }
     }
