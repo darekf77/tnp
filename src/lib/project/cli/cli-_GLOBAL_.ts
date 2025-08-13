@@ -747,7 +747,9 @@ export class $Global extends BaseGlobalCommandLine<
     //#endregion
 
     Helpers.taskDone(`Done syncing node_modules from container to tnp...`);
-    Helpers.taskStarted(`Syncing node_modules from tnp to ../taon-container...`);
+    Helpers.taskStarted(
+      `Syncing node_modules from tnp to ../taon-container...`,
+    );
 
     //#region copy from tnp to ../taon
     await Helpers.copyFolderOsNative(
@@ -767,7 +769,9 @@ export class $Global extends BaseGlobalCommandLine<
 
     //#endregion
 
-    Helpers.taskDone(`Done syncing node_modules from tnp to ../taon-containers...`);
+    Helpers.taskDone(
+      `Done syncing node_modules from tnp to ../taon-containers...`,
+    );
     this._exit();
   }
 
@@ -801,10 +805,10 @@ export class $Global extends BaseGlobalCommandLine<
   //#endregion
 
   //#region copy and rename (vscode option)
-  async $COPY_AND_RENAME(args: string) {
+  async $COPY_AND_RENAME() {
     // console.log(`>> ${args} <<`)
     const ins = MagicRenamer.Instance(this.cwd);
-    await ins.start(args, true);
+    await ins.start(this.args.join(''), true);
     this._exit();
   }
   //#endregion
