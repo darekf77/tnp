@@ -98,10 +98,29 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       //#region taon example
       {
         group: groupGENERATE,
-        title: `taon example (api-service, controller, entity, repository)`,
+        title: `taon simple example (context, ctrl, entity, repo, api-service)`,
         exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-simple %entity%`,
         options: {
-          titleWhenProcessing: 'generating taon code',
+          titleWhenProcessing: 'generating taon simple example code',
+          showSuccessMessage: false,
+          resolveVariables: [
+            {
+              variable: 'entity',
+              placeholder: `my-entity`,
+              encode: true,
+            },
+          ],
+        },
+      },
+      //#endregion
+
+       //#region taon example
+       {
+        group: groupGENERATE,
+        title: `taon worker (worker, ui, context, ctrl, entity, repo, api-service)`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-worker %entity%`,
+        options: {
+          titleWhenProcessing: 'generating taon worker code',
           showSuccessMessage: false,
           resolveVariables: [
             {
