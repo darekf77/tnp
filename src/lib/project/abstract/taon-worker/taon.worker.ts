@@ -99,6 +99,15 @@ export class TaonProjectsWorker extends BaseCliWorker<
           console.log('✅ Traefik is ready');
           return true;
         }
+        if (status === 'unhealthy') {
+          console.log('❌ Traefik is unhealthy');
+          if (options.waitUntilHealthy) {
+            console.log('Traefik state is not healthy yet, waiting...');
+          } else {
+            console.log('Traefik state is not running or not healthy');
+            return false;
+          }
+        }
       } catch (error) {
         // console.error(error);
         if (options.waitUntilHealthy) {
