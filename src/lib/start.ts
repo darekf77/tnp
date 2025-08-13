@@ -41,6 +41,8 @@ export async function start(
           a.startsWith('mp3') ||
           a.startsWith('mp4') ||
           a.startsWith('dedupe') ||
+          a.startsWith('copy:and:rename') ||
+          a.startsWith('generate') ||
           a === 'cloud',
       ),
     ) // for workers
