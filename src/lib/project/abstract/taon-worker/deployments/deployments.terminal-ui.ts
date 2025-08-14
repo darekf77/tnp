@@ -36,7 +36,9 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
         name: 'Get stuff from backend',
         action: async () => {
           Helpers.info(`Stuff from backend will be fetched`);
-          const ctrl = await this.worker.getControllerForRemoteConnection();
+          const ctrl = await this.worker.getControllerForRemoteConnection({
+            calledFrom: 'Get stuff from backend action',
+          });
           const list = (await ctrl.getEntities().received)?.body.json || [];
           console.log(list.map(c => `- ${c.id} ${c.deploymentDescriptionFromZip}`).join('\n'));
           Helpers.info(`Fetched ${list.length} entities`);
@@ -49,7 +51,9 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
         name: 'Insert new deployment',
         action: async () => {
           Helpers.info(`Inserting new deployment`);
-          const ctrl = await this.worker.getControllerForRemoteConnection();
+          const ctrl = await this.worker.getControllerForRemoteConnection({
+            calledFrom: 'Insert new deployment action',
+          });
           try {
             const response = await ctrl.insertEntity().received;
             console.info(`Entity saved successfully: ${response.body.text}`);

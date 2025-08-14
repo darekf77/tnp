@@ -123,7 +123,9 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
         name: 'Manage Environments',
         action: async () => {
           console.log('hello world');
-          const ctrl = await this.worker.getControllerForRemoteConnection();
+          const ctrl = await this.worker.getControllerForRemoteConnection({
+            calledFrom: 'Manage Environments action',
+          });
           const list = (await ctrl.getEnvironments().received)?.body.json || [];
           await UtilsTerminal.previewLongList(
             list.map(s => `${s.name} ${s.type}`),

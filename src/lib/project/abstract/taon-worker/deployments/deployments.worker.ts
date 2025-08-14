@@ -41,9 +41,13 @@ export class DeploymentsWorker extends BaseCliWorker<
   //#endregion
 
   public async startNormallyInCurrentProcess(): Promise<void> {
+    //#region @backendFunc
     await super.startNormallyInCurrentProcess();
-    const ctrl = await this.getControllerForRemoteConnection();
+    const ctrl = await this.getControllerForRemoteConnection({
+      calledFrom: 'deployment startNormallyInCurrentProcess',
+    });
     await ctrl.insertEntity().received;
     await ctrl.insertEntity().received;
+    //#endregion
   }
 }
