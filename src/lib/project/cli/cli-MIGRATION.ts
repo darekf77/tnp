@@ -145,12 +145,12 @@ ${detectedContexts.map(db => `- ${db}`).join('\n')}
     }
 
     const classes = detectedContexts.map(contextName => {
-      return `
+      return `//#${'reg' + 'ion'} Migration class for context "${contextName}"
 @Taon.Migration({
   className: '${contextName}_${timestamp}_${migrationName}',
 })
 export class ${contextName}_${timestamp}_${migrationName} extends Taon.Base.Migration {
-
+    //#${'reg' + 'ion'} is migration for context ${contextName} ready to run
     /**
      * IMPORTANT !!!
      * remove this method if you are ready to run this migration
@@ -158,11 +158,15 @@ export class ${contextName}_${timestamp}_${migrationName} extends Taon.Base.Migr
     public isReadyToRun(): boolean {
       return false;
     }
+    //#${'end' + 'reg' + 'ion'}
 
+    //#${'reg' + 'ion'} up
     async up(queryRunner: QueryRunner): Promise<any> {
        await queryRunner.startTransaction();
       try {
+
       // do "something" in db
+
         await queryRunner.commitTransaction();
       } catch (error) {
         console.error('Error in migration:', error);
@@ -171,12 +175,16 @@ export class ${contextName}_${timestamp}_${migrationName} extends Taon.Base.Migr
         await queryRunner.release();
       }
     }
+    //#${'end' + 'reg' + 'ion'}
 
+    //#${'reg' + 'ion'} down
     async down(queryRunner: QueryRunner): Promise<any> {
       // revert this "something" in db
-      // queryRunner.clearDatabase()
+      // await queryRunner.clearDatabase()
     }
+    //#${'end' + 'reg' + 'ion'}
 }
+//#${'end' + 'reg' + 'ion'}
       `;
     });
 
@@ -188,7 +196,7 @@ export class ${contextName}_${timestamp}_${migrationName} extends Taon.Base.Migr
     Helpers.writeFile(
       absPathToNewMigrationFile,
       `import { Taon } from 'taon/src';\n` +
-        `import { QueryRunner } from 'taon-typeorm/src';\n` +
+        `import { QueryRunner } from 'taon-typeorm/src';\n\n` +
         `${classes.join('\n\n')}`,
     );
     UtilsTypescript.formatFile(absPathToNewMigrationFile);
