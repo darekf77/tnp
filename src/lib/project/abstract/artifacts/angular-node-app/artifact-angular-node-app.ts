@@ -8,6 +8,7 @@ import {
   UtilsYaml,
   dateformat,
   chalk,
+  CoreModels,
 } from 'tnp-core/src';
 import { UtilsOs, UtilsTerminal } from 'tnp-core/src';
 import {
@@ -517,37 +518,29 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         customDestinationLocation: dockerComposeYmlDestPath,
       });
 
-      (() => {
-        const startJsRelativePath = 'docker-templates/start.ts';
-        const startJsDestPath = crossPlatformPath([
-          localReleaseOutputBasePath,
-          path.basename(startJsRelativePath),
-        ]);
-
-        this.project.framework.recreateFileFromCoreProject({
-          relativePathInCoreProject: startJsRelativePath,
-          customDestinationLocation: startJsDestPath,
-        });
-      })();
-
       //#endregion
 
-      const contextsNames =
-        this.project.framework.getAllDetectedContextsNames();
+      const contextsNames = this.project.framework.getAllDetectedTaonContexts();
 
       const useDomain = releaseOptions.website.useDomain;
       const domain = releaseOptions.website.domain;
 
       //#region create one env file for all docker containers
       for (let i = 0; i < contextsNames.length; i++) {
-        const index = i + 1; // start from 1
-        const contextName = contextsNames[index];
+        const contextRealIndex = i + 1; // start from 1
+        const contextName = contextsNames[i].contextName;
+        const taskNameBackendReleasePort =
+          `docker release ${releaseOptions.release.releaseType} ` +
+          `backend port for ${contextName} (n=${contextRealIndex})`;
         const portBackendRelease = await this.project.registerAndAssignPort(
-          `docker release ${releaseOptions.release.releaseType} backend port for ${contextName} (n=${index})`,
+          taskNameBackendReleasePort,
         );
 
+        const taskNameFrontendreleasePort =
+          `docker release ${releaseOptions.release.releaseType} ` +
+          `frontend port for ${contextName} (n=${contextRealIndex})`;
         const portFrontendRelease = await this.project.registerAndAssignPort(
-          `docker release ${releaseOptions.release.releaseType} frontend port for ${contextName} (n=${index})`,
+          taskNameFrontendreleasePort,
         );
 
         // const unknownProtocol = `https://`;
@@ -582,10 +575,11 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
                   )]: 'HINT! IF YOU NEED DOMAIN USE userDomain=true in env.ts',
                 }
               : {}),
-            [`HOST_BACKEND_PORT_${index}`]: portBackendRelease,
-            [`HOST_URL_${index}`]: domainForContextBE,
-            [`FRONTEND_NORMAL_APP_PORT_${index}`]: portFrontendRelease,
-            [`FRONTEND_HOST_URL_${index}`]: domainForContextFE,
+            [`HOST_BACKEND_PORT_${contextRealIndex}`]: portBackendRelease,
+            [`HOST_URL_${contextRealIndex}`]: domainForContextBE,
+            [`FRONTEND_NORMAL_APP_PORT_${contextRealIndex}`]:
+              portFrontendRelease,
+            [`FRONTEND_HOST_URL_${contextRealIndex}`]: domainForContextFE,
 
             ...(i === 0 // fallback to old taon app.hosts values
               ? {
@@ -597,10 +591,28 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
               : {}),
           },
         );
+        UtilsDotFile.setCommentToKeyInDotFile(
+          [localReleaseOutputBasePath, '.env'],
+          `HOST_BACKEND_PORT_${contextRealIndex}`,
+          `${CoreModels.tagForTaskName}="${taskNameBackendReleasePort}"`,
+        );
+        if (i === 0) {
+          UtilsDotFile.setCommentToKeyInDotFile(
+            [localReleaseOutputBasePath, '.env'],
+            `HOST_BACKEND_PORT`,
+            `${CoreModels.tagForTaskName}="${taskNameBackendReleasePort}"`,
+          );
+        }
+        UtilsDotFile.setCommentToKeyInDotFile(
+          [localReleaseOutputBasePath, '.env'],
+          `FRONTEND_NORMAL_APP_PORT_${contextRealIndex}`,
+          `${CoreModels.tagForTaskName}="${taskNameFrontendreleasePort}"`,
+        );
       }
 
       UtilsDotFile.setValueToDotFile(
         [localReleaseOutputBasePath, '.env'],
+        'COMPOSE_PROJECT_NAME',
         (
           _.camelCase(this.project.parent?.name) +
           '-' +
@@ -614,20 +626,18 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
               : releaseOptions.release.envName
           }${releaseOptions.release.envNumber || ''}`
         ).toLowerCase(),
-
-        'COMPOSE_PROJECT_NAME',
       );
 
       UtilsDotFile.setValueToDotFile(
         [localReleaseOutputBasePath, '.env'],
-        `${dateformat(new Date(), 'dd-mm-yyyy_HH:MM:ss')}`,
         'BUILD_DATE',
+        `${dateformat(new Date(), 'dd-mm-yyyy_HH:MM:ss')}`,
       );
 
       UtilsDotFile.setValueToDotFile(
         [localReleaseOutputBasePath, '.env'],
-        `production`,
         'NODE_ENV',
+        `production`,
       );
       //#endregion
 
@@ -647,7 +657,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
       for (let i = 0; i < contextsNames.length; i++) {
         const index = i + 1; // start from 1
-        const contextName = contextsNames[i];
+        const contextName = contextsNames[i].contextName;
         const ctxBackend = _.cloneDeep(backendTemplapteObj);
         const newKey =
           `backend-app-node--${contextName}--${index}`.toLowerCase();
@@ -740,6 +750,22 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 ${dockerComposeYmlFileContent}
 # ${THIS_IS_GENERATED_STRING}`,
       );
+      Helpers.copyFile(this.project.pathFor(config.file.package_json), [
+        localReleaseOutputBasePath,
+        config.file.package_json,
+      ]);
+      Helpers.setValueToJSON(
+        [localReleaseOutputBasePath, config.file.package_json],
+        'scripts',
+        {},
+      );
+
+      Helpers.setValueToJSON(
+        [localReleaseOutputBasePath, config.file.package_json],
+        'scripts.start',
+        `taon preview ./docker-compose.yml`,
+      );
+
       //#endregion
 
       //#region update index.html with env variables
@@ -778,9 +804,12 @@ ${dockerComposeYmlFileContent}
         // Helpers.run
         // localReleaseOutputBasePath
         // TODO @LAST automatic compose up/down
-        const zipFileAbsPath = await UtilsZip.zipDir(localReleaseOutputBasePath, {
-          overrideIfZipFileExists: true,
-        });
+        const zipFileAbsPath = await UtilsZip.zipDir(
+          localReleaseOutputBasePath,
+          {
+            overrideIfZipFileExists: true,
+          },
+        );
 
         Helpers.taskDone(`
 
@@ -790,6 +819,8 @@ ${dockerComposeYmlFileContent}
           ${zipFileAbsPath}
 
           `);
+
+        // this.project.nodeModules.linkToLocation(localReleaseOutputBasePath);
       }
 
       //#endregion
