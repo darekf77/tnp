@@ -623,6 +623,12 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         `${dateformat(new Date(), 'dd-mm-yyyy_HH:MM:ss')}`,
         'BUILD_DATE',
       );
+
+      UtilsDotFile.setValueToDotFile(
+        [localReleaseOutputBasePath, '.env'],
+        `production`,
+        'NODE_ENV',
+      );
       //#endregion
 
       const allValues = UtilsDotFile.getValuesKeysAsJsonObject([
