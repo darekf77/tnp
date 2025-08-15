@@ -98,6 +98,8 @@ export const MIGRATION_CONST_PREFIX = 'MIGRATIONS_CLASSES_FOR_';
 export const UNIT_TEST_TIMEOUT = 30000;
 export const INTEGRATION_TEST_TIMEOUT = 30000;
 
+export const USE_MIGRATIONS_DATA_IN_HOST_CONFIG = false;
+
 export const COMPILATION_COMPLETE_LIB_NG_BUILD =
   'Compilation complete. Watching for file changes';
 
