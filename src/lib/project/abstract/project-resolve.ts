@@ -328,6 +328,8 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     //#region pull master with tags
     try {
       Helpers.git.meltActionCommits(cwd);
+} catch (error) {}
+    try {
       Helpers.run(
         `git reset --hard HEAD~2 && git reset --hard && git clean -df && git pull --tags origin master`,
         { cwd, output: false },
@@ -342,6 +344,12 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
         true,
       );
     }
+try {
+      Helpers.git.meltActionCommits(cwd);
+    } catch (error) {}
+    try {
+      Helpers.run(`git reset --hard`, { cwd, output: false }).sync();
+    } catch (error) {}
     //#endregion
 
     //#region checkout lastest tag
