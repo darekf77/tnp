@@ -74,7 +74,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       //#region GENERATE INDEX.TS
       {
         group: groupGENERATE,
-        title: `index.ts`,
+        title: `generate ./index.ts with all isomorphic imports`,
         exec: `${FRAMEWORK_NAME} generate %absolutePath% generated-index-exports_custom`,
         options: {
           titleWhenProcessing: 'generating index.ts',
@@ -84,12 +84,24 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       //#endregion
 
       //#region GENERATE INDEX.TS
+      // {
+      //   group: groupGENERATE,
+      //   title: `app.routes.ts`,
+      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% generated-index-exports_custom`,
+      //   options: {
+      //     titleWhenProcessing: 'generating index.ts',
+      //     showSuccessMessage: false,
+      //   },
+      // },
+      //#endregion
+
+      //#region GENERATE INDEX.TS
       {
         group: groupRefactor,
         title: `class fields @websql regions`,
         exec: `${FRAMEWORK_NAME} generate:fieldsWebsqlRegions %absolutePath%`,
         options: {
-          titleWhenProcessing: 'generating index.ts',
+          titleWhenProcessing: 'refactoring class field with @websql regions',
           showSuccessMessage: false,
         },
       },
