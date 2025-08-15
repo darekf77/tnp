@@ -35,7 +35,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     this.taonProjectsWorker = new TaonProjectsWorker(
       'taon-projects',
       `${cliToolName} ${
-        'startCliServiceTaonProjectsWorker'
+        'startCliServiceTaonProjectsWorker --skipCoreCheck'
         // as keyof $Global
       }`,
       this,
@@ -328,7 +328,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     //#region pull master with tags
     try {
       Helpers.git.meltActionCommits(cwd);
-} catch (error) {}
+    } catch (error) {}
     try {
       Helpers.run(
         `git reset --hard HEAD~2 && git reset --hard && git clean -df && git pull --tags origin master`,
@@ -344,7 +344,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
         true,
       );
     }
-try {
+    try {
       Helpers.git.meltActionCommits(cwd);
     } catch (error) {}
     try {
@@ -420,7 +420,6 @@ try {
       path.dirname(taonRepoPathUserInUserDir),
       'taon-projects/.vscode',
     ]);
-
 
     if (!fse.existsSync(taonRepoPathUserInUserDir) && !global.skipCoreCheck) {
       if (!fse.existsSync(path.dirname(taonRepoPathUserInUserDir))) {
