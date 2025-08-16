@@ -10,6 +10,7 @@ import multer from 'multer';
 import axios from 'axios';
 import FormData from 'form-data';
 
+//#region helpers
 // ---------- shared utils ----------
 const ensureDir = (dir: string) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -28,16 +29,20 @@ function parseArgs(argv: string[]) {
   }
   return flags;
 }
+//#endregion
 
 // ---------- [1] Express server ----------
 async function startServer(port: number) {
   ensureDir(UPLOAD_DIR);
+  // multer
 
   const storage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
     filename: (_req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
-      const base = path.basename(file.originalname, ext).replace(/[^\w.-]/g, '_');
+      const base = path
+        .basename(file.originalname, ext)
+        .replace(/[^\w.-]/g, '_');
       const uniq = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}`;
       cb(null, `${base}-${uniq}${ext}`);
     },
@@ -135,7 +140,10 @@ async function sendZip(filePath: string, url = 'http://localhost:3000/upload') {
     // first non-flag arg is file path
     const nonFlags = rest.filter(a => !a.startsWith('--'));
     const filePath = nonFlags[0];
-    if (!filePath) throw new Error('Usage: ts-node transfer.ts send <path-to-zip> [--url=http://host:port/upload]');
+    if (!filePath)
+      throw new Error(
+        'Usage: ts-node transfer.ts send <path-to-zip> [--url=http://host:port/upload]',
+      );
     const flags = parseArgs(rest);
     const url = (flags.url as string) || 'http://localhost:3000/upload';
     await sendZip(filePath, url);
