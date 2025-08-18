@@ -11,7 +11,11 @@ import { PackageJson } from 'type-fest';
 
 import { TO_REMOVE_TAG } from '../../../../../../constants';
 import { Models } from '../../../../../../models';
-import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../../../../../options';
+import {
+  EnvOptions,
+  ReleaseArtifactTaon,
+  ReleaseType,
+} from '../../../../../../options';
 import type { Project } from '../../../../project';
 
 import { CopyMangerHelpers } from './copy-manager-helpers';
@@ -151,13 +155,18 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     ) {
       try {
         const possibleTnpLocation = crossPlatformPath(
+          // <root>
           path.dirname(
-            fse.realpathSync(
-              this.project.pathFor([
-                config.folder.node_modules,
-                'tnp',
-                'source',
-              ]),
+            // src
+            path.dirname(
+              // src/lib
+              fse.realpathSync(
+                this.project.pathFor([
+                  config.folder.node_modules,
+                  'tnp',
+                  'source',
+                ]),
+              ),
             ),
           ),
         );
