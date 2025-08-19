@@ -11,6 +11,7 @@ import { DeploymentsRepository } from './deployments.repository';
   className: 'DeploymentsController',
 })
 export class DeploymentsController extends BaseCliWorkerController {
+  // @ts-ignore
   deploymentsRepository = this.injectCustomRepo(DeploymentsRepository);
 
   // @ts-ignore
@@ -18,6 +19,7 @@ export class DeploymentsController extends BaseCliWorkerController {
   getEntities(): Taon.Response<Deployments[]> {
     //#region @backendFunc
     return async (req, res) => {
+      // @ts-ignore
       return this.deploymentsRepository.find();
     };
     //#endregion
@@ -27,6 +29,7 @@ export class DeploymentsController extends BaseCliWorkerController {
   insertEntity(): Taon.Response<string> {
     return async (req, res) => {
       //#region @backendFunc
+      // @ts-ignore
       await this.deploymentsRepository.save(new Deployments().clone({}));
       return 'Entity saved successfully';
       //#endregion
