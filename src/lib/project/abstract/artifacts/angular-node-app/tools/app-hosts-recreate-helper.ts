@@ -159,7 +159,7 @@ export const HOST_BACKEND_PORT${n ? `_${n}` : ''} = ` +
  * ${!n ? '@deprecated use FRONTEND_NORMAL_APP_PORT_n instead' : ''}
  */
 export const FRONTEND_NORMAL_APP_PORT${n ? `_${n}` : ''} = ` +
-        `${this.prefixVarTemplate('FRONTEND_NORMAL_APP_PORT', n) + (n ? `undefined` : 'FRONTEND_NORMAL_APP_PORT_1')};
+        `${this.prefixVarTemplate('FRONTEND_NORMAL_APP_PORT', n, { sameAsFirstInDevMode: true }) + (n ? `undefined` : 'FRONTEND_NORMAL_APP_PORT_1')};
 
 /**
  * @deprecated use FRONTEND_NORMAL_APP_PORT instead
@@ -171,7 +171,7 @@ export const CLIENT_DEV_NORMAL_APP_PORT${n ? `_${n}` : ''} = FRONTEND_NORMAL_APP
  * ${!n ? '@deprecated use FRONTEND_WEBSQL_APP_PORT_n instead' : ''}
  */
 export const FRONTEND_WEBSQL_APP_PORT${n ? `_${n}` : ''} = ` +
-        `${this.prefixVarTemplate('FRONTEND_WEBSQL_APP_PORT', n) + (n ? `undefined` : 'FRONTEND_WEBSQL_APP_PORT_1')};
+        `${this.prefixVarTemplate('FRONTEND_WEBSQL_APP_PORT', n, { sameAsFirstInDevMode: true }) + (n ? `undefined` : 'FRONTEND_WEBSQL_APP_PORT_1')};
 
 /**
  * @deprecated use FRONTEND_WEBSQL_APP_PORT instead
@@ -188,12 +188,12 @@ export const FRONTEND_NORMAL_ELECTRON_PORT${n ? `_${n}` : ''} = ${n ? `undefined
  * Backend url - use as "host" inside your context
  * ${!n ? '@deprecated use HOST_URL_n instead' : ''}
  */
-export const HOST_URL${n ? `_${n}` : ''} =  ${this.prefixVarTemplate('HOST_URL', n, true)} ('http://localhost:' + HOST_BACKEND_PORT${n ? `_${n}` : ''});
+export const HOST_URL${n ? `_${n}` : ''} =  ${this.prefixVarTemplate('HOST_URL', n, { isURL: true })} ('http://localhost:' + HOST_BACKEND_PORT${n ? `_${n}` : ''});
 /**
  * Frontend host url - use as "frontendHost" inside your context
  * ${!n ? '@deprecated use FRONTEND_HOST_URL_n instead' : ''}
  */
-export const FRONTEND_HOST_URL${n ? `_${n}` : ''} = ${this.prefixVarTemplate('FRONTEND_HOST_URL', n, true)}  ( 'http://localhost:' +
+export const FRONTEND_HOST_URL${n ? `_${n}` : ''} = ${this.prefixVarTemplate('FRONTEND_HOST_URL', n, { isURL: true, sameAsFirstInDevMode: true })}  ( 'http://localhost:' +
   (isWebSQLMode ? FRONTEND_WEBSQL_APP_PORT${n ? `_${n}` : ''} : FRONTEND_NORMAL_APP_PORT${n ? `_${n}` : ''}));
 /**
  * Frontend electron host url - use in app.electron.ts with win.loadURL(FRONTEND_HOST_URL_ELECTRON);
@@ -347,13 +347,23 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   protected prefixVarTemplate(
     varName: string,
     n: number | undefined,
-    isURL = false,
+    options?: { isURL?: boolean; sameAsFirstInDevMode?: boolean },
   ): string {
+    //#region @backendFunc
+    options = options || {};
+    let { isURL, sameAsFirstInDevMode } = options;
+    isURL = !!isURL;
+    sameAsFirstInDevMode = !!sameAsFirstInDevMode;
+    const IS_DEV_MODE =
+      sameAsFirstInDevMode && n > 1
+        ? `(!ACTIVE_CONTEXT ? ${varName}_1 : undefined ) ||`
+        : '';
     return (
-      `${isURL ? 'transformURL' : ''}(nodeENV['${varName}${n ? `_${n}` : ''}']) || ` +
+      `${IS_DEV_MODE} ${isURL ? 'transformURL' : ''}(nodeENV['${varName}${n ? `_${n}` : ''}']) || ` +
       `${isURL ? 'transformURL' : ''}(windowENV['${varName}${n ? `_${n}` : ''}']) || ` +
       `${isURL ? 'transformURL' : ''}(argsENV['${varName}${n ? `_${n}` : ''}']) || `
     );
+    //#endregion
   }
   //#endregion
 
@@ -382,6 +392,12 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     const allDetectedContexts =
       this.project.framework.getAllDetectedTaonContexts();
 
+    const ONLY_ONE_FRONTEND_IN_DEV = true;
+    let ngWebsqlAppPortFirst: number | undefined;
+    let ngNormalAppPortFirst: number | undefined;
+    let ngWebsqlElectronPortFirst: number | undefined;
+    let ngNormalElectronPortFirst: number | undefined;
+
     for (let i = 0; i < allDetectedContexts.length; i++) {
       const nodeBeAppPort = await this.NODE_BACKEND_PORT_UNIQ_KEY(
         buildOptions.clone({
@@ -394,62 +410,80 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         }),
         i + 1,
       );
-      const ngWebsqlAppPort = await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
-        buildOptions.clone({
-          build: {
-            websql: true,
-          },
-          release: {
-            targetArtifact: 'angular-node-app',
-          },
-        }),
-        {
-          num: i + 1,
-        },
-      );
-      const ngNormalAppPort = await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
-        buildOptions.clone({
-          build: {
-            websql: false,
-          },
-          release: {
-            targetArtifact: 'angular-node-app',
-          },
-        }),
-        {
-          num: i + 1,
-        },
-      );
+      const ngWebsqlAppPort =
+        ONLY_ONE_FRONTEND_IN_DEV && ngWebsqlAppPortFirst
+          ? ngWebsqlAppPortFirst
+          : await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+              buildOptions.clone({
+                build: {
+                  websql: true,
+                },
+                release: {
+                  targetArtifact: 'angular-node-app',
+                },
+              }),
+              {
+                num: i + 1,
+              },
+            );
+      ngWebsqlAppPortFirst = ngWebsqlAppPortFirst || ngWebsqlAppPort;
+
+      const ngNormalAppPort =
+        ONLY_ONE_FRONTEND_IN_DEV && ngNormalAppPortFirst
+          ? ngNormalAppPortFirst
+          : await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+              buildOptions.clone({
+                build: {
+                  websql: false,
+                },
+                release: {
+                  targetArtifact: 'angular-node-app',
+                },
+              }),
+              {
+                num: i + 1,
+              },
+            );
+
+      ngNormalAppPortFirst = ngNormalAppPortFirst || ngNormalAppPort;
 
       const ngWebsqlElectronPort =
-        await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
-          buildOptions.clone({
-            build: {
-              websql: true,
-            },
-            release: {
-              targetArtifact: 'electron-app',
-            },
-          }),
-          {
-            num: i + 1,
-          },
-        );
+        ONLY_ONE_FRONTEND_IN_DEV && ngWebsqlElectronPortFirst
+          ? ngWebsqlElectronPortFirst
+          : await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+              buildOptions.clone({
+                build: {
+                  websql: true,
+                },
+                release: {
+                  targetArtifact: 'electron-app',
+                },
+              }),
+              {
+                num: i + 1,
+              },
+            );
+      ngWebsqlElectronPortFirst =
+        ngWebsqlElectronPortFirst || ngWebsqlElectronPortFirst;
 
       const ngNormalElectronPort =
-        await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
-          buildOptions.clone({
-            build: {
-              websql: false,
-            },
-            release: {
-              targetArtifact: 'electron-app',
-            },
-          }),
-          {
-            num: i + 1,
-          },
-        );
+        ONLY_ONE_FRONTEND_IN_DEV && ngNormalElectronPortFirst
+          ? ngNormalElectronPortFirst
+          : await this.APP_NG_SERVE_ARTIFACT_PORT_UNIQ_KEY(
+              buildOptions.clone({
+                build: {
+                  websql: false,
+                },
+                release: {
+                  targetArtifact: 'electron-app',
+                },
+              }),
+              {
+                num: i + 1,
+              },
+            );
+      ngNormalElectronPortFirst =
+        ngNormalElectronPortFirst || ngNormalElectronPort;
 
       contexts.push(
         contextTemplate({
