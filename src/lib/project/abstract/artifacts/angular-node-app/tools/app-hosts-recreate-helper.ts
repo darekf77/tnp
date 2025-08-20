@@ -274,9 +274,16 @@ const transformURL = (url: string): string => {
 
 const ACTIVE_CONTEXT: string | null = nodeENV['ACTIVE_CONTEXT'] || argsENV['ACTIVE_CONTEXT'] || windowENV['ACTIVE_CONTEXT'] || null;
 
-${_.times(this.lastTaonContexts.length, i => {
-  return tempalte(i + 1);
-}).join('\n')}
+${_.times(
+  this.lastTaonContexts.filter(
+    f =>
+      f.fileRelativePath.startsWith('app/') ||
+      f.fileRelativePath.startsWith('app.'),
+  ).length,
+  i => {
+    return tempalte(i + 1);
+  },
+).join('\n')}
 ${tempalte()}
 
 export const HOST_CONFIG = {
@@ -286,9 +293,12 @@ ${Object.keys(filesWithContexts)
     const contextsInFile = (filesWithContexts[contextFileName] || []).sort(
       (a, b) => a.localeCompare(b),
     );
-    const markAsDepecated = contextFileName.startsWith('lib/');
+    const contextIsInsideLibInsteadApp = contextFileName.startsWith('lib/');
+    if (contextIsInsideLibInsteadApp) {
+      return `// Context(s) "${contextsInFile.join(',')}" from /src/lib can't use HOST_CONFIG - only code from /src/app or scr/app.* can use it.`;
+    }
     return `
-    ${markAsDepecated ? depecationMessage : `\n/** Relative file path for context */\n`}
+    ${contextIsInsideLibInsteadApp ? depecationMessage : `\n/** Relative file path for context */\n`}
     ${!USE_IN_HOST_CONFIG_FULL_CONTEXT_PATH ? '//' : ''}'${contextFileName}' ${USE_IN_HOST_CONFIG_FULL_CONTEXT_PATH ? `: {` : ''}
 ${contextsInFile
   .map((contextName, i) => {
@@ -299,24 +309,24 @@ ${contextsInFile
     ++counter;
 
     return `
-${markAsDepecated ? depecationMessage : `\n/** Name of context (var, let, const variable) inside *.ts file. */\n`}
+${contextIsInsideLibInsteadApp ? depecationMessage : `\n/** Name of context (var, let, const variable) inside *.ts file. */\n`}
         '${contextName}': {
-        ${markAsDepecated ? depecationMessage : ''}
+        ${contextIsInsideLibInsteadApp ? depecationMessage : ''}
          activeContext: ACTIVE_CONTEXT,
-        ${markAsDepecated ? depecationMessage : ''}
+        ${contextIsInsideLibInsteadApp ? depecationMessage : ''}
          contextName: '${contextName}',
-        ${markAsDepecated ? depecationMessage : ''}
+        ${contextIsInsideLibInsteadApp ? depecationMessage : ''}
          hostPortNumber: Number(HOST_BACKEND_PORT_${counter}),
-         ${markAsDepecated ? depecationMessage : ''}
+         ${contextIsInsideLibInsteadApp ? depecationMessage : ''}
          host: HOST_URL_${counter} + BUILD_BASE_HREF,
-         ${markAsDepecated ? depecationMessage : ''}
+         ${contextIsInsideLibInsteadApp ? depecationMessage : ''}
          frontendHostPortNumber: Number(FRONTEND_NORMAL_APP_PORT_${counter}),
-         ${markAsDepecated ? depecationMessage : ''}
+         ${contextIsInsideLibInsteadApp ? depecationMessage : ''}
          frontendHost: FRONTEND_HOST_URL_${counter} + BUILD_BASE_HREF,
-         ${markAsDepecated ? depecationMessage : ''}
+         ${contextIsInsideLibInsteadApp ? depecationMessage : ''}
          appId: APP_ID,
         ${USE_MIGRATIONS_DATA_IN_HOST_CONFIG ? `//#${'reg' + 'ion'}  @${'web' + 'sql'}` : ''}
-         ${USE_MIGRATIONS_DATA_IN_HOST_CONFIG && contextMigraions && markAsDepecated ? depecationMessage : ''}
+         ${USE_MIGRATIONS_DATA_IN_HOST_CONFIG && contextMigraions && contextIsInsideLibInsteadApp ? depecationMessage : ''}
          ${
            USE_MIGRATIONS_DATA_IN_HOST_CONFIG && contextMigraions
              ? `migrations: { ...${contextMigraions} },`
@@ -389,8 +399,13 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 `;
     };
 
-    const allDetectedContexts =
-      this.project.framework.getAllDetectedTaonContexts();
+    const allDetectedContexts = this.project.framework
+      .getAllDetectedTaonContexts()
+      .filter(
+        f =>
+          f.fileRelativePath.startsWith('app/') ||
+          f.fileRelativePath.startsWith('app.'),
+      );
 
     const ONLY_ONE_FRONTEND_IN_DEV = true;
     let ngWebsqlAppPortFirst: number | undefined;
