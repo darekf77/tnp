@@ -41,6 +41,12 @@
     //   "replaceWithNothing": true,
     // },
     {
+      "description": "TypeScript Node.js runtime",
+      "includeInBundleNodeModules": "*",
+      "isExternalFor": "*",
+      "packageName": "typescript",
+    },
+    {
       "description": "Image manipulations",
       "includeInBundleNodeModules": "*",
       "isExternalFor": "*",

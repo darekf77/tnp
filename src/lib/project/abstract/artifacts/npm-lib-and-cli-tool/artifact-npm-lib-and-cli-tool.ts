@@ -1192,7 +1192,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     await Helpers.bundleCodeIntoSingleFile(destCli, destCliMin, {
       minify,
       additionalExternals: [
-        'typescript', // is not external
         ...this.project.taonJson.additionalExternalsFor('npm-lib-and-cli-tool'),
       ],
       additionalReplaceWithNothing: [
