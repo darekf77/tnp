@@ -87,6 +87,7 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
       : [];
 
     if (
+      this.lastTaonContexts?.length > 0 &&
       _.isEqual(taonContexts, this.lastTaonContexts) &&
       (USE_MIGRATIONS_DATA_IN_HOST_CONFIG
         ? _.isEqual(migrationExported, this.lastMigrationExported)
@@ -136,8 +137,14 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
     const migrationExported: UtilsTypescript.ExportInfo[] =
       this.lastMigrationExported;
 
+    const contexts = this.lastTaonContexts.filter(
+      f =>
+        f.fileRelativePath.startsWith('app/') ||
+        f.fileRelativePath.startsWith('app.'),
+    );
+
     // console.log({ taonContexts });
-    for (const context of this.lastTaonContexts) {
+    for (const context of contexts) {
       if (!filesWithContexts[context.fileRelativePath]) {
         filesWithContexts[context.fileRelativePath] = [];
       }
@@ -274,17 +281,10 @@ const transformURL = (url: string): string => {
 
 const ACTIVE_CONTEXT: string | null = nodeENV['ACTIVE_CONTEXT'] || argsENV['ACTIVE_CONTEXT'] || windowENV['ACTIVE_CONTEXT'] || null;
 
-${_.times(
-  this.lastTaonContexts.filter(
-    f =>
-      f.fileRelativePath.startsWith('app/') ||
-      f.fileRelativePath.startsWith('app.'),
-  ).length,
-  i => {
-    return tempalte(i + 1);
-  },
-).join('\n')}
-${tempalte()}
+${_.times(contexts.length, i => {
+  return tempalte(i + 1);
+}).join('\n')}
+${contexts.length > 0 ? tempalte() : ''}
 
 export const HOST_CONFIG = {
 ${Object.keys(filesWithContexts)

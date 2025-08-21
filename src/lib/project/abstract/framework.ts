@@ -502,14 +502,7 @@ export class Framework extends BaseFeatureForProject<Project> {
    */
   public getAllDetectedTaonContexts(): Models.TaonContext[] {
     const detectedContexts = [...this._allDetectedNestedContexts()];
-    return detectedContexts.length > 0
-      ? detectedContexts
-      : [
-          {
-            contextName: 'NoContextDetected',
-            fileRelativePath: '',
-          },
-        ];
+    return detectedContexts.length > 0 ? detectedContexts : [];
   }
 
   contextFilter(relativePath: string): boolean {
