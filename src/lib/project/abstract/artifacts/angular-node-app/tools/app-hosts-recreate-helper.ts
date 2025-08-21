@@ -284,7 +284,11 @@ const ACTIVE_CONTEXT: string | null = nodeENV['ACTIVE_CONTEXT'] || argsENV['ACTI
 ${_.times(contexts.length, i => {
   return tempalte(i + 1);
 }).join('\n')}
-${contexts.length > 0 ? tempalte() : ''}
+${contexts.length > 0 ? tempalte() : `
+
+export const CLIENT_DEV_NORMAL_APP_PORT = void 0;
+export const CLIENT_DEV_WEBSQL_APP_PORT = void 0;
+  `}
 
 export const HOST_CONFIG = {
 ${Object.keys(filesWithContexts)
