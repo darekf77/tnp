@@ -42,7 +42,9 @@ const frontendHost =
   standalone: false,
 })
 export class TnpComponent {
-  angularVersion = VERSION.full + ` mode: ${UtilsOs.isRunningInWebSQL() ? ' (websql)' : '(normal)'}`;
+  angularVersion =
+    VERSION.full +
+    ` mode: ${UtilsOs.isRunningInWebSQL() ? ' (websql)' : '(normal)'}`;
   userApiService = inject(UserApiService);
   readonly users$: Observable<User[]> = this.userApiService.getAll();
 }
@@ -59,7 +61,8 @@ export class UserApiService {
   getAll() {
     return this.userController
       .getAll()
-      .request().observable.pipe(map(r => r.body.json));
+      .request()
+      .observable.pipe(map(r => r.body.json));
   }
 }
 //#endregion
@@ -132,7 +135,7 @@ async function start() {
       'users from backend': users,
     });
   }
-  if(Taon.isElectron) {
+  if (Taon.isElectron) {
     console.log('running in electron');
   }
 }
