@@ -46,8 +46,8 @@ export class DeploymentsWorker extends BaseCliWorker<
     const ctrl = await this.getControllerForRemoteConnection({
       calledFrom: 'deployment startNormallyInCurrentProcess',
     });
-    await ctrl.insertEntity().received;
-    await ctrl.insertEntity().received;
+    await ctrl.insertEntity().request();
+    await ctrl.insertEntity().request();
     //#endregion
   }
 }

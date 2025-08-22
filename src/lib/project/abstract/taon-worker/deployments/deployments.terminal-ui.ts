@@ -39,7 +39,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
           const ctrl = await this.worker.getControllerForRemoteConnection({
             calledFrom: 'Get stuff from backend action',
           });
-          const list = (await ctrl.getEntities().received)?.body.json || [];
+          const list = (await ctrl.getEntities().request())?.body.json || [];
           console.log(list.map(c => `- ${c.id} ${c.deploymentDescriptionFromZip}`).join('\n'));
           Helpers.info(`Fetched ${list.length} entities`);
           await UtilsTerminal.pressAnyKeyToContinueAsync({
@@ -55,7 +55,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
             calledFrom: 'Insert new deployment action',
           });
           try {
-            const response = await ctrl.insertEntity().received;
+            const response = await ctrl.insertEntity().request();
             console.info(`Entity saved successfully: ${response.body.text}`);
           } catch (error) {
             console.error('Error inserting entity:', error);
