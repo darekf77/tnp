@@ -9,10 +9,7 @@ import { EnvOptions } from '../../../../../options';
 import type { Project } from '../../../project';
 import { InsideStruct } from '../../__helpers__/inside-structures/inside-struct';
 import { BaseInsideStruct } from '../../__helpers__/inside-structures/structs/base-inside-struct';
-import {
-  recreateApp,
-  recreateIndex,
-} from '../../__helpers__/inside-structures/structs/inside-struct-helpers';
+
 
 //#endregion
 
@@ -255,8 +252,6 @@ export * from './lib';
             Helpers.writeJson(ngPackageJson, json);
           })();
 
-          recreateApp(project, this.initOptions);
-          recreateIndex(project);
         },
       },
       project,

@@ -19,13 +19,6 @@ import {
 } from 'tnp-helpers/src';
 import { UtilsDotFile } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
-import {
-  createSourceFile,
-  isClassDeclaration,
-  ScriptTarget,
-  Node,
-  forEachChild,
-} from 'typescript';
 
 import {
   ACTIVE_CONTEXT,
@@ -90,7 +83,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     } else {
       await this.insideStructureApp.init(initOptions);
     }
-    this.fixAppTsFile();
 
     // await this.project.docker.runTask({
     //   watch: initOptions.build.watch,
@@ -877,150 +869,7 @@ ${dockerComposeYmlFileContent}
   }
   //#endregion
 
-  //#region private methods / fix missing components/modules
-  private fixAppTsFile(): string {
-    //#region @backendFunc
-    if (!this.project.framework.isStandaloneProject) {
-      return;
-    }
 
-    const relativeAppTs = crossPlatformPath([config.folder.src, 'app.ts']);
-    const appFile = this.project.pathFor(relativeAppTs);
-    if (Helpers.exists(appFile)) {
-      let contentAppFile = Helpers.readFile(appFile);
-      let newContentAppFile = this.replaceModuleAndComponentName(
-        contentAppFile,
-        this.project.name,
-      );
-
-      if (contentAppFile !== newContentAppFile) {
-        Helpers.writeFile(appFile, newContentAppFile);
-        try {
-          this.project.formatFile(relativeAppTs);
-        } catch (error) {}
-      }
-    }
-    //#endregion
-  }
-  //#endregion
-
-  //#region private methods / add missing components/modules
-  private replaceModuleAndComponentName(
-    tsFileContent: string,
-    projectName: string,
-  ) {
-    //#region @backendFunc
-    // Parse the source file using TypeScript API
-
-    const sourceFile = createSourceFile(
-      'temp.ts',
-      tsFileContent,
-      ScriptTarget.Latest,
-      true,
-    );
-
-    let moduleName: string | null = null;
-    let componentName: string | null = null;
-    let tooMuchToProcess = false;
-
-    const newComponentName = `${_.upperFirst(_.camelCase(projectName))}Component`;
-    const newModuleName = `${_.upperFirst(_.camelCase(projectName))}Module`;
-    let orignalComponentClassName: string;
-    let orignalModuleClassName: string;
-
-    // Visitor to analyze the AST
-    const visit = (node: Node) => {
-      if (isClassDeclaration(node) && node.name) {
-        const className = node.name.text;
-
-        if (className.endsWith('Module')) {
-          if (moduleName) {
-            // More than one module found, return original content
-            tooMuchToProcess = true;
-            return;
-          }
-          moduleName = className;
-          orignalModuleClassName = className;
-        }
-
-        if (className.endsWith('Component')) {
-          if (componentName) {
-            // More than one component found, return original content
-            tooMuchToProcess = true;
-            return;
-          }
-          componentName = className;
-          orignalComponentClassName = className;
-        }
-      }
-
-      forEachChild(node, visit);
-    };
-
-    visit(sourceFile);
-
-    if (tooMuchToProcess) {
-      return tsFileContent;
-    }
-
-    const moduleTempalte =
-      [`\n//#re`, `gion  ${this.project.name} module `].join('') +
-      ['\n//#re', 'gion @bro', 'wser'].join('') +
-      `\n@NgModule({ declarations: [${newComponentName}],` +
-      ` imports: [CommonModule], exports: [${newComponentName}] })\n` +
-      `export class ${newModuleName} {}` +
-      ['\n//#endre', 'gion'].join('') +
-      ['\n//#endre', 'gion'].join('');
-
-    const componentTemplate =
-      [`\n//#re`, `gion  ${this.project.name} component `].join('') +
-      ['\n//#re', 'gion @bro', 'wser'].join('') +
-      `\n@Component({
-      standalone: false,
-      template: \`
-
-      hello world fromr ${this.project.name}
-
-      \` })` +
-      `\nexport class ${newComponentName} {}` +
-      ['\n//#endre', 'gion'].join('') +
-      ['\n//#endre', 'gion'].join('');
-
-    if (orignalModuleClassName) {
-      tsFileContent = tsFileContent.replace(
-        new RegExp(orignalModuleClassName, 'g'),
-        newModuleName,
-      );
-    }
-
-    if (orignalComponentClassName) {
-      tsFileContent = tsFileContent.replace(
-        new RegExp(orignalComponentClassName, 'g'),
-        newComponentName,
-      );
-    }
-
-    if (moduleName === null && componentName === null) {
-      // No module or component found, append new ones
-      return (
-        tsFileContent + '\n\n' + componentTemplate + '\n\n' + moduleTempalte
-      );
-    }
-
-    if (moduleName === null && componentName !== null) {
-      // append only module
-      return tsFileContent + '\n\n' + moduleTempalte;
-    }
-
-    if (moduleName !== null && componentName === null) {
-      // Either module or component is missing; leave content unchanged
-      return tsFileContent + '\n\n' + componentTemplate;
-    }
-
-    return tsFileContent;
-    //#endregion
-  }
-  //#endregion
 
   //#endregion
 }

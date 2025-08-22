@@ -10,13 +10,9 @@ import {
   path,
 } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
-import { BaseProcessManger, CommandConfig } from 'tnp-helpers/src';
 
-import {
-  COMPILATION_COMPLETE_APP_NG_SERVE,
-  COMPILATION_COMPLETE_LIB_NG_BUILD,
-} from '../../../constants';
 import { ReleaseArtifactTaon, EnvOptions } from '../../../options';
+import { EXPORT_TEMPLATE } from '../../../templates';
 import { Project } from '../project';
 
 import { ArtifactsGlobalHelper } from './__helpers__/artifacts-helpers';
@@ -128,6 +124,38 @@ export class ArtifactManager {
   }
   //#endregion
 
+  private recreateAndFixCoreFiles(): void {
+    //#region @backendFunc
+    const project = this.project;
+    if (
+      !project.framework.isCoreProject &&
+      project.framework.isStandaloneProject
+    ) {
+      project.framework.recreateFileFromCoreProject({
+        fileRelativePath: [config.folder.src, 'app.ts'],
+      });
+
+      project.framework.preventNotExistedComponentAndModuleInAppTs();
+
+      project.framework.recreateFileFromCoreProject({
+        fileRelativePath: [config.folder.src, 'global.scss'],
+      });
+
+      project.framework.recreateFileFromCoreProject({
+        fileRelativePath: [config.folder.src, 'app.electron.ts'],
+      });
+
+      const indexInSrcFile = crossPlatformPath(
+        path.join(project.location, config.folder.src, config.file.index_ts),
+      );
+
+      if (!Helpers.exists(indexInSrcFile)) {
+        Helpers.writeFile(indexInSrcFile, EXPORT_TEMPLATE('lib'));
+      }
+    }
+    //#endregion
+  }
+
   //#region init
   async init(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
@@ -186,11 +214,15 @@ export class ArtifactManager {
       await this.project.nodeModules.makeSureInstalled();
     }
 
+    this.recreateAndFixCoreFiles();
+
     initOptions = await this.project.environmentConfig.update(initOptions, {
       saveEnvToLibEnv:
         initOptions.release.targetArtifact === 'npm-lib-and-cli-tool' ||
         !initOptions.release.targetArtifact,
     });
+
+    this.project.framework.recreateVarsScss(initOptions);
 
     // TODO QUICK_FIX change env to something else
     Helpers.removeFileIfExists(

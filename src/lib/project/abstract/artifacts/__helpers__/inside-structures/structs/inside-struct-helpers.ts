@@ -1,15 +1,8 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { _, crossPlatformPath, path } from 'tnp-core/src';
+import { _, crossPlatformPath } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import {
-  DOCKER_COMPOSE_FILE_NAME,
-  DOCKER_FOLDER,
-  THIS_IS_GENERATED_INFO_COMMENT,
-} from '../../../../../../constants';
-import { EnvOptions } from '../../../../../../options';
-import { EXPORT_TEMPLATE } from '../../../../../../templates';
 import type { Project } from '../../../../project';
 //#endregion
 
@@ -71,62 +64,6 @@ export function resolvePathToAsset(
   browserPath = resolveBrowserPathToAssetFrom(project, absPathToAsset);
 
   return browserPath;
-  //#endregion
-}
-//#endregion
-
-//#region recreate index.ts file
-export function recreateIndex(project: Project) {
-  //#region @backendFunc
-
-  const indexInSrcFile = crossPlatformPath(
-    path.join(project.location, config.folder.src, config.file.index_ts),
-  );
-
-  if (!Helpers.exists(indexInSrcFile)) {
-    Helpers.writeFile(indexInSrcFile, EXPORT_TEMPLATE('lib'));
-  }
-  //#endregion
-}
-//#endregion
-
-//#region recreate app
-export function recreateApp(project: Project, initOptions: EnvOptions): void {
-  //#region @backendFunc
-
-  if (!project.framework.isCoreProject) {
-    project.framework.recreateFileFromCoreProject({
-      fileRelativePath: [config.folder.src, 'app.ts'],
-    });
-
-    project.framework.recreateFileFromCoreProject({
-      fileRelativePath: [config.folder.src, 'global.scss'],
-    });
-
-    project.framework.recreateFileFromCoreProject({
-      fileRelativePath: [config.folder.src, 'app.electron.ts'],
-    });
-
-    //#region recreate vars.scss file
-    // TODO QUICK_FIX this will work in app - only if app is build with same base-href
-    project.writeFile(
-      'src/vars.scss',
-      `${THIS_IS_GENERATED_INFO_COMMENT}
-// CORE ASSETS BASENAME - use it only for asset from core container
-$basename: '${
-        (initOptions.build.baseHref?.startsWith('./')
-          ? initOptions.build.baseHref.replace('./', '/')
-          : initOptions.build.baseHref) || '/'
-      }';
-$website_title: '${initOptions.website.title}';
-$website_domain: '${initOptions.website.domain}';
-$project_npm_name: '${project.nameForNpmPackage}';
-${THIS_IS_GENERATED_INFO_COMMENT}
-`,
-    );
-    //#endregion
-  }
-
   //#endregion
 }
 //#endregion

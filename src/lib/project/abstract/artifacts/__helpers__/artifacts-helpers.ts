@@ -94,13 +94,18 @@ export class ArtifactsGlobalHelper {
   //#endregion
 
   //#region add sources from core
-  __addSourcesFromCore(): void {
+  addSrcFolderFromCoreProject(): void {
     //#region @backend
     const corePath = this.project.framework.coreProject.pathFor('src');
     const dest = this.project.pathFor('src');
 
-    Helpers.copy(corePath, dest, { recursive: true, overwrite: true });
-    debugger;
+    Helpers.copy(corePath, dest, {
+      recursive: true,
+      overwrite: true,
+      filter: src => {
+        return ['app.ts', 'app.vscode.ts'].includes(path.basename(src));
+      },
+    });
     //#endregion
   }
   //#endregion

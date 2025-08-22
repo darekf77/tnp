@@ -26,13 +26,7 @@ import { TaonJson } from '../abstract/taonJson';
 import { BaseCli } from './base-cli';
 //#endregion
 
-export class $New extends BaseCommandLineFeature<
-  {
-    // TODO
-  },
-  // @ts-ignore TODO weird inheritance problem
-  Project
-> {
+export class $New extends BaseCli {
   public async _(): Promise<void> {
     await this._createContainersOrStandalone({
       name: this.firstArg,
@@ -54,6 +48,7 @@ export class $New extends BaseCommandLineFeature<
     appProj: Project;
     containersAndProjFromArgName: string[];
     preOrgs: string;
+    initGit: boolean;
   }> {
     //#region resolve variables
 
@@ -197,7 +192,12 @@ export class $New extends BaseCommandLineFeature<
         }
         parentContainer = currentContainer;
 
-        if (isLastContainer && isBrandNew && !parentContainer) {
+        if (
+          isLastContainer &&
+          isBrandNew &&
+          !parentContainer &&
+          !currentContainer.git.isInsideGitRepo
+        ) {
           try {
             currentContainer.run('git init').sync();
             try {
@@ -207,7 +207,7 @@ export class $New extends BaseCommandLineFeature<
             } catch (error) {}
           } catch (error) {
             Helpers.warn(
-              `Not able to git init inside: ${currentContainer?.location}`,
+              `Not able to init git inside container: ${currentContainer?.location}`,
             );
           }
         }
@@ -247,31 +247,58 @@ export class $New extends BaseCommandLineFeature<
     taonJson.setType('isomorphic-lib');
     taonJson.setFrameworkVersion(DEFAULT_FRAMEWORK_VERSION);
     taonJson.overridePackageJsonManager.setIsPrivate(true);
+
     Project.ins.unload(appLocation);
     appProj = Project.ins.From(appLocation) as Project;
     if (!hasAtLeastOneContainersFromArgs) {
       lastContainer = appProj.parent;
     }
-    if (
-      lastContainer &&
-      lastContainer.framework.isContainer &&
-      !lastContainer.isMonorepo
-    ) {
+    let initGit = true;
+    if (lastContainer?.framework?.isContainer && lastContainer.isMonorepo) {
+      initGit = false;
+      Helpers.info(
+        `Not initing git since ${path.basename(appLocation)} is inside container monorepo`,
+      );
+    }
+
+    if (Helpers.git.isInsideGitRepo(appLocation)) {
+      initGit = false;
+      Helpers.info(
+        `Not initing git since ${path.basename(appLocation)} is inside git repo`,
+      );
+    }
+
+    if (initGit) {
       try {
-        if (!appProj.parent?.isMonorepo) {
-          appProj.run('git init').sync();
-          try {
-            if (appProj.git.currentBranchName !== 'master') {
-              appProj.run('git checkout -b master').sync();
-            }
-          } catch (error) {}
-        }
+        appProj.run('git init').sync();
       } catch (error) {
+        initGit = false;
         console.log(error);
-        Helpers.warn(`Not able to git init inside: ${appProj.location}`);
+        Helpers.warn(`Not able to init git inside: ${appProj.location}`);
       }
     }
-    appProj.artifactsManager.globalHelper.__addSourcesFromCore();
+    if (initGit) {
+      // if(Helpers.git.)
+      try {
+        appProj.run('git add --all . && git commit -m "first"').sync();
+      } catch (error) {
+        initGit = false;
+        console.log(error);
+        Helpers.warn(
+          `Not add "first" commit inside repository: ${appProj.location}`,
+        );
+      }
+    }
+
+    if (initGit) {
+      try {
+        if (appProj.git.currentBranchName !== 'master') {
+          appProj.run('git checkout -b master').sync();
+        }
+      } catch (error) {}
+    }
+
+    appProj.artifactsManager.globalHelper.addSrcFolderFromCoreProject();
     //#endregion
 
     // console.log({
@@ -284,7 +311,7 @@ export class $New extends BaseCommandLineFeature<
     }
 
     await appProj.init(
-      EnvOptions.from({
+      this.params.clone({
         purpose: 'initing new app',
       }),
     );
@@ -296,6 +323,17 @@ export class $New extends BaseCommandLineFeature<
     appProj.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode(
       true,
     );
+
+    if (initGit) {
+      try {
+        appProj
+          .run('git add --all . && git commit -m "chore: initial structure"')
+          .sync();
+      } catch (error) {
+        console.log(error);
+        Helpers.warn(`Not able to init git inside: ${appProj.location}`);
+      }
+    }
 
     if (appProj.git.isGitRoot) {
       try {
@@ -311,6 +349,7 @@ export class $New extends BaseCommandLineFeature<
       appProj,
       containersAndProjFromArgName: allProjectFromArgs,
       preOrgs: autoCreateNormalContainersPathName,
+      initGit,
     };
   }
   //#endregion
@@ -320,20 +359,16 @@ export class $New extends BaseCommandLineFeature<
     if (appProj.framework.isStandaloneProject) {
       const lastContainer = appProj.parent;
       const ADDRESS_GITHUB_SSH_PARENT = lastContainer?.git?.originURL;
-      const newRemote = ADDRESS_GITHUB_SSH_PARENT?.replace(
-        `${lastContainer.name}.git`,
-        `${appProj.name}.git`,
-      );
+      const newRemote =
+        ADDRESS_GITHUB_SSH_PARENT &&
+        ADDRESS_GITHUB_SSH_PARENT?.replace(
+          `${lastContainer.name}.git`,
+          `${appProj.name}.git`,
+        );
       if (newRemote) {
         try {
           appProj
             .run('git remote add origin ' + newRemote, {
-              output: false,
-              silence: true,
-            })
-            .sync();
-          appProj
-            .run('git add --all . && git commit -m "first"', {
               output: false,
               silence: true,
             })
@@ -349,17 +384,25 @@ export class $New extends BaseCommandLineFeature<
     options: Models.NewSiteOptions,
   ): Promise<void> {
     let { name: nameFromArgs, cwd } = options;
-    const { appProj, containers, lastContainer, lastIsBrandNew } =
+    const { appProj, containers, lastContainer, lastIsBrandNew, initGit } =
       await this._initContainersAndApps(cwd, nameFromArgs);
 
     Helpers.writeFile(
       [appProj.location, 'README.md'],
-      `#  ${appProj.name}
+      `# ${appProj.name}
 
 Hello from Standalone Project
 
        `,
     );
+
+    if (initGit) {
+      try {
+        appProj
+          .run(`git add --all . && git commit -m "docs: README.md update"`)
+          .sync();
+      } catch (error) {}
+    }
 
     if (lastIsBrandNew) {
       lastContainer.writeFile(
@@ -376,7 +419,7 @@ Hello from Container Project
       const container = containers[index];
 
       await container.init(
-        EnvOptions.from({
+        this.params.clone({
           purpose: 'initing new container',
         }),
       );
