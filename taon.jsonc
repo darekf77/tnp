@@ -42,8 +42,7 @@
     // },
     {
       "description": "TypeScript Node.js runtime",
-      "includeInBundleNodeModules": "*",
-      "isExternalFor": "*",
+      "isExternalFor": ["npm-lib-and-cli-tool"],
       "packageName": "typescript",
     },
     {
