@@ -221,6 +221,9 @@ export namespace Models {
 
       /**
        * Specify for which artifacts this package is external
+       * Example:
+       * vscode - for vscode plugin (vscode is in runtime of vscode plugin)
+       * electron - for electron apps (electron is in runtime of electron app)
        */
       isExternalFor?: TaonArtifactInclude;
 
@@ -231,10 +234,11 @@ export namespace Models {
       replaceWithNothing?: TaonArtifactInclude;
 
       /**
-       * only for native stuff that can't be minified
-       * and needs to be included in bundle.
-       * Taon will perform npm install for all
-       * packages marked with this
+       * ! FOR NOW ONLY FOR: 'electron-app' and 'angular-node-app'
+       *
+       * Native stuff that can't be minified and needs to be included in bundle.
+       * Taon will perform npm install for all packages marked with this
+       *
        */
       includeInBundleNodeModules?: TaonArtifactInclude;
     }[];

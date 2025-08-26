@@ -43,6 +43,7 @@ export async function start(
           a.startsWith('dedupe') ||
           a.startsWith('copy:and:rename') ||
           a.startsWith('generate') ||
+          a.startsWith('shorten') ||
           a === 'melt' ||
           a === 'soft' ||
           a === 'cloud',

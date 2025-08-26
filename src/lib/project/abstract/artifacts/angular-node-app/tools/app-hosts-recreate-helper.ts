@@ -396,7 +396,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     };
 
     const contextTemplate = (options: ContextOptions): string => {
-      return `###  **${options.contextName}** (#${options.num}):
+      return `###  **${options.contextName}** (#${options.num})
 - nodejs backend http://localhost:${options.nodeBeAppPort}
 - normal frontend app for nodejs backend http://localhost:${options.ngNormalAppPort}
 - websql app backend/frontend http://localhost:${options.ngWebsqlAppPort}
@@ -566,7 +566,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 Project name: **${this.project.name}** <br>
 Project npm name: **${this.project.nameForNpmPackage}**
 
-## All contexts (detected = ${allDetectedContexts.length}): :
+## All contexts (detected = ${allDetectedContexts.length})
 
 ${contexts.join('\n')}
 `,

@@ -266,6 +266,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
   protected checkIsomorphic(node_modules: string, packageName: string) {
     //#region @backendFunc
     let isIsomorphic = false;
+    // !  TODO this in probably incorrect packages is never a link
     const packageInNodeModulesPath = crossPlatformPath(
       fse.realpathSync(path.join(node_modules, packageName)),
     );

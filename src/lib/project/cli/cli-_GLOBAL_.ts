@@ -949,7 +949,10 @@ ${this.project.children
       const currentPackageVersion = allDeps[packageName];
       const currentVerObj = getVerObj(currentPackageVersion);
       const taonJsonContent = this.project.readFile(config.file.taon_jsonc);
-      const tags = UtilsJson.getAtrributiesFromJsonWithComments(packageName, taonJsonContent);
+      const tags = UtilsJson.getAtrributiesFromJsonWithComments(
+        packageName,
+        taonJsonContent,
+      );
       Helpers.info(
         `(${index + 1} / ${allDepsKeys.length}) ` +
           `Downloading info about "${packageName}" (current ver: ${currentPackageVersion})`,
@@ -1430,7 +1433,10 @@ ${this.project.children
     walk.Object(Helpers.parse(jsoncContent, true), (value, jsonPath) => {
       if (!this.firstArg || jsonPath.includes(this.firstArg)) {
         // console.log('PATH: ' + jsonPath);
-        const attrs = UtilsJson.getAtrributiesFromJsonWithComments(jsonPath, jsoncContent);
+        const attrs = UtilsJson.getAtrributiesFromJsonWithComments(
+          jsonPath,
+          jsoncContent,
+        );
 
         console.log(
           `${attrs.length > 0 ? chalk.bold('DETECTED') : 'DETECTED'} ` +

@@ -100,16 +100,6 @@ export class Framework extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region is temp container core project
-  get isContainerCoreProjectTempProj(): boolean {
-    //#region @backendFunc
-    const dirOfParent = path.dirname(path.dirname(this.project.location));
-    const isTemp = path.basename(dirOfParent) === 'tmp-smart-node_modules'; // TODO QUICK_FIX
-    return this.isContainerCoreProject && isTemp;
-    //#endregion
-  }
-  //#endregion
-
   //#region is container child
   get isContainerChild(): boolean {
     //#region @backendFunc
