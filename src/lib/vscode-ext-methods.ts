@@ -1,10 +1,13 @@
-import { Utils } from 'tnp-core/src';
+import { Utils, Helpers, crossPlatformPath, fse, path } from 'tnp-core/src';
 import { CommandType } from 'tnp-helpers/src';
+
+import { dirnameFromSourceToProject, whatToLinkFromCore } from './constants';
 
 export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
   //#region @backendFunc
   const toolName = `${FRAMEWORK_NAME.toUpperCase()} CLI `;
   const group = `${toolName}`;
+  const groupOpen = `${toolName} open`;
   const groupGENERATE = `${toolName} generate`;
   const groupRefactor = `${toolName} refactor`;
   // const groupTempFiles = `${toolName} temporary files`;
@@ -12,6 +15,64 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
 
   return (
     [
+      {
+        group: groupOpen,
+        title: `open debuggable path`,
+        async exec({ vscode }) {
+          // opt.vscode.
+          const editorOrgFilePath = crossPlatformPath(
+            vscode.window.activeTextEditor.document.uri.fsPath,
+          );
+          let currentFilePath = editorOrgFilePath;
+          let relativePath: string = '';
+          let projectRoot = '';
+          while (true) {
+            currentFilePath = crossPlatformPath(path.dirname(currentFilePath));
+            if (
+              currentFilePath === '/' ||
+              !currentFilePath ||
+              currentFilePath.length < 3
+            ) {
+              break;
+            }
+            if (Helpers.isUnexistedLink(currentFilePath)) {
+              break;
+            }
+            if (fse.lstatSync(currentFilePath).isSymbolicLink()) {
+              projectRoot = dirnameFromSourceToProject(currentFilePath);
+              relativePath = crossPlatformPath([
+                whatToLinkFromCore,
+                editorOrgFilePath.replace(currentFilePath + '/', ''),
+              ]);
+              break;
+            }
+          }
+
+          const targetPath = crossPlatformPath([projectRoot, relativePath]);
+
+          // now close the original file if it's open
+          const unwantedUri = vscode.Uri.file(editorOrgFilePath);
+          const editors = vscode.window.visibleTextEditors;
+          const unwantedEditorPath = crossPlatformPath(unwantedUri.fsPath);
+
+          for (const editor of editors) {
+            const editorPath = crossPlatformPath(editor.document.uri.fsPath);
+
+            if (editorPath === unwantedEditorPath) {
+              await vscode.window.showTextDocument(editor.document); // bring it to front
+              await vscode.commands.executeCommand(
+                'workbench.action.closeActiveEditor',
+              );
+            }
+          }
+
+          const doc = await vscode.workspace.openTextDocument(targetPath);
+          await vscode.window.showTextDocument(doc);
+        },
+        options: {
+          titleWhenProcessing: `taon opening debuggable version of file.`,
+        },
+      },
       //#region CREATE MIGRATION
       {
         group: groupGENERATE,
@@ -49,6 +110,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
 
       //#region OPEN CORE CONTAINER
       {
+        group: groupOpen,
         title: `open core container`,
         exec: `${FRAMEWORK_NAME} open:core:container`,
         options: {
@@ -61,6 +123,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
 
       //#region OPEN CORE PROJECT
       {
+        group: groupOpen,
         title: `open core project`,
         exec: `${FRAMEWORK_NAME} open:core:project`,
         options: {
@@ -126,8 +189,8 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-       //#region taon example
-       {
+      //#region taon example
+      {
         group: groupGENERATE,
         title: `taon worker (worker, ui, context, ctrl, entity, repo, api-service)`,
         exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-worker %entity%`,
@@ -172,8 +235,8 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-       //#region generate taon controller file
-       {
+      //#region generate taon controller file
+      {
         group: groupGENERATE,
         title: `taon .controller.ts file`,
         exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-controller_flat  %entity%`,
@@ -232,8 +295,8 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-       //#region generate taon api-service file
-       {
+      //#region generate taon api-service file
+      {
         group: groupGENERATE,
         title: `taon .api-service.ts file`,
         exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-api-service_flat  %entity%`,
@@ -363,7 +426,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
     if (!c.command) {
       c.command = `extension.${FRAMEWORK_NAME}.${Utils.camelize(c.title)}`;
     }
-    if (!c.group) {
+    if (c.group === undefined) {
       c.group = group;
     }
     return c;

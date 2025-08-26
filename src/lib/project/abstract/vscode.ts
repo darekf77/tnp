@@ -1,6 +1,6 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { chalk, fse, json5, path, _, os } from 'tnp-core/src';
+import { chalk, fse, json5, path, _, os, win32Path } from 'tnp-core/src';
 import { Utils } from 'tnp-core/src';
 import { crossPlatformPath } from 'tnp-core/src';
 import { BaseVscodeHelpers, Helpers, UtilsVSCode } from 'tnp-helpers/src';
@@ -12,6 +12,9 @@ import {
   THIS_IS_GENERATED_INFO_COMMENT,
   tmpVscodeProj,
   DEFAULT_PORT,
+  dirnameFromSourceToProject,
+  whatToLinkFromCoreDeepPart,
+  whatToLinkFromCore,
 } from '../../constants';
 import { Models } from '../../models';
 import { Development, EnvOptions } from '../../options';
@@ -486,7 +489,10 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
               config.folder.source,
             ]);
             return Helpers.isExistedSymlink(p)
-              ? `${crossPlatformPath(path.dirname(fse.realpathSync(p)))}/dist/**/*.js`
+              ? `${dirnameFromSourceToProject(p)}/dist/${whatToLinkFromCoreDeepPart}/**/*.js`.replace(
+                  /\/\//g,
+                  '/',
+                )
               : void 0;
           })
           .filter(f => !!f),
@@ -511,11 +517,20 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
         if (!Helpers.isExistedSymlink(p)) {
           return;
         }
-        const realPathToPackage = crossPlatformPath(
-          path.dirname(fse.realpathSync(p)),
-        );
-        sourceMapPathOverrides[`${realPathToPackage}/src/lib/*`] =
-          `\${workspaceFolder}/node_modules/${packageName}/source/lib/*`;
+        const realPathToPackage = dirnameFromSourceToProject(p);
+
+        // Somehow this work if debuggable path
+        sourceMapPathOverrides[
+          `*/${path.basename(realPathToPackage)}/${whatToLinkFromCore}/*`
+        ] = `\${workspaceFolder}/node_modules/${packageName}/source/*`;
+
+        // that thing should work
+        // sourceMapPathOverrides[`${realPathToPackage}/${whatToLinkFromCore}/*`] =
+        //   `\${workspaceFolder}/node_modules/${packageName}/source/*`;
+
+        // that was goog long time ago - when first good debugging made with chat gpt
+        // sourceMapPathOverrides[`${realPathToPackage}/src/lib/*`] =
+        //   `\${workspaceFolder}/node_modules/${packageName}/source/lib/*`;
       });
 
     return sourceMapPathOverrides;

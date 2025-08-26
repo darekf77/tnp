@@ -9,7 +9,11 @@ import { BaseCompilerForProject } from 'tnp-helpers/src';
 import { Helpers } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
-import { TO_REMOVE_TAG } from '../../../../../../constants';
+import {
+  dirnameFromSourceToProject,
+  TO_REMOVE_TAG,
+  whatToLinkFromCore,
+} from '../../../../../../constants';
 import { Models } from '../../../../../../models';
 import {
   EnvOptions,
@@ -89,11 +93,12 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 
   //#region getters / source path to link
 
-  get sourcePathToLink() {
+  get sourcePathToLink(): string {
     //#region @backendFunc
-    const sourceToLink = crossPlatformPath(
-      path.join(this.project.location, config.folder.src, config.folder.lib),
-    );
+    const sourceToLink = crossPlatformPath([
+      this.project.location,
+      whatToLinkFromCore,
+    ]);
     return sourceToLink;
     //#endregion
   }
@@ -155,19 +160,8 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     ) {
       try {
         const possibleTnpLocation = crossPlatformPath(
-          // <root>
-          path.dirname(
-            // src
-            path.dirname(
-              // src/lib
-              fse.realpathSync(
-                this.project.pathFor([
-                  config.folder.node_modules,
-                  'tnp',
-                  'source',
-                ]),
-              ),
-            ),
+          dirnameFromSourceToProject(
+            this.project.pathFor([config.folder.node_modules, 'tnp', 'source']),
           ),
         );
         const tnpProject = this.project.ins.From(possibleTnpLocation);

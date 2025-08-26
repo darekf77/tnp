@@ -1,13 +1,59 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { CoreModels, os } from 'tnp-core/src';
+import { Helpers } from 'tnp-core/src';
+import { CoreModels, fse, os } from 'tnp-core/src';
 import { _, UtilsOs } from 'tnp-core/src';
 import { crossPlatformPath, path, Utils } from 'tnp-core/src';
 
 import { CURRENT_PACKAGE_VERSION } from './build-info._auto-generated_';
 import { ReleaseArtifactTaon, ReleaseType } from './options';
-import type { Project } from './project/abstract/project';
+// import type { Project } from './project/abstract/project';
 //#endregion
+
+export const whatToLinkFromCore: 'src' | 'src/lib' = 'src/lib';
+// export const whatToLinkFromCore: 'src' | 'src/lib' = 'src/lib';
+
+/**
+ *  '' - when whatToLinkFromCore is src
+ *  'lib' - when whatToLinkFromCore is src/lib
+ *  'deep/folder' - when whatToLinkFromCore is src/deep/folder
+ */
+export const whatToLinkFromCoreDeepPart =
+  whatToLinkFromCore === ('src' as any)
+    ? ''
+    : (whatToLinkFromCore as string).replace('src/', '');
+
+export const dirnameFromSourceToProject = (linkToSource: string): string => {
+  const orgParamLinkAbs = linkToSource;
+  linkToSource = fse.realpathSync(linkToSource);
+  linkToSource = crossPlatformPath(linkToSource);
+  const orgRealLinkToSource = linkToSource;
+  const howManyDirname = whatToLinkFromCore.split('/').length;
+  _.times(howManyDirname, n => {
+    // console.log(`dirname action ${n}/${howManyDirname}`);
+    linkToSource = crossPlatformPath(path.dirname(linkToSource));
+  });
+  linkToSource = crossPlatformPath(linkToSource);
+  // console.log({ linkToSource, orgRealLinkToSource, howManyDirname });
+
+  if (path.basename(linkToSource) === 'src') {
+    // console.log(`FIXING NOT PROPER LINK TO SOURCE ${orgParamLinkAbs}`);
+    linkToSource = crossPlatformPath(path.dirname(linkToSource));
+    // if (whatToLinkFromCore === 'src') {
+    //   try {
+    //     fse.unlinkSync(orgParamLinkAbs);
+    //   } catch (error) {}
+    //   Helpers.createSymLink(
+    //     crossPlatformPath([linkToSource, whatToLinkFromCore]),
+    //     orgParamLinkAbs,
+    //   );
+    // }
+
+    // linkToSource = crossPlatformPath(path.dirname(linkToSource));
+  }
+
+  return linkToSource;
+};
 
 export const DUMMY_LIB = '@lib';
 
