@@ -24,6 +24,25 @@
   "license": "MIT",
   "author": "Dariusz Filipiak",
   "private": false,
+  "contributes": {
+    "views": {
+      "projectsContainer": [
+        {
+          "id": "projectsView",
+          "name": "Taon Parent Container Projects"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "icon": "./logo-small-svg.svg",
+          "id": "projectsContainer",
+          "title": "Taon Parent Container Projects"
+        }
+      ]
+    }
+  },
   "dependencies": {
     "7zip-bin": "~5.2.0",
     "@angular-builders/custom-webpack": "~19.0.1",

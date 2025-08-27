@@ -62,29 +62,43 @@ export class ArtifactVscodePlugin extends BaseArtifact<
       initOptions.release.releaseType,
     );
 
+    const packageJsonForVscode = {
+      name: this.project.name,
+      version:
+        initOptions.release.resolvedNewVersion ||
+        this.project.packageJson.version,
+      main: `./out/${initOptions.release.releaseType ? 'extension.js' : 'app.vscode.js'}`,
+      categories: ['Other'],
+      activationEvents: ['*'],
+      displayName:
+        this.project.packageJson.displayName ||
+        `${this.project.name}-vscode-ext`,
+      publisher: this.project.packageJson.publisher || 'taon-dev-local',
+      icon: `${iconVscode128Basename}`,
+      description:
+        this.project.packageJson.description ||
+        `Description of ${this.project.nameForNpmPackage} extension`,
+      engines: {
+        vscode: '^1.30.0',
+      },
+    };
+
+    if (this.project.taonJson.overridePackageJsonManager.contributes) {
+      packageJsonForVscode['contributes'] =
+        this.project.taonJson.overridePackageJsonManager.contributes;
+    }
+
     Helpers.writeJson(
       crossPlatformPath([tmpVscodeProjPath, config.file.package_json]),
-      {
-        name: this.project.name,
-        version:
-          initOptions.release.resolvedNewVersion ||
-          this.project.packageJson.version,
-        main: `./out/${initOptions.release.releaseType ? 'extension.js' : 'app.vscode.js'}`,
-        categories: ['Other'],
-        activationEvents: ['*'],
-        displayName:
-          this.project.packageJson.displayName ||
-          `${this.project.name}-vscode-ext`,
-        publisher: this.project.packageJson.publisher || 'taon-dev-local',
-        icon: `${iconVscode128Basename}`,
-        description:
-          this.project.packageJson.description ||
-          `Description of ${this.project.nameForNpmPackage} extension`,
-        engines: {
-          vscode: '^1.30.0',
-        },
-      },
+      packageJsonForVscode,
     );
+
+    for (const resourceRelative of this.project.taonJson.resources) {
+      Helpers.copyFile(
+        this.project.pathFor(resourceRelative),
+        crossPlatformPath([tmpVscodeProjPath, resourceRelative]),
+      );
+    }
 
     Helpers.createSymLink(
       this.project.pathFor(config.folder.dist),

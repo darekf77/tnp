@@ -44,6 +44,7 @@ export async function start(
           a.startsWith('copy:and:rename') ||
           a.startsWith('generate') ||
           a.startsWith('shorten') ||
+          a === 'dumpPackagesVersions' ||
           a === 'melt' ||
           a === 'soft' ||
           a === 'cloud',

@@ -32,7 +32,7 @@
 
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
 
-  "resources": [],
+  "resources": ["logo-small-svg.svg"],
   "singleFileBundlingPackages": [
     // electron is replaced by default
     // {
@@ -97,8 +97,28 @@
 
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
+    "contributes": {
+      "views": {
+        "projectsContainer": [
+          {
+            "id": "projectsView",
+            "name": "Taon Parent Container Projects",
+          },
+        ],
+      },
+      "viewsContainers": {
+        "activitybar": [
+          {
+            "icon": "./logo-small-svg.svg",
+            "id": "projectsContainer",
+            "title": "Taon Parent Container Projects",
+          },
+        ],
+      },
+    },
     "description": "Development version of taon.dev vscode plugin",
     "license": "MIT",
+
     "private": false,
 
     "publisher": "taon-dev",
