@@ -16,8 +16,8 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
   return (
     [
       {
-        group: groupOpen,
-        title: `open debuggable path`,
+        group: null,
+        title: `${toolName} open debuggable path`,
         async exec({ vscode }) {
           // opt.vscode.
           const editorOrgFilePath = crossPlatformPath(
@@ -110,7 +110,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
 
       //#region OPEN CORE CONTAINER
       {
-        group: groupOpen,
+        group,
         title: `open core container`,
         exec: `${FRAMEWORK_NAME} open:core:container`,
         options: {
@@ -123,7 +123,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
 
       //#region OPEN CORE PROJECT
       {
-        group: groupOpen,
+        group,
         title: `open core project`,
         exec: `${FRAMEWORK_NAME} open:core:project`,
         options: {
