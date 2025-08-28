@@ -210,8 +210,9 @@ export function activate(
 
       const parentForParentChildren = [
         parentOfParent,
-        ...(parentOfParent.children || []),
+        ...(parentOfParent?.children || []),
       ]
+        .filter(f => !!f)
         .filter(f => f.location !== CURRENT_PROJECT.location)
         .map(c => MAP_PROJEC_FN(c, true))
         .filter(f => !!f);

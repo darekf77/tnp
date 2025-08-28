@@ -510,14 +510,6 @@ export class $Global extends BaseGlobalCommandLine<
   }
   //#endregion
 
-  //#region ln
-  LN() {
-    const [source, dest] = this.args;
-    Helpers.createSymLink(source, dest);
-    this._exit();
-  }
-  //#endregion
-
   //#region dedupe
   DEDUPE() {
     this.project.nodeModules.dedupe(
