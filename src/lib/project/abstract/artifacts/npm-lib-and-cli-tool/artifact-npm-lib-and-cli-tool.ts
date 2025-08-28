@@ -265,7 +265,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       );
       Helpers.log(`
 
-      ANGULAR ${this.project.ins.Tnp?.packageJson.version} ${
+      ANGULAR ${this.project.framework.coreContainer?.packageJson.version} ${
         buildOptions.build.watch ? 'WATCH ' : ''
       } LIB BUILD STARTED... ${buildOptions.build.websql ? '[WEBSQL]' : ''}
 

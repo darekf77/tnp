@@ -441,7 +441,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
               return settings;
             });
           },
-          hideOrShowFilesInVscode(hide: boolean = true) {
+          hideOrShowFilesInVscode(hide: boolean = true): void {
             self.modifyVscode(settings => {
               settings['files.exclude'] = {};
 

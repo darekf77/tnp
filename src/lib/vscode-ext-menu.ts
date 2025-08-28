@@ -1,48 +1,134 @@
-import { crossPlatformPath, Helpers } from 'tnp-core/src';
+//#region imports
+import { crossPlatformPath, Helpers, path } from 'tnp-core/src';
+import { UtilsVSCode } from 'tnp-helpers/src';
 import type { ExtensionContext } from 'vscode';
 import type * as vscode from 'vscode';
 
 import { Project } from '../lib/project/abstract/project';
+//#endregion
 
 export function activate(
   context: vscode.ExtensionContext,
   vscode: typeof import('vscode'),
+  frameworkCliName: string,
 ) {
+  //#region focus first element function
+  const focustFirstElement = () => {
+    treeView.reveal(treeProvider.getDummy(), {
+      select: true,
+      focus: true,
+    });
+  };
+  //#endregion
+
+  //#region open / click item command
   vscode.commands.registerCommand(
     'projectsView.openItem',
     (item: ProjectItem) => {
+      if (item?.triggerActionOnClick) {
+        vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.SourceControl,
+            title: 'Executing action...',
+            cancellable: false,
+          },
+          async (progres, token) => {
+            progres.report({ increment: 0, message: 'Processing...' });
+            await item.triggerActionOnClick(item.project, progres, token);
+            progres.report({ message: 'Done' });
+          },
+        );
+
+        return;
+      }
       if (item.project) {
         // example: open folder in same window
+        const clickLink = item.refreshLinkOnClick
+          ? item.clickLinkFn(item.project)
+          : item.clickLink;
+
         vscode.commands
-          .executeCommand(
-            'vscode.openFolder',
-            vscode.Uri.file(item.project.location),
-            {
-              forceNewWindow: true,
-            },
-          )
+          .executeCommand('vscode.openFolder', vscode.Uri.file(clickLink), {
+            forceNewWindow: true,
+          })
           .then(() => {
-            // After open, re-select dummy element
-            treeView.reveal(treeProvider.getDummy(), {
-              select: true,
-              focus: true,
-            });
+            focustFirstElement();
           });
       }
     },
   );
+  //#endregion
+
+  //#region project item class
   class ProjectItem extends vscode.TreeItem {
+    public readonly clickLink: string;
+    public readonly project?: Project;
+    public readonly clickLinkFn?: (project: Project) => string;
+    public readonly refreshLinkOnClick?: boolean;
+    public readonly triggerActionOnClick?: (
+      project: Project,
+      progres: vscode.Progress<{
+        message?: string;
+        increment?: number;
+      }>,
+      token: vscode.CancellationToken,
+    ) => Promise<any>;
+    public readonly processTitle?: string;
+
+    //#region constructor
     constructor(
       public readonly label: string,
       public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-      public readonly project: Project,
+      options?: {
+        project?: Project;
+        clickLinkFn?: (project: Project) => string;
+        refreshLinkOnClick?: boolean;
+        triggerActionOnClick?: (project: Project) => any;
+        processTitle?: string;
+        boldLabel?: boolean;
+        iconPath?:
+          | string
+          | vscode.ThemeIcon
+          | vscode.Uri
+          | {
+              light: string | vscode.Uri;
+              dark: string | vscode.Uri;
+            };
+      },
     ) {
       super(label, collapsibleState);
+      options = options || {};
+      if (options.boldLabel) {
+        const labelBold = {
+          label: label,
+          highlights: [[0, label.length]],
+        };
+        this.label = labelBold as any;
+      }
+      if (options.iconPath !== undefined) {
+        this.iconPath =
+          options.iconPath === null ? undefined : options.iconPath;
+      } else {
+        this.iconPath =
+          collapsibleState === vscode.TreeItemCollapsibleState.None
+            ? vscode.ThemeIcon.File
+            : vscode.ThemeIcon.Folder;
+      }
+
+      const project = options?.project;
+      this.processTitle = options?.processTitle;
+      this.clickLinkFn = options?.clickLinkFn
+        ? options.clickLinkFn
+        : p => p?.location;
+
+      this.triggerActionOnClick = options.triggerActionOnClick;
+      this.refreshLinkOnClick = options?.refreshLinkOnClick;
+
+      this.project = project;
+      this.clickLink = this.refreshLinkOnClick
+        ? undefined
+        : this.clickLinkFn(project);
       this.tooltip = project ? project.nameForNpmPackage : label;
-      this.iconPath =
-        collapsibleState === vscode.TreeItemCollapsibleState.None
-          ? vscode.ThemeIcon.File
-          : vscode.ThemeIcon.Folder;
 
       if (collapsibleState === vscode.TreeItemCollapsibleState.None) {
         this.command = {
@@ -52,9 +138,218 @@ export function activate(
         };
       }
     }
+    //#endregion
   }
+  //#endregion
 
+  //#region tree provider class
   class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectItem> {
+    //#region get children
+    async getChildren(element?: ProjectItem): Promise<ProjectItem[]> {
+      //#region resolve variables
+      // if (!element) {
+      // root → workspace folders
+      // const editorOrgFilePath = crossPlatformPath(
+      //   vscode.window.activeTextEditor.document.uri.fsPath,
+      // );
+      // let currentFilePath = editorOrgFilePath;
+
+      const WORKSPACE_MAIN_FOLDER_PATH =
+        vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+
+      /**
+       * may be container (normal or organization) or standalone project or unknow project
+       */
+      const CURRENT_PROJECT = Project.ins.From(WORKSPACE_MAIN_FOLDER_PATH);
+      if (!CURRENT_PROJECT) {
+        return [this.taonProjWarning];
+      }
+
+      const CURRENT_PROJECT_PARENT_IS_ORGANIZATION =
+        CURRENT_PROJECT.framework.isContainerChild &&
+        CURRENT_PROJECT.parent?.taonJson.isOrganization;
+
+      /**
+       * organization container or container organization child
+       */
+      const ORGANIZATION =
+        CURRENT_PROJECT.taonJson.isOrganization ||
+        (CURRENT_PROJECT_PARENT_IS_ORGANIZATION &&
+          CURRENT_PROJECT.framework.isContainerChild);
+
+      const MAP_PROJEC_FN = (
+        project: Project,
+        nameIsFirst: boolean = false,
+      ): ProjectItem | undefined => {
+        if (!project) {
+          return;
+        }
+
+        const parentName = CURRENT_PROJECT_PARENT_IS_ORGANIZATION
+          ? CURRENT_PROJECT.parent.name
+          : CURRENT_PROJECT.name;
+
+        const secondPartOfName = nameIsFirst
+          ? `${project.name} ${project.nameForNpmPackage !== project.name ? `(${project.nameForNpmPackage})` : ''}`
+          : `${project.nameForNpmPackage.replace(parentName, `---`)}` +
+            ` ${project.name !== path.basename(project.nameForNpmPackage) ? `(${project.name})` : ''}`;
+
+        return new ProjectItem(
+          project.name === project.nameForNpmPackage
+            ? project.name
+            : secondPartOfName,
+          vscode.TreeItemCollapsibleState.None,
+          { project },
+        );
+      };
+      //#endregion
+
+      const parentOfParent = CURRENT_PROJECT_PARENT_IS_ORGANIZATION
+        ? CURRENT_PROJECT.parent?.parent // special case
+        : CURRENT_PROJECT.parent;
+
+      const parentForParentChildren = [
+        parentOfParent,
+        ...(parentOfParent.children || []),
+      ]
+        .filter(f => f.location !== CURRENT_PROJECT.location)
+        .map(c => MAP_PROJEC_FN(c, true))
+        .filter(f => !!f);
+
+      const organizationMainItem =
+        ORGANIZATION &&
+        new ProjectItem(
+          `@${CURRENT_PROJECT_PARENT_IS_ORGANIZATION ? CURRENT_PROJECT.parent.name : CURRENT_PROJECT.name}`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            project: CURRENT_PROJECT_PARENT_IS_ORGANIZATION
+              ? CURRENT_PROJECT.parent
+              : CURRENT_PROJECT,
+          },
+        );
+
+      //#region core items
+      const coreProjectItem = new ProjectItem(
+        `$ ${frameworkCliName} open:core:project`,
+        vscode.TreeItemCollapsibleState.None,
+
+        {
+          project: CURRENT_PROJECT.framework.coreProject,
+          refreshLinkOnClick: true,
+          iconPath: null,
+        },
+      );
+
+      const coreContainerItem = new ProjectItem(
+        `$ ${frameworkCliName} open:core:container`,
+        vscode.TreeItemCollapsibleState.None,
+        {
+          project: CURRENT_PROJECT.framework.coreContainer,
+          refreshLinkOnClick: true,
+          iconPath: null,
+        },
+      );
+      //#endregion
+
+      const isContainerOrganizationCurrentProj =
+        CURRENT_PROJECT.framework.isContainer &&
+        CURRENT_PROJECT.taonJson.isOrganization;
+
+      const ORGANIZATION_PROJECTS_OR_CURRENT_PROJECT_CHILDREN =
+        organizationMainItem
+          ? [
+              ...(CURRENT_PROJECT_PARENT_IS_ORGANIZATION
+                ? CURRENT_PROJECT.parent?.children
+                : CURRENT_PROJECT.children),
+            ]
+          : [...CURRENT_PROJECT.children];
+
+      const currentProjectProjects = [
+        organizationMainItem,
+        ...ORGANIZATION_PROJECTS_OR_CURRENT_PROJECT_CHILDREN.map(c =>
+          MAP_PROJEC_FN(c),
+        ).filter(f => !!f),
+      ].filter(f => !!f);
+
+      if (
+        // skip when project is not organizaition and not inside organization
+        // and does not have children
+        currentProjectProjects.length === 1 &&
+        currentProjectProjects[0].project?.location === CURRENT_PROJECT.location
+      ) {
+        currentProjectProjects.length = 0;
+      }
+
+      return [
+        this.dummy,
+        currentProjectProjects.length > 0 &&
+          this.getInfoItem('Choose projects below to switch', true),
+        ...currentProjectProjects,
+        currentProjectProjects.length > 0 && this.empty,
+        this.getInfoItem('Click item below to trigger action', true),
+        //#region items with actions
+        new ProjectItem(
+          `$ ${frameworkCliName} refresh:vscode:colors`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: project => {
+              if (project?.location) {
+                project.vsCodeHelpers.refreshColorsInSettings();
+                focustFirstElement();
+              }
+            },
+          },
+        ),
+        new ProjectItem(
+          `$ ${frameworkCliName} vscode:hide:temp`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: project => {
+              if (project) {
+                project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode(
+                  true,
+                );
+                vscode.commands.executeCommand('workbench.view.explorer');
+              }
+            },
+          },
+        ),
+        new ProjectItem(
+          `$ ${frameworkCliName} vscode:show:temp`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: project => {
+              if (project) {
+                project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode(
+                  false,
+                );
+                vscode.commands.executeCommand('workbench.view.explorer');
+              }
+            },
+          },
+        ),
+        ...(CURRENT_PROJECT.typeIs('isomorphic-lib', 'container')
+          ? [
+              !isContainerOrganizationCurrentProj ? coreProjectItem : void 0,
+              coreContainerItem,
+            ].filter(f => !!f)
+          : []),
+        //#endregion
+        parentForParentChildren.length > 0 && this.empty,
+        parentForParentChildren.length > 0 &&
+          this.getInfoItem('Choose parent project children to switch', true),
+        ...parentForParentChildren,
+      ].filter(f => !!f);
+    }
+    //#endregion
+
+    //#region methods & fields
     private _onDidChangeTreeData =
       new vscode.EventEmitter<ProjectItem | void>();
     // @ts-ignore
@@ -63,6 +358,16 @@ export function activate(
 
     refresh(): void {
       this._onDidChangeTreeData.fire();
+    }
+
+    getInfoItem(text: string, boldLabel: boolean = false) {
+      return new ProjectItem(text, vscode.TreeItemCollapsibleState.None, {
+        triggerActionOnClick: () => {
+          focustFirstElement();
+        },
+        iconPath: null,
+        boldLabel,
+      });
     }
 
     getTreeItem(element: ProjectItem): vscode.TreeItem {
@@ -74,87 +379,33 @@ export function activate(
       return undefined;
     }
 
-    private dummy = new ProjectItem(
-      '- choose project below to switch -',
-      vscode.TreeItemCollapsibleState.None,
-      undefined,
-    );
+    private dummy = this.getInfoItem(' ');
+
+    private empty = new ProjectItem(' ', vscode.TreeItemCollapsibleState.None, {
+      triggerActionOnClick: () => {
+        focustFirstElement();
+      },
+      iconPath: null,
+    });
 
     private taonProjWarning = new ProjectItem(
       '< Current project is not a Taon project >',
       vscode.TreeItemCollapsibleState.None,
-      undefined,
+      {
+        triggerActionOnClick: () => {
+          focustFirstElement();
+        },
+      },
     );
 
     getDummy() {
       return this.dummy;
     }
-
-    async getChildren(element?: ProjectItem): Promise<ProjectItem[]> {
-      // if (!element) {
-      // root → workspace folders
-      // const editorOrgFilePath = crossPlatformPath(
-      //   vscode.window.activeTextEditor.document.uri.fsPath,
-      // );
-      // let currentFilePath = editorOrgFilePath;
-      const workspacPath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-      const currentProject = Project.ins.From(workspacPath);
-      if (!currentProject) {
-        return [this.taonProjWarning];
-      }
-
-      const parentIsOrganization =
-        currentProject.framework.isContainerChild &&
-        currentProject.parent?.taonJson.isOrganization;
-
-      const root = 'ROOT';
-
-      const parentProj = new ProjectItem(
-        `${root} => @${parentIsOrganization ? currentProject.parent.name : currentProject.name}`,
-        vscode.TreeItemCollapsibleState.None,
-        parentIsOrganization ? currentProject.parent : currentProject,
-      );
-
-      const parentName = parentIsOrganization
-        ? currentProject.parent.name
-        : currentProject.name;
-
-      const isOrganizationCurrentProj =
-        currentProject.framework.isContainer &&
-        currentProject.taonJson.isOrganization;
-
-      const parentAbs = isOrganizationCurrentProj
-        ? crossPlatformPath([workspacPath])
-        : crossPlatformPath([workspacPath, '..']);
-
-      const folders = Helpers.foldersFrom(parentAbs, { recursive: false });
-
-      const projects = folders
-        .map(f => {
-          const project = Project.ins.From(f);
-          if (!project) {
-            return;
-          }
-          return new ProjectItem(
-            project.name === project.nameForNpmPackage
-              ? project.name
-              : `${project.nameForNpmPackage.replace(parentName, `${root}`)} (${project.name})`,
-            vscode.TreeItemCollapsibleState.None,
-            project,
-          );
-        })
-        .filter(f => !!f);
-
-      return [
-        this.dummy,
-        ...(isOrganizationCurrentProj || parentIsOrganization
-          ? [parentProj]
-          : []),
-        ...projects,
-      ];
-    }
+    //#endregion
   }
+  //#endregion
 
+  //#region register tree view
   const treeProvider = new ProjectsTreeProvider();
   // context.subscriptions.push(
   //   vscode.window.registerTreeDataProvider('projectsView', treeProvider as any),
@@ -164,6 +415,7 @@ export function activate(
     treeDataProvider: treeProvider as any,
   });
   context.subscriptions.push(treeView);
+  //#endregion
 }
 
 export function deactivate() {}

@@ -87,6 +87,7 @@ export async function start(
     shortArgsReplaceConfig: {
       //#region short args replacement
       il: 'release:install:locally',
+      ilvscodeplugin: 'release:install:locally:vscode:plugin',
       cil: 'release:clear:install:locally',
       'install:locally': 'release:install:locally',
       cinit: 'init:clearInit',

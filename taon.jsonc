@@ -102,7 +102,7 @@
         "projectsContainer": [
           {
             "id": "projectsView",
-            "name": "Taon Parent Container Projects",
+            "name": "Taon Projects",
           },
         ],
       },
@@ -111,7 +111,7 @@
           {
             "icon": "./logo-small-svg.svg",
             "id": "projectsContainer",
-            "title": "Taon Parent Container Projects",
+            "title": "Taon Projects",
           },
         ],
       },

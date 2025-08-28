@@ -1772,6 +1772,13 @@ ${this.project.children
   }
   //#endregion
 
+  _regenerateVscodeSettingsColors() {
+    const overrideBottomColor =
+      this.project.vsCodeHelpers.getVscodeBottomColor();
+
+    super._regenerateVscodeSettingsColors(overrideBottomColor);
+  }
+
   messagesTest() {
     console.log('-----1');
     Helpers.log(`Helpers.log`);

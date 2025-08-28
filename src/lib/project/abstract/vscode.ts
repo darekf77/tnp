@@ -548,4 +548,26 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     //#endregion
   }
   //#endregion
+
+  getVscodeBottomColor(): string {
+    let overrideBottomColor =
+      this.project?.parent?.taonJson.isOrganization &&
+      this.project.framework.isContainerChild
+        ? this.project?.parent.getValueFromJSONC(
+            '.vscode/settings.json',
+            `['workbench.colorCustomizations']['statusBar.background']`,
+          )
+        : void 0;
+
+    return overrideBottomColor;
+  }
+
+  refreshColorsInSettings(): void {
+    super.refreshColorsInSettings();
+    if (this.project.taonJson.isOrganization) {
+      this.project.children.forEach(child => {
+        child.vsCodeHelpers.refreshColorsInSettings();
+      });
+    }
+  }
 }
