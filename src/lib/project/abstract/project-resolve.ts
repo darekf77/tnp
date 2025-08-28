@@ -31,6 +31,44 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     // if (!this.cliToolName) {
     //   Helpers.throw(`cliToolName is not provided`);
     // }
+    if (UtilsOs.isRunningInVscodeExtension()) {
+      //#region @backend
+      config.frameworkName =
+        config.frameworkName ||
+        (config.frameworkNames.productionFrameworkName as any);
+
+      const taonContinaers = Helpers.foldersFrom(
+        [
+          UtilsOs.getRealHomeDir(),
+          `.${config.frameworkNames.productionFrameworkName}`,
+          'taon-containers',
+        ],
+        { recursive: false },
+      )
+        .map(c => this.From(c))
+        .filter(c => c?.typeIs('container'))
+        .sort((a, b) => {
+          const numA =
+            Number(
+              a.name
+                ?.replace('container', '')
+                .replace('-', '')
+                .replace('v', ''),
+            ) || 0;
+          const numB =
+            Number(
+              b.name
+                ?.replace('container', '')
+                .replace('-', '')
+                .replace('v', ''),
+            ) || 0;
+          return numB - numA; // highest numbers first
+        });
+      const firstContainer = _.first(taonContinaers);
+      config.dirnameForTnp =
+        firstContainer?.pathFor('node_modules/tnp') || config.dirnameForTnp;
+      //#endregion
+    }
 
     this.taonProjectsWorker = new TaonProjectsWorker(
       'taon-projects',
@@ -253,9 +291,9 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     if (!fse.existsSync(projectPath)) {
       Helpers.error(
         `
-     ${projectPath}
-     ${projectPath.replace(/\//g, '\\\\')}
-     ${crossPlatformPath(projectPath)}
+    path: ${crossPlatformPath(projectPath)}
+    config.dirnameForTnp: ${config.dirnameForTnp}
+
      [taon/project] Bad library type "${libraryType}" for this framework version "${version}"
 
      `,
@@ -472,8 +510,10 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     // console.log('pathResolved', partOfPath);
 
     if (
-      global['frameworkName'] &&
-      global['frameworkName'] === config.frameworkNames.productionFrameworkName
+      (global['frameworkName'] &&
+        global['frameworkName'] ===
+          config.frameworkNames.productionFrameworkName) ||
+      UtilsOs.isRunningInVscodeExtension()
     ) {
       const joined = partOfPath.join('/');
 
@@ -501,16 +541,20 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
         `[taon/project] v4 is not supported anymore.. use v16 instead`,
       );
     }
+    const coreContainerPath = this.pathResolved(
+      config.dirnameForTnp,
+      `${this.taonProjectsRelative}/container${version}`,
+    );
+
     const result = {
-      container: this.pathResolved(
-        config.dirnameForTnp,
-        `${this.taonProjectsRelative}/container${version}`,
-      ),
+      container: coreContainerPath,
       projectByType: (libType: CoreModels.NewFactoryType) => {
-        return this.pathResolved(
+        const resultByType = this.pathResolved(
           config.dirnameForTnp,
           `${this.taonProjectsRelative}/container${version}/${libType}${version}`,
         );
+        // console.log(`resultByType ${libType}`, resultByType);
+        return resultByType;
       },
     };
     return result;

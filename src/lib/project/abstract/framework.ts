@@ -16,6 +16,7 @@ import {
   chalk,
   fse,
   Utils,
+  UtilsOs,
 } from 'tnp-core/src';
 import { BaseFeatureForProject, UtilsTypescript } from 'tnp-helpers/src';
 import {
@@ -516,8 +517,9 @@ export class Framework extends BaseFeatureForProject<Project> {
     ) as Project;
 
     if (!coreContainer) {
-      Helpers.error(
-        `
+      if (!UtilsOs.isRunningInVscodeExtension()) {
+        Helpers.error(
+          `
         There is something wrong with core container-${this.frameworkVersion}
 
         You need to sync taon containers. Try command:
@@ -525,9 +527,18 @@ export class Framework extends BaseFeatureForProject<Project> {
       ${config.frameworkName} sync
 
       `,
-        false,
-        true,
-      );
+          false,
+          true,
+        );
+      } else {
+        console.warn(`Not able to find core container for
+           project name: ${this.project.nameForNpmPackage}
+           location: ${this.project.location}
+           type: ${this.project.type}
+           config.frameworkName: ${config.frameworkName}
+
+           `);
+      }
     }
     // TODO I cloud install node_modules here automatically, but sometimes
     // is is not needed

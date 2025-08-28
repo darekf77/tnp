@@ -1754,6 +1754,11 @@ ${this.project.children
   }
   //#endregion
 
+  dirnameForTnp() {
+    console.log(config.dirnameForTnp);
+    this._exit();
+  }
+
   //#region detect contexts
   contexts() {
     Helpers.taskStarted(`Detecting contexts...`);
