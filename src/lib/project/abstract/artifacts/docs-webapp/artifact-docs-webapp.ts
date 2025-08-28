@@ -115,6 +115,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
       );
 
       projectsReposToPush.push(...releaseData.projectsReposToPush);
+      releaseProjPath = releaseData.releaseProjPath;
       //#endregion
     }
 

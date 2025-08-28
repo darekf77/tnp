@@ -54,6 +54,7 @@ export interface PlatformArchType {
   platform?: NodeJS.Platform;
   arch?: 'arm64' | 'x64';
 }
+//#endregion
 
 export abstract class BaseArtifact<
   BUILD_OUTPUT extends {},
@@ -132,9 +133,9 @@ export abstract class BaseArtifact<
   //#endregion
 
   //#region private methods / get static pages cloned project location
-  protected getStaticPagesClonedProjectLocation(
+  protected async getStaticPagesClonedProjectLocation(
     releaseOptions: EnvOptions,
-  ): string {
+  ): Promise<string> {
     //#region @backendFunc
     const staticPagesRepoBranch = `${releaseOptions.release.releaseType}-${this.currentArtifactName}`;
     const repoRoot = this.project.pathFor([
@@ -149,7 +150,7 @@ export abstract class BaseArtifact<
 
     if (!Helpers.exists(repoPath)) {
       Helpers.mkdirp(repoRoot);
-      Helpers.git.clone({
+      await Helpers.git.clone({
         cwd: repoRoot,
         url: repoUrl,
         override: true,
@@ -250,6 +251,7 @@ export abstract class BaseArtifact<
   }
   //#endregion
 
+  //#region getters & methods / distinct architecture prefix
   protected getDistinctArchitecturePrefix(
     options?: boolean | PlatformArchType,
     includeDashEnTheEnd = false,
@@ -270,6 +272,7 @@ export abstract class BaseArtifact<
     return '';
     //#endregion
   }
+  //#endregion
 
   //#region local release deploy
   async localReleaseDeploy(
@@ -370,7 +373,7 @@ export abstract class BaseArtifact<
     const projectsReposToPush: string[] = [];
     let releaseProjPath: string;
     const staticPagesProjLocation =
-      this.getStaticPagesClonedProjectLocation(releaseOptions);
+      await this.getStaticPagesClonedProjectLocation(releaseOptions);
 
     try {
       await Helpers.git.pullCurrentBranch(staticPagesProjLocation, {
@@ -385,17 +388,32 @@ export abstract class BaseArtifact<
     }
 
     Helpers.writeFile([outputFromBuildAbsPath, '.nojekyll'], '');
+
+    //#region make sure version folder are proper
+    let versionFolderName = this.project.packageJson.version;
+
+    const versionType =
+      releaseOptions.release.overrideStaticPagesReleaseType || 'patch';
+
+    if (versionType === 'major') {
+      versionFolderName = this.project.packageJson.majorVersion?.toString();
+    }
+
+    if (versionType === 'minor') {
+      versionFolderName = [
+        this.project.packageJson.majorVersion?.toString(),
+        this.project.packageJson.minorVersion?.toString(),
+      ].join('.');
+    }
+    //#endregion
+
     const destinationStaticPagesLocationRepoAbsPath = releaseOptions.release
       .skipStaticPagesVersioning
       ? staticPagesProjLocation
       : crossPlatformPath([
           staticPagesProjLocation,
           'version',
-          this.project.packageJson
-            .getVersionFor(
-              releaseOptions.release.overrideStaticPagesReleaseType || 'patch',
-            )
-            ?.toString(),
+          versionFolderName,
           architecturePrefix,
         ]);
     if (options.copyOnlyExtensions) {

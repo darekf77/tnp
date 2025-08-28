@@ -151,7 +151,7 @@ export class PackageJSON extends BasePackageJson {
     //#region @backendFunc
     const pj = new BasePackageJson({
       jsonContent: {
-        version: this.project.packageJson.getVersionFor(releaseVersionBumpType),
+        version: this.project.packageJson.getBumpedVersionFor(releaseVersionBumpType),
       },
       reloadInMemoryCallback: data => {
         // console.log('new pj data', data);
@@ -180,7 +180,7 @@ export class PackageJSON extends BasePackageJson {
     });
 
     if (pjtag.version) {
-      pjtag.setVersion(pjtag.getVersionFor(releaseVersionBumpType));
+      pjtag.setVersion(pjtag.getBumpedVersionFor(releaseVersionBumpType));
     }
 
     let i = 0;

@@ -288,7 +288,7 @@ export class ArtifactManager {
       this.project.nameForNpmPackage,
     ]);
     if (this.project.framework.isStandaloneProject) {
-      this.project.artifactsManager.artifact.angularNodeApp.appHostsRecreateHelper.runTask(
+      await this.project.artifactsManager.artifact.angularNodeApp.appHostsRecreateHelper.runTask(
         {
           watch: initOptions.build.watch,
           initialParams: {
@@ -715,7 +715,9 @@ export class ArtifactManager {
     //#region tag and push
     if (!releaseOptions.release.skipTagGitPush) {
       if (!releaseOptions.release.autoReleaseUsingConfig) {
-        Helpers.info(`Checking ${releaseOutput.releaseProjPath} ..`);
+        Helpers.info(
+          `Checking project path "${releaseOutput.releaseProjPath}" ..`,
+        );
         await this.project.releaseProcess.checkBundleQuestion(
           releaseOutput.releaseProjPath,
           `Check ${chalk.bold('bundle')} before tagging/pushing`,
@@ -728,7 +730,7 @@ export class ArtifactManager {
       for (const repoAbsPath of Utils.uniqArray(
         releaseOutput.projectsReposToPush,
       )) {
-        Helpers.info(`Checking ${repoAbsPath} ..`);
+        Helpers.info(`Checking  path "${repoAbsPath}" `);
         if (!releaseOptions.release.autoReleaseUsingConfig) {
           await this.project.releaseProcess.checkBundleQuestion(
             repoAbsPath,
@@ -747,7 +749,7 @@ export class ArtifactManager {
         releaseOutput.projectsReposToPushAndTag,
       )) {
         if (!releaseOptions.release.autoReleaseUsingConfig) {
-          Helpers.info(`Checking ${repoAbsPath} ..`);
+          Helpers.info(`Checking  path "${repoAbsPath}" ..`);
           await this.project.releaseProcess.checkBundleQuestion(
             repoAbsPath,
             `Check ${chalk.bold('project repo')} before tagging/pushing`,
