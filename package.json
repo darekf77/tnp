@@ -19,7 +19,8 @@
     "taon migration:run": "taon migration:run",
     "taon migration:revert": "taon migration:revert",
     "taon vscode:temp:show": "taon vscode:temp:show",
-    "taon vscode:temp:hide": "taon vscode:temp:hide"
+    "taon vscode:temp:hide": "taon vscode:temp:hide",
+    "mkdocs": "mkdocs"
   },
   "license": "MIT",
   "author": "Dariusz Filipiak",

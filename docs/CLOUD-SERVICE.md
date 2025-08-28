@@ -1,4 +1,4 @@
-# CLOUD-SERVICE
+## Cloud-Service
 
 Taon, out of the box, provides users with a local service for easy project/port/domain management and deployment. It also gives an insight into what the real bare-bones Taon Cloud service feels like. Essentially, *Taon Service* is the same as *Taon Cloud*.
 <br>
@@ -24,26 +24,31 @@ By default, each Taon command checks if a working and healthy local Taon service
   </tr>
   <tr>
     <td><b>Enable/Disable Cloud</b></td>
-    <td  colspan="2">
+    <td >
     - enable or disable possibility of deploying docker projects<br>
     - start/stop treafik and related services<br>
      <br>
     </td>
-  </tr>
-  <tr>
-    <td><b>Projects</b></td>
-    <td  colspan="2">
-    - discover/view/add/edit projects for deployments <br>
-    - create new project (in future - automatic domain purchase ) <br>
+    <td>
+    - domains are secure with automatically generated ssl ceritifacte 
     </td>
   </tr>
   <tr>
+    <td><b>Projects</b></td>
+    <td  >
+    - discover/view/add/edit projects for deployments <br>
+    - create new project (in future - automatic domain purchase ) <br>
+    </td>
+    <td><= same as on localhost</td>
+  </tr>
+  <tr>
     <td><b>Deployments</b></td>
-    <td colspan="2" >
+    <td  >
       - main place where you can specify quickly what to deploy and where<br />
       - deploy projects/artifacts<br />
       - deploy groups of projects/artifacts
     </td>
+    <td><= same as on localhost</td>
   </tr>
   <tr>
     <td><b>Domains</b></td>
@@ -58,30 +63,33 @@ By default, each Taon command checks if a working and healthy local Taon service
   </tr>
   <tr>
     <td><b>Ports</b></td>
-    <td colspan="2">
+    <td >
       - assign automatically ports to projects when starting local build (no
       more --port needed, everything)<br />
       - project from same location use the same ports every time to avoid
       confusion<br />
       - for: projects, services, dockers
     </td>
+    <td><= same as on localhost</td>
   </tr>
   
   <tr>
     <td><b>Monitor</b></td>
-    <td  colspan="2" >
+    <td   >
     - monitor server resources <br>
     - duplicate/scale container <br>
     - set up warning <br>
     - log for processes<br>
     </td>
+    <td><= same as on localhost</td>
   </tr>
 
   <tr>
     <td><b>Settings / Account</b></td>
-    <td  colspan="2"  >
+    <td    >
       - setup password / 2fa authentication for server <br>
       - enable cloud optional container (etc. portainer)<br>
     </td>
+    <td><= same as on localhost</td>
   </tr>
 </table>

@@ -143,3 +143,16 @@ Recreate favicons, pwa assets from logo.png
 tnp branding
 
 ```
+
+
+## Refactor
+
+For every file:
+- fix prettier
+- fix eslint
+- wrap imports in region
+
+```bash
+tnp refactor
+
+```
