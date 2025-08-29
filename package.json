@@ -36,7 +36,7 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "icon": "./logo-small-svg.svg",
+          "icon": "./icon-menu-tnp.svg",
           "id": "projectsContainer",
           "title": "Taon Projects"
         }

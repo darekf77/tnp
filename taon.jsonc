@@ -32,7 +32,7 @@
 
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
 
-  "resources": ["logo-small-svg.svg"],
+  "resources": ["icon-menu-tnp.svg"],
   "singleFileBundlingPackages": [
     // electron is replaced by default
     // {
@@ -102,16 +102,16 @@
         "projectsContainer": [
           {
             "id": "projectsView",
-            "name": "Taon Projects",
+            "name": "Tnp Projects",
           },
         ],
       },
       "viewsContainers": {
         "activitybar": [
           {
-            "icon": "./logo-small-svg.svg",
+            "icon": "./icon-menu-tnp.svg",
             "id": "projectsContainer",
-            "title": "Taon Projects",
+            "title": "Tnp Projects",
           },
         ],
       },
