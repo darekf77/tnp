@@ -1,16 +1,16 @@
 //#region imports
 import { crossPlatformPath, Helpers, path } from 'tnp-core/src';
-import { UtilsVSCode } from 'tnp-helpers/src';
+import { _ } from 'tnp-core/src';
 import type { ExtensionContext } from 'vscode';
 import type * as vscode from 'vscode';
 
 import { Project } from '../lib/project/abstract/project';
 //#endregion
 
-export function activate(
+export function activateMenuTnp(
   context: vscode.ExtensionContext,
   vscode: typeof import('vscode'),
-  frameworkCliName: string,
+  FRAMEWORK_NAME: string,
 ) {
   //#region focus first element function
   const focustFirstElement = () => {
@@ -20,10 +20,10 @@ export function activate(
     });
   };
   //#endregion
-
+  const FRAMEWORK_NAME_UPPER_FIST = _.upperFirst(FRAMEWORK_NAME);
   //#region open / click item command
   vscode.commands.registerCommand(
-    'projectsView.openItem',
+    `projectsView${FRAMEWORK_NAME_UPPER_FIST}.openItem`,
     (item: ProjectItem) => {
       if (item?.triggerActionOnClick) {
         vscode.window.withProgress(
@@ -132,7 +132,7 @@ export function activate(
 
       if (collapsibleState === vscode.TreeItemCollapsibleState.None) {
         this.command = {
-          command: 'projectsView.openItem', // must be registered
+          command: `projectsView${FRAMEWORK_NAME_UPPER_FIST}.openItem`, // must be registered
           title: 'Open',
           arguments: [this], // passed to command handler
         };
@@ -231,7 +231,7 @@ export function activate(
 
       //#region core items
       const coreProjectItem = new ProjectItem(
-        `$ ${frameworkCliName} open:core:project`,
+        `$ ${FRAMEWORK_NAME} open:core:project`,
         vscode.TreeItemCollapsibleState.None,
 
         {
@@ -242,7 +242,7 @@ export function activate(
       );
 
       const coreContainerItem = new ProjectItem(
-        `$ ${frameworkCliName} open:core:container`,
+        `$ ${FRAMEWORK_NAME} open:core:container`,
         vscode.TreeItemCollapsibleState.None,
         {
           project: CURRENT_PROJECT.framework.coreContainer,
@@ -290,7 +290,7 @@ export function activate(
         this.getInfoItem('Click item below to trigger action', true),
         //#region items with actions
         new ProjectItem(
-          `$ ${frameworkCliName} refresh:vscode:colors`,
+          `$ ${FRAMEWORK_NAME} refresh:vscode:colors`,
           vscode.TreeItemCollapsibleState.None,
           {
             iconPath: null,
@@ -304,7 +304,7 @@ export function activate(
           },
         ),
         new ProjectItem(
-          `$ ${frameworkCliName} vscode:hide:temp`,
+          `$ ${FRAMEWORK_NAME} vscode:hide:temp`,
           vscode.TreeItemCollapsibleState.None,
           {
             iconPath: null,
@@ -320,7 +320,7 @@ export function activate(
           },
         ),
         new ProjectItem(
-          `$ ${frameworkCliName} vscode:show:temp`,
+          `$ ${FRAMEWORK_NAME} vscode:show:temp`,
           vscode.TreeItemCollapsibleState.None,
           {
             iconPath: null,
@@ -409,14 +409,14 @@ export function activate(
   //#region register tree view
   const treeProvider = new ProjectsTreeProvider();
   // context.subscriptions.push(
-  //   vscode.window.registerTreeDataProvider('projectsView', treeProvider as any),
+  //   vscode.window.registerTreeDataProvider(`projectsView${FRAMEWORK_NAME_UPPER_FIST}`, treeProvider as any),
   // );
 
-  var treeView = vscode.window.createTreeView('projectsView', {
+  var treeView = vscode.window.createTreeView(`projectsView${FRAMEWORK_NAME_UPPER_FIST}`, {
     treeDataProvider: treeProvider as any,
   });
   context.subscriptions.push(treeView);
   //#endregion
 }
 
-export function deactivate() {}
+export function deactivateMenuTnp() {}

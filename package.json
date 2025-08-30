@@ -29,7 +29,7 @@
       "projectsContainer": [
         {
           "id": "projectsView",
-          "name": "Taon Projects"
+          "name": "Tnp Projects"
         }
       ]
     },
@@ -38,7 +38,7 @@
         {
           "icon": "./icon-menu-tnp.svg",
           "id": "projectsContainer",
-          "title": "Taon Projects"
+          "title": "Tnp Projects"
         }
       ]
     }

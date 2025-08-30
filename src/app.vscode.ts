@@ -2,13 +2,13 @@ import { vscodeExtMethods } from 'tnp/src';
 import { executeCommand } from 'tnp-helpers/src'; // @backend
 import { ExtensionContext } from 'vscode';
 
-import { BUILD_FRAMEWORK_CLI_NAME } from './lib/build-info._auto-generated_';
+const FRAMEWORK_NAME = 'tnp';
 import * as menu from './lib/vscode-ext-menu';
 
-const commands = vscodeExtMethods(BUILD_FRAMEWORK_CLI_NAME);
+const commands = vscodeExtMethods(FRAMEWORK_NAME);
 export async function activate(context: ExtensionContext) {
   const vscode = await import('vscode');
-  menu.activate(context, vscode, BUILD_FRAMEWORK_CLI_NAME);
+  menu.activateMenuTnp(context, vscode, FRAMEWORK_NAME);
   //#region @backendFunc
   for (let index = 0; index < commands.length; index++) {
     const {
@@ -34,7 +34,7 @@ export async function activate(context: ExtensionContext) {
 }
 
 export function deactivate() {
-  menu.deactivate();
+  menu.deactivateMenuTnp();
 }
 
 export default { commands };

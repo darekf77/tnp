@@ -81,8 +81,13 @@ export class ArtifactVscodePlugin extends BaseArtifact<
       engines: {
         vscode: '^1.30.0',
       },
+      repository: this.project.packageJson.repository || {
+        url: this.project.git.remoteOriginUrl,
+        type: 'git',
+      },
     };
 
+    // will be done by update-vscode-package-json.js
     if (this.project.taonJson.overridePackageJsonManager.contributes) {
       packageJsonForVscode['contributes'] =
         this.project.taonJson.overridePackageJsonManager.contributes;
