@@ -4,8 +4,6 @@ import {
   path,
   crossPlatformPath,
   fse,
-  chalk,
-  moment,
   CoreModels,
   PROGRESS_DATA,
   dateformat,
@@ -131,7 +129,7 @@ export class NodeModules extends BaseNodeModules {
 
       Helpers.writeFile(
         [this.project.nodeModules.path, '.install-date'],
-        moment(new Date()).format('L LTS'),
+        `[${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}]`,
       );
       if (this.project.nodeModules.shouldDedupePackages) {
         this.project.nodeModules.dedupe();

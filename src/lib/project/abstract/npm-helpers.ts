@@ -8,7 +8,6 @@ import {
   _,
   dateformat,
   fse,
-  moment,
 } from 'tnp-core/src';
 import {
   BaseNodeModules,
