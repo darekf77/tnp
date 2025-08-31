@@ -197,12 +197,13 @@ export class $Global extends BaseGlobalCommandLine<
 
   //#region proper watcher test
   async PROPERWATCHERTEST(engine: string) {
-    const proj = this.project as Project;
-    const watchLocation = crossPlatformPath([proj.location, config.folder.src]);
-    const symlinkCatalog = crossPlatformPath([proj.location, 'symlinkCatalog']);
+    // const proj = this.project as Project;
+    const cwd = this.cwd;
+    const watchLocation = crossPlatformPath([cwd, config.folder.src]);
+    const symlinkCatalog = crossPlatformPath([cwd, 'symlinkCatalog']);
     const symlinkCatalogInWatch = crossPlatformPath([watchLocation, 'symlink']);
     const symlinkCatalogFile = crossPlatformPath([
-      proj.location,
+      cwd,
       'symlinkCatalog',
       'aaa.txt',
     ]);
@@ -214,11 +215,11 @@ export class $Global extends BaseGlobalCommandLine<
     Helpers.remove(symlinkCatalog);
     Helpers.writeFile(symlinkCatalogFile, 'hello aaa');
     Helpers.writeFile(
-      crossPlatformPath([proj.location, config.folder.src, 'a1', 'aa']),
+      crossPlatformPath([cwd, config.folder.src, 'a1', 'aa']),
       'asdasdasdhello aaa',
     );
     Helpers.writeFile(
-      crossPlatformPath([proj.location, config.folder.src, 'a2', 'ccc']),
+      crossPlatformPath([cwd, config.folder.src, 'a2', 'ccc']),
       'heasdasdllo asdasd',
     );
     Helpers.createSymLink(symlinkCatalog, symlinkCatalogInWatch);
