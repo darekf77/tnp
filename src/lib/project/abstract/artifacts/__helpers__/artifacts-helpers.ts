@@ -7,7 +7,6 @@ import { EnvOptions } from '../../../../options';
 import type { Project } from '../../project';
 
 import { Branding } from './branding';
-import { DockerHelper } from './docker-helper';
 //#endregion
 
 /**
@@ -15,7 +14,7 @@ import { DockerHelper } from './docker-helper';
  */
 export class ArtifactsGlobalHelper {
   public readonly branding: Branding;
-  public readonly docker: DockerHelper;
+
 
   constructor(private project: Project) {
     this.branding = new Branding(project);

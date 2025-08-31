@@ -21,6 +21,7 @@ import { Project } from '../../project';
 //#endregion
 
 /**
+ * @deprecated TODO not needed ?
  * handle dockers image in taon projects
  */
 export class DockerHelper extends BaseDebounceCompilerForProject<

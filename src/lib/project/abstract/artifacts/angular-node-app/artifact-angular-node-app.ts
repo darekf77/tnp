@@ -31,7 +31,6 @@ import {
 } from '../../../../constants';
 import { Development, EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
-import { DockerHelper } from '../__helpers__/docker-helper';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 import { InsideStructuresElectron } from '../electron-app/tools/inside-struct-electron';
 
@@ -53,7 +52,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   //#region fields & getters
   public readonly migrationHelper: MigrationHelper;
   public readonly angularFeBasenameManager: AngularFeBasenameManager;
-  public readonly docker: DockerHelper;
+
   public readonly insideStructureApp: InsideStructuresApp;
   public readonly insideStructureElectron: InsideStructuresElectron;
   public readonly appHostsRecreateHelper: AppHostsRecreateHelper;
@@ -68,7 +67,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     this.insideStructureApp = new InsideStructuresApp(project);
     this.insideStructureElectron = new InsideStructuresElectron(project);
     this.appHostsRecreateHelper = new AppHostsRecreateHelper(project);
-    this.docker = new DockerHelper(project);
   }
   //#endregion
 
