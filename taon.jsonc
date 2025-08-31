@@ -17,6 +17,7 @@
     "favicons",
     "mariadb",
     "sql.js",
+    "@parcel/watcher",
     // "rxjs",
     // "tslib",
     // "magic-renamer",
@@ -42,8 +43,15 @@
     // },
     {
       "description": "TypeScript Node.js runtime",
+      // I am actually bundling ts in 'vscode-plugin'
+      // in npm-lib-and-cli-tool it is external
       "isExternalFor": ["npm-lib-and-cli-tool"],
       "packageName": "typescript",
+    },
+    {
+      "description": "Fast file watcher",
+      "isExternalFor": "*",
+      "packageName": "@parcel/watcher",
     },
     {
       "description": "Image manipulations",

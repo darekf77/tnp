@@ -202,6 +202,14 @@ export namespace Models {
      */
     peerDependenciesNamesForNpmLib: string[];
 
+     /**
+     * At beginning after node_modules installation taon is checking is
+     * packages are installed - if not it will throw error.
+     * Also.. this optionalDependencies are going to be included in released npm lib
+     * as optionalDependencies.
+     */
+    optionalDependenciesNamesForNpmLib: string[];
+
     /**
      * Provide information about external packages for single file
      * bundling process
