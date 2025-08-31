@@ -90,7 +90,22 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
                 Helpers.remove(dest, true);
               }
             } else {
-              Helpers.copyFile(changeOfFile.fileAbsolutePath, dest);
+              try {
+                Helpers.copyFile(changeOfFile.fileAbsolutePath, dest);
+              } catch (error) {
+                Helpers.warn(
+                  `[${config.frameworkName}] Could not copy asset ` +
+                    `from ${changeOfFile.fileAbsolutePath} to ${dest}
+
+      Probably you should start clean build
+      ${config.frameworkName} build:clean:lib
+      ${config.frameworkName} build:clean:watch:lib
+
+
+
+                    `,
+                );
+              }
             }
           });
       } else {
