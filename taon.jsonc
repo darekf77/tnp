@@ -32,15 +32,8 @@
   ],
 
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
-
-  // each installation will succeed or fail on specyfic system
-  "optionalDependenciesNamesForNpmLib": [
-    "@parcel/watcher-darwin-x64",
-    "@parcel/watcher-linux-x64-glibc",
-    "@parcel/watcher-win32-x64-msvc",
-  ],
-
   "resources": ["icon-menu-tnp.svg"],
+
   "singleFileBundlingPackages": [
     // electron is replaced by default
     // {
@@ -142,5 +135,5 @@
       "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     },
     "sideEffects": false,
-  },
+  }
 }
