@@ -256,6 +256,9 @@ export class ArtifactManager {
       } catch (error) {}
       this.project.removeFile('.vscode/launch-backup.json');
       this.project.removeFile('.vscode/run-org.js');
+      if (this.project.typeIs('container')) {
+        this.project.removeFile('src/vars.scss');
+      }
       this.project.remove('src/docker', true);
       try {
         this.project

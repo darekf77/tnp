@@ -320,6 +320,10 @@ export class Framework extends BaseFeatureForProject<Project> {
 
   recreateVarsScss(initOptions: EnvOptions): void {
     //#region @backendFunc
+    if (!this.project.typeIs('isomorphic-lib')) {
+      return;
+    }
+
     //#region recreate vars.scss file
     // TODO QUICK_FIX this will work in app - only if app is build with same base-href
     this.project.writeFile(
