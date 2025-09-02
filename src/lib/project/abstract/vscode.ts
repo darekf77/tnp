@@ -261,8 +261,11 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
         args: [
           `--extensionDevelopmentPath=\${workspaceFolder}/${vscodeProjDevPath}`,
         ],
-
-        outFiles: [`\${workspaceFolder}/${vscodeProjDevPath}/out/**/*.js`],
+        sourceMapPathOverrides: this.sourceMapPathOverrides,
+        outFiles: [
+          `\${workspaceFolder}/${vscodeProjDevPath}/out/**/*.js`,
+          ...this.outFiles.slice(1), // skip dist
+        ],
         preLaunchTask: this.vscodePluginDevPreLaunchTask.label,
       },
       // {
