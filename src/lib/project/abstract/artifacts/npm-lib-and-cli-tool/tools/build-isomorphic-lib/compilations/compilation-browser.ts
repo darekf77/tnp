@@ -202,7 +202,13 @@ export class BrowserCompilation extends IncCompiler.Base {
             if (relativeFilePath.startsWith(`${config.folder.assets}/`)) {
               // nothing
             } else {
-              Helpers.removeFileIfExists(destinationFileBackendPath);
+              try {
+                Helpers.removeFileIfExists(destinationFileBackendPath);
+              } catch (error) {
+                Helpers.warn(
+                  `Error during removing file ${destinationFileBackendPath}`,
+                );
+              }
             }
           } else {
             if (fse.existsSync(absoluteFilePath)) {
@@ -237,13 +243,25 @@ export class BrowserCompilation extends IncCompiler.Base {
         const destinationFileScssPath = this.sassDestFor(relativeFilePath);
 
         if (event.eventName === 'unlinkDir') {
-          Helpers.removeFolderIfExists(destinationFileScssPath);
+          try {
+            Helpers.removeFolderIfExists(destinationFileScssPath);
+          } catch (error) {
+            Helpers.warn(
+              `Error during removing folder ${destinationFileScssPath}`,
+            );
+          }
         } else {
           if (event.eventName === 'unlink') {
             if (relativeFilePath.startsWith(`${config.folder.assets}/`)) {
               // nothing
             } else {
-              Helpers.removeFileIfExists(destinationFileScssPath);
+              try {
+                Helpers.removeFileIfExists(destinationFileScssPath);
+              } catch (error) {
+                Helpers.warn(
+                  `Error during removing file ${destinationFileScssPath}`,
+                );
+              }
             }
           } else {
             if (fse.existsSync(absoluteFilePath)) {
@@ -289,7 +307,11 @@ export class BrowserCompilation extends IncCompiler.Base {
               ? this.codecutWEBSQL.files([relativeFilePath], true)
               : this.codecutNORMAL.files([relativeFilePath], true);
           } else {
-            Helpers.removeFileIfExists(destinationFilePath);
+            try {
+              Helpers.removeFileIfExists(destinationFilePath);
+            } catch (error) {
+              Helpers.warn(`Error during removing file ${destinationFilePath}`);
+            }
           }
         } else {
           if (fse.existsSync(absoluteFilePath)) {
