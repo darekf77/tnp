@@ -107,9 +107,9 @@
     "author": "Dariusz Filipiak",
     "contributes": {
       "views": {
-        "projectsContainer": [
+        "projectsContainerTnp": [
           {
-            "id": "projectsView",
+            "id": "projectsViewTnp",
             "name": "Tnp Projects",
           },
         ],
@@ -118,7 +118,7 @@
         "activitybar": [
           {
             "icon": "./icon-menu-tnp.svg",
-            "id": "projectsContainer",
+            "id": "projectsContainerTnp",
             "title": "Tnp Projects",
           },
         ],

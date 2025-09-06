@@ -201,6 +201,11 @@ export const tmpAppsForDistElectron = `${tmpAppsForDist}-electron`;
 export const tmpBuildPort = 'tmp-build-port';
 export const tmpBaseHrefOverwriteRelPath = 'tmp-base-href-overwrite';
 
+export const docsConfigJsonFileName = 'docs-config.jsonc';
+export const docsConfigSchema = 'docs-config.schema.json';
+export const customDefaultCss = 'custom-default.css';
+export const customDefaultJs = 'custom-default.js';
+
 export const frameworkBuildFolders = Utils.uniqArray([
   'firedev',
   'taon',

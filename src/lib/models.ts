@@ -46,24 +46,6 @@ export namespace Models {
   };
   //#endregion
 
-  //#region generate project copy
-  export interface GenerateProjectCopyOpt {
-    override?: boolean;
-    markAsGenerated?: boolean;
-    regenerateOnlyCoreProjects?: boolean;
-    forceCopyPackageJSON?: boolean;
-    filterForReleaseDist?: boolean;
-    showInfo?: boolean;
-    ommitSourceCode?: boolean;
-    regenerateProjectChilds?: boolean;
-    useTempLocation?: boolean;
-    /**
-     * copy links as folders and files
-     */
-    dereference?: boolean;
-  }
-  //#endregion
-
   //#region ps list info
   export interface PsListInfo {
     pid: number;
@@ -185,6 +167,13 @@ export namespace Models {
      * going to be included in release dist
      */
     resources?: string[];
+
+    /**
+     * @default false
+     * By default generated assets from logo.png are not stored
+     * in repository
+     */
+    storeGeneratedAssetsInRepository?: boolean;
 
     /**
      * At beginning after node_modules installation taon is checking is

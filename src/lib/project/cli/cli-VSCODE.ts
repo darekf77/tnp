@@ -14,8 +14,7 @@ import { BaseCli } from './base-cli';
 //#endregion
 
 export class $Vscode extends BaseCli {
-
-  public async _() {
+  public async _(): Promise<void> {
     this._displayMenu();
   }
 
@@ -79,37 +78,39 @@ export class $Vscode extends BaseCli {
   //#endregion
 
   //#region global
-  GLOBAL() {
+  GLOBAL(): void {
     this.project.vsCodeHelpers.applyProperGlobalSettings();
     this._exit();
   }
   //#endregion
 
-  TEMP_SHOW() {
+  TEMP_SHOW(): void {
     this._showfilesfor(this.project.ins.Current);
     this._exit();
   }
 
-  TEMP_HIDE() {
+  TEMP_HIDE(): void {
     this._hidefilesfor(this.project);
     this._exit();
   }
 
-  INIT() {
-    this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode();
+  INIT(): void {
+    this.project.vsCodeHelpers.toogleFilesVisibilityInVscode({
+      action: 'hide-files',
+    });
     this._exit();
   }
 
-  _showfilesfor(project: Project) {
-    project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode(
-      false,
-    );
+  _showfilesfor(project: Project): void {
+    project.vsCodeHelpers.toogleFilesVisibilityInVscode({
+      action: 'show-files',
+    });
   }
 
-  _hidefilesfor(project: Project) {
-    project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode(
-      true,
-    );
+  _hidefilesfor(project: Project): void {
+    project.vsCodeHelpers.toogleFilesVisibilityInVscode({
+      action: 'hide-files',
+    });
   }
 
   async vsce() {

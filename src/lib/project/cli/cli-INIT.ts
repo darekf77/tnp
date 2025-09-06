@@ -69,7 +69,9 @@ export class $Init extends BaseCli {
   }
 
   vscode(): void {
-    this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode();
+    this.project.vsCodeHelpers.toogleFilesVisibilityInVscode({
+      action: 'hide-files',
+    });
   }
 
   //#region ask when empty

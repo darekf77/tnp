@@ -300,7 +300,12 @@ export class ArtifactManager {
         },
       );
     }
-    await this.project.vsCodeHelpers.init();
+
+    await this.project.ignoreHide.init();
+    await this.project.vsCodeHelpers.init({
+      skipHiddingTempFiles: !initOptions.init.struct,
+    });
+
     await this.project.linter.init();
 
     if (this.project.framework.isStandaloneProject) {

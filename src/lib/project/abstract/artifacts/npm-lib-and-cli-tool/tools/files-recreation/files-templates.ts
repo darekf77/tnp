@@ -16,7 +16,7 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
   //#region files
   get files() {
     //#region @backendFunc
-    return this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.__filesTemplates();
+    return this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.filesTemplates();
     //#endregion
   }
   //#endregion

@@ -320,9 +320,9 @@ export class $New extends BaseCli {
       lastContainer.linkedProjects.addLinkedProject(lastProjectFromArgName);
     }
 
-    appProj.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode(
-      true,
-    );
+    appProj.vsCodeHelpers.toogleFilesVisibilityInVscode({
+      action: 'hide-files',
+    });
 
     if (initGit) {
       try {
@@ -423,7 +423,7 @@ Hello from Container Project
           purpose: 'initing new container',
         }),
       );
-      container.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.initVscode();
+      await container.vsCodeHelpers.init();
     }
 
     Helpers.info(`DONE CREATING ${nameFromArgs}`);

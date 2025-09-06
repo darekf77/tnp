@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-config/src';
+import { config, fileName } from 'tnp-config/src';
 import { chalk, fse, json5, path, _, os, win32Path } from 'tnp-core/src';
 import { Utils } from 'tnp-core/src';
 import { crossPlatformPath } from 'tnp-core/src';
@@ -15,6 +15,9 @@ import {
   dirnameFromSourceToProject,
   whatToLinkFromCoreDeepPart,
   whatToLinkFromCore,
+  frameworkBuildFolders,
+  docsConfigJsonFileName,
+  docsConfigSchema,
 } from '../../constants';
 import { Models } from '../../models';
 import { Development, EnvOptions } from '../../options';
@@ -29,19 +32,22 @@ import type { Project } from './project';
 export class Vscode // @ts-ignore TODO weird inheritance problem
   extends BaseVscodeHelpers<Project>
 {
-  async init(): Promise<void> {
-    this.recreateExtensions();
+  //#region init
+  async init(options?: { skipHiddingTempFiles?: boolean }): Promise<void> {
+    options = options || {};
     await this.saveLaunchJson();
     this.saveTasksJson();
 
     // modyfing settings.json
     this.recreateJsonSchemaForDocs();
     this.recreateJsonSchemaForTaon();
-    this.recreateWindowTitle({ save: false });
     this.saveColorsForWindow();
     this.saveCurrentSettings();
+    await super.init(options);
   }
+  //#endregion
 
+  //#region save current settings
   saveCurrentSettings(): void {
     //#region @backendFunc
     // TODO QUCIK_FIX for asar that can be deleted because of vscode watcher
@@ -52,7 +58,9 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     super.saveCurrentSettings();
     //#endregion
   }
+  //#endregion
 
+  //#region save colors for window
   private saveColorsForWindow(checkingParent: boolean = false): void {
     //#region @backendFunc
 
@@ -86,15 +94,14 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     //#endregion
   }
+  //#endregion
 
   //#region recreate jsonc schema for docs
   public recreateJsonSchemaForDocs(): void {
     //#region @backendFunc
     const properSchema = {
-      fileMatch: [
-        `/${this.project.artifactsManager.artifact.docsWebapp.docs.docsConfigJsonFileName}`,
-      ],
-      url: `./${this.project.artifactsManager.artifact.docsWebapp.docs.docsConfigSchema}`,
+      fileMatch: [`/${docsConfigJsonFileName}`],
+      url: `./${docsConfigSchema}`,
     };
 
     const currentSchemas: {
@@ -106,7 +113,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       .filter(
         (x, i) => x =>
           (_.first(x.fileMatch) as string)?.startsWith(
-            `/${this.project.artifactsManager.artifact.docsWebapp.docs.docsConfigJsonFileName}`,
+            `/${docsConfigJsonFileName}`,
           ),
       )
       .map((_, i) => i);
@@ -145,7 +152,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     if (this.project.framework.isStandaloneProject) {
       const properSchema = {
-        fileMatch: [`/${config.file.taon_jsonc}`],
+        fileMatch: [`/${fileName.taon_jsonc}`],
         url: `./${taonConfigSchemaJsonStandalone}`,
       };
 
@@ -156,7 +163,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       }
     } else if (this.project.framework.isContainer) {
       const properSchema = {
-        fileMatch: [`/${config.file.taon_jsonc}`],
+        fileMatch: [`/${fileName.taon_jsonc}`],
         url: `./${taonConfigSchemaJsonContainer}`,
       };
 
@@ -174,6 +181,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   }
   //#endregion
 
+  //#region vscode plugin dev pre launch task
   private get vscodePluginDevPreLaunchTask() {
     //#region vscode update package.json
     return {
@@ -220,7 +228,9 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       },
     };
   }
+  //#endregion
 
+  //#region save tasks.json
   public saveTasksJson(): void {
     //#region @backendFunc
 
@@ -232,6 +242,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     });
     //#endregion
   }
+  //#endregion
 
   //#region save launch.json
   public async saveLaunchJson(): Promise<void> {
@@ -503,7 +514,9 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     ];
     //#endregion
   }
+  //#endregion
 
+  //#region get source map path overrides
   get sourceMapPathOverrides() {
     //#region @backendFunc
     const sourceMapPathOverrides = {};
@@ -552,6 +565,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   }
   //#endregion
 
+  //#region get vscode bottom color
   getVscodeBottomColor(): string {
     let overrideBottomColor =
       this.project?.parent?.taonJson.isOrganization &&
@@ -564,7 +578,9 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     return overrideBottomColor;
   }
+  //#endregion
 
+  //#region refresh colors in settings for org and children
   refreshColorsInSettings(): void {
     super.refreshColorsInSettings();
     if (this.project.taonJson.isOrganization) {
@@ -573,4 +589,17 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       });
     }
   }
+  //#endregion
+
+  //#region get basic settings
+  async getBasicSettins(): Promise<object> {
+    //#region @backendFunc
+    const settings = await super.getBasicSettins();
+    frameworkBuildFolders.forEach(f => {
+      settings['search.exclude'][f] = true;
+    });
+    return settings;
+    //#endregion
+  }
+  //#endregion
 }

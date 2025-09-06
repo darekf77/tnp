@@ -29,9 +29,9 @@ export class Refactor extends BaseFeatureForProject<Project> {
     await this.eslint();
     await this.prettier();
     await this.importsWrap();
-    this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode(
-      true,
-    );
+    this.project.vsCodeHelpers.toogleFilesVisibilityInVscode({
+      action: 'hide-files',
+    });
   }
 
   async prettier() {

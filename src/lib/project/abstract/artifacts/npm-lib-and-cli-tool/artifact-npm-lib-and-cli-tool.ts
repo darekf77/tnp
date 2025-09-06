@@ -110,6 +110,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     );
     await this.filesRecreator.init();
 
+
     // const updatedConfig =
     // if (updatedConfig) {
     //   initOptions = updatedConfig;
@@ -779,11 +780,14 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     const optionalDeps = pj.optionalDependencies;
 
-     if (this.project.taonJson.optionalDependenciesNamesForNpmLib) {
+    if (this.project.taonJson.optionalDependenciesNamesForNpmLib) {
       pj.setPeerDependencies(
-        this.project.taonJson.optionalDependenciesNamesForNpmLib.reduce((a, b) => {
-          return { ...a, [b]: optionalDeps[b] };
-        }, {}),
+        this.project.taonJson.optionalDependenciesNamesForNpmLib.reduce(
+          (a, b) => {
+            return { ...a, [b]: optionalDeps[b] };
+          },
+          {},
+        ),
       );
     }
 

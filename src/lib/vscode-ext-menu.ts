@@ -311,9 +311,9 @@ export function activateMenuTnp(
             project: CURRENT_PROJECT,
             triggerActionOnClick: project => {
               if (project) {
-                project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode(
-                  true,
-                );
+                project.vsCodeHelpers.toogleFilesVisibilityInVscode({
+                  action: 'hide-files',
+                });
                 vscode.commands.executeCommand('workbench.view.explorer');
               }
             },
@@ -327,9 +327,9 @@ export function activateMenuTnp(
             project: CURRENT_PROJECT,
             triggerActionOnClick: project => {
               if (project) {
-                project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.vscode.settings.hideOrShowFilesInVscode(
-                  false,
-                );
+                project.vsCodeHelpers.toogleFilesVisibilityInVscode({
+                  action: 'show-files',
+                });
                 vscode.commands.executeCommand('workbench.view.explorer');
               }
             },
@@ -412,9 +412,12 @@ export function activateMenuTnp(
   //   vscode.window.registerTreeDataProvider(`projectsView${FRAMEWORK_NAME_UPPER_FIST}`, treeProvider as any),
   // );
 
-  var treeView = vscode.window.createTreeView(`projectsView${FRAMEWORK_NAME_UPPER_FIST}`, {
-    treeDataProvider: treeProvider as any,
-  });
+  var treeView = vscode.window.createTreeView(
+    `projectsView${FRAMEWORK_NAME_UPPER_FIST}`,
+    {
+      treeDataProvider: treeProvider as any,
+    },
+  );
   context.subscriptions.push(treeView);
   //#endregion
 }

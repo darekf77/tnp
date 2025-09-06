@@ -9,8 +9,10 @@ import { EnvOptions } from '../../options';
 
 import { EnvironmentConfig } from './artifacts/__helpers__/environment-config/environment-config';
 import { ArtifactManager } from './artifacts/artifacts-manager';
+import { FileFoldersOperations } from './file-folders-operations';
 import { Framework } from './framework';
 import { Git } from './git';
+import { IgnoreHide } from './ignore-hide';
 import { LibraryBuild } from './library-build';
 import { LinkedProjects } from './linked-projects';
 import { Linter } from './linter';
@@ -23,7 +25,8 @@ import { QuickFixes } from './quick-fixes';
 import { Refactor } from './refactor';
 import type { ReleaseProcess } from './release-process';
 import { TaonJson } from './taonJson';
-import { Vscode } from './vscode';
+import { Vscode } from './vscode-helper';
+
 //#endregion
 let frameworkName = '';
 //#region @backend
@@ -59,7 +62,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   get nodeModules(): NodeModules {
     return this.npmHelpers.nodeModules as any;
   }
-
+// @ts-ignore TODO weird inheritance problem
   public readonly linter: Linter;
   public readonly framework: Framework;
 
@@ -68,6 +71,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   public readonly artifactsManager: ArtifactManager;
   // @ts-ignore TODO weird inheritance problem
   public readonly git: Git;
+  // @ts-ignore TODO weird inheritance problem
+  public readonly ignoreHide: IgnoreHide;
   public readonly taonJson: TaonJson;
   public readonly packagesRecognition: PackagesRecognition;
   public readonly environmentConfig: EnvironmentConfig;
@@ -87,6 +92,12 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     this.framework = new Framework(this);
 
     this.git = new (require('./git').Git as typeof Git)(this as any);
+
+    this.ignoreHide = new (require('./ignore-hide')
+      .IgnoreHide as typeof IgnoreHide)(this as any);
+
+    this.fileFoldersOperations = new (require('./file-folders-operations')
+      .FileFoldersOperations as typeof FileFoldersOperations)(this as any);
 
     this.libraryBuild = new (require('./library-build')
       .LibraryBuild as typeof LibraryBuild)(this as any) as any;

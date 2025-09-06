@@ -8,6 +8,12 @@ import { UtilsMd } from 'tnp-helpers/src';
 import { BaseDebounceCompilerForProject } from 'tnp-helpers/src';
 import { Helpers, UtilsHttp } from 'tnp-helpers/src';
 
+import {
+  customDefaultCss,
+  customDefaultJs,
+  docsConfigJsonFileName,
+  docsConfigSchema,
+} from '../../../../constants';
 import { Models } from '../../../../models';
 import { EnvOptions } from '../../../../options';
 import type { Project } from '../../project';
@@ -38,17 +44,13 @@ export class Docs extends BaseDebounceCompilerForProject<
 > {
   //#region fields & getters
 
-  public readonly docsConfigJsonFileName = 'docs-config.jsonc';
-  public readonly docsConfigSchema = 'docs-config.schema.json';
-  public readonly customDefaultCss = 'custom-default.css';
-  public readonly customDefaultJs = 'custom-default.js';
   protected mkdocsServePort: number;
   private linkedAlreadProjects = {};
 
   //#region fields & getters / docs config current proj abs path
-  public get docsConfigCurrentProjAbsPath() {
+  public get docsConfigCurrentProjAbsPath(): string {
     //#region @backendFunc
-    return this.project.pathFor(this.docsConfigJsonFileName);
+    return this.project.pathFor(docsConfigJsonFileName);
     //#endregion
   }
   //#endregion
@@ -56,9 +58,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   //#region fields & getters / docs config
   get config(): Models.DocsConfig {
     //#region @backendFunc
-    return this.project.readJson(
-      this.docsConfigJsonFileName,
-    ) as Models.DocsConfig;
+    return this.project.readJson(docsConfigJsonFileName) as Models.DocsConfig;
     //#endregion
   }
   //#endregion
@@ -136,7 +136,7 @@ export class Docs extends BaseDebounceCompilerForProject<
     //#region @backendFunc
     return this.project.ins
       .by('isomorphic-lib', this.project.framework.frameworkVersion)
-      .pathFor(this.docsConfigSchema);
+      .pathFor(docsConfigSchema);
     //#endregion
   }
   //#endregion
@@ -151,21 +151,18 @@ export class Docs extends BaseDebounceCompilerForProject<
       this.tmpDocsFolderRootDocsDirRelativePath,
     );
     this.project.createFolder(this.tmpDocsFolderRootDocsDirRelativePath);
-    if (!this.project.hasFile(this.docsConfigJsonFileName)) {
-      this.project.writeJson(
-        this.docsConfigJsonFileName,
-        this.defaultDocsConfig(),
-      );
+    if (!this.project.hasFile(docsConfigJsonFileName)) {
+      this.project.writeJson(docsConfigJsonFileName, this.defaultDocsConfig());
     }
 
     if (!this.project.framework.isCoreProject) {
       try {
-        fse.unlinkSync(this.project.pathFor(this.docsConfigSchema));
+        fse.unlinkSync(this.project.pathFor(docsConfigSchema));
       } catch (error) {}
 
       Helpers.createSymLink(
         this.docsConfigSchemaPath,
-        this.project.pathFor(this.docsConfigSchema),
+        this.project.pathFor(docsConfigSchema),
         { continueWhenExistedFolderDoesntExists: true },
       );
     }
@@ -249,7 +246,7 @@ export class Docs extends BaseDebounceCompilerForProject<
       await this.buildMkdocs({ watch: this.isWatchCompilation });
 
       chokidar
-        .watch(this.project.pathFor(this.docsConfigJsonFileName), {
+        .watch(this.project.pathFor(docsConfigJsonFileName), {
           ignoreInitial: true,
         })
         .on('all', async () => {
@@ -418,10 +415,10 @@ theme:
     # accent: red
 
 extra_css:
-  - ${this.config.customCssPath || this.customDefaultCss}
+  - ${this.config.customCssPath || customDefaultCss}
 
 extra_javascript:
-  - ${this.config.customJsPath || this.customDefaultJs}
+  - ${this.config.customJsPath || customDefaultJs}
 
 # plugins:
 #   - social
@@ -529,7 +526,7 @@ markdown_extensions:
       );
     } else {
       this.project.writeFile(
-        [this.tmpDocsFolderRootDocsDirRelativePath, this.customDefaultCss],
+        [this.tmpDocsFolderRootDocsDirRelativePath, customDefaultCss],
         '',
       );
     }
@@ -547,7 +544,7 @@ markdown_extensions:
       );
     } else {
       this.project.writeFile(
-        [this.tmpDocsFolderRootDocsDirRelativePath, this.customDefaultJs],
+        [this.tmpDocsFolderRootDocsDirRelativePath, customDefaultJs],
         '',
       );
     }
