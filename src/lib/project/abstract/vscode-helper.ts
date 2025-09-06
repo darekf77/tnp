@@ -35,6 +35,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   //#region init
   async init(options?: { skipHiddingTempFiles?: boolean }): Promise<void> {
     options = options || {};
+
     await this.saveLaunchJson();
     this.saveTasksJson();
 

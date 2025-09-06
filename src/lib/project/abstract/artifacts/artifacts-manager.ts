@@ -21,6 +21,7 @@ import type {
   IArtifactProcessObj,
   ReleasePartialOutput,
 } from './base-artifact';
+import { FilesRecreator } from './npm-lib-and-cli-tool/tools/files-recreation';
 //#endregion
 
 /**
@@ -29,6 +30,8 @@ import type {
  * current project or/and children projects
  */
 export class ArtifactManager {
+  public readonly filesRecreator: FilesRecreator;
+
   static for(project: Project): ArtifactManager {
     //#region @backendFunc
     const artifactProcess = {
@@ -71,7 +74,9 @@ export class ArtifactManager {
     public artifact: IArtifactProcessObj,
     private project: Project,
     public globalHelper: ArtifactsGlobalHelper,
-  ) {}
+  ) {
+    this.filesRecreator = new FilesRecreator(this.project);
+  }
   //#endregion
 
   //#region clear
@@ -302,6 +307,7 @@ export class ArtifactManager {
     }
 
     await this.project.ignoreHide.init();
+    await this.filesRecreator.init();
     await this.project.vsCodeHelpers.init({
       skipHiddingTempFiles: !initOptions.init.struct,
     });

@@ -37,7 +37,7 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       '/src/tests/mocha-tests-info.md',
       '/src/assets/shared/shared_folder_info.txt',
       '/.vscode/launch.json',
-      this.project.taonJson.storeGeneratedAssetsInRepository
+      !this.project.taonJson.storeGeneratedAssetsInRepository
         ? `/src/assets/generated`
         : void 0,
       ...(this.project.isMonorepo
@@ -66,10 +66,7 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
   }
 
   alwaysUseRecursivePattern(): string[] {
-    return [
-      ...super.alwaysUseRecursivePattern(),
-      '*.filetemplate',
-    ]
+    return [...super.alwaysUseRecursivePattern(), '*.filetemplate'];
   }
 
   protected hiddenButNotNecessaryIgnoredInRepoFilesAndFolders(): string[] {

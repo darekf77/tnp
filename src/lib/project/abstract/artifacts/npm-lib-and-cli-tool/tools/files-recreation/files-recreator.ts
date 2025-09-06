@@ -89,7 +89,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
       // nothing
     } else if (defaultProjectProptotype) {
       const projectSpecyficFiles =
-        this.project.artifactsManager.artifact.npmLibAndCliTool.filesRecreator.projectSpecyficFiles();
+        this.project.artifactsManager.filesRecreator.projectSpecyficFiles();
       // console.log({
       //   projectSpecyficFiles,
       //   project: this.project.genericName

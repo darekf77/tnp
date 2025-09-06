@@ -69,8 +69,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   public readonly __testsJest: JestTestRunner;
   public readonly __testsCypress: CypressTestRunner;
 
-  public readonly filesRecreator: FilesRecreator;
-
   public readonly copyNpmDistLibManager: CopyManager;
   public readonly insideStructureLib: InsideStructuresLib;
   protected readonly indexAutogenProvider: IndexAutogenProvider;
@@ -91,7 +89,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     this.copyNpmDistLibManager = CopyManager.for(project);
     this.indexAutogenProvider = new IndexAutogenProvider(project);
     this.filesTemplatesBuilder = new FilesTemplatesBuilder(project);
-    this.filesRecreator = new FilesRecreator(project);
     this.insideStructureLib = new InsideStructuresLib(project);
     this.assetsManager = new AssetsManager(project);
   }
@@ -108,8 +105,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         initOptions.init.struct ? '(without packages install)' : ''
       } `,
     );
-    await this.filesRecreator.init();
-
 
     // const updatedConfig =
     // if (updatedConfig) {

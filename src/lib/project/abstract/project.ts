@@ -108,7 +108,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     this.linkedProjects = new (require('./linked-projects')
       .LinkedProjects as typeof LinkedProjects)(this as any);
 
-    this.vsCodeHelpers = new (require('./vscode').Vscode as typeof Vscode)(
+    this.vsCodeHelpers = new (require('./vscode-helper').Vscode as typeof Vscode)(
       this,
     );
 

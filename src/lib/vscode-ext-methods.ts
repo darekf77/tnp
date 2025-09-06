@@ -25,7 +25,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
   const groupOpen = `${toolName} open`;
   const groupGENERATE = `${toolName} generate`;
   const groupRefactor = `${toolName} refactor`;
-  const groupGroupOprations = `${toolName} projects operations`;
+  const groupGroupOperations = `${toolName} projects operations`;
   // const groupTempFiles = `${toolName} temporary files`;
   // const groupOpen = `${toolName} open`;
 
@@ -41,11 +41,11 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
   }
 
   //#region copy or cut project
-  const copyOrCutProject = (
+  const copyOrCutProject = async (
     action: keyof CopyPasteTaonProjectJson,
     vscode: typeof import('vscode'),
     uri: Uri,
-  ) => {
+  ): Promise<void> => {
     //#region @backendFunc
 
     const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
@@ -77,7 +77,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
 
     Helpers.writeJson(taonHomeDirForCopyPathJson, resultContent);
     vscode.window.showInformationMessage(`
-            Path ${nearestProject.location} save to ${_.startCase(action)?.toLowerCase()} .
+            Path ${nearestProject.location} saved ${_.startCase(action)?.toLowerCase()} .
             `);
 
     //#endregion
@@ -87,31 +87,53 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
   return (
     [
       //#region COPY/CUT PASTE PROJECT
+      // {
+      //   group: groupGroupOperations,
+      //   title: `init project`,
+      //   options: {
+      //     // showSuccessMessage: false,
+      //   },
+      //   async exec({ vscode, uri }) {
+      //     const nearestProject = Project.ins.From(crossPlatformPath(uri.path));
+      //     await nearestProject?.init();
+      //   },
+      // },
+      // {
+      //   group: groupGroupOperations,
+      //   title: `refresh project`,
+      //   options: {
+      //     // showSuccessMessage: false,
+      //   },
+      //   async exec({ vscode, uri }) {
+      //     const nearestProject = Project.ins.From(crossPlatformPath(uri.path));
+      //     await nearestProject?.refreshChildrenProjects();
+      //   },
+      // },
       {
-        group: groupGroupOprations,
+        group: groupGroupOperations,
         title: `copy project`,
         options: {
           showSuccessMessage: false,
         },
         async exec({ vscode, uri }) {
-          copyOrCutProject('toCopy', vscode, uri);
+          await copyOrCutProject('toCopy', vscode, uri);
         },
       },
       {
-        group: groupGroupOprations,
+        group: groupGroupOperations,
         title: `cut project`,
         options: {
           showSuccessMessage: false,
         },
         async exec({ vscode, uri }) {
-          copyOrCutProject('toMove', vscode, uri);
+          await copyOrCutProject('toMove', vscode, uri);
         },
       },
       //#endregion
 
       //#region PASTE PROJECT
       {
-        group: groupGroupOprations,
+        group: groupGroupOperations,
         options: {
           showSuccessMessage: false,
         },
@@ -137,34 +159,62 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
             taonHomeDirForCopyPathJson,
           ) as CopyPasteTaonProjectJson;
 
-          const copyOrMove = (action: keyof CopyPasteTaonProjectJson) => {
-            const nearestProject = Project.ins.nearestTo(
+          const copyOrMove = async (action: keyof CopyPasteTaonProjectJson) => {
+            const copyOrMoveSource = Project.ins.nearestTo(
               currentContent[action],
             );
-            if (!nearestProject) {
+            if (!copyOrMoveSource) {
               vscode.window.showErrorMessage(
                 `Cannot find project in path ${currentContent[action]}`,
               );
               return;
             }
             if (action === 'toMove') {
-              nearestProject.fileFoldersOperations.moveProjectTo(
+              await copyOrMoveSource.fileFoldersOperations.moveProjectTo(
                 MAIN_CLICKED_PATH,
               );
             } else if (action === 'toCopy') {
-              nearestProject.fileFoldersOperations.copyProjectTo(
+              await copyOrMoveSource.fileFoldersOperations.copyProjectTo(
                 MAIN_CLICKED_PATH,
               );
+            } else {
+              vscode.window.showWarningMessage(`NOTHING TO PASTE!`);
+              return;
             }
+
+            //#region refresh projects in container
+            const mainProj = Project.ins.From(MAIN_CLICKED_PATH);
+            if (mainProj) {
+              try {
+                await mainProj.refreshChildrenProjects();
+              } catch (error) {}
+            }
+            //#endregion
+
+            //#region init copied project
+            const destProj = Project.ins.From([
+              MAIN_CLICKED_PATH,
+              copyOrMoveSource.basename,
+            ]);
+            if (destProj) {
+              try {
+                destProj.run(`${FRAMEWORK_NAME.toLowerCase()} init`).sync();
+              } catch (error) {}
+            }
+            //#endregion
+
             Helpers.writeJson(taonHomeDirForCopyPathJson, {});
             const actionName = action === 'toCopy' ? 'copied' : 'moved';
             vscode.window.showInformationMessage(`Done ${actionName}!`);
           };
 
           if (currentContent.toCopy) {
-            copyOrMove('toCopy');
+            await copyOrMove('toCopy');
           } else if (currentContent.toMove) {
-            copyOrMove('toMove');
+            await copyOrMove('toMove');
+          } else {
+            vscode.window.showWarningMessage(`NOTHING TO PASTE!`);
+            return;
           }
           //#endregion
         },
