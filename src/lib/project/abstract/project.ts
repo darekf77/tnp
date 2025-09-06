@@ -465,6 +465,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     isStandaloneProject: ${this.framework.isStandaloneProject}
     isCoreProject: ${this.framework.isCoreProject}
     isContainer: ${this.framework.isContainer}
+    isOrganization: ${this.taonJson.isOrganization}
     should dedupe packages ${this.nodeModules.shouldDedupePackages}
 
     genericName: ${this.genericName}

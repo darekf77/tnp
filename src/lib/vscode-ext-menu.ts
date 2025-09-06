@@ -263,7 +263,7 @@ export function activateMenuTnp(
                 ? CURRENT_PROJECT.parent?.children
                 : CURRENT_PROJECT.children),
             ]
-          : [...CURRENT_PROJECT.children];
+          : [];
 
       const currentProjectProjects = [
         organizationMainItem,
