@@ -446,6 +446,11 @@ class EnvOptionsRelease {
    * - docs-webapp -> as offline pwa app installed in current os
    */
   declare installLocally: boolean;
+  /**
+   * after local install remove release output
+   * (for quick local test releases)
+   */
+  declare removeReleaseOutputAfterLocalInstall?: boolean;
 }
 //#endregion
 
@@ -848,6 +853,7 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
     envName: '-' as any,
     envNumber: '-' as any,
     installLocally: '-' as any,
+    removeReleaseOutputAfterLocalInstall: '-' as any,
     cli: {
       minify: '-' as any,
       includeNodeModules: '-' as any,

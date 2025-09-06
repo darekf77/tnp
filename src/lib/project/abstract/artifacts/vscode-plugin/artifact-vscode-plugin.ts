@@ -304,6 +304,10 @@ local VSCode instance.
       await this.installLocally(vscodeVsixOutPath);
     }
 
+    if (releaseOptions.release.removeReleaseOutputAfterLocalInstall) {
+      Helpers.removeFolderIfExists(path.dirname(vscodeVsixOutPath));
+    }
+
     return {
       resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
       releaseProjPath,

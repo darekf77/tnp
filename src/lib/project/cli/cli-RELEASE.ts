@@ -162,20 +162,20 @@ class $Release extends BaseCli {
 
   //#region install locally
   async installLocallyVscodePlugin(): Promise<void> {
-    await this._installLocally({
-      skipLibBuild: true,
+    await this._installLocally(true, {
       targetArtifact: 'vscode-plugin',
+      removeReleaseOutputAfterLocalInstall: true,
     });
     this._exit();
   }
 
-  private async _installLocally({
-    skipLibBuild,
-    targetArtifact,
-  }: {
-    skipLibBuild: boolean;
-    targetArtifact: ReleaseArtifactTaon;
-  }): Promise<void> {
+  private async _installLocally(
+    skipLibBuild: boolean,
+    releaseOpt: Pick<
+      EnvOptions['release'],
+      'targetArtifact' | 'removeReleaseOutputAfterLocalInstall'
+    >,
+  ): Promise<void> {
     await this.project.release(
       this.params.clone({
         build: {
@@ -184,7 +184,9 @@ class $Release extends BaseCli {
         release: {
           skipTagGitPush: true,
           skipResolvingGitChanges: true,
-          targetArtifact,
+          targetArtifact: releaseOpt.targetArtifact,
+          removeReleaseOutputAfterLocalInstall:
+            releaseOpt.removeReleaseOutputAfterLocalInstall,
           releaseType: 'local',
           releaseVersionBumpType: 'patch',
           installLocally: true,
@@ -233,8 +235,7 @@ class $Release extends BaseCli {
     });
 
     if (option === 'vscode-plugin') {
-      await this._installLocally({
-        skipLibBuild,
+      await this._installLocally(skipLibBuild, {
         targetArtifact: option,
       });
     }
