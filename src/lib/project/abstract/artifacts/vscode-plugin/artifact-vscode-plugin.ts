@@ -305,7 +305,7 @@ local VSCode instance.
     }
 
     if (releaseOptions.release.removeReleaseOutputAfterLocalInstall) {
-      Helpers.removeFolderIfExists(path.dirname(vscodeVsixOutPath));
+      Helpers.removeFolderIfExists(releaseProjPath);
     }
 
     return {

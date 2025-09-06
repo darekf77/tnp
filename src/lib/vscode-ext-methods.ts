@@ -8,6 +8,7 @@ import {
   _,
 } from 'tnp-core/src';
 import { CommandType } from 'tnp-helpers/src';
+import type { Uri } from 'vscode';
 
 import { dirnameFromSourceToProject, whatToLinkFromCore } from './constants';
 import { Project } from './project/abstract/project';
@@ -43,16 +44,16 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
   const copyOrCutProject = (
     action: keyof CopyPasteTaonProjectJson,
     vscode: typeof import('vscode'),
+    uri: Uri,
   ) => {
     //#region @backendFunc
 
-    const WORKSPACE_MAIN_FOLDER_PATH =
-      vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+    const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
 
     const nearestProject = Project.ins.From(WORKSPACE_MAIN_FOLDER_PATH);
     if (!nearestProject) {
       vscode.window.showErrorMessage(
-        `Cannot find project in path ${WORKSPACE_MAIN_FOLDER_PATH}`,
+        `Cannot find project nearest project in path ${WORKSPACE_MAIN_FOLDER_PATH}`,
       );
       return;
     }
@@ -63,14 +64,20 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       taonHomeDirForCopyPathJson,
     ) as CopyPasteTaonProjectJson;
 
-    Helpers.writeJson(
-      taonHomeDirForCopyPathJson,
-      _.merge(currentContent, {
-        [action]: nearestProject.location,
-      } as CopyPasteTaonProjectJson),
-    );
+    const resultContent = _.merge(currentContent, {
+      [action]: nearestProject.location,
+    } as CopyPasteTaonProjectJson);
+
+    if (action === 'toCopy') {
+      delete resultContent.toMove;
+    }
+    if (action === 'toMove') {
+      delete resultContent.toCopy;
+    }
+
+    Helpers.writeJson(taonHomeDirForCopyPathJson, resultContent);
     vscode.window.showInformationMessage(`
-            Path ${nearestProject.location} save to ${action} .
+            Path ${nearestProject.location} save to ${_.startCase(action)?.toLowerCase()} .
             `);
 
     //#endregion
@@ -86,8 +93,8 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         options: {
           showSuccessMessage: false,
         },
-        async exec({ vscode }) {
-          copyOrCutProject('toCopy', vscode);
+        async exec({ vscode, uri }) {
+          copyOrCutProject('toCopy', vscode, uri);
         },
       },
       {
@@ -96,8 +103,8 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         options: {
           showSuccessMessage: false,
         },
-        async exec({ vscode }) {
-          copyOrCutProject('toMove', vscode);
+        async exec({ vscode, uri }) {
+          copyOrCutProject('toMove', vscode, uri);
         },
       },
       //#endregion
@@ -109,12 +116,18 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
           showSuccessMessage: false,
         },
         title: `paste project`,
-        async exec({ vscode }) {
+        async exec({ vscode, uri, rootFolderPath }) {
           //#region @backendFunc
-          const mainLoadedFolderPath =
-            vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-          if (!mainLoadedFolderPath) {
+
+          let MAIN_CLICKED_PATH =
+            crossPlatformPath(uri.path) || crossPlatformPath(rootFolderPath);
+          if (!MAIN_CLICKED_PATH) {
             return;
+          }
+          if (!Helpers.isFolder(MAIN_CLICKED_PATH)) {
+            MAIN_CLICKED_PATH = crossPlatformPath(
+              path.dirname(MAIN_CLICKED_PATH),
+            );
           }
 
           if (!Helpers.exists(taonHomeDirForCopyPathJson)) {
@@ -123,32 +136,35 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
           const currentContent = Helpers.readJson(
             taonHomeDirForCopyPathJson,
           ) as CopyPasteTaonProjectJson;
+
+          const copyOrMove = (action: keyof CopyPasteTaonProjectJson) => {
+            const nearestProject = Project.ins.nearestTo(
+              currentContent[action],
+            );
+            if (!nearestProject) {
+              vscode.window.showErrorMessage(
+                `Cannot find project in path ${currentContent[action]}`,
+              );
+              return;
+            }
+            if (action === 'toMove') {
+              nearestProject.fileFoldersOperations.moveProjectTo(
+                MAIN_CLICKED_PATH,
+              );
+            } else if (action === 'toCopy') {
+              nearestProject.fileFoldersOperations.copyProjectTo(
+                MAIN_CLICKED_PATH,
+              );
+            }
+            Helpers.writeJson(taonHomeDirForCopyPathJson, {});
+            const actionName = action === 'toCopy' ? 'copied' : 'moved';
+            vscode.window.showInformationMessage(`Done ${actionName}!`);
+          };
+
           if (currentContent.toCopy) {
-            const nearestProject = Project.ins.nearestTo(currentContent.toCopy);
-            if (!nearestProject) {
-              vscode.window.showErrorMessage(
-                `Cannot find project in path ${currentContent.toCopy}`,
-              );
-              return;
-            }
-            nearestProject.fileFoldersOperations.copyProjectTo(
-              mainLoadedFolderPath,
-            );
-            Helpers.writeJson(taonHomeDirForCopyPathJson, {});
-            vscode.window.showInformationMessage(`Copy done!`);
+            copyOrMove('toCopy');
           } else if (currentContent.toMove) {
-            const nearestProject = Project.ins.nearestTo(currentContent.toCopy);
-            if (!nearestProject) {
-              vscode.window.showErrorMessage(
-                `Cannot find project in path ${currentContent.toCopy}`,
-              );
-              return;
-            }
-            nearestProject.fileFoldersOperations.moveProjectTo(
-              mainLoadedFolderPath,
-            );
-            Helpers.writeJson(taonHomeDirForCopyPathJson, {});
-            vscode.window.showInformationMessage(`Copy done!`);
+            copyOrMove('toMove');
           }
           //#endregion
         },
