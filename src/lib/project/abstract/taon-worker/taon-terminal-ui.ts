@@ -119,6 +119,15 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
           });
         },
       },
+      instances: {
+        name: 'Manage Instances',
+        action: async () => {
+          Helpers.info(`This feature is not yet implemented.`);
+          await UtilsTerminal.pressAnyKeyToContinueAsync({
+            message: 'Press any key to go back to main menu',
+          });
+        },
+      },
       environments: {
         name: 'Manage Environments',
         action: async () => {

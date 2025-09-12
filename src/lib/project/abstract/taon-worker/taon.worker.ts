@@ -19,6 +19,7 @@ import { DeploymentsWorker } from './deployments/deployments.worker';
 import { TaonTerminalUI } from './taon-terminal-ui';
 import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
+import { InstancesWorker } from './instances/instances.worker';
 //#endregion
 
 export class TaonProjectsWorker extends BaseCliWorker<
@@ -34,6 +35,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
   controllerClass = TaonProjectsController;
 
   public deploymentsWorker: DeploymentsWorker;
+  public instancesWorker: InstancesWorker;
   //#region constructor
   constructor(
     /**
@@ -51,6 +53,10 @@ export class TaonProjectsWorker extends BaseCliWorker<
     this.deploymentsWorker = new DeploymentsWorker(
       'taon-project-deployments-worker',
       `${global.frameworkName} cloud:deployments`,
+    );
+    this.instancesWorker = new InstancesWorker(
+      'taon-project-instances-worker',
+      `${global.frameworkName} cloud:instances`,
     );
     //#endregion
   }

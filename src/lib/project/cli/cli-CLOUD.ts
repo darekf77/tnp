@@ -20,11 +20,27 @@ class $Cloud extends BaseCli {
     // await this.ins.taonProjectsWorker.cliStartProcedure(this.params);
   }
 
+  //#region deployments
   async deployments(): Promise<void> {
     // UtilsTerminal.drawBigText('Deployments');
-    await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
-  }
+    // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
 
+    await this.project.ins.taonProjectsWorker.deploymentsWorker.cliStartProcedure(
+      this.params,
+    );
+  }
+  //#endregion
+
+  //#region deployments
+  async instances(): Promise<void> {
+    // UtilsTerminal.drawBigText('Deployments');
+    await this.project.ins.taonProjectsWorker.instancesWorker.cliStartProcedure(
+      this.params,
+    );
+  }
+  //#endregion
+
+  //#region send
   async send() {
     // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
     const ctrl =
@@ -38,8 +54,9 @@ class $Cloud extends BaseCli {
     const data = await ctrl.uploadLocalFileToServer(filePath);
     console.log(data);
     Helpers.taskDone(`Done uploading file "${this.firstArg}" to server`);
-    this._exit()
+    this._exit();
   }
+  //#endregion
 }
 
 export default {

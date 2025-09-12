@@ -183,6 +183,8 @@ export const taonConfigSchemaJsonStandalone =
 export const taonConfigSchemaJsonContainer =
   'taon-config-container.schema.json';
 
+export const localhostIpAddress = '127.0.0.1';
+
 export const TEMP_DOCS = 'tmp-documentation';
 
 export const DEFAULT_PORT = {
