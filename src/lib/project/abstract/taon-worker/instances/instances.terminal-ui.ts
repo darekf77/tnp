@@ -64,12 +64,12 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
           const ipAddress = await UtilsTerminal.input({
             required: true,
             question: 'Enter IP address of the instance',
-            validate: (val) => {
-              if(val?.trim() === localhostIpAddress) {
+            validate: val => {
+              if (val?.trim() === localhostIpAddress) {
                 return false;
               }
               return UtilsNetwork.isValidIp(val);
-            }
+            },
           });
 
           const nameOfInstance = await UtilsTerminal.input({
@@ -102,7 +102,10 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
     return {
       ...this.chooseAction,
       ...myActions,
-      ...super.getWorkerTerminalActions({ chooseAction: false }),
+      ...super.getWorkerTerminalActions({
+        ...options,
+        chooseAction: false,
+      }),
     };
     //#endregion
   }

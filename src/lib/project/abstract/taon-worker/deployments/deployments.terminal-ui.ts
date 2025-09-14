@@ -40,7 +40,11 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
             calledFrom: 'Get stuff from backend action',
           });
           const list = (await ctrl.getEntities().request())?.body.json || [];
-          console.log(list.map(c => `- ${c.id} ${c.deploymentDescriptionFromZip}`).join('\n'));
+          console.log(
+            list
+              .map(c => `- ${c.id} ${c.deploymentDescriptionFromZip}`)
+              .join('\n'),
+          );
           Helpers.info(`Fetched ${list.length} entities`);
           await UtilsTerminal.pressAnyKeyToContinueAsync({
             message: 'Press any key to go back to main menu',
@@ -72,7 +76,10 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     return {
       ...this.chooseAction,
       ...myActions,
-      ...super.getWorkerTerminalActions({ chooseAction: false }),
+      ...super.getWorkerTerminalActions({
+        ...options,
+        chooseAction: false,
+      }),
     };
     //#endregion
   }
