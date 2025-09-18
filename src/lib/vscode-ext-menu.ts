@@ -7,6 +7,16 @@ import type * as vscode from 'vscode';
 import { Project } from '../lib/project/abstract/project';
 //#endregion
 
+//#region models
+type TriggerActionFn = (
+  project?: Project,
+  progres?: vscode.Progress<{
+    message?: string;
+    increment?: number;
+  }>,
+  token?: vscode.CancellationToken,
+) => Promise<any> | void;
+//#endregion
 export function activateMenuTnp(
   context: vscode.ExtensionContext,
   vscode: typeof import('vscode'),
@@ -65,14 +75,7 @@ export function activateMenuTnp(
     public readonly project?: Project;
     public readonly clickLinkFn?: (project: Project) => string;
     public readonly refreshLinkOnClick?: boolean;
-    public readonly triggerActionOnClick?: (
-      project: Project,
-      progres: vscode.Progress<{
-        message?: string;
-        increment?: number;
-      }>,
-      token: vscode.CancellationToken,
-    ) => Promise<any>;
+    public readonly triggerActionOnClick?: TriggerActionFn;
     public readonly processTitle?: string;
 
     //#region constructor
@@ -83,7 +86,7 @@ export function activateMenuTnp(
         project?: Project;
         clickLinkFn?: (project: Project) => string;
         refreshLinkOnClick?: boolean;
-        triggerActionOnClick?: (project: Project) => any;
+        triggerActionOnClick?: TriggerActionFn;
         processTitle?: string;
         boldLabel?: boolean;
         iconPath?:
@@ -309,9 +312,11 @@ export function activateMenuTnp(
           {
             iconPath: null,
             project: CURRENT_PROJECT,
-            triggerActionOnClick: async project => {
+            triggerActionOnClick: async (project, progress, token) => {
               if (project?.location) {
+                progress?.report({ message: 'Pushing changes...' });
                 await project.git.pushProcess();
+                progress?.report({ message: 'Done', increment: 100 });
               }
             },
           },
