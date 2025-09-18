@@ -17,6 +17,8 @@ type TriggerActionFn = (
   token?: vscode.CancellationToken,
 ) => Promise<any> | void;
 //#endregion
+
+let menuItemClickable = true;
 export function activateMenuTnp(
   context: vscode.ExtensionContext,
   vscode: typeof import('vscode'),
@@ -35,7 +37,11 @@ export function activateMenuTnp(
   vscode.commands.registerCommand(
     `projectsView${FRAMEWORK_NAME_UPPER_FIST}.openItem`,
     (item: ProjectItem) => {
+      if (!menuItemClickable) {
+        return;
+      }
       if (item?.triggerActionOnClick) {
+        menuItemClickable = false;
         vscode.window.withProgress(
           {
             location: item.progressLocation,
@@ -46,9 +52,9 @@ export function activateMenuTnp(
             progres.report({ increment: 0, message: 'Processing...' });
             await item.triggerActionOnClick(item.project, progres, token);
             progres.report({ message: 'Done' });
+            menuItemClickable = false;
           },
         );
-
         return;
       }
       if (item.project) {
