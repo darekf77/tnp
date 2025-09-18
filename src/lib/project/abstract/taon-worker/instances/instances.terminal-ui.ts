@@ -68,6 +68,9 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
               if (val?.trim() === localhostIpAddress) {
                 return false;
               }
+              if (val?.trim() === 'localhost') {
+                return false;
+              }
               return UtilsNetwork.isValidIp(val);
             },
           });
@@ -75,6 +78,12 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
           const nameOfInstance = await UtilsTerminal.input({
             required: true,
             question: 'Enter name of instance',
+            validate: val => {
+              if (!val || val.trim() === '') {
+                return false;
+              }
+              return val.trim().length > 3;
+            },
           });
 
           try {

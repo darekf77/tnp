@@ -304,6 +304,19 @@ export function activateMenuTnp(
           },
         ),
         new ProjectItem(
+          `$ ${FRAMEWORK_NAME} push # action commit`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: async project => {
+              if (project?.location) {
+                await project.git.pushProcess();
+              }
+            },
+          },
+        ),
+        new ProjectItem(
           `$ ${FRAMEWORK_NAME} vscode:hide:temp`,
           vscode.TreeItemCollapsibleState.None,
           {
@@ -335,23 +348,23 @@ export function activateMenuTnp(
             },
           },
         ),
-//         new ProjectItem(
-//           `$ ${FRAMEWORK_NAME} vscode:uninstall:itself`,
-//           vscode.TreeItemCollapsibleState.None,
-//           {
-//             iconPath: null,
-//             project: CURRENT_PROJECT,
-//             triggerActionOnClick: project => {
-//               if (project) {
-//                 Helpers.run(
-//                   `code --uninstall-extension taon-dev.${FRAMEWORK_NAME}-vscode-ext
-// `,
-//                 ).sync();
-//                 vscode.commands.executeCommand('workbench.view.explorer');
-//               }
-//             },
-//           },
-//         ),
+        //         new ProjectItem(
+        //           `$ ${FRAMEWORK_NAME} vscode:uninstall:itself`,
+        //           vscode.TreeItemCollapsibleState.None,
+        //           {
+        //             iconPath: null,
+        //             project: CURRENT_PROJECT,
+        //             triggerActionOnClick: project => {
+        //               if (project) {
+        //                 Helpers.run(
+        //                   `code --uninstall-extension taon-dev.${FRAMEWORK_NAME}-vscode-ext
+        // `,
+        //                 ).sync();
+        //                 vscode.commands.executeCommand('workbench.view.explorer');
+        //               }
+        //             },
+        //           },
+        //         ),
         ...(CURRENT_PROJECT.typeIs('isomorphic-lib', 'container')
           ? [
               !isContainerOrganizationCurrentProj ? coreProjectItem : void 0,
