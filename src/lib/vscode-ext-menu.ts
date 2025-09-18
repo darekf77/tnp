@@ -339,6 +339,7 @@ export function activateMenuTnp(
                 progress?.report({ message: 'Pushing changes...' });
                 await project.git.pushProcess();
                 progress?.report({ message: 'Done', increment: 100 });
+                focustFirstElement();
               }
             },
           },
