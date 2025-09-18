@@ -335,11 +335,11 @@ export function activateMenuTnp(
             project: CURRENT_PROJECT,
             progressLocation: vscode.ProgressLocation.Notification,
             triggerActionOnClick: async (project, progress, token) => {
+              focustFirstElement();
               if (project?.location) {
                 progress?.report({ message: 'Pushing changes...' });
                 await project.git.pushProcess();
                 progress?.report({ message: 'Done', increment: 100 });
-                focustFirstElement();
               }
             },
           },
