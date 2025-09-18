@@ -38,7 +38,7 @@ export function activateMenuTnp(
       if (item?.triggerActionOnClick) {
         vscode.window.withProgress(
           {
-            location: vscode.ProgressLocation.SourceControl,
+            location: item.progressLocation,
             title: 'Executing action...',
             cancellable: false,
           },
@@ -78,6 +78,7 @@ export function activateMenuTnp(
     public readonly triggerActionOnClick?: TriggerActionFn;
     public readonly processTitle?: string;
 
+    public readonly progressLocation: vscode.ProgressLocation;
     //#region constructor
     constructor(
       public readonly label: string,
@@ -88,6 +89,7 @@ export function activateMenuTnp(
         refreshLinkOnClick?: boolean;
         triggerActionOnClick?: TriggerActionFn;
         processTitle?: string;
+        progressLocation?: vscode.ProgressLocation;
         boldLabel?: boolean;
         iconPath?:
           | string
@@ -101,6 +103,9 @@ export function activateMenuTnp(
     ) {
       super(label, collapsibleState);
       options = options || {};
+      this.progressLocation =
+        options.progressLocation || vscode.ProgressLocation.SourceControl;
+
       if (options.boldLabel) {
         const labelBold = {
           label: label,
@@ -307,11 +312,12 @@ export function activateMenuTnp(
           },
         ),
         new ProjectItem(
-          `$ ${FRAMEWORK_NAME} push # action commit`,
+          `$ ${FRAMEWORK_NAME} push`,
           vscode.TreeItemCollapsibleState.None,
           {
             iconPath: null,
             project: CURRENT_PROJECT,
+            progressLocation: vscode.ProgressLocation.Notification,
             triggerActionOnClick: async (project, progress, token) => {
               if (project?.location) {
                 progress?.report({ message: 'Pushing changes...' });
