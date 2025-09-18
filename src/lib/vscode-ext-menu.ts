@@ -50,9 +50,19 @@ export function activateMenuTnp(
           },
           async (progres, token) => {
             progres.report({ increment: 0, message: 'Processing...' });
-            await item.triggerActionOnClick(item.project, progres, token);
-            progres.report({ message: 'Done' });
-            menuItemClickable = false;
+            try {
+              await item.triggerActionOnClick(item.project, progres, token);
+              progres.report({ message: 'Done' });
+              if (
+                item.progressLocation === vscode.ProgressLocation.Notification
+              ) {
+                vscode.window.showInformationMessage(`Done ${item.label}`);
+              }
+            } catch (error) {
+              vscode.window.showErrorMessage(error?.message || error);
+            }
+
+            menuItemClickable = true;
           },
         );
         return;
