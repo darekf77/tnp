@@ -296,7 +296,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     if (
       (['manual', 'cloud'] as ReleaseType[]).includes(
         releaseOptions.release.releaseType,
-      )
+      ) &&
+      releaseOptions.release.targetArtifact === 'angular-node-app'
     ) {
       const ctrl =
         await this.ins.taonProjectsWorker.instancesWorker.getControllerForRemoteConnection();
