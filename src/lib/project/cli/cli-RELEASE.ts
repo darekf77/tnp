@@ -190,6 +190,7 @@ class $Release extends BaseCli {
           releaseType: 'local',
           releaseVersionBumpType: 'patch',
           installLocally: true,
+          skipReleaseQuestion: skipLibBuild,
           skipBuildingArtifacts: skipLibBuild ? ['npm-lib-and-cli-tool'] : [],
         },
       }),

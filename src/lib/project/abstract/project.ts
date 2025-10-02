@@ -5,7 +5,7 @@ import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { Helpers, BaseProject } from 'tnp-helpers/src';
 
-import { EnvOptions } from '../../options';
+import { EnvOptions, ReleaseType } from '../../options';
 
 import { EnvironmentConfig } from './artifacts/__helpers__/environment-config/environment-config';
 import { ArtifactManager } from './artifacts/artifacts-manager';
@@ -26,6 +26,7 @@ import { Refactor } from './refactor';
 import type { ReleaseProcess } from './release-process';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
+import { UtilsTerminal } from 'tnp-core/src';
 
 //#endregion
 let frameworkName = '';
@@ -62,7 +63,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   get nodeModules(): NodeModules {
     return this.npmHelpers.nodeModules as any;
   }
-// @ts-ignore TODO weird inheritance problem
+  // @ts-ignore TODO weird inheritance problem
   public readonly linter: Linter;
   public readonly framework: Framework;
 
@@ -108,9 +109,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     this.linkedProjects = new (require('./linked-projects')
       .LinkedProjects as typeof LinkedProjects)(this as any);
 
-    this.vsCodeHelpers = new (require('./vscode-helper').Vscode as typeof Vscode)(
-      this,
-    );
+    this.vsCodeHelpers = new (require('./vscode-helper')
+      .Vscode as typeof Vscode)(this);
 
     this.releaseProcess = new (require('./release-process')
       .ReleaseProcess as typeof ReleaseProcess)(this);
@@ -289,6 +289,35 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       }))
     ) {
       return;
+    }
+    //#endregion
+
+    //#region resolve taon instances
+    if (
+      (['manual', 'cloud'] as ReleaseType[]).includes(
+        releaseOptions.release.releaseType,
+      )
+    ) {
+      const ctrl =
+        await this.ins.taonProjectsWorker.instancesWorker.getControllerForRemoteConnection();
+
+      const instances = (await ctrl.getEntities().request())?.body.json || [];
+      const options = instances.map(i => ({
+        name: `${i.name} (${i.ipAddress})`,
+        value: i.ipAddress,
+      }));
+      releaseOptions.release.taonInstanceIpOrDomain =
+        await UtilsTerminal.select({
+          choices: options,
+          autocomplete: true,
+          question: 'Select to what instance you want to release',
+        });
+
+      console.log(
+        chalk.gray(
+          `You selected to release to instance: ${releaseOptions.release.taonInstanceIpOrDomain}`,
+        ),
+      );
     }
     //#endregion
 

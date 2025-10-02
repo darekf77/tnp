@@ -5,15 +5,9 @@ import { chalk, Helpers, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { BaseStartConfig } from 'tnp-helpers/src';
 
+// import { globalSpinner } from './constants';
 import cliClassArr from './project/cli/index';
 
-//#endregion
-
-//#region constants
-/**
- * ISSUE largest http request sometime are failing ... but with second try everything is OK
- */
-axios.defaults.timeout = 3000;
 //#endregion
 
 export async function start(
@@ -22,6 +16,13 @@ export async function start(
   mode: 'dist' | 'npm' = 'dist',
 ): Promise<void> {
   config.frameworkName = frameworkName;
+
+  if (config.frameworkNames.productionFrameworkName === config.frameworkName) {
+    /**
+     * ISSUE largest http request sometime are failing ... but with second try everything is OK
+     */
+    axios.defaults.timeout = 3000;
+  }
 
   // Helpers.log(`ins start, mode: "${mode}"`);
   const ProjectClass = (await import('./project/abstract/project')).Project;
@@ -41,6 +42,7 @@ export async function start(
           a.startsWith('mp3') ||
           a.startsWith('mp4') ||
           a.startsWith('dedupe') ||
+          a.startsWith('cloud:') ||
           a.startsWith('copy:and:rename') ||
           a.startsWith('generate') ||
           a.startsWith('shorten') ||

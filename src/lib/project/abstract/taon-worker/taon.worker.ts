@@ -33,7 +33,9 @@ export class TaonProjectsWorker extends BaseCliWorker<
 
   workerContextTemplate = TaonProjectsContextTemplate as any; // TODO for some reason as any is nessesary
   controllerClass = TaonProjectsController;
-
+  // public deploymentsWorkerFor: {
+  //   [ipAddressOfTaonInstance: string]: DeploymentsWorker;
+  // };
   public deploymentsWorker: DeploymentsWorker;
   public instancesWorker: InstancesWorker;
   //#region constructor
@@ -60,6 +62,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
     );
     //#endregion
   }
+
   //#endregion
 
   //#region methods / start normally in current process
@@ -74,9 +77,15 @@ export class TaonProjectsWorker extends BaseCliWorker<
       useCurrentWindowForDetach: true,
     });
 
-    // await this.deploymentsWorker.startDetachedIfNeedsToBeStarted({
-    //   useCurrentWindowForDetach: true,
-    // });
+    Helpers.taskStarted(`Waiting for deployments manager to be started...`);
+    await this.deploymentsWorker.startDetachedIfNeedsToBeStarted({
+      useCurrentWindowForDetach: true,
+    });
+
+    Helpers.taskStarted(`Waiting for taon instances manager to be started...`);
+    await this.instancesWorker.startDetachedIfNeedsToBeStarted({
+      useCurrentWindowForDetach: true,
+    });
 
     Helpers.taskDone(`Ports manager started !`);
     await super.startNormallyInCurrentProcess();
@@ -198,7 +207,9 @@ export class TaonProjectsWorker extends BaseCliWorker<
     // Start traefik in detached mode
     const pathToCompose = this.ins
       .by('isomorphic-lib')
-      .pathFor(`docker-templates/terafik`);
+      .pathFor(`docker-templates/terafik`); // TODO @LAST make this path different or
+          // move whole treafik to separated folder in users home .taon
+
     if (!Helpers.exists(pathToCompose)) {
       return false;
     }

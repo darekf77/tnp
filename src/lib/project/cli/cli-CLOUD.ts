@@ -6,21 +6,68 @@ import {
   UtilsNetwork,
   UtilsTerminal,
 } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
-import { BaseCommandLineFeature } from 'tnp-helpers/src';
+import { Helpers, UtilsZip } from 'tnp-helpers/src';
+import { UtilsCliMethod } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../options';
 
 import { BaseCli } from './base-cli';
 
 // @ts-ignore TODO weird inheritance problem
-class $Cloud extends BaseCli {
+export class $Cloud extends BaseCli {
   async _(): Promise<void> {
     await this.project.ins.taonProjectsWorker.cliStartProcedure(this.params);
     // await this.ins.taonProjectsWorker.cliStartProcedure(this.params);
   }
 
+  //#region start file deploy
+  @UtilsCliMethod.decorator('startFileDeploy')
+  async startFileDeploy(): Promise<void> {
+    let zipDeploymentFileAbsPath = this.firstArg;
+    if (!zipDeploymentFileAbsPath) {
+      throw new Error(
+        'You have to provide path to file that should be deployed',
+      );
+    }
+    if (!path.isAbsolute(zipDeploymentFileAbsPath)) {
+      throw new Error(
+        'You have to provide absolute path to file that should be deployed',
+      );
+    }
+    if (!zipDeploymentFileAbsPath.endsWith('.zip')) {
+      throw new Error('Provided file for deployment has to be .zip file');
+    }
+    if (!Helpers.exists(zipDeploymentFileAbsPath)) {
+      throw new Error(
+        `File provided for deployment does not exist: ${zipDeploymentFileAbsPath}`,
+      );
+    }
+
+    const unpackedZipFolder = zipDeploymentFileAbsPath.replace('.zip', '');
+
+    Helpers.remove(unpackedZipFolder);
+    await UtilsZip.unzipArchive(zipDeploymentFileAbsPath);
+
+    const dockerComposeProject = this.project.ins.From(unpackedZipFolder);
+    if (!dockerComposeProject) {
+      throw new Error(
+        `Docker compose project not found inside zip file. Make sure that you zipped the project folder.`,
+      );
+    }
+
+    if (!dockerComposeProject) {
+      throw new Error(
+        `Project not found. You have to be inside project folder to use this command.`,
+      );
+    }
+    await dockerComposeProject.docker.updateDockerComposePorts();
+    dockerComposeProject.docker.getDockerComposeUpExecChildProcess('down');
+    dockerComposeProject.docker.getDockerComposeUpExecChildProcess('up');
+  }
+  //#endregion
+
   //#region deployments
+  @UtilsCliMethod.decorator('deployments')
   async deployments(): Promise<void> {
     // UtilsTerminal.drawBigText('Deployments');
     // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
@@ -31,7 +78,7 @@ class $Cloud extends BaseCli {
   }
   //#endregion
 
-  //#region deployments
+  //#region instances
   async instances(): Promise<void> {
     // UtilsTerminal.drawBigText('Deployments');
     await this.project.ins.taonProjectsWorker.instancesWorker.cliStartProcedure(

@@ -64,17 +64,26 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
           const ipAddress = await UtilsTerminal.input({
             required: true,
             question: 'Enter IP address of the instance',
-            validate: (val) => {
-              if(val?.trim() === localhostIpAddress) {
+            validate: val => {
+              if (val?.trim() === localhostIpAddress) {
+                return false;
+              }
+              if (val?.trim() === 'localhost') {
                 return false;
               }
               return UtilsNetwork.isValidIp(val);
-            }
+            },
           });
 
           const nameOfInstance = await UtilsTerminal.input({
             required: true,
             question: 'Enter name of instance',
+            validate: val => {
+              if (!val || val.trim() === '') {
+                return false;
+              }
+              return val.trim().length > 3;
+            },
           });
 
           try {
@@ -102,7 +111,10 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
     return {
       ...this.chooseAction,
       ...myActions,
-      ...super.getWorkerTerminalActions({ chooseAction: false }),
+      ...super.getWorkerTerminalActions({
+        ...options,
+        chooseAction: false,
+      }),
     };
     //#endregion
   }

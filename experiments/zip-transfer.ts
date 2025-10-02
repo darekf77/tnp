@@ -75,7 +75,7 @@ async function startServer(port: number) {
       ok: true,
       originalName: f.originalname,
       savedAs: path.basename(savedAbs),
-      savedPath: savedRel,
+      // savedPath: savedRel,
       size: f.size,
       mimetype: f.mimetype,
     });

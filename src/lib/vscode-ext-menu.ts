@@ -7,6 +7,18 @@ import type * as vscode from 'vscode';
 import { Project } from '../lib/project/abstract/project';
 //#endregion
 
+//#region models
+type TriggerActionFn = (
+  project?: Project,
+  progres?: vscode.Progress<{
+    message?: string;
+    increment?: number;
+  }>,
+  token?: vscode.CancellationToken,
+) => Promise<any> | void;
+//#endregion
+
+let menuItemClickable = true;
 export function activateMenuTnp(
   context: vscode.ExtensionContext,
   vscode: typeof import('vscode'),
@@ -25,20 +37,34 @@ export function activateMenuTnp(
   vscode.commands.registerCommand(
     `projectsView${FRAMEWORK_NAME_UPPER_FIST}.openItem`,
     (item: ProjectItem) => {
+      if (!menuItemClickable) {
+        return;
+      }
       if (item?.triggerActionOnClick) {
+        menuItemClickable = false;
         vscode.window.withProgress(
           {
-            location: vscode.ProgressLocation.SourceControl,
+            location: item.progressLocation,
             title: 'Executing action...',
             cancellable: false,
           },
           async (progres, token) => {
             progres.report({ increment: 0, message: 'Processing...' });
-            await item.triggerActionOnClick(item.project, progres, token);
-            progres.report({ message: 'Done' });
+            try {
+              await item.triggerActionOnClick(item.project, progres, token);
+              progres.report({ message: 'Done' });
+              if (
+                item.progressLocation === vscode.ProgressLocation.Notification
+              ) {
+                vscode.window.showInformationMessage(`Done ${item.label}`);
+              }
+            } catch (error) {
+              vscode.window.showErrorMessage(error?.message || error);
+            }
+
+            menuItemClickable = true;
           },
         );
-
         return;
       }
       if (item.project) {
@@ -65,16 +91,10 @@ export function activateMenuTnp(
     public readonly project?: Project;
     public readonly clickLinkFn?: (project: Project) => string;
     public readonly refreshLinkOnClick?: boolean;
-    public readonly triggerActionOnClick?: (
-      project: Project,
-      progres: vscode.Progress<{
-        message?: string;
-        increment?: number;
-      }>,
-      token: vscode.CancellationToken,
-    ) => Promise<any>;
+    public readonly triggerActionOnClick?: TriggerActionFn;
     public readonly processTitle?: string;
 
+    public readonly progressLocation: vscode.ProgressLocation;
     //#region constructor
     constructor(
       public readonly label: string,
@@ -83,8 +103,9 @@ export function activateMenuTnp(
         project?: Project;
         clickLinkFn?: (project: Project) => string;
         refreshLinkOnClick?: boolean;
-        triggerActionOnClick?: (project: Project) => any;
+        triggerActionOnClick?: TriggerActionFn;
         processTitle?: string;
+        progressLocation?: vscode.ProgressLocation;
         boldLabel?: boolean;
         iconPath?:
           | string
@@ -98,6 +119,9 @@ export function activateMenuTnp(
     ) {
       super(label, collapsibleState);
       options = options || {};
+      this.progressLocation =
+        options.progressLocation || vscode.ProgressLocation.SourceControl;
+
       if (options.boldLabel) {
         const labelBold = {
           label: label,
@@ -304,6 +328,23 @@ export function activateMenuTnp(
           },
         ),
         new ProjectItem(
+          `$ ${FRAMEWORK_NAME} push`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            progressLocation: vscode.ProgressLocation.Notification,
+            triggerActionOnClick: async (project, progress, token) => {
+              focustFirstElement();
+              if (project?.location) {
+                progress?.report({ message: 'Pushing changes...' });
+                await project.git.pushProcess();
+                progress?.report({ message: 'Done', increment: 100 });
+              }
+            },
+          },
+        ),
+        new ProjectItem(
           `$ ${FRAMEWORK_NAME} vscode:hide:temp`,
           vscode.TreeItemCollapsibleState.None,
           {
@@ -335,23 +376,23 @@ export function activateMenuTnp(
             },
           },
         ),
-//         new ProjectItem(
-//           `$ ${FRAMEWORK_NAME} vscode:uninstall:itself`,
-//           vscode.TreeItemCollapsibleState.None,
-//           {
-//             iconPath: null,
-//             project: CURRENT_PROJECT,
-//             triggerActionOnClick: project => {
-//               if (project) {
-//                 Helpers.run(
-//                   `code --uninstall-extension taon-dev.${FRAMEWORK_NAME}-vscode-ext
-// `,
-//                 ).sync();
-//                 vscode.commands.executeCommand('workbench.view.explorer');
-//               }
-//             },
-//           },
-//         ),
+        //         new ProjectItem(
+        //           `$ ${FRAMEWORK_NAME} vscode:uninstall:itself`,
+        //           vscode.TreeItemCollapsibleState.None,
+        //           {
+        //             iconPath: null,
+        //             project: CURRENT_PROJECT,
+        //             triggerActionOnClick: project => {
+        //               if (project) {
+        //                 Helpers.run(
+        //                   `code --uninstall-extension taon-dev.${FRAMEWORK_NAME}-vscode-ext
+        // `,
+        //                 ).sync();
+        //                 vscode.commands.executeCommand('workbench.view.explorer');
+        //               }
+        //             },
+        //           },
+        //         ),
         ...(CURRENT_PROJECT.typeIs('isomorphic-lib', 'container')
           ? [
               !isContainerOrganizationCurrentProj ? coreProjectItem : void 0,

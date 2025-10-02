@@ -113,18 +113,45 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       deployments: {
         name: 'Manage Deployments',
         action: async () => {
-          Helpers.info(`This feature is not yet implemented.`);
-          await UtilsTerminal.pressAnyKeyToContinueAsync({
-            message: 'Press any key to go back to main menu',
+          if (
+            config.frameworkNames.productionFrameworkName.includes(
+              config.frameworkName,
+            )
+          ) {
+            Helpers.info(`This feature is not yet implemented.`);
+            await UtilsTerminal.pressAnyKeyToContinueAsync({
+              message: 'Press any key to go back to main menu',
+            });
+            return;
+          }
+          await this.worker.deploymentsWorker.startDetachedIfNeedsToBeStarted({
+            useCurrentWindowForDetach: true,
+          });
+          await this.worker.deploymentsWorker.terminalUI.infoScreen({
+            exitIsOnlyReturn: true,
           });
         },
       },
       instances: {
         name: 'Manage Instances',
         action: async () => {
-          Helpers.info(`This feature is not yet implemented.`);
-          await UtilsTerminal.pressAnyKeyToContinueAsync({
-            message: 'Press any key to go back to main menu',
+          if (
+            config.frameworkNames.productionFrameworkName.includes(
+              config.frameworkName,
+            )
+          ) {
+            Helpers.info(`This feature is not yet implemented.`);
+            await UtilsTerminal.pressAnyKeyToContinueAsync({
+              message: 'Press any key to go back to main menu',
+            });
+            return;
+          }
+          // move this to main stuff
+          await this.worker.instancesWorker.startDetachedIfNeedsToBeStarted({
+            useCurrentWindowForDetach: true,
+          });
+          await this.worker.instancesWorker.terminalUI.infoScreen({
+            exitIsOnlyReturn: true,
           });
         },
       },
@@ -135,7 +162,8 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
           const ctrl = await this.worker.getControllerForRemoteConnection({
             calledFrom: 'Manage Environments action',
           });
-          const list = (await ctrl.getEnvironments().request())?.body.json || [];
+          const list =
+            (await ctrl.getEnvironments().request())?.body.json || [];
           await UtilsTerminal.previewLongList(
             list.map(s => `${s.name} ${s.type}`),
           );

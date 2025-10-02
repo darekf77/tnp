@@ -75,7 +75,9 @@
     "**/.firedev": true,
     "**/.taon": true,
     "**/.tnp": true,
-    "projects": true
+    "projects": true,
+    "dist-*": true,
+    "**/dist-*": true
   },
   "workbench.colorCustomizations": {
     "activityBar.background": "#5c3735",

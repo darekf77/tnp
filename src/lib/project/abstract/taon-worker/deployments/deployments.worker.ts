@@ -1,5 +1,5 @@
 //#region imports
-import { _ } from 'tnp-core/src';
+import { _, UtilsTerminal } from 'tnp-core/src';
 import { BaseCliWorker } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../../../build-info._auto-generated_';
@@ -42,12 +42,16 @@ export class DeploymentsWorker extends BaseCliWorker<
 
   public async startNormallyInCurrentProcess(): Promise<void> {
     //#region @backendFunc
-    await super.startNormallyInCurrentProcess();
-    const ctrl = await this.getControllerForRemoteConnection({
-      calledFrom: 'deployment startNormallyInCurrentProcess',
+    await super.startNormallyInCurrentProcess({
+      actionBeforeTerminalUI: async () => {
+        const ctrl = await this.getControllerForRemoteConnection({
+          calledFrom: 'deployment startNormallyInCurrentProcess',
+        });
+        await ctrl.addExistedDeployments().request();
+      }
     });
-    await ctrl.insertEntity().request();
-    await ctrl.insertEntity().request();
+
+    // await UtilsTerminal.pressAnyKeyToContinueAsync();
     //#endregion
   }
 }

@@ -358,11 +358,16 @@ class EnvOptionsLoading {
 
 //#region env options / release
 class EnvOptionsRelease {
+  declare taonInstanceIpOrDomain?: string;
   /**
    * new version resolve at the beginning of release process
    * and is used for all artifacts
    */
   declare readonly resolvedNewVersion: string;
+  /**
+   * skip npm publish
+   */
+  declare skipDeploy?: boolean;
   /**
    * skip npm publish
    */
@@ -874,7 +879,9 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
       doNotIncludeLibFiles: '-' as any,
     },
     autoReleaseUsingConfig: '-' as any,
+    taonInstanceIpOrDomain: '-' as any,
     skipNpmPublish: '-' as any,
+    skipDeploy: '-' as any,
     skipTagGitPush: '-' as any,
     skipReleaseQuestion: '-' as any,
     skipResolvingGitChanges: '-' as any,

@@ -1,36 +1,81 @@
 //#region imports
-import { Taon } from 'taon/src';
-import { _ } from 'tnp-core/src';
+import { MulterFileUploadResponse, Taon } from 'taon/src';
+import { _, chalk, path } from 'tnp-core/src';
+import { FilePathMetaData } from 'tnp-helpers/src';
 
 import { DeploymentsDefaultsValues } from './deployments.defaults-values';
+import { DeploymentReleaseData, DeploymentStatus } from './deployments.models';
 //#endregion
 
 @Taon.Entity({
   className: 'Deployments',
 })
 export class Deployments extends Taon.Base.AbstractEntity<Deployments> {
-  /**
-   * zip file with docker-compose and other files
-   * needed to deploy this deployment
-   */
   //#region @websql
-  @Taon.Orm.Column.String(DeploymentsDefaultsValues.zipFileURL, 500)
+  @Taon.Orm.Column.Custom({
+    type: 'varchar',
+    length: 500,
+    unique: true,
+  })
   //#endregion
-  zipFileURL?: string;
+  zipFileBasenameMetadataPart?: string;
 
   //#region @websql
-  @Taon.Orm.Column.String(DeploymentsDefaultsValues.deploymentNameFromZip, 200)
+  @Taon.Orm.Column.Number()
   //#endregion
-  deploymentNameFromZip?: string;
+  size: MulterFileUploadResponse['size'];
 
   //#region @websql
-  @Taon.Orm.Column.String(DeploymentsDefaultsValues.deploymentDescriptionFromZip, 500)
+  @Taon.Orm.Column.String45('not-started' as DeploymentStatus)
   //#endregion
-  deploymentDescriptionFromZip?: string;
+  status?: DeploymentStatus;
 
   //#region @websql
-  // @ts-ignore
-  @Taon.Orm.Column.DateTIme()
+  @Taon.Orm.Column.String45()
+  //#endregion
+  processId?: string | null;
+
+  //#region @websql
+  @Taon.Orm.Column.CreateDate()
   //#endregion
   arrivalDate?: Date;
+
+  get releaseData(): Partial<DeploymentReleaseData> {
+    const data = FilePathMetaData.extractData<DeploymentReleaseData>(
+      this.zipFileBasenameMetadataPart,
+    );
+    return data || ({} as Partial<DeploymentReleaseData>);
+  }
+
+  get previewString(): string {
+    const r = this.releaseData;
+    return `${this.id} ${r.projectName || 'unknown project'} ${this.arrivalDate} `;
+  }
+
+  fullPreviewString(options?: { boldValues?: boolean }): string {
+    //#region @websqlFunc
+    options = options || {};
+    const boldValues = !!options.boldValues;
+    const r = this.releaseData;
+    let envName = '';
+    if (!r.envName) {
+      envName = 'unknown environment';
+    } else if (r.envName === '__') {
+      envName = '< default >';
+    } else {
+      envName = `${r.envName} ${r.envNumber}`;
+    }
+
+    const boldFn = (str: string) => (boldValues ? chalk.bold(str) : str);
+
+    return [
+      `Project Name (${boldFn(r.projectName || 'unknown project')})`,
+      `Version (${boldFn(r.version || 'unknown version')})`,
+      `Artifact (${boldFn(r.targetArtifact || 'unknown artifact')})`,
+      `Release Type (${boldFn(r.releaseType || 'unknown release type')})`,
+      `Environment (${boldFn(envName)})`,
+      `Arrival Date (${boldFn(this.arrivalDate?.toString() || 'unknown date')})`,
+    ].join('\n');
+    //#endregion
+  }
 }

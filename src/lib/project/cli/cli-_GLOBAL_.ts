@@ -41,6 +41,7 @@ import {
   BaseGlobalCommandLine,
   UtilsNpm,
   UtilsTypescript,
+  UtilsCliMethod,
 } from 'tnp-helpers/src';
 import { createGenerator, SchemaGenerator } from 'ts-json-schema-generator';
 
@@ -1747,7 +1748,9 @@ ${this.project.children
   }
   //#endregion
 
+  @UtilsCliMethod.decorator('dirnameForTnp')
   dirnameForTnp() {
+    // console.log(UtilsCliMethod.getFrom($Global.prototype.dirnameForTnp, true));
     console.log(config.dirnameForTnp);
     this._exit();
   }

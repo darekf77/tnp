@@ -90,8 +90,9 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             //#region manual
             name: `${this.getColoredTextItem(manual)} Taon release + create config for Cloud`,
             action: async () => {
-              await this.releaseByType(manual, envOptions);
-              process.exit(0);
+              if (await this.releaseByType(manual, envOptions)) {
+                process.exit(0);
+              }
             },
             //#endregion
           },
@@ -99,8 +100,9 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             //#region cloud
             name: `${this.getColoredTextItem(cloud)} release tirgger for Taon Cloud`,
             action: async () => {
-              await this.releaseByType(cloud, envOptions);
-              process.exit(0);
+              if (await this.releaseByType(cloud, envOptions)) {
+                process.exit(0);
+              }
             },
             //#endregion
           },
@@ -108,8 +110,9 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             //#region local
             name: `${this.getColoredTextItem(local)} release to current git repository`,
             action: async () => {
-              await this.releaseByType(local, envOptions);
-              process.exit(0);
+              if (await this.releaseByType(local, envOptions)) {
+                process.exit(0);
+              }
             },
             //#endregion
           },
@@ -117,8 +120,9 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             //#region local
             name: `${this.getColoredTextItem(staticPages)} release for ${priovider} pages`,
             action: async () => {
-              await this.releaseByType(staticPages, envOptions);
-              process.exit(0);
+              if (await this.releaseByType(staticPages, envOptions)) {
+                process.exit(0);
+              }
             },
             //#endregion
           },
@@ -139,7 +143,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
   async releaseByType(
     releaseType: ReleaseType,
     envOptions: EnvOptions,
-  ): Promise<void> {
+  ): Promise<boolean> {
     //#region @backendFunc
 
     const selectedProjects =
@@ -151,18 +155,25 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       selectedProjects,
       ALLOWED_TO_RELEASE[releaseType] as ReleaseArtifactTaon[],
     );
-    if (!envOptions.release.releaseVersionBumpType) {
-      if (envOptions.release.autoReleaseUsingConfig) {
-        envOptions.release.releaseVersionBumpType = 'patch';
-      } else {
-        envOptions.release.releaseVersionBumpType =
-          await this.selectReleaseType(bumpType =>
-            this.project.packageJson.resolvePossibleNewVersion(bumpType),
-          );
+
+    if (releaseArtifactsTaon.length > 0) {
+      if (!envOptions.release.releaseVersionBumpType) {
+        if (envOptions.release.autoReleaseUsingConfig) {
+          envOptions.release.releaseVersionBumpType = 'patch';
+        } else {
+          envOptions.release.releaseVersionBumpType =
+            await this.selectReleaseType(bumpType =>
+              this.project.packageJson.resolvePossibleNewVersion(bumpType),
+            );
+        }
       }
+    } else {
+      Helpers.warn(`No release artifacts selected for release process`);
+      await UtilsTerminal.pressAnyKeyToContinueAsync();
+      return false;
     }
 
-    await this.releaseArtifacts(
+    return await this.releaseArtifacts(
       releaseType,
       releaseArtifactsTaon,
       selectedProjects,
@@ -281,8 +292,17 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
           },
         });
       }, {}) as {
-        [key in ReleaseArtifactTaon]: { name: string };
+        [key in ReleaseArtifactTaon]: { name: string; disabled: boolean };
       };
+
+      const allDisabled = Object.values(choices).every(c => c.disabled);
+
+      if (allDisabled) {
+        if (!envOptions.release.autoReleaseUsingConfig) {
+          Helpers.warn(`No release artifacts available for this release type`);
+        }
+        return [];
+      }
 
       const { selected } = await UtilsTerminal.multiselectActionAndExecute(
         choices,
@@ -354,13 +374,17 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
   //#endregion
 
   //#region private methods / release artifacts for each project
+
+  /**
+   * return true if everything went ok
+   */
   async releaseArtifacts(
     releaseType: ReleaseType,
     releaseArtifactsTaon: ReleaseArtifactTaon[],
     selectedProjects: Project[],
     envOptions: EnvOptions,
-  ): Promise<void> {
-    //#region @backend
+  ): Promise<boolean> {
+    //#region @backendFunc
 
     for (const project of selectedProjects) {
       for (const targetArtifact of releaseArtifactsTaon) {
@@ -377,6 +401,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       }
     }
     await this.pushReleaseCommits();
+    return true;
     //#endregion
   }
   //#endregion

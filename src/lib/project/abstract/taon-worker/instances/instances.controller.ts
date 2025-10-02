@@ -12,9 +12,9 @@ import { InstancesRepository } from './instances.repository';
 })
 export class InstancesController extends BaseCliWorkerController {
   // @ts-ignore
-  instancesRepository = this.injectCustomRepo(InstancesRepository);
+  instancesRepository: InstancesRepository = // @ts-ignore
+    this.injectCustomRepo(InstancesRepository);
 
-  // @ts-ignore
   @Taon.Http.GET()
   getEntities(): Taon.Response<Instances[]> {
     //#region @backendFunc
@@ -31,7 +31,7 @@ export class InstancesController extends BaseCliWorkerController {
   ): Taon.Response<Instances> {
     return async (req, res) => {
       //#region @backendFunc
-      // @ts-expect-error TODO ! this should not trigger error
+
       const instance = await this.instancesRepository.save(
         new Instances().clone(entity || {}),
       );
