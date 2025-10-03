@@ -16,7 +16,8 @@ import { BaseCli } from './base-cli';
 // @ts-ignore TODO weird inheritance problem
 export class $Cloud extends BaseCli {
   async _(): Promise<void> {
-    await this.project.ins.taonProjectsWorker.cliStartProcedure(this.params);
+    const { Project } = await import('../abstract/project');
+    await Project.ins.taonProjectsWorker.cliStartProcedure(this.params);
     // await this.ins.taonProjectsWorker.cliStartProcedure(this.params);
   }
 
@@ -47,8 +48,8 @@ export class $Cloud extends BaseCli {
 
     Helpers.remove(unpackedZipFolder);
     await UtilsZip.unzipArchive(zipDeploymentFileAbsPath);
-
-    const dockerComposeProject = this.project.ins.From(unpackedZipFolder);
+    const { Project } = await import('../abstract/project');
+    const dockerComposeProject = Project.ins.From(unpackedZipFolder);
     if (!dockerComposeProject) {
       throw new Error(
         `Docker compose project not found inside zip file. Make sure that you zipped the project folder.`,
@@ -71,8 +72,8 @@ export class $Cloud extends BaseCli {
   async deployments(): Promise<void> {
     // UtilsTerminal.drawBigText('Deployments');
     // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
-
-    await this.project.ins.taonProjectsWorker.deploymentsWorker.cliStartProcedure(
+    const { Project } = await import('../abstract/project');
+    await Project.ins.taonProjectsWorker.deploymentsWorker.cliStartProcedure(
       this.params,
     );
   }
@@ -81,17 +82,19 @@ export class $Cloud extends BaseCli {
   //#region instances
   async instances(): Promise<void> {
     // UtilsTerminal.drawBigText('Deployments');
-    await this.project.ins.taonProjectsWorker.instancesWorker.cliStartProcedure(
+    const { Project } = await import('../abstract/project');
+    await Project.ins.taonProjectsWorker.instancesWorker.cliStartProcedure(
       this.params,
     );
   }
   //#endregion
 
   //#region send
-  async send() {
+  async send(): Promise<void> {
     // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
+    const { Project } = await import('../abstract/project');
     const ctrl =
-      await this.project.ins.taonProjectsWorker.deploymentsWorker.getControllerForRemoteConnection();
+      await Project.ins.taonProjectsWorker.deploymentsWorker.getControllerForRemoteConnection();
 
     const filePath = path.isAbsolute(this.firstArg)
       ? crossPlatformPath(this.firstArg)
