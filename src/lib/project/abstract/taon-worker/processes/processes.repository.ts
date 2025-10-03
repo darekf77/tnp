@@ -5,6 +5,7 @@ import { Taon } from 'taon/src';
 import { Raw } from 'taon-typeorm/src';
 import { _, child_process, dateformat, Helpers } from 'tnp-core/src';
 
+import { ProcessFileLogger } from './process-file-logger';
 import { Processes } from './processes';
 //#endregion
 
@@ -13,6 +14,8 @@ import { Processes } from './processes';
 })
 export class ProcessesRepository extends Taon.Base.Repository<Processes> {
   entityClassResolveFn: () => typeof Processes = () => Processes;
+
+  private processFileLoggers: { [processId: string]: ProcessFileLogger } = {};
 
   async getByProcessID(processId: number | string): Promise<Processes | null> {
     //#region @websqlFunc
@@ -39,6 +42,9 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
     processFromDb.state = 'starting';
     processFromDb.output = `${processFromDb.output}\n----- new session ${dateformat(new Date())} -----\n`;
     await this.update(processFromDb);
+    // this.processFileLoggers[processFromDb.id] = new ProcessFileLogger(
+    //   `process-${processFromDb.id}`,
+    // );
     // const realProcess = child_process.exec(processFromDb.command, {
     //   stdio: ['ignore', 'pipe', 'pipe'], // stdin ignored, capture stdout & stderr
     //   cwd: processFromDb.cwd,
