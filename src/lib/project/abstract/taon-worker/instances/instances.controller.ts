@@ -25,6 +25,15 @@ export class InstancesController extends BaseCliWorkerController {
     //#endregion
   }
 
+  @Taon.Http.DELETE('/:id')
+  delete(@Taon.Http.Param.Path('id') id: string): Taon.Response<Instances> {
+    //#region @backendFunc
+    return async (req, res) => {
+      return this.instancesRepository.deleteById(id);
+    };
+    //#endregion
+  }
+
   @Taon.Http.PUT()
   insertEntity(
     @Taon.Http.Param.Body() entity: Instances,

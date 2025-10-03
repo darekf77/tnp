@@ -83,11 +83,12 @@ export class DeploymentsController extends BaseCliWorkerController {
       ...parentMiddlewares,
       BaseFileUploadMiddleware: DeploymentsMiddleware,
     }),
-  })
-  override uploadFormDataToServer(
+  }) // @ts-ignore TODO weird inheritance problem
+  uploadFormDataToServer(
     @Taon.Http.Param.Body() formData: FormData,
   ): Models.Http.Response<MulterFileUploadResponse[]> {
     //#region @backendFunc
+    // @ts-ignore TODO weird inheritance problem
     return super.uploadFormDataToServer(formData);
     //#endregion
   }

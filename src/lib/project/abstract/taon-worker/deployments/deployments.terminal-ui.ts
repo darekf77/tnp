@@ -1,14 +1,5 @@
 //#region imports
-import { config } from 'tnp-config/src';
-import {
-  CoreModels,
-  Helpers,
-  UtilsTerminal,
-  _,
-  chalk,
-  fse,
-} from 'tnp-core/src';
-import { UtilsOs } from 'tnp-core/src';
+import { CoreModels, Helpers, UtilsTerminal, _ } from 'tnp-core/src';
 import {
   BaseCliWorkerTerminalUI,
   BaseWorkerTerminalActionReturnType,
@@ -16,19 +7,11 @@ import {
 
 import { Deployments } from './deployments';
 import { DeploymentsController } from './deployments.controller';
-import { DeploymentsWorker } from './deployments.worker';
-import {
-  debounceTime,
-  exhaustMap,
-  map,
-  Subscription,
-  throttle,
-  throttleTime,
-} from 'rxjs';
-import { ProcessesController } from '../processes/processes.controller';
 import { DeploymentsUtils } from './deployments.utils';
+import { DeploymentsWorker } from './deployments.worker';
 //#endregion
 
+// @ts-ignore TODO weird inheritance problem
 export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWorker> {
   async headerText(): Promise<string> {
     return 'Taon Deployments';

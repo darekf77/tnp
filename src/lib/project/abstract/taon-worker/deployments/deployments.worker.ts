@@ -9,7 +9,8 @@ import { DeploymentsController } from './deployments.controller';
 import { DeploymentsTerminalUI } from './deployments.terminal-ui';
 //#endregion
 
-export class DeploymentsWorker extends BaseCliWorker<
+// @ts-ignore TODO weird inheritance problem
+export class DeploymentsWorker extends BaseCliWorker< // @ts-ignore TODO weird inheritance problem
   DeploymentsController,
   DeploymentsTerminalUI
 > {
@@ -48,7 +49,7 @@ export class DeploymentsWorker extends BaseCliWorker<
           calledFrom: 'deployment startNormallyInCurrentProcess',
         });
         await ctrl.addExistedDeployments().request();
-      }
+      },
     });
 
     // await UtilsTerminal.pressAnyKeyToContinueAsync();

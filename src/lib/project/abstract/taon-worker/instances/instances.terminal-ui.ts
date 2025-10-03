@@ -1,15 +1,11 @@
 //#region imports
-import { config } from 'tnp-config/src';
 import {
   CoreModels,
   Helpers,
   UtilsNetwork,
   UtilsTerminal,
   _,
-  chalk,
-  fse,
 } from 'tnp-core/src';
-import { UtilsOs } from 'tnp-core/src';
 import {
   BaseCliWorkerTerminalUI,
   BaseWorkerTerminalActionReturnType,
@@ -39,7 +35,7 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
       getStuffFromBackend: {
         name: 'Get instances list',
         action: async () => {
-          Helpers.info(`Stuff from backend will be fetched`);
+          Helpers.info(`Fetching list...`);
           const ctrl = await this.worker.getControllerForRemoteConnection({
             calledFrom: 'Get stuff from backend action',
           });
@@ -51,6 +47,56 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
           await UtilsTerminal.pressAnyKeyToContinueAsync({
             message: 'Press any key to go back to main menu',
           });
+        },
+      },
+      deleteInstance: {
+        name: 'Delete instance',
+        action: async () => {
+          Helpers.info(`Fetching list...`);
+          const ctrl = await this.worker.getControllerForRemoteConnection({
+            calledFrom: 'Get stuff from backend action',
+          });
+          const list = (await ctrl.getEntities().request())?.body.json || [];
+
+          const choices = list.map(c => ({
+            name: `${c.id} ${c.name} ${c.ipAddress}`,
+            value: c.id,
+          }));
+
+          const id = await UtilsTerminal.select({
+            question: 'Select instance to delete',
+            autocomplete: true,
+            choices: [{ name: '- back -', value: '' }, ...choices],
+          });
+          const instance = id && list.find(l => l.id === id);
+
+          if (instance) {
+            Helpers.info(`Deleting instance with
+
+              ip:${instance.ipAddress}
+              name:${instance.name}
+
+              `);
+            if (
+              await UtilsTerminal.confirm({
+                message: 'Are you sure you want this instance ?',
+              })
+            ) {
+              try {
+                Helpers.taskStarted('Deleting instance');
+                await ctrl.delete(instance.id).request();
+                await UtilsTerminal.pressAnyKeyToContinueAsync({
+                  message:
+                    'Instance deleted. Press any key to go back to main menu',
+                });
+              } catch (error) {
+                await UtilsTerminal.pressAnyKeyToContinueAsync({
+                  message:
+                    'Error deleting instance. Press any key to go back to main menu',
+                });
+              }
+            }
+          }
         },
       },
       insertDeployment: {
@@ -95,9 +141,14 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
                 }),
               )
               .request();
-            console.info(`Entity saved successfully: ${response.body.text}`);
+            await UtilsTerminal.pressAnyKeyToContinueAsync({
+              message: 'Instance create. Press any key to go back to main menu',
+            });
           } catch (error) {
-            console.error('Error inserting entity:', error);
+            await UtilsTerminal.pressAnyKeyToContinueAsync({
+              message:
+                'Error creating instance. Press any key to go back to main menu',
+            });
           }
 
           // console.log(response);
