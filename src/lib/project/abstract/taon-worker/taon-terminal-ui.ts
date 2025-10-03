@@ -113,20 +113,6 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       deployments: {
         name: 'Manage Deployments',
         action: async () => {
-          if (
-            config.frameworkNames.productionFrameworkName.includes(
-              config.frameworkName,
-            )
-          ) {
-            Helpers.info(`This feature is not yet implemented.`);
-            await UtilsTerminal.pressAnyKeyToContinueAsync({
-              message: 'Press any key to go back to main menu',
-            });
-            return;
-          }
-          await this.worker.deploymentsWorker.startDetachedIfNeedsToBeStarted({
-            useCurrentWindowForDetach: true,
-          });
           await this.worker.deploymentsWorker.terminalUI.infoScreen({
             exitIsOnlyReturn: true,
           });
@@ -135,21 +121,6 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       instances: {
         name: 'Manage Instances',
         action: async () => {
-          if (
-            config.frameworkNames.productionFrameworkName.includes(
-              config.frameworkName,
-            )
-          ) {
-            Helpers.info(`This feature is not yet implemented.`);
-            await UtilsTerminal.pressAnyKeyToContinueAsync({
-              message: 'Press any key to go back to main menu',
-            });
-            return;
-          }
-          // move this to main stuff
-          await this.worker.instancesWorker.startDetachedIfNeedsToBeStarted({
-            useCurrentWindowForDetach: true,
-          });
           await this.worker.instancesWorker.terminalUI.infoScreen({
             exitIsOnlyReturn: true,
           });
