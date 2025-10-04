@@ -5,7 +5,9 @@ import { config } from 'tnp-config/src';
 import {
   _,
   child_process,
+  crossPlatformPath,
   fse,
+  path,
   UtilsOs,
   UtilsProcess,
   UtilsTerminal,
@@ -13,31 +15,33 @@ import {
 import { BaseCliWorker, Helpers } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
+import { taonBasePathToGlobalDockerTemplates } from '../../../constants';
 import type { TaonProjectResolve } from '../project-resolve';
 
 import { DeploymentsWorker } from './deployments/deployments.worker';
+import { InstancesWorker } from './instances/instances.worker';
 import { TaonTerminalUI } from './taon-terminal-ui';
 import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
-import { InstancesWorker } from './instances/instances.worker';
 //#endregion
 
 export class TaonProjectsWorker extends BaseCliWorker<
   TaonProjectsController,
   TaonTerminalUI
 > {
+  //#region properties
   public cloudIsEnabled = false;
+  protected reverseProxyNetworkName = 'traefik-net';
 
   // @ts-ignore
   terminalUI = new TaonTerminalUI(this);
 
   workerContextTemplate = TaonProjectsContextTemplate as any; // TODO for some reason as any is nessesary
   controllerClass = TaonProjectsController;
-  // public deploymentsWorkerFor: {
-  //   [ipAddressOfTaonInstance: string]: DeploymentsWorker;
-  // };
   public deploymentsWorker: DeploymentsWorker;
   public instancesWorker: InstancesWorker;
+  //#endregion
+
   //#region constructor
   constructor(
     /**
@@ -152,8 +156,6 @@ export class TaonProjectsWorker extends BaseCliWorker<
   }
   //#endregion
 
-  protected reverseProxyNetworkName = 'traefik-net';
-
   //#region methods / delete traefik network
   async deleteTraefikNetwork(): Promise<void> {
     //#region @backendFunc
@@ -173,6 +175,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
   }
   //#endregion
 
+  //#region methods / make sure traefik network created
   async makeSureTraefikNetworkCreated(): Promise<void> {
     //#region @backendFunc
     try {
@@ -190,6 +193,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
     }
     //#endregion
   }
+  //#endregion
 
   //#region methods / start traefik
   protected async startTraefik(): Promise<boolean> {
@@ -204,21 +208,17 @@ export class TaonProjectsWorker extends BaseCliWorker<
       `🚀 Starting Traefik ${isOsWithGraphicalInterface ? 'DEV' : 'PROD'}...`,
     );
     const execAsync = promisify(child_process.exec);
-    // Start traefik in detached mode
-    const pathToCompose = this.ins
-      .by('isomorphic-lib')
-      .pathFor(`docker-templates/terafik`); // TODO @LAST make this path different or
-          // move whole treafik to separated folder in users home .taon
 
-    if (!Helpers.exists(pathToCompose)) {
-      return false;
-    }
+    Helpers.removeFolderIfExists(this.pathToTreafikComposeDest);
+    Helpers.copy(this.pathToComposeSource, this.pathToTreafikComposeDest, {
+      recursive: true,
+    });
 
     await execAsync(
       `docker compose -f ` +
         ` traefik-compose${isOsWithGraphicalInterface ? '.local-dev' : ''}.yml up -d traefik`,
       {
-        cwd: pathToCompose,
+        cwd: this.pathToTreafikComposeDest,
       },
     );
 
@@ -232,6 +232,30 @@ export class TaonProjectsWorker extends BaseCliWorker<
   }
   //#endregion
 
+  //#region get path to compose source
+  private get pathToComposeSource(): string {
+    //#region @backendFunc
+    const pathToComposeSource = this.ins
+      .by('isomorphic-lib')
+      .pathFor(`docker-templates/terafik`);
+
+    return pathToComposeSource;
+    //#endregion
+  }
+  //#endregion
+
+  //#region get path to compose dest
+  get pathToTreafikComposeDest(): string {
+    //#region @backendFunc
+    const pathToComposeDest = crossPlatformPath([
+      taonBasePathToGlobalDockerTemplates,
+      path.basename(this.pathToComposeSource),
+    ]);
+    return pathToComposeDest;
+    //#endregion
+  }
+  //#endregion
+
   //#region methods / stop traefik
   async stopTraefik(): Promise<boolean> {
     //#region @backendFunc
@@ -241,16 +265,10 @@ export class TaonProjectsWorker extends BaseCliWorker<
 
     const execAsync = promisify(child_process.exec);
     // Start traefik in detached mode
-    const pathToCompose = this.ins
-      .by('isomorphic-lib')
-      .pathFor(`docker-templates/terafik`);
-    if (!Helpers.exists(pathToCompose)) {
-      return false;
-    }
 
     try {
       await execAsync(`docker compose -f traefik-compose.yml down`, {
-        cwd: pathToCompose,
+        cwd: this.pathToTreafikComposeDest,
       });
     } catch (error) {
       Helpers.error(error, true, true);
@@ -258,9 +276,36 @@ export class TaonProjectsWorker extends BaseCliWorker<
       return false;
     }
 
+    Helpers.removeFolderIfExists(this.pathToTreafikComposeDest);
+
     // docker compose rm -f traefik
     // docker compose down --remove-orphans
 
+    return true;
+    //#endregion
+  }
+  //#endregion
+
+  //#region methods / check if docker enabled
+  async checkIfDockerEnabled(): Promise<boolean> {
+    //#region @backendFunc
+    Helpers.taskStarted(`Checking if docker is enabled...`);
+    const isEnableDocker = await UtilsOs.isDockerAvailable();
+    if (!isEnableDocker) {
+      Helpers.error(
+        `
+
+        Docker is not enabled, please enable docker to use cloud features
+
+
+        `,
+        true,
+        true,
+      );
+      await UtilsTerminal.pressAnyKeyToContinueAsync();
+      return false;
+    }
+    Helpers.taskDone(`Docker is enabled!`);
     return true;
     //#endregion
   }
@@ -273,59 +318,9 @@ export class TaonProjectsWorker extends BaseCliWorker<
       Helpers.clearConsole();
 
       //#region docker check
-      Helpers.taskStarted(`Checking if docker is enabled...`);
-      const isEnableDocker = await UtilsOs.isDockerAvailable();
-      if (!isEnableDocker) {
-        Helpers.error(
-          `
-
-          Docker is not enabled, please enable docker to use cloud features
-
-
-          `,
-          true,
-          true,
-        );
-        await UtilsTerminal.pressAnyKeyToContinueAsync();
-        break;
+      if (!(await this.checkIfDockerEnabled())) {
+        return;
       }
-      Helpers.taskDone(`Docker is enabled!`);
-      //#endregion
-
-      //#region kill processes on ports 80 and 443
-      // try {
-      //   await UtilsProcess.killProcessOnPort(80);
-      // } catch (error) {
-      //   Helpers.error(
-      //     `
-
-      //     Not able to kill process on port 80, please close it manually
-      //     and start again...
-
-      //     `,
-      //     true,
-      //     true,
-      //   );
-      //   await UtilsTerminal.pressAnyKeyToContinueAsync();
-      //   break;
-      // }
-
-      // try {
-      //   await UtilsProcess.killProcessOnPort(443);
-      // } catch (error) {
-      //   Helpers.error(
-      //     `
-
-      //     Not able to kill process on port 80, please close it manually
-      //     and start again...
-
-      //     `,
-      //     true,
-      //     true,
-      //   );
-      //   await UtilsTerminal.pressAnyKeyToContinueAsync();
-      //   break;
-      // }
       //#endregion
 
       //#region traefik check

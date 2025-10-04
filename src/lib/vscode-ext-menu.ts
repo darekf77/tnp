@@ -254,26 +254,27 @@ export function activateMenuTnp(
         );
 
       //#region core items
-      const coreProjectItem = new ProjectItem(
-        `$ ${FRAMEWORK_NAME} open:core:project`,
-        vscode.TreeItemCollapsibleState.None,
+      // TODO maybe later I will add it back
+      // const coreProjectItem = new ProjectItem(
+      //   `$ ${FRAMEWORK_NAME} open:core:project`,
+      //   vscode.TreeItemCollapsibleState.None,
 
-        {
-          project: CURRENT_PROJECT.framework.coreProject,
-          refreshLinkOnClick: true,
-          iconPath: null,
-        },
-      );
+      //   {
+      //     project: CURRENT_PROJECT.framework.coreProject,
+      //     refreshLinkOnClick: true,
+      //     iconPath: null,
+      //   },
+      // );
 
-      const coreContainerItem = new ProjectItem(
-        `$ ${FRAMEWORK_NAME} open:core:container`,
-        vscode.TreeItemCollapsibleState.None,
-        {
-          project: CURRENT_PROJECT.framework.coreContainer,
-          refreshLinkOnClick: true,
-          iconPath: null,
-        },
-      );
+      // const coreContainerItem = new ProjectItem(
+      //   `$ ${FRAMEWORK_NAME} open:core:container`,
+      //   vscode.TreeItemCollapsibleState.None,
+      //   {
+      //     project: CURRENT_PROJECT.framework.coreContainer,
+      //     refreshLinkOnClick: true,
+      //     iconPath: null,
+      //   },
+      // );
       //#endregion
 
       const isContainerOrganizationCurrentProj =
@@ -393,12 +394,12 @@ export function activateMenuTnp(
         //             },
         //           },
         //         ),
-        ...(CURRENT_PROJECT.typeIs('isomorphic-lib', 'container')
-          ? [
-              !isContainerOrganizationCurrentProj ? coreProjectItem : void 0,
-              coreContainerItem,
-            ].filter(f => !!f)
-          : []),
+        // ...(CURRENT_PROJECT.typeIs('isomorphic-lib', 'container')
+        //   ? [
+        //       !isContainerOrganizationCurrentProj ? coreProjectItem : void 0,
+        //       coreContainerItem,
+        //     ].filter(f => !!f)
+        //   : []),
         //#endregion
         parentForParentChildren.length > 0 && this.empty,
         parentForParentChildren.length > 0 &&

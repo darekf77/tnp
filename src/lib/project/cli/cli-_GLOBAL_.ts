@@ -69,11 +69,13 @@ export class $Global extends BaseGlobalCommandLine<
     await this.ins.taonProjectsWorker.terminalUI.infoScreen();
   }
 
+  //#region detect packages
   async detectPackages() {
     this.project.removeFile(config.file.tmpIsomorphicPackagesJson);
     await this.project.packagesRecognition.start('detecting packages');
     this._exit();
   }
+  //#endregion
 
   //#region kill process on port
   async killonport() {
@@ -1748,12 +1750,14 @@ ${this.project.children
   }
   //#endregion
 
+  //#region dirname for tnp
   @UtilsCliMethod.decorator('dirnameForTnp')
   dirnameForTnp() {
     // console.log(UtilsCliMethod.getFrom($Global.prototype.dirnameForTnp, true));
     console.log(config.dirnameForTnp);
     this._exit();
   }
+  //#endregion
 
   //#region detect contexts
   contexts() {
@@ -1768,13 +1772,16 @@ ${this.project.children
   }
   //#endregion
 
+  //#region regenerate vscode settings colors
   _regenerateVscodeSettingsColors() {
     const overrideBottomColor =
       this.project.vsCodeHelpers.getVscodeBottomColor();
 
     super._regenerateVscodeSettingsColors(overrideBottomColor);
   }
+  //#endregion
 
+  //#region test messages
   messagesTest() {
     console.log('-----1');
     Helpers.log(`Helpers.log`);
@@ -1790,6 +1797,18 @@ ${this.project.children
     Helpers.logWarn(`Helpers.logWarn`);
     Helpers.logSuccess(`Helpers.logSuccess`);
     console.log('-----3');
+    this._exit();
+  }
+  //#endregion
+
+  aaa() {
+    const coreProject1 = this.project.framework.coreProject;
+    const coreProject2 = Project.ins.by('isomorphic-lib');
+    console.log('coreProject2');
+    console.log(coreProject1.pathFor(`docker-templates/terafik`));
+    console.log('coreProject2');
+    console.log(coreProject2.pathFor(`docker-templates/terafik`));
+
     this._exit();
   }
 }

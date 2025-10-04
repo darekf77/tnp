@@ -127,6 +127,15 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }> {
     //#region @backendFunc
 
+    // TODO @REMOVE when microfrontends for container ready
+    if (this.project.typeIsNot('isomorphic-lib')) {
+      Helpers.error(
+        `Only project type isomorphic-lib can use artifact angular-node-app!`,
+        false,
+        true,
+      );
+    }
+
     buildOptions = await this.project.artifactsManager.init(
       EnvOptions.from(buildOptions),
     );

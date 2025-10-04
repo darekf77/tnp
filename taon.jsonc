@@ -54,6 +54,12 @@
       "packageName": "@parcel/watcher",
     },
     {
+      "description": "Draw big text in terminal",
+      "isExternalFor": ["npm-lib-and-cli-tool"],
+      "includeInBundleNodeModules": "*",
+      "packageName": "cfonts",
+    },
+    {
       "description": "Image manipulations",
       "includeInBundleNodeModules": "*",
       "isExternalFor": "*",

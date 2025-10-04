@@ -163,15 +163,25 @@ export const COMPILATION_COMPLETE_APP_NG_SERVE = 'Compiled successfully';
 export const DEFAULT_FRAMEWORK_VERSION =
   `v${CURRENT_PACKAGE_VERSION.split('.')[0]}` as CoreModels.FrameworkVersion;
 
-export let taonRepoPathUserInUserDir: string =
-  //#region @backend
-  crossPlatformPath([
-    UtilsOs.getRealHomeDir(),
-    `.${config.frameworkNames.productionFrameworkName}`,
-    'taon-containers',
-  ]);
+let taonRepoPathUserInUserDir: string = '';
+//#region @backend
+taonRepoPathUserInUserDir = crossPlatformPath([
+  UtilsOs.getRealHomeDir(),
+  `.${config.frameworkNames.productionFrameworkName}`,
+  'taon-containers',
+]);
 //#endregion
-('');
+
+let taonBasePathToGlobalDockerTemplates: string = '';
+//#region @backend
+taonBasePathToGlobalDockerTemplates = crossPlatformPath([
+  UtilsOs.getRealHomeDir(),
+  `.${config.frameworkNames.productionFrameworkName}`,
+  `docker-templates/${config.frameworkName}`,
+]);
+//#endregion
+
+export { taonRepoPathUserInUserDir, taonBasePathToGlobalDockerTemplates };
 
 export const argsToClear = [
   'websql',

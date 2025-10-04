@@ -200,6 +200,16 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             );
 
             appComponentFile = appComponentFile.replace(
+              `${'import'} { CoreModels } from 'tnp-core';`,
+              `${'import'} { CoreModels } from 'tnp-core/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
+            );
+
+            appComponentFile = appComponentFile.replace(
+              `${'import'} { ContextsEndpointStorage } from 'taon';`,
+              `${'import'} { ContextsEndpointStorage } from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
+            );
+
+            appComponentFile = appComponentFile.replace(
               `${'import'} start from './---projectname---/app';`,
               `${'import'} start from './${this.project.name}/app';`,
             );
