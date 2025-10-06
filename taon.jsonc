@@ -55,8 +55,8 @@
     },
     {
       "description": "Draw big text in terminal",
-      "isExternalFor": ["npm-lib-and-cli-tool"],
       "includeInBundleNodeModules": "*",
+      "isExternalFor": ["npm-lib-and-cli-tool"],
       "packageName": "cfonts",
     },
     {
