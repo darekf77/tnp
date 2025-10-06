@@ -12,13 +12,13 @@ import {
   CoreModels,
 } from 'tnp-core/src';
 import { UtilsOs, UtilsTerminal } from 'tnp-core/src';
+import { UtilsDotFile } from 'tnp-core/src';
 import {
   Helpers,
   UtilsTypescript,
   DockerComposeFile,
   UtilsZip,
 } from 'tnp-helpers/src';
-import { UtilsDotFile } from 'tnp-helpers/src';
 import { FilePathMetaData } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 

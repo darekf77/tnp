@@ -1,7 +1,7 @@
 //#region imports
 import axios from 'axios';
 import { config } from 'tnp-config/src';
-import { chalk, Helpers, UtilsTerminal } from 'tnp-core/src';
+import { chalk, Helpers, UtilsNetwork, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { BaseStartConfig } from 'tnp-helpers/src';
 
@@ -23,6 +23,36 @@ export async function start(
      */
     axios.defaults.timeout = 3000;
   }
+
+  //#region prevent incorrect /etc/hosts file
+  // @LAST move this to worker
+  // if (!UtilsNetwork.etcHostHasProperLocalhostIp4Entry()) {
+  //   Helpers.error(
+  //     `Your /etc/hosts file does not have proper entry for "localhost" hostname.
+
+  //     Please add:
+  //     ${chalk.bold('127.0.0.1 localhost')}
+  //     `,
+  //     true,
+  //     true,
+  //   );
+  //   await UtilsTerminal.pressAnyKeyToContinueAsync();
+  // }
+
+  // TODO uncomment later
+  // if (!UtilsNetwork.etcHostHasProperLocalhostIp6Entry()) {
+  //   Helpers.error(
+  //     `Your /etc/hosts file does not have proper entry for "localhost" hostname.
+
+  //     Please add:
+  //     ${chalk.bold('::1 localhost')}
+  //     `,
+  //     true,
+  //     true,
+  //   );
+  //   await UtilsTerminal.pressAnyKeyToContinueAsync();
+  // }
+  //#endregion
 
   // Helpers.log(`ins start, mode: "${mode}"`);
   const ProjectClass = (await import('./project/abstract/project')).Project;
