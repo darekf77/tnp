@@ -143,6 +143,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       },
     };
 
+    delete myActions.environments;
     if (this.worker.cloudIsEnabled) {
       myActions.enableCloud.name = 'Disable Cloud';
     } else {
