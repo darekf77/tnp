@@ -326,6 +326,19 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   sync({ syncFromCommand }: { syncFromCommand?: boolean } = {}): void {
     //#region @backendFunc
     const cwd = taonRepoPathUserInUserDir;
+
+    const oldTaonFolder = crossPlatformPath([
+      path.dirname(taonRepoPathUserInUserDir),
+      'taon',
+    ]);
+
+    if (Helpers.exists(oldTaonFolder)) {
+      Helpers.taskStarted(`Removing old taon folder: ${oldTaonFolder}`);
+      Helpers.removeSymlinks(oldTaonFolder);
+      Helpers.remove(oldTaonFolder);
+      Helpers.taskDone('Old taon folder removed');
+    }
+
     Helpers.info(`Syncing... Fetching git data... `);
     CLI.installEnvironment(requiredForDev);
 
