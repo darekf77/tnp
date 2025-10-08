@@ -235,7 +235,19 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     }
 
     if (!buildOptions.build.watch && buildOptions.release.releaseType) {
-      extProj.run(`taon-vsce package`).sync();
+      try {
+        const args = [
+          ...(this.project.taonJson.baseContentUrl
+            ? [`--baseContentUrl "${this.project.taonJson.baseContentUrl}"`]
+            : []),
+          ...(this.project.taonJson.baseImagesUrl
+            ? [`--baseImagesUrl "${this.project.taonJson.baseImagesUrl}"`]
+            : []),
+        ];
+        extProj.run(`taon-vsce package ${args.join(' ')}`).sync();
+      } catch (error) {
+        throw 'Problem with vscode package metadata';
+      }
     }
 
     return { vscodeVsixOutPath };
@@ -367,40 +379,6 @@ local VSCode instance.
     Helpers.run(`code --install-extension ${path.basename(pathToVsixFile)}`, {
       cwd: crossPlatformPath(path.dirname(pathToVsixFile)),
     }).sync();
-    //#endregion
-  }
-  //#endregion
-
-  //#region private methods / create vscode package
-  async createVscePackage({
-    releaseOptions,
-    showInfo = true,
-    args = '',
-  }: { releaseOptions?: EnvOptions; showInfo?: boolean; args?: string } = {}) {
-    //#region @backendFunc
-    const vsixPackageName = this.extensionVsixNameFrom(releaseOptions);
-    try {
-      await Helpers.actionWrapper(
-        () => {
-          this.project.run(`taon-vsce package ${args}`).sync();
-        },
-        `Building vsix package ` + chalk.bold(vsixPackageName) + `... `,
-      );
-      if (showInfo) {
-        const commandInstall = chalk.bold(
-          `${config.frameworkName} install:locally`,
-        );
-        Helpers.info(`
-
-        Please use command: ${commandInstall} # or ${config.frameworkName} il
-        to install this package in local vscode instance.
-
-        `);
-      }
-    } catch (error) {
-      Helpers.error(error, true, true);
-      Helpers.error(`Not able to build ${vsixPackageName} package `);
-    }
     //#endregion
   }
   //#endregion

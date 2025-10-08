@@ -169,6 +169,18 @@ export namespace Models {
     resources?: string[];
 
     /**
+     * Base url for content (docs, md files etc.)
+     * Required if README.md has relative pathes to links
+     */
+    baseContentUrl?: string;
+
+    /**
+     * Base url for content (docs, md files etc.)
+     * Required if README.md has relative pathes to images
+     */
+    baseImagesUrl?: string;
+
+    /**
      * @default false
      * By default generated assets from logo.png are not stored
      * in repository
@@ -191,7 +203,7 @@ export namespace Models {
      */
     peerDependenciesNamesForNpmLib: string[];
 
-     /**
+    /**
      * At beginning after node_modules installation taon is checking is
      * packages are installed - if not it will throw error.
      * Also.. this optionalDependencies are going to be included in released npm lib

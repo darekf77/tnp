@@ -204,6 +204,30 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region base content url
+  /**
+   * Base url for content (docs, md files etc.)
+   * Required if README.md has relative pathes to links
+   */
+  get baseContentUrl(): string | undefined {
+    //#region @backendFunc
+    return (this.data as Models.TaonJsonStandalone)?.baseContentUrl;
+    //#endregion
+  }
+  //#endregion
+
+  //#region base images url
+  /**
+   * Base url for content (docs, md files etc.)
+   * Required if README.md has relative pathes to images
+   */
+  get baseImagesUrl(): string | undefined {
+    //#region @backendFunc
+    return (this.data as Models.TaonJsonStandalone)?.baseImagesUrl;
+    //#endregion
+  }
+  //#endregion
+
   get storeGeneratedAssetsInRepository(): boolean {
     //#region @backendFunc
 

@@ -112,15 +112,6 @@ export class $Vscode extends BaseCli {
       action: 'hide-files',
     });
   }
-
-  async vsce() {
-    await this.project.artifactsManager.artifact.vscodePlugin.createVscePackage(
-      {
-        args: this.argsWithParams,
-      },
-    );
-    this._exit();
-  }
 }
 
 export default {
