@@ -327,7 +327,7 @@ export class NodeModules extends BaseNodeModules {
   //#endregion
 
   //#region dedupe
-  dedupe(selectedPackages?: string[]): void {
+  dedupe(selectedPackages?: string[], fake = false): void {
     //#region @backendFunc
     const packages: string[] = (
       _.isArray(selectedPackages) && selectedPackages.length >= 1
@@ -335,7 +335,7 @@ export class NodeModules extends BaseNodeModules {
         : this.packagesToDedupe
     ) as any;
 
-    this.dedupePackages(packages, false);
+    this.dedupePackages(packages, false, fake);
     //#endregion
   }
   //#endregion

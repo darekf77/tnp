@@ -522,6 +522,14 @@ export class $Global extends BaseGlobalCommandLine<
     this._exit();
   }
 
+  DEDUPE_FAKE() {
+    this.project.nodeModules.dedupe(
+      this.args.join(' ').trim() === '' ? void 0 : this.args,
+      true,
+    );
+    this._exit();
+  }
+
   DEDUPE_COUNT() {
     this.project.nodeModules.dedupeCount(this.args);
     this._exit();
