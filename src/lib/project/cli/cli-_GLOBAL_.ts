@@ -515,6 +515,23 @@ export class $Global extends BaseGlobalCommandLine<
   //#endregion
 
   //#region dedupe
+
+  dedupecore() {
+    const coreProject = Project.ins.by('container') as Project;
+    coreProject.nodeModules.dedupe(
+      this.args.join(' ').trim() === '' ? void 0 : this.args,
+    );
+    this._exit();
+  }
+  dedupecorefalse() {
+    const coreProject = Project.ins.by('container') as Project;
+    coreProject.nodeModules.dedupe(
+      this.args.join(' ').trim() === '' ? void 0 : this.args,
+      true,
+    );
+    this._exit();
+  }
+
   DEDUPE() {
     this.project.nodeModules.dedupe(
       this.args.join(' ').trim() === '' ? void 0 : this.args,
