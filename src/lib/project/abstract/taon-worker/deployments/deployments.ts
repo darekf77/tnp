@@ -1,7 +1,9 @@
 //#region imports
 import { MulterFileUploadResponse, Taon } from 'taon/src';
-import { _, chalk, path } from 'tnp-core/src';
+import { _, chalk, dateformat, path } from 'tnp-core/src';
 import { FilePathMetaData } from 'tnp-helpers/src';
+
+import { keysMap } from '../../../../constants';
 
 import { DeploymentsDefaultsValues } from './deployments.defaults-values';
 import { DeploymentReleaseData, DeploymentStatus } from './deployments.models';
@@ -43,13 +45,19 @@ export class Deployments extends Taon.Base.AbstractEntity<Deployments> {
   get releaseData(): Partial<DeploymentReleaseData> {
     const data = FilePathMetaData.extractData<DeploymentReleaseData>(
       this.zipFileBasenameMetadataPart,
+      {
+        keysMap,
+      },
     );
     return data || ({} as Partial<DeploymentReleaseData>);
   }
 
   get previewString(): string {
     const r = this.releaseData;
-    return `${this.id} ${r.projectName || 'unknown project'} ${this.arrivalDate} `;
+    return (
+      `${this.id} ${r.projectName || 'unknown project'} ` +
+      `${this.arrivalDate ? dateformat(this.arrivalDate, 'dd-mm-yyyy HH:MM:ss') : 'unknown date'} `
+    );
   }
 
   fullPreviewString(options?: { boldValues?: boolean }): string {
@@ -74,7 +82,11 @@ export class Deployments extends Taon.Base.AbstractEntity<Deployments> {
       `Artifact (${boldFn(r.targetArtifact || 'unknown artifact')})`,
       `Release Type (${boldFn(r.releaseType || 'unknown release type')})`,
       `Environment (${boldFn(envName)})`,
-      `Arrival Date (${boldFn(this.arrivalDate?.toString() || 'unknown date')})`,
+      `Arrival Date (${boldFn(
+        this.arrivalDate
+          ? dateformat(this.arrivalDate, 'dd-mm-yyyy HH:MM:ss')
+          : 'unknown date',
+      )})`,
     ].join('\n');
     //#endregion
   }

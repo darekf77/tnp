@@ -101,8 +101,11 @@ ${deployment.fullPreviewString({
         startDeployment: {
           name: 'Start Deployment',
         },
-        displayProgress: {
-          name: 'Display Progress log',
+        realtimeMonitor: {
+          name: 'Realtime Progress Monitor',
+        },
+        displayLog: {
+          name: 'Display Log File',
         },
         stopDeployment: {
           name: 'Stop Deployment',
@@ -116,7 +119,7 @@ ${deployment.fullPreviewString({
         delete choices.startDeployment;
       } else {
         delete choices.stopDeployment;
-        delete choices.displayProgress;
+        delete choices.realtimeMonitor;
       }
 
       const selected = await UtilsTerminal.select<keyof typeof choices>({
@@ -131,10 +134,10 @@ ${deployment.fullPreviewString({
           await this.startDeployment(deployment, ctrl);
           deployment = (await ctrl.getByDeploymentId(deployment.id).request())
             .body.json;
-          await DeploymentsUtils.displayDeploymentProgress(deployment, ctrl);
+          await DeploymentsUtils.displayRealtimeProgressMonitor(deployment, ctrl);
           break;
-        case 'displayProgress':
-          await DeploymentsUtils.displayDeploymentProgress(deployment, ctrl);
+        case 'realtimeMonitor':
+          await DeploymentsUtils.displayRealtimeProgressMonitor(deployment, ctrl);
           break;
         case 'stopDeployment':
           await this.stopDeployment(deployment, ctrl);

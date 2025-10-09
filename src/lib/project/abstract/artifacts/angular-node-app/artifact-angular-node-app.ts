@@ -27,6 +27,7 @@ import {
   COMPILATION_COMPLETE_APP_NG_SERVE,
   DEFAULT_PORT,
   globalSpinner,
+  keysMap,
   THIS_IS_GENERATED_INFO_COMMENT,
   THIS_IS_GENERATED_STRING,
   tmpBaseHrefOverwriteRelPath,
@@ -824,6 +825,7 @@ ${dockerComposeYmlFileContent}
           path.basename(zipFileAbsPath),
           {
             skipAddingBasenameAtEnd: true,
+            keysMap,
           },
         );
 
@@ -908,7 +910,7 @@ STARTING DEPLOYMENT PREVIEW (PRESS ANY KEY TO MOVE BACK TO RELEASE FINSH SCREEN)
 
 
               `);
-            await DeploymentsUtils.displayDeploymentProgress(deployment, ctrl);
+            await DeploymentsUtils.displayRealtimeProgressMonitor(deployment, ctrl);
           }
         }
 

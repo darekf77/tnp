@@ -42,11 +42,13 @@ import {
   UtilsNpm,
   UtilsTypescript,
   UtilsCliMethod,
+  FilePathMetaData,
 } from 'tnp-helpers/src';
 import { createGenerator, SchemaGenerator } from 'ts-json-schema-generator';
 
 import {
   DEFAULT_FRAMEWORK_VERSION,
+  keysMap,
   taonConfigSchemaJsonContainer,
   taonConfigSchemaJsonStandalone,
 } from '../../constants';
@@ -1825,6 +1827,17 @@ ${this.project.children
     this._exit();
   }
   //#endregion
+
+  // projectName|-|www-domgrubegozwierzaka-pl||--||releaseType|-|manual||--||version|-|0.0.8||--||
+  // envName|-|__||--||envNumber|-|||--||targetArtifact|-|angular-node-app|||||-1759151320202-fa12e3a5cfdd
+  extractStringMetadata() {
+    const str = this.firstArg || '';
+    console.log(str);
+    console.log(FilePathMetaData.extractData(str,{
+      keysMap
+    }));
+    this._exit();
+  }
 
   // aaa() {
   //   const coreProject1 = this.project.framework.coreProject;

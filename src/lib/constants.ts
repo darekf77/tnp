@@ -24,6 +24,15 @@ export const whatToLinkFromCoreDeepPart =
     ? ''
     : (whatToLinkFromCore as string).replace('src/', '');
 
+export const keysMap = {
+  projectName: 'pn',
+  releaseType: 'rt',
+  version: 'ver',
+  envName: 'enm',
+  envNumber: 'enu',
+  targetArtifact: 'ta',
+};
+
 export const dirnameFromSourceToProject = (linkToSource: string): string => {
   const orgParamLinkAbs = linkToSource;
   linkToSource = fse.realpathSync(linkToSource);

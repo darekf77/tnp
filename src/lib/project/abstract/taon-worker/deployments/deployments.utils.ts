@@ -6,17 +6,16 @@ import { DeploymentsController } from './deployments.controller';
 
 export namespace DeploymentsUtils {
   //#region display deployment progress
-  export const displayDeploymentProgress = async (
+  export const displayRealtimeProgressMonitor = async (
     deployment: Deployments,
     ctrl: DeploymentsController,
+    options?: {
+      resolveWhenTextInStdoutOrStder?: string;
+    },
   ): Promise<void> => {
     //#region @backendFunc
+    options = options || {};
     UtilsTerminal.clearConsole();
-    // console.log(`Starting deployment...`);
-    // await ctrl
-    //   .startDeployment(deployment.zipFileBasenameMetadataPart)
-    //   .request();
-    // console.log(`Displaying for process id: ${deployment.processId} `);
 
     const procData = await ctrl.processesController
       .getByProcessID(deployment.processId)
@@ -50,6 +49,14 @@ export namespace DeploymentsUtils {
           if (displayLogs) {
             Helpers.clearConsole();
             console.log(data.output);
+            if (
+              options.resolveWhenTextInStdoutOrStder &&
+              data?.output
+                ?.toString()
+                .includes(options.resolveWhenTextInStdoutOrStder)
+            ) {
+              process.stdin.emit('data', Buffer.from('\n'));
+            }
           }
         });
       let closing = false;
