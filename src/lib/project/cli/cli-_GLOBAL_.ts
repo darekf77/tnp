@@ -523,7 +523,7 @@ export class $Global extends BaseGlobalCommandLine<
     );
     this._exit();
   }
-  dedupecorefalse() {
+  dedupecorefake() {
     const coreProject = Project.ins.by('container') as Project;
     coreProject.nodeModules.dedupe(
       this.args.join(' ').trim() === '' ? void 0 : this.args,
