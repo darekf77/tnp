@@ -15,9 +15,9 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
   private processesRepository = this.injectCustomRepo(ProcessesRepository);
 
   //#region start process
-  @Taon.Http.GET('/get/process/:processId')
+  @Taon.Http.GET()
   getByProcessID(
-    @Taon.Http.Param.Path('processId')
+    @Taon.Http.Param.Query('processId')
     processId: number | string,
   ): Taon.Response<Processes> {
     //#region @websqlFunc
@@ -38,9 +38,9 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
   //#endregion
 
   //#region start process
-  @Taon.Http.GET('/start/process/:processId')
+  @Taon.Http.GET()
   start(
-    @Taon.Http.Param.Path('processId')
+    @Taon.Http.Param.Query('processId')
     processId: number,
   ): Taon.Response<void> {
     //#region @websqlFunc
@@ -55,9 +55,9 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
   //#endregion
 
   //#region stop process
-  @Taon.Http.GET('/stop/process/:processId')
+  @Taon.Http.GET()
   stop(
-    @Taon.Http.Param.Path('processId')
+    @Taon.Http.Param.Query('processId')
     processId: number,
   ): Taon.Response<void> {
     //#region @websqlFunc
