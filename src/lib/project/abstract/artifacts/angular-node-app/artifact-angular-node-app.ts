@@ -910,7 +910,14 @@ STARTING DEPLOYMENT PREVIEW (PRESS ANY KEY TO MOVE BACK TO RELEASE FINSH SCREEN)
 
 
               `);
-            await DeploymentsUtils.displayRealtimeProgressMonitor(deployment, ctrl);
+            await DeploymentsUtils.displayRealtimeProgressMonitor(
+              deployment,
+              ctrl,
+              {
+                resolveWhenTextInStdoutOrStder:
+                  CoreModels.SPECIAL_APP_READY_MESSAGE,
+              },
+            );
           }
         }
 
