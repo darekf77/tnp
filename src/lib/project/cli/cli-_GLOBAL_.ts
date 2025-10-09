@@ -36,13 +36,13 @@ import {
 } from 'tnp-core/src';
 import { CLI } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
+import { FilePathMetaData } from 'tnp-core/src';
 import {
   Helpers,
   BaseGlobalCommandLine,
   UtilsNpm,
   UtilsTypescript,
   UtilsCliMethod,
-  FilePathMetaData,
 } from 'tnp-helpers/src';
 import { createGenerator, SchemaGenerator } from 'ts-json-schema-generator';
 
@@ -1833,9 +1833,11 @@ ${this.project.children
   extractStringMetadata() {
     const str = this.firstArg || '';
     console.log(str);
-    console.log(FilePathMetaData.extractData(str,{
-      keysMap
-    }));
+    console.log(
+      FilePathMetaData.extractData(str, {
+        keysMap,
+      }),
+    );
     this._exit();
   }
 

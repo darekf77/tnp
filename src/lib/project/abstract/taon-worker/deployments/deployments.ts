@@ -1,7 +1,7 @@
 //#region imports
 import { MulterFileUploadResponse, Taon } from 'taon/src';
 import { _, chalk, dateformat, path } from 'tnp-core/src';
-import { FilePathMetaData } from 'tnp-helpers/src';
+import { FilePathMetaData } from 'tnp-core/src';
 
 import { keysMap } from '../../../../constants';
 

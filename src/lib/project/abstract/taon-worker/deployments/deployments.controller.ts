@@ -9,7 +9,7 @@ import {
 } from 'taon/src';
 import { _, crossPlatformPath, Helpers } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
-import { BaseCliWorkerController, FilePathMetaData } from 'tnp-helpers/src';
+import { BaseCliWorkerController } from 'tnp-helpers/src';
 
 import { ProcessesController } from '../processes/processes.controller';
 
