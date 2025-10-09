@@ -1826,16 +1826,16 @@ ${this.project.children
   }
   //#endregion
 
-  aaa() {
-    const coreProject1 = this.project.framework.coreProject;
-    const coreProject2 = Project.ins.by('isomorphic-lib');
-    console.log('coreProject2');
-    console.log(coreProject1.pathFor(`docker-templates/terafik`));
-    console.log('coreProject2');
-    console.log(coreProject2.pathFor(`docker-templates/terafik`));
+  // aaa() {
+  //   const coreProject1 = this.project.framework.coreProject;
+  //   const coreProject2 = Project.ins.by('isomorphic-lib');
+  //   console.log('coreProject2');
+  //   console.log(coreProject1.pathFor(`docker-templates/terafik`));
+  //   console.log('coreProject2');
+  //   console.log(coreProject2.pathFor(`docker-templates/terafik`));
 
-    this._exit();
-  }
+  //   this._exit();
+  // }
 }
 
 export default {

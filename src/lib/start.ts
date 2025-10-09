@@ -7,6 +7,7 @@ import { BaseStartConfig } from 'tnp-helpers/src';
 
 // import { globalSpinner } from './constants';
 import cliClassArr from './project/cli/index';
+import { UtilsOs } from 'tnp-core/src';
 
 //#endregion
 
@@ -25,21 +26,27 @@ export async function start(
   }
 
   //#region prevent incorrect /etc/hosts file
-  // @LAST move this to worker
-  // if (!UtilsNetwork.etcHostHasProperLocalhostIp4Entry()) {
-  //   Helpers.error(
-  //     `Your /etc/hosts file does not have proper entry for "localhost" hostname.
+  const isGraphicsCapableOs =
+    UtilsOs.isRunningInOsWithGraphicsCapableEnvironment();
+  Helpers.logInfo(`Checking your /etc/hosts file...`);
+  try {
+    if (!UtilsNetwork.etcHostHasProperLocalhostIp4Entry()) {
+      Helpers.error(
+        `Your /etc/hosts file does not have proper entry for "localhost" hostname.
 
-  //     Please add:
-  //     ${chalk.bold('127.0.0.1 localhost')}
-  //     `,
-  //     true,
-  //     true,
-  //   );
-  //   await UtilsTerminal.pressAnyKeyToContinueAsync();
-  // }
+      Please add:
+      ${chalk.bold('127.0.0.1 localhost')}
+      `,
+        isGraphicsCapableOs,
+        true,
+      );
+      await UtilsTerminal.pressAnyKeyToContinueAsync();
+    }
+  } catch (error) {
+    console.error(`Not able to check your /etc/hosts file`);
+  }
 
-  // TODO uncomment later
+  // TODO not needed for now
   // if (!UtilsNetwork.etcHostHasProperLocalhostIp6Entry()) {
   //   Helpers.error(
   //     `Your /etc/hosts file does not have proper entry for "localhost" hostname.
@@ -47,11 +54,12 @@ export async function start(
   //     Please add:
   //     ${chalk.bold('::1 localhost')}
   //     `,
-  //     true,
+  //     isGraphicsCapableOs,
   //     true,
   //   );
   //   await UtilsTerminal.pressAnyKeyToContinueAsync();
   // }
+  Helpers.logInfo(`Done checking your /etc/hosts file...`);
   //#endregion
 
   // Helpers.log(`ins start, mode: "${mode}"`);
