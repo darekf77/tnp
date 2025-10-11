@@ -3,9 +3,15 @@ import type { ChildProcess } from 'child_process';
 
 import { Taon } from 'taon/src';
 import { Raw } from 'taon-typeorm/src';
-import { _, child_process, dateformat, Helpers } from 'tnp-core/src';
+import {
+  _,
+  child_process,
+  dateformat,
+  Helpers,
+  UtilsProcess,
+} from 'tnp-core/src';
+import { UtilsProcessLogger } from 'tnp-core/src';
 
-import { ProcessFileLogger } from './process-file-logger';
 import { Processes } from './processes';
 //#endregion
 
@@ -15,7 +21,9 @@ import { Processes } from './processes';
 export class ProcessesRepository extends Taon.Base.Repository<Processes> {
   entityClassResolveFn: () => typeof Processes = () => Processes;
 
-  private processFileLoggers: { [processId: string]: ProcessFileLogger } = {};
+  private processFileLoggers: {
+    [processId: string]: UtilsProcessLogger.ProcessFileLogger;
+  } = {};
 
   async getByProcessID(processId: number | string): Promise<Processes | null> {
     //#region @websqlFunc
@@ -29,8 +37,15 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
   }
 
   //#region start process
-  async start(processId: string | number): Promise<void> {
+  async start(
+    processId: string | number,
+    options?: {
+      processName?: string;
+      specialEvent?: UtilsProcessLogger.SpecialEventInProcessLogger;
+    },
+  ): Promise<void> {
     //#region @websqlFunc
+    options = options || {};
     let processFromDb = await this.findOne({
       where: { id: processId?.toString() },
     });
@@ -42,9 +57,7 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
     processFromDb.state = 'starting';
     processFromDb.output = `${processFromDb.output}\n----- new session ${dateformat(new Date())} -----\n`;
     await this.update(processFromDb);
-    // this.processFileLoggers[processFromDb.id] = new ProcessFileLogger(
-    //   `process-${processFromDb.id}`,
-    // );
+
     // const realProcess = child_process.exec(processFromDb.command, {
     //   stdio: ['ignore', 'pipe', 'pipe'], // stdin ignored, capture stdout & stderr
     //   cwd: processFromDb.cwd,
@@ -54,6 +67,20 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
       stdio: ['ignore', 'pipe', 'pipe'], // don't inherit console
       shell: true, // use shell if command has operators (&&, |, etc.)
     });
+
+    const processFileLogger = new UtilsProcessLogger.ProcessFileLogger(
+      {
+        name: options.processName || `unknow-proc`,
+        id: processFromDb.id,
+      },
+      {
+        specialEvent: options.specialEvent,
+      },
+    );
+
+    this.processFileLoggers[processFromDb.id] = processFileLogger;
+
+    processFileLogger.startLogging(realProcess);
 
     processFromDb.state = 'active';
     processFromDb.pid = realProcess.pid;

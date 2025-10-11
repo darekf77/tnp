@@ -19,5 +19,5 @@ export type DeploymentStatus =
   | 'not-started'
   | 'in-progress'
   | 'stopping'
-  // | 'done' // TODO how to recognize when docker compose up done ?
+  | 'done'
   | 'error';

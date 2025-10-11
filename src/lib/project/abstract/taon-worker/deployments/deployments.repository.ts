@@ -6,6 +6,7 @@ import { config } from 'tnp-config/src';
 import {
   _,
   child_process,
+  CoreModels,
   crossPlatformPath,
   fse,
   Helpers,
@@ -65,15 +66,22 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
   //#region stop deployment
   async stopDeploymentFor(
     zipFileBasenameMetadataPart: string,
+    options?: {
+      skipThrowingErrorIfNotFound?: boolean;
+    },
   ): Promise<Deployments> {
     //#region @backendFunc
-    const deployment = await this.findOne({
+    options = options || {};
+    let deployment = await this.findOne({
       where: {
         zipFileBasenameMetadataPart,
       },
     });
 
     if (!deployment) {
+      if (options.skipThrowingErrorIfNotFound) {
+        return void 0;
+      }
       throw new Error(
         `Deployment with name ${zipFileBasenameMetadataPart} not found`,
       );
@@ -91,17 +99,32 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
     const projectDockerCompose = Project.ins.From(unpackedZipfileAbsPath);
 
+    const markDeploymentAsNotStarted = async () => {
+      deployment = await this.findOne({
+        where: {
+          zipFileBasenameMetadataPart,
+        },
+      });
+      deployment.status = 'not-started';
+      await this.save(deployment);
+      return deployment;
+    };
+
+    if (!projectDockerCompose) {
+      return await markDeploymentAsNotStarted();
+    }
+
     return await new Promise<Deployments>((resolve, rej) => {
       projectDockerCompose.docker
         .getDockerComposeUpExecChildProcess('down')
-        .on('error', err => {
+        .on('error', async err => {
           console.error(`Error while stopping docker compose down`);
           console.error(err);
+          deployment = await markDeploymentAsNotStarted();
           resolve(deployment);
         })
         .on('close', async () => {
-          deployment.status = 'not-started';
-          await this.save(deployment);
+          deployment = await markDeploymentAsNotStarted();
           resolve(deployment);
         });
     });
@@ -110,25 +133,37 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
   //#endregion
 
   //#region start deployment
-  async startDeploymentFor(zipFileBasenameMetadataPart: string): Promise<Deployments> {
+  async startDeploymentFor(
+    zipFileBasenameMetadataPart: string,
+    options?: {
+      forceStart?: boolean;
+    },
+  ): Promise<Deployments> {
     //#region @backendFunc
-    const deployment = await this.findOne({
+    options = options || {};
+    let deployment = await this.findOne({
       where: {
         zipFileBasenameMetadataPart,
       },
     });
-    if (!deployment) {
-      throw new Error(
-        `Deployment with name ${zipFileBasenameMetadataPart} not found`,
-      );
-    }
-    if (deployment.status == 'in-progress') {
-      throw new Error(
-        `Deployment with name ${zipFileBasenameMetadataPart} is already in progress`,
-      );
-    }
+    if (deployment) {
+      if (options.forceStart) {
+        await this.stopDeploymentFor(zipFileBasenameMetadataPart, {
+          skipThrowingErrorIfNotFound: true,
+        });
+        deployment = await this.findOne({
+          where: {
+            zipFileBasenameMetadataPart,
+          },
+        });
+      }
 
-    // zipFileBasenameMetadataPart = deployment.zipFileBasenameMetadataPart;
+      if (deployment.status == 'in-progress') {
+        throw new Error(
+          `Deployment with name ${zipFileBasenameMetadataPart} is already in progress`,
+        );
+      }
+    }
 
     const zipfileAbsPath = crossPlatformPath([
       DEPLOYMENT_LOCAL_FOLDER_PATH,
@@ -153,7 +188,33 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
     deployment.processId = procFromDb.id;
     await this.save(deployment);
 
-    await this.processesRepository.start(procFromDb.id);
+    const callbackWhenAppReady = async () => {
+      deployment = await this.findOne({
+        where: {
+          zipFileBasenameMetadataPart,
+        },
+      });
+      deployment.status = 'in-progress';
+      await this.save(deployment);
+    };
+
+    await this.processesRepository.start(procFromDb.id, {
+      processName: `taon-deployment`,
+      specialEvent: {
+        stdout: [
+          {
+            stringInStream: CoreModels.SPECIAL_APP_READY_MESSAGE,
+            callback: () => callbackWhenAppReady(),
+          },
+        ],
+        stderr: [
+          {
+            stringInStream: CoreModels.SPECIAL_APP_READY_MESSAGE,
+            callback: () => callbackWhenAppReady(),
+          },
+        ],
+      },
+    });
     return deployment;
     //#endregion
   }

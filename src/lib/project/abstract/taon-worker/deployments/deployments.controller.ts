@@ -124,6 +124,7 @@ export class DeploymentsController extends BaseCliWorkerController {
   startDeployment(
     @Taon.Http.Param.Body('deploymentBaseFileName')
     deploymentBaseFileName: string,
+    @Taon.Http.Param.Body('forceStart') forceStart: boolean = false,
   ): Taon.Response<Deployments> {
     //#region @backendFunc
     return async (req, res) => {
@@ -132,6 +133,7 @@ export class DeploymentsController extends BaseCliWorkerController {
       }
       return await this.deploymentsRepository.startDeploymentFor(
         deploymentBaseFileName,
+        { forceStart: !!forceStart },
       );
     };
     //#endregion

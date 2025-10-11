@@ -48,7 +48,7 @@ export namespace DeploymentsUtils {
         .subscribe(data => {
           if (displayLogs) {
             Helpers.clearConsole();
-            console.log(data.output);
+            process.stdout.write(data.output);
             if (
               options.resolveWhenTextInStdoutOrStder &&
               data?.output
