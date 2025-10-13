@@ -29,6 +29,30 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
   }
   //#endregion
 
+  projectSpecificFilesForStandalone(): string[] {
+    let files = ['index.js', 'index.d.ts', 'index.js.map'];
+
+    files = files.concat([
+      taonConfigSchemaJsonStandalone,
+      'tsconfig.browser.json',
+      'webpack.config.js',
+      'run.js',
+      'update-vscode-package-json.js',
+      'eslint.config.js',
+      ...this.filesTemplates(),
+    ]);
+
+    if (this.project.framework.frameworkVersionAtLeast('v2')) {
+      files = files.filter(f => f !== 'tsconfig.browser.json');
+    }
+
+    return files;
+  }
+
+  projectSpecificFilesForContainer(): string[] {
+    return [taonConfigSchemaJsonContainer, 'eslint.config.js'];
+  }
+
   //#region getters & methods / project specify files
   /**
    * Return list of files that are copied from
@@ -37,32 +61,14 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
    */
   projectSpecyficFiles(): string[] {
     //#region @backendFunc
-    let files = ['index.js', 'index.d.ts', 'index.js.map'];
+    let files = [];
 
     if (this.project.framework.isContainer) {
-      return [taonConfigSchemaJsonContainer, 'eslint.config.js'];
+      return this.projectSpecificFilesForContainer();
     }
 
     if (this.project.framework.isStandaloneProject) {
-      files = files
-        .concat([
-          taonConfigSchemaJsonStandalone,
-          'tsconfig.browser.json',
-          'webpack.config.js',
-          'run.js',
-          'update-vscode-package-json.js',
-          'eslint.config.js',
-          ...this.filesTemplates(),
-        ])
-        .concat(
-          !this.project.framework.isStandaloneProject
-            ? ['src/typings.d.ts']
-            : [],
-        );
-
-      if (this.project.framework.frameworkVersionAtLeast('v2')) {
-        files = files.filter(f => f !== 'tsconfig.browser.json');
-      }
+      files = this.projectSpecificFilesForStandalone();
     }
 
     return files;
@@ -143,6 +149,26 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
   }
   //#endregion
 
+  filesTemplatesForStandalone(): string[] {
+    let templates = [];
+    templates = [
+      'tsconfig.json.filetemplate',
+      'tsconfig.backend.dist.json.filetemplate',
+    ];
+
+    if (this.project.framework.frameworkVersionAtLeast('v2')) {
+      templates = [
+        'tsconfig.isomorphic.json.filetemplate',
+        'tsconfig.isomorphic-flat-dist.json.filetemplate',
+        'tsconfig.browser.json.filetemplate',
+        ...this.project.vsCodeHelpers.__vscodeFileTemplates,
+        ...templates,
+      ];
+    }
+
+    return templates;
+  }
+
   //#region getters & methods / files templates
   /**
    * Generated automaticly file templates exmpale:
@@ -155,21 +181,8 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
     // TODO should be abstract
     let templates = [];
 
-    if (this.project.typeIs('isomorphic-lib')) {
-      templates = [
-        'tsconfig.json.filetemplate',
-        'tsconfig.backend.dist.json.filetemplate',
-      ];
-
-      if (this.project.framework.frameworkVersionAtLeast('v2')) {
-        templates = [
-          'tsconfig.isomorphic.json.filetemplate',
-          'tsconfig.isomorphic-flat-dist.json.filetemplate',
-          'tsconfig.browser.json.filetemplate',
-          ...this.project.vsCodeHelpers.__vscodeFileTemplates,
-          ...templates,
-        ];
-      }
+    if (this.project.framework.isStandaloneProject) {
+      return this.filesTemplatesForStandalone();
     }
 
     return templates;
