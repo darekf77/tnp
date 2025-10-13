@@ -32,7 +32,7 @@ export async function start(
   try {
     if (!UtilsNetwork.etcHostHasProperLocalhostIp4Entry()) {
       Helpers.error(
-        `Your /etc/hosts file does not have proper entry for "localhost" hostname.
+        `Your ${UtilsNetwork.getEtcHostsPath()} file does not have proper entry for "localhost" hostname.
 
       Please add:
       ${chalk.bold('127.0.0.1 localhost')}

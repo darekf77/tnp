@@ -20,6 +20,7 @@ import {
   DockerComposeFile,
   UtilsZip,
 } from 'tnp-helpers/src';
+import { UtilsDocker } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
 import {
@@ -660,6 +661,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         dockerComposeFile.services['backend-app-node'];
       delete dockerComposeFile.services['backend-app-node'];
 
+      const containerLabel = `${UtilsDocker.DOCKER_LABEL_KEY}="\${COMPOSE_PROJECT_NAME}"`;
+
       for (let i = 0; i < contextsNames.length; i++) {
         const index = i + 1; // start from 1
         const contextName = contextsNames[i].contextName;
@@ -677,7 +680,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           `traefik.http.routers.${treafikKeyBackend}.entrypoints=websecure`,
           // `traefik.http.routers.${treafikKeyBackend}.tls.certresolver=myresolver`,
           `traefik.http.services.${treafikKeyBackend}.loadbalancer.server.port=$\{HOST_BACKEND_PORT_1\}`,
-
+containerLabel,
           // only when sripping prefix
           // 'traefik.http.middlewares.strip-api.stripprefix.prefixes=/api',
           // 'traefik.http.routers.backend.middlewares=strip-api',
@@ -732,6 +735,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
             `traefik.http.routers.${treafikKeyFronend}.entrypoints=websecure`,
             // `traefik.http.routers.${treafikKeyFronend}.tls.certresolver=myresolver`,
             `traefik.http.services.${treafikKeyFronend}.loadbalancer.server.port=80`,
+containerLabel,
           ];
           const treafikLabelsFEObject: Record<string, string> = {};
           treafikLabelsFE.forEach(label => {

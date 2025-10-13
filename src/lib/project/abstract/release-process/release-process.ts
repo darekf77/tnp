@@ -146,10 +146,13 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
   ): Promise<boolean> {
     //#region @backendFunc
 
+    envOptions.release.releaseType = releaseType;
+
     const selectedProjects =
       await this.project.releaseProcess.displayProjectsSelectionMenu(
         envOptions,
       );
+
     const releaseArtifactsTaon = await this.displaySelectArtifactsMenu(
       envOptions,
       selectedProjects,
@@ -162,8 +165,12 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
           envOptions.release.releaseVersionBumpType = 'patch';
         } else {
           envOptions.release.releaseVersionBumpType =
-            await this.selectReleaseType(bumpType =>
-              this.project.packageJson.resolvePossibleNewVersion(bumpType),
+            await this.selectReleaseType(
+              bumpType =>
+                this.project.packageJson.resolvePossibleNewVersion(bumpType),
+              {
+                quesitonPrefixMessage: `${envOptions.release.releaseType}-release`,
+              },
             );
         }
       }
@@ -309,7 +316,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
         {
           autocomplete: false,
           question:
-            `Select release artifacts for this ` +
+            `[${envOptions.release.releaseType}-release] Select release artifacts for this ` +
             `${
               this.project.framework.isContainer
                 ? `container's ${selectedProjects.length} projects`
@@ -357,7 +364,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
                 value: e.envName,
               };
             }),
-            question: `Select environment`,
+            question: `[${envOptions?.release.releaseType}-release] Select environment`,
             autocomplete: true,
           });
           selected = environments.find(e => e.envName === selectedEnv);

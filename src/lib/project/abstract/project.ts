@@ -286,6 +286,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
           (this.framework.isStandaloneProject &&
             releaseOptions.release.autoReleaseUsingConfig) ||
           releaseOptions.release.skipReleaseQuestion,
+        messagePrefix: `${releaseOptions.release.releaseType}-release`,
       }))
     ) {
       return;
@@ -311,7 +312,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         await UtilsTerminal.select({
           choices: options,
           autocomplete: true,
-          question: 'Select to what instance you want to release',
+          question: `[${releaseOptions.release.releaseType}-release] Select to what instance you want to release`,
         });
 
       console.log(
