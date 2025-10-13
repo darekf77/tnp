@@ -838,7 +838,7 @@ export class $Global extends BaseGlobalCommandLine<
 
   //#region clear
   async CLEAN() {
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.clearPartial();
+    await this.project.artifactsManager.clear(EnvOptions.from(this.params as any));
     this._exit();
   }
 

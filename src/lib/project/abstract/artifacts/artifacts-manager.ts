@@ -92,6 +92,22 @@ export class ArtifactManager {
     await this.artifact.mobileApp.clearPartial(options);
     await this.artifact.docsWebapp.clearPartial(options);
     await this.artifact.vscodePlugin.clearPartial(options);
+
+    if (this.project.framework.isContainer) {
+      [
+        'src',
+        ...this.filesRecreator.projectSpecificFilesForContainer(),
+        ...this.filesRecreator.projectSpecificFilesForStandalone(),
+        ...this.filesRecreator.filesTemplatesForStandalone(),
+        ...this.filesRecreator
+          .filesTemplatesForStandalone()
+          .map(f => f.replace('.filetemplate', '')),
+      ].forEach(f => {
+        console.log('removing', f);
+        this.project.remove(f, true);
+      });
+    }
+
     Helpers.taskDone(`
 
       Done cleaning artifacts temp data in ${this.project.name}
