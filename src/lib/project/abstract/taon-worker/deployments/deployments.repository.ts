@@ -6,6 +6,7 @@ import { config } from 'tnp-config/src';
 import {
   _,
   child_process,
+  CoreModels,
   crossPlatformPath,
   fse,
   Helpers,
@@ -21,6 +22,11 @@ import { ProcessesRepository } from '../processes/processes.repository';
 
 import { Deployments } from './deployments';
 import { DEPLOYMENT_LOCAL_FOLDER_PATH } from './deployments.constants';
+import {
+  DeploymentsAddingStatus,
+  DeploymentsAddingStatusObj,
+  DeploymentStatusNotAllowedToStart,
+} from './deployments.models';
 //#endregion
 
 @Taon.Repository({
@@ -30,19 +36,41 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
   entityClassResolveFn: () => typeof Deployments = () => Deployments;
   processesRepository = this.injectCustomRepo(ProcessesRepository);
 
-  getLast100linesOfOutput(zipFileBasenameMetadataPart: string): string[] {
-    //#region @backendFunc
-
-    return [];
-    //#endregion
-  }
-
-  //#region remove deployment
-  async removeDeployment(zipFileBasenameMetadataPart: string): Promise<void> {
-    //#region @backendFunc
-    const stoppedDeployment = await this.stopDeploymentFor(
+  //#region private zipfileAbsPath
+  private zipfileAbsPath(zipFileBasenameMetadataPart: string): string {
+    const zipfileAbsPath = crossPlatformPath([
+      DEPLOYMENT_LOCAL_FOLDER_PATH,
       zipFileBasenameMetadataPart,
-    );
+    ]);
+    return zipfileAbsPath;
+  }
+  //#endregion
+
+  //#region remove deployment process
+  async removeDeploymetProcess({
+    deployment,
+    zipFileBasenameMetadataPart,
+  }: {
+    deployment: Deployments;
+    zipFileBasenameMetadataPart: string;
+  }): Promise<void> {
+    //#region @backendFunc
+    deployment = await this.findOne({
+      where: {
+        zipFileBasenameMetadataPart,
+      },
+    });
+    if (!deployment) {
+      throw new Error(
+        `Deployment with name ${zipFileBasenameMetadataPart} not found`,
+      );
+    }
+
+    const stoppedDeployment = await this.stopDeploymentProcess({
+      zipFileBasenameMetadataPart,
+      deployment,
+    });
+
     await this.deleteById(stoppedDeployment.id);
 
     const unpackedZipfileAbsPath = crossPlatformPath([
@@ -57,31 +85,54 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
     ]);
 
     Helpers.remove(zipfileAbsPath);
-
     //#endregion
   }
   //#endregion
 
-  //#region stop deployment
-  async stopDeploymentFor(
+  //#region trigger deployment remove
+  async triggerRemoveDeployment(
     zipFileBasenameMetadataPart: string,
-  ): Promise<Deployments> {
+  ): Promise<void> {
     //#region @backendFunc
     const deployment = await this.findOne({
       where: {
         zipFileBasenameMetadataPart,
       },
     });
-
     if (!deployment) {
       throw new Error(
         `Deployment with name ${zipFileBasenameMetadataPart} not found`,
       );
     }
 
-    deployment.status = 'stopping';
+    deployment.status = 'removing';
     await this.save(deployment);
+    setTimeout(
+      () =>
+        this.removeDeploymetProcess({
+          zipFileBasenameMetadataPart,
+          deployment,
+        }),
+      1000,
+    );
+    //#endregion
+  }
+  //#endregion
 
+  //#region stop deployment process
+  private async stopDeploymentProcess({
+    deployment,
+    zipFileBasenameMetadataPart,
+  }: {
+    deployment: Deployments;
+    zipFileBasenameMetadataPart: string;
+  }): Promise<Deployments> {
+    //#region @backendFunc
+    deployment = await this.findOne({
+      where: {
+        zipFileBasenameMetadataPart,
+      },
+    });
     await this.processesRepository.stop(deployment.processId);
 
     const unpackedZipfileAbsPath = crossPlatformPath([
@@ -91,17 +142,32 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
     const projectDockerCompose = Project.ins.From(unpackedZipfileAbsPath);
 
+    const markDeploymentAsNotStarted = async () => {
+      deployment = await this.findOne({
+        where: {
+          zipFileBasenameMetadataPart,
+        },
+      });
+      deployment.status = 'not-started';
+      await this.save(deployment);
+      return deployment;
+    };
+
+    if (!projectDockerCompose) {
+      return await markDeploymentAsNotStarted();
+    }
+
     return await new Promise<Deployments>((resolve, rej) => {
       projectDockerCompose.docker
         .getDockerComposeUpExecChildProcess('down')
-        .on('error', err => {
+        .on('error', async err => {
           console.error(`Error while stopping docker compose down`);
           console.error(err);
+          deployment = await markDeploymentAsNotStarted();
           resolve(deployment);
         })
         .on('close', async () => {
-          deployment.status = 'not-started';
-          await this.save(deployment);
+          deployment = await markDeploymentAsNotStarted();
           resolve(deployment);
         });
     });
@@ -109,35 +175,59 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
   }
   //#endregion
 
-  //#region start deployment
-  async startDeploymentFor(zipFileBasenameMetadataPart: string): Promise<Deployments> {
+  //#region trigger deployment stop
+  async triggerDeploymentStop(
+    zipFileBasenameMetadataPart: string,
+    options?: {
+      skipThrowingErrorIfNotFound?: boolean;
+      removing?: boolean;
+    },
+  ): Promise<Deployments> {
     //#region @backendFunc
-    const deployment = await this.findOne({
+    options = options || {};
+    let deployment = await this.findOne({
       where: {
         zipFileBasenameMetadataPart,
       },
     });
+
     if (!deployment) {
+      if (options.skipThrowingErrorIfNotFound) {
+        return void 0;
+      }
       throw new Error(
         `Deployment with name ${zipFileBasenameMetadataPart} not found`,
       );
     }
-    if (deployment.status == 'in-progress') {
-      throw new Error(
-        `Deployment with name ${zipFileBasenameMetadataPart} is already in progress`,
-      );
-    }
 
-    // zipFileBasenameMetadataPart = deployment.zipFileBasenameMetadataPart;
+    deployment.status = options.removing ? 'removing' : 'stopping';
+    await this.save(deployment);
+    setTimeout(
+      () =>
+        this.stopDeploymentProcess({
+          deployment,
+          zipFileBasenameMetadataPart,
+        }),
+      1000,
+    );
+    //#endregion
+  }
+  //#endregion
 
-    const zipfileAbsPath = crossPlatformPath([
-      DEPLOYMENT_LOCAL_FOLDER_PATH,
-      zipFileBasenameMetadataPart,
-    ]);
-    if (!Helpers.exists(zipfileAbsPath)) {
-      throw new Error(`File for deployment not found: ${zipfileAbsPath}`);
-    }
-    deployment.status = 'in-progress';
+  //#region start deployment process
+  private async startDeploymentProcess({
+    deployment,
+    zipFileBasenameMetadataPart,
+  }: {
+    deployment: Deployments;
+    zipFileBasenameMetadataPart: string;
+  }): Promise<Deployments> {
+    deployment = await this.findOne({
+      where: {
+        zipFileBasenameMetadataPart,
+      },
+    });
+    const zipfileAbsPath = this.zipfileAbsPath(zipFileBasenameMetadataPart);
 
     const command = `${config.frameworkName} ${UtilsCliMethod.getFrom(
       $Cloud.prototype.startFileDeploy,
@@ -151,16 +241,98 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
     );
 
     deployment.processId = procFromDb.id;
+    deployment.status = 'in-progress';
+
     await this.save(deployment);
 
-    await this.processesRepository.start(procFromDb.id);
+    return new Promise<Deployments>(async resolve => {
+      const callbackWhenAppReady = async () => {
+        deployment = await this.findOne({
+          where: {
+            zipFileBasenameMetadataPart,
+          },
+        });
+        deployment.status = 'success';
+        await this.save(deployment);
+        resolve(deployment);
+      };
+
+      await this.processesRepository
+        .start(procFromDb.id, {
+          processName: `taon-deployment`,
+          specialEvent: {
+            stdout: [
+              {
+                stringInStream: CoreModels.SPECIAL_APP_READY_MESSAGE,
+                callback: () => callbackWhenAppReady(),
+              },
+            ],
+            stderr: [
+              {
+                stringInStream: CoreModels.SPECIAL_APP_READY_MESSAGE,
+                callback: () => callbackWhenAppReady(),
+              },
+            ],
+          },
+        })
+        .catch(async err => {
+          deployment.status = 'error';
+          await this.save(deployment);
+        });
+    });
+  }
+  //#endregion
+
+  //#region start deployment start
+  async triggerDeploymentStart(
+    zipFileBasenameMetadataPart: string,
+    options?: {
+      // forceStart?: boolean;
+    },
+  ): Promise<Deployments> {
+    //#region @backendFunc
+    options = options || {};
+    let deployment = await this.findOne({
+      where: {
+        zipFileBasenameMetadataPart,
+      },
+    });
+    if (deployment) {
+      if (DeploymentStatusNotAllowedToStart.includes(deployment.status)) {
+        throw new Error(
+          `Deployment can't be started in status "${deployment.status}"`,
+        );
+      }
+    }
+
+    if (!Helpers.exists(this.zipfileAbsPath(zipFileBasenameMetadataPart))) {
+      throw new Error(
+        `File for deployment not found: ${this.zipfileAbsPath(zipFileBasenameMetadataPart)}`,
+      );
+    }
+    deployment.status = 'starting';
+    await this.save(deployment);
+
+    setTimeout(
+      () =>
+        this.startDeploymentProcess({
+          deployment,
+          zipFileBasenameMetadataPart,
+        }),
+      1000,
+    );
+
     return deployment;
     //#endregion
   }
   //#endregion
 
-  //#region add existed deployments
-  async addExistedDeployments(): Promise<void> {
+  //#region add existed deployments process
+
+  /**
+   * TODO disable http timeout for large files
+   */
+  async addExistedDeploymentsProcess(): Promise<void> {
     //#region @backendFunc
     const allZips = Helpers.getFilesFrom(DEPLOYMENT_LOCAL_FOLDER_PATH).filter(
       f => f.endsWith('.zip'),
@@ -184,5 +356,22 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
     }
     //#endregion
   }
+  //#endregion
+
+  //#region trigger add existed deployments
+  private isAddingDeployment: DeploymentsAddingStatus = 'not-started';
+  triggerAddExistedDeployments(): void {
+    //#region @backendFunc
+    this.isAddingDeployment = 'started';
+    setTimeout(() => this.addExistedDeploymentsProcess(), 1000);
+    //#endregion
+  }
+
+  isAddingDeploymentStatus(): DeploymentsAddingStatusObj {
+    return {
+      status: this.isAddingDeployment,
+    };
+  }
+
   //#endregion
 }

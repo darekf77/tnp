@@ -16,13 +16,18 @@ import { ProcessesController } from '../processes/processes.controller';
 import { Deployments } from './deployments';
 import { DEPLOYMENT_LOCAL_FOLDER_PATH } from './deployments.constants';
 import { DeploymentsMiddleware } from './deployments.middleware';
+import {
+  DeploymentReleaseData,
+  DeploymentsAddingStatus,
+  DeploymentsAddingStatusObj,
+} from './deployments.models';
 import { DeploymentsRepository } from './deployments.repository';
 //#endregion
 
 @Taon.Controller({
   className: 'DeploymentsController',
 })
-export class DeploymentsController extends BaseCliWorkerController {
+export class DeploymentsController extends BaseCliWorkerController<DeploymentReleaseData> {
   // @ts-ignore
   private deploymentsRepository = this.injectCustomRepo<DeploymentsRepository>(
     DeploymentsRepository,
@@ -94,7 +99,8 @@ export class DeploymentsController extends BaseCliWorkerController {
   }
 
   protected async afterFileUploadAction(
-    file: MulterFileUploadResponse,
+    file?: MulterFileUploadResponse,
+    queryParams?: DeploymentReleaseData,
   ): Promise<void> {
     //#region @backendFunc
     await this.deploymentsRepository.save(
@@ -112,9 +118,14 @@ export class DeploymentsController extends BaseCliWorkerController {
       Models.Http.Rest.Ng2RestAxiosRequestConfig,
       'onUploadProgress'
     >,
+    queryParams?: DeploymentReleaseData,
   ): Promise<MulterFileUploadResponse[]> {
     //#region @backendFunc
-    return super.uploadLocalFileToServer(absFilePath, options);
+    return super.uploadLocalFileToServer(
+      absFilePath,
+      options,
+      queryParams as DeploymentReleaseData,
+    );
     //#endregion
   }
   //#endregion
@@ -124,14 +135,16 @@ export class DeploymentsController extends BaseCliWorkerController {
   startDeployment(
     @Taon.Http.Param.Body('deploymentBaseFileName')
     deploymentBaseFileName: string,
+    @Taon.Http.Param.Body('forceStart') forceStart: boolean = false,
   ): Taon.Response<Deployments> {
     //#region @backendFunc
     return async (req, res) => {
       if (!deploymentBaseFileName || _.isEmpty(deploymentBaseFileName.trim())) {
         throw new Error(`Parameter deploymentBaseFileName is required`);
       }
-      return await this.deploymentsRepository.startDeploymentFor(
+      return await this.deploymentsRepository.triggerDeploymentStart(
         deploymentBaseFileName,
+        { forceStart: !!forceStart },
       );
     };
     //#endregion
@@ -149,7 +162,7 @@ export class DeploymentsController extends BaseCliWorkerController {
       if (!deploymentBaseFileName || _.isEmpty(deploymentBaseFileName.trim())) {
         throw new Error(`Parameter deploymentBaseFileName is required`);
       }
-      await this.deploymentsRepository.stopDeploymentFor(
+      await this.deploymentsRepository.triggerDeploymentStop(
         deploymentBaseFileName,
       );
     };
@@ -168,7 +181,9 @@ export class DeploymentsController extends BaseCliWorkerController {
       if (!deploymentBaseFileName || _.isEmpty(deploymentBaseFileName.trim())) {
         throw new Error(`Parameter deploymentBaseFileName is required`);
       }
-      await this.deploymentsRepository.removeDeployment(deploymentBaseFileName);
+      await this.deploymentsRepository.triggerRemoveDeployment(
+        deploymentBaseFileName,
+      );
     };
     //#endregion
   }
@@ -176,10 +191,21 @@ export class DeploymentsController extends BaseCliWorkerController {
 
   //#region start deployment process
   @Taon.Http.POST()
-  addExistedDeployments(): Taon.Response<void> {
+  triggerAddExistedDeployments(): Taon.Response<void> {
     //#region @backendFunc
     return async (req, res) => {
-      await this.deploymentsRepository.addExistedDeployments();
+      await this.deploymentsRepository.triggerAddExistedDeployments();
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region start deployment process
+  @Taon.Http.GET()
+  isAddingDeployments(): Taon.Response<DeploymentsAddingStatusObj> {
+    //#region @backendFunc
+    return async (req, res) => {
+      return this.deploymentsRepository.isAddingDeploymentStatus();
     };
     //#endregion
   }

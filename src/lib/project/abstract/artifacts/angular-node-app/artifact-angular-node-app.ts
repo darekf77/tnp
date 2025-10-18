@@ -680,7 +680,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           `traefik.http.routers.${treafikKeyBackend}.entrypoints=websecure`,
           // `traefik.http.routers.${treafikKeyBackend}.tls.certresolver=myresolver`,
           `traefik.http.services.${treafikKeyBackend}.loadbalancer.server.port=$\{HOST_BACKEND_PORT_1\}`,
-containerLabel,
+          containerLabel,
           // only when sripping prefix
           // 'traefik.http.middlewares.strip-api.stripprefix.prefixes=/api',
           // 'traefik.http.routers.backend.middlewares=strip-api',
@@ -735,7 +735,7 @@ containerLabel,
             `traefik.http.routers.${treafikKeyFronend}.entrypoints=websecure`,
             // `traefik.http.routers.${treafikKeyFronend}.tls.certresolver=myresolver`,
             `traefik.http.services.${treafikKeyFronend}.loadbalancer.server.port=80`,
-containerLabel,
+            containerLabel,
           ];
           const treafikLabelsFEObject: Record<string, string> = {};
           treafikLabelsFE.forEach(label => {
@@ -817,15 +817,18 @@ ${dockerComposeYmlFileContent}
           overrideIfZipFileExists: true,
         });
 
+        const projData = {
+          destinationDomain: releaseOptions.website.domain,
+          version: releaseOptions.release.resolvedNewVersion,
+          envName: releaseOptions.release.envName,
+          envNumber: releaseOptions.release.envNumber || '',
+          releaseType: releaseOptions.release.releaseType as ReleaseType,
+          projectName: this.project.name,
+          targetArtifact: releaseOptions.release.targetArtifact,
+        } as DeploymentReleaseData;
+
         const newBasenameZipFile = FilePathMetaData.embedData(
-          {
-            projectName: this.project.name,
-            releaseType: releaseOptions.release.releaseType as ReleaseType,
-            version: releaseOptions.release.resolvedNewVersion,
-            envName: releaseOptions.release.envName,
-            envNumber: releaseOptions.release.envNumber || '',
-            targetArtifact: releaseOptions.release.targetArtifact,
-          } as DeploymentReleaseData,
+          projData,
           path.basename(zipFileAbsPath),
           {
             skipAddingBasenameAtEnd: true,
@@ -883,6 +886,7 @@ ${path.dirname(zipFileAbsPath)}
                   // console.log(`Upload progress: ${percentCompleted}%`);
                 },
               },
+              projData,
             );
 
             globalSpinner.succeed(`Deployment upload done!`);
@@ -901,8 +905,11 @@ ${path.dirname(zipFileAbsPath)}
 
         if (!releaseOptions.release.skipDeploy) {
           Helpers.info(`Starting deployment...`);
+          const forceStart = true;
           const deployment = (
-            await ctrl.startDeployment(uploadResponse[0].savedAs).request()
+            await ctrl
+              .startDeployment(uploadResponse[0].savedAs, forceStart)
+              .request()
           ).body.json;
           Helpers.info(`Deployment started! `);
 

@@ -57,12 +57,17 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
   private async startDeployment(
     deployment: Deployments,
     ctrl: DeploymentsController,
+    options?: { forceStart?: boolean },
   ): Promise<void> {
     //#region @backendFunc
+    options = options || {};
     console.log(`Starting deployment...`);
     try {
       await ctrl
-        .startDeployment(deployment.zipFileBasenameMetadataPart)
+        .startDeployment(
+          deployment.zipFileBasenameMetadataPart,
+          !!options.forceStart,
+        )
         .request();
 
       console.log(`deployment process started...`);
@@ -131,13 +136,19 @@ ${deployment.fullPreviewString({
         case 'back':
           return;
         case 'startDeployment':
-          await this.startDeployment(deployment, ctrl);
+          await this.startDeployment(deployment, ctrl, { forceStart: false });
           deployment = (await ctrl.getByDeploymentId(deployment.id).request())
             .body.json;
-          await DeploymentsUtils.displayRealtimeProgressMonitor(deployment, ctrl);
+          await DeploymentsUtils.displayRealtimeProgressMonitor(
+            deployment,
+            ctrl,
+          );
           break;
         case 'realtimeMonitor':
-          await DeploymentsUtils.displayRealtimeProgressMonitor(deployment, ctrl);
+          await DeploymentsUtils.displayRealtimeProgressMonitor(
+            deployment,
+            ctrl,
+          );
           break;
         case 'stopDeployment':
           await this.stopDeployment(deployment, ctrl);

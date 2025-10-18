@@ -8,6 +8,7 @@ import { crossPlatformPath, path, Utils } from 'tnp-core/src';
 
 import { CURRENT_PACKAGE_VERSION } from './build-info._auto-generated_';
 import { ReleaseArtifactTaon, ReleaseType } from './options';
+import { DeploymentReleaseData } from './project/abstract/taon-worker/deployments/deployments.models';
 // import type { Project } from './project/abstract/project';
 //#endregion
 
@@ -25,13 +26,14 @@ export const whatToLinkFromCoreDeepPart =
     : (whatToLinkFromCore as string).replace('src/', '');
 
 export const keysMap = {
+  destinationDomain: 'dn',
   projectName: 'pn',
   releaseType: 'rt',
   version: 'ver',
   envName: 'enm',
   envNumber: 'enu',
   targetArtifact: 'ta',
-};
+} as { [key in keyof DeploymentReleaseData]: string };
 
 export const dirnameFromSourceToProject = (linkToSource: string): string => {
   const orgParamLinkAbs = linkToSource;

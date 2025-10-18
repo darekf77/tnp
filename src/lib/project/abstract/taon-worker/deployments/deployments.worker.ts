@@ -10,7 +10,8 @@ import { DeploymentsTerminalUI } from './deployments.terminal-ui';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
-export class DeploymentsWorker extends BaseCliWorker< // @ts-ignore TODO weird inheritance problem
+export class DeploymentsWorker extends BaseCliWorker<
+  // @ts-ignore TODO weird inheritance problem
   DeploymentsController,
   DeploymentsTerminalUI
 > {
@@ -48,7 +49,25 @@ export class DeploymentsWorker extends BaseCliWorker< // @ts-ignore TODO weird i
         const ctrl = await this.getControllerForRemoteConnection({
           calledFrom: 'deployment startNormallyInCurrentProcess',
         });
-        await ctrl.addExistedDeployments().request();
+        await ctrl.triggerAddExistedDeployments().request();
+        let maxTrys = 20;
+        let i = 0;
+        while (true) {
+          await UtilsTerminal.wait(1);
+          const isDoneAdding = await ctrl.isAddingDeployments().request();
+          // TODO REMOVE
+          console.log({
+            isDoneAdding
+          })
+          if (isDoneAdding.body.json.status === 'done') {
+            break;
+          }
+          if (i++ > maxTrys) {
+            throw new Error(
+              `Timeout waiting for adding deployments to be finished. Waited for ${maxTrys} seconds`,
+            );
+          }
+        }
       },
     });
 
