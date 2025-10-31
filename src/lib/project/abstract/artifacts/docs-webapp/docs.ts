@@ -597,7 +597,7 @@ markdown_extensions:
       // console.log(`assets for ${relativeFileSourcePath}`, assetsFromMdFile);
       // }
 
-      // TODO @LAST add assets to watching list
+      // TODO add assets to watching list
       for (const assetRelativePathFromFile of assetsFromMdFile) {
         const hasSlash = relativeFileSourcePath.includes('/');
         const slash = hasSlash ? '/' : '';

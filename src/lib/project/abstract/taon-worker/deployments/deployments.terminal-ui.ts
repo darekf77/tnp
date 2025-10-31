@@ -5,8 +5,12 @@ import {
   BaseWorkerTerminalActionReturnType,
 } from 'tnp-helpers/src';
 
+import { Project } from '../../project';
+import { ProcessesController } from '../processes/processes.controller';
+
 import { Deployments } from './deployments';
 import { DeploymentsController } from './deployments.controller';
+import { DeploymentsStatesAllowedStart } from './deployments.models';
 import { DeploymentsUtils } from './deployments.utils';
 import { DeploymentsWorker } from './deployments.worker';
 //#endregion
@@ -28,7 +32,11 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
   ): Promise<void> {
     //#region @backendFunc
     console.log(`Stopping deployment...`);
-    await ctrl.stopDeployment(deployment.zipFileBasenameMetadataPart).request();
+    await ctrl
+      .triggerDeploymentStop(deployment.baseFileNameWithHashDatetime)
+      .request();
+
+    await ctrl.waitUntilDeploymentStopped(deployment.id);
 
     console.log(`Stopping done..`);
     await UtilsTerminal.pressAnyKeyToContinueAsync();
@@ -44,7 +52,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     //#region @backendFunc
     console.log(`Removing deployment...`);
     await ctrl
-      .removeDeployment(deployment.zipFileBasenameMetadataPart)
+      .triggerDeploymentRemove(deployment.baseFileNameWithHashDatetime)
       .request();
 
     console.log(`Removing done..`);
@@ -57,12 +65,17 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
   private async startDeployment(
     deployment: Deployments,
     ctrl: DeploymentsController,
+    options?: { forceStart?: boolean },
   ): Promise<void> {
     //#region @backendFunc
+    options = options || {};
     console.log(`Starting deployment...`);
     try {
       await ctrl
-        .startDeployment(deployment.zipFileBasenameMetadataPart)
+        .triggerDeploymentStart(
+          deployment.baseFileNameWithHashDatetime,
+          !!options.forceStart,
+        )
         .request();
 
       console.log(`deployment process started...`);
@@ -77,13 +90,15 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
   //#region crud menu for single deployment
   protected async crudMenuForSingleDeployment(
     deployment: Deployments,
-    ctrl: DeploymentsController,
+    deploymentsController: DeploymentsController,
+    processesController: ProcessesController,
   ): Promise<void> {
     //#region @backendFunc
     while (true) {
       Helpers.info(`Fetching deployment data...`);
-      deployment = (await ctrl.getByDeploymentId(deployment.id).request()).body
-        .json;
+      deployment = (
+        await deploymentsController.getByDeploymentId(deployment.id).request()
+      ).body.json;
 
       // UtilsTerminal.clearConsole();
       Helpers.info(`You selected deployment:
@@ -115,11 +130,11 @@ ${deployment.fullPreviewString({
         },
       };
 
-      if (deployment.status === 'in-progress') {
-        delete choices.startDeployment;
-      } else {
+      if (DeploymentsStatesAllowedStart.includes(deployment.status)) {
         delete choices.stopDeployment;
         delete choices.realtimeMonitor;
+      } else {
+        delete choices.startDeployment;
       }
 
       const selected = await UtilsTerminal.select<keyof typeof choices>({
@@ -131,19 +146,30 @@ ${deployment.fullPreviewString({
         case 'back':
           return;
         case 'startDeployment':
-          await this.startDeployment(deployment, ctrl);
-          deployment = (await ctrl.getByDeploymentId(deployment.id).request())
-            .body.json;
-          await DeploymentsUtils.displayRealtimeProgressMonitor(deployment, ctrl);
+          await this.startDeployment(deployment, deploymentsController, {
+            forceStart: false,
+          });
+          deployment = (
+            await deploymentsController
+              .getByDeploymentId(deployment.id)
+              .request()
+          ).body.json;
+          await DeploymentsUtils.displayRealtimeProgressMonitor(
+            deployment,
+            processesController,
+          );
           break;
         case 'realtimeMonitor':
-          await DeploymentsUtils.displayRealtimeProgressMonitor(deployment, ctrl);
+          await DeploymentsUtils.displayRealtimeProgressMonitor(
+            deployment,
+            processesController,
+          );
           break;
         case 'stopDeployment':
-          await this.stopDeployment(deployment, ctrl);
+          await this.stopDeployment(deployment, deploymentsController);
           break;
         case 'removeDeployment':
-          await this.removeDeployment(deployment, ctrl);
+          await this.removeDeployment(deployment, deploymentsController);
           return;
       }
     }
@@ -162,19 +188,28 @@ ${deployment.fullPreviewString({
         name: 'Get deployments from backend',
         action: async () => {
           Helpers.info(`Fetching deployments data...`);
-          const ctrl = await this.worker.getControllerForRemoteConnection({
-            calledFrom: 'Get stuff from backend action',
-          });
+          const deploymentsController =
+            await this.worker.getControllerForRemoteConnection({
+              calledFrom: 'Get stuff from backend action',
+            });
+
+          const remoteContextProcesses =
+            await Project.ins.taonProjectsWorker.processesWorker.gerContextForRemoteConnection();
+
+          const processesController =
+            remoteContextProcesses.getInstanceBy(ProcessesController);
 
           while (true) {
-            const list = (await ctrl.getEntities().request())?.body.json || [];
+            const list =
+              (await deploymentsController.getEntities().request())?.body
+                .json || [];
             Helpers.info(`Fetched ${list.length} entities`);
 
             const options = [
               { name: ' - back - ', value: 'back' },
               ...list.map(c => ({
                 name: c.previewString,
-                value: c.id,
+                value: c.id?.toString(),
               })),
             ];
 
@@ -185,8 +220,9 @@ ${deployment.fullPreviewString({
 
             if (selected !== 'back') {
               await this.crudMenuForSingleDeployment(
-                list.find(l => l.id === selected),
-                ctrl,
+                list.find(l => l.id?.toString() === selected),
+                deploymentsController,
+                processesController,
               );
             }
 

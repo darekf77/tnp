@@ -37,12 +37,12 @@ import {
 import { CLI } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { FilePathMetaData } from 'tnp-core/src';
+import { UtilsCliClassMethod } from 'tnp-core/src';
 import {
   Helpers,
   BaseGlobalCommandLine,
   UtilsNpm,
   UtilsTypescript,
-  UtilsCliMethod,
 } from 'tnp-helpers/src';
 import { createGenerator, SchemaGenerator } from 'ts-json-schema-generator';
 
@@ -68,34 +68,43 @@ export class $Global extends BaseGlobalCommandLine<
   TaonProjectResolve
 > {
   public async _() {
+    //#region @backendFunc
     await this.ins.taonProjectsWorker.terminalUI.infoScreen();
+    //#endregion
   }
 
   //#region detect packages
   async detectPackages() {
+    //#region @backendFunc
     this.project.removeFile(config.file.tmpIsomorphicPackagesJson);
     await this.project.packagesRecognition.start('detecting packages');
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region kill process on port
   async killonport() {
+    //#region @backendFunc
     const port = parseInt(this.firstArg);
     await Helpers.killProcessByPort(port);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region kill all node processes
   killAllNode() {
+    //#region @backendFunc
     Helpers.killAllNode();
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region kill vscode processes
   killAllCode() {
+    //#region @backendFunc
     if (process.platform === 'win32') {
       Helpers.run(`taskkill /f /im code.exe`).sync();
       this._exit();
@@ -103,6 +112,7 @@ export class $Global extends BaseGlobalCommandLine<
       Helpers.run(`fkill -f code`).sync();
     }
     this._exit();
+    //#endregion
   }
   //#endregion
 
@@ -119,6 +129,7 @@ export class $Global extends BaseGlobalCommandLine<
 
   //#region fork
   async fork() {
+    //#region @backendFunc
     const argv = this.args;
     const githubUrl = _.first(argv);
     let projectName = _.last(githubUrl.replace('.git', '').split('/'));
@@ -175,33 +186,41 @@ export class $Global extends BaseGlobalCommandLine<
     Helpers.run(`code ${newProj.location}`).sync();
     Helpers.info(`Done`);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region watcher linux
   watchersfix() {
+    //#region @backendFunc
     Helpers.run(
       `echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p`,
     ).sync();
     this._exit();
+    //#endregion
   }
   watchers() {
+    //#region @backendFunc
     Helpers.run(
       `find /proc/*/fd -user "$USER" -lname anon_inode:inotify -printf '%hinfo/%f\n' 2>/dev/null | xargs cat | grep -c '^inotify'`,
     ).sync();
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region code instal ext
   code() {
+    //#region @backendFunc
     this.project.run(`code --install-extension ${this.args.join(' ')}`).sync();
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region proper watcher test
   async PROPERWATCHERTEST(engine: string) {
+    //#region @backendFunc
     // const proj = this.project as Project;
     const cwd = this.cwd;
     const watchLocation = crossPlatformPath([cwd, config.folder.src]);
@@ -242,6 +261,7 @@ export class $Global extends BaseGlobalCommandLine<
     });
 
     console.log('await done');
+    //#endregion
   }
   //#endregion
 
@@ -250,6 +270,7 @@ export class $Global extends BaseGlobalCommandLine<
    * @deprecated
    */
   ADD_IMPORT_SRC() {
+    //#region @backendFunc
     const project = this.project as Project;
 
     const regexEnd = /from\s+(\'|\").+(\'|\")/g;
@@ -369,11 +390,13 @@ export class $Global extends BaseGlobalCommandLine<
     }
 
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region move js to ts
   $MOVE_JS_TO_TS(args) {
+    //#region @backendFunc
     Helpers.filesFrom(crossPlatformPath([this.cwd, args]), true).forEach(f => {
       if (path.extname(f) === '.js') {
         Helpers.move(
@@ -387,11 +410,13 @@ export class $Global extends BaseGlobalCommandLine<
     });
     Helpers.info('DONE');
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region show messages
   ASYNC_PROC = async args => {
+    //#region @backendFunc
     global.tnpShowProgress = true;
     let p = Helpers.run(`${config.frameworkName} show:loop ${args}`, {
       output: false,
@@ -404,9 +429,11 @@ export class $Global extends BaseGlobalCommandLine<
       console.log('process exited with code: ' + c);
       this._exit();
     });
+    //#endregion
   };
 
   SYNC_PROC = async args => {
+    //#region @backendFunc
     global.tnpShowProgress = true;
     try {
       let p = Helpers.run(`${config.frameworkName} show:loop ${args}`, {
@@ -418,17 +445,22 @@ export class $Global extends BaseGlobalCommandLine<
       console.log('Erroroejk');
       this._exit(1);
     }
+    //#endregion
   };
 
-  SHOW_RANDOM_HAMSTERS() {
+  async SHOW_RANDOM_HAMSTERS() {
+    //#region @backendFunc
     while (true) {
       const arr = ['Pluszla', 'Łapczuch', 'Misia', 'Chrupka'];
       console.log(arr[Helpers.numbers.randomInteger(0, arr.length - 1)]);
-      Helpers.sleep(1);
+      await Utils.wait(1);
     }
+    //#endregion
   }
 
-  SHOW_RANDOM_HAMSTERS_TYPES() {
+  @UtilsCliClassMethod.decoratorMethod('showRandomHamstersTypes')
+  async showRandomHamstersTypes(): Promise<void> {
+    //#region @backendFunc
     while (true) {
       const arr = [
         'djungarian',
@@ -440,11 +472,13 @@ export class $Global extends BaseGlobalCommandLine<
         'chinese hamster',
       ];
       console.log(arr[Helpers.numbers.randomInteger(0, arr.length - 1)]);
-      Helpers.sleep(1);
+      await Utils.wait(1);
     }
+    //#endregion
   }
 
   SHOW_LOOP_MESSAGES(args) {
+    //#region @backendFunc
     console.log(`
 
     platform: ${process.platform}
@@ -458,14 +492,18 @@ export class $Global extends BaseGlobalCommandLine<
     //   this._exit()
     // })
     this._SHOW_LOOP_MESSAGES();
+    //#endregion
   }
 
   async newTermMessages() {
+    //#region @backendFunc
     UtilsProcess.startInNewTerminalWindow(`tnp showloopmessages 10`);
     this._exit();
+    //#endregion
   }
 
   _SHOW_LOOP(c = 0 as any, maximum = Infinity, errExit = false) {
+    //#region @backendFunc
     if (_.isString(c)) {
       var { max = Infinity, err = false } = require('minimist')(c.split(' '));
       maximum = max;
@@ -481,6 +519,7 @@ export class $Global extends BaseGlobalCommandLine<
     setTimeout(() => {
       this._SHOW_LOOP(++c, maximum, errExit);
     }, 1000);
+    //#endregion
   }
 
   _SHOW_LOOP_MESSAGES(
@@ -489,6 +528,7 @@ export class $Global extends BaseGlobalCommandLine<
     errExit = false,
     throwErr = false,
   ) {
+    //#region @backendFunc
     if (_.isString(c)) {
       const obj = require('minimist')(c.split(' '));
       var { max = Infinity, err = false } = obj;
@@ -513,45 +553,56 @@ export class $Global extends BaseGlobalCommandLine<
     setTimeout(() => {
       this._SHOW_LOOP_MESSAGES(++c, maximum, errExit, throwErr);
     }, 2000);
+    //#endregion
   }
   //#endregion
 
   //#region dedupe
 
   dedupecore() {
+    //#region @backendFunc
     const coreProject = Project.ins.by('container') as Project;
     coreProject.nodeModules.dedupe(
       this.args.join(' ').trim() === '' ? void 0 : this.args,
     );
     this._exit();
+    //#endregion
   }
   dedupecorefake() {
+    //#region @backendFunc
     const coreProject = Project.ins.by('container') as Project;
     coreProject.nodeModules.dedupe(
       this.args.join(' ').trim() === '' ? void 0 : this.args,
       true,
     );
     this._exit();
+    //#endregion
   }
 
   DEDUPE() {
+    //#region @backendFunc
     this.project.nodeModules.dedupe(
       this.args.join(' ').trim() === '' ? void 0 : this.args,
     );
     this._exit();
+    //#endregion
   }
 
   DEDUPE_FAKE() {
+    //#region @backendFunc
     this.project.nodeModules.dedupe(
       this.args.join(' ').trim() === '' ? void 0 : this.args,
       true,
     );
     this._exit();
+    //#endregion
   }
 
   DEDUPE_COUNT() {
+    //#region @backendFunc
     this.project.nodeModules.dedupeCount(this.args);
     this._exit();
+    //#endregion
   }
   //#endregion
 
@@ -561,6 +612,7 @@ export class $Global extends BaseGlobalCommandLine<
    * generate deps json
    */
   DEPS_JSON() {
+    //#region @backendFunc
     const node_moduels = path.join(this.cwd, config.folder.node_modules);
     const result = {};
     Helpers.foldersFrom(node_moduels)
@@ -594,11 +646,13 @@ export class $Global extends BaseGlobalCommandLine<
       result,
     );
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region reinstall
   async reinstall() {
+    //#region @backendFunc
     Helpers.taskStarted(`Reinstalling ${this.project.genericName}...`);
     if (!this.project) {
       Helpers.error(`Project not found in ${this.cwd}`, true, false);
@@ -607,11 +661,14 @@ export class $Global extends BaseGlobalCommandLine<
     await this.project?.nodeModules?.reinstall();
     Helpers.info(`Done reinstalling ${this.project.genericName}`);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region reinstall core containers
+  @UtilsCliClassMethod.decoratorMethod('reinstallCoreContainers')
   async reinstallCoreContainers(): Promise<void> {
+    //#region @backendFunc
     const toReinstallCoreContainers = crossPlatformPath([
       Project.ins.by('container').location,
       '..',
@@ -644,19 +701,23 @@ export class $Global extends BaseGlobalCommandLine<
     }
     Helpers.info(`Done reinstalling core containers`);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region file info
   FILEINFO = args => {
+    //#region @backendFunc
     console.log(Helpers.getMostRecentFilesNames(crossPlatformPath(this.cwd)));
 
     this._exit();
+    //#endregion
   };
   //#endregion
 
   //#region versions
   VERSIONS() {
+    //#region @backendFunc
     const children = this.project.children;
 
     for (let index = 0; index < children.length; index++) {
@@ -665,36 +726,47 @@ export class $Global extends BaseGlobalCommandLine<
     }
 
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region path
   path() {
+    //#region @backendFunc
     console.log(this.ins.Tnp.location);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region env
   ENV_CHECK(args) {
+    //#region @backendFunc
     Helpers.checkEnvironment();
     this._exit();
+    //#endregion
   }
 
+  @UtilsCliClassMethod.decoratorMethod('ENV_INSTALL')
   ENV_INSTALL() {
+    //#region @backendFunc
     CLI.installEnvironment(requiredForDev);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region throw error
   THROW_ERR() {
+    //#region @backendFunc
     Helpers.error(`Erororoororo here`, false, true);
+    //#endregion
   }
   //#endregion
 
   //#region brew
   BREW(args) {
+    //#region @backendFunc
     const isM1MacOS = os.cpus()[0].model.includes('Apple M1');
     if (process.platform === 'darwin') {
       if (isM1MacOS) {
@@ -704,21 +776,25 @@ export class $Global extends BaseGlobalCommandLine<
       }
     }
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region run
   run() {
+    //#region @backendFunc
     Helpers.run(`node run.js`, {
       output: true,
       silence: false,
     }).sync();
     this._exit(0);
+    //#endregion
   }
   //#endregion
 
   //#region ps info
   async PSINFO(args: string) {
+    //#region @backendFunc
     const pid = Number(args);
 
     let ps: Models.PsListInfo[] = await psList();
@@ -729,12 +805,14 @@ export class $Global extends BaseGlobalCommandLine<
     }
     console.log(psinfo);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region sync core repositories
 
   get absPathToLocalTaonContainers(): string | undefined {
+    //#region @backendFunc
     if (!this.project) {
       return;
     }
@@ -743,9 +821,11 @@ export class $Global extends BaseGlobalCommandLine<
       this.project.ins.taonProjectsRelative,
     ]);
     return localTaonRepoPath;
+    //#endregion
   }
 
   async TNP_SYNC() {
+    //#region @backendFunc
     const isomorphicPackagesFile = config.file.tmpIsomorphicPackagesJson; // 'tmp-isomorphic-packages.json';
     const currentFrameworkVersion = this.project.taonJson.frameworkVersion;
     const pathToTaonContainerNodeModules = crossPlatformPath([
@@ -796,9 +876,11 @@ export class $Global extends BaseGlobalCommandLine<
       `Done syncing node_modules from tnp to ../taon-containers...`,
     );
     this._exit();
+    //#endregion
   }
 
   async SYNC() {
+    //#region @backendFunc
     const isInsideTnpAndTaonDev =
       this.project?.name === 'tnp' &&
       this.project?.parent.name === 'taon-dev' &&
@@ -824,35 +906,47 @@ export class $Global extends BaseGlobalCommandLine<
       await this.TNP_SYNC();
     }
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region copy and rename (vscode option)
   async $COPY_AND_RENAME() {
+    //#region @backendFunc
     // console.log(`>> ${args} <<`)
     const ins = MagicRenamer.Instance(this.cwd);
     await ins.start(this.args.join(''), true);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region clear
   async CLEAN() {
-    await this.project.artifactsManager.clear(EnvOptions.from(this.params as any));
+    //#region @backendFunc
+    await this.project.artifactsManager.clear(
+      EnvOptions.from(this.params as any),
+    );
     this._exit();
+    //#endregion
   }
 
   CLEAR() {
+    //#region @backendFunc
     this.CLEAN();
+    //#endregion
   }
 
   CL() {
+    //#region @backendFunc
     this.CLEAN();
+    //#endregion
   }
   //#endregion
 
   //#region show git in progress
   inprogress() {
+    //#region @backendFunc
     Helpers.info(`
     In progress
 ${this.project.children
@@ -865,11 +959,13 @@ ${this.project.children
 
     `);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region update deps for core container
   async updatedeps(): Promise<void> {
+    //#region @backendFunc
     if (!this.project || !this.project.framework.isCoreProject) {
       Helpers.error(`This command is only for core projects`, false, true);
     }
@@ -1253,11 +1349,13 @@ ${this.project.children
     }
 
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region compare containers
   compareContainers() {
+    //#region @backendFunc
     Helpers.clearConsole();
     const [c1ver, c2ver] = this.args;
     const c1 = this.ins.by('container', `v${c1ver.replace('v', '')}` as any);
@@ -1294,6 +1392,7 @@ ${this.project.children
       );
     }
     this._exit();
+    //#endregion
   }
   //#endregion
 
@@ -1304,6 +1403,7 @@ ${this.project.children
    *  choco install ffmpeg
    */
   MP3(args) {
+    //#region @backendFunc
     const downloadPath = crossPlatformPath([
       UtilsOs.getRealHomeDir(),
       'Downloads',
@@ -1322,11 +1422,13 @@ ${this.project.children
       },
     ).sync();
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region not for npm / mp4
   MP4(args) {
+    //#region @backendFunc
     const downloadPath = crossPlatformPath([
       UtilsOs.getRealHomeDir(),
       'Downloads',
@@ -1342,9 +1444,13 @@ ${this.project.children
       },
     ).sync();
     this._exit();
+    //#endregion
   }
+  //#endregion
 
+  //#region gif from video
   gif(): void {
+    //#region @backendFunc
     const cwdToProcess = path.isAbsolute(this.firstArg)
       ? path.dirname(this.firstArg)
       : this.cwd;
@@ -1391,27 +1497,37 @@ ${this.project.children
       `);
     Helpers.openFolderInFileExplorer(path.dirname(gifDownloadPath));
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region not for npm / kill zscaller
   killZs() {
+    //#region @backendFunc
     this.killZscaller();
+    //#endregion
   }
 
   startZs() {
+    //#region @backendFunc
     this.startZscaller();
+    //#endregion
   }
 
   zsKill() {
+    //#region @backendFunc
     this.killZscaller();
+    //#endregion
   }
 
   zsStart() {
+    //#region @backendFunc
     this.startZscaller();
+    //#endregion
   }
 
   startZscaller() {
+    //#region @backendFunc
     const commands = [
       // `open -a /Applications/Zscaler/Zscaler.app --hide`,
       `open -a /Applications/Zscaler/Zscaler.app`,
@@ -1427,9 +1543,11 @@ ${this.project.children
     }
     Helpers.info(`Zscaller started`);
     this._exit();
+    //#endregion
   }
 
   killZscaller() {
+    //#region @backendFunc
     const commands = [
       `find /Library/LaunchAgents -name '*zscaler*' -exec launchctl unload {} \\;`,
       `sudo find /Library/LaunchDaemons -name '*zscaler*' -exec launchctl unload {} \\;`,
@@ -1445,12 +1563,14 @@ ${this.project.children
     }
     Helpers.info(`Zscaller killed`);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region not for npm / get trusted
   //#region @notForNpm
   getJsonCAttrs() {
+    //#region @backendFunc
     console.log(`Scannign for args in jsonc files...`);
     const jsoncContent = this.project.readFile(config.file.taon_jsonc);
     walk.Object(Helpers.parse(jsoncContent, true), (value, jsonPath) => {
@@ -1475,6 +1595,7 @@ ${this.project.children
       }
     });
     this._exit();
+    //#endregion
   }
   //#endregion
   //#endregion
@@ -1482,6 +1603,7 @@ ${this.project.children
   //#region not for npm / tnp fix taon json
   //#region @notForNpm
   async taonJsonAddAutoElement() {
+    //#region @backendFunc
     for (const child of this.project.children) {
       child.taonJson.autoReleaseConfigAllowedItems = [
         {
@@ -1490,18 +1612,23 @@ ${this.project.children
       ];
     }
     this._exit();
+    //#endregion
   }
   //#endregion
   //#endregion
 
   //#region start taon projects worker
+  @UtilsCliClassMethod.decoratorMethod('startCliServiceTaonProjectsWorker')
   async startCliServiceTaonProjectsWorker() {
+    //#region @backendFunc
     await this.ins.taonProjectsWorker.cliStartProcedure(this.params);
+    //#endregion
   }
   //#endregion
 
   //#region json schema docs watcher
   async recreateDocsConfigJsonSchema(): Promise<void> {
+    //#region @backendFunc
     await this.project.init(
       EnvOptions.from({
         purpose: 'initing before json schema docs watch',
@@ -1542,11 +1669,13 @@ ${this.project.children
       await recreate();
       this._exit();
     }
+    //#endregion
   }
   //#endregion
 
   //#region json schema taon watch
   async recreateTaonJsonSchema(): Promise<void> {
+    //#region @backendFunc
     // await this.project.init(
     //   EnvOptions.from({
     //     purpose: 'initing before json schema docs watch',
@@ -1618,12 +1747,16 @@ ${this.project.children
       await recreate();
       this._exit();
     }
+    //#endregion
   }
 
   jsonSchema() {
+    //#region @backendFunc
     return this.schemaJson();
+    //#endregion
   }
   async _createJsonSchemaFrom(options: Models.CreateJsonSchemaOptions) {
+    //#region @backendFunc
     const { project, relativePathToTsFile, nameOfTypeOrInterface } = options;
 
     // Create the config for ts-json-schema-generator
@@ -1644,9 +1777,11 @@ ${this.project.children
     const schemaJson = JSON.stringify(schema, null, 2);
 
     return schemaJson;
+    //#endregion
   }
 
   schemaJson() {
+    //#region @backendFunc
     console.log(
       this._createJsonSchemaFrom({
         project: this.project,
@@ -1655,11 +1790,13 @@ ${this.project.children
       }),
     );
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region ts testing functions
   public async ts() {
+    //#region @backendFunc
     Helpers.clearConsole();
     await UtilsTerminal.selectActionAndExecute({
       recognizeImportExportRequire: {
@@ -1686,11 +1823,13 @@ ${this.project.children
       },
     });
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region update core container deps
   async coreContainerDepsUpdate() {
+    //#region @backendFunc
     if (
       this.project.name !== 'taon' &&
       this.project?.parent?.typeIsNot('container')
@@ -1717,11 +1856,13 @@ ${this.project.children
     }
     Helpers.info(`Container deps updated`);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region wrapper for ng
   ng() {
+    //#region @backendFunc
     // check if for example v18 in args
     const latest = 'latest';
     const version = this.args.find(arg => arg.startsWith('v')) || latest;
@@ -1738,18 +1879,22 @@ ${this.project.children
       },
     ).sync();
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region are linked node_modules
   isLinkNodeModules() {
+    //#region @backendFunc
     console.log(this.project.nodeModules.isLink);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region link node_modules from core container
   linkNodeModulesFromCoreContainer() {
+    //#region @backendFunc
     const coreContainer = this.project.ins.by(
       'container',
       this.firstArg as any,
@@ -1764,30 +1909,43 @@ ${this.project.children
     this.project.nodeModules.unlinkNodeModulesWhenLinked();
     coreContainer.nodeModules.linkToProject(this.project as any);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region recognize imports from file
   imports() {
+    //#region @backendFunc
     const imports = UtilsTypescript.recognizeImportsFromFile(
       this.project.pathFor(this.firstArg),
     );
     console.log(imports);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region dirname for tnp
-  @UtilsCliMethod.decorator('dirnameForTnp')
+  @UtilsCliClassMethod.decoratorMethod('dirnameForTnp')
   dirnameForTnp() {
-    // console.log(UtilsCliMethod.getFrom($Global.prototype.dirnameForTnp, true));
+    //#region @backendFunc
+    console.log(
+      `cli method: ${config.frameworkName} ${UtilsCliClassMethod.getFrom(
+        $Global.prototype.dirnameForTnp,
+        {
+          globalMethod: true,
+        },
+      )}`,
+    );
     console.log(config.dirnameForTnp);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region detect contexts
   contexts() {
+    //#region @backendFunc
     Helpers.taskStarted(`Detecting contexts...`);
     const contexts = this.project.framework.getAllDetectedTaonContexts();
     console.log(`Detected contexts: ${contexts.length} `);
@@ -1796,20 +1954,24 @@ ${this.project.children
     }
     Helpers.taskDone(`Contexts detected`);
     this._exit();
+    //#endregion
   }
   //#endregion
 
   //#region regenerate vscode settings colors
   _regenerateVscodeSettingsColors() {
+    //#region @backendFunc
     const overrideBottomColor =
       this.project.vsCodeHelpers.getVscodeBottomColor();
 
     super._regenerateVscodeSettingsColors(overrideBottomColor);
+    //#endregion
   }
   //#endregion
 
   //#region test messages
   messagesTest() {
+    //#region @backendFunc
     console.log('-----1');
     Helpers.log(`Helpers.log`);
     Helpers.info(`Helpers.info`);
@@ -1825,12 +1987,15 @@ ${this.project.children
     Helpers.logSuccess(`Helpers.logSuccess`);
     console.log('-----3');
     this._exit();
+    //#endregion
   }
   //#endregion
 
+  //#region extract string metadata
   // projectName|-|www-domgrubegozwierzaka-pl||--||releaseType|-|manual||--||version|-|0.0.8||--||
   // envName|-|__||--||envNumber|-|||--||targetArtifact|-|angular-node-app|||||-1759151320202-fa12e3a5cfdd
   extractStringMetadata() {
+    //#region @backendFunc
     const str = this.firstArg || '';
     console.log(str);
     console.log(
@@ -1839,18 +2004,23 @@ ${this.project.children
       }),
     );
     this._exit();
+    //#endregion
   }
+  //#endregion
 
-  // aaa() {
-  //   const coreProject1 = this.project.framework.coreProject;
-  //   const coreProject2 = Project.ins.by('isomorphic-lib');
-  //   console.log('coreProject2');
-  //   console.log(coreProject1.pathFor(`docker-templates/terafik`));
-  //   console.log('coreProject2');
-  //   console.log(coreProject2.pathFor(`docker-templates/terafik`));
-
-  //   this._exit();
-  // }
+  //#region aaa (test command)
+  aaa() {
+    //#region @backendFunc
+    //   const coreProject1 = this.project.framework.coreProject;
+    //   const coreProject2 = Project.ins.by('isomorphic-lib');
+    //   console.log('coreProject2');
+    //   console.log(coreProject1.pathFor(`docker-templates/terafik`));
+    //   console.log('coreProject2');
+    //   console.log(coreProject2.pathFor(`docker-templates/terafik`));
+    //   this._exit();
+    //#endregion
+  }
+  //#endregion
 }
 
 export default {

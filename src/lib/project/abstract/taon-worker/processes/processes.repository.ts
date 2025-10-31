@@ -3,21 +3,39 @@ import type { ChildProcess } from 'child_process';
 
 import { Taon } from 'taon/src';
 import { Raw } from 'taon-typeorm/src';
-import { _, child_process, dateformat, Helpers } from 'tnp-core/src';
+import {
+  _,
+  child_process,
+  dateformat,
+  Helpers,
+  UtilsProcess,
+} from 'tnp-core/src';
+import { UtilsProcessLogger } from 'tnp-core/src';
 
-import { ProcessFileLogger } from './process-file-logger';
 import { Processes } from './processes';
+import {
+  ProcessesState,
+  ProcessesStatesAllowedStart,
+  ProcessesStatesAllowedStop,
+} from './processes.models';
 //#endregion
 
 @Taon.Repository({
   className: 'ProcessesRepository',
 })
 export class ProcessesRepository extends Taon.Base.Repository<Processes> {
+  //#region fields and getters
   entityClassResolveFn: () => typeof Processes = () => Processes;
 
-  private processFileLoggers: { [processId: string]: ProcessFileLogger } = {};
+  private processFileLoggers: {
+    [processId: string]: UtilsProcessLogger.ProcessFileLogger;
+  } = {};
+  //#endregion
 
-  async getByProcessID(processId: number | string): Promise<Processes | null> {
+  //#region get by process id
+  public async getByProcessID(
+    processId: number | string,
+  ): Promise<Processes | null> {
     //#region @websqlFunc
     const proc = await this.findOne({
       where: {
@@ -27,108 +45,185 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
     return proc;
     //#endregion
   }
+  //#endregion
+
+  //#region get by uniquer params
+  public async getByUniqueParams({
+    cwd,
+    command,
+  }: {
+    cwd: string;
+    command: string;
+  }): Promise<Processes | null> {
+    //#region @websqlFunc
+    const proc = await this.findOne({
+      where: {
+        cwd,
+        command,
+      },
+    });
+    return proc;
+    //#endregion
+  }
+  //#endregion
 
   //#region start process
-  async start(processId: string | number): Promise<void> {
-    //#region @websqlFunc
-    let processFromDb = await this.findOne({
-      where: { id: processId?.toString() },
-    });
+  public async triggerStart(
+    processId: string | number,
+    options?: {
+      processName?: string;
+    },
+  ): Promise<void> {
+    //#region @backendFunc
+    options = options || {};
 
-    if (processFromDb.state === 'active') {
-      Helpers.warn('[ProcesController] process already stated');
-      return;
-    }
-    processFromDb.state = 'starting';
-    processFromDb.output = `${processFromDb.output}\n----- new session ${dateformat(new Date())} -----\n`;
-    await this.update(processFromDb);
-    // this.processFileLoggers[processFromDb.id] = new ProcessFileLogger(
-    //   `process-${processFromDb.id}`,
-    // );
-    // const realProcess = child_process.exec(processFromDb.command, {
-    //   stdio: ['ignore', 'pipe', 'pipe'], // stdin ignored, capture stdout & stderr
-    //   cwd: processFromDb.cwd,
-    // });
-    const [cmd, ...args] = processFromDb.command.split(' '); // safer: parse properly
-    const realProcess = child_process.spawn(cmd, args, {
-      stdio: ['ignore', 'pipe', 'pipe'], // don't inherit console
-      shell: true, // use shell if command has operators (&&, |, etc.)
-    });
-
-    processFromDb.state = 'active';
-    processFromDb.pid = realProcess.pid;
-    // console.log(`Starting child process with pid: ${realProcess.pid}`);
-    await this.update(processFromDb);
-
-    //#region update process
-    const updateProcess = _.debounce(async (newData: string) => {
-      processFromDb = await this.findOne({
-        where: { id: processId?.toString() },
-      });
-      if (!processFromDb.output) {
-        processFromDb.output = '';
+    await this.getAndUpdateProcess(processId, async proc => {
+      if (!ProcessesStatesAllowedStart.includes(proc.state)) {
+        throw new Error(
+          `Process not allowed to start with state: ${proc.state}`,
+        );
       }
-      processFromDb.output = `${processFromDb.output}${newData}`;
-      await this.update(processFromDb);
 
-      this.ctx.realtimeServer.triggerEntityChanges(Processes, processFromDb.id);
-      // Taon.Realtime.Server.TrigggerEntityChanges(process);
-    }, 500);
-    //#endregion
+      //#region prepare process for start
+      proc.state = ProcessesState.STARTING;
 
-    realProcess.stdout.on('data', data => {
-      updateProcess(data);
-    });
-    realProcess.stderr.on('data', data => {
-      updateProcess(data);
-    });
-    /**
-     * 15 - soft kill
-     * 9 - hard kill
-     * 1 - from code exit
-     * 0 - process done
-     */
-    realProcess.on('exit', async (code, data) => {
-      processFromDb.state = code === 0 ? 'ended-ok' : 'ended-with-error';
-      processFromDb.pid = void 0;
-      await this.update(processFromDb);
+      proc.outputLast40lines =
+        `${proc.outputLast40lines}` +
+        `\n----- new session ${dateformat(new Date(), 'dd-mm-yyyy_HH:MM:ss')} -----\n`;
 
-      this.ctx.realtimeServer.triggerEntityChanges(Processes, processFromDb.id);
-      // Taon.Realtime.Server.TrigggerEntityChanges(process);
+      const [cmd, ...commandArgs] = proc.command.split(' '); // safer: parse properly
+      const realProcess = child_process.spawn(cmd, commandArgs, {
+        stdio: ['ignore', 'pipe', 'pipe'], // don't inherit console
+        shell: true, // use shell if command has operators (&&, |, etc.)
+      });
+      proc.pid = realProcess.pid;
+      proc.ppid = process.pid;
+      //#endregion
+
+      //#region prepare logging
+      const processFileLogger = new UtilsProcessLogger.ProcessFileLogger(
+        {
+          name: options.processName || `unknow-proc-name__id-${proc.id}`,
+          id: proc.id,
+        },
+        {
+          specialEvent: {
+            stderr: (proc.conditionProcessActiveStderr || []).map(
+              stringInStream => ({
+                stringInStream,
+                callback: async () => {
+                  await this.getAndUpdateProcess(proc.id, proc1 => {
+                    proc1.state = ProcessesState.ACTIVE;
+                  });
+                },
+              }),
+            ),
+            stdout: (proc.conditionProcessActiveStdout || []).map(
+              stringInStream => ({
+                stringInStream,
+                callback: async () => {
+                  await this.getAndUpdateProcess(proc.id, proc1 => {
+                    proc1.state = ProcessesState.ACTIVE;
+                  });
+                },
+              }),
+            ),
+          },
+        },
+      );
+
+      this.processFileLoggers[proc.id] = processFileLogger;
+
+      processFileLogger.startLogging(realProcess, {
+        cacheLinesMax: 15,
+        update: async ({ outputLines, stderrLines, stdoutLines }) => {
+          await this.getAndUpdateProcess(proc.id, proc1 => {
+            proc1.outputLast40lines = outputLines;
+          });
+        },
+      });
+      proc.fileLogAbsPath = processFileLogger.processLogAbsFilePath;
+      //#endregion
+
+      //#region handle process exit
+      /**
+       * 15 - soft kill
+       * 9 - hard kill
+       * 1 - from code exit
+       * 0 - process done
+       */
+      realProcess.on('exit', async (code, data) => {
+        await this.getAndUpdateProcess(proc.id, proc1 => {
+          if (proc1.state === ProcessesState.KILLING) {
+            proc1.state = ProcessesState.KILLED;
+          } else {
+            proc1.state =
+              code === 0
+                ? ProcessesState.ENDED_OK
+                : ProcessesState.ENDED_WITH_ERROR;
+          }
+          delete this.processFileLoggers[proc1.id];
+          proc1.pid = null;
+        });
+      });
+      //#endregion
     });
+
     //#endregion
   }
   //#endregion
 
   //#region stop process
-  async stop(processId: string | number): Promise<void> {
+  public async triggerStop(processId: string | number): Promise<void> {
     //#region @websqlFunc
-    let processFromDb = await this.findOne({
-      where: { id: processId?.toString() },
+    await this.getAndUpdateProcess(processId, proc => {
+      if (!ProcessesStatesAllowedStop.includes(proc.state)) {
+        throw new Error(
+          `Process not allowed to stop with state: ${proc.state}`,
+        );
+      }
+      proc.state = ProcessesState.KILLING;
+      setTimeout(async () => {
+        try {
+          await UtilsProcess.killProcess(proc.pid);
+          console.info(`Process killed successfully (by pid = ${proc.pid})`);
+        } catch (error) {
+          console.error(`Not able to kill process by pid ${proc.pid}`);
+        }
+      }, 500);
     });
-    if (!processFromDb || !processFromDb.pid) {
-      Helpers.warn(
-        `[ProcessesRepository] No process with id ${processId} or pid ${processFromDb?.pid}`,
-      );
-      return;
-    }
-    processFromDb.state = 'killing';
-    console.log(`Killing child process with pid: ${processFromDb.pid}`);
-    await this.update(processFromDb);
-
-    this.ctx.realtimeServer.triggerEntityChanges(Processes, processFromDb.id);
-    try {
-      Helpers.killProcess(processFromDb.pid);
-      console.info(
-        `Process killed successfully (by pid = ${processFromDb.pid})`,
-      );
-    } catch (error) {
-      console.error(`Not able to kill process by pid ${processFromDb.pid}`);
-    }
-    processFromDb.state = 'killed';
-    processFromDb.pid = void 0;
-    await this.update(processFromDb);
     //#endregion
   }
+  //#endregion
+
+  //#region private methods
+
+  //#region  private methods / get and update process
+  private async getAndUpdateProcess(
+    processId: string | number,
+    /**
+     * Callback with process to update
+     * (any modifications done in callback will be saved after its end)
+     */
+    callback: (proc: Processes) => Promise<void> | void,
+  ): Promise<void> {
+    //#region @backendFunc
+
+    const proc = await this.findOne({
+      where: { id: processId?.toString() },
+    });
+    if (!proc) {
+      throw new Error(`No process with id ${processId}`);
+    }
+    await callback(proc);
+    await this.update(proc);
+    this.ctx.realtimeServer.triggerEntityPropertyChanges(
+      proc,
+      'outputLast40lines' as keyof Processes,
+    );
+    //#endregion
+  }
+  //#endregion
+
   //#endregion
 }

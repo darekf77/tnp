@@ -1,9 +1,17 @@
 //#region imports
 import { config, PREFIXES } from 'tnp-config/src';
-import { _, path, fse, crossPlatformPath, chalk } from 'tnp-core/src';
+import {
+  _,
+  path,
+  fse,
+  crossPlatformPath,
+  chalk,
+  UtilsCliClassMethod,
+} from 'tnp-core/src';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
 import { notAllowedAsPacakge } from '../../constants';
+// import { $Global } from '../cli/cli-_GLOBAL_';
 
 import type { Project } from './project';
 //#endregion
@@ -229,12 +237,18 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
         this.coreContainer?.packagesRecognition.inMemoryIsomorphicLibs
           .length === 0
       ) {
+        // const command =
+        //   `${config.frameworkName} ` +
+        //   `${UtilsCliClassMethod.getFrom($Global.prototype.reinstall, { globalMethod: true })}`;
+        // this.coreContainer.run(command).sync();
+
         this.coreContainer
           .run(
             // $Global.prototype.reinstall.name
             `${config.frameworkName}  ${'reinstall'}`,
           )
           .sync();
+
         this.resolveAndAddIsomorphicLibsToMemory(
           this.coreContainer?.packagesRecognition.libsFromJson,
           false,

@@ -12,18 +12,14 @@ import { DeploymentsController } from './deployments.controller';
 @Injectable()
 //#endregion
 export class DeploymentsApiService extends Taon.Base.AngularService {
-  private deploymentsController: DeploymentsController;
+  deploymentsController: DeploymentsController = this.injectController(
+    DeploymentsController,
+  );
 
-  public get allMyEntities$(): Observable<Deployments[]> {
-    return this.deploymentsController
-      .getEntities()
-      .request().observable.pipe(map(res => res.body.json));
-  }
-
-  constructor() {
-    super();
-    this.deploymentsController = Taon.inject(() =>
-      this.currentContext.getClass(DeploymentsController),
-    );
-  }
+  // public get allMyEntities$(): Observable<Deployments[]> {
+  //   return this.deploymentsController
+  //     .getEntities()
+  //     .request()
+  //     .observable.pipe(map(res => res.body.json));
+  // }
 }

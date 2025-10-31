@@ -6,7 +6,7 @@ import { FilePathMetaData } from 'tnp-core/src';
 import { keysMap } from '../../../../constants';
 
 import { DeploymentsDefaultsValues } from './deployments.defaults-values';
-import { DeploymentReleaseData, DeploymentStatus } from './deployments.models';
+import { DeploymentReleaseData, DeploymentsStatus } from './deployments.models';
 //#endregion
 
 @Taon.Entity({
@@ -20,7 +20,7 @@ export class Deployments extends Taon.Base.AbstractEntity<Deployments> {
     unique: true,
   })
   //#endregion
-  zipFileBasenameMetadataPart?: string;
+  baseFileNameWithHashDatetime?: string;
 
   //#region @websql
   @Taon.Orm.Column.Number()
@@ -28,30 +28,42 @@ export class Deployments extends Taon.Base.AbstractEntity<Deployments> {
   size: MulterFileUploadResponse['size'];
 
   //#region @websql
-  @Taon.Orm.Column.String45('not-started' as DeploymentStatus)
+  @Taon.Orm.Column.Custom({
+    type: 'varchar',
+    length: 20,
+    default: DeploymentsStatus.NOT_STARTED,
+  })
   //#endregion
-  status?: DeploymentStatus;
+  status: DeploymentsStatus;
 
   //#region @websql
   @Taon.Orm.Column.String45()
   //#endregion
-  processId?: string | null;
+  processIdComposeUp?: string | null;
+
+  //#region @websql
+  @Taon.Orm.Column.String45()
+  //#endregion
+  processIdComposeDown?: string | null;
 
   //#region @websql
   @Taon.Orm.Column.CreateDate()
   //#endregion
   arrivalDate?: Date;
 
+  //#region getters / release date
   get releaseData(): Partial<DeploymentReleaseData> {
     const data = FilePathMetaData.extractData<DeploymentReleaseData>(
-      this.zipFileBasenameMetadataPart,
+      this.baseFileNameWithHashDatetime,
       {
         keysMap,
       },
     );
     return data || ({} as Partial<DeploymentReleaseData>);
   }
+  //#endregion
 
+  //#region getters / preview string
   get previewString(): string {
     const r = this.releaseData;
     return (
@@ -59,6 +71,7 @@ export class Deployments extends Taon.Base.AbstractEntity<Deployments> {
       `${this.arrivalDate ? dateformat(this.arrivalDate, 'dd-mm-yyyy HH:MM:ss') : 'unknown date'} `
     );
   }
+  //#endregion
 
   fullPreviewString(options?: { boldValues?: boolean }): string {
     //#region @websqlFunc
@@ -77,15 +90,16 @@ export class Deployments extends Taon.Base.AbstractEntity<Deployments> {
     const boldFn = (str: string) => (boldValues ? chalk.bold(str) : str);
 
     return [
-      `Project Name (${boldFn(r.projectName || 'unknown project')})`,
-      `Version (${boldFn(r.version || 'unknown version')})`,
-      `Artifact (${boldFn(r.targetArtifact || 'unknown artifact')})`,
-      `Release Type (${boldFn(r.releaseType || 'unknown release type')})`,
+      `Destination domain (${boldFn(r.destinationDomain || '- unknown domain -')})`,
+      `Project Name (${boldFn(r.projectName || '- unknown project -')})`,
+      `Version (${boldFn(r.version || '- unknown version -')})`,
+      `Artifact (${boldFn(r.targetArtifact || '- unknown artifact -')})`,
+      `Release Type (${boldFn(r.releaseType || '- unknown release type -')})`,
       `Environment (${boldFn(envName)})`,
       `Arrival Date (${boldFn(
         this.arrivalDate
           ? dateformat(this.arrivalDate, 'dd-mm-yyyy HH:MM:ss')
-          : 'unknown date',
+          : '- unknown date -',
       )})`,
     ].join('\n');
     //#endregion

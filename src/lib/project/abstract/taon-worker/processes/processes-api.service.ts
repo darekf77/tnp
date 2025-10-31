@@ -12,9 +12,9 @@ import { ProcessesController } from './processes.controller';
 export class ProcessesApiService extends Taon.Base.AngularService {
   protected processesController = this.injectController(ProcessesController);
 
-  public get allMyEntities$(): Observable<Processes[]> {
-    return this.processesController
-      .getAll()
-      .request().observable.pipe(map(res => res.body.json));
-  }
+  // public get allProcesses$(): Observable<Processes[]> {
+  //   return this.processesController
+  //     .getAll()
+  //     .request().observable.pipe(map(res => res.body.json));
+  // }
 }

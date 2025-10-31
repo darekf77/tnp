@@ -13,7 +13,7 @@ declare const ENV: any;
 // @ts-ignore TODO weird inheritance problem
 export class $Version extends BaseCli {
   //#region _
-  public _() {
+  public async _(): Promise<void> {
     // Helpers.log(`Framework name: '${config.frameworkName}'`);
     //#region @notForNpm
     if (ENV.notForNpm) {
@@ -22,21 +22,21 @@ export class $Version extends BaseCli {
     //#endregion
 
     // global.spinner?.start();
-    // Helpers.sleep(1);
+    // a(1);
     // Helpers.info(`${config.frameworkName} location: ${ this.Tnp.location}`)
-    // Helpers.sleep(1);
+    // await Utils.wait(1);
     // Helpers.info(`${config.frameworkName} location: ${ this.Tnp.location}`)
-    // Helpers.sleep(1);
+    // await Utils.wait(1);
     // Helpers.info(`${config.frameworkName} location: ${ this.Tnp.location}`)
-    // Helpers.sleep(1);
+    // await Utils.wait(1);
     // Helpers.info(`${config.frameworkName} location: ${ this.Tnp.location}`)
-    // Helpers.sleep(1);
+    // await Utils.wait(1);
     // Helpers.info(`${config.frameworkName} location: ${ this.Tnp.location}`)
     // Helpers.info('waiting...');
 
     // global.spinner?.start();
     // Helpers.info('waiting next time!!. ..');
-    // Helpers.sleep(5);
+    // await Utils.wait(5);
     // global.spinner?.stop();
     // log.data('Hellleoeoeo')
 

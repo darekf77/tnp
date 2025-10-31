@@ -8,6 +8,7 @@ import {
   crossPlatformPath,
   fse,
   path,
+  UtilsCliClassMethod,
   UtilsOs,
   UtilsProcess,
   UtilsTerminal,
@@ -16,10 +17,12 @@ import { BaseCliWorker, Helpers } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
 import { taonBasePathToGlobalDockerTemplates } from '../../../constants';
+import { $Cloud } from '../../cli/cli-CLOUD';
 import type { TaonProjectResolve } from '../project-resolve';
 
 import { DeploymentsWorker } from './deployments/deployments.worker';
 import { InstancesWorker } from './instances/instances.worker';
+import { ProcessesWorker } from './processes/processes.worker';
 import { TaonTerminalUI } from './taon-terminal-ui';
 import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
@@ -40,6 +43,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
   controllerClass = TaonProjectsController;
   public deploymentsWorker: DeploymentsWorker;
   public instancesWorker: InstancesWorker;
+  public processesWorker: ProcessesWorker;
   //#endregion
 
   //#region constructor
@@ -55,6 +59,13 @@ export class TaonProjectsWorker extends BaseCliWorker<
     public readonly ins: TaonProjectResolve,
   ) {
     super(serviceID, startCommand, CURRENT_PACKAGE_VERSION);
+    // console.log({
+    //   depoyments: UtilsCliClassMethod.getFrom($Cloud.prototype.deployments),
+    //   instances: UtilsCliClassMethod.getFrom($Cloud.prototype.instances),
+    //   processes: UtilsCliClassMethod.getFrom($Cloud.prototype.processes),
+    // });
+    // console.log('Initializing TaonProjectsWorker...');
+
     //#region @backend
     this.deploymentsWorker = new DeploymentsWorker(
       'taon-project-deployments-worker',
@@ -64,6 +75,23 @@ export class TaonProjectsWorker extends BaseCliWorker<
       'taon-project-instances-worker',
       `${global.frameworkName} cloud:instances`,
     );
+    this.processesWorker = new ProcessesWorker(
+      'taon-project-processes-worker',
+      `${global.frameworkName} cloud:processes`,
+    );
+
+    // this.deploymentsWorker = new DeploymentsWorker(
+    //   'taon-project-deployments-worker',
+    //   `${global.frameworkName} ${UtilsCliClassMethod.getFrom($Cloud.prototype.deployments)}`,
+    // );
+    // this.instancesWorker = new InstancesWorker(
+    //   'taon-project-instances-worker',
+    //   `${global.frameworkName} ${UtilsCliClassMethod.getFrom($Cloud.prototype.instances)}`,
+    // );
+    // this.processesWorker = new ProcessesWorker(
+    //   'taon-project-processes-worker',
+    //   `${global.frameworkName} ${UtilsCliClassMethod.getFrom($Cloud.prototype.processes)}`,
+    // );
     //#endregion
   }
 
@@ -78,6 +106,11 @@ export class TaonProjectsWorker extends BaseCliWorker<
     //#region @backendFunc
     Helpers.taskStarted(`Waiting for ports manager to be started...`);
     await this.ins.portsWorker.startDetachedIfNeedsToBeStarted({
+      useCurrentWindowForDetach: true,
+    });
+
+    Helpers.taskStarted(`Waiting for processes manager to be started...`);
+    await this.processesWorker.startDetachedIfNeedsToBeStarted({
       useCurrentWindowForDetach: true,
     });
 

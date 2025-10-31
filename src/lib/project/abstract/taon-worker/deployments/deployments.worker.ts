@@ -10,7 +10,8 @@ import { DeploymentsTerminalUI } from './deployments.terminal-ui';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
-export class DeploymentsWorker extends BaseCliWorker< // @ts-ignore TODO weird inheritance problem
+export class DeploymentsWorker extends BaseCliWorker<
+  // @ts-ignore TODO weird inheritance problem
   DeploymentsController,
   DeploymentsTerminalUI
 > {
@@ -22,6 +23,7 @@ export class DeploymentsWorker extends BaseCliWorker< // @ts-ignore TODO weird i
   // TODO ts ignore needed for some reason
   // @ts-ignore
   terminalUI = new DeploymentsTerminalUI(this);
+  // @ts-ignore
   controllerClass = DeploymentsController;
   //#endregion
 
@@ -48,7 +50,8 @@ export class DeploymentsWorker extends BaseCliWorker< // @ts-ignore TODO weird i
         const ctrl = await this.getControllerForRemoteConnection({
           calledFrom: 'deployment startNormallyInCurrentProcess',
         });
-        await ctrl.addExistedDeployments().request();
+        await ctrl.triggerTableClearAndAddExistedDeployments().request();
+        await ctrl.waitUntilTableClearAndAllExistedDeploymentsAdded();
       },
     });
 

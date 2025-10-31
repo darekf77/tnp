@@ -36,8 +36,10 @@ import {
 } from '../../../../constants';
 import { Development, EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
+import { DeploymentsController } from '../../taon-worker/deployments';
 import type { DeploymentReleaseData } from '../../taon-worker/deployments/deployments.models';
 import { DeploymentsUtils } from '../../taon-worker/deployments/deployments.utils';
+import { ProcessesController } from '../../taon-worker/processes/processes.controller';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 import { InsideStructuresElectron } from '../electron-app/tools/inside-struct-electron';
 
@@ -45,7 +47,6 @@ import { AppHostsRecreateHelper } from './tools/app-hosts-recreate-helper';
 import { AngularFeBasenameManager } from './tools/basename-manager';
 import { InsideStructuresApp } from './tools/inside-struct-app';
 import { MigrationHelper } from './tools/migrations-helper';
-
 //#endregion
 
 export class ArtifactAngularNodeApp extends BaseArtifact<
@@ -680,7 +681,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           `traefik.http.routers.${treafikKeyBackend}.entrypoints=websecure`,
           // `traefik.http.routers.${treafikKeyBackend}.tls.certresolver=myresolver`,
           `traefik.http.services.${treafikKeyBackend}.loadbalancer.server.port=$\{HOST_BACKEND_PORT_1\}`,
-containerLabel,
+          containerLabel,
           // only when sripping prefix
           // 'traefik.http.middlewares.strip-api.stripprefix.prefixes=/api',
           // 'traefik.http.routers.backend.middlewares=strip-api',
@@ -735,7 +736,7 @@ containerLabel,
             `traefik.http.routers.${treafikKeyFronend}.entrypoints=websecure`,
             // `traefik.http.routers.${treafikKeyFronend}.tls.certresolver=myresolver`,
             `traefik.http.services.${treafikKeyFronend}.loadbalancer.server.port=80`,
-containerLabel,
+            containerLabel,
           ];
           const treafikLabelsFEObject: Record<string, string> = {};
           treafikLabelsFE.forEach(label => {
@@ -817,15 +818,18 @@ ${dockerComposeYmlFileContent}
           overrideIfZipFileExists: true,
         });
 
+        const projData = {
+          destinationDomain: releaseOptions.website.domain,
+          version: releaseOptions.release.resolvedNewVersion,
+          envName: releaseOptions.release.envName,
+          envNumber: releaseOptions.release.envNumber || '',
+          releaseType: releaseOptions.release.releaseType as ReleaseType,
+          projectName: this.project.name,
+          targetArtifact: releaseOptions.release.targetArtifact,
+        } as DeploymentReleaseData;
+
         const newBasenameZipFile = FilePathMetaData.embedData(
-          {
-            projectName: this.project.name,
-            releaseType: releaseOptions.release.releaseType as ReleaseType,
-            version: releaseOptions.release.resolvedNewVersion,
-            envName: releaseOptions.release.envName,
-            envNumber: releaseOptions.release.envNumber || '',
-            targetArtifact: releaseOptions.release.targetArtifact,
-          } as DeploymentReleaseData,
+          _.pick(projData, ['destinationDomain', 'version']),
           path.basename(zipFileAbsPath),
           {
             skipAddingBasenameAtEnd: true,
@@ -861,18 +865,31 @@ ${path.dirname(zipFileAbsPath)}
 
           `);
 
-        const ctrl =
-          await this.project.ins.taonProjectsWorker.deploymentsWorker.getRemoteControllerFor(
+        const remoteContextDeployments =
+          await this.project.ins.taonProjectsWorker.deploymentsWorker.getRemoteContextFor(
             releaseOptions.release.taonInstanceIpOrDomain,
             portIfLocalhost,
           );
+
+        const deploymentController = remoteContextDeployments.getInstanceBy(
+          DeploymentsController,
+        );
+
+        const remoteContextProcesses =
+          await this.project.ins.taonProjectsWorker.processesWorker.getRemoteContextFor(
+            releaseOptions.release.taonInstanceIpOrDomain,
+            portIfLocalhost,
+          );
+
+        const processesController =
+          remoteContextProcesses.getInstanceBy(ProcessesController);
 
         let uploadResponse: MulterFileUploadResponse[];
         while (true) {
           try {
             Helpers.info(`Uploading zip file to taon server...`);
             globalSpinner.start();
-            uploadResponse = await ctrl.uploadLocalFileToServer(
+            uploadResponse = await deploymentController.uploadLocalFileToServer(
               zipFileAbsPath,
               {
                 onUploadProgress: (progressEvent: AxiosProgressEvent) => {
@@ -883,6 +900,7 @@ ${path.dirname(zipFileAbsPath)}
                   // console.log(`Upload progress: ${percentCompleted}%`);
                 },
               },
+              projData,
             );
 
             globalSpinner.succeed(`Deployment upload done!`);
@@ -901,8 +919,11 @@ ${path.dirname(zipFileAbsPath)}
 
         if (!releaseOptions.release.skipDeploy) {
           Helpers.info(`Starting deployment...`);
+          const forceStart = true;
           const deployment = (
-            await ctrl.startDeployment(uploadResponse[0].savedAs).request()
+            await deploymentController
+              .triggerDeploymentStart(uploadResponse[0].savedAs, forceStart)
+              .request()
           ).body.json;
           Helpers.info(`Deployment started! `);
 
@@ -914,12 +935,12 @@ STARTING DEPLOYMENT PREVIEW (PRESS ANY KEY TO MOVE BACK TO RELEASE FINSH SCREEN)
 
 
               `);
+
             await DeploymentsUtils.displayRealtimeProgressMonitor(
               deployment,
-              ctrl,
+              processesController,
               {
-                resolveWhenTextInStdoutOrStder:
-                  CoreModels.SPECIAL_APP_READY_MESSAGE,
+                resolveWhenTextInOutput: CoreModels.SPECIAL_APP_READY_MESSAGE,
               },
             );
           }

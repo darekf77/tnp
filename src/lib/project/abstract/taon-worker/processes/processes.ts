@@ -1,9 +1,9 @@
 //#region imports
 import { Taon } from 'taon/src';
-import { _ } from 'tnp-core/src';
+import { _, chalk, dateformat } from 'tnp-core/src';
 
 import { ProcessesDefaultsValues } from './processes.defaults-values';
-import { ProcessState } from './processes.models';
+import { ProcessesState } from './processes.models';
 //#endregion
 
 @Taon.Entity({
@@ -14,7 +14,8 @@ export class Processes extends Taon.Base.AbstractEntity<Processes> {
   //#region @websql
   @Taon.Orm.Column.Custom({
     type: 'varchar',
-    length: 500,
+    length: 1500,
+    nullable: false,
   })
   //#endregion
   command: string;
@@ -22,7 +23,8 @@ export class Processes extends Taon.Base.AbstractEntity<Processes> {
   //#region @websql
   @Taon.Orm.Column.Custom({
     type: 'varchar',
-    length: 1000,
+    length: 500,
+    default: process.cwd(),
   })
   //#endregion
   cwd: string;
@@ -30,16 +32,18 @@ export class Processes extends Taon.Base.AbstractEntity<Processes> {
   //#region @websql
   @Taon.Orm.Column.Custom({
     type: 'varchar',
-    length: 10,
-    default: 'created',
+    length: 20,
+    default: ProcessesState.NOT_STARTED,
+    nullable: false,
   })
   //#endregion
-  state: ProcessState;
+  state: ProcessesState;
 
   //#region @websql
   @Taon.Orm.Column.Custom({
     type: 'int',
     default: null,
+    nullable: true,
   })
   //#endregion
   pid: number;
@@ -48,9 +52,20 @@ export class Processes extends Taon.Base.AbstractEntity<Processes> {
   @Taon.Orm.Column.Custom({
     type: 'int',
     default: null,
+    nullable: true,
   })
   //#endregion
   ppid: number;
+
+  //#region @websql
+  @Taon.Orm.Column.SimpleJson()
+  //#endregion
+  conditionProcessActiveStdout: string[];
+
+  //#region @websql
+  @Taon.Orm.Column.SimpleJson()
+  //#endregion
+  conditionProcessActiveStderr: string[];
 
   //#region @websql
   @Taon.Orm.Column.Custom({
@@ -58,5 +73,47 @@ export class Processes extends Taon.Base.AbstractEntity<Processes> {
     default: '',
   })
   //#endregion
-  output: string;
+  /**
+   * last 40 lines of output
+   * (combined stdout + stderr)
+   */
+  outputLast40lines: string;
+
+  //#region @websql
+  @Taon.Orm.Column.String500()
+  //#endregion
+  /**
+   * absolute path to file where stdout + stderr is logged
+   */
+  fileLogAbsPath: string;
+
+  //#region getters / preview string
+  get previewString(): string {
+    return `${this.id} ${this.command} in ${this.cwd} `;
+  }
+  //#endregion
+
+  fullPreviewString(options?: { boldValues?: boolean }): string {
+    //#region @websqlFunc
+    options = options || {};
+    const boldValues = !!options.boldValues;
+
+    const boldFn = (str: string | number) =>
+      boldValues ? chalk.bold(str?.toString()) : str;
+
+    const processFromDB = this;
+
+    return `
+  > id: ${boldFn(processFromDB.id)}
+  > cwd: ${boldFn(processFromDB.cwd)}
+  > command: ${boldFn(processFromDB.command)}
+  > state: ${boldFn(processFromDB.state)}
+  > pid: ${boldFn(processFromDB.pid)}
+  > ppid: ${boldFn(processFromDB.ppid)}
+  > log path: ${boldFn(processFromDB.fileLogAbsPath)}
+  > conditionProcessActiveStdout: ${boldFn((processFromDB.conditionProcessActiveStdout || []).join(', ') || '<empty>')}
+  > conditionProcessActiveStderr: ${boldFn((processFromDB.conditionProcessActiveStderr || []).join(', ') || '<empty>')}
+    `;
+    //#endregion
+  }
 }

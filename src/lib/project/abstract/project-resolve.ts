@@ -1,7 +1,13 @@
 //#region imports
 import { config, urlRepoTaonContainers } from 'tnp-config/src';
 import { LibTypeArr } from 'tnp-config/src';
-import { child_process, fse, os, requiredForDev } from 'tnp-core/src';
+import {
+  child_process,
+  fse,
+  os,
+  requiredForDev,
+  UtilsCliClassMethod,
+} from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { CLI, UtilsOs } from 'tnp-core/src';
 import { Helpers, BaseProjectResolver } from 'tnp-helpers/src';
@@ -10,6 +16,7 @@ import {
   DEFAULT_FRAMEWORK_VERSION,
   taonRepoPathUserInUserDir,
 } from '../../constants';
+// import { $Global } from '../cli/cli-_GLOBAL_';
 
 import type { Project } from './project';
 import { TaonProjectsWorker } from './taon-worker/taon.worker';
@@ -69,6 +76,17 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
         firstContainer?.pathFor('node_modules/tnp') || config.dirnameForTnp;
       //#endregion
     }
+
+    // TODO $Global not available here
+    // const commandStartWorker = `${cliToolName} ${UtilsCliClassMethod.getFrom(
+    //   $Global.prototype.startCliServiceTaonProjectsWorker,
+    //   { globalMethod: true, argsToParse: { skipCoreCheck: true } },
+    // )}`;
+
+    // const commandStartWorker = `${cliToolName} ${
+    //   'startCliServiceTaonProjectsWorker --skipCoreCheck'
+    //   // as keyof $Global
+    // }`;
 
     this.taonProjectsWorker = new TaonProjectsWorker(
       'taon-projects',
@@ -450,6 +468,13 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     //#endregion
 
     if (syncFromCommand) {
+      // const command =
+      //   `${config.frameworkName} ` +
+      //   `${UtilsCliClassMethod.getFrom(
+      //     $Global.prototype.reinstallCoreContainers,
+      //     { globalMethod: true, argsToParse: { skipCoreCheck: true } },
+      //   )}`;
+      // Helpers.run(command).sync();
       Helpers.run(
         // $Global.prototype.reinstallCoreContainers.name
         `${config.frameworkName} ${'reinstallCoreContainers'} --skipCoreCheck`,
@@ -479,6 +504,14 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
       CLI.installEnvironment(requiredForDev);
 
+      // const commandEnvInstall = `${config.frameworkName} ${UtilsCliClassMethod.getFrom(
+      //   $Global.prototype.ENV_INSTALL,
+      //   {
+      //     globalMethod: true,
+      //     argsToParse: { skipCoreCheck: true },
+      //   },
+      // )}`;
+      // child_process.execSync(commandEnvInstall, { stdio: [0, 1, 2] });
       try {
         child_process.execSync(
           //$Global.prototype.ENV_INSTALL.name

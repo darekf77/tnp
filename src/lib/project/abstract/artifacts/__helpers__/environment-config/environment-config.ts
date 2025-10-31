@@ -220,7 +220,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       // @ts-ignore
       env = require(pathToEnvTs)?.default;
     } catch (error) {
-      // TODO QUICK_FIX @UNCOMMENT @LAST
+      // TODO QUICK_FIX @UNCOMMENT
       if (this.project.framework.isCoreProject) {
         return {};
       }
@@ -252,7 +252,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       UtilsTypescript.clearRequireCacheRecursive(this.absPathToEnvTs);
       configStandaloneEnv = require(this.absPathToEnvTs)?.default;
     } catch (error) {
-      // TODO QUICK_FIX @UNCOMMENT @LAST
+      // TODO QUICK_FIX @UNCOMMENT
       if (this.project.framework.isCoreProject) {
         return {};
       }
