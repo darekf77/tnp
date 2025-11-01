@@ -36,7 +36,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
       .triggerDeploymentStop(deployment.baseFileNameWithHashDatetime)
       .request();
 
-    await ctrl.waitUntilDeploymentStopped(deployment.id);
+    await ctrl.waitUntilDeployment(deployment.id, 'stopped');
 
     console.log(`Stopping done..`);
     await UtilsTerminal.pressAnyKeyToContinueAsync();

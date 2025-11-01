@@ -304,4 +304,5 @@ export const TO_REMOVE_TAG = `/${'TO_REMOVE'
   .map(c => _.times(8, () => c).join(''))
   .join('')}`;
 
-// console.log('TO_REMOVE_TAG', TO_REMOVE_TAG);
+export const ERR_MESSAGE_DEPLOYMENT_NOT_FOUND = 'DEPLOYMENT_NOT_FOUND';
+  // console.log('TO_REMOVE_TAG', TO_REMOVE_TAG);

@@ -347,10 +347,6 @@ ${processFromDb.fullPreviewString({
             Helpers.readFile(processFromDB.fileLogAbsPath) ||
               '< empty log file >',
           );
-
-          // await UtilsTerminal.pressAnyKeyToContinueAsync({
-          //   message: 'Press any key to go back to main menu',
-          // });
         },
       },
       //#endregion

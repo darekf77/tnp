@@ -11,6 +11,7 @@ import { _, crossPlatformPath, Helpers } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { BaseCliWorkerController } from 'tnp-helpers/src';
 
+import { ERR_MESSAGE_DEPLOYMENT_NOT_FOUND } from '../../../../constants';
 import { ProcessesController } from '../processes/processes.controller';
 
 import { Deployments } from './deployments';
@@ -66,7 +67,11 @@ export class DeploymentsController extends BaseCliWorkerController<DeploymentRel
         },
       });
       if (!deployment) {
-        throw new Error(`Deployment with id ${deploymentId} not found`);
+        Taon.error({
+          message: `Deployment with id ${deploymentId} not found`,
+          status: 404,
+          code: ERR_MESSAGE_DEPLOYMENT_NOT_FOUND,
+        });
       }
 
       return deployment;
@@ -187,17 +192,30 @@ export class DeploymentsController extends BaseCliWorkerController<DeploymentRel
   //#endregion
 
   //#region wait until deployment killed
-  async waitUntilDeploymentStopped(
+  async waitUntilDeployment(
     deploymentId: string | number,
+    action: 'stopped' | 'removed',
   ): Promise<void> {
     await this._waitForProperStatusChange<Deployments>({
-      actionName: `Waiting until deployment ${deploymentId} is stopped`,
+      actionName: `Waiting until deployment ${deploymentId} is ${action}`,
       request: () =>
         this.getByDeploymentId(deploymentId).request({
           timeout: 2000,
         }),
+      // TODO @LAST wait until deployment fail with messages
       statusCheck: resp => {
         return DeploymentsStatesAllowedStart.includes(resp.body.json.status);
+      },
+      // TODO @LAST
+      loopRequestsOnBackendError: opt => {
+        if (action === 'removed') {
+          if (opt.errorData instanceof Taon.HttpResponseError) {
+            return (
+              opt.errorData.body.json.code === ERR_MESSAGE_DEPLOYMENT_NOT_FOUND
+            );
+          }
+        }
+        return false;
       },
     });
   }
