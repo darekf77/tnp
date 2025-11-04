@@ -19,7 +19,7 @@ import { InstancesWorker } from './instances.worker';
 
 export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker> {
   async headerText(): Promise<string> {
-    return 'Taon Instances';
+    return null;
   }
 
   textHeaderStyle(): CoreModels.CfontStyle {
@@ -36,8 +36,10 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
         name: 'Get instances list',
         action: async () => {
           Helpers.info(`Fetching list...`);
-          const ctrl = await this.worker.getControllerForRemoteConnection({
-            calledFrom: 'Get stuff from backend action',
+          const ctrl = await this.worker.getRemoteControllerFor({
+            methodOptions: {
+              calledFrom: 'Get instances backend terminal action',
+            },
           });
           const list = (await ctrl.getEntities().request())?.body.json || [];
           console.log(
@@ -53,8 +55,10 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
         name: 'Delete instance',
         action: async () => {
           Helpers.info(`Fetching list...`);
-          const ctrl = await this.worker.getControllerForRemoteConnection({
-            calledFrom: 'Get stuff from backend action',
+          const ctrl = await this.worker.getRemoteControllerFor({
+            methodOptions: {
+              calledFrom: 'Get stuff from backend action',
+            },
           });
           const list = (await ctrl.getEntities().request())?.body.json || [];
 
@@ -103,8 +107,10 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
         name: 'Create new instance',
         action: async () => {
           Helpers.info(`Inserting new deployment`);
-          const ctrl = await this.worker.getControllerForRemoteConnection({
-            calledFrom: 'Insert new deployment action',
+          const ctrl = await this.worker.getRemoteControllerFor({
+            methodOptions: {
+              calledFrom: 'Insert new deployment action',
+            },
           });
 
           const ipAddress = await UtilsTerminal.input({

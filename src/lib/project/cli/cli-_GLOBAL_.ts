@@ -44,6 +44,7 @@ import {
   UtilsNpm,
   UtilsTypescript,
 } from 'tnp-helpers/src';
+import { BaseCLiWorkerStartMode } from 'tnp-helpers/src';
 import { createGenerator, SchemaGenerator } from 'ts-json-schema-generator';
 
 import {
@@ -1450,7 +1451,15 @@ ${this.project.children
   @UtilsCliClassMethod.decoratorMethod('startCliServiceTaonProjectsWorker')
   async startCliServiceTaonProjectsWorker() {
     //#region @backendFunc
-    await this.ins.taonProjectsWorker.cliStartProcedure(this.params);
+    await this.ins.taonProjectsWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          ...this.params,
+          mode: BaseCLiWorkerStartMode.IN_CURRENT_PROCESS,
+        },
+        calledFrom: 'cli-GLobal',
+      },
+    });
     //#endregion
   }
   //#endregion

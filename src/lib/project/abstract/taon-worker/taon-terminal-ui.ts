@@ -126,12 +126,22 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
           });
         },
       },
+      processes: {
+        name: 'Manage Processes',
+        action: async () => {
+          await this.worker.processesWorker.terminalUI.infoScreen({
+            exitIsOnlyReturn: true,
+          });
+        },
+      },
       environments: {
         name: 'Manage Environments',
         action: async () => {
           console.log('hello world');
-          const ctrl = await this.worker.getControllerForRemoteConnection({
-            calledFrom: 'Manage Environments action',
+          const ctrl = await this.worker.getRemoteControllerFor({
+            methodOptions: {
+              calledFrom: 'Manage Environments action',
+            },
           });
           const list =
             (await ctrl.getEnvironments().request())?.body.json || [];

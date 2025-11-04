@@ -43,8 +43,10 @@ export class ProcessesWorker extends BaseCliWorker<
     //#region @backendFunc
     await super.startNormallyInCurrentProcess({
       actionBeforeTerminalUI: async () => {
-        const ctx = await this.gerContextForRemoteConnection({
-          calledFrom: 'processes startNormallyInCurrentProcess',
+        const ctx = await this.getRemoteContextFor({
+          methodOptions: {
+            calledFrom: 'processes startNormallyInCurrentProcess',
+          },
         });
         const processController = ctx.getInstanceBy(ProcessesController);
         Helpers.info(`Clearing processes table before starting terminal UI`);

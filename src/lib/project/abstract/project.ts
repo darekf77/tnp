@@ -301,7 +301,13 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       releaseOptions.release.targetArtifact === 'angular-node-app'
     ) {
       const ctrl =
-        await this.ins.taonProjectsWorker.instancesWorker.getControllerForRemoteConnection();
+        await this.ins.taonProjectsWorker.instancesWorker.getRemoteControllerFor(
+          {
+            methodOptions: {
+              calledFrom: 'Project.release',
+            },
+          },
+        );
 
       const instances = (await ctrl.getEntities().request())?.body.json || [];
       const options = instances.map(i => ({

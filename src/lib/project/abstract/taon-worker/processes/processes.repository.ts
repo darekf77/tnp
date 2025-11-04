@@ -153,18 +153,27 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
        * 0 - process done
        */
       realProcess.on('exit', async (code, data) => {
-        await this.getAndUpdateProcess(proc.id, proc1 => {
-          if (proc1.state === ProcessesState.KILLING) {
-            proc1.state = ProcessesState.KILLED;
-          } else {
-            proc1.state =
-              code === 0
-                ? ProcessesState.ENDED_OK
-                : ProcessesState.ENDED_WITH_ERROR;
-          }
-          delete this.processFileLoggers[proc1.id];
-          proc1.pid = null;
-        });
+        await this.getAndUpdateProcess(
+          proc.id,
+          proc1 => {
+            if (proc1) {
+              if (proc1.state === ProcessesState.KILLING) {
+                proc1.state = ProcessesState.KILLED;
+              } else {
+                proc1.state =
+                  code === 0
+                    ? ProcessesState.ENDED_OK
+                    : ProcessesState.ENDED_WITH_ERROR;
+              }
+              proc1.pid = null;
+            }
+            delete this.processFileLoggers[proc.id];
+          },
+          {
+            skipThrowingErrorWhenNoProcess: true,
+            executeCallbackWhenNoProcess: true,
+          },
+        );
       });
       //#endregion
     });
@@ -173,9 +182,15 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
   }
   //#endregion
 
-  //#region stop process
-  public async triggerStop(processId: string | number): Promise<void> {
+  //#region stop/remove process
+  public async triggerStop(
+    processId: string | number,
+    options?: {
+      deleteAfterKill?: boolean;
+    },
+  ): Promise<void> {
     //#region @websqlFunc
+    options = options || {};
     await this.getAndUpdateProcess(processId, proc => {
       if (!ProcessesStatesAllowedStop.includes(proc.state)) {
         throw new Error(
@@ -190,7 +205,10 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
         } catch (error) {
           console.error(`Not able to kill process by pid ${proc.pid}`);
         }
-      }, 500);
+        if (options.deleteAfterKill) {
+          await this.remove(proc);
+        }
+      }, 1000);
     });
     //#endregion
   }
@@ -205,14 +223,24 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
      * Callback with process to update
      * (any modifications done in callback will be saved after its end)
      */
-    callback: (proc: Processes) => Promise<void> | void,
+    callback: (proc?: Processes) => Promise<void> | void,
+    options?: {
+      skipThrowingErrorWhenNoProcess?: boolean;
+      executeCallbackWhenNoProcess?: boolean;
+    },
   ): Promise<void> {
     //#region @backendFunc
-
+    options = options || {};
     const proc = await this.findOne({
       where: { id: processId?.toString() },
     });
     if (!proc) {
+      if (options.skipThrowingErrorWhenNoProcess) {
+        if (options.executeCallbackWhenNoProcess) {
+          await callback();
+        }
+        return;
+      }
       throw new Error(`No process with id ${processId}`);
     }
     await callback(proc);

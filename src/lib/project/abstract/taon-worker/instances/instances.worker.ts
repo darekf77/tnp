@@ -43,8 +43,10 @@ export class InstancesWorker extends BaseCliWorker<
   public async startNormallyInCurrentProcess(): Promise<void> {
     //#region @backendFunc
     await super.startNormallyInCurrentProcess();
-    const ctrl = await this.getControllerForRemoteConnection({
-      calledFrom: 'deployment startNormallyInCurrentProcess',
+    const ctrl = await this.getRemoteControllerFor({
+      methodOptions: {
+        calledFrom: 'instances startNormallyInCurrentProcess',
+      },
     });
     //#endregion
   }

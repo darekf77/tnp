@@ -33,7 +33,7 @@ export const keysMap = {
   envName: 'enm',
   envNumber: 'enu',
   targetArtifact: 'ta',
-} as { [key in keyof DeploymentReleaseData]: string };
+} as Required<{ [key in keyof DeploymentReleaseData]: string }>;
 
 export const dirnameFromSourceToProject = (linkToSource: string): string => {
   const orgParamLinkAbs = linkToSource;
@@ -304,4 +304,6 @@ export const TO_REMOVE_TAG = `/${'TO_REMOVE'
   .map(c => _.times(8, () => c).join(''))
   .join('')}`;
 
+export const ERR_MESSAGE_DEPLOYMENT_NOT_FOUND = 'DEPLOYMENT_NOT_FOUND';
+export const ERR_MESSAGE_PROCESS_NOT_FOUND = 'PROCESS_NOT_FOUND';
 // console.log('TO_REMOVE_TAG', TO_REMOVE_TAG);

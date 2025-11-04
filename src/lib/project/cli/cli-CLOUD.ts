@@ -8,7 +8,8 @@ import {
   UtilsTerminal,
 } from 'tnp-core/src';
 import { UtilsCliClassMethod } from 'tnp-core/src';
-import { Helpers, UtilsZip } from 'tnp-helpers/src';
+import { BaseCLiWorkerStartMode, Helpers, UtilsZip } from 'tnp-helpers/src';
+import { BaseCLiWorkerStartParams } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../options';
 // import { ProcessWorker } from '../abstract/taon-worker/processes/process/process.worker';
@@ -19,13 +20,21 @@ import { BaseCli } from './base-cli';
 // @ts-ignore TODO weird inheritance problem
 
 export class $Cloud extends BaseCli {
+  declare params: EnvOptions & Partial<BaseCLiWorkerStartParams>;
   static [UtilsCliClassMethod.staticClassNameProperty] = '$Cloud';
 
   //#region _
   async _(): Promise<void> {
     const { Project } = await import('../abstract/project');
-    await Project.ins.taonProjectsWorker.cliStartProcedure(this.params);
-    // await this.ins.taonProjectsWorker.cliStartProcedure(this.params);
+    await Project.ins.taonProjectsWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          ...this.params,
+          mode: BaseCLiWorkerStartMode.IN_CURRENT_PROCESS,
+        },
+        calledFrom: 'cli-CLOUD/$Cloud._',
+      },
+    });
   }
   //#endregion
 
@@ -155,9 +164,15 @@ export class $Cloud extends BaseCli {
     // UtilsTerminal.drawBigText('Deployments');
     // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
     const { Project } = await import('../abstract/project');
-    await Project.ins.taonProjectsWorker.deploymentsWorker.cliStartProcedure(
-      this.params,
-    );
+    await Project.ins.taonProjectsWorker.deploymentsWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          ...this.params,
+          mode: BaseCLiWorkerStartMode.IN_CURRENT_PROCESS,
+        },
+        calledFrom: 'cli-CLOUD/$Cloud.deployments',
+      },
+    });
   }
   //#endregion
 
@@ -166,9 +181,15 @@ export class $Cloud extends BaseCli {
   async instances(): Promise<void> {
     // UtilsTerminal.drawBigText('Deployments');
     const { Project } = await import('../abstract/project');
-    await Project.ins.taonProjectsWorker.instancesWorker.cliStartProcedure(
-      this.params,
-    );
+    await Project.ins.taonProjectsWorker.instancesWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          ...this.params,
+          mode: BaseCLiWorkerStartMode.IN_CURRENT_PROCESS,
+        },
+        calledFrom: 'cli-CLOUD/$Cloud.instances',
+      },
+    });
   }
   //#endregion
 
@@ -177,9 +198,15 @@ export class $Cloud extends BaseCli {
   async processes(): Promise<void> {
     // UtilsTerminal.drawBigText('Deployments');
     const { Project } = await import('../abstract/project');
-    await Project.ins.taonProjectsWorker.processesWorker.cliStartProcedure(
-      this.params,
-    );
+    await Project.ins.taonProjectsWorker.processesWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          ...this.params,
+          mode: BaseCLiWorkerStartMode.IN_CURRENT_PROCESS,
+        },
+        calledFrom: 'cli-CLOUD/$Cloud.processes',
+      },
+    });
   }
   //#endregion
 
@@ -188,7 +215,13 @@ export class $Cloud extends BaseCli {
     // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
     const { Project } = await import('../abstract/project');
     const ctrl =
-      await Project.ins.taonProjectsWorker.deploymentsWorker.getControllerForRemoteConnection();
+      await Project.ins.taonProjectsWorker.deploymentsWorker.getRemoteControllerFor(
+        {
+          methodOptions: {
+            calledFrom: 'cli-CLOUD/$Cloud.send',
+          },
+        },
+      );
 
     const filePath = path.isAbsolute(this.firstArg)
       ? crossPlatformPath(this.firstArg)

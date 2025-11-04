@@ -3,11 +3,11 @@ import axios from 'axios';
 import { config } from 'tnp-config/src';
 import { chalk, Helpers, UtilsNetwork, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
-import { BaseStartConfig } from 'tnp-helpers/src';
+import { UtilsOs } from 'tnp-core/src';
+import { BaseCLiWorkerStartMode, BaseStartConfig } from 'tnp-helpers/src';
 
 // import { globalSpinner } from './constants';
 import cliClassArr from './project/cli/index';
-import { UtilsOs } from 'tnp-core/src';
 
 //#endregion
 
@@ -93,7 +93,14 @@ export async function start(
   ) {
     // console.log('starting projects workers...');
 
-    await ProjectClass.ins.taonProjectsWorker.startDetachedIfNeedsToBeStarted();
+    await ProjectClass.ins.taonProjectsWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          mode: BaseCLiWorkerStartMode.DETACHED_WINDOW,
+        },
+        calledFrom: 'start framework function',
+      },
+    });
   }
 
   new BaseStartConfig({

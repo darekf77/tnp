@@ -11,6 +11,7 @@ import { _, crossPlatformPath, Helpers } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { BaseCliWorkerController } from 'tnp-helpers/src';
 
+import { ERR_MESSAGE_DEPLOYMENT_NOT_FOUND } from '../../../../constants';
 import { ProcessesController } from '../processes/processes.controller';
 
 import { Deployments } from './deployments';
@@ -32,8 +33,8 @@ import { DeploymentsRepository } from './deployments.repository';
 export class DeploymentsController extends BaseCliWorkerController<DeploymentReleaseData> {
   //#region fields & getters
 
-  // @ts-ignore
-  protected deploymentsRepository =
+  // @ts-ignore remove after move to separated repo
+  protected deploymentsRepository = // @ts-ignore remove after move to separated repo
     this.injectCustomRepo<DeploymentsRepository>(DeploymentsRepository);
 
   //#endregion
@@ -66,7 +67,11 @@ export class DeploymentsController extends BaseCliWorkerController<DeploymentRel
         },
       });
       if (!deployment) {
-        throw new Error(`Deployment with id ${deploymentId} not found`);
+        Taon.error({
+          message: `Deployment with id ${deploymentId} not found`,
+          status: 404,
+          code: ERR_MESSAGE_DEPLOYMENT_NOT_FOUND,
+        });
       }
 
       return deployment;
@@ -101,10 +106,11 @@ export class DeploymentsController extends BaseCliWorkerController<DeploymentRel
   }) // @ts-ignore TODO weird inheritance problem
   uploadFormDataToServer(
     @Taon.Http.Param.Body() formData: FormData,
+    @Taon.Http.Param.Query() queryParams?: DeploymentReleaseData,
   ): Models.Http.Response<MulterFileUploadResponse[]> {
     //#region @backendFunc
     // @ts-ignore TODO weird inheritance problem
-    return super.uploadFormDataToServer(formData);
+    return super.uploadFormDataToServer(formData, queryParams);
     //#endregion
   }
 
@@ -113,12 +119,7 @@ export class DeploymentsController extends BaseCliWorkerController<DeploymentRel
     queryParams?: DeploymentReleaseData,
   ): Promise<void> {
     //#region @backendFunc
-    await this.deploymentsRepository.save(
-      new Deployments().clone({
-        baseFileNameWithHashDatetime: path.basename(file.savedAs),
-        size: file.size,
-      }),
-    );
+    await this.deploymentsRepository.saveDeployment(file, queryParams);
     //#endregion
   }
 
@@ -186,24 +187,76 @@ export class DeploymentsController extends BaseCliWorkerController<DeploymentRel
   }
   //#endregion
 
-  //#region wait until deployment killed
+  //#region wait deployment has compose up process
+  async waitUntilDeploymentHasComposeUpProcess(
+    deploymentId: string | number,
+  ): Promise<void> {
+    //#region @backendFunc
+    await this._waitForProperStatusChange<Deployments>({
+      actionName: `Waiting until deployment ${deploymentId} has compose up process`,
+      request: () =>
+        // @ts-ignore remove after move to separated repo
+        this.getByDeploymentId(deploymentId).request({
+          timeout: 1000,
+        }),
+      statusCheck: resp => {
+        return !!resp.body.json.processIdComposeUp;
+      },
+    });
+    //#endregion
+  }
+  //#endregion
+
+  //#region wait until deployment stopped
   async waitUntilDeploymentStopped(
     deploymentId: string | number,
   ): Promise<void> {
+    //#region @backendFunc
     await this._waitForProperStatusChange<Deployments>({
       actionName: `Waiting until deployment ${deploymentId} is stopped`,
       request: () =>
+        // @ts-ignore
         this.getByDeploymentId(deploymentId).request({
-          timeout: 2000,
+          timeout: 1000,
         }),
       statusCheck: resp => {
         return DeploymentsStatesAllowedStart.includes(resp.body.json.status);
       },
     });
+    //#endregion
   }
   //#endregion
 
-  //#region remove deployment
+  //#region wait until deployment removed
+  async waitUntilDeploymentRemoved(
+    deploymentId: string | number,
+  ): Promise<void> {
+    //#region @backendFunc
+    await this._waitForProperStatusChange<Deployments>({
+      actionName: `Waiting until deployment ${deploymentId} is removed`,
+      request: () =>
+        // @ts-ignore
+        this.getByDeploymentId(deploymentId).request({
+          timeout: 1000,
+        }),
+      loopRequestsOnBackendError: opt => {
+        if (
+          opt.taonError &&
+          opt.taonError.body.json.code === ERR_MESSAGE_DEPLOYMENT_NOT_FOUND
+        ) {
+          return false;
+        }
+        // if (opt.unknownError || opt.unknownHttpError) {
+        //   return true;
+        // }
+        return true;
+      },
+    });
+    //#endregion
+  }
+  //#endregion
+
+  //#region trigger remove deployment
   @Taon.Http.POST()
   triggerDeploymentRemove(
     @Taon.Http.Param.Body('baseFileNameWithHashDatetime')

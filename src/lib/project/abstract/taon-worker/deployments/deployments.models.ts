@@ -12,7 +12,7 @@ export interface DeploymentReleaseData {
   releaseType: ReleaseType;
   version: string;
   envName: CoreModels.EnvironmentNameTaon;
-  envNumber: string;
+  envNumber?: string;
   targetArtifact: ReleaseArtifactTaon;
 }
 

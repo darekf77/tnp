@@ -12,9 +12,17 @@ export namespace ProcessesUtils {
     },
   ): Promise<void> => {
     //#region @backendFunc
+    if (!processId) {
+      throw new Error(`processId is required`);
+    }
+    if( !processesController) {
+      throw new Error(`processesController is required`);
+    }
     options = options || {};
     UtilsTerminal.clearConsole();
-
+    Helpers.info(`Waiting for process ${processId} to start...`);
+    await processesController.waitUntilProcessStartedOrActive(processId);
+    Helpers.info(`PRESS ANY KEY TO STOP DISPLAYING PROGRESS...`);
     const procData = await processesController
       .getByProcessID(processId)
       .request();
@@ -60,7 +68,7 @@ export namespace ProcessesUtils {
           }
         });
       let closing = false;
-      Helpers.info(`PRESS ANY KEY TO STOP DISPLAYING PROGRESS...`);
+
       process.stdin.setRawMode(true);
       process.stdin.resume();
       process.stdin.on('data', () => {

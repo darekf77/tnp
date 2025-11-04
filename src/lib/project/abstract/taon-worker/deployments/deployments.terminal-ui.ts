@@ -18,7 +18,7 @@ import { DeploymentsWorker } from './deployments.worker';
 // @ts-ignore TODO weird inheritance problem
 export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWorker> {
   async headerText(): Promise<string> {
-    return 'Taon Deployments';
+    return null;
   }
 
   textHeaderStyle(): CoreModels.CfontStyle {
@@ -31,7 +31,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     ctrl: DeploymentsController,
   ): Promise<void> {
     //#region @backendFunc
-    console.log(`Stopping deployment...`);
+    console.log(`Stopping deployment... please wait...`);
     await ctrl
       .triggerDeploymentStop(deployment.baseFileNameWithHashDatetime)
       .request();
@@ -50,10 +50,12 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     ctrl: DeploymentsController,
   ): Promise<void> {
     //#region @backendFunc
-    console.log(`Removing deployment...`);
+    console.log(`Removing deployment... please wait...`);
     await ctrl
       .triggerDeploymentRemove(deployment.baseFileNameWithHashDatetime)
       .request();
+
+    await ctrl.waitUntilDeploymentRemoved(deployment.id);
 
     console.log(`Removing done..`);
     await UtilsTerminal.pressAnyKeyToContinueAsync();
@@ -77,12 +79,39 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
           !!options.forceStart,
         )
         .request();
-
+      console.log(`Waiting for process to start...`);
+      await ctrl.waitUntilDeploymentHasComposeUpProcess(deployment.id);
       console.log(`deployment process started...`);
     } catch (error) {
       console.error('Fail to start deployment');
     }
     await UtilsTerminal.pressAnyKeyToContinueAsync();
+    //#endregion
+  }
+  //#endregion
+
+  //#region refetch deployment
+  protected async refetchDeployment(
+    deployment: Deployments,
+    deploymentsController: DeploymentsController,
+  ): Promise<Deployments> {
+    //#region @backendFunc
+    while (true) {
+      try {
+        deployment = (
+          await deploymentsController.getByDeploymentId(deployment.id).request()
+        ).body.json;
+        return deployment;
+      } catch (error) {
+        const fetchAgain = await UtilsTerminal.confirm({
+          message: `Not able to fetch deployment (id=${deployment.id}). Try again?`,
+          defaultValue: true,
+        });
+        if (!fetchAgain) {
+          return;
+        }
+      }
+    }
     //#endregion
   }
   //#endregion
@@ -101,12 +130,9 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
       ).body.json;
 
       // UtilsTerminal.clearConsole();
-      Helpers.info(`You selected deployment:
-
-${deployment.fullPreviewString({
-  boldValues: true,
-})}
-
+      Helpers.info(`Selected deployment:
+  for domain: ${deployment.destinationDomain}, version: ${deployment.version}
+  current status: ${deployment.status}, arrived at: ${deployment.arrivalDate}
     `);
 
       const choices = {
@@ -116,10 +142,13 @@ ${deployment.fullPreviewString({
         startDeployment: {
           name: 'Start Deployment',
         },
+        info: {
+          name: 'Deployment info',
+        },
         realtimeMonitor: {
           name: 'Realtime Progress Monitor',
         },
-        displayLog: {
+        displayDeploymentLog: {
           name: 'Display Log File',
         },
         stopDeployment: {
@@ -139,25 +168,75 @@ ${deployment.fullPreviewString({
 
       const selected = await UtilsTerminal.select<keyof typeof choices>({
         choices,
-        question: 'What do you want to do?',
+        question: '[Deployments] What do you want to do?',
       });
 
       switch (selected) {
         case 'back':
           return;
+        case 'displayDeploymentLog':
+          deployment = await this.refetchDeployment(
+            deployment,
+            deploymentsController,
+          );
+          if (!deployment) {
+            return;
+          }
+          UtilsTerminal.clearConsole();
+          const processComposeUp = deployment.processIdComposeUp;
+          try {
+            const processFromDb = await processesController
+              .getByProcessID(processComposeUp)
+              .request()
+              .then(r => r.body.json);
+
+            await UtilsTerminal.previewLongListGitLogLike(
+              Helpers.readFile(processFromDb.fileLogAbsPath) ||
+                '< empty log file >',
+            );
+          } catch (error) {
+            console.error(
+              `Error fetching process log for process id: ${processComposeUp}`,
+            );
+            await UtilsTerminal.pressAnyKeyToContinueAsync();
+          }
+          break;
+        case 'info':
+          deployment = await this.refetchDeployment(
+            deployment,
+            deploymentsController,
+          );
+          if (!deployment) {
+            return;
+          }
+          UtilsTerminal.clearConsole();
+          console.log(deployment.fullPreviewString({ boldValues: true }));
+          await UtilsTerminal.pressAnyKeyToContinueAsync();
+          break;
         case 'startDeployment':
+          const displayRealtimePreview = await UtilsTerminal.confirm({
+            message: `Would you like to see realtime preview in terminal after starting?`,
+            defaultValue: true,
+          });
+
           await this.startDeployment(deployment, deploymentsController, {
             forceStart: false,
           });
-          deployment = (
-            await deploymentsController
-              .getByDeploymentId(deployment.id)
-              .request()
-          ).body.json;
-          await DeploymentsUtils.displayRealtimeProgressMonitor(
-            deployment,
-            processesController,
-          );
+
+          if (displayRealtimePreview) {
+            deployment = await this.refetchDeployment(
+              deployment,
+              deploymentsController,
+            );
+            if (!deployment) {
+              return;
+            }
+            await DeploymentsUtils.displayRealtimeProgressMonitor(
+              deployment,
+              processesController,
+            );
+          }
+
           break;
         case 'realtimeMonitor':
           await DeploymentsUtils.displayRealtimeProgressMonitor(
@@ -189,15 +268,21 @@ ${deployment.fullPreviewString({
         action: async () => {
           Helpers.info(`Fetching deployments data...`);
           const deploymentsController =
-            await this.worker.getControllerForRemoteConnection({
-              calledFrom: 'Get stuff from backend action',
+            await this.worker.getRemoteControllerFor({
+              methodOptions: {
+                calledFrom: 'Get stuff from backend action',
+              },
             });
 
-          const remoteContextProcesses =
-            await Project.ins.taonProjectsWorker.processesWorker.gerContextForRemoteConnection();
-
           const processesController =
-            remoteContextProcesses.getInstanceBy(ProcessesController);
+            await Project.ins.taonProjectsWorker.processesWorker.getRemoteControllerFor(
+              {
+                methodOptions: {
+                  calledFrom: 'Deployments.getStuffFromBackend',
+                },
+                controllerClass: ProcessesController,
+              },
+            );
 
           while (true) {
             const list =
@@ -215,7 +300,7 @@ ${deployment.fullPreviewString({
 
             const selected = await UtilsTerminal.select<string>({
               choices: options,
-              question: 'Select what to do',
+              question: 'Select deployment',
             });
 
             if (selected !== 'back') {
@@ -236,7 +321,7 @@ ${deployment.fullPreviewString({
       //   name: 'Insert new deployment',
       //   action: async () => {
       //     Helpers.info(`Inserting new deployment`);
-      //     const ctrl = await this.worker.getControllerForRemoteConnection({
+      //     const ctrl = await this.worker.getRemoteControllerFor({
       //       calledFrom: 'Insert new deployment action',
       //     });
       //     try {

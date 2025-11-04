@@ -47,8 +47,10 @@ export class DeploymentsWorker extends BaseCliWorker<
     //#region @backendFunc
     await super.startNormallyInCurrentProcess({
       actionBeforeTerminalUI: async () => {
-        const ctrl = await this.getControllerForRemoteConnection({
-          calledFrom: 'deployment startNormallyInCurrentProcess',
+        const ctrl = await this.getRemoteControllerFor({
+          methodOptions: {
+            calledFrom: 'deployment startNormallyInCurrentProcess',
+          },
         });
         await ctrl.triggerTableClearAndAddExistedDeployments().request();
         await ctrl.waitUntilTableClearAndAllExistedDeploymentsAdded();

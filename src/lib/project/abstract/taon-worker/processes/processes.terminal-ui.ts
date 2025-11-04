@@ -16,16 +16,16 @@ import {
 
 import { Processes } from './processes';
 import { ProcessesController } from './processes.controller';
-import { ProcessesWorker } from './processes.worker';
-import { ProcessesUtils } from './processes.utils';
 import { ProcessesStatesAllowedStart } from './processes.models';
+import { ProcessesUtils } from './processes.utils';
+import { ProcessesWorker } from './processes.worker';
 //#endregion
 
 let dummyProcessCreate = false;
 export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker> {
   //#region header text
   protected async headerText(): Promise<string> {
-    return 'Processes';
+    return null;
   }
   //#endregion
 
@@ -49,6 +49,32 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
   }
   //#endregion
 
+  //#region refetch process
+  protected async refetchProcess(
+    process: Processes,
+    processesController: ProcessesController,
+  ): Promise<Processes> {
+    //#region @backendFunc
+    while (true) {
+      try {
+        process = (
+          await processesController.getByProcessID(process.id).request()
+        ).body.json;
+        return process;
+      } catch (error) {
+        const fetchAgain = await UtilsTerminal.confirm({
+          message: `Not able to fetch process (id=${process.id}). Try again?`,
+          defaultValue: true,
+        });
+        if (!fetchAgain) {
+          return;
+        }
+      }
+    }
+    //#endregion
+  }
+  //#endregion
+
   //#region crud menu for single deployment
   protected async crudMenuForSingleProcess(
     processFromDb: Processes,
@@ -61,14 +87,12 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
         await processesController.getByProcessID(processFromDb.id).request()
       ).body.json;
 
-      // UtilsTerminal.clearConsole();
-      Helpers.info(`You selected process:
-
-${processFromDb.fullPreviewString({
-  boldValues: true,
-})}
-
-    `);
+      UtilsTerminal.clearConsole();
+      //       Helpers.info(`You selected process:
+      //  id: ${processFromDb.id}
+      //  command: ${processFromDb.command}
+      //  cwd: ${processFromDb.cwd}
+      //  state: ${processFromDb.state}`);
 
       const choices = {
         back: {
@@ -76,6 +100,9 @@ ${processFromDb.fullPreviewString({
         },
         startProcess: {
           name: 'Start Process',
+        },
+        processInfo: {
+          name: 'Process Info',
         },
         realtimeProcessMonitor: {
           name: 'Realtime Monitor',
@@ -100,12 +127,24 @@ ${processFromDb.fullPreviewString({
 
       const selected = await UtilsTerminal.select<keyof typeof choices>({
         choices,
-        question: 'What do you want to do?',
+        question: `[Process id=${processFromDb.id},status=${processFromDb.state}] What do you want to do?`,
       });
 
       switch (selected) {
         case 'back':
           return;
+        case 'processInfo':
+          processFromDb = await this.refetchProcess(
+            processFromDb,
+            processesController,
+          );
+          if (!processFromDb) {
+            return;
+          }
+          UtilsTerminal.clearConsole();
+          console.log(processFromDb.fullPreviewString({ boldValues: true }));
+          await UtilsTerminal.pressAnyKeyToContinueAsync();
+          break;
         case 'startProcess':
           await processesController.triggerStart(processFromDb.id).request();
           Helpers.info(`Triggered start for process`);
@@ -133,8 +172,13 @@ ${processFromDb.fullPreviewString({
           });
           break;
         case 'removeProcess':
-          await processesController.deleteById(processFromDb.id).request();
-          Helpers.info(`Triggered remove of process`);
+          await processesController
+            .triggerStop(processFromDb.id, true)
+            .request();
+
+          Helpers.info(`Triggered remove of process... please wait... `);
+          await processesController.waitUntilProcessDeleted(processFromDb.id);
+          Helpers.info(`Process removed successfully.`);
           await UtilsTerminal.pressAnyKeyToContinueAsync({
             message: 'Press any key to go back to main menu',
           });
@@ -157,8 +201,13 @@ ${processFromDb.fullPreviewString({
         name: 'Get all processes from backend',
         action: async () => {
           // Helpers.info(`Stuff from backend will be fetched`);
-          const ctx = await this.worker.gerContextForRemoteConnection();
-          const processesController = ctx.getInstanceBy(ProcessesController);
+          const processesController = await this.worker.getRemoteControllerFor({
+            methodOptions: {
+              calledFrom:
+                'ProcessesTerminalUI.getWorkerTerminalActions/getStuffFromBackend',
+            },
+            controllerClass: ProcessesController,
+          });
 
           while (true) {
             const list =
@@ -175,7 +224,7 @@ ${processFromDb.fullPreviewString({
 
             const selected = await UtilsTerminal.select<string>({
               choices: options,
-              question: 'Select what to do',
+              question: 'Select process',
             });
 
             if (selected !== 'back') {
@@ -198,15 +247,19 @@ ${processFromDb.fullPreviewString({
         name: 'Start custom process',
         action: async () => {
           // Helpers.info(`Stuff from backend will be fetched`);
-          const ctx = await this.worker.gerContextForRemoteConnection();
-          const processesController = ctx.getInstanceBy(ProcessesController);
+          const processesController = await this.worker.getRemoteControllerFor({
+            methodOptions: {
+              calledFrom:
+                'ProcessesTerminalUI.getWorkerTerminalActions/startCustomProcess',
+            },
+            controllerClass: ProcessesController,
+          });
 
           const command = await UtilsTerminal.input({
             required: true,
             question: 'Enter command to run:',
           });
 
-          // TOOD @LAST PROPER taon crud methods (remove create in favor of save)
           const processFromDBReq = await processesController
             .save(
               new Processes().clone({
@@ -237,31 +290,43 @@ ${processFromDb.fullPreviewString({
         name: 'DUMMY PROCESS - create and start',
         action: async () => {
           // Helpers.info(`Stuff from backend will be fetched`);
-          const ctx = await this.worker.gerContextForRemoteConnection();
-          const processesController = ctx.getInstanceBy(ProcessesController);
-          const { command, cwd } = await this.getDummyProcessParams();
-          // TOOD @LAST PROPER taon crud methods (remove create in favor of save)
-          const processFromDBReq = await processesController
-            .save(
-              new Processes().clone({
-                command,
-                cwd,
-              }),
-            )
-            .request();
-          const processFromDB = processFromDBReq.body.json;
-          await processesController.triggerStart(processFromDB.id).request();
-          dummyProcessCreate = true;
-          Helpers.info(
-            `Triggered start for dummy process -
+
+          try {
+            const processesController =
+              await this.worker.getRemoteControllerFor({
+                methodOptions: {
+                  calledFrom:
+                    'ProcessesTerminalUI.getWorkerTerminalActions/createDummyProcess',
+                },
+                controllerClass: ProcessesController,
+              });
+
+            const { command, cwd } = await this.getDummyProcessParams();
+
+            const processFromDBReq = await processesController
+              .save(
+                new Processes().clone({
+                  command,
+                  cwd,
+                }),
+              )
+              .request();
+            const processFromDB = processFromDBReq.body.json;
+            await processesController.triggerStart(processFromDB.id).request();
+            dummyProcessCreate = true;
+            Helpers.info(
+              `Triggered start for dummy process -
 
             > command: "${command}"
 
             `,
-          );
-          await UtilsTerminal.pressAnyKeyToContinueAsync({
-            message: 'Press any key to go back to main menu',
-          });
+            );
+          } catch (error) {
+            console.log(error);
+            await UtilsTerminal.pressAnyKeyToContinueAsync({
+              message: 'Press any key to go back to main menu',
+            });
+          }
         },
       },
       //#endregion
@@ -271,8 +336,13 @@ ${processFromDb.fullPreviewString({
         name: 'DUMMY PROCESS - stop process',
         action: async () => {
           // Helpers.info(`Stuff from backend will be fetched`);
-          const ctx = await this.worker.gerContextForRemoteConnection();
-          const processesController = ctx.getInstanceBy(ProcessesController);
+          const processesController = await this.worker.getRemoteControllerFor({
+            methodOptions: {
+              calledFrom:
+                'ProcessesTerminalUI.getWorkerTerminalActions/stopDummyProcess',
+            },
+            controllerClass: ProcessesController,
+          });
           const { command, cwd } = await this.getDummyProcessParams();
           const processFromDBReq = await processesController
             .save(
@@ -299,8 +369,13 @@ ${processFromDb.fullPreviewString({
         name: 'DUMMY PROCESS - get info',
         action: async () => {
           // Helpers.info(`Stuff from backend will be fetched`);
-          const ctx = await this.worker.gerContextForRemoteConnection();
-          const processesController = ctx.getInstanceBy(ProcessesController);
+          const processesController = await this.worker.getRemoteControllerFor({
+            methodOptions: {
+              calledFrom:
+                'ProcessesTerminalUI.getWorkerTerminalActions/getDummyProcessInfo',
+            },
+            controllerClass: ProcessesController,
+          });
           const { command, cwd } = await this.getDummyProcessParams();
           const processFromDBReq = await processesController
             .getByUniqueParams(cwd, command)
@@ -335,8 +410,13 @@ ${processFromDb.fullPreviewString({
         name: 'DUMMY PROCESS - preview log file',
         action: async () => {
           // Helpers.info(`Stuff from backend will be fetched`);
-          const ctx = await this.worker.gerContextForRemoteConnection();
-          const processesController = ctx.getInstanceBy(ProcessesController);
+          const processesController = await this.worker.getRemoteControllerFor({
+            methodOptions: {
+              calledFrom:
+                'ProcessesTerminalUI.getWorkerTerminalActions/getPreviewLogFile',
+            },
+            controllerClass: ProcessesController,
+          });
           const { command, cwd } = await this.getDummyProcessParams();
           const processFromDBReq = await processesController
             .getByUniqueParams(cwd, command)
@@ -347,10 +427,6 @@ ${processFromDb.fullPreviewString({
             Helpers.readFile(processFromDB.fileLogAbsPath) ||
               '< empty log file >',
           );
-
-          // await UtilsTerminal.pressAnyKeyToContinueAsync({
-          //   message: 'Press any key to go back to main menu',
-          // });
         },
       },
       //#endregion
@@ -360,8 +436,12 @@ ${processFromDb.fullPreviewString({
         name: 'DUMMY PROCESS - get realtime preview',
         action: async () => {
           // Helpers.info(`Stuff from backend will be fetched`);
-          const ctx = await this.worker.gerContextForRemoteConnection();
-          const processesController = ctx.getInstanceBy(ProcessesController);
+          const processesController = await this.worker.getRemoteControllerFor({
+            methodOptions: {
+              calledFrom: 'realtimePreviewDummyProcess',
+            },
+            controllerClass: ProcessesController,
+          });
           const { command, cwd } = await this.getDummyProcessParams();
           const processFromDBReq = await processesController
             .getByUniqueParams(cwd, command)
@@ -387,7 +467,7 @@ ${processFromDb.fullPreviewString({
     return {
       ...this.chooseAction,
       ...myActions,
-      ...super.getWorkerTerminalActions({ chooseAction: false }),
+      ...super.getWorkerTerminalActions({ ...options, chooseAction: false }),
     };
     //#endregion
   }

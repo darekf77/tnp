@@ -847,7 +847,7 @@ ${dockerComposeYmlFileContent}
         zipFileAbsPath = newZipFileName;
         const portIfLocalhost =
           releaseOptions.release.taonInstanceIpOrDomain ===
-          CoreModels.localhostIp127
+          CoreModels.localhostDomain
             ? Number(
                 this.project.ins.taonProjectsWorker.deploymentsWorker
                   .processLocalInfoObj.port,
@@ -865,24 +865,35 @@ ${path.dirname(zipFileAbsPath)}
 
           `);
 
-        const remoteContextDeployments =
-          await this.project.ins.taonProjectsWorker.deploymentsWorker.getRemoteContextFor(
-            releaseOptions.release.taonInstanceIpOrDomain,
-            portIfLocalhost,
-          );
-
-        const deploymentController = remoteContextDeployments.getInstanceBy(
-          DeploymentsController,
-        );
-
-        const remoteContextProcesses =
-          await this.project.ins.taonProjectsWorker.processesWorker.getRemoteContextFor(
-            releaseOptions.release.taonInstanceIpOrDomain,
-            portIfLocalhost,
+        const deploymentController =
+          await this.project.ins.taonProjectsWorker.deploymentsWorker.getRemoteControllerFor(
+            {
+              methodOptions: {
+                connectionOptions: {
+                  ipAddressOfTaonInstance:
+                    releaseOptions.release.taonInstanceIpOrDomain,
+                  port: portIfLocalhost,
+                },
+                calledFrom: 'artifact-angular-node-app.releasePartial',
+              },
+              controllerClass: DeploymentsController,
+            },
           );
 
         const processesController =
-          remoteContextProcesses.getInstanceBy(ProcessesController);
+          await this.project.ins.taonProjectsWorker.processesWorker.getRemoteControllerFor(
+            {
+              methodOptions: {
+                connectionOptions: {
+                  ipAddressOfTaonInstance:
+                    releaseOptions.release.taonInstanceIpOrDomain,
+                  port: portIfLocalhost,
+                },
+                calledFrom: 'artifact-angular-node-app.releasePartial',
+              },
+              controllerClass: ProcessesController,
+            },
+          );
 
         let uploadResponse: MulterFileUploadResponse[];
         while (true) {
@@ -906,9 +917,10 @@ ${path.dirname(zipFileAbsPath)}
             globalSpinner.succeed(`Deployment upload done!`);
             break;
           } catch (error) {
-            globalSpinner.text = `Error during upload zip file to taon server...`;
+            globalSpinner.fail(`Error during upload zip file to taon server!`);
+            config.frameworkName === 'tnp' && console.error(error);
             if (releaseOptions.release.autoReleaseUsingConfig) {
-              throw new Error('Deployment upload failed!');
+              throw `Error during upload zip file to taon server...`;
             } else {
               await UtilsTerminal.pressAnyKeyToContinueAsync({
                 message: `Error during upload zip file to taon server...press any key to continue`,
@@ -920,11 +932,20 @@ ${path.dirname(zipFileAbsPath)}
         if (!releaseOptions.release.skipDeploy) {
           Helpers.info(`Starting deployment...`);
           const forceStart = true;
-          const deployment = (
+          let deployment = (
             await deploymentController
               .triggerDeploymentStart(uploadResponse[0].savedAs, forceStart)
               .request()
           ).body.json;
+          await deploymentController.waitUntilDeploymentHasComposeUpProcess(
+            deployment.id,
+          );
+          deployment = (
+            await deploymentController
+              .getByDeploymentId(deployment.id)
+              .request()
+          ).body.json;
+
           Helpers.info(`Deployment started! `);
 
           if (!releaseOptions.release.autoReleaseUsingConfig) {

@@ -3,8 +3,11 @@ import { Taon, ClassHelpers } from 'taon/src';
 import { _, dateformat, Helpers } from 'tnp-core/src';
 import { BaseCliWorkerController } from 'tnp-helpers/src';
 
+import { ERR_MESSAGE_PROCESS_NOT_FOUND } from '../../../../constants';
+
 import { Processes } from './processes';
 import { ProcessesRepository } from './processes.repository';
+import { ProcessesState } from './processes.models';
 //#endregion
 
 @Taon.Controller({
@@ -28,7 +31,11 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
       }
       const proc = await this.processesRepository.getByProcessID(processId);
       if (!proc) {
-        throw new Error(`No process found by id ${processId}`);
+        throw Taon.error({
+          code: ERR_MESSAGE_PROCESS_NOT_FOUND,
+          message: `No process found by given processId: ${processId}`,
+          status: 404,
+        });
       }
       return proc;
     };
@@ -93,14 +100,69 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
   triggerStop(
     @Taon.Http.Param.Query('processId')
     processId: number | string,
+    @Taon.Http.Param.Query('deleteAfterKill')
+    deleteAfterKill?: boolean,
   ): Taon.Response<void> {
     //#region @websqlFunc
     return async (req, res) => {
       if (!processId) {
         throw new Error(`No processId queryParm provided!`);
       }
-      await this.processesRepository.triggerStop(processId);
+      await this.processesRepository.triggerStop(processId, {
+        deleteAfterKill,
+      });
     };
+    //#endregion
+  }
+  //#endregion
+
+  //#region wait until deployment removed
+  async waitUntilProcessDeleted(processId: string | number): Promise<void> {
+    //#region @backendFunc
+    await this._waitForProperStatusChange<Processes>({
+      actionName: `Waiting until process ${processId} is removed`,
+      request: () => {
+        console.log(`Checking if process ${processId} deleted...`);
+        return this.getByProcessID(processId).request({
+          timeout: 1000,
+        });
+      },
+      loopRequestsOnBackendError: opt => {
+        if (
+          opt.taonError &&
+          opt.taonError.body.json.code === ERR_MESSAGE_PROCESS_NOT_FOUND
+        ) {
+          return false;
+        }
+        return true;
+      },
+    });
+    //#endregion
+  }
+  //#endregion
+
+  //#region wait until deployment removed
+  async waitUntilProcessStartedOrActive(
+    processId: string | number,
+  ): Promise<void> {
+    //#region @backendFunc
+    await this._waitForProperStatusChange<Processes>({
+      actionName: `Waiting until process ${processId} started or active`,
+      request: () => {
+        console.log(`Checking if process ${processId} started or active...`);
+        return this.getByProcessID(processId).request({
+          timeout: 1000,
+        });
+      },
+      poolingInterval: 1000,
+      statusCheck: resp => {
+        return true;
+      },
+      loopRequestsOnBackendError: opt => {
+        console.log(opt);
+        return true
+      }
+    });
     //#endregion
   }
   //#endregion

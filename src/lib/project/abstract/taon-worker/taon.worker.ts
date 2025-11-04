@@ -13,7 +13,11 @@ import {
   UtilsProcess,
   UtilsTerminal,
 } from 'tnp-core/src';
-import { BaseCliWorker, Helpers } from 'tnp-helpers/src';
+import {
+  BaseCliWorker,
+  BaseCLiWorkerStartMode,
+  Helpers,
+} from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
 import { taonBasePathToGlobalDockerTemplates } from '../../../constants';
@@ -104,25 +108,50 @@ export class TaonProjectsWorker extends BaseCliWorker<
    */
   async startNormallyInCurrentProcess(): Promise<void> {
     //#region @backendFunc
+
     Helpers.taskStarted(`Waiting for ports manager to be started...`);
-    await this.ins.portsWorker.startDetachedIfNeedsToBeStarted({
-      useCurrentWindowForDetach: true,
+    await this.ins.portsWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
+        },
+        calledFrom: 'taon projects/portsWorker worker start',
+      },
     });
 
     Helpers.taskStarted(`Waiting for processes manager to be started...`);
-    await this.processesWorker.startDetachedIfNeedsToBeStarted({
-      useCurrentWindowForDetach: true,
+    await this.processesWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
+        },
+        calledFrom: 'taon projects/processesWorker worker start',
+      },
     });
 
     Helpers.taskStarted(`Waiting for deployments manager to be started...`);
-    await this.deploymentsWorker.startDetachedIfNeedsToBeStarted({
-      useCurrentWindowForDetach: true,
+    await this.deploymentsWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
+        },
+        calledFrom: 'taon projects/deploymentsWorker worker start',
+      },
     });
 
     Helpers.taskStarted(`Waiting for taon instances manager to be started...`);
-    await this.instancesWorker.startDetachedIfNeedsToBeStarted({
-      useCurrentWindowForDetach: true,
+    await this.instancesWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
+        },
+        calledFrom: 'taon projects/instancesWorker worker start',
+      },
     });
+
+    // TODO @LAST
+    // shutdown of all if shutdown in main window
+    // handle cli args for group --restart
 
     Helpers.taskDone(`Ports manager started !`);
     await super.startNormallyInCurrentProcess();

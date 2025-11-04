@@ -2,8 +2,8 @@
 import { ChildProcess } from 'child_process';
 
 import { Subscription } from 'rxjs';
-import { EndpointContext, Taon } from 'taon/src';
-import { config } from 'tnp-config/src';
+import { EndpointContext, MulterFileUploadResponse, Taon } from 'taon/src';
+import { baseTaonDevProjectsNames, config } from 'tnp-config/src';
 import {
   _,
   child_process,
@@ -31,6 +31,7 @@ import {
   DeploymentsStatesAllowedStart,
   DeploymentsStatus,
   DeploymentsStatesAllowedStop,
+  DeploymentReleaseData,
 } from './deployments.models';
 import {
   ProcessesState,
@@ -47,19 +48,18 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
   //#region protected methods
 
-  //#region protected methods / get context processes
-  protected async getCtxProcesses(): Promise<EndpointContext> {
-    const ctxProcess =
-      await Project.ins.taonProjectsWorker.processesWorker.gerContextForRemoteConnection();
-
-    return ctxProcess as any;
-  }
-  //#endregion
-
   //#region protected methods / get processes controller
   protected async getProcessesController(): Promise<ProcessesController> {
-    const ctxProcess = await this.getCtxProcesses();
-    const processesController = ctxProcess.getInstanceBy(ProcessesController);
+    // const ctxProcess = await this.getCtxProcesses();
+    const processesController =
+      await Project.ins.taonProjectsWorker.processesWorker.getRemoteControllerFor<ProcessesController>(
+        {
+          methodOptions: {
+            calledFrom: 'DeploymentsRepository.getCtxProcesses',
+          },
+          controllerClass: ProcessesController,
+        },
+      );
     return processesController;
   }
   //#endregion
@@ -71,6 +71,44 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       baseFileNameWithHashDatetime,
     ]);
     return zipfileAbsPath;
+  }
+  //#endregion
+
+  protected jsonQueryParamsFileAbsPath(
+    baseFileNameWithHashDatetime: string,
+  ): string {
+    return crossPlatformPath([
+      `${this.zipfileAbsPath(baseFileNameWithHashDatetime)}.json`,
+    ]);
+  }
+
+  //#region public methods / save deployment
+  public async saveDeployment(
+    file?: MulterFileUploadResponse,
+    queryParams?: DeploymentReleaseData,
+  ): Promise<Deployments> {
+    //#region @backendFunc
+    const baseFileNameWithHashDatetime = path.basename(file.savedAs);
+    const partialDeployment = {
+      baseFileNameWithHashDatetime,
+      size: file.size,
+      projectName: queryParams.projectName,
+      envName: queryParams.envName,
+      envNumber: queryParams.envNumber,
+      targetArtifact: queryParams.targetArtifact,
+      releaseType: queryParams.releaseType,
+      version: queryParams.version,
+      destinationDomain: queryParams.destinationDomain,
+    } as Partial<Deployments>;
+    const deployment = await this.save(
+      new Deployments().clone(partialDeployment),
+    );
+    Helpers.writeJson(
+      this.jsonQueryParamsFileAbsPath(baseFileNameWithHashDatetime),
+      partialDeployment,
+    );
+    return deployment;
+    //#endregion
   }
   //#endregion
 
@@ -314,6 +352,9 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
       this.repeatRefreshDeploymentStateUntil(deployment.id, {
         operation: DeploymentsStatus.STOPPING,
+        callback: async () => {
+          await this.remove(deployment);
+        },
       });
     };
     //#endregion
@@ -454,28 +495,38 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
     //#region @backendFunc
 
     // clear all deployments first
+    console.log('Clearing existing deployments from database...');
     await this.clear();
+    console.log('Existing deployments cleared.');
 
     const allZips = Helpers.getFilesFrom(DEPLOYMENT_LOCAL_FOLDER_PATH).filter(
       f => f.endsWith('.zip'),
     );
 
-    // console.log(`Found ${allZips.length} zip files in deployment folder.`);
+    console.log(`Found ${allZips.length} zip files in deployments folder.`);
 
     for (const zipAbsPath of allZips) {
+      const baseFileNameWithHashDatetime = path.basename(zipAbsPath);
       const existing = await this.findOne({
         where: {
-          baseFileNameWithHashDatetime: path.basename(zipAbsPath),
+          baseFileNameWithHashDatetime,
         },
       });
       if (!existing) {
-        const deployment = new Deployments().clone({
-          baseFileNameWithHashDatetime: path.basename(zipAbsPath),
-          size: fse.statSync(zipAbsPath).size,
-        });
+        const queryParamsJsonAbsPath = this.jsonQueryParamsFileAbsPath(
+          baseFileNameWithHashDatetime,
+        );
+        if (!fse.existsSync(queryParamsJsonAbsPath)) {
+          return;
+        }
+        const dataJson = Helpers.readFile(
+          this.jsonQueryParamsFileAbsPath(baseFileNameWithHashDatetime),
+        ) as Partial<Deployments>;
+        const deployment = new Deployments().clone(dataJson);
         await this.save(deployment);
       }
     }
+    this.deploymentsIsAddingStatus = DeploymentsIsAddingStatus.DONE;
     //#endregion
   }
   //#endregion
