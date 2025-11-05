@@ -130,8 +130,9 @@ export function activateMenuTnp(
         this.label = labelBold as any;
       }
       if (options.iconPath !== undefined) {
-        this.iconPath =
-          options.iconPath === null ? undefined : options.iconPath;
+        this.iconPath = (
+          options.iconPath === null ? undefined : options.iconPath
+        ) as string;
       } else {
         this.iconPath =
           collapsibleState === vscode.TreeItemCollapsibleState.None
