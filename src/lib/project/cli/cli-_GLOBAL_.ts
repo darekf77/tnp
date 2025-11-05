@@ -1847,15 +1847,20 @@ ${this.project.children
   //#endregion
 
   //#region aaa (test command)
-  aaa() {
+  async aaa() {
     //#region @backendFunc
+    const stuff = await UtilsTerminal.select({
+      choices: [],
+      question: 'Select something',
+    });
+
     //   const coreProject1 = this.project.framework.coreProject;
     //   const coreProject2 = Project.ins.by('isomorphic-lib');
     //   console.log('coreProject2');
     //   console.log(coreProject1.pathFor(`docker-templates/terafik`));
     //   console.log('coreProject2');
     //   console.log(coreProject2.pathFor(`docker-templates/terafik`));
-    //   this._exit();
+      this._exit();
     //#endregion
   }
   //#endregion
