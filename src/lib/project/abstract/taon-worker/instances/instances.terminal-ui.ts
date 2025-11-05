@@ -11,8 +11,6 @@ import {
   BaseWorkerTerminalActionReturnType,
 } from 'tnp-helpers/src';
 
-import { localhostIpAddress } from '../../../../constants';
-
 import { Instances } from './instances';
 import { InstancesWorker } from './instances.worker';
 //#endregion
@@ -113,54 +111,63 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
             },
           });
 
-          const ipAddress = await UtilsTerminal.input({
-            required: true,
-            question: 'Enter IP address of the instance',
-            validate: val => {
-              if (val?.trim() === localhostIpAddress) {
-                return false;
-              }
-              if (val?.trim() === 'localhost') {
-                return false;
-              }
-              return UtilsNetwork.isValidIp(val);
-            },
-          });
+          while (true) {
+            try {
+              //#region terminal form
+              const ipAddress = await UtilsTerminal.input({
+                required: true,
+                question: 'Enter IP address of the instance',
+                validate: val => {
+                  if (val?.trim() === CoreModels.localhostIp127) {
+                    return false;
+                  }
+                  if (val?.trim() === 'localhost') {
+                    return false;
+                  }
+                  return UtilsNetwork.isValidIp(val);
+                },
+              });
 
-          const nameOfInstance = await UtilsTerminal.input({
-            required: true,
-            question: 'Enter name of instance',
-            validate: val => {
-              if (!val || val.trim() === '') {
-                return false;
-              }
-              return val.trim().length > 3;
-            },
-          });
+              const nameOfInstance = await UtilsTerminal.input({
+                required: true,
+                question: 'Enter name of instance',
+                validate: val => {
+                  if (!val || val.trim() === '') {
+                    return false;
+                  }
+                  return val.trim().length > 3;
+                },
+              });
+              //#endregion
 
-          try {
-            const response = await ctrl
-              .insertEntity(
-                new Instances().clone({
-                  ipAddress,
-                  name: nameOfInstance,
-                }),
-              )
-              .request();
-            await UtilsTerminal.pressAnyKeyToContinueAsync({
-              message: 'Instance create. Press any key to go back to main menu',
-            });
-          } catch (error) {
-            await UtilsTerminal.pressAnyKeyToContinueAsync({
-              message:
-                'Error creating instance. Press any key to go back to main menu',
-            });
+              const instance = await ctrl
+                .insertEntity(
+                  new Instances().clone({
+                    ipAddress,
+                    name: nameOfInstance,
+                  }),
+                )
+                .request()
+                .then(r => r.body.json);
+
+              await UtilsTerminal.pressAnyKeyToContinueAsync({
+                message: `Instance (id=${instance.id}) created. Press any key to go back to main menu`,
+              });
+              break;
+            } catch (error) {
+              //#region error handling
+              if (
+                await UtilsTerminal.confirm({
+                  message: 'Error creating instance. Try again ?',
+                })
+              ) {
+                continue;
+              } else {
+                break;
+              }
+              //#endregion
+            }
           }
-
-          // console.log(response);
-          await UtilsTerminal.pressAnyKeyToContinueAsync({
-            message: 'Press any key to go back to main menu',
-          });
         },
       },
     };

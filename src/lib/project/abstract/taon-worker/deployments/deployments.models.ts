@@ -33,7 +33,7 @@ export interface DeploymentsAddingStatusObj {
 
 export enum DeploymentsStatus {
   NOT_STARTED = 'not-started',
-  STARING = 'staring',
+  STARTING = 'starting',
   STARTED_AND_ACTIVE = 'started-active',
   FAILED_START = 'failed-start',
   STOPPING = 'stopping',
@@ -47,6 +47,6 @@ export const DeploymentsStatesAllowedStart: DeploymentsStatus[] = [
 ];
 
 export const DeploymentsStatesAllowedStop: DeploymentsStatus[] = [
-  DeploymentsStatus.STARING,
+  DeploymentsStatus.STARTING,
   DeploymentsStatus.STARTED_AND_ACTIVE,
 ];

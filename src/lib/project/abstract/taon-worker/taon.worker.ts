@@ -96,6 +96,28 @@ export class TaonProjectsWorker extends BaseCliWorker<
     //   'taon-project-processes-worker',
     //   `${global.frameworkName} ${UtilsCliClassMethod.getFrom($Cloud.prototype.processes)}`,
     // );
+
+    if (config.frameworkName !== 'tnp') {
+      // skip restarting ports worker for tnp development
+      this.dependencyWorkers.set(
+        this.ins.portsWorker.serviceID,
+        this.ins.portsWorker,
+      );
+    }
+
+    this.dependencyWorkers.set(
+      this.processesWorker.serviceID,
+      this.processesWorker,
+    );
+    this.dependencyWorkers.set(
+      this.deploymentsWorker.serviceID,
+      this.deploymentsWorker,
+    );
+    this.dependencyWorkers.set(
+      this.instancesWorker.serviceID,
+      this.instancesWorker,
+    );
+
     //#endregion
   }
 
@@ -110,7 +132,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
     //#region @backendFunc
 
     Helpers.taskStarted(`Waiting for ports manager to be started...`);
-    const ports = await this.ins.portsWorker.cliStartProcedure({
+    await this.ins.portsWorker.cliStartProcedure({
       methodOptions: {
         cliParams: {
           mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
@@ -118,10 +140,9 @@ export class TaonProjectsWorker extends BaseCliWorker<
         calledFrom: 'taon projects/portsWorker worker start',
       },
     });
-    this.dependencyWorkers.set(ports.serviceId, ports.worker);
 
     Helpers.taskStarted(`Waiting for processes manager to be started...`);
-    const process = await this.processesWorker.cliStartProcedure({
+    await this.processesWorker.cliStartProcedure({
       methodOptions: {
         cliParams: {
           mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
@@ -129,10 +150,9 @@ export class TaonProjectsWorker extends BaseCliWorker<
         calledFrom: 'taon projects/processesWorker worker start',
       },
     });
-    this.dependencyWorkers.set(process.serviceId, process.worker);
 
     Helpers.taskStarted(`Waiting for deployments manager to be started...`);
-    const deployments = await this.deploymentsWorker.cliStartProcedure({
+    await this.deploymentsWorker.cliStartProcedure({
       methodOptions: {
         cliParams: {
           mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
@@ -140,10 +160,9 @@ export class TaonProjectsWorker extends BaseCliWorker<
         calledFrom: 'taon projects/deploymentsWorker worker start',
       },
     });
-    this.dependencyWorkers.set(deployments.serviceId, deployments.worker);
 
     Helpers.taskStarted(`Waiting for taon instances manager to be started...`);
-    const instances = await this.instancesWorker.cliStartProcedure({
+    await this.instancesWorker.cliStartProcedure({
       methodOptions: {
         cliParams: {
           mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
@@ -151,7 +170,6 @@ export class TaonProjectsWorker extends BaseCliWorker<
         calledFrom: 'taon projects/instancesWorker worker start',
       },
     });
-    this.dependencyWorkers.set(instances.serviceId, instances.worker);
 
     // TODO @LAST
     // shutdown of all if shutdown in main window

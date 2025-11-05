@@ -1,9 +1,8 @@
 //#region imports
 import { Taon, BaseContext, ClassHelpers } from 'taon/src';
 import { QueryRunner } from 'taon-typeorm/src';
+import { CoreModels } from 'tnp-core/src';
 import { getBaseCliWorkerDatabaseConfig } from 'tnp-helpers/src';
-
-import { localhostIpAddress } from '../../../../constants';
 
 import { Instances } from './instances';
 import { InstancesController } from './instances.controller';
@@ -11,7 +10,7 @@ import { InstancesRepository } from './instances.repository';
 //#endregion
 
 const appId = 'instances-worker-app.project.worker';
-
+const localhostInstanceName = 'Localhost';
 @Taon.Migration({
   className: 'MigrationLocalhost',
 })
@@ -25,13 +24,13 @@ class MigrationLocalhost extends Taon.Base.Migration {
     try {
       await queryRunner.startTransaction();
       await this.instanceRepository.delete({
-        ipAddress: localhostIpAddress,
+        ipAddress: CoreModels.localhostIp127,
       });
 
       await this.instanceRepository.save(
         new Instances().clone({
-          name: 'Localhost',
-          ipAddress: localhostIpAddress,
+          name: localhostInstanceName,
+          ipAddress: CoreModels.localhostIp127,
         }),
       );
 
@@ -54,7 +53,7 @@ class MigrationLocalhost extends Taon.Base.Migration {
       `[BaseMigration] Running migration DOWN "${ClassHelpers.getName(this)}"`,
     );
     await this.instanceRepository.delete({
-      ipAddress: localhostIpAddress,
+      name: localhostInstanceName,
     });
   }
 }

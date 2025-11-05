@@ -14,7 +14,7 @@ import {
   frontendFiles,
   notNeededForExportFiles,
 } from 'tnp-config/src';
-import { psList, UtilsJson, UtilsOs } from 'tnp-core/src';
+import { psList, UtilsJson, UtilsOs, UtilsProcessLogger } from 'tnp-core/src';
 import {
   chokidar,
   dateformat,
@@ -1849,10 +1849,10 @@ ${this.project.children
   //#region aaa (test command)
   async aaa() {
     //#region @backendFunc
-    const stuff = await UtilsTerminal.select({
-      choices: [],
-      question: 'Select something',
-    });
+    // const stuff = await UtilsTerminal.select({
+    //   choices: [],
+    //   question: 'Select something',
+    // });
 
     //   const coreProject1 = this.project.framework.coreProject;
     //   const coreProject2 = Project.ins.by('isomorphic-lib');
@@ -1860,7 +1860,47 @@ ${this.project.children
     //   console.log(coreProject1.pathFor(`docker-templates/terafik`));
     //   console.log('coreProject2');
     //   console.log(coreProject2.pathFor(`docker-templates/terafik`));
-      this._exit();
+
+    // const wrap = UtilsProcessLogger.createStickyTopBox('AAA TEST');
+    // const ui = UtilsProcessLogger.createStickyTopBox(
+    //   '🐹 PROCESS OUTPUT — last 40 lines — Press ENTER to stop',
+    // );
+
+    // let iteration = 0;
+    // const allLogs: string[] = [];
+
+    // function makeChunk(chunkNo: number): string[] {
+    //   const lines: string[] = [];
+    //   for (let i = 0; i < 40; i++) {
+    //     const now = new Date().toLocaleTimeString();
+    //     lines.push(
+    //       `[chunk ${chunkNo.toString().padStart(2, '0')}] line ${i
+    //         .toString()
+    //         .padStart(2, '0')} — ${now}`,
+    //     );
+    //   }
+    //   return lines;
+    // }
+
+    // function feedChunk() {
+    //   iteration++;
+    //   allLogs.push(...makeChunk(iteration));
+    //   ui.update(allLogs.join('\n'));
+    // }
+
+    // console.clear();
+    // console.log('Starting stress test...\n');
+
+    // // generate a new 40-line chunk every second
+    // const timer = setInterval(feedChunk, 1000);
+
+    // // stop after 10 chunks (≈ 400 lines)
+    // setTimeout(() => {
+    //   clearInterval(timer);
+    //   console.log('\n\n✅ Finished streaming 10 chunks of 40 lines each.');
+    // }, 10000);
+
+    // this._exit();
     //#endregion
   }
   //#endregion

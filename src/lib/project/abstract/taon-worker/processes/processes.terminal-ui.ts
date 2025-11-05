@@ -82,7 +82,7 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
   ): Promise<void> {
     //#region @backendFunc
     while (true) {
-      Helpers.info(`Fetching deployment data...`);
+      Helpers.info(`Fetching processes data...`);
       processFromDb = (
         await processesController.getByProcessID(processFromDb.id).request()
       ).body.json;

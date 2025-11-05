@@ -79,6 +79,9 @@ export class $Cloud extends BaseCli {
       );
     }
     await dockerComposeProject.docker.updateDockerComposePorts();
+
+    await dockerComposeProject.docker.removeAllImagesBy_Env_COMPOSE_PROJECT_NAME();
+
     await new Promise<void>(resolve => {
       dockerComposeProject.docker
         .getDockerComposeUpExecChildProcess('down')
@@ -145,16 +148,31 @@ export class $Cloud extends BaseCli {
       process.exit(1);
     }
 
+    await dockerComposeProject.docker.removeAllImagesBy_Env_COMPOSE_PROJECT_NAME();
+
     const child =
       dockerComposeProject.docker.getDockerComposeUpExecChildProcess('down');
 
     await new Promise<void>(resolve => {
       child.once('exit', () => {
-        Helpers.remove(unpackedZipFolder);
+        Helpers.remove(unpackedZipFolder); // cleanup
         resolve(void 0);
       });
     });
+
     process.exit(0);
+  }
+  //#endregion
+
+  //#region remove file deploy
+  @UtilsCliClassMethod.decoratorMethod('removeFileDeploy')
+  async removeFileDeploy(): Promise<void> {
+    await this.stopFileDeploy();
+    let zipDeploymentFileAbsPath = this.firstArg;
+
+    // remove zip files/json completely
+    Helpers.remove(zipDeploymentFileAbsPath);
+    Helpers.remove(`${zipDeploymentFileAbsPath}.json`);
   }
   //#endregion
 

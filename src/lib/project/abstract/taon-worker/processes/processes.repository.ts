@@ -136,7 +136,7 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
       this.processFileLoggers[proc.id] = processFileLogger;
 
       processFileLogger.startLogging(realProcess, {
-        cacheLinesMax: 30,
+        cacheLinesMax: 40,
         update: async ({ outputLines, stderrLines, stdoutLines }) => {
           await this.getAndUpdateProcess(proc.id, proc1 => {
             proc1.outputLast40lines = outputLines;

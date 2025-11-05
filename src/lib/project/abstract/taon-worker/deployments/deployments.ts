@@ -162,6 +162,7 @@ export class Deployments
       `Destination domain (${boldFn(this.destinationDomain || '- unknown domain -')})`,
       `Project Name (${boldFn(this.projectName || '- unknown project -')})`,
       `Version (${boldFn(this.version || '- unknown version -')})`,
+      `Status (${boldFn(this.status || '- unknown version -')})`,
       `Artifact (${boldFn(this.targetArtifact || '- unknown artifact -')})`,
       `Release Type (${boldFn(this.releaseType || '- unknown release type -')})`,
       `Environment (${boldFn(envName)})`,

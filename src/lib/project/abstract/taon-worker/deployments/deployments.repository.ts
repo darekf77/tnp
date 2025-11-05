@@ -244,7 +244,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
         `;
     } else {
       if (processComposeUp) {
-        if (options.operation === DeploymentsStatus.STARING) {
+        if (options.operation === DeploymentsStatus.STARTING) {
           if (processComposeUp.state === ProcessesState.ACTIVE) {
             deployment.status = DeploymentsStatus.STARTED_AND_ACTIVE;
             await this.save(deployment);
@@ -330,7 +330,9 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       const zipfileAbsPath = this.zipfileAbsPath(baseFileNameWithHashDatetime);
 
       const commandComposeDown = `${config.frameworkName} ${UtilsCliClassMethod.getFrom(
-        $Cloud.prototype.stopFileDeploy,
+        options.removeAfterStop
+          ? $Cloud.prototype.removeFileDeploy
+          : $Cloud.prototype.stopFileDeploy,
       )} ${zipfileAbsPath}`;
 
       const processComposeDownRequest = await processesController
@@ -348,12 +350,19 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
       await this.save(deployment);
 
-      await processesController.triggerStart(processComposeDown.id).request();
+      await processesController
+        .triggerStart(
+          processComposeDown.id,
+          `docker-compose-down__deployment-${deployment.id}`,
+        )
+        .request();
 
       this.repeatRefreshDeploymentStateUntil(deployment.id, {
         operation: DeploymentsStatus.STOPPING,
         callback: async () => {
-          await this.remove(deployment);
+          if (options.removeAfterStop) {
+            await this.remove(deployment);
+          }
         },
       });
     };
@@ -422,7 +431,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
     }
     //#endregion
 
-    deployment.status = DeploymentsStatus.STARING;
+    deployment.status = DeploymentsStatus.STARTING;
     await this.save(deployment);
 
     //#region trigger docker compose up process
@@ -441,10 +450,10 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
             command: commandComposeUp,
             cwd,
             conditionProcessActiveStderr: [
-              CoreModels.SPECIAL_WORKER_READY_MESSAGE,
+              CoreModels.SPECIAL_APP_READY_MESSAGE,
             ],
             conditionProcessActiveStdout: [
-              CoreModels.SPECIAL_WORKER_READY_MESSAGE,
+              CoreModels.SPECIAL_APP_READY_MESSAGE,
             ],
           }),
         )
@@ -456,10 +465,15 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
       await this.save(deployment);
 
-      await processesController.triggerStart(procFromDb.id).request();
+      await processesController
+        .triggerStart(
+          procFromDb.id,
+          `docker-compose-up__deployment-${deployment.id}`,
+        )
+        .request();
 
       this.repeatRefreshDeploymentStateUntil(deployment.id, {
-        operation: DeploymentsStatus.STARING,
+        operation: DeploymentsStatus.STARTING,
       });
     };
     //#endregion
@@ -519,10 +533,12 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
         if (!fse.existsSync(queryParamsJsonAbsPath)) {
           continue;
         }
-        const dataJson = Helpers.readFile(
+        const dataJson = Helpers.readJson(
           this.jsonQueryParamsFileAbsPath(baseFileNameWithHashDatetime),
         ) as Partial<Deployments>;
+
         const deployment = new Deployments().clone(dataJson);
+
         await this.save(deployment);
       }
     }
@@ -543,6 +559,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       try {
         await this.clearAndAddExistedDeploymentsProcess();
       } catch (error) {
+        config.frameworkName === 'tnp' && console.log(error);
         this.deploymentsIsAddingStatus = DeploymentsIsAddingStatus.FAILED;
         return;
       }

@@ -35,7 +35,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     await ctrl
       .triggerDeploymentStop(deployment.baseFileNameWithHashDatetime)
       .request();
-
+    console.log(`Waiting until deployment stopped...`);
     await ctrl.waitUntilDeploymentStopped(deployment.id);
 
     console.log(`Stopping done..`);
@@ -85,7 +85,6 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     } catch (error) {
       console.error('Fail to start deployment');
     }
-    await UtilsTerminal.pressAnyKeyToContinueAsync();
     //#endregion
   }
   //#endregion
@@ -124,12 +123,12 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
   ): Promise<void> {
     //#region @backendFunc
     while (true) {
+      UtilsTerminal.clearConsole();
       Helpers.info(`Fetching deployment data...`);
       deployment = (
         await deploymentsController.getByDeploymentId(deployment.id).request()
       ).body.json;
 
-      // UtilsTerminal.clearConsole();
       Helpers.info(`Selected deployment:
   for domain: ${deployment.destinationDomain}, version: ${deployment.version}
   current status: ${deployment.status}, arrived at: ${deployment.arrivalDate}
@@ -235,6 +234,8 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
               deployment,
               processesController,
             );
+          } else {
+            await UtilsTerminal.pressAnyKeyToContinueAsync();
           }
 
           break;

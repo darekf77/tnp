@@ -1,5 +1,10 @@
 import { debounceTime, exhaustMap, map, Subscription } from 'rxjs';
-import { Helpers, UtilsTerminal, UtilsProcessLogger } from 'tnp-core/src';
+import {
+  Helpers,
+  UtilsTerminal,
+  UtilsProcessLogger,
+  Utils,
+} from 'tnp-core/src';
 
 import { ProcessesController } from './processes.controller';
 
@@ -19,19 +24,24 @@ export namespace ProcessesUtils {
       throw new Error(`processesController is required`);
     }
     options = options || {};
-
+    UtilsTerminal.clearConsole();
     const wrap = UtilsProcessLogger.createStickyTopBox(
       `PROCESS REALTIME OUTPUT - PRESS ENTER KEY TO STOP`,
     );
     wrap.clear();
-    wrap.draw(`Waiting for process ${processId} to start...`);
+    wrap.update(`Waiting for process ${processId} to start...`);
     await processesController.waitUntilProcessStartedOrActive(processId);
-    wrap.draw(`PRESS ANY KEY TO STOP DISPLAYING PROGRESS...`);
+    wrap.update(`PRESS ANY KEY TO STOP DISPLAYING PROGRESS...`);
     const procData = await processesController
       .getByProcessID(processId)
       .request();
 
     const proc = procData.body.json;
+    if (proc.outputLast40lines) {
+      await Utils.waitMilliseconds(500);
+      wrap.clear();
+      wrap.update(proc.outputLast40lines);
+    }
     let displayLogs = true;
     const unSub: Subscription = await new Promise((resolve, reject) => {
       const sub = processesController.ctx.realtimeClient
@@ -53,7 +63,8 @@ export namespace ProcessesUtils {
         .subscribe(data => {
           if (displayLogs) {
             // UtilsTerminal.clearConsole();
-            wrap.append(data.outputLast40lines);
+            wrap.clear();
+            wrap.update(data.outputLast40lines);
             // process.stdout.write(data.outputLast40lines);
             if (
               options.resolveWhenTextInOutput &&

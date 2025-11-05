@@ -25,6 +25,7 @@ import {
   DeploymentsStatus,
 } from './deployments.models';
 import { DeploymentsRepository } from './deployments.repository';
+import { config } from 'tnp-config/src';
 //#endregion
 
 @Taon.Controller({
@@ -319,7 +320,8 @@ export class DeploymentsController extends BaseCliWorkerController<DeploymentRel
 
         return resp.body.json.status === DeploymentsAddingStatus.DONE;
       },
-      loopRequestsOnBackendError: () => {
+      loopRequestsOnBackendError: err => {
+        config.frameworkName === 'tnp' && console.log(err);
         throw new Error(
           'Error occurred during checking adding existed deployments',
         );
