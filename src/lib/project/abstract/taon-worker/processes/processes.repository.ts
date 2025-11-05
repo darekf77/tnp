@@ -93,6 +93,7 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
 
       const [cmd, ...commandArgs] = proc.command.split(' '); // safer: parse properly
       const realProcess = child_process.spawn(cmd, commandArgs, {
+        env: { ...process.env, FORCE_COLOR: '1' },
         stdio: ['ignore', 'pipe', 'pipe'], // don't inherit console
         shell: true, // use shell if command has operators (&&, |, etc.)
       });
@@ -135,7 +136,7 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
       this.processFileLoggers[proc.id] = processFileLogger;
 
       processFileLogger.startLogging(realProcess, {
-        cacheLinesMax: 15,
+        cacheLinesMax: 30,
         update: async ({ outputLines, stderrLines, stdoutLines }) => {
           await this.getAndUpdateProcess(proc.id, proc1 => {
             proc1.outputLast40lines = outputLines;
@@ -192,12 +193,19 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
     //#region @websqlFunc
     options = options || {};
     await this.getAndUpdateProcess(processId, proc => {
-      if (!ProcessesStatesAllowedStop.includes(proc.state)) {
-        throw new Error(
-          `Process not allowed to stop with state: ${proc.state}`,
-        );
+      const alreadyStopped = ProcessesStatesAllowedStart.includes(proc.state);
+      if (!alreadyStopped) {
+        if (!ProcessesStatesAllowedStop.includes(proc.state)) {
+          throw new Error(
+            `Process not allowed to stop with state: ${proc.state}`,
+          );
+        }
       }
-      proc.state = ProcessesState.KILLING;
+
+      if (!alreadyStopped) {
+        proc.state = ProcessesState.KILLING;
+      }
+
       setTimeout(async () => {
         try {
           await UtilsProcess.killProcess(proc.pid);
@@ -205,8 +213,11 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
         } catch (error) {
           console.error(`Not able to kill process by pid ${proc.pid}`);
         }
+
         if (options.deleteAfterKill) {
-          await this.remove(proc);
+          try {
+            await this.remove(proc);
+          } catch (error) {}
         }
       }, 1000);
     });

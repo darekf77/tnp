@@ -1,5 +1,5 @@
 import { debounceTime, exhaustMap, map, Subscription } from 'rxjs';
-import { Helpers, UtilsTerminal } from 'tnp-core/src';
+import { Helpers, UtilsTerminal, UtilsProcessLogger } from 'tnp-core/src';
 
 import { ProcessesController } from './processes.controller';
 
@@ -15,21 +15,25 @@ export namespace ProcessesUtils {
     if (!processId) {
       throw new Error(`processId is required`);
     }
-    if( !processesController) {
+    if (!processesController) {
       throw new Error(`processesController is required`);
     }
     options = options || {};
-    UtilsTerminal.clearConsole();
-    Helpers.info(`Waiting for process ${processId} to start...`);
+
+    const wrap = UtilsProcessLogger.createStickyTopBox(
+      `PROCESS REALTIME OUTPUT - PRESS ENTER KEY TO STOP`,
+    );
+    wrap.clear();
+    wrap.draw(`Waiting for process ${processId} to start...`);
     await processesController.waitUntilProcessStartedOrActive(processId);
-    Helpers.info(`PRESS ANY KEY TO STOP DISPLAYING PROGRESS...`);
+    wrap.draw(`PRESS ANY KEY TO STOP DISPLAYING PROGRESS...`);
     const procData = await processesController
       .getByProcessID(processId)
       .request();
 
     const proc = procData.body.json;
     let displayLogs = true;
-    const unsub: Subscription = await new Promise((resolve, reject) => {
+    const unSub: Subscription = await new Promise((resolve, reject) => {
       const sub = processesController.ctx.realtimeClient
         .listenChangesEntity(proc, {
           property: 'outputLast40lines',
@@ -44,19 +48,13 @@ export namespace ProcessesUtils {
           }),
           map(p => {
             return p;
-            // return processesActions.UPDATE_PROCESS({
-            //   process: {
-            //     //
-            //     id: process.id,
-            //     changes: process,
-            //   },
-            // });
           }),
         )
         .subscribe(data => {
           if (displayLogs) {
-            UtilsTerminal.clearConsole();
-            process.stdout.write(data.outputLast40lines);
+            // UtilsTerminal.clearConsole();
+            wrap.append(data.outputLast40lines);
+            // process.stdout.write(data.outputLast40lines);
             if (
               options.resolveWhenTextInOutput &&
               data?.outputLast40lines
@@ -83,7 +81,7 @@ export namespace ProcessesUtils {
       });
     });
     try {
-      unsub.unsubscribe();
+      unSub.unsubscribe();
     } catch (error) {}
 
     // console.log(`Starting started...`);

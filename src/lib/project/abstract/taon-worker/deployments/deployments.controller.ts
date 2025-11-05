@@ -319,6 +319,11 @@ export class DeploymentsController extends BaseCliWorkerController<DeploymentRel
 
         return resp.body.json.status === DeploymentsAddingStatus.DONE;
       },
+      loopRequestsOnBackendError: () => {
+        throw new Error(
+          'Error occurred during checking adding existed deployments',
+        );
+      },
     });
   }
   //#endregion

@@ -6,8 +6,11 @@ import { BaseCliWorkerController } from 'tnp-helpers/src';
 import { ERR_MESSAGE_PROCESS_NOT_FOUND } from '../../../../constants';
 
 import { Processes } from './processes';
+import {
+  ProcessesState,
+  ProcessesStatesAllowedStart,
+} from './processes.models';
 import { ProcessesRepository } from './processes.repository';
-import { ProcessesState } from './processes.models';
 //#endregion
 
 @Taon.Controller({
@@ -122,12 +125,13 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
     await this._waitForProperStatusChange<Processes>({
       actionName: `Waiting until process ${processId} is removed`,
       request: () => {
-        console.log(`Checking if process ${processId} deleted...`);
+        // console.log(`Checking if process ${processId} deleted...`);
         return this.getByProcessID(processId).request({
           timeout: 1000,
         });
       },
       loopRequestsOnBackendError: opt => {
+        //  console.log(opt);
         if (
           opt.taonError &&
           opt.taonError.body.json.code === ERR_MESSAGE_PROCESS_NOT_FOUND
@@ -149,7 +153,7 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
     await this._waitForProperStatusChange<Processes>({
       actionName: `Waiting until process ${processId} started or active`,
       request: () => {
-        console.log(`Checking if process ${processId} started or active...`);
+        // console.log(`Checking if process ${processId} started or active...`);
         return this.getByProcessID(processId).request({
           timeout: 1000,
         });
@@ -159,9 +163,32 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
         return true;
       },
       loopRequestsOnBackendError: opt => {
-        console.log(opt);
-        return true
-      }
+        // console.log(opt);
+        return true;
+      },
+    });
+    //#endregion
+  }
+  //#endregion
+
+  //#region wait until deployment removed
+  async waitUntilProcessStopped(processId: string | number): Promise<void> {
+    //#region @backendFunc
+    await this._waitForProperStatusChange<Processes>({
+      actionName: `Waiting until process ${processId} stopped`,
+      request: () => {
+        return this.getByProcessID(processId).request({
+          timeout: 1000,
+        });
+      },
+      poolingInterval: 1000,
+      statusCheck: resp => {
+        return ProcessesStatesAllowedStart.includes(resp.body.json.state);
+      },
+      loopRequestsOnBackendError: opt => {
+        // console.log(opt);
+        return true;
+      },
     });
     //#endregion
   }

@@ -110,7 +110,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
     //#region @backendFunc
 
     Helpers.taskStarted(`Waiting for ports manager to be started...`);
-    await this.ins.portsWorker.cliStartProcedure({
+    const ports = await this.ins.portsWorker.cliStartProcedure({
       methodOptions: {
         cliParams: {
           mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
@@ -118,9 +118,10 @@ export class TaonProjectsWorker extends BaseCliWorker<
         calledFrom: 'taon projects/portsWorker worker start',
       },
     });
+    this.dependencyWorkers.set(ports.serviceId, ports.worker);
 
     Helpers.taskStarted(`Waiting for processes manager to be started...`);
-    await this.processesWorker.cliStartProcedure({
+    const process = await this.processesWorker.cliStartProcedure({
       methodOptions: {
         cliParams: {
           mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
@@ -128,9 +129,10 @@ export class TaonProjectsWorker extends BaseCliWorker<
         calledFrom: 'taon projects/processesWorker worker start',
       },
     });
+    this.dependencyWorkers.set(process.serviceId, process.worker);
 
     Helpers.taskStarted(`Waiting for deployments manager to be started...`);
-    await this.deploymentsWorker.cliStartProcedure({
+    const deployments = await this.deploymentsWorker.cliStartProcedure({
       methodOptions: {
         cliParams: {
           mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
@@ -138,9 +140,10 @@ export class TaonProjectsWorker extends BaseCliWorker<
         calledFrom: 'taon projects/deploymentsWorker worker start',
       },
     });
+    this.dependencyWorkers.set(deployments.serviceId, deployments.worker);
 
     Helpers.taskStarted(`Waiting for taon instances manager to be started...`);
-    await this.instancesWorker.cliStartProcedure({
+    const instances = await this.instancesWorker.cliStartProcedure({
       methodOptions: {
         cliParams: {
           mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
@@ -148,12 +151,12 @@ export class TaonProjectsWorker extends BaseCliWorker<
         calledFrom: 'taon projects/instancesWorker worker start',
       },
     });
+    this.dependencyWorkers.set(instances.serviceId, instances.worker);
 
     // TODO @LAST
     // shutdown of all if shutdown in main window
     // handle cli args for group --restart
 
-    Helpers.taskDone(`Ports manager started !`);
     await super.startNormallyInCurrentProcess();
     //#endregion
   }

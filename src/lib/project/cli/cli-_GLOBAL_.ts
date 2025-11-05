@@ -464,11 +464,11 @@ export class $Global extends BaseGlobalCommandLine<
     //#region @backendFunc
     while (true) {
       const arr = [
-        'djungarian',
-        'syrian golden',
-        'syrian teddy bear',
-        'dwarf roborowski',
-        'dwarf russian',
+        chalk.red('djungarian'),
+        chalk.magenta('syrian golden'),
+        chalk.bold('syrian teddy bear'),
+        chalk.red('dwarf roborowski'),
+        chalk.underline('dwarf russian'),
         'dwarf winter white',
         'chinese hamster',
       ];

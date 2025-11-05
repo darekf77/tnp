@@ -166,7 +166,8 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
           break;
         case 'stopProcess':
           await processesController.triggerStop(processFromDb.id).request();
-          Helpers.info(`Triggered stop for process`);
+          Helpers.info(`Triggered stop for process..please wait`);
+          await processesController.waitUntilProcessStopped(processFromDb.id);
           await UtilsTerminal.pressAnyKeyToContinueAsync({
             message: 'Press any key to go back to main menu',
           });

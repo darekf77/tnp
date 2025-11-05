@@ -517,7 +517,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
           baseFileNameWithHashDatetime,
         );
         if (!fse.existsSync(queryParamsJsonAbsPath)) {
-          return;
+          continue;
         }
         const dataJson = Helpers.readFile(
           this.jsonQueryParamsFileAbsPath(baseFileNameWithHashDatetime),
@@ -526,6 +526,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
         await this.save(deployment);
       }
     }
+
     this.deploymentsIsAddingStatus = DeploymentsIsAddingStatus.DONE;
     //#endregion
   }

@@ -2,10 +2,10 @@ import { debounceTime, exhaustMap, map, Subscription } from 'rxjs';
 import { Helpers, UtilsTerminal } from 'tnp-core/src';
 
 import { ProcessesController } from '../processes';
+import { ProcessesUtils } from '../processes/processes.utils';
 
 import { Deployments } from './deployments';
 import { DeploymentsController } from './deployments.controller';
-import { ProcessesUtils } from '../processes/processes.utils';
 
 export namespace DeploymentsUtils {
   //#region display deployment progress
