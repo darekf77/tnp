@@ -750,7 +750,7 @@ export class ArtifactManager {
         );
         await this.project.releaseProcess.checkBundleQuestion(
           releaseOutput.releaseProjPath,
-          `Check ${chalk.bold('bundle')} before tagging/pushing`,
+          `[${releaseOptions.release.releaseType}] Check ${chalk.bold('bundle')} before tagging/pushing`,
         );
       }
 
@@ -764,7 +764,7 @@ export class ArtifactManager {
         if (!releaseOptions.release.autoReleaseUsingConfig) {
           await this.project.releaseProcess.checkBundleQuestion(
             repoAbsPath,
-            `Check ${chalk.bold('project repo')} before pushing`,
+            `[${releaseOptions.release.releaseType}] Check ${chalk.bold('project repo')} before pushing`,
           );
         }
         await Helpers.git.tagAndPushToGitRepo(repoAbsPath, {
@@ -782,7 +782,7 @@ export class ArtifactManager {
           Helpers.info(`Checking  path "${repoAbsPath}" ..`);
           await this.project.releaseProcess.checkBundleQuestion(
             repoAbsPath,
-            `Check ${chalk.bold('project repo')} before tagging/pushing`,
+            `[${releaseOptions.release.releaseType}] Check ${chalk.bold('project repo')} before tagging/pushing`,
           );
         }
         await Helpers.git.tagAndPushToGitRepo(repoAbsPath, {

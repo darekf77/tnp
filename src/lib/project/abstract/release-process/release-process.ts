@@ -43,22 +43,6 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
     //#region @backendFunc
     while (true) {
       UtilsTerminal.clearConsole();
-      //#region info
-      console.info(
-        `
-${chalk.bold.green('Manual release')} => for everything whats Taon supports
-        - everything is done here manually, you have to provide options
-        - config saved during release process can be use for 'Cloud release' later
-${chalk.bold.blue('Cloud release')} => trigger remote release action on server (local or remote)
-        - trigger release base on config stored inside cloud
-        - use local Taon Cloud or login to remote Taon Cloud
-${chalk.bold.gray('Local release')} => use current git repo for storing release data
-        - for anything that you want to backup inside your git repository
-${chalk.bold.yellow('Static Pages release')} => use specific branch for storing release data
-        - perfect for github pages, gitlab pages and similar solutions
-        `.trimStart(),
-      );
-      //#endregion
 
       //#region return if not projects
       if (
@@ -86,6 +70,29 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       // const { actionResult } =
       await UtilsTerminal.selectActionAndExecute(
         {
+          readInfo: {
+            name: 'READ INFO ABOUT RELEASE TYPES',
+            action: async () => {
+              UtilsTerminal.clearConsole();
+              //#region info
+              console.info(
+                `
+${chalk.bold.green('Manual release')} => for everything whats Taon supports
+        - everything is done here manually, you have to provide options
+        - config saved during release process can be use for 'Cloud release' later
+${chalk.bold.blue('Cloud release')} => trigger remote release action on server (local or remote)
+        - trigger release base on config stored inside cloud
+        - use local Taon Cloud or login to remote Taon Cloud
+${chalk.bold.gray('Local release')} => use current git repo for storing release data
+        - for anything that you want to backup inside your git repository
+${chalk.bold.yellow('Static Pages release')} => use specific branch for storing release data
+        - perfect for github pages, gitlab pages and similar solutions
+        `.trimStart(),
+              );
+              //#endregion
+              await UtilsTerminal.pressAnyKeyToContinueAsync({});
+            },
+          },
           [manual]: {
             //#region manual
             name: `${this.getColoredTextItem(manual)} Taon release + create config for Cloud`,
