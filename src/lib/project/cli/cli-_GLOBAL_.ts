@@ -74,6 +74,20 @@ export class $Global extends BaseGlobalCommandLine<
     //#endregion
   }
 
+  simulateDomain(): Promise<void> {
+    //#region @backendFunc
+    if (this.project?.framework?.isStandaloneProject) {
+      const domain =
+        this.project.environmentConfig.getEnvMain()?.website?.domain;
+      if (domain) {
+        this.args = [domain, ...this.args];
+        return super.simulateDomain();
+      }
+    }
+    super.simulateDomain();
+    //#endregion
+  }
+
   //#region detect packages
   async detectPackages() {
     //#region @backendFunc
@@ -1853,22 +1867,18 @@ ${this.project.children
     //   choices: [],
     //   question: 'Select something',
     // });
-
     //   const coreProject1 = this.project.framework.coreProject;
     //   const coreProject2 = Project.ins.by('isomorphic-lib');
     //   console.log('coreProject2');
     //   console.log(coreProject1.pathFor(`docker-templates/terafik`));
     //   console.log('coreProject2');
     //   console.log(coreProject2.pathFor(`docker-templates/terafik`));
-
     // const wrap = UtilsProcessLogger.createStickyTopBox('AAA TEST');
     // const ui = UtilsProcessLogger.createStickyTopBox(
     //   '🐹 PROCESS OUTPUT — last 40 lines — Press ENTER to stop',
     // );
-
     // let iteration = 0;
     // const allLogs: string[] = [];
-
     // function makeChunk(chunkNo: number): string[] {
     //   const lines: string[] = [];
     //   for (let i = 0; i < 40; i++) {
@@ -1881,25 +1891,20 @@ ${this.project.children
     //   }
     //   return lines;
     // }
-
     // function feedChunk() {
     //   iteration++;
     //   allLogs.push(...makeChunk(iteration));
     //   ui.update(allLogs.join('\n'));
     // }
-
     // console.clear();
     // console.log('Starting stress test...\n');
-
     // // generate a new 40-line chunk every second
     // const timer = setInterval(feedChunk, 1000);
-
     // // stop after 10 chunks (≈ 400 lines)
     // setTimeout(() => {
     //   clearInterval(timer);
     //   console.log('\n\n✅ Finished streaming 10 chunks of 40 lines each.');
     // }, 10000);
-
     // this._exit();
     //#endregion
   }
