@@ -25,7 +25,7 @@ let dummyProcessCreate = false;
 export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker> {
   //#region header text
   protected async headerText(): Promise<string> {
-    return null;
+    return 'Processes';
   }
   //#endregion
 

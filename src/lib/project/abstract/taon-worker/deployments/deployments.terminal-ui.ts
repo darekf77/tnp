@@ -18,7 +18,7 @@ import { DeploymentsWorker } from './deployments.worker';
 // @ts-ignore TODO weird inheritance problem
 export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWorker> {
   async headerText(): Promise<string> {
-    return null;
+    return 'Taon Deployments';
   }
 
   textHeaderStyle(): CoreModels.CfontStyle {
