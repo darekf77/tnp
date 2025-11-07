@@ -1,8 +1,18 @@
 //#region imports
 import { config } from 'tnp-config/src';
-import { Helpers, UtilsTerminal, _, chalk, fse } from 'tnp-core/src';
+import {
+  Helpers,
+  UtilsNetwork,
+  UtilsTerminal,
+  _,
+  chalk,
+  fse,
+} from 'tnp-core/src';
 import { UtilsOs } from 'tnp-core/src';
-import { BaseCliWorkerTerminalUI } from 'tnp-helpers/src';
+import {
+  BaseCliWorkerTerminalUI,
+  BaseWorkerTerminalActionReturnType,
+} from 'tnp-helpers/src';
 
 import { DEFAULT_FRAMEWORK_VERSION } from '../../../constants';
 
@@ -55,11 +65,71 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
   }
   //#endregion
 
+  //#region methods / domains
+  protected async getDomainsMenu(): Promise<void> {
+    //#region @backendFunc
+    while (true) {
+      UtilsTerminal.clearConsole();
+      try {
+        const choices = {
+          back: {
+            name: 'Back to main menu',
+          },
+          listSimulatedDomains: {
+            name: 'List simulated domains (from /etc/hosts file)',
+          },
+        };
+
+        const options = await UtilsTerminal.select<keyof typeof choices>({
+          choices,
+        });
+
+        if (options === 'back') {
+          return;
+        }
+        if (options === 'listSimulatedDomains') {
+          UtilsTerminal.clearConsole();
+          Helpers.info(
+            `
+
+            Listing of simulated domains (from ${UtilsNetwork.getEtcHostsPath()} file):
+
+            `,
+          );
+          const domains = UtilsNetwork.getEtcHostEntryByComment(
+            UtilsNetwork.SIMULATE_DOMAIN_TAG,
+          );
+          if (domains.length === 0) {
+            await UtilsTerminal.pressAnyKeyToContinueAsync({
+              message: 'No simulated domains found. Press any key to continue.',
+            });
+            return;
+          }
+          const domainsSimulated: string[] = domains.reduce((acc, curr) => {
+            return acc.concat(curr.domains);
+          }, []);
+          for (let index = 0; index < domainsSimulated.length; index++) {
+            const domain = domainsSimulated[index];
+            Helpers.info(`${index + 1}. ${chalk.bold(domain)}`);
+          }
+          await UtilsTerminal.pressAnyKeyToContinueAsync();
+        }
+      } catch (error) {
+        await UtilsTerminal.pressAnyKeyToContinueAsync({
+          message: 'Error occurred. Press any key to continue.',
+        });
+      }
+    }
+    //#endregion
+  }
+  //#endregion
+
   //#region methods / get worker terminal actions
-  getWorkerTerminalActions() {
+  getWorkerTerminalActions(): BaseWorkerTerminalActionReturnType {
     //#region @backendFunc
 
     const myActions = {
+      //#region enableCloud
       enableCloud: {
         name: '',
         action: async () => {
@@ -85,6 +155,9 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
           }
         },
       },
+      //#endregion
+
+      //#region projects
       projects: {
         name: 'Manage Taon Projects',
         action: async () => {
@@ -94,6 +167,9 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
           });
         },
       },
+      //#endregion
+
+      //#region ports
       ports: {
         name: 'Manage Ports (TCP/UDP)',
         action: async () => {
@@ -102,15 +178,18 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
           });
         },
       },
+      //#endregion
+
+      //#region domains
       domains: {
         name: 'Manage Domains (and /etc/hosts file)',
         action: async () => {
-          Helpers.info(`This feature is not yet implemented.`);
-          await UtilsTerminal.pressAnyKeyToContinueAsync({
-            message: 'Press any key to go back to main menu',
-          });
+          await this.getDomainsMenu();
         },
       },
+      //#endregion
+
+      //#region deployments
       deployments: {
         name: 'Manage Deployments',
         action: async () => {
@@ -119,6 +198,9 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
           });
         },
       },
+      //#endregion
+
+      //#region instances
       instances: {
         name: 'Manage Instances',
         action: async () => {
@@ -127,6 +209,9 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
           });
         },
       },
+      //#endregion
+
+      //#region processes
       processes: {
         name: 'Manage Processes',
         action: async () => {
@@ -135,6 +220,9 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
           });
         },
       },
+      //#endregion
+
+      //#region environments
       environments: {
         name: 'Manage Environments',
         action: async () => {
@@ -152,6 +240,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
           await UtilsTerminal.pressAnyKeyToContinueAsync();
         },
       },
+      //#endregion
     };
 
     delete myActions.environments;
@@ -174,6 +263,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
   }
   //#endregion
 
+  //#region methods / info screen
   async infoScreen(options?: { exitIsOnlyReturn?: boolean }): Promise<void> {
     const isDockerRunning = await UtilsOs.isDockerAvailable();
     if (isDockerRunning) {
@@ -182,4 +272,5 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
     }
     await super.infoScreen(options);
   }
+  //#endregion
 }
