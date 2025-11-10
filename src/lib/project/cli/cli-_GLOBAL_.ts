@@ -14,7 +14,13 @@ import {
   frontendFiles,
   notNeededForExportFiles,
 } from 'tnp-config/src';
-import { psList, UtilsJson, UtilsOs, UtilsProcessLogger } from 'tnp-core/src';
+import {
+  psList,
+  UtilsEtcHosts,
+  UtilsJson,
+  UtilsOs,
+  UtilsProcessLogger,
+} from 'tnp-core/src';
 import {
   chokidar,
   dateformat,
@@ -38,6 +44,7 @@ import { CLI } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { FilePathMetaData } from 'tnp-core/src';
 import { UtilsCliClassMethod } from 'tnp-core/src';
+import { UtilsNetwork } from 'tnp-core/src';
 import {
   Helpers,
   BaseGlobalCommandLine,
@@ -74,6 +81,29 @@ export class $Global extends BaseGlobalCommandLine<
     //#endregion
   }
 
+  async hasSudoCommand(): Promise<void> {
+    //#region @backendFunc
+    const hasSudo = await UtilsOs.commandExistsAsync('sudo');
+    console.log(`Your os has sudo: ${hasSudo}`);
+    this._exit();
+    //#endregion
+  }
+
+  //#region add etc hosts entry
+  @UtilsCliClassMethod.decoratorMethod('addEtcHostsEntry')
+  addEtcHostsEntry(): void {
+    //#region @backendFunc
+    const [ip, domain, comment] = this.args || [];
+    UtilsNetwork.setEtcHost(domain, ip, comment);
+    Helpers.info(
+      `Added entry: ${chalk.bold(`${ip} ${domain}`)} to ${UtilsEtcHosts.getPath()} `,
+    );
+    this._exit();
+    //#endregion
+  }
+  //#endregion
+
+  //#region simulate domain
   simulateDomain(): Promise<void> {
     //#region @backendFunc
     if (this.project?.framework?.isStandaloneProject) {
@@ -87,6 +117,7 @@ export class $Global extends BaseGlobalCommandLine<
     super.simulateDomain();
     //#endregion
   }
+  //#endregion
 
   //#region detect packages
   async detectPackages() {

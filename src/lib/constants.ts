@@ -183,16 +183,19 @@ taonRepoPathUserInUserDir = crossPlatformPath([
 ]);
 //#endregion
 
-let taonBasePathToGlobalDockerTemplates: string = '';
-//#region @backend
-taonBasePathToGlobalDockerTemplates = crossPlatformPath([
+const taonBasePathToGlobalDockerTemplates: string = crossPlatformPath([
   UtilsOs.getRealHomeDir(),
   `.${config.frameworkNames.productionFrameworkName}`,
-  `docker-templates/${config.frameworkName}`,
+  `docker-templates`,
 ]);
-//#endregion
 
 export { taonRepoPathUserInUserDir, taonBasePathToGlobalDockerTemplates };
+
+/**
+ * Prevents taon from checking core container when
+ * calling itself from child process
+ */
+export const SKIP_CORE_CHECK_PARAM = '--skipCoreCheck';
 
 export const argsToClear = [
   'websql',

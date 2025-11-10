@@ -1,4 +1,6 @@
 //#region imports
+import { URL } from 'url'; // @backend
+
 import { config } from 'tnp-config/src';
 import {
   Helpers,
@@ -10,9 +12,12 @@ import {
 } from 'tnp-core/src';
 import { UtilsOs } from 'tnp-core/src';
 import {
+  BaseCliWorkerConfig,
   BaseCliWorkerTerminalUI,
   BaseWorkerTerminalActionReturnType,
 } from 'tnp-helpers/src';
+import { BaseCliWorkerUtils } from 'tnp-helpers/src';
+import { BaseCliWorker } from 'tnp-helpers/src';
 
 import { DEFAULT_FRAMEWORK_VERSION } from '../../../constants';
 
@@ -65,7 +70,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
   }
   //#endregion
 
-  //#region methods / domains
+  //#region methods / get domains menu
   protected async getDomainsMenu(): Promise<void> {
     //#region @backendFunc
     while (true) {
@@ -133,7 +138,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       enableCloud: {
         name: '',
         action: async () => {
-          if (this.worker.cloudIsEnabled) {
+          if (this.worker.traefikProvider.cloudIsEnabled) {
             if (
               await UtilsTerminal.confirm({
                 message: `Are you sure you want to disable cloud?`,
@@ -244,8 +249,8 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
     };
 
     delete myActions.environments;
-    if (this.worker.cloudIsEnabled) {
-      myActions.enableCloud.name = 'Disable Cloud';
+    if (this.worker.traefikProvider.cloudIsEnabled) {
+      myActions.enableCloud.name = `Disable Cloud ${this.worker.traefikProvider.isDevMode ? '(dev mode)' : ''}`;
     } else {
       myActions.enableCloud.name =
         'Enable Cloud (add possibility of deploying projects)';
@@ -265,11 +270,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
 
   //#region methods / info screen
   async infoScreen(options?: { exitIsOnlyReturn?: boolean }): Promise<void> {
-    const isDockerRunning = await UtilsOs.isDockerAvailable();
-    if (isDockerRunning) {
-      Helpers.logInfo(`Docker is running.. checking if Traefik is enabled...`);
-      this.worker.cloudIsEnabled = await this.worker.checkIfTreafikIsRunning();
-    }
+    await this.worker.traefikProvider.initialCloudStatusCheck();
     await super.infoScreen(options);
   }
   //#endregion

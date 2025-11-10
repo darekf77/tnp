@@ -670,28 +670,28 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         const ctxBackend = _.cloneDeep(backendTemplapteObj);
         const newKey =
           `backend-app-node--${contextName}--${index}`.toLowerCase();
-        const treafikKeyBackend = _.kebabCase(
+        const traefikKeyBackend = _.kebabCase(
           `${this.project.name}-${newKey}--` +
             `${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`,
         );
 
-        const treafikLabelsBE = [
+        const traefikLabelsBE = [
           `traefik.enable=true`,
-          `traefik.http.routers.${treafikKeyBackend}.rule=Host(\`${releaseOptions.website.domain}\`) && PathPrefix(\`/api/CTX/\`)`,
-          `traefik.http.routers.${treafikKeyBackend}.entrypoints=websecure`,
-          // `traefik.http.routers.${treafikKeyBackend}.tls.certresolver=myresolver`,
-          `traefik.http.services.${treafikKeyBackend}.loadbalancer.server.port=$\{HOST_BACKEND_PORT_1\}`,
+          `traefik.http.routers.${traefikKeyBackend}.rule=Host(\`${releaseOptions.website.domain}\`) && PathPrefix(\`/api/CTX/\`)`,
+          `traefik.http.routers.${traefikKeyBackend}.entrypoints=websecure`,
+          // `traefik.http.routers.${traefikKeyBackend}.tls.certresolver=myresolver`,
+          `traefik.http.services.${traefikKeyBackend}.loadbalancer.server.port=$\{HOST_BACKEND_PORT_1\}`,
           containerLabel,
           // only when sripping prefix
           // 'traefik.http.middlewares.strip-api.stripprefix.prefixes=/api',
           // 'traefik.http.routers.backend.middlewares=strip-api',
         ];
-        const treafikLabelsBEObject: Record<string, string> = {};
-        treafikLabelsBE.forEach(label => {
+        const traefikLabelsBEObject: Record<string, string> = {};
+        traefikLabelsBE.forEach(label => {
           const [key, value] = label.split('=');
-          treafikLabelsBEObject[key] = value;
+          traefikLabelsBEObject[key] = value;
         });
-        ctxBackend.labels = { ...ctxBackend.labels, ...treafikLabelsBEObject };
+        ctxBackend.labels = { ...ctxBackend.labels, ...traefikLabelsBEObject };
         ctxBackend.container_name = newKey;
         const all = _.cloneDeep(allValues) as Record<string, string>;
         for (const key of Object.keys(all)) {
@@ -700,7 +700,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         ctxBackend.environment = all;
         ctxBackend.environment[ACTIVE_CONTEXT] = contextName;
         (() => {
-          const keyLoadBalancerServerPort = `traefik.http.services.${treafikKeyBackend}.loadbalancer.server.port`;
+          const keyLoadBalancerServerPort = `traefik.http.services.${traefikKeyBackend}.loadbalancer.server.port`;
           const loadBalancerValue =
             ctxBackend.labels[keyLoadBalancerServerPort];
           ctxBackend.labels[keyLoadBalancerServerPort] =
@@ -708,7 +708,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         })();
 
         (() => {
-          const httpRouterBackendPortKey = `traefik.http.routers.${treafikKeyBackend}.rule`;
+          const httpRouterBackendPortKey = `traefik.http.routers.${traefikKeyBackend}.rule`;
           const loadBalancerValue = ctxBackend.labels[httpRouterBackendPortKey];
           ctxBackend.labels[httpRouterBackendPortKey] =
             loadBalancerValue?.replace('CTX', contextName);
@@ -726,24 +726,24 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           c.environment = all;
 
           const newKey = `angular-app-node--${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
-          const treafikKeyFronend = _.kebabCase(
+          const traefikKeyFrontend = _.kebabCase(
             `${this.project.name}-${newKey}`,
           );
 
-          const treafikLabelsFE = [
+          const traefikLabelsFE = [
             `traefik.enable=true`,
-            `traefik.http.routers.${treafikKeyFronend}.rule=Host(\`${releaseOptions.website.domain}\`)`,
-            `traefik.http.routers.${treafikKeyFronend}.entrypoints=websecure`,
-            // `traefik.http.routers.${treafikKeyFronend}.tls.certresolver=myresolver`,
-            `traefik.http.services.${treafikKeyFronend}.loadbalancer.server.port=80`,
+            `traefik.http.routers.${traefikKeyFrontend}.rule=Host(\`${releaseOptions.website.domain}\`)`,
+            `traefik.http.routers.${traefikKeyFrontend}.entrypoints=websecure`,
+            // `traefik.http.routers.${traefikKeyFronend}.tls.certresolver=myresolver`,
+            `traefik.http.services.${traefikKeyFrontend}.loadbalancer.server.port=80`,
             containerLabel,
           ];
-          const treafikLabelsFEObject: Record<string, string> = {};
-          treafikLabelsFE.forEach(label => {
+          const traefikLabelsFEObject: Record<string, string> = {};
+          traefikLabelsFE.forEach(label => {
             const [key, value] = label.split('=');
-            treafikLabelsFEObject[key] = value;
+            traefikLabelsFEObject[key] = value;
           });
-          c.labels = treafikLabelsFEObject;
+          c.labels = traefikLabelsFEObject;
           //#endregion
         }
       });

@@ -75,7 +75,7 @@ export class SplitFileProcess {
       const matchRegex = new RegExp(
         `^(${this.isomorphicLibraries
           .sort((a, b) => b.length - a.length)
-          .map(Utils.escapeStringForRegEx)
+          .map(a => Utils.escapeStringForRegEx(a))
           .join('|')})`,
       );
       const match = imp.cleanEmbeddedPathToFile.match(matchRegex);

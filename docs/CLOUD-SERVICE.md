@@ -26,7 +26,7 @@ By default, each Taon command checks if a working and healthy local Taon service
     <td><b>Enable/Disable Cloud</b></td>
     <td >
     - enable or disable possibility of deploying docker projects<br>
-    - start/stop treafik and related services<br>
+    - start/stop traefik and related services<br>
      <br>
     </td>
     <td>

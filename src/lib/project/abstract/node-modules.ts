@@ -15,6 +15,8 @@ import {
   Helpers,
 } from 'tnp-helpers/src';
 
+import { SKIP_CORE_CHECK_PARAM } from '../../constants';
+
 import type { NpmHelpers } from './npm-helpers';
 import type { Project } from './project';
 
@@ -42,7 +44,7 @@ export class NodeModules extends BaseNodeModules {
     // the problem is that I don't wanna check each time I am acessing core container
     if (this.project.nodeModules.empty) {
       this.project
-        .run(`${config.frameworkName} reinstall --skipCoreCheck`)
+        .run(`${config.frameworkName} reinstall ${SKIP_CORE_CHECK_PARAM}`)
         .sync();
     }
     //#endregion

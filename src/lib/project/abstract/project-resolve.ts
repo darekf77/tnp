@@ -14,6 +14,7 @@ import { Helpers, BaseProjectResolver } from 'tnp-helpers/src';
 
 import {
   DEFAULT_FRAMEWORK_VERSION,
+  SKIP_CORE_CHECK_PARAM,
   taonRepoPathUserInUserDir,
 } from '../../constants';
 // import { $Global } from '../cli/cli-_GLOBAL_';
@@ -84,14 +85,14 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     // )}`;
 
     // const commandStartWorker = `${cliToolName} ${
-    //   'startCliServiceTaonProjectsWorker --skipCoreCheck'
+    //   'startCliServiceTaonProjectsWorker ${SKIP_CORE_CHECK_PARAM}'
     //   // as keyof $Global
     // }`;
 
     this.taonProjectsWorker = new TaonProjectsWorker(
       'taon-projects',
       `${cliToolName} ${
-        'startCliServiceTaonProjectsWorker --skipCoreCheck'
+        `startCliServiceTaonProjectsWorker ${SKIP_CORE_CHECK_PARAM}`
         // as keyof $Global
       }`,
       this,
@@ -477,7 +478,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       // Helpers.run(command).sync();
       Helpers.run(
         // $Global.prototype.reinstallCoreContainers.name
-        `${config.frameworkName} ${'reinstallCoreContainers'} --skipCoreCheck`,
+        `${config.frameworkName} ${'reinstallCoreContainers'} ${SKIP_CORE_CHECK_PARAM}`,
       ).sync();
     }
 
@@ -515,7 +516,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       try {
         child_process.execSync(
           //$Global.prototype.ENV_INSTALL.name
-          `${config.frameworkName}  ${'ENV_INSTALL'} --skipCoreCheck`,
+          `${config.frameworkName}  ${'ENV_INSTALL'} ${SKIP_CORE_CHECK_PARAM}`,
           { stdio: [0, 1, 2] },
         );
       } catch (error) {
