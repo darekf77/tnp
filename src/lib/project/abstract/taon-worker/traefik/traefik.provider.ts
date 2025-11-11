@@ -445,6 +445,7 @@ export class TraefikProvider {
   protected async areCloudIpsValid(): Promise<boolean> {
     //#region @backendFunc
     for (const localIp of this.cloudIps) {
+      Helpers.info(`Validating IP address (ping): ${localIp}...`);
       if (!(await UtilsNetwork.checkIfServerPings(localIp))) {
         Helpers.error(
           `Server with IP ${localIp} is not reachable! Please select only reachable IPs.`,
@@ -590,13 +591,9 @@ export class TraefikProvider {
     if (isTraefikRunning) {
       this.setEnabledMode();
       for (const cloudIp of this.cloudIps) {
-        await this.service.register(
-          cloudIp,
-          this.taonProjectsWorker.processLocalInfoObj.port,
-          {
-            restartTraefikAfterRegister: false,
-          },
-        );
+        const workers =
+          BaseCliWorker.getAllWorkersStartedInSystemFromCurrentCli();
+        await this.service.registerWorkers(cloudIp, workers);
       }
       await this.restartTraefik();
     } else {

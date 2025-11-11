@@ -1,9 +1,11 @@
 //#region imports
+import { apiPrefix } from 'taon/src';
 import { chalk, crossPlatformPath, Helpers, UtilsYaml } from 'tnp-core/src';
 import { path, _ } from 'tnp-core/src';
+import { BaseCliWorker } from 'tnp-helpers/src';
 
-import { TraefikProvider } from './traefik.provider';
 import { TraefikConfig } from './traefik.models';
+import { TraefikProvider } from './traefik.provider';
 //#endregion
 
 export class TraefikServiceProvider {
@@ -16,8 +18,17 @@ export class TraefikServiceProvider {
   //#region protected methods
 
   //#region protected methods / get service prefix
-  protected getRuleFromIp(options: { publicOrLocalIp: string }): string {
+  protected getRuleFromIp(options: {
+    publicOrLocalIp: string;
+    worker?: BaseCliWorker<any, any>;
+  }): string {
     //#region @backendFunc
+    options = options || ({} as any);
+    if (options.worker) {
+      return `Host(\`${options.publicOrLocalIp}\`) && PathPrefix(\`/${apiPrefix}/${
+        options.worker.workerContextTemplate().contextName
+      }/\`)`;
+    }
     return `"Host(\`${options.publicOrLocalIp}\`)"`;
     // can be also rule: "Host(`33.44.55.66`) || HostRegexp(`{subdomain:.+}.33.44.55.66.sslip.io`)"
     //#endregion
@@ -40,7 +51,7 @@ export class TraefikServiceProvider {
   }
   //#endregion
 
-  //#region protected methods / get ip from yml
+  2; //#region protected methods / get ip from yml
   public getIpFromYml(): string | undefined {
     //#region @backendFunc
     const ymlFileAbsPath = _.first(
@@ -50,11 +61,14 @@ export class TraefikServiceProvider {
       ]).filter(f => f.endsWith('.yml')),
     );
 
-    const data = UtilsYaml.readYamlAsJson<TraefikConfig>(ymlFileAbsPath, {
-      defaultValue: { http: { routers: {}, services: {} } },
-    });
-    const firstKey = _.first(Object.keys(data.http.services || {})) || '';
-    const ip = firstKey.replace('ip-', '').replace(/\_/g, '.');
+    if (!Helpers.exists(ymlFileAbsPath)) {
+      return undefined;
+    }
+
+    const ip = path
+      .basename(ymlFileAbsPath)
+      .replace('.yml', '')
+      .replace(/\_/g, '.');
     return ip;
     //#endregion
   }
@@ -79,7 +93,78 @@ export class TraefikServiceProvider {
   }
   //#endregion
 
+  //#region public methods / register workers
+  public async registerWorkers(
+    publicOrLocalIp: string,
+    workers: BaseCliWorker<any, any>[],
+    options?: {
+      /**
+       * If true, Traefik will be restarted after registering the service
+       */
+      restartTraefikAfterRegister?: boolean;
+    },
+  ): Promise<void> {
+    //#region @backendFunc
+    options = options || {};
+    const routers: Record<string, any> = {};
+    const services: Record<string, any> = {};
+
+    for (const worker of workers) {
+      const safeName = `ip-${publicOrLocalIp.replace(/\./g, '-')}-${worker.contextName.toLowerCase()}`;
+
+      // HTTP router
+      routers[`${safeName}-http`] = {
+        rule: this.getRuleFromIp({ publicOrLocalIp, worker }),
+        service: safeName,
+        entryPoints: ['web'],
+      };
+
+      // HTTPS router
+      routers[`${safeName}-https`] = {
+        rule: this.getRuleFromIp({ publicOrLocalIp, worker }),
+        service: safeName,
+        entryPoints: ['websecure'],
+        tls: {},
+      };
+
+      // Service
+      services[safeName] = {
+        loadBalancer: {
+          servers: [
+            {
+              url: `http://host.docker.internal:${worker.port}`,
+            },
+          ],
+        },
+      };
+    }
+
+    const jsonConfig = {
+      http: {
+        routers,
+        services,
+      },
+    };
+
+    const yamlContent = UtilsYaml.jsonToYaml(jsonConfig);
+    const ipAsServiceName = _.snakeCase(publicOrLocalIp);
+    const yamlPath = this.yamlPathForServiceName({ ipAsServiceName });
+
+    Helpers.writeFile(yamlPath, yamlContent.trim() + '\n');
+    console.log(`✅ Registered service for all workers.`);
+
+    if (options.restartTraefikAfterRegister) {
+      await this.traefikProvider.restartTraefik();
+    }
+
+    //#endregion
+  }
+  //#endregion
+
   //#region public methods / register service
+  /**
+   * @deprecated
+   */
   public async register(
     publicOrLocalIp: string,
     localhostPort: number,

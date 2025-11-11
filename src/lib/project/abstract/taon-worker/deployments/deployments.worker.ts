@@ -1,12 +1,13 @@
 //#region imports
 import { _, UtilsTerminal } from 'tnp-core/src';
-import { BaseCliWorker } from 'tnp-helpers/src';
+import { BaseCliWorker, BaseCliWorkerGuiUrlOptions } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../../../build-info._auto-generated_';
 
 import { DeploymentsContext } from './deployments.context';
 import { DeploymentsController } from './deployments.controller';
 import { DeploymentsTerminalUI } from './deployments.terminal-ui';
+import { Project } from '../../project';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -25,6 +26,24 @@ export class DeploymentsWorker extends BaseCliWorker<
   terminalUI = new DeploymentsTerminalUI(this);
   // @ts-ignore
   controllerClass = DeploymentsController;
+  //#endregion
+
+  //#region methods / get gui url
+  getWorkerInfoGuiUrl(options?: BaseCliWorkerGuiUrlOptions): string {
+    //#region @backendFunc
+    if (Project.ins.taonProjectsWorker.traefikProvider.cloudIsEnabled) {
+      return super.getWorkerInfoGuiUrl({
+        domain: _.first(
+          Project.ins.taonProjectsWorker.traefikProvider.cloudIps,
+        ),
+        useHttps: true,
+        port: null,
+      });
+    } else {
+      return super.getWorkerInfoGuiUrl(options);
+    }
+    //#endregion
+  }
   //#endregion
 
   //#region constructor
