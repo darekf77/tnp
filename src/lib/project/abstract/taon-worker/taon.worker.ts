@@ -110,23 +110,6 @@ export class TaonProjectsWorker extends BaseCliWorker<
 
   //#endregion
 
-  //#region methods / get gui url
-  getWorkerInfoGuiUrl(options?: BaseCliWorkerGuiUrlOptions): string {
-    //#region @backendFunc
-    if (this.traefikProvider.cloudIsEnabled) {
-
-      return super.getWorkerInfoGuiUrl({
-        domain: _.first(this.traefikProvider.cloudIps),
-        useHttps: true,
-        port: null,
-      });
-    } else {
-      return super.getWorkerInfoGuiUrl(options);
-    }
-    //#endregion
-  }
-  //#endregion
-
   //#region methods / start normally in current process
   /**
    * start normally process

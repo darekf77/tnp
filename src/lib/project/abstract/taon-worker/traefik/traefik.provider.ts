@@ -99,6 +99,8 @@ export class TraefikProvider {
     } else {
       this.taonCloudStatus = TaonCloudStatus.ENABLED_SECURED;
     }
+    BaseCliWorker.cloudIp.next(_.first(this.cloudIps));
+    BaseCliWorker.isCloudEnable.next(true);
   }
   //#endregion
 
@@ -153,7 +155,7 @@ export class TraefikProvider {
       child_process.execSync(
         `docker network create ${this.reverseProxyNetworkName}`,
         {
-          stdio: 'inherit',
+          stdio: 'ignore',
         },
       );
       console.log(`✅ Network created: ${this.reverseProxyNetworkName}`);
@@ -630,6 +632,7 @@ export class TraefikProvider {
 
     Helpers.removeFolderIfExists(this.pathToTraefikComposeDestCwd);
     this.taonCloudStatus = TaonCloudStatus.NOT_STARED;
+    BaseCliWorker.isCloudEnable.next(false);
     // docker compose rm -f traefik
     // docker compose down --remove-orphans
 
