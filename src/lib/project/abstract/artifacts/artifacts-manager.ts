@@ -79,7 +79,7 @@ export class ArtifactManager {
   }
   //#endregion
 
-  //#region clear
+  //#region public methods / clear
   async clear(options: EnvOptions): Promise<void> {
     Helpers.taskStarted(`
 
@@ -122,7 +122,7 @@ export class ArtifactManager {
   }
   //#endregion
 
-  //#region struct
+  //#region public methods / struct
   /**
    * struct current project only
    * struct() <=> init() with struct flag
@@ -145,40 +145,8 @@ export class ArtifactManager {
   }
   //#endregion
 
-  private recreateAndFixCoreFiles(): void {
-    //#region @backendFunc
-    const project = this.project;
-    if (
-      !project.framework.isCoreProject &&
-      project.framework.isStandaloneProject
-    ) {
-      project.framework.recreateFileFromCoreProject({
-        fileRelativePath: [config.folder.src, 'app.ts'],
-      });
-
-      project.framework.preventNotExistedComponentAndModuleInAppTs();
-
-      project.framework.recreateFileFromCoreProject({
-        fileRelativePath: [config.folder.src, 'global.scss'],
-      });
-
-      project.framework.recreateFileFromCoreProject({
-        fileRelativePath: [config.folder.src, 'app.electron.ts'],
-      });
-
-      const indexInSrcFile = crossPlatformPath(
-        path.join(project.location, config.folder.src, config.file.index_ts),
-      );
-
-      if (!Helpers.exists(indexInSrcFile)) {
-        Helpers.writeFile(indexInSrcFile, EXPORT_TEMPLATE('lib'));
-      }
-    }
-    //#endregion
-  }
-
-  //#region init
-  async init(initOptions: EnvOptions): Promise<EnvOptions> {
+  //#region public methods / init
+  public async init(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
 
     //#region prevent not requested framework version
@@ -381,14 +349,19 @@ export class ArtifactManager {
     //#endregion
   }
 
-  async initAllChildren(options: EnvOptions): Promise<void> {
+  public async initAllChildren(options: EnvOptions): Promise<void> {
     for (const child of this.project.children) {
       await child.artifactsManager.init(options.clone({}));
     }
   }
   //#endregion
 
-  //#region build
+  //#region public methods / build
+
+  //#region public methods / interactive menu TODO
+  /**
+   * @deprecated
+   */
   private buildWatchCmdForArtifact = (
     artifact: ReleaseArtifactTaon,
     options?: Partial<EnvOptions>,
@@ -410,7 +383,9 @@ export class ArtifactManager {
 
     return `${config.frameworkName} build${options.build.watch ? ':watch' : ''} ${params}`;
   };
+  //#endregion
 
+  //#region public methods / build standalone
   async build(buildOptions: EnvOptions): Promise<void> {
     if (!buildOptions.release.targetArtifact) {
       //#region  build Menu
@@ -551,7 +526,9 @@ export class ArtifactManager {
       //#endregion
     }
   }
+  //#endregion
 
+  //#region public methods / build all children
   async buildAllChildren(
     options: EnvOptions,
     children = this.project.children,
@@ -608,8 +585,10 @@ export class ArtifactManager {
   }
   //#endregion
 
-  //#region release
-  async release(
+  //#endregion
+
+  //#region public methods / release
+  public async release(
     releaseOptions: EnvOptions,
     autoReleaseProcess = false,
   ): Promise<void> {
@@ -792,6 +771,16 @@ export class ArtifactManager {
         });
       }
     }
+
+    if (releaseOutput.deploymentFunction) {
+      if (releaseOptions.release.skipDeploy) {
+        Helpers.warn(
+          `Skipping deployment as per release.skipDeploy`,
+        );
+      } else {
+        await releaseOutput.deploymentFunction();
+      }
+    }
     //#endregion
 
     //#endregion
@@ -824,7 +813,7 @@ export class ArtifactManager {
   }
   //#endregion
 
-  //#region try catch wrapper
+  //#region public methods / try catch wrapper
   public async tryCatchWrapper(
     action: () => any,
     actionName: 'release' | 'build' | 'init' | 'clear' | 'struct' | 'brand',
@@ -868,6 +857,40 @@ export class ArtifactManager {
         } else if (res === 'skipPackage') {
           break;
         }
+      }
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region private methods / recreation and fixing core files
+  private recreateAndFixCoreFiles(): void {
+    //#region @backendFunc
+    const project = this.project;
+    if (
+      !project.framework.isCoreProject &&
+      project.framework.isStandaloneProject
+    ) {
+      project.framework.recreateFileFromCoreProject({
+        fileRelativePath: [config.folder.src, 'app.ts'],
+      });
+
+      project.framework.preventNotExistedComponentAndModuleInAppTs();
+
+      project.framework.recreateFileFromCoreProject({
+        fileRelativePath: [config.folder.src, 'global.scss'],
+      });
+
+      project.framework.recreateFileFromCoreProject({
+        fileRelativePath: [config.folder.src, 'app.electron.ts'],
+      });
+
+      const indexInSrcFile = crossPlatformPath(
+        path.join(project.location, config.folder.src, config.file.index_ts),
+      );
+
+      if (!Helpers.exists(indexInSrcFile)) {
+        Helpers.writeFile(indexInSrcFile, EXPORT_TEMPLATE('lib'));
       }
     }
     //#endregion

@@ -46,6 +46,7 @@ export interface ReleasePartialOutput {
   projectsReposToPushAndTag?: string[];
   projectsReposToPush?: string[];
   resolvedNewVersion?: string;
+  deploymentFunction?: () => Promise<void>;
 }
 //#endregion
 

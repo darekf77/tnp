@@ -17,6 +17,13 @@ export namespace DeploymentsUtils {
     },
   ): Promise<void> => {
     //#region @backendFunc
+    if (!deployment) {
+      throw new Error(`deployment is required`);
+    }
+    if (!deployment.processIdComposeUp) {
+      throw new Error(`deployment.processIdComposeUp is required`);
+    }
+
     await ProcessesUtils.displayRealtimeProgressMonitor(
       deployment.processIdComposeUp,
       processesController,

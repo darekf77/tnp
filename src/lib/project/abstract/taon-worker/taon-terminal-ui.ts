@@ -267,11 +267,4 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
     //#endregion
   }
   //#endregion
-
-  //#region methods / info screen
-  async infoScreen(options?: { exitIsOnlyReturn?: boolean }): Promise<void> {
-    await this.worker.traefikProvider.initialCloudStatusCheck();
-    await super.infoScreen(options);
-  }
-  //#endregion
 }

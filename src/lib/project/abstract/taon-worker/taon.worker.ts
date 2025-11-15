@@ -6,6 +6,7 @@ import {
   BaseCliWorkerGuiUrlOptions,
   BaseCLiWorkerStartMode,
   Helpers,
+  UtilsDocker,
 } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
@@ -162,7 +163,12 @@ export class TaonProjectsWorker extends BaseCliWorker<
     // shutdown of all if shutdown in main window
     // handle cli args for group --restart
 
-    await super.startNormallyInCurrentProcess();
+    await super.startNormallyInCurrentProcess({
+      actionBeforeTerminalUI: async () => {
+        Helpers.info(``);
+        await this.traefikProvider.initialCloudStatusCheck();
+      },
+    });
     //#endregion
   }
   //#endregion
@@ -200,6 +206,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
       UtilsTerminal.clearConsole();
 
       await this.traefikProvider.stopTraefik();
+      await UtilsDocker.removeAllTaonContainersAndImagesFromDocker();
       // await UtilsProcess.killProcessOnPort(80);
       // await UtilsProcess.killProcessOnPort(443);
       Helpers.taskDone(`Taon cloud disabled!`);

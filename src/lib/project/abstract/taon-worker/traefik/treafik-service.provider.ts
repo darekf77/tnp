@@ -61,7 +61,7 @@ export class TraefikServiceProvider {
       ]).filter(f => f.endsWith('.yml')),
     );
 
-    if (!Helpers.exists(ymlFileAbsPath)) {
+    if (!ymlFileAbsPath || !Helpers.exists(ymlFileAbsPath)) {
       return undefined;
     }
 

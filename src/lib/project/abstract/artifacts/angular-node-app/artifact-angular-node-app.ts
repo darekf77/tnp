@@ -19,6 +19,7 @@ import {
   UtilsTypescript,
   DockerComposeFile,
   UtilsZip,
+  BaseCliWorkerConfigGetContextOptions,
 } from 'tnp-helpers/src';
 import { UtilsDocker } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
@@ -429,6 +430,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     releaseOptions: EnvOptions,
   ): Promise<ReleasePartialOutput> {
     //#region @backendFunc
+    let deploymentFunction: () => Promise<void> = void 0;
 
     //#region update resolved variables
     releaseOptions = this.updateResolvedVersion(releaseOptions);
@@ -466,8 +468,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       releaseOptions.release.releaseType === 'local' ||
       releaseOptions.release.releaseType === 'manual'
     ) {
-      //#region local/manual release
-
       //#region copy to local release folder
       const localReleaseOutputBasePath =
         releaseOptions.release.releaseType === 'local'
@@ -481,6 +481,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
               'release-manual',
               this.currentArtifactName,
             ]);
+
       Helpers.copy(appDistOutBrowserAngularAbsPath, [
         localReleaseOutputBasePath,
         path.basename(appDistOutBrowserAngularAbsPath),
@@ -490,7 +491,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         path.basename(appDistOutBackendNodeAbsPath),
       ]);
       releaseProjPath = localReleaseOutputBasePath;
+      //#endregion
 
+      //#region update package.json in backend app
       Helpers.setValueToJSON(
         [
           localReleaseOutputBasePath,
@@ -512,7 +515,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       );
       //#endregion
 
-      //#region handle docker-compose files
+      //#region update docker-compose files
 
       const dockerComposeRelativePath = 'docker-templates/docker-compose.yml';
       const dockerComposeYmlDestPath = crossPlatformPath([
@@ -682,6 +685,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           // `traefik.http.routers.${traefikKeyBackend}.tls.certresolver=myresolver`,
           `traefik.http.services.${traefikKeyBackend}.loadbalancer.server.port=$\{HOST_BACKEND_PORT_1\}`,
           containerLabel,
+          UtilsDocker.DOCKER_TAON_PROJECT_LABEL,
           // only when sripping prefix
           // 'traefik.http.middlewares.strip-api.stripprefix.prefixes=/api',
           // 'traefik.http.routers.backend.middlewares=strip-api',
@@ -787,8 +791,8 @@ ${dockerComposeYmlFileContent}
         ]);
 
         const envScript = `<script>
-        window.ENV = ${JSON.stringify(allValues, null, 2)};
-      </script>`;
+      window.ENV = ${JSON.stringify(allValues, null, 2)};
+    </script>`;
 
         let html = Helpers.readFile(indexHtmlFromAngularAppPath);
         // Inject before </head> if found
@@ -799,178 +803,27 @@ ${dockerComposeYmlFileContent}
 
       Helpers.info(`
 
-        Dockerized version of your app is ready.
-        you can run: ${chalk.bold('docker compose up -d')}
-        in ${localReleaseOutputBasePath}
+      Dockerized version of your app is ready.
+      you can run: ${chalk.bold('docker compose up -d')}
+      in ${localReleaseOutputBasePath}
 
-        or quick script:
-        taon preview ./docker-compose.yml
+      or quick script:
+      taon preview ./docker-compose.yml
 
-        `);
+      `);
 
       if (releaseOptions.release.releaseType === 'local') {
         Helpers.taskDone(`Local release done!`);
+        // TODO
       } else if (releaseOptions.release.releaseType === 'manual') {
-        // Helpers.run
-        // localReleaseOutputBasePath
-
-        let zipFileAbsPath = await UtilsZip.zipDir(localReleaseOutputBasePath, {
-          overrideIfZipFileExists: true,
-        });
-
-        const projData = {
-          destinationDomain: releaseOptions.website.domain,
-          version: releaseOptions.release.resolvedNewVersion,
-          envName: releaseOptions.release.envName,
-          envNumber: releaseOptions.release.envNumber || '',
-          releaseType: releaseOptions.release.releaseType as ReleaseType,
-          projectName: this.project.name,
-          targetArtifact: releaseOptions.release.targetArtifact,
-        } as DeploymentReleaseData;
-
-        const newBasenameZipFile = FilePathMetaData.embedData(
-          _.pick(projData, ['destinationDomain', 'version']),
-          path.basename(zipFileAbsPath),
-          {
-            skipAddingBasenameAtEnd: true,
-            keysMap,
-          },
-        );
-
-        const newZipFileName = crossPlatformPath([
-          path.dirname(zipFileAbsPath),
-          newBasenameZipFile,
-        ]);
-
-        Helpers.copyFile(zipFileAbsPath, newZipFileName);
-
-        zipFileAbsPath = newZipFileName;
-        const portIfLocalhost =
-          releaseOptions.release.taonInstanceIpOrDomain ===
-          CoreModels.localhostDomain
-            ? Number(
-                this.project.ins.taonProjectsWorker.deploymentsWorker
-                  .processLocalInfoObj.port,
-              )
-            : undefined;
-
-        Helpers.taskDone(`
-
-          Manual release done!
-          Destination taon instance ip (or domain): "${releaseOptions.release.taonInstanceIpOrDomain}"
-
-          Zip file ready for taon cloud deployment:
-${path.dirname(zipFileAbsPath)}
-/${path.basename(zipFileAbsPath)}
-
-          `);
-
-        const deploymentController =
-          await this.project.ins.taonProjectsWorker.deploymentsWorker.getRemoteControllerFor(
-            {
-              methodOptions: {
-                connectionOptions: {
-                  ipAddressOfTaonInstance:
-                    releaseOptions.release.taonInstanceIpOrDomain,
-                  port: portIfLocalhost,
-                },
-                calledFrom: 'artifact-angular-node-app.releasePartial',
-              },
-              controllerClass: DeploymentsController,
-            },
-          );
-
-        const processesController =
-          await this.project.ins.taonProjectsWorker.processesWorker.getRemoteControllerFor(
-            {
-              methodOptions: {
-                connectionOptions: {
-                  ipAddressOfTaonInstance:
-                    releaseOptions.release.taonInstanceIpOrDomain,
-                  port: portIfLocalhost,
-                },
-                calledFrom: 'artifact-angular-node-app.releasePartial',
-              },
-              controllerClass: ProcessesController,
-            },
-          );
-
-        let uploadResponse: MulterFileUploadResponse[];
-        while (true) {
-          try {
-            Helpers.info(`Uploading zip file to taon server...`);
-            globalSpinner.start();
-            uploadResponse = await deploymentController.uploadLocalFileToServer(
-              zipFileAbsPath,
-              {
-                onUploadProgress: (progressEvent: AxiosProgressEvent) => {
-                  const percentCompleted = Math.round(
-                    (progressEvent.loaded * 100) / progressEvent.total,
-                  );
-                  globalSpinner.text = `Upload progress: ${percentCompleted}%`;
-                  // console.log(`Upload progress: ${percentCompleted}%`);
-                },
-              },
-              projData,
-            );
-
-            globalSpinner.succeed(`Deployment upload done!`);
-            break;
-          } catch (error) {
-            globalSpinner.fail(`Error during upload zip file to taon server!`);
-            config.frameworkName === 'tnp' && console.error(error);
-            if (releaseOptions.release.autoReleaseUsingConfig) {
-              throw `Error during upload zip file to taon server...`;
-            } else {
-              await UtilsTerminal.pressAnyKeyToContinueAsync({
-                message: `Error during upload zip file to taon server...press any key to continue`,
-              });
-            }
-          }
-        }
-
-        if (!releaseOptions.release.skipDeploy) {
-          Helpers.info(`Starting deployment...`);
-          const forceStart = true;
-          let deployment = (
-            await deploymentController
-              .triggerDeploymentStart(uploadResponse[0].savedAs, forceStart)
-              .request()
-          ).body.json;
-          await deploymentController.waitUntilDeploymentHasComposeUpProcess(
-            deployment.id,
-          );
-          deployment = (
-            await deploymentController
-              .getByDeploymentId(deployment.id)
-              .request()
-          ).body.json;
-
-          Helpers.info(`Deployment started! `);
-
-          if (!releaseOptions.release.autoReleaseUsingConfig) {
-            Helpers.info(`
-
-
-STARTING DEPLOYMENT PREVIEW (PRESS ANY KEY TO MOVE BACK TO RELEASE FINSH SCREEN)
-
-
-              `);
-
-            await DeploymentsUtils.displayRealtimeProgressMonitor(
-              deployment,
-              processesController,
-              {
-                resolveWhenTextInOutput: CoreModels.SPECIAL_APP_READY_MESSAGE,
-              },
-            );
-          }
-        }
-
-        // this.project.nodeModules.linkToLocation(localReleaseOutputBasePath);
+        Helpers.taskDone(`Manual release prepared!`);
+        deploymentFunction = async () => {
+          await this.deployToTaonCloud({
+            releaseOptions,
+            localReleaseOutputBasePath,
+          });
+        };
       }
-
-      //#endregion
     }
 
     return {
@@ -979,7 +832,187 @@ STARTING DEPLOYMENT PREVIEW (PRESS ANY KEY TO MOVE BACK TO RELEASE FINSH SCREEN)
       releaseType: releaseOptions.release.releaseType,
       projectsReposToPushAndTag,
       projectsReposToPush,
+      deploymentFunction,
     };
+    //#endregion
+  }
+  //#endregion
+
+  //#region deploy to cloud
+  private async deployToTaonCloud({
+    releaseOptions,
+    localReleaseOutputBasePath,
+  }: {
+    releaseOptions: EnvOptions;
+    localReleaseOutputBasePath?: string;
+  }): Promise<void> {
+    //#region @backendFunc
+
+    //#region prepare zip newZipFileName file for upload
+    const tmpZipLocalReleaseFileAbsPath = await UtilsZip.zipDir(
+      localReleaseOutputBasePath,
+      {
+        overrideIfZipFileExists: true,
+      },
+    );
+
+    const tmpProjDataForUpload = {
+      destinationDomain: releaseOptions.website.domain,
+      version: releaseOptions.release.resolvedNewVersion,
+      envName: releaseOptions.release.envName,
+      envNumber: releaseOptions.release.envNumber || '',
+      releaseType: releaseOptions.release.releaseType as ReleaseType,
+      projectName: this.project.name,
+      targetArtifact: releaseOptions.release.targetArtifact,
+    } as DeploymentReleaseData;
+
+    const newBasenameZipFile = FilePathMetaData.embedData(
+      _.pick(tmpProjDataForUpload, ['destinationDomain', 'version']),
+      path.basename(tmpZipLocalReleaseFileAbsPath),
+      {
+        skipAddingBasenameAtEnd: true,
+        keysMap,
+      },
+    );
+
+    const newZipFileName = crossPlatformPath([
+      path.dirname(tmpZipLocalReleaseFileAbsPath),
+      newBasenameZipFile,
+    ]);
+
+    Helpers.copyFile(tmpZipLocalReleaseFileAbsPath, newZipFileName);
+
+    Helpers.taskDone(`
+      Release zip file prepared for taon cloud deployment!
+      Destination taon instance ip (or domain): "${releaseOptions.release.taonInstanceIp}"
+
+      Zip file ready for taon cloud deployment:
+${path.dirname(newZipFileName)}
+/${path.basename(newZipFileName)}
+
+      `);
+    //#endregion
+
+    //#region prepare cloud connections and controllers
+    const connectionOptionsDeployments = {
+      ipAddressOfTaonInstance: releaseOptions.release.taonInstanceIp,
+      port:
+        releaseOptions.release.taonInstanceIp === CoreModels.localhostIp127
+          ? Number(
+              this.project.ins.taonProjectsWorker.deploymentsWorker
+                .processLocalInfoObj.port,
+            )
+          : null,
+    } as BaseCliWorkerConfigGetContextOptions;
+
+    const connectionOptionsProcesses = {
+      ipAddressOfTaonInstance: releaseOptions.release.taonInstanceIp,
+      port:
+        releaseOptions.release.taonInstanceIp === CoreModels.localhostIp127
+          ? Number(
+              this.project.ins.taonProjectsWorker.processesWorker
+                .processLocalInfoObj.port,
+            )
+          : null,
+    } as BaseCliWorkerConfigGetContextOptions;
+
+    const deploymentController =
+      await this.project.ins.taonProjectsWorker.deploymentsWorker.getRemoteControllerFor(
+        {
+          methodOptions: {
+            connectionOptions: connectionOptionsDeployments,
+            calledFrom: 'artifact-angular-node-app.releasePartial',
+          },
+          controllerClass: DeploymentsController,
+        },
+      );
+
+    const processesController =
+      await this.project.ins.taonProjectsWorker.processesWorker.getRemoteControllerFor(
+        {
+          methodOptions: {
+            connectionOptions: connectionOptionsProcesses,
+            calledFrom: 'artifact-angular-node-app.releasePartial',
+          },
+          controllerClass: ProcessesController,
+        },
+      );
+    //#endregion
+
+    //#region try to upload release to taon cloud
+    let uploadResponse: MulterFileUploadResponse[];
+    while (true) {
+      try {
+        Helpers.info(`Uploading zip file to taon server...`);
+        globalSpinner.start();
+        uploadResponse = await deploymentController.uploadLocalFileToServer(
+          newZipFileName,
+          {
+            onUploadProgress: (progressEvent: AxiosProgressEvent) => {
+              const percentCompleted = Math.round(
+                (progressEvent.loaded * 100) / progressEvent.total,
+              );
+              globalSpinner.text = `Upload progress: ${percentCompleted}%`;
+              // console.log(`Upload progress: ${percentCompleted}%`);
+            },
+          },
+          tmpProjDataForUpload,
+        );
+
+        globalSpinner.succeed(`Deployment upload done!`);
+        break;
+      } catch (error) {
+        globalSpinner.fail(`Error during upload zip file to taon server!`);
+        config.frameworkName === 'tnp' && console.error(error);
+        if (releaseOptions.release.autoReleaseUsingConfig) {
+          throw `Error during upload zip file to taon server...`;
+        } else {
+          await UtilsTerminal.pressAnyKeyToContinueAsync({
+            message: `Error during upload zip file to taon server...press any key to continue`,
+          });
+        }
+      }
+    }
+    //#endregion
+
+    //#region trigger deployment start
+    Helpers.info(`Starting deployment...`);
+    const forceStart = true;
+    let deployment = (
+      await deploymentController
+        .triggerDeploymentStart(uploadResponse[0].savedAs, forceStart)
+        .request()
+    ).body.json;
+    await deploymentController.waitUntilDeploymentHasComposeUpProcess(
+      deployment.id,
+    );
+    deployment = (
+      await deploymentController.getByDeploymentId(deployment.id).request()
+    ).body.json;
+
+    Helpers.info(`Deployment started! `);
+    //#endregion
+
+    //#region display realtime deployment log
+    if (!releaseOptions.isCiProcess) {
+      Helpers.info(`
+
+
+STARTING DEPLOYMENT PREVIEW (PRESS ANY KEY TO MOVE BACK TO RELEASE FINISH SCREEN)
+
+
+              `);
+
+      await DeploymentsUtils.displayRealtimeProgressMonitor(
+        deployment,
+        processesController,
+        {
+          resolveWhenTextInOutput: CoreModels.SPECIAL_APP_READY_MESSAGE,
+        },
+      );
+    }
+    //#endregion
+
     //#endregion
   }
   //#endregion

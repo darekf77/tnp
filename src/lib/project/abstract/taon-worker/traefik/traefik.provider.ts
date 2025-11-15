@@ -15,7 +15,10 @@ import {
 import { CoreModels, UtilsNetwork } from 'tnp-core/src';
 import { BaseCliWorker, Helpers } from 'tnp-helpers/src';
 
-import { taonBasePathToGlobalDockerTemplates } from '../../../../constants';
+import {
+  globalSpinner,
+  taonBasePathToGlobalDockerTemplates,
+} from '../../../../constants';
 import { TaonCloudStatus } from '../taon.models';
 import type { TaonProjectsWorker } from '../taon.worker';
 
@@ -260,10 +263,13 @@ export class TraefikProvider {
       options.maxTries = options.maxTries || 50;
     }
     const execAsync = promisify(child_process.exec);
+
+    globalSpinner.start(`Traefik health: checking...`);
+
     while (true) {
       tries++;
       if (options.maxTries && tries > options.maxTries) {
-        console.log(
+        globalSpinner.fail(
           `Traefik is not running or not healthy after ${tries} tries`,
         );
         return false;
@@ -276,27 +282,26 @@ export class TraefikProvider {
         );
 
         const status = stdout.trim().replace(/"/g, '');
-        Helpers.logInfo(`Traefik health: ${status}`);
+        globalSpinner.text = `Traefik health: ${status}`;
 
         if (status === 'healthy') {
-          console.log('✅ Traefik is ready');
+          globalSpinner.succeed(`Traefik is ready`);
+          await UtilsTerminal.wait(1);
           return true;
         }
         if (status === 'unhealthy') {
-          console.log('❌ Traefik is unhealthy');
           if (options.waitUntilHealthy) {
-            console.log('Traefik state is not healthy yet, waiting...');
+            globalSpinner.text = 'Traefik state is not healthy yet, waiting...';
           } else {
-            console.log('Traefik state is not running or not healthy');
+            globalSpinner.fail(`Traefik state is not running or not healthy`);
             return false;
           }
         }
       } catch (error) {
-        // console.error(error);
         if (options.waitUntilHealthy) {
-          console.log('Traefik is not healthy yet, waiting...');
+          globalSpinner.text = 'Traefik is not healthy yet, waiting...';
         } else {
-          console.log('Traefik is not running or not healthy');
+          globalSpinner.fail('Traefik is not running or not healthy');
           return false;
         }
       }

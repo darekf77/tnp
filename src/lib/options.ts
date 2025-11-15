@@ -358,7 +358,7 @@ class EnvOptionsLoading {
 
 //#region env options / release
 class EnvOptionsRelease {
-  declare taonInstanceIpOrDomain?: string;
+  declare taonInstanceIp?: string;
   /**
    * new version resolve at the beginning of release process
    * and is used for all artifacts
@@ -879,7 +879,7 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
       doNotIncludeLibFiles: '-' as any,
     },
     autoReleaseUsingConfig: '-' as any,
-    taonInstanceIpOrDomain: '-' as any,
+    taonInstanceIp: '-' as any,
     skipNpmPublish: '-' as any,
     skipDeploy: '-' as any,
     skipTagGitPush: '-' as any,
