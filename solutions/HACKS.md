@@ -59,7 +59,7 @@ arch -x86_64 brew install <package>
 
 # set origin name
 ```
-git remote set-url orgin <my-new-origin-name>
+git remote set-url origin <my-new-origin-name>
 ```
 
 
