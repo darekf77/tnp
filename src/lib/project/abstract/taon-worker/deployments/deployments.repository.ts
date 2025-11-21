@@ -21,6 +21,10 @@ import { $Cloud } from '../../../cli/cli-CLOUD';
 import { Project } from '../../project';
 import { Processes } from '../processes/processes';
 import { ProcessesController } from '../processes/processes.controller';
+import {
+  ProcessesState,
+  ProcessesStatesAllowedStart,
+} from '../processes/processes.models';
 import { ProcessesRepository } from '../processes/processes.repository';
 
 import { Deployments } from './deployments';
@@ -32,12 +36,9 @@ import {
   DeploymentsStatus,
   DeploymentsStatesAllowedStop,
   DeploymentReleaseData,
+  AllDeploymentsRemoveStatus,
+  AllDeploymentsRemoveStatusObj,
 } from './deployments.models';
-import {
-  ProcessesState,
-  ProcessesStatesAllowedStart,
-} from '../processes/processes.models';
-import { UtilsTerminal } from 'tnp-core/src';
 //#endregion
 
 @Taon.Repository({
@@ -47,6 +48,27 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
   entityClassResolveFn: () => typeof Deployments = () => Deployments;
 
   //#region protected methods
+
+  //#region protected methods / wait until deployment removed
+  protected async waitUntilDeploymentRemoved(
+    deploymentId: string,
+  ): Promise<void> {
+    //#region @backendFunc
+    while (true) {
+      const deployment = await this.findOne({
+        where: {
+          id: deploymentId?.toString(),
+        },
+      });
+      if (!deployment) {
+        return;
+      }
+      Helpers.logInfo(`Entity still exists... waiting`);
+      await Utils.waitMilliseconds(800);
+    }
+    //#endregion
+  }
+  //#endregion
 
   //#region protected methods / get processes controller
   protected async getProcessesController(): Promise<ProcessesController> {
@@ -74,6 +96,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
   }
   //#endregion
 
+  //#region protected methods / json query params file abs path
   protected jsonQueryParamsFileAbsPath(
     baseFileNameWithHashDatetime: string,
   ): string {
@@ -81,6 +104,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       `${this.zipfileAbsPath(baseFileNameWithHashDatetime)}.json`,
     ]);
   }
+  //#endregion
 
   //#region public methods / save deployment
   public async saveDeployment(
@@ -283,16 +307,71 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
   //#endregion
 
+  //#region remove all deployments
+
+  public allDeploymentRemoveStatus: AllDeploymentsRemoveStatus =
+    AllDeploymentsRemoveStatus.NOT_STARTED;
+
+  removingAllDeploymentsStatus(): AllDeploymentsRemoveStatusObj {
+    return {
+      status: this.allDeploymentRemoveStatus,
+    };
+  }
+
+  protected async clearAllDeployments(): Promise<void> {
+    //#region @backendFunc
+    const allDeployments = await this.find();
+    for (const deployment of allDeployments) {
+      try {
+        await this.triggerDeploymentStop(
+          deployment.baseFileNameWithHashDatetime,
+          {
+            removeAfterStop: true,
+            skipStatusCheck: true,
+          },
+        );
+      } catch (error) {
+        console.error(error);
+      }
+
+      await this.waitUntilDeploymentRemoved(deployment.id);
+    }
+
+    await this.clear(); // remove all records from db
+    // remove all files from deployments folder
+    Helpers.removeFolderIfExists(DEPLOYMENT_LOCAL_FOLDER_PATH);
+    Helpers.mkdirp(DEPLOYMENT_LOCAL_FOLDER_PATH);
+    this.allDeploymentRemoveStatus = AllDeploymentsRemoveStatus.DONE;
+    //#endregion
+  }
+
+  async triggerAllDeploymentsRemove(): Promise<void> {
+    //#region @backendFunc
+    if (config.frameworkName === 'taon') {
+      Taon.error({
+        message: `This operation is not allowed in production environment`,
+      });
+    }
+    this.allDeploymentRemoveStatus = AllDeploymentsRemoveStatus.REMOVING;
+    setTimeout(async () => {
+      await this.clearAllDeployments();
+    }, 1000);
+    //#endregion
+  }
+  //#endregion
+
   //#region trigger deployment stop
   async triggerDeploymentStop(
     baseFileNameWithHashDatetime: string,
     options?: {
       removeAfterStop?: boolean;
+      skipStatusCheck?: boolean;
     },
   ): Promise<Deployments> {
     //#region @backendFunc
     options = options || {};
     options.removeAfterStop = options.removeAfterStop || false;
+    options.skipStatusCheck == !!options.skipStatusCheck;
 
     //#region find deployment
     let deployment = await this.findOne({
@@ -309,7 +388,10 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       );
     }
 
-    if (!DeploymentsStatesAllowedStop.includes(deployment.status)) {
+    if (
+      !options.skipStatusCheck &&
+      !DeploymentsStatesAllowedStop.includes(deployment.status)
+    ) {
       throw new Error(
         `Deployment can't be stopped when process in status "${deployment.status}"`,
       );

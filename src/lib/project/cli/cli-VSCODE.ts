@@ -3,7 +3,7 @@ import { config } from 'tnp-config/src';
 import { CoreModels, _, crossPlatformPath, os, path } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { chalk } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { BaseVscodeHelpers, Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { MESSAGES, TEMP_DOCS } from '../../constants';
@@ -34,7 +34,7 @@ export class $Vscode extends BaseCli {
             global: {
               name: 'Apply global settings',
               action: async () => {
-                await this.project.vsCodeHelpers.applyProperGlobalSettings();
+                await BaseVscodeHelpers.applyProperGlobalSettings();
                 await UtilsTerminal.pressAnyKeyToContinueAsync();
               },
             },
@@ -79,7 +79,7 @@ export class $Vscode extends BaseCli {
 
   //#region global
   GLOBAL(): void {
-    this.project.vsCodeHelpers.applyProperGlobalSettings();
+    BaseVscodeHelpers.applyProperGlobalSettings();
     this._exit();
   }
   //#endregion

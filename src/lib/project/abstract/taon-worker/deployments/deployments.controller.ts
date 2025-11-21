@@ -7,8 +7,10 @@ import {
   Models,
   EndpointContext,
 } from 'taon/src';
+import { config } from 'tnp-config/src';
 import { _, crossPlatformPath, Helpers } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
+import { UtilsTerminal } from 'tnp-core/src';
 import { BaseCliWorkerController } from 'tnp-helpers/src';
 
 import { ERR_MESSAGE_DEPLOYMENT_NOT_FOUND } from '../../../../constants';
@@ -18,6 +20,8 @@ import { Deployments } from './deployments';
 import { DEPLOYMENT_LOCAL_FOLDER_PATH } from './deployments.constants';
 import { DeploymentsMiddleware } from './deployments.middleware';
 import {
+  AllDeploymentsRemoveStatus,
+  AllDeploymentsRemoveStatusObj,
   DeploymentReleaseData,
   DeploymentsAddingStatus,
   DeploymentsAddingStatusObj,
@@ -25,7 +29,6 @@ import {
   DeploymentsStatus,
 } from './deployments.models';
 import { DeploymentsRepository } from './deployments.repository';
-import { config } from 'tnp-config/src';
 //#endregion
 
 @Taon.Controller({
@@ -37,6 +40,58 @@ export class DeploymentsController extends BaseCliWorkerController<DeploymentRel
   // @ts-ignore remove after move to separated repo
   protected deploymentsRepository = // @ts-ignore remove after move to separated repo
     this.injectCustomRepo<DeploymentsRepository>(DeploymentsRepository);
+
+  //#endregion
+
+  //#region remove all deployments
+  // (NOT FOR PRODUCTION)
+
+  //#region remove all deployments / trigger
+  /**
+   * Not available in production environment
+   */
+  @Taon.Http.DELETE()
+  triggerAllDeploymentsRemove(): Taon.Response<void> {
+    //#region @backendFunc
+    return async (req, res) => {
+      if (config.frameworkName === 'taon') {
+        Taon.error({
+          message: `This operation is not allowed in production environment`,
+        });
+      }
+      return await this.deploymentsRepository.triggerAllDeploymentsRemove();
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region remove all deployments / status check
+  @Taon.Http.GET()
+  protected removingAllDeploymentsStatus(): Taon.Response<AllDeploymentsRemoveStatusObj> {
+    //#region @backendFunc
+    return async (req, res) => {
+      return this.deploymentsRepository.removingAllDeploymentsStatus();
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region remove all deployments / wait until done
+  public waitUntilAllDeploymentsRemoved(): Promise<void> {
+    //#region @backendFunc
+    return this._waitForProperStatusChange<AllDeploymentsRemoveStatusObj>({
+      actionName: 'Checking if all deployments are removed',
+      request: () =>
+        this.removingAllDeploymentsStatus().request({
+          timeout: 900,
+        }) as any,
+      statusCheck: resp => {
+        return resp.body.json.status === AllDeploymentsRemoveStatus.DONE;
+      },
+    });
+    //#endregion
+  }
+  //#endregion
 
   //#endregion
 

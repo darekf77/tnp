@@ -314,7 +314,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         name: `${i.name} (${i.ipAddress})`,
         value: i.ipAddress,
       }));
-      releaseOptions.release.taonInstanceIpOrDomain =
+      releaseOptions.release.taonInstanceIp =
         await UtilsTerminal.select({
           choices: options,
           autocomplete: true,
@@ -323,7 +323,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
       console.log(
         chalk.gray(
-          `You selected to release to instance: ${releaseOptions.release.taonInstanceIpOrDomain}`,
+          `You selected to release to instance: ${releaseOptions.release.taonInstanceIp}`,
         ),
       );
     }

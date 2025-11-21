@@ -84,7 +84,7 @@ export class $Cloud extends BaseCli {
 
     await new Promise<void>(resolve => {
       dockerComposeProject.docker
-        .getDockerComposeUpExecChildProcess('down')
+        .getDockerComposeActionChildProcess('down')
         .once('exit', () => {
           resolve(void 0);
         })
@@ -95,7 +95,7 @@ export class $Cloud extends BaseCli {
 
     await new Promise<void>(resolve => {
       dockerComposeProject.docker
-        .getDockerComposeUpExecChildProcess('up')
+        .getDockerComposeActionChildProcess('up')
         .once('exit', () => {
           resolve(void 0);
         })
@@ -151,7 +151,7 @@ export class $Cloud extends BaseCli {
     await dockerComposeProject.docker.removeAllImagesBy_Env_COMPOSE_PROJECT_NAME();
 
     const child =
-      dockerComposeProject.docker.getDockerComposeUpExecChildProcess('down');
+      dockerComposeProject.docker.getDockerComposeActionChildProcess('down');
 
     await new Promise<void>(resolve => {
       child.once('exit', () => {

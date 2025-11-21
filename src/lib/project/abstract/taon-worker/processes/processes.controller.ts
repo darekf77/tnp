@@ -146,32 +146,6 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
   //#endregion
 
   //#region wait until deployment removed
-  async waitUntilProcessStartedOrActive(
-    processId: string | number,
-  ): Promise<void> {
-    //#region @backendFunc
-    await this._waitForProperStatusChange<Processes>({
-      actionName: `Waiting until process ${processId} started or active`,
-      request: () => {
-        // console.log(`Checking if process ${processId} started or active...`);
-        return this.getByProcessID(processId).request({
-          timeout: 1000,
-        });
-      },
-      poolingInterval: 1000,
-      statusCheck: resp => {
-        return true;
-      },
-      loopRequestsOnBackendError: opt => {
-        // console.log(opt);
-        return true;
-      },
-    });
-    //#endregion
-  }
-  //#endregion
-
-  //#region wait until deployment removed
   async waitUntilProcessStopped(processId: string | number): Promise<void> {
     //#region @backendFunc
     await this._waitForProperStatusChange<Processes>({

@@ -79,7 +79,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
           !!options.forceStart,
         )
         .request();
-      console.log(`Waiting for process to start...`);
+      console.log(`Waiting for deployment to start...`);
       await ctrl.waitUntilDeploymentHasComposeUpProcess(deployment.id);
       console.log(`deployment process started...`);
     } catch (error) {
@@ -316,6 +316,43 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
               return;
             }
           }
+        },
+      },
+      removeAllDeployments: {
+        name: 'Remove all deployments',
+        action: async () => {
+          const confirm = await UtilsTerminal.confirm({
+            message: `Are you sure you want to remove ALL deployments?`,
+            defaultValue: false,
+          });
+          if (!confirm) {
+            return;
+          }
+
+          while (true) {
+            try {
+              Helpers.info(`Removing all deployments...`);
+              const deploymentController =
+                await this.worker.getRemoteControllerFor({
+                  methodOptions: {
+                    calledFrom: 'Remove all deployments action',
+                  },
+                });
+
+              await deploymentController.triggerAllDeploymentsRemove().request();
+              Helpers.info(`Waiting until all deployments are removed...`);
+              await deploymentController.waitUntilAllDeploymentsRemoved();
+              Helpers.info(`All deployments removed.`);
+              break;
+            } catch (error) {
+              await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error);
+              continue;
+            }
+          }
+
+          await UtilsTerminal.pressAnyKeyToContinueAsync({
+            message: 'Press any key to go back to main menu',
+          });
         },
       },
       // insertDeployment: {

@@ -29,8 +29,12 @@ export namespace ProcessesUtils {
       `PROCESS REALTIME OUTPUT - PRESS ENTER KEY TO STOP`,
     );
     wrap.clear();
-    wrap.update(`Waiting for process ${processId} to start...`);
-    await processesController.waitUntilProcessStartedOrActive(processId);
+    // wrap.update(`Waiting for process id=${processId} to start...`);
+    // await processesController.waitUntilProcessExists(processId);
+
+    // await UtilsTerminal.pressAnyKeyToContinueAsync({
+    //   message: `Process started. Listening for realtime output...`,
+    // });
     wrap.update(`PRESS ANY KEY TO STOP DISPLAYING PROGRESS...`);
     const procData = await processesController
       .getByProcessID(processId)
@@ -42,6 +46,7 @@ export namespace ProcessesUtils {
       wrap.clear();
       wrap.update(proc.outputLast40lines);
     }
+    // Helpers.info(`Listening for process id=${processId}  realtime output...`);
     let displayLogs = true;
     const unSub: Subscription = await new Promise((resolve, reject) => {
       const sub = processesController.ctx.realtimeClient
@@ -85,12 +90,11 @@ export namespace ProcessesUtils {
           return;
         }
         displayLogs = false;
-        // If we are already closing, ignore further input
-        sub.unsubscribe();
-        Helpers.clearConsole();
         resolve(sub);
       });
     });
+
+    UtilsTerminal.clearConsole();
     try {
       unSub.unsubscribe();
     } catch (error) {}

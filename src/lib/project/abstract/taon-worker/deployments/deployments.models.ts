@@ -31,6 +31,10 @@ export interface DeploymentsAddingStatusObj {
   status: DeploymentsAddingStatus;
 }
 
+export interface AllDeploymentsRemoveStatusObj {
+  status: AllDeploymentsRemoveStatus;
+}
+
 export enum DeploymentsStatus {
   NOT_STARTED = 'not-started',
   STARTING = 'starting',
@@ -38,6 +42,12 @@ export enum DeploymentsStatus {
   FAILED_START = 'failed-start',
   STOPPING = 'stopping',
   STOPPED = 'stopped',
+}
+
+export enum AllDeploymentsRemoveStatus {
+  NOT_STARTED = 'not-started',
+  REMOVING = 'removing',
+  DONE = 'done',
 }
 
 export const DeploymentsStatesAllowedStart: DeploymentsStatus[] = [
