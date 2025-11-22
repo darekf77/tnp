@@ -1955,7 +1955,7 @@ ${this.project.children
         true,
       );
     }
-    await UtilsProcess.killAllOtherNodeProcesses()
+    await UtilsProcess.killAllOtherNodeProcesses();
 
     const tnp = this.project.children.find(c => c.name === 'tnp');
     const taonContainersProj = this.project.ins.From(
@@ -1977,7 +1977,50 @@ ${this.project.children
     await tnpContainer.nodeModules.reinstall();
     tnpContainer.nodeModules.copyToProject(tnp as any);
     // Helpers.info(`Done syncing node_modules from container to tnp...`);
+
+    let children = this.project.children.filter(c =>
+      c.typeIs('isomorphic-lib'),
+    );
+
+    children = children.filter((c, i) => {
+      const lastCommitMessage = c?.git?.lastCommitMessage()?.trim();
+      return !lastCommitMessage?.startsWith('release: ');
+    });
+
+    if (children.length > 0) {
+      Helpers.info(
+        `Found ${children.length} children isomorphic projects to rebuild...
+
+${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
+
+        `,
+      );
+    }
+
+    const rebuildChildren = await UtilsTerminal.confirm({
+      message: `Rebuild ${children.length} children isomorphic projects ?`,
+      defaultValue: true,
+    });
+
+    if (rebuildChildren) {
+      for (let index = 0; index < children.length; index++) {
+        const child = children[index];
+        await child.build(
+          EnvOptions.from({
+            purpose: 'local-sync',
+            build: {
+              watch: false,
+            },
+            release: {
+              targetArtifact: 'npm-lib-and-cli-tool',
+            },
+          }),
+        );
+      }
+    }
+
     Helpers.info(`Dony local sync of taon-dev`);
+    this._exit();
     //#endregion
   }
   //#endregion
