@@ -1982,6 +1982,10 @@ ${this.project.children
       c.typeIs('isomorphic-lib'),
     );
 
+    for (const child of children) {
+      child.git.meltActionCommits();
+    }
+
     children = children.filter((c, i) => {
       const lastCommitMessage = c?.git?.lastCommitMessage()?.trim();
       return !lastCommitMessage?.startsWith('release: ');
@@ -1997,6 +2001,15 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
       );
     }
 
+    await Project.ins.taonProjectsWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          mode: BaseCLiWorkerStartMode.DETACHED_WINDOW,
+        },
+        calledFrom: 'start framework function',
+      },
+    });
+
     const rebuildChildren = await UtilsTerminal.confirm({
       message: `Rebuild ${children.length} children isomorphic projects ?`,
       defaultValue: true,
@@ -2005,6 +2018,9 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     if (rebuildChildren) {
       for (let index = 0; index < children.length; index++) {
         const child = children[index];
+        Helpers.info(
+          `Rebuilding ${index + 1} / ${children.length}: ${child.name} ...`,
+        );
         await child.build(
           EnvOptions.from({
             purpose: 'local-sync',

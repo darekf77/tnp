@@ -379,6 +379,7 @@ ${THIS_IS_GENERATED_STRING}`,
         '@types/eslint',
         '@types/eslint-scope',
         '@types/inquirer',
+        '@types/fs-extra',
       ].forEach(name => {
         Helpers.remove(path.join(this.project.nodeModules.path, name));
       });

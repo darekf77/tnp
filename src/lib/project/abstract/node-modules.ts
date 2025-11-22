@@ -381,6 +381,7 @@ export class NodeModules extends BaseNodeModules {
       // "any-project-cli",
       'node-cli-test',
       'fs-extra',
+      '@types/fs-extra',
       'ng2-rest',
       'ng2-logger',
       'json10',
