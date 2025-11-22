@@ -1955,6 +1955,8 @@ ${this.project.children
         true,
       );
     }
+    await UtilsProcess.killAllOtherNodeProcesses()
+
     const tnp = this.project.children.find(c => c.name === 'tnp');
     const taonContainersProj = this.project.ins.From(
       this.project.pathFor('taon-containers'),
@@ -1973,11 +1975,12 @@ ${this.project.children
       c => c.name === 'container-' + tnp.taonJson.frameworkVersion,
     );
     await tnpContainer.nodeModules.reinstall();
-    tnpContainer.nodeModules.copyToProject(tnp as BaseProject<any>);
+    tnpContainer.nodeModules.copyToProject(tnp as any);
     // Helpers.info(`Done syncing node_modules from container to tnp...`);
     Helpers.info(`Dony local sync of taon-dev`);
     //#endregion
   }
+  //#endregion
 }
 
 export default {
