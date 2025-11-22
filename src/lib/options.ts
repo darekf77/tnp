@@ -167,7 +167,6 @@ class EnvOptionsBuild {
    * default for organizaion main other targets: '/<project-name-or-overwritten>/-/<other-target-name>/'
    */
   declare baseHref: string;
-  declare skipBuildForRelease?: boolean;
   declare websql: boolean;
   /**
    * watch build
@@ -909,7 +908,6 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
     },
     overrideOutputPath: '-' as any,
     baseHref: '-' as any,
-    skipBuildForRelease: '-' as any,
     watch: '-' as any,
     genOnlyClientCode: '-' as any,
   },

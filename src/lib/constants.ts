@@ -160,6 +160,12 @@ export const USE_IN_HOST_CONFIG_FULL_CONTEXT_PATH = false;
 
 export const MIGRATION_CONST_PREFIX = 'MIGRATIONS_CLASSES_FOR_';
 
+let taonUsingBundledCliMode = false;
+//#region @backend
+taonUsingBundledCliMode = !!global.taonUsingBundledCliMode;
+//#endregion
+export { taonUsingBundledCliMode };
+
 export const UNIT_TEST_TIMEOUT = 30000;
 export const INTEGRATION_TEST_TIMEOUT = 30000;
 

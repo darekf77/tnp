@@ -36,6 +36,12 @@ declare global {
        * when vscode plugin is running
        */
       tnpNonInteractive?: boolean;
+      /**
+       * When true it mean that CLI uses
+       * single file version that
+       * bundled whole node_modules
+       */
+      taonUsingBundledCliMode?: boolean;
       tnpNoColorsMode?: boolean;
       dbAlreadyRecreated?: boolean;
       spinner: any; // Ora;

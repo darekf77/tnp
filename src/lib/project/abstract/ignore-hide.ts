@@ -40,6 +40,9 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       !this.project.taonJson.storeGeneratedAssetsInRepository
         ? `/src/assets/generated`
         : void 0,
+      !this.project.taonJson.storeLocalReleaseFilesInRepository
+        ? `/local_release`
+        : void 0,
       ...(this.project.isMonorepo
         ? []
         : this.project.linkedProjects.linkedProjects

@@ -124,8 +124,10 @@ export async function start(
     },
     shortArgsReplaceConfig: {
       //#region short args replacement
+      // TODO use UtilsCliClassMethod !!!
       il: 'release:install:locally',
       ilvscodeplugin: 'release:install:locally:vscode:plugin',
+      ilclitool: 'release:install:locally:cli:tool',
       cil: 'release:clear:install:locally',
       'install:locally': 'release:install:locally',
       cinit: 'init:clearInit',

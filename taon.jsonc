@@ -109,6 +109,8 @@
     },
   ],
 
+  "storeLocalReleaseFilesInRepository": false,
+
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
     "contributes": {

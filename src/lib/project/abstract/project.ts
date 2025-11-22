@@ -314,12 +314,11 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         name: `${i.name} (${i.ipAddress})`,
         value: i.ipAddress,
       }));
-      releaseOptions.release.taonInstanceIp =
-        await UtilsTerminal.select({
-          choices: options,
-          autocomplete: true,
-          question: `[${releaseOptions.release.releaseType}-release] Select to what instance you want to release`,
-        });
+      releaseOptions.release.taonInstanceIp = await UtilsTerminal.select({
+        choices: options,
+        autocomplete: true,
+        question: `[${releaseOptions.release.releaseType}-release] Select to what instance you want to release`,
+      });
 
       console.log(
         chalk.gray(
@@ -439,6 +438,13 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     //#endregion
   }
   //#endregion
+
+  get nameForCli(): string {
+    if (this.taonJson.overrideNameForCli) {
+      return this.taonJson.overrideNameForCli;
+    }
+    return this.name;
+  }
 
   //#region name for npm package
   /**

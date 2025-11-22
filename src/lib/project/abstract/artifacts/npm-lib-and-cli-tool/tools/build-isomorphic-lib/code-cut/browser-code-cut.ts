@@ -175,10 +175,12 @@ export class BrowserCodeCut {
       // if (this.absFileSourcePathBrowserOrWebsql.endsWith(debugFiles[0])) {
       //   debugger;
       // }
-      const realAbsSourcePathFromSrc = fse.realpathSync(
-        this.absSourcePathFromSrc,
-      );
+      const realAbsSourcePathFromSrc =
+        fse.existsSync(this.absSourcePathFromSrc) &&
+        fse.realpathSync(this.absSourcePathFromSrc);
+
       if (
+        !realAbsSourcePathFromSrc ||
         !Helpers.exists(realAbsSourcePathFromSrc) ||
         Helpers.isFolder(realAbsSourcePathFromSrc)
       ) {

@@ -188,6 +188,12 @@ export namespace Models {
     storeGeneratedAssetsInRepository?: boolean;
 
     /**
+     * @default true
+     * By default local release files are stored in repository
+     */
+    storeLocalReleaseFilesInRepository?: boolean;
+
+    /**
      * At beginning after node_modules installation taon is checking is
      * packages are installed - if not it will throw error.
      * Also.. this dependencies are going to be included in released npm lib

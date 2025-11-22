@@ -50,6 +50,7 @@ import {
   BaseGlobalCommandLine,
   UtilsNpm,
   UtilsTypescript,
+  BaseProject,
 } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartMode } from 'tnp-helpers/src';
 import { createGenerator, SchemaGenerator } from 'ts-json-schema-generator';
@@ -1940,6 +1941,43 @@ ${this.project.children
     //#endregion
   }
   //#endregion
+
+  //#region local sync
+  async localSync() {
+    //#region @backendFunc
+    if (!this.project) {
+      Helpers.error(`No project found in cwd: ${this.cwd}`, false, true);
+    }
+    if (this.project.name !== 'taon-dev') {
+      Helpers.error(
+        `This command is only for ${chalk.bold('taon-dev')} project`,
+        false,
+        true,
+      );
+    }
+    const tnp = this.project.children.find(c => c.name === 'tnp');
+    const taonContainersProj = this.project.ins.From(
+      this.project.pathFor('taon-containers'),
+    );
+    if (!taonContainersProj) {
+      Helpers.error(
+        `No taon-containers project found in ${this.project.pathFor('taon-containers')}`,
+        false,
+        true,
+      );
+    }
+    if (!tnp) {
+      Helpers.error(`No tnp project found inside taon-dev`, false, true);
+    }
+    const tnpContainer = taonContainersProj.children.find(
+      c => c.name === 'container-' + tnp.taonJson.frameworkVersion,
+    );
+    await tnpContainer.nodeModules.reinstall();
+    tnpContainer.nodeModules.copyToProject(tnp as BaseProject<any>);
+    // Helpers.info(`Done syncing node_modules from container to tnp...`);
+    Helpers.info(`Dony local sync of taon-dev`);
+    //#endregion
+  }
 }
 
 export default {

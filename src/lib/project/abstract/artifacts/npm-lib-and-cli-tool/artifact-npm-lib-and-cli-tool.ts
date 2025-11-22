@@ -199,8 +199,14 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     const isOrganizationPackage =
       this.project.nameForNpmPackage.startsWith('@');
 
-    if (buildOptions.build.skipBuildForRelease) {
-      Helpers.warn(`Skipping build for release`);
+    if (shouldSkipBuild) {
+      Helpers.warn(`
+
+
+        Skipping build of npm-lib-and-cli-tool artifact...
+
+
+        `);
       return {
         tmpProjNpmLibraryInNodeModulesAbsPath,
         isOrganizationPackage,
@@ -427,22 +433,25 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         // },
       }),
     );
+
     let releaseProjPath: string = tmpProjNpmLibraryInNodeModulesAbsPath;
+
     //#endregion
 
     this.project.packageJson.setVersion(
       releaseOptions.release.resolvedNewVersion,
     );
 
-    this.removeNotNpmReleatedFilesFromReleaseBundle(
-      tmpProjNpmLibraryInNodeModulesAbsPath,
-    );
+    if (releaseOptions.release.releaseType !== 'local') {
+      this.removeNotNpmRelatedFilesFromReleaseBundle(releaseProjPath);
+    }
+
     this.copyEssentialFilesTo([tmpProjNpmLibraryInNodeModulesAbsPath]);
 
     this.packResource(tmpProjNpmLibraryInNodeModulesAbsPath);
 
     this.fixPackageJsonForRelease(
-      releaseProjPath,
+      tmpProjNpmLibraryInNodeModulesAbsPath,
       releaseOptions.release.resolvedNewVersion,
     );
 
@@ -461,25 +470,41 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     const allowedToNpmReleases: ReleaseType[] = ['manual', 'cloud'];
 
-    if (releaseOptions.release.lib.doNotIncludeLibFiles) {
-      Helpers.remove([releaseProjPath, 'lib']);
-      Helpers.remove([releaseProjPath, 'source']);
-      Helpers.remove([releaseProjPath, 'assets']);
-      Helpers.remove([releaseProjPath, config.folder.browser]);
-      Helpers.remove([releaseProjPath, config.folder.client]);
-      Helpers.remove([releaseProjPath, config.folder.websql]);
-      Helpers.remove([releaseProjPath, 'migrations']);
-      Helpers.remove([releaseProjPath, 'src']);
-      Helpers.remove([releaseProjPath, 'src.*']);
-      Helpers.remove([releaseProjPath, 'index.*']);
-      Helpers.remove([releaseProjPath, 'cli.d.ts']);
-      Helpers.remove([releaseProjPath, 'cli.js.map']);
-      Helpers.setValueToJSON([releaseProjPath, 'package.json'], 'scripts', {});
+    // console.log(`
+
+    //   doNotIncludeLibFiles: ${releaseOptions.release.lib.doNotIncludeLibFiles}
+
+    //   `);
+
+    const clearLibFiles = (folderAbsPath: string) => {
+      Helpers.remove([folderAbsPath, 'lib']);
+      Helpers.remove([folderAbsPath, 'source']);
+      Helpers.remove([folderAbsPath, 'assets']);
+      Helpers.remove([folderAbsPath, config.folder.browser]);
+      Helpers.remove([folderAbsPath, config.folder.client]);
+      Helpers.remove([folderAbsPath, config.folder.websql]);
+      Helpers.remove([folderAbsPath, 'migrations']);
+      Helpers.remove([folderAbsPath, 'src']);
+      Helpers.remove([folderAbsPath, 'src.*']);
+      Helpers.remove([folderAbsPath, 'index.*']);
+      Helpers.remove([folderAbsPath, 'cli.d.ts']);
+      Helpers.remove([folderAbsPath, 'cli.js.map']);
+      Helpers.setValueToJSON([folderAbsPath, 'package.json'], 'scripts', {});
+    };
+
+    if (
+      releaseOptions.release.lib.doNotIncludeLibFiles &&
+      releaseOptions.release.releaseType !== 'local'
+    ) {
+      clearLibFiles(releaseProjPath);
     }
 
-    Helpers.remove([releaseProjPath, config.file.taon_jsonc]);
-    Helpers.remove([releaseProjPath, 'firedev.jsonc']);
-    Helpers.remove([releaseProjPath, 'client']);
+    Helpers.remove([
+      tmpProjNpmLibraryInNodeModulesAbsPath,
+      config.file.taon_jsonc,
+    ]);
+    Helpers.remove([tmpProjNpmLibraryInNodeModulesAbsPath, 'firedev.jsonc']);
+    Helpers.remove([tmpProjNpmLibraryInNodeModulesAbsPath, 'client']);
 
     if (allowedToNpmReleases.includes(releaseOptions.release.releaseType)) {
       if (!releaseOptions.release.skipNpmPublish) {
@@ -499,8 +524,26 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         Helpers.remove(releaseDest, true);
         Helpers.copy(releaseProjPath, releaseDest);
 
-        Helpers.info(`Local release done: ${releaseDest}`);
         releaseProjPath = releaseDest;
+        if (releaseOptions.release.lib.doNotIncludeLibFiles) {
+          clearLibFiles(releaseProjPath);
+        }
+        this.removeNotNpmRelatedFilesFromReleaseBundle(releaseProjPath);
+
+        if (releaseOptions.release.installLocally) {
+          // console.log('SHOULD INSTALL LOCALLY');
+          Helpers.taskStarted('Linking local package globally...');
+          Helpers.run(`npm link`, { cwd: releaseProjPath }).sync();
+          Helpers.taskDone(`Done linking local package globally.
+
+            Now you can use it globally via CLI:
+            ${this.project.nameForCli} <command>
+
+
+            `);
+        }
+
+        Helpers.info(`Local release done: ${releaseDest}`);
         //#endregion
       }
     }
@@ -791,18 +834,18 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#endregion
 
   //#region private methods / remove not npm releated files from release bundle
-  private removeNotNpmReleatedFilesFromReleaseBundle(
-    relaseAbsPath: string,
+  private removeNotNpmRelatedFilesFromReleaseBundle(
+    releaseAbsPath: string,
   ): void {
     //#region @backendFunc
-    Helpers.remove(`${relaseAbsPath}/app*`); // QUICK_FIX
-    Helpers.remove(`${relaseAbsPath}/tests*`); // QUICK_FIX
-    Helpers.remove(`${relaseAbsPath}/src`, true); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/app*`); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/tests*`); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/src`, true); // QUICK_FIX
     // Helpers.removeFileIfExists(`${relaseAbsPath}/source`);
 
     // regenerate src.d.ts
     Helpers.writeFile(
-      crossPlatformPath([relaseAbsPath, 'src.d.ts']),
+      crossPlatformPath([releaseAbsPath, 'src.d.ts']),
       `
 ${THIS_IS_GENERATED_INFO_COMMENT}
 export * from './lib';
@@ -1229,7 +1272,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     const destStartJS = crossPlatformPath([releaseAbsLocation, 'bin/start.js']);
     Helpers.writeFile(
       destStartJS,
-      `console.log('<<< USING BUNDLED CLI >>>');` +
+      `console.log('<<< USING BUNDLED CLI >>>');global.taonUsingBundledCliMode = true;` +
         `\n${Helpers.readFile(destStartJS)}`,
     );
 

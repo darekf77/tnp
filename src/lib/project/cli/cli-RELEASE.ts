@@ -169,11 +169,19 @@ class $Release extends BaseCli {
     this._exit();
   }
 
+  async installLocallyCliTool(): Promise<void> {
+    await this._installLocally(true, {
+      targetArtifact: 'npm-lib-and-cli-tool',
+      envName: 'dev',
+    });
+    this._exit();
+  }
+
   private async _installLocally(
     skipLibBuild: boolean,
     releaseOpt: Pick<
       EnvOptions['release'],
-      'targetArtifact' | 'removeReleaseOutputAfterLocalInstall'
+      'targetArtifact' | 'removeReleaseOutputAfterLocalInstall' | 'envName' | 'envNumber'
     >,
   ): Promise<void> {
     await this.project.release(
@@ -182,6 +190,8 @@ class $Release extends BaseCli {
           watch: false,
         },
         release: {
+          envName: releaseOpt.envName,
+          envNumber: releaseOpt.envNumber,
           skipTagGitPush: true,
           skipResolvingGitChanges: true,
           targetArtifact: releaseOpt.targetArtifact,
@@ -199,7 +209,10 @@ class $Release extends BaseCli {
 
   async installLocally() {
     //#region @backendFunc
-    const allowedArtifacts: ReleaseArtifactTaon[] = ['vscode-plugin'];
+    const allowedArtifacts: ReleaseArtifactTaon[] = [
+      'vscode-plugin',
+      'npm-lib-and-cli-tool',
+    ];
 
     const options = {
       ['_']: {
@@ -230,12 +243,23 @@ class $Release extends BaseCli {
       }
     }
 
-    const skipLibBuild = await UtilsTerminal.confirm({
-      message: 'Skip library build ?',
-      defaultValue: true,
-    });
+    let skipLibBuild = false;
+
+    if (option !== 'npm-lib-and-cli-tool') {
+      skipLibBuild = await UtilsTerminal.confirm({
+        message: 'Skip library build ?',
+        defaultValue: true,
+      });
+    }
 
     if (option === 'vscode-plugin') {
+      await this._installLocally(skipLibBuild, {
+        targetArtifact: option,
+      });
+    }
+
+    if (option === 'npm-lib-and-cli-tool') {
+      skipLibBuild = true;
       await this._installLocally(skipLibBuild, {
         targetArtifact: option,
       });

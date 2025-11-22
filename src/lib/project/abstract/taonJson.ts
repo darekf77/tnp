@@ -236,6 +236,14 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     //#endregion
   }
 
+  get storeLocalReleaseFilesInRepository(): boolean {
+    //#region @backendFunc
+
+    return !!(this.data as Models.TaonJsonStandalone)
+      ?.storeLocalReleaseFilesInRepository;
+    //#endregion
+  }
+
   //#region dependencies names for npm lib
   /**
    * deps to inlculde in npm lib
@@ -409,6 +417,13 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     //#endregion
   }
   //#endregion
+
+  get overrideNameForCli(): string | undefined {
+    //#region @backendFunc
+    const data = this.data as Models.TaonJsonStandalone;
+    return data?.overrideNameForCli;
+    //#endregion
+  }
 
   //#region name when inside organization
   get overrideNpmName(): string | undefined {
