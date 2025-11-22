@@ -2040,6 +2040,12 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     //#endregion
   }
   //#endregion
+
+  async killOthers() {
+    //#region @backendFunc
+    await UtilsProcess.killAllOtherNodeProcesses();
+    //#endregion
+  }
 }
 
 export default {
