@@ -524,6 +524,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         Helpers.remove(releaseDest, true);
         Helpers.copy(releaseProjPath, releaseDest);
 
+        Helpers.taskStarted(`Installing dependencies for local release...`);
+        Helpers.run(`npm install`, { cwd: releaseProjPath }).sync();
+        Helpers.taskDone(`Dependencies installed for local release.`);
+
         releaseProjPath = releaseDest;
         if (releaseOptions.release.lib.doNotIncludeLibFiles) {
           clearLibFiles(releaseProjPath);
