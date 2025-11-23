@@ -81,6 +81,7 @@ export async function start(
           a.startsWith('mp4') ||
           a.startsWith('dedupe') ||
           a.startsWith('cloud:') ||
+          a.startsWith('link:') ||
           a.startsWith('copy:and:rename') ||
           a.startsWith('generate') ||
           a.startsWith('shorten') ||
@@ -90,7 +91,8 @@ export async function start(
           a === 'local:sync' ||
           a === 'localSync' ||
           a === 'localsync' ||
-          a === 'cloud',
+          a === 'cloud' ||
+          a === 'link',
       ),
     ) // for workers
   ) {
