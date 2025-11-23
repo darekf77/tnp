@@ -1991,6 +1991,17 @@ ${this.project.children
       return !lastCommitMessage?.startsWith('release: ');
     });
 
+    children = this.ins // @ts-ignore BaseProject inheritace compatiblity with Project problem
+      .sortGroupOfProject<Project>(
+        children,
+        proj => [
+          ...proj.taonJson.dependenciesNamesForNpmLib,
+          proj.taonJson.peerDependenciesNamesForNpmLib,
+        ],
+        proj => proj.nameForNpmPackage,
+      )
+      .filter(d => d.framework.isStandaloneProject);
+
     if (children.length > 0) {
       Helpers.info(
         `Found ${children.length} children isomorphic projects to rebuild...
