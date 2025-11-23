@@ -364,45 +364,50 @@ ${THIS_IS_GENERATED_STRING}`,
   //#region bad types in node modules
   removeBadTypesInNodeModules(): void {
     //#region @backendFunc
-    if (
-      this.project.framework.frameworkVersionAtLeast('v2') &&
-      this.project.framework.isStandaloneProject
-    ) {
-      [
-        '@types/prosemirror-*',
-        '@types/mocha',
-        '@types/jasmine*',
-        '@types/puppeteer-core',
-        '@types/puppeteer',
-        '@types/oauth2orize',
-        '@types/lowdb',
-        '@types/eslint',
-        '@types/eslint-scope',
-        '@types/inquirer',
-        '@types/fs-extra',
-      ].forEach(name => {
-        Helpers.remove(path.join(this.project.nodeModules.path, name));
-      });
-      const globalsDts = this.project.readFile(
-        'node_modules/@types/node/globals.d.ts',
-      );
-      try {
-        this.project.writeFile(
-          'node_modules/@types/node/globals.d.ts',
-          UtilsTypescript.removeRegionByName(globalsDts, 'borrowed'),
-        );
-      } catch (error) {
-        Helpers.error(
-          `Problem with removing borrowed types from globals.d.ts`,
-          true,
-          false,
-        );
-        this.project.writeFile(
-          'node_modules/@types/node/globals.d.ts',
-          globalsDts,
-        );
-      }
+    if (!fse.existsSync(this.project.nodeModules.path)) {
+      Helpers.warn(`Cannot remove bad types from node_modules. Folder node_modules does not exist.`);
+      return;
     }
+
+    [
+      '@types/prosemirror-*',
+      '@types/mocha',
+      '@types/jasmine*',
+      '@types/puppeteer-core',
+      '@types/puppeteer',
+      '@types/oauth2orize',
+      '@types/lowdb',
+      '@types/eslint',
+      '@types/eslint-scope',
+      '@types/inquirer',
+      '@types/fs-extra',
+      'ts-json-schema-generator/node_modules/.bin', // problem with symlinks
+    ].forEach(name => {
+      Helpers.info(`Removing bad folders from node_modules: ${name}`);
+      Helpers.removeFolderIfExists(
+        path.join(this.project.nodeModules.path, name),
+      );
+    });
+    const globalsDts = this.project.readFile(
+      'node_modules/@types/node/globals.d.ts',
+    );
+    try {
+      this.project.writeFile(
+        'node_modules/@types/node/globals.d.ts',
+        UtilsTypescript.removeRegionByName(globalsDts, 'borrowed'),
+      );
+    } catch (error) {
+      Helpers.error(
+        `Problem with removing borrowed types from globals.d.ts`,
+        true,
+        false,
+      );
+      this.project.writeFile(
+        'node_modules/@types/node/globals.d.ts',
+        globalsDts,
+      );
+    }
+
     //#endregion
   }
   //#endregion

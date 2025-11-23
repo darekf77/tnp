@@ -87,6 +87,9 @@ export async function start(
           a === 'dumpPackagesVersions' ||
           a === 'melt' ||
           a === 'soft' ||
+          a === 'local:sync' ||
+          a === 'localSync' ||
+          a === 'localsync' ||
           a === 'cloud',
       ),
     ) // for workers

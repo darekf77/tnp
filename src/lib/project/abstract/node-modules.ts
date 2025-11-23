@@ -107,6 +107,8 @@ export class NodeModules extends BaseNodeModules {
       //#region after npm install taon things
       // TODO not a good idea
       // this.project.quickFixes.unpackNodeModulesPackagesZipReplacements();
+      this.project.quickFixes.createDummyEmptyLibsReplacements([]); // TODO
+      this.project.quickFixes.removeBadTypesInNodeModules();
       await this.project.packagesRecognition.start('after npm install');
       if (!options.generateYarnOrPackageJsonLock) {
         if (options.useYarn) {
