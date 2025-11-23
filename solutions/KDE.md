@@ -570,6 +570,23 @@ sudo apt install input-remapper
         "target_uinput": "keyboard",
         "output_symbol": "Control_L + Right",
         "mapping_type": "key_macro"
+    },
+    {
+        "input_combination": [
+            {
+                "type": 1,
+                "code": 125,
+                "origin_hash": "c7a57701951be3c5bc2eacf549aa9cf2"
+            },
+            {
+                "type": 1,
+                "code": 53,
+                "origin_hash": "c7a57701951be3c5bc2eacf549aa9cf2"
+            }
+        ],
+        "target_uinput": "keyboard",
+        "output_symbol": "Control_L + slash",
+        "mapping_type": "key_macro"
     }
 ]
 
