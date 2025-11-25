@@ -91,9 +91,8 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     this.taonProjectsWorker = new TaonProjectsWorker(
       'taon-projects',
-      `${cliToolName} ${
-        `startCliServiceTaonProjectsWorker ${SKIP_CORE_CHECK_PARAM}`
-        // as keyof $Global
+      `${cliToolName} ${`startCliServiceTaonProjectsWorker ${SKIP_CORE_CHECK_PARAM}`
+      // as keyof $Global
       }`,
       this,
     );
@@ -295,8 +294,11 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   ): Project {
     //#region @backendFunc
 
+    // console.log({ libraryType, version });
+
     if (libraryType === 'container') {
       const pathToContainer = this.resolveCoreProjectsPathes(version).container;
+      // console.log({ pathToContainer });
       const containerProject = this.From(pathToContainer);
       return containerProject as any;
     }
@@ -306,6 +308,8 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     const projectPath =
       this.resolveCoreProjectsPathes(version).projectByType(libraryType);
+
+    // console.log({ projectPath });
 
     if (!fse.existsSync(projectPath)) {
       Helpers.error(
@@ -398,7 +402,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     //#region pull master with tags
     try {
       Helpers.git.meltActionCommits(cwd);
-    } catch (error) {}
+    } catch (error) { }
     try {
       Helpers.run(
         `git reset --hard HEAD~2 && git reset --hard && git clean -df && git pull --tags origin master`,
@@ -409,17 +413,17 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       Helpers.log(error);
       Helpers.error(
         `[${config.frameworkName} Not able to pull master branch for :` +
-          `${urlRepoTaonContainers} in: ${crossPlatformPath(cwd)}`,
+        `${urlRepoTaonContainers} in: ${crossPlatformPath(cwd)}`,
         false,
         true,
       );
     }
     try {
       Helpers.git.meltActionCommits(cwd);
-    } catch (error) {}
+    } catch (error) { }
     try {
       Helpers.run(`git reset --hard`, { cwd, output: false }).sync();
-    } catch (error) {}
+    } catch (error) { }
     //#endregion
 
     //#region checkout lastest tag
@@ -465,7 +469,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     //#region remove vscode folder
     try {
       Helpers.run('rimraf .vscode', { cwd }).sync();
-    } catch (error) {}
+    } catch (error) { }
     //#endregion
 
     if (syncFromCommand) {
@@ -559,7 +563,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     if (
       (global['frameworkName'] &&
         global['frameworkName'] ===
-          config.frameworkNames.productionFrameworkName) ||
+        config.frameworkNames.productionFrameworkName) ||
       UtilsOs.isRunningInVscodeExtension()
     ) {
       const joined = partOfPath.join('/');
@@ -588,6 +592,8 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
         `[taon/project] v4 is not supported anymore.. use v16 instead`,
       );
     }
+    // console.log(({ dirnameForTnp: config.dirnameForTnp, taonProjectsRelative: this.taonProjectsRelative, version }));
+
     const coreContainerPath = this.pathResolved(
       config.dirnameForTnp,
       `${this.taonProjectsRelative}/container${version}`,

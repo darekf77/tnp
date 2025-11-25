@@ -45,6 +45,9 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
         break;
       } catch (error) {
         currentVersion--;
+        // console.log({
+        //   error, currentVersion
+        // })
         if (currentVersion < 18) {
           throw new Error(
             '[taon] Could not find console logo image for any version',
