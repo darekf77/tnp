@@ -833,6 +833,13 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       );
     }
 
+    if (!pj.repository) {
+      pj.setRepository({
+        type: 'git',
+        url: Helpers.git.originSshToHttp(this.project.git.originURL),
+      });
+    }
+
     //#endregion
   }
   //#endregion
