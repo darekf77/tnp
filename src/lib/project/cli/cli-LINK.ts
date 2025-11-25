@@ -63,7 +63,11 @@ export class $Link extends BaseCli {
   }
 
   async local(pathToFolder: string) {
-    const localReleaseFolder = pathToFolder || this.firstArg;
+    const localReleaseFolder =
+      pathToFolder ||
+      this.firstArg ||
+      `local_release/npm-lib-and-cli-tool/${this.project.nameForCli}-latest`;
+
     Helpers.info(`Linking
 
       ${localReleaseFolder}

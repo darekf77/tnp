@@ -245,7 +245,7 @@ export class ArtifactManager {
       } catch (error) {}
       this.project.removeFile('.eslintrc.json');
       this.project.removeFile('.vscode/launch-backup.json');
-      this.project.removeFile('.vscode/run-org.js');
+      this.project.removeFile('run-org.js');
       if (this.project.typeIs('container')) {
         this.project.removeFile('src/vars.scss');
       }

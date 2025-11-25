@@ -1,4 +1,5 @@
 //#region imports
+import { TaonTempDatabasesFolder, TaonTempRoutesFolder } from 'taon/src';
 import { config } from 'tnp-core/src';
 import { glob, fse, chalk } from 'tnp-core/src';
 import { path, _, crossPlatformPath } from 'tnp-core/src';
@@ -332,15 +333,8 @@ ${THIS_IS_GENERATED_STRING}
       })();
     }
 
-    const app_folder_path = crossPlatformPath([
-      this.project.location,
-      config.folder.src,
-      'app',
-      'app-folder-info.md',
-    ]);
-
     Helpers.writeFile(
-      app_folder_path,
+      [this.project.location, config.folder.src, 'app', 'app-folder-info.md'],
       `${THIS_IS_GENERATED_STRING}
 
 # HOW TO USE THIS FOLDER
@@ -356,6 +350,31 @@ Put here files that you don't want to share through npm package.
 ${THIS_IS_GENERATED_STRING}`,
     );
 
+    Helpers.writeFile(
+      [this.project.location, TaonTempDatabasesFolder, 'databases-folder-info.md'],
+      `${THIS_IS_GENERATED_STRING}
+
+# PURPOSE OF THIS FOLDER
+
+You will see here *.sqlite database files only after you run your application
+that uses HOST_CONFIG from src/app.hosts.ts
+
+${THIS_IS_GENERATED_STRING}`,
+    );
+
+     Helpers.writeFile(
+      [this.project.location, TaonTempRoutesFolder, 'routes-folder-info.md'],
+      `${THIS_IS_GENERATED_STRING}
+
+# PURPOSE OF THIS FOLDER
+
+You will see here *.rest routes for each context/controller of your application
+that uses HOST_CONFIG from src/app.hosts.ts
+
+
+${THIS_IS_GENERATED_STRING}`,
+    );
+
     Helpers.taskDone(`[quick fixes] missing angular lib fles end`);
     //#endregion
   }
@@ -365,7 +384,9 @@ ${THIS_IS_GENERATED_STRING}`,
   removeBadTypesInNodeModules(): void {
     //#region @backendFunc
     if (!fse.existsSync(this.project.nodeModules.path)) {
-      Helpers.warn(`Cannot remove bad types from node_modules. Folder node_modules does not exist.`);
+      Helpers.warn(
+        `Cannot remove bad types from node_modules. Folder node_modules does not exist.`,
+      );
       return;
     }
 

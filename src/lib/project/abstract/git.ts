@@ -75,9 +75,9 @@ export class Git extends BaseGit<Project> {
   }
   //#endregion
 
-  protected async _afterPullProcessAction(
-    setOrigin: 'ssh' | 'http',
-  ): Promise<void> {
+  protected async removeUnnecessaryFoldersAfterPullingFromGit(): Promise<void> {
+    //#region @backendFunc
+    this.project.taonJson.reloadFromDisk();
     const absPaths = (this.project.taonJson.removeAfterPullingFromGit || [])
       .map(folder => {
         if (!_.isString(folder)) {
@@ -110,7 +110,13 @@ export class Git extends BaseGit<Project> {
         }
       }
     }
+    //#endregion
+  }
 
+  protected async _afterPullProcessAction(
+    setOrigin: 'ssh' | 'http',
+  ): Promise<void> {
+    await this.removeUnnecessaryFoldersAfterPullingFromGit();
     await super._afterPullProcessAction(setOrigin);
   }
 

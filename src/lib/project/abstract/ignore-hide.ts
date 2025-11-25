@@ -1,4 +1,5 @@
 //#region imports
+import { TaonTempDatabasesFolder, TaonTempRoutesFolder } from 'taon/src';
 import { config, fileName } from 'tnp-core/src';
 import { crossPlatformPath } from 'tnp-core/src';
 import {
@@ -31,6 +32,8 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       '/src/vars.scss',
       '/BUILD-INFO.md',
       `/${docsConfigSchema}`,
+      `/${TaonTempDatabasesFolder}/*.sqlite`,
+      `/${TaonTempRoutesFolder}/*.rest`,
       '/src/lib/lib-info.md',
       '/src/lib/env/**/*.*',
       '/src/migrations/migrations-info.md',

@@ -1,3 +1,4 @@
+import { walk } from 'lodash-walk-object/src';
 import { config } from 'tnp-core/src';
 import { CoreModels, os, path } from 'tnp-core/src';
 import { Helpers, _ } from 'tnp-core/src';
@@ -42,6 +43,30 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
   //#endregion
+
+  /**
+   * ! TODO EXPERMIENTAL
+   * @deprecated
+   */
+  public reloadFromDisk(): void {
+    //#region @backendFunc
+    const newData =
+      Helpers.readJson5([this.project.pathFor(config.file.taon_jsonc)]) ||
+      this.data;
+
+    walk.Object(
+      newData,
+      (value, lodashPath) => {
+        if (_.isNil(value) || _.isFunction(value) || _.isObject(value)) {
+          // skipping
+        } else {
+          _.set(this.data, lodashPath, value);
+        }
+      },
+      { walkGetters: false },
+    );
+    //#endregion
+  }
 
   get exists(): boolean {
     return Helpers.exists(this.project.pathFor(config.file.taon_jsonc));

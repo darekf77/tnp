@@ -360,7 +360,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
         let fixedComponent = content;
         for (const taonClassName of BaseTaonClassesNames) {
           fixedComponent = fixedComponent.replace(
-            new RegExp(`${taonClassName}`, 'g'),
+            new RegExp(`[\\s\\n]*${taonClassName}`, 'g'),
             `Taon${taonClassName}`,
           );
         }
