@@ -243,6 +243,7 @@ export class ArtifactManager {
           })
           .sync();
       } catch (error) {}
+      this.project.removeFile('.eslintrc.json');
       this.project.removeFile('.vscode/launch-backup.json');
       this.project.removeFile('.vscode/run-org.js');
       if (this.project.typeIs('container')) {
