@@ -2,7 +2,7 @@
 // import { fse } from 'tnp-core/src';
 // import { path } from 'tnp-core/src';
 // import { Models } from 'tnp-models/src';
-// import { config } from 'tnp-config/src';
+// import { config } from 'tnp-core/src';
 // import { Helpers } from 'tnp-helpers/src';
 // import '../global-typings';
 

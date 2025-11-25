@@ -176,13 +176,13 @@ export class UserComponent implements OnInit {
 
 **app.context.ts**
 ```ts
-import { BaseContext, Taon } from 'taon/src';
+import { TaonBaseContext, Taon } from 'taon/src';
 const host = 'http://localhost:4444'; // host defined once!
 
 const UserContext = await Taon.createContext(()=> {
     host,
     contextName: 'UserContext',
-    contexts: { BaseContext },
+    contexts: { TaonBaseContext },
     controllers: { UserController },
     entities: { User },
     database: true,
@@ -200,7 +200,7 @@ async function start() {
 
 **app.ts**  (*imports*)
 ```ts
-import { Taon, BaseContext } from 'taon/src';
+import { Taon, TaonBaseContext } from 'taon/src';
 import {
   Observable,
   Subject,
@@ -347,7 +347,7 @@ var UserContext = Taon.createContext(() => ({
   host,
   frontendHost,
   contextName: 'UserContext',
-  contexts: { BaseContext },
+  contexts: { TaonBaseContext },
   controllers: { RealtimeUserController },
   subscribers: { RealtimeClassSubscriber },
   entities: { RealtimeUserEntity: UserEntity },

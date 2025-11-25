@@ -6,14 +6,14 @@ import {
 import { walk } from 'lodash-walk-object/src';
 import { MagicRenamer } from 'magic-renamer/src';
 import * as semver from 'semver';
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import {
   TAGS,
   backendNodejsOnlyFiles,
   extAllowedToExportAndReplaceTSJSCodeFiles,
   frontendFiles,
   notNeededForExportFiles,
-} from 'tnp-config/src';
+} from 'tnp-core/src';
 import {
   psList,
   UtilsEtcHosts,

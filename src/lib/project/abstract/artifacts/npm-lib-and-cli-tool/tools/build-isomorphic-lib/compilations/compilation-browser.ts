@@ -1,8 +1,8 @@
 //#region imports
 import { IncCompiler } from 'incremental-compiler/src';
 import { JSON10 } from 'json10/src';
-import { config, extForSassLikeFiles } from 'tnp-config/src';
-import { TAGS } from 'tnp-config/src';
+import { config, extForSassLikeFiles } from 'tnp-core/src';
+import { TAGS } from 'tnp-core/src';
 import {
   _,
   path,

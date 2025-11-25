@@ -1,7 +1,7 @@
 //#region imports
 import { IncCompiler } from 'incremental-compiler/src';
 import { Log } from 'ng2-logger/src';
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import { crossPlatformPath, _ } from 'tnp-core/src';
 import { fse } from 'tnp-core/src';
 import { path } from 'tnp-core/src';

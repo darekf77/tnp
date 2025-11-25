@@ -6,7 +6,7 @@
 // import { _ } from 'tnp-core/src';
 // import { it } from 'mocha';
 // import { SpecWrap } from '../_helpers.spec';
-// import { config } from 'tnp-config/src';
+// import { config } from 'tnp-core/src';
 // import type { Project } from '../../lib/project/abstract/project';
 // import { Helpers } from 'tnp-helpers/src';
 // import { EnvOptions } from '../../lib/options';

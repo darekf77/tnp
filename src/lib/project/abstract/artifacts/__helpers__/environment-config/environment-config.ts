@@ -2,7 +2,7 @@
 import { incrementalWatcher } from 'incremental-compiler/src';
 import { walk } from 'lodash-walk-object/src';
 import { from } from 'rxjs';
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import { chalk, CoreModels, crossPlatformPath, fse, Utils } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';

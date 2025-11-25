@@ -1,6 +1,6 @@
 //#region imports
-import { BaseContext, Taon } from 'taon/src';
-import { config } from 'tnp-config/src';
+import { TaonBaseContext, Taon } from 'taon/src';
+import { config } from 'tnp-core/src';
 import { os, UtilsOs } from 'tnp-core/src';
 import { crossPlatformPath, Helpers, path } from 'tnp-core/src';
 import { getBaseCliWorkerDatabaseConfig } from 'tnp-helpers/src';
@@ -16,7 +16,7 @@ import { TaonProjectsController } from './taon.controller';
 export const TaonProjectsContextTemplate = Taon.createContextTemplate(() => ({
   contextName: 'TaonProjectsContext',
   appId: 'dev.taon.projects.worker',
-  contexts: { BaseContext },
+  contexts: { TaonBaseContext },
   controllers: { TaonProjectsController },
   entities: { TaonProject, TaonBuild, TaonEnv },
   migrations: { ...MIGRATIONS_CLASSES_FOR_TaonProjectsContext },

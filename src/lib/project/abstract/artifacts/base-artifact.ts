@@ -1,6 +1,6 @@
 //#region imports
 import { RegionRemover } from 'isomorphic-region-loader/src';
-import { config, extAllowedToReplace, TAGS } from 'tnp-config/src';
+import { config, extAllowedToReplace, TAGS } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath, glob, path } from 'tnp-core/src';
 import { Helpers, UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
 

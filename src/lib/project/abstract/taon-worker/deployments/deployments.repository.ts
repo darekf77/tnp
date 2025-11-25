@@ -3,7 +3,7 @@ import { ChildProcess } from 'child_process';
 
 import { Subscription } from 'rxjs';
 import { EndpointContext, MulterFileUploadResponse, Taon } from 'taon/src';
-import { baseTaonDevProjectsNames, config } from 'tnp-config/src';
+import { baseTaonDevProjectsNames, config } from 'tnp-core/src';
 import {
   _,
   child_process,

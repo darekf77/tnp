@@ -1,5 +1,5 @@
 import { Taon } from 'taon/src';
-import { BaseCliWorkerController } from 'tnp-helpers/src';
+import { TaonBaseCliWorkerController } from 'tnp-helpers/src';
 
 import { TaonBuild } from './taon-build.entity';
 import { TaonEnv } from './taon-env.entity';
@@ -8,7 +8,7 @@ import { TaonEnv } from './taon-env.entity';
 @Taon.Controller({
   className: 'TaonProjectsController',
 })
-export class TaonProjectsController extends BaseCliWorkerController {
+export class TaonProjectsController extends TaonBaseCliWorkerController {
   taonEnvRepo = this.injectRepo(TaonEnv);
 
   @Taon.Http.GET()

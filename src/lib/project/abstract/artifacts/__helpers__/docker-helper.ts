@@ -1,7 +1,7 @@
 //#region imports
 // import * as dockernode from 'dockerode';
 import { ChangeOfFile } from 'incremental-compiler/src';
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import { CoreModels, crossPlatformPath, path } from 'tnp-core/src';
 import { fse } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';

@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import { glob, fse, chalk } from 'tnp-core/src';
 import { path, _, crossPlatformPath } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';

@@ -6,7 +6,7 @@ import {
   extAllowedToReplace,
   frontEndOnly,
   TAGS,
-} from 'tnp-config/src';
+} from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 

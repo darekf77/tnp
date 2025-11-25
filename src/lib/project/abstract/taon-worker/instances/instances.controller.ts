@@ -1,7 +1,7 @@
 //#region imports
 import { Taon, ClassHelpers } from 'taon/src';
 import { _ } from 'tnp-core/src';
-import { BaseCliWorkerController } from 'tnp-helpers/src';
+import { TaonBaseCliWorkerController } from 'tnp-helpers/src';
 
 import { Instances } from './instances';
 import { InstancesRepository } from './instances.repository';
@@ -10,7 +10,7 @@ import { InstancesRepository } from './instances.repository';
 @Taon.Controller({
   className: 'InstancesController',
 })
-export class InstancesController extends BaseCliWorkerController {
+export class InstancesController extends TaonBaseCliWorkerController {
   // @ts-ignore
   instancesRepository: InstancesRepository = // @ts-ignore
     this.injectCustomRepo(InstancesRepository);

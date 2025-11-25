@@ -1,4 +1,4 @@
-import { config, PREFIXES } from 'tnp-config/src';
+import { config, PREFIXES } from 'tnp-core/src';
 import { crossPlatformPath, glob, path, _, fse } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 

@@ -1,4 +1,4 @@
-import { fileName, folderName } from 'tnp-config/src';
+import { fileName, folderName } from 'tnp-core/src';
 import { BaseFileFoldersOperations } from 'tnp-helpers/src';
 
 import { environments } from '../../constants';

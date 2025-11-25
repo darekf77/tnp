@@ -1,5 +1,5 @@
 import { gt, gte, valid } from 'semver';
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import {
   CoreModels,
   Helpers,

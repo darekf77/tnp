@@ -1,6 +1,6 @@
 //#region imports
-import { config } from 'tnp-config/src';
-import { notAllowedProjectNames } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
+import { notAllowedProjectNames } from 'tnp-core/src';
 import {
   CoreModels,
   _,

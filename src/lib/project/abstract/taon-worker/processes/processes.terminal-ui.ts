@@ -1,6 +1,6 @@
 //#region imports
 import { debounceTime, exhaustMap, map, Subscription } from 'rxjs';
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import {
   CoreModels,
   Helpers,

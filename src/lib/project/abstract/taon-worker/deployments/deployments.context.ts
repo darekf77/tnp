@@ -1,5 +1,5 @@
 //#region imports
-import { Taon, BaseContext } from 'taon/src';
+import { Taon, TaonBaseContext } from 'taon/src';
 import { getBaseCliWorkerDatabaseConfig } from 'tnp-helpers/src';
 
 import { Deployments } from './deployments';
@@ -14,7 +14,7 @@ export const DeploymentsContext = Taon.createContextTemplate(() => ({
   contextName: 'DeploymentsContext',
   appId,
   skipWritingServerRoutes: true,
-  contexts: { BaseContext },
+  contexts: { TaonBaseContext },
   repositories: { DeploymentsRepository },
   entities: { Deployments },
   middlewares: { DeploymentsMiddleware },

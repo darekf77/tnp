@@ -1,5 +1,5 @@
 //#region imports
-import { config, frontendFiles } from 'tnp-config/src';
+import { config, frontendFiles } from 'tnp-core/src';
 import { _, CoreModels, crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';

@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';

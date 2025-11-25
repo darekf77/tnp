@@ -1,5 +1,5 @@
 //#region imports
-import { Taon, BaseContext } from 'taon/src';
+import { Taon, TaonBaseContext } from 'taon/src';
 import { getBaseCliWorkerDatabaseConfig } from 'tnp-helpers/src';
 
 import { Processes } from './processes';
@@ -14,7 +14,7 @@ export const ProcessesContext = Taon.createContextTemplate(() => ({
   contextName: 'ProcessesContext', // not needed if using HOST_CONFIG object
   appId,
   skipWritingServerRoutes: true,
-  contexts: { BaseContext },
+  contexts: { TaonBaseContext },
   repositories: { ProcessesRepository },
   database: true,
   entities: { Processes },

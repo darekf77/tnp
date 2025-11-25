@@ -1,7 +1,7 @@
 //#region imports
 import type { AxiosProgressEvent } from 'axios';
-import { BaseContext, MulterFileUploadResponse, Taon } from 'taon/src';
-import { config } from 'tnp-config/src';
+import { TaonBaseContext, MulterFileUploadResponse, Taon } from 'taon/src';
+import { config } from 'tnp-core/src';
 import {
   crossPlatformPath,
   path,

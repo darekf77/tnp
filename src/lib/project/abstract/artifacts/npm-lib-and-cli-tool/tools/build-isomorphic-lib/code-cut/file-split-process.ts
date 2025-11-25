@@ -1,4 +1,4 @@
-import { extAllowedToExportAndReplaceTSJSCodeFiles } from 'tnp-config/src';
+import { extAllowedToExportAndReplaceTSJSCodeFiles } from 'tnp-core/src';
 import { path, _, Utils } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { UtilsTypescript } from 'tnp-helpers/src';

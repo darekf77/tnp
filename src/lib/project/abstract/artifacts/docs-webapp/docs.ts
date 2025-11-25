@@ -1,7 +1,7 @@
 //#region imports
 import { ChangeOfFile } from 'incremental-compiler/src';
 import { RenameRule } from 'magic-renamer/src';
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import { chalk, chokidar, fse, Utils } from 'tnp-core/src';
 import { _, crossPlatformPath, path } from 'tnp-core/src';
 import { UtilsMd } from 'tnp-helpers/src';

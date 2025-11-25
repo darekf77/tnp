@@ -1,4 +1,4 @@
-export { config } from 'tnp-config/src';
+export { config } from 'tnp-core/src';
 //#region @backend
 export { start } from './lib/start';
 import { start } from './lib/start';

@@ -7,11 +7,11 @@ import {
   Models,
   EndpointContext,
 } from 'taon/src';
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import { _, crossPlatformPath, Helpers } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
-import { BaseCliWorkerController } from 'tnp-helpers/src';
+import { TaonBaseCliWorkerController } from 'tnp-helpers/src';
 
 import { ERR_MESSAGE_DEPLOYMENT_NOT_FOUND } from '../../../../constants';
 import { ProcessesController } from '../processes/processes.controller';
@@ -34,7 +34,7 @@ import { DeploymentsRepository } from './deployments.repository';
 @Taon.Controller({
   className: 'DeploymentsController',
 })
-export class DeploymentsController extends BaseCliWorkerController<DeploymentReleaseData> {
+export class DeploymentsController extends TaonBaseCliWorkerController<DeploymentReleaseData> {
   //#region fields & getters
 
   // @ts-ignore remove after move to separated repo
@@ -157,7 +157,7 @@ export class DeploymentsController extends BaseCliWorkerController<DeploymentRel
     overrideContentType: 'multipart/form-data',
     middlewares: ({ parentMiddlewares }) => ({
       ...parentMiddlewares,
-      BaseFileUploadMiddleware: DeploymentsMiddleware,
+      TaonBaseFileUploadMiddleware: DeploymentsMiddleware,
     }),
   }) // @ts-ignore TODO weird inheritance problem
   uploadFormDataToServer(

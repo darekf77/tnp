@@ -393,7 +393,7 @@ import { ClassHelpers } from '../../helpers/class-helpers';
 import { Symbols } from '../../symbols';
 import { Models } from '../../models';
 import { _ } from 'tnp-core/src';
-import type { BaseSubscriberForEntity } from '../../base-classes/base-subscriber-for-entity';
+import type { TaonBaseSubscriberForEntity } from '../../base-classes/base-subscriber-for-entity';
 import type { EndpointContext } from '../../endpoint-context';
 
 export class TaonSubscriberOptions<
@@ -432,7 +432,7 @@ export function TaonSubscriber(options: TaonSubscriberOptions) {
                 '__trigger_event__',
                 'clone',
                 'listenTo',
-              ] as (keyof BaseSubscriberForEntity)[]
+              ] as (keyof TaonBaseSubscriberForEntity)[]
             ).includes(m as any) &&
             !m.startsWith('_') &&
             !m.startsWith('inject')
@@ -445,7 +445,7 @@ export function TaonSubscriber(options: TaonSubscriberOptions) {
 
           (this as any)[methodName] = async (...methodArgs: any[]) => {
             const result = originalMethod.apply(this, methodArgs);
-            const self = this as any as BaseSubscriberForEntity<any>;
+            const self = this as any as TaonBaseSubscriberForEntity<any>;
             // If the result is a promise, wait for it to resolve
             if (result instanceof Promise) {
               await result;

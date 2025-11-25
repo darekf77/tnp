@@ -6,7 +6,7 @@ import {
   frontendFiles,
   notNeededForExportFiles,
   TAGS,
-} from 'tnp-config/src';
+} from 'tnp-core/src';
 import {
   CoreModels,
   crossPlatformPath,

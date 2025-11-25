@@ -1,6 +1,6 @@
 //#region imports
 import type * as ora from 'ora';
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import { Helpers } from 'tnp-core/src';
 import { CoreModels, fse, os } from 'tnp-core/src';
 import { _, UtilsOs } from 'tnp-core/src';

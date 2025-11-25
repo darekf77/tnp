@@ -1,7 +1,7 @@
 //#region imports
 import { Taon, ClassHelpers } from 'taon/src';
 import { _, dateformat, Helpers } from 'tnp-core/src';
-import { BaseCliWorkerController } from 'tnp-helpers/src';
+import { TaonBaseCliWorkerController } from 'tnp-helpers/src';
 
 import { ERR_MESSAGE_PROCESS_NOT_FOUND } from '../../../../constants';
 

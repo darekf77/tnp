@@ -1,6 +1,6 @@
 //#region imports
 import axios from 'axios';
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import { chalk, Helpers, UtilsNetwork, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { UtilsOs } from 'tnp-core/src';

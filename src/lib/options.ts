@@ -1,6 +1,6 @@
 import type axiosType from 'axios';
 import { walk } from 'lodash-walk-object/src';
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import { Helpers } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
 

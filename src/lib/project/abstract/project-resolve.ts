@@ -1,6 +1,6 @@
 //#region imports
-import { config, urlRepoTaonContainers } from 'tnp-config/src';
-import { LibTypeArr } from 'tnp-config/src';
+import { config, urlRepoTaonContainers } from 'tnp-core/src';
+import { LibTypeArr } from 'tnp-core/src';
 import {
   child_process,
   fse,

@@ -1,5 +1,5 @@
 import { ChangeOfFile } from 'incremental-compiler/src';
-import { config, extAllowedToReplace } from 'tnp-config/src';
+import { config, extAllowedToReplace } from 'tnp-core/src';
 import { crossPlatformPath, Helpers, _, path } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 import { BaseCompilerForProject } from 'tnp-helpers/src';

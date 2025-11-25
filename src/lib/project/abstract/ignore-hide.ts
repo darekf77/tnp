@@ -1,5 +1,5 @@
 //#region imports
-import { config, fileName } from 'tnp-config/src';
+import { config, fileName } from 'tnp-core/src';
 import { crossPlatformPath } from 'tnp-core/src';
 import {
   BaseFeatureForProject,

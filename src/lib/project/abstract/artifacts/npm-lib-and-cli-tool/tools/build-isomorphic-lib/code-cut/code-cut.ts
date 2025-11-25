@@ -1,7 +1,7 @@
 //#region imports
 import { ReplaceOptionsExtended } from 'isomorphic-region-loader/src';
-import { config, PREFIXES } from 'tnp-config/src';
-import { extAllowedToReplace } from 'tnp-config/src';
+import { config, PREFIXES } from 'tnp-core/src';
+import { extAllowedToReplace } from 'tnp-core/src';
 import { crossPlatformPath, fse, path, _ } from 'tnp-core/src';
 
 import { EnvOptions } from '../../../../../../../options';

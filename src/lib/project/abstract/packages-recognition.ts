@@ -1,5 +1,5 @@
 //#region imports
-import { config, PREFIXES } from 'tnp-config/src';
+import { config, PREFIXES } from 'tnp-core/src';
 import {
   _,
   path,

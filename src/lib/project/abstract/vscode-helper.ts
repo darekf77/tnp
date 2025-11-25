@@ -1,5 +1,5 @@
 //#region imports
-import { config, fileName } from 'tnp-config/src';
+import { config, fileName } from 'tnp-core/src';
 import { chalk, fse, json5, path, _, os, win32Path } from 'tnp-core/src';
 import { Utils } from 'tnp-core/src';
 import { crossPlatformPath } from 'tnp-core/src';

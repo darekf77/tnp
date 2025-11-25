@@ -1,7 +1,7 @@
 //#region imports
 import { URL } from 'url'; // @backend
 
-import { config } from 'tnp-config/src';
+import { config } from 'tnp-core/src';
 import {
   Helpers,
   UtilsNetwork,

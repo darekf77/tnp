@@ -2,7 +2,7 @@
 import * as crypto from 'crypto';
 
 import * as multer from 'multer';
-import { Taon, BaseFileUploadMiddleware } from 'taon/src';
+import { Taon, TaonBaseFileUploadMiddleware } from 'taon/src';
 import { fse, path, UtilsOs } from 'tnp-core/src';
 import { _, crossPlatformPath } from 'tnp-core/src';
 
@@ -13,7 +13,7 @@ import { DEPLOYMENT_LOCAL_FOLDER_PATH } from './deployments.constants';
 @Taon.Middleware({
   className: 'DeploymentsMiddleware',
 })
-export class DeploymentsMiddleware extends BaseFileUploadMiddleware {
+export class DeploymentsMiddleware extends TaonBaseFileUploadMiddleware {
   uploadDir(): string {
     return DEPLOYMENT_LOCAL_FOLDER_PATH;
   }
