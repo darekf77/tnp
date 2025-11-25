@@ -76,7 +76,9 @@
     "**/.tnp": true,
     "projects": true,
     "dist-*": true,
-    "**/dist-*": true
+    "**/dist-*": true,
+    "*.rest": true,
+    "**/*.rest": true
   },
   "workbench.colorCustomizations": {
     "activityBar.background": "#5c3735",
