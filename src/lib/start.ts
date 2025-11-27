@@ -18,6 +18,28 @@ export async function start(
 ): Promise<void> {
   config.frameworkName = frameworkName;
 
+  if (frameworkName === 'tnp') {
+    process.on('unhandledRejection', (err, promise) => {
+      const reason = err as Error;
+      console.error('Unhandled Promise Rejection at:', promise);
+      console.error('Reason:', reason);
+
+      // Optional: get full stack trace even for objects
+      if (reason && typeof reason === 'object') {
+        console.error('Error name:', reason.name);
+        console.error('Error message:', reason.message);
+        console.error('Error stack:\n', reason.stack || 'No stack');
+      } else {
+        console.error(`Error occurred`);
+        console.trace('Error:', reason);
+      }
+      process.exit(1);
+      // Prevent crash during development
+      // In production, you might want to log and exit gracefully
+      // process.exit(1);
+    });
+  }
+
   if (config.frameworkNames.productionFrameworkName === config.frameworkName) {
     /**
      * ISSUE largest http request sometime are failing ... but with second try everything is OK
