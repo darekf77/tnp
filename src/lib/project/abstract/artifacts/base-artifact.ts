@@ -110,6 +110,10 @@ export abstract class BaseArtifact<
         releaseOptions.release.releaseVersionBumpType,
       );
 
+    this.project.packageJson.setVersion(
+      releaseOptions.release.resolvedNewVersion,
+    );
+
     return releaseOptions;
   }
   //#endregion

@@ -438,10 +438,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     //#endregion
 
-    this.project.packageJson.setVersion(
-      releaseOptions.release.resolvedNewVersion,
-    );
-
     if (releaseOptions.release.releaseType !== 'local') {
       this.removeNotNpmRelatedFilesFromReleaseBundle(releaseProjPath);
     }
