@@ -1,6 +1,6 @@
 import type axiosType from 'axios';
 import { walk } from 'lodash-walk-object/src';
-import { config } from 'tnp-core/src';
+import { config, UtilsTerminal } from 'tnp-core/src';
 import { Helpers } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
 
@@ -512,6 +512,84 @@ class EnvOptionsContainer {
 
 export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   //#region static / from
+
+  static async releaseSkipMenu(
+    options: EnvOptions,
+    opt?: {
+      selectDefaultValues?: boolean;
+    },
+  ): Promise<EnvOptions> {
+    opt = opt || {};
+    const defaultSelected = [
+      'skipBuildingArtifactsNpmLibAndCliTool',
+      'skipReleaseQuestion',
+    ] as (keyof typeof choices)[];
+
+    const choices = {
+      skipDeploy: {
+        name: 'Skip deploy',
+      },
+      skipNpmPublish: {
+        name: 'Skip npm publish',
+      },
+      skipTagGitPush: {
+        name: 'Skip git tag & push',
+      },
+      skipReleaseQuestion: {
+        name: 'Skip release questions',
+      },
+      skipResolvingGitChanges: {
+        name: 'Skip resolving git changes',
+      },
+      skipBuildingArtifactsNpmLibAndCliTool: {
+        name: 'Skip building artifact: npm-lib-and-cli-tool',
+      },
+      skipBuildingArtifactsAngularNodeApp: {
+        name: 'Skip building artifact: angular-node-app',
+      },
+    };
+
+    const optionsToSet = opt.selectDefaultValues
+      ? defaultSelected
+      : await UtilsTerminal.multiselect({
+          question: 'Select options to skip during release:',
+          choices,
+          defaultSelected,
+          autocomplete: true,
+        });
+
+    if (optionsToSet.includes('skipDeploy')) {
+      options.release.skipDeploy = true;
+    }
+    if (optionsToSet.includes('skipNpmPublish')) {
+      options.release.skipNpmPublish = true;
+    }
+    if (optionsToSet.includes('skipTagGitPush')) {
+      options.release.skipTagGitPush = true;
+    }
+    if (optionsToSet.includes('skipReleaseQuestion')) {
+      options.release.skipReleaseQuestion = true;
+    }
+    if (optionsToSet.includes('skipResolvingGitChanges')) {
+      options.release.skipResolvingGitChanges = true;
+    }
+
+    options.release.skipBuildingArtifacts =
+      options.release.skipBuildingArtifacts || [];
+    if (optionsToSet.includes('skipBuildingArtifactsNpmLibAndCliTool')) {
+      (options.release.skipBuildingArtifacts as string[]).push(
+        ReleaseArtifactTaonNames.NPM_LIB_PKG_AND_CLI_TOOL,
+      );
+    }
+    if (optionsToSet.includes('skipBuildingArtifactsAngularNodeApp')) {
+      (options.release.skipBuildingArtifacts as string[]).push(
+        ReleaseArtifactTaonNames.ANGULAR_NODE_APP,
+      );
+    }
+
+    return options;
+  }
+
   public static from(options: Partial<EnvOptions>): EnvOptions {
     const orgFinishCallback = options?.finishCallback;
     let res = new EnvOptions(options);

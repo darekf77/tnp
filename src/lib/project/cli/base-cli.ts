@@ -11,6 +11,18 @@ export class BaseCli extends BaseCommandLineFeature<EnvOptions, Project> {
     // await this.__recreateEnvForArtifactAndEnvironment(); // TODO this taks too much time
     // console.log('this.params', this.params);
     // this._tryResolveChildIfInsideArg();
+
+    if (this.params['skipMenu']) {
+      this.params = await EnvOptions.releaseSkipMenu(this.params);
+      delete this.params['skipMenu'];
+    }
+
+    if (this.params['skipMenuAuto']) {
+      this.params = await EnvOptions.releaseSkipMenu(this.params, {
+        selectDefaultValues: true,
+      });
+      delete this.params['skipMenuAuto'];
+    }
   }
 
   protected async __recreateEnvForArtifactAndEnvironment(): Promise<void> {
