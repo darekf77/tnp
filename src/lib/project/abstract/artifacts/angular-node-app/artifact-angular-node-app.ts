@@ -578,13 +578,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         UtilsDotFile.setValuesKeysFromObject(
           [localReleaseOutputBasePath, '.env'],
           {
-            ...(!useDomain
-              ? {
-                  [_.snakeCase(
-                    'HINT! IF YOU NEED DOMAIN USE userDomain=true in env.ts',
-                  )]: 'HINT! IF YOU NEED DOMAIN USE userDomain=true in env.ts',
-                }
-              : {}),
             [`HOST_BACKEND_PORT_${contextRealIndex}`]: portBackendRelease,
             [`HOST_URL_${contextRealIndex}`]: domainForContextBE,
             [`FRONTEND_NORMAL_APP_PORT_${contextRealIndex}`]:
@@ -601,6 +594,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
               : {}),
           },
         );
+
         UtilsDotFile.setCommentToKeyInDotFile(
           [localReleaseOutputBasePath, '.env'],
           `HOST_BACKEND_PORT_${contextRealIndex}`,
@@ -617,6 +611,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           [localReleaseOutputBasePath, '.env'],
           `FRONTEND_NORMAL_APP_PORT_${contextRealIndex}`,
           `${CoreModels.tagForTaskName}="${taskNameFrontendreleasePort}"`,
+        );
+      }
+
+      if (!useDomain) {
+        UtilsDotFile.addCommentAtTheBeginningOfDotFile(
+          [localReleaseOutputBasePath, '.env'],
+          `HINT! IF YOU NEED DOMAIN USE userDomain=true in env.ts`,
         );
       }
 
