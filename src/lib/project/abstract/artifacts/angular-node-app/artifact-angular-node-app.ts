@@ -717,6 +717,20 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           ctxBackend.labels[httpRouterBackendPortKey] =
             loadBalancerValue?.replace('CTX', contextName);
         })();
+
+        const specificForProjectSQliteDbLocation = crossPlatformPath([
+          `~/.${config.frameworkNames.productionFrameworkName}`,
+          'cloud/docker-backend-databases',
+          releaseOptions.website.domain,
+          this.project.packageJson.version,
+          contextName,
+          'databases',
+        ]);
+
+        ctxBackend.volumes = [
+          `${specificForProjectSQliteDbLocation}:/app/databases`,
+        ];
+
         dockerComposeFile.services[newKey] = ctxBackend;
       }
 
