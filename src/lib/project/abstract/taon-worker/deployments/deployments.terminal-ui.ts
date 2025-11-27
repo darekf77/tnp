@@ -50,14 +50,23 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     ctrl: DeploymentsController,
   ): Promise<void> {
     //#region @backendFunc
-    console.log(`Removing deployment... please wait...`);
-    await ctrl
-      .triggerDeploymentRemove(deployment.baseFileNameWithHashDatetime)
-      .request();
+    while (true) {
+      console.log(`Removing deployment... please wait...`);
+      try {
+        await ctrl
+          .triggerDeploymentRemove(deployment.baseFileNameWithHashDatetime)
+          .request();
 
-    await ctrl.waitUntilDeploymentRemoved(deployment.id);
+        await ctrl.waitUntilDeploymentRemoved(deployment.id);
 
-    console.log(`Removing done..`);
+        console.log(`Removing done..`);
+        break;
+      } catch (error) {
+        if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
+          break;
+        }
+      }
+    }
     await UtilsTerminal.pressAnyKeyToContinueAsync();
     //#endregion
   }
@@ -150,6 +159,9 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
         displayDeploymentLog: {
           name: 'Display Log File',
         },
+        displayDeploymentLogPath: {
+          name: 'Display Log File Path',
+        },
         stopDeployment: {
           name: 'Stop Deployment',
         },
@@ -173,6 +185,40 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
       switch (selected) {
         case 'back':
           return;
+        case 'displayDeploymentLogPath':
+          deployment = await this.refetchDeployment(
+            deployment,
+            deploymentsController,
+          );
+          if (!deployment) {
+            return;
+          }
+          UtilsTerminal.clearConsole();
+          await (async () => {
+            const processComposeUp = deployment.processIdComposeUp;
+            try {
+              const processFromDb = await processesController
+                .getByProcessID(processComposeUp)
+                .request()
+                .then(r => r.body.json);
+              console.log(
+                `
+
+                Log file path: ${processFromDb.fileLogAbsPath}
+
+                `,
+              );
+              await UtilsTerminal.pressAnyKeyToContinueAsync({
+                message: 'Press any key go back to previous menu',
+              });
+            } catch (error) {
+              console.error(
+                `Error fetching process log for process id: ${processComposeUp}`,
+              );
+              await UtilsTerminal.pressAnyKeyToContinueAsync();
+            }
+          })();
+
         case 'displayDeploymentLog':
           deployment = await this.refetchDeployment(
             deployment,
@@ -339,13 +385,19 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
                   },
                 });
 
-              await deploymentController.triggerAllDeploymentsRemove().request();
+              await deploymentController
+                .triggerAllDeploymentsRemove()
+                .request();
               Helpers.info(`Waiting until all deployments are removed...`);
               await deploymentController.waitUntilAllDeploymentsRemoved();
               Helpers.info(`All deployments removed.`);
               break;
             } catch (error) {
-              await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error);
+              if (
+                !(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))
+              ) {
+                break;
+              }
               continue;
             }
           }

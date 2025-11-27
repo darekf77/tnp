@@ -388,13 +388,21 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       );
     }
 
-    if (
-      !options.skipStatusCheck &&
-      !DeploymentsStatesAllowedStop.includes(deployment.status)
-    ) {
-      throw new Error(
-        `Deployment can't be stopped when process in status "${deployment.status}"`,
-      );
+    let onlyRemove =
+      options.removeAfterStop &&
+      deployment.status === DeploymentsStatus.NOT_STARTED;
+
+    if (deployment.status === DeploymentsStatus.NOT_STARTED) {
+      // nothing here do to
+    } else {
+      if (
+        !options.skipStatusCheck &&
+        !DeploymentsStatesAllowedStop.includes(deployment.status)
+      ) {
+        throw new Error(
+          `Deployment can't be stopped when process in status "${deployment.status}"`,
+        );
+      }
     }
 
     if (!Helpers.exists(this.zipfileAbsPath(baseFileNameWithHashDatetime))) {
@@ -452,22 +460,28 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
     //#region handle existing up process
     const processesController = await this.getProcessesController();
-    if (deployment.processIdComposeUp) {
-      await processesController
-        .triggerStop(deployment.processIdComposeUp)
-        .request();
 
-      await this.waitUntilProcessKilled(
-        deployment.processIdComposeUp,
-        async () => {
-          deployment.processIdComposeUp = null;
-          await this.save(deployment);
-          triggerStop();
-        },
-      );
-    } else {
+    if (onlyRemove) {
       triggerStop();
+    } else {
+      if (deployment.processIdComposeUp) {
+        await processesController
+          .triggerStop(deployment.processIdComposeUp)
+          .request();
+
+        await this.waitUntilProcessKilled(
+          deployment.processIdComposeUp,
+          async () => {
+            deployment.processIdComposeUp = null;
+            await this.save(deployment);
+            triggerStop();
+          },
+        );
+      } else {
+        triggerStop();
+      }
     }
+
     //#endregion
 
     return deployment;
