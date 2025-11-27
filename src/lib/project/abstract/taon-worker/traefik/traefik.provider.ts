@@ -206,11 +206,12 @@ export class TraefikProvider {
           !UtilsOs.isRunningInOsWithGraphicsCapableEnvironment();
 
         const optSecure = {
-          [TaonCloudStatus.ENABLED_SECURED]:
+          [TaonCloudStatus.STARTING_SECURE_MODE]:
             'Enable Taon Cloud (PRODUCTION MODE)',
         };
         const optNotSecure = {
-          [TaonCloudStatus.ENABLED_NOT_SECURE]: 'Enable Taon Cloud (DEV MODE)',
+          [TaonCloudStatus.STARTING_NOT_SECURE_MODE]:
+            'Enable Taon Cloud (DEV MODE)',
         };
         const optExplain = {
           explain: {
@@ -244,7 +245,9 @@ export class TraefikProvider {
 
         return status;
       } catch (error) {
-        await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error);
+        if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
+          break;
+        }
       }
     }
     //#endregion
@@ -394,8 +397,13 @@ export class TraefikProvider {
 
           return true;
         } catch (error) {
-          await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error);
-          return false;
+          if (
+            !(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))
+          ) {
+            return false;
+          } else {
+            continue;
+          }
         }
       }
       //#endregion
@@ -434,7 +442,11 @@ export class TraefikProvider {
           }
           return true;
         } catch (error) {
-          await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error);
+          if (
+            !(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))
+          ) {
+            break;
+          }
           continue;
         }
       }
@@ -551,12 +563,13 @@ export class TraefikProvider {
       return false;
     }
 
-    await this.selectMode({
+    this.taonCloudStatus = await this.selectMode({
       skipDisabled: true,
     });
 
     if (!(await this.selectCloudIps())) {
       console.error('No IPs selected, cannot start Traefik');
+      this.taonCloudStatus = TaonCloudStatus.NOT_STARED;
       return false;
     }
 
