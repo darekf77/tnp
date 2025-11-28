@@ -652,7 +652,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       );
       //#endregion
 
-      const allValues = UtilsDotFile.getValuesKeysAsJsonObject([
+      const allValuesDotEnv = UtilsDotFile.getValuesKeysAsJsonObject([
         localReleaseOutputBasePath,
         '.env',
       ]);
@@ -662,6 +662,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         dockerComposeYmlDestPath,
       );
 
+      //#region prepare backend containers
       const backendTemplapteObj =
         dockerComposeFile.services['backend-app-node'];
       delete dockerComposeFile.services['backend-app-node'];
@@ -672,12 +673,15 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         const index = i + 1; // start from 1
         const contextName = contextsNames[i].contextName;
         const ctxBackend = _.cloneDeep(backendTemplapteObj);
-        const newKey =
-          `backend-app-node--${contextName}--${index}`.toLowerCase();
-        const traefikKeyBackend = _.kebabCase(
-          `${this.project.name}-${newKey}--` +
-            `${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`,
-        );
+
+        const containerIdentifierBackendNOde =
+          `backend-app-node--${_.kebabCase(releaseOptions.website.domain)}--` +
+          `v${_.kebabCase(this.project.packageJson.version)}--${contextName}--ctxIndex${index}`.toLowerCase();
+
+        //#region updating cloned backend template
+        const traefikKeyBackend =
+          `${containerIdentifierBackendNOde}--` +
+          `${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
 
         const traefikLabelsBE = [
           `traefik.enable=true`,
@@ -697,8 +701,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           traefikLabelsBEObject[key] = value;
         });
         ctxBackend.labels = { ...ctxBackend.labels, ...traefikLabelsBEObject };
-        ctxBackend.container_name = newKey;
-        const all = _.cloneDeep(allValues) as Record<string, string>;
+        ctxBackend.container_name = containerIdentifierBackendNOde;
+        const all = _.cloneDeep(allValuesDotEnv) as Record<string, string>;
         for (const key of Object.keys(all)) {
           all[key] = `\${${key}}`;
         }
@@ -731,47 +735,65 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         ctxBackend.volumes = [
           `${specificForProjectSQliteDbLocation}:/app/databases`,
         ];
+        //#endregion
 
-        dockerComposeFile.services[newKey] = ctxBackend;
+        dockerComposeFile.services[containerIdentifierBackendNOde] = ctxBackend;
       }
+      //#endregion
 
-      Object.values(dockerComposeFile.services).forEach(c => {
-        if (c.container_name.startsWith('angular-app-node')) {
-          //#region set traefik labels for frontend app
-          const all = _.cloneDeep(allValues) as Record<string, string>;
-          for (const key of Object.keys(all)) {
-            all[key] = `\${${key}}`;
-          }
-          c.environment = all;
+      //#region prepare frontend container
+      const frontendTemplapteObj =
+        dockerComposeFile.services['angular-app-node'];
+      delete dockerComposeFile.services['angular-app-node'];
 
-          const newKey = `angular-app-node--${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
-          const traefikKeyFrontend = _.kebabCase(
-            `${this.project.name}-${newKey}`,
-          );
+      const ctxFrontend = _.cloneDeep(frontendTemplapteObj);
 
-          const traefikLabelsFE = [
-            `traefik.enable=true`,
-            `traefik.http.routers.${traefikKeyFrontend}.rule=Host(\`${releaseOptions.website.domain}\`)`,
-            `traefik.http.routers.${traefikKeyFrontend}.entrypoints=websecure`,
-            // `traefik.http.routers.${traefikKeyFronend}.tls.certresolver=myresolver`,
-            `traefik.http.services.${traefikKeyFrontend}.loadbalancer.server.port=80`,
-            containerLabel,
-          ];
-          const traefikLabelsFEObject: Record<string, string> = {};
-          traefikLabelsFE.forEach(label => {
-            const [key, value] = label.split('=');
-            traefikLabelsFEObject[key] = value;
-          });
-          c.labels = traefikLabelsFEObject;
-          //#endregion
-        }
+      const newKeyForContainerFrontendAngular = (
+        `angular-app-node--${_.kebabCase(releaseOptions.website.domain)}` +
+        `--v${_.kebabCase(this.project.packageJson.version)}`
+      ).toLowerCase();
+
+      //#region set traefik labels for frontend app
+
+      const all = _.cloneDeep(allValuesDotEnv) as Record<string, string>;
+      for (const key of Object.keys(all)) {
+        all[key] = `\${${key}}`;
+      }
+      ctxFrontend.environment = all;
+
+      const traefikKeyFrontend =
+        `${newKeyForContainerFrontendAngular}--` +
+        `${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
+
+      const traefikLabelsFE = [
+        `traefik.enable=true`,
+        `traefik.http.routers.${traefikKeyFrontend}.rule=Host(\`${releaseOptions.website.domain}\`)`,
+        `traefik.http.routers.${traefikKeyFrontend}.entrypoints=websecure`,
+        // `traefik.http.routers.${traefikKeyFronend}.tls.certresolver=myresolver`,
+        `traefik.http.services.${traefikKeyFrontend}.loadbalancer.server.port=80`,
+        containerLabel,
+      ];
+      const traefikLabelsFEObject: Record<string, string> = {};
+      traefikLabelsFE.forEach(label => {
+        const [key, value] = label.split('=');
+        traefikLabelsFEObject[key] = value;
       });
+      ctxFrontend.labels = traefikLabelsFEObject;
+      //#endregion
+
+      ctxFrontend.container_name = newKeyForContainerFrontendAngular;
+
+      dockerComposeFile.services[newKeyForContainerFrontendAngular] =
+        ctxFrontend;
+      //#endregion
 
       UtilsYaml.writeJsonToYaml(dockerComposeYmlDestPath, dockerComposeFile);
 
+      //#region add info comment to docker-compose.yml file
       const dockerComposeYmlFileContent = Helpers.readFile(
         dockerComposeYmlDestPath,
       );
+
       Helpers.writeFile(
         dockerComposeYmlDestPath,
         `# ${THIS_IS_GENERATED_STRING}
@@ -779,6 +801,11 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 ${dockerComposeYmlFileContent}
 # ${THIS_IS_GENERATED_STRING}`,
       );
+      //#endregion
+
+      //#endregion
+
+      //#region create package.json with start script for whole build
       Helpers.copyFile(this.project.pathFor(config.file.package_json), [
         localReleaseOutputBasePath,
         config.file.package_json,
@@ -794,7 +821,6 @@ ${dockerComposeYmlFileContent}
         'scripts.start',
         `taon preview ./docker-compose.yml`,
       );
-
       //#endregion
 
       //#region update index.html with env variables
@@ -806,7 +832,7 @@ ${dockerComposeYmlFileContent}
         ]);
 
         const envScript = `<script>
-      window.ENV = ${JSON.stringify(allValues, null, 2)};
+      window.ENV = ${JSON.stringify(allValuesDotEnv, null, 2)};
     </script>`;
 
         let html = Helpers.readFile(indexHtmlFromAngularAppPath);
@@ -816,6 +842,7 @@ ${dockerComposeYmlFileContent}
       })();
       //#endregion
 
+      //#region display final build info
       Helpers.info(`
 
       Dockerized version of your app is ready.
@@ -826,6 +853,7 @@ ${dockerComposeYmlFileContent}
       taon preview ./docker-compose.yml
 
       `);
+      //#endregion
 
       if (releaseOptions.release.releaseType === 'local') {
         Helpers.taskDone(`Local release done!`);
