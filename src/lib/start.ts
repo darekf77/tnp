@@ -185,6 +185,7 @@ export async function start(
       startElectron: 'build:start:electron',
       se: 'build:start:electron',
       sd: 'simulateDomain',
+      simd: 'simulateDomain',
       cse: 'build:clear:start:electron',
       cstart: 'build:start:clean',
       cs: 'build:start:clean',

@@ -51,7 +51,7 @@ export class TraefikServiceProvider {
   }
   //#endregion
 
-  2; //#region protected methods / get ip from yml
+  //#region protected methods / get ip from yml
   public getIpFromYml(): string | undefined {
     //#region @backendFunc
     const ymlFileAbsPath = _.first(

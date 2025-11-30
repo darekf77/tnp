@@ -136,7 +136,8 @@ export class Deployments
   //#region getters / preview string
   get previewString(): string {
     return (
-      `${this.id} ${this.projectName || '<unknown-project>'} ` +
+      `${this.id} ${this.destinationDomain || '<unknown-domain>'} v${this.version} ` +
+      `(${this.status}) ` +
       `${this.arrivalDate ? dateformat(this.arrivalDate, 'dd-mm-yyyy HH:MM:ss') : 'unknown date'} `
     );
   }

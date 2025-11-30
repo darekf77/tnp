@@ -300,25 +300,29 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       ) &&
       releaseOptions.release.targetArtifact === 'angular-node-app'
     ) {
-      const ctrl =
-        await this.ins.taonProjectsWorker.instancesWorker.getRemoteControllerFor(
-          {
-            methodOptions: {
-              calledFrom: 'Project.release',
+      if (releaseOptions.release.autoReleaseUsingConfig) {
+        // use from config
+      } else {
+        const ctrl =
+          await this.ins.taonProjectsWorker.instancesWorker.getRemoteControllerFor(
+            {
+              methodOptions: {
+                calledFrom: 'Project.release',
+              },
             },
-          },
-        );
+          );
 
-      const instances = (await ctrl.getEntities().request())?.body.json || [];
-      const options = instances.map(i => ({
-        name: `${i.name} (${i.ipAddress})`,
-        value: i.ipAddress,
-      }));
-      releaseOptions.release.taonInstanceIp = await UtilsTerminal.select({
-        choices: options,
-        autocomplete: true,
-        question: `[${releaseOptions.release.releaseType}-release] Select to what instance you want to release`,
-      });
+        const instances = (await ctrl.getEntities().request())?.body.json || [];
+        const options = instances.map(i => ({
+          name: `${i.name} (${i.ipAddress})`,
+          value: i.ipAddress,
+        }));
+        releaseOptions.release.taonInstanceIp = await UtilsTerminal.select({
+          choices: options,
+          autocomplete: true,
+          question: `[${releaseOptions.release.releaseType}-release] Select to what instance you want to release`,
+        });
+      }
 
       console.log(
         chalk.gray(

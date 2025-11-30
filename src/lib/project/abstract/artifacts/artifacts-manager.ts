@@ -607,6 +607,7 @@ export class ArtifactManager {
             envName: item.envName || '__',
             envNumber: item.envNumber,
             releaseType: item.releaseType || releaseOptions.release.releaseType,
+            taonInstanceIp: item.taonInstanceIp,
           },
         });
         await this.release(clonedOptions, true);

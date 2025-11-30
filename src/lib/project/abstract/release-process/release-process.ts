@@ -365,12 +365,14 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
           selected = environments[0];
         } else {
           const selectedEnv = await UtilsTerminal.select({
-            choices: environments.map(e => {
-              return {
-                name: e.envName === '__' ? '__ ( default )' : e.envName,
-                value: e.envName,
-              };
-            }),
+            choices: environments
+              .filter(e => e.envName !== '__') // filter out default env from selection
+              .map(e => {
+                return {
+                  name: e.envName === '__' ? '__ ( default )' : e.envName,
+                  value: e.envName,
+                };
+              }),
             question: `[${envOptions?.release.releaseType}-release] Select environment`,
             autocomplete: true,
           });

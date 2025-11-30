@@ -1484,6 +1484,14 @@ ${this.project.children
       child.taonJson.autoReleaseConfigAllowedItems = [
         {
           artifactName: 'npm-lib-and-cli-tool',
+          itemFriendlyName: 'npm library build',
+        },
+        {
+          artifactName: 'angular-node-app',
+          envName: 'dev',
+          itemFriendlyName: 'localhost-manual-dev-release',
+          releaseType: 'manual',
+          taonInstanceIp: '127.0.0.1',
         },
       ];
     }

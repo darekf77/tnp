@@ -672,8 +672,11 @@ export class Framework extends BaseFeatureForProject<Project> {
   /**
    * @returns by default it will always return at least one context
    */
-  public getAllDetectedTaonContexts(): Models.TaonContext[] {
-    const detectedContexts = [...this._allDetectedNestedContexts()];
+  public getAllDetectedTaonContexts(options?: {
+    skipLibFolder?: boolean;
+  }): Models.TaonContext[] {
+    options = options || {};
+    const detectedContexts = [...this._allDetectedNestedContexts(options)];
     return detectedContexts.length > 0 ? detectedContexts : [];
   }
 
@@ -686,15 +689,22 @@ export class Framework extends BaseFeatureForProject<Project> {
     );
   }
 
-  private _allDetectedNestedContexts(): Models.TaonContext[] {
+  private _allDetectedNestedContexts(options?: {
+    skipLibFolder?: boolean;
+  }): Models.TaonContext[] {
     //#region @backendFunc
+    options = options || {};
     const basePath = this.project.pathFor([config.folder.src]);
-    const filesForContext = Helpers.filesFrom(basePath, true).filter(
-      absPath => {
-        const relativePath = absPath.replace(`${basePath}/`, '');
-        return this.contextFilter(relativePath);
-      },
-    );
+    const notAllowedFolders = [...(options.skipLibFolder ? ['lib'] : [])];
+    const filesForContext = Helpers.getFilesFrom(basePath, {
+      recursive: true,
+    }).filter(absPath => {
+      const relativePath = absPath.replace(`${basePath}/`, '');
+      if (notAllowedFolders.find(f => relativePath.startsWith(`${f}/`))) {
+        return false;
+      }
+      return this.contextFilter(relativePath);
+    });
 
     const detectedDatabaseFiles = filesForContext.reduce((a, absPathToFile) => {
       return a.concat(

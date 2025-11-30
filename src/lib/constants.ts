@@ -77,6 +77,8 @@ export const DOCKER_TEMPLATES = 'docker-templates';
 
 export const ACTIVE_CONTEXT = 'ACTIVE_CONTEXT';
 
+export const friendlyNameForReleaseAutoConfigIsRequired = false;
+
 export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
 } = {

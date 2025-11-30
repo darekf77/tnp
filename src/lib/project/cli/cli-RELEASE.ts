@@ -4,6 +4,7 @@ import { CoreModels, _, UtilsTerminal, path, chalk } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
+import { friendlyNameForReleaseAutoConfigIsRequired } from '../../constants';
 import { Models } from '../../models';
 import {
   ReleaseArtifactTaon,
@@ -84,6 +85,7 @@ class $Release extends BaseCli {
 
   //#region auto release / auto
   async auto(): Promise<void> {
+    this._validateProjectAutoReleaseConfig();
     await this.project.release(
       this.params.clone({
         release: {
@@ -99,6 +101,7 @@ class $Release extends BaseCli {
 
   //#region auto release / auto clear
   async autoClear(): Promise<void> {
+    this._validateProjectAutoReleaseConfig();
     await this.project.clear();
     await this.project.release(
       this.params.clone({
@@ -115,6 +118,7 @@ class $Release extends BaseCli {
 
   //#region auto release / major
   async major(): Promise<void> {
+    this._validateProjectAutoReleaseConfig();
     await this.project.release(
       this.params.clone({
         release: {
@@ -130,6 +134,7 @@ class $Release extends BaseCli {
 
   //#region auto release / minor
   async minor(): Promise<void> {
+    this._validateProjectAutoReleaseConfig();
     await this.project.release(
       this.params.clone({
         release: {
@@ -145,6 +150,7 @@ class $Release extends BaseCli {
 
   //#region auto release / patch
   async patch(): Promise<void> {
+    this._validateProjectAutoReleaseConfig();
     await this.project.release(
       this.params.clone({
         release: {
@@ -159,6 +165,40 @@ class $Release extends BaseCli {
   //#endregion
 
   //#endregion
+
+  private _validateProjectAutoReleaseConfig(): void {
+    //#region @backendFunc
+    if (
+      friendlyNameForReleaseAutoConfigIsRequired &&
+      this.project.taonJson.autoReleaseConfigAllowedItems
+    ) {
+      for (const item of this.project.taonJson.autoReleaseConfigAllowedItems) {
+        if (!item.itemFriendlyName) {
+          Helpers.error(
+            `${chalk.bold('itemFriendlyName')} is required property in "autoReleaseConfigAllowedItems" in taon.json `,
+            false,
+            true,
+          );
+        }
+        const regexContainerOnlySmallLettersAndDash = /^[a-z\-]+$/;
+        if (
+          regexContainerOnlySmallLettersAndDash.test(item.itemFriendlyName) ===
+          false
+        ) {
+          Helpers.error(
+            `
+
+            invalid item ${chalk.bold(item.itemFriendlyName)} in "autoReleaseConfigAllowedItems" in taon.json
+
+            ${chalk.bold('itemFriendlyName')} can contains only small letters and dash(-). Current value: "${item.itemFriendlyName}"`,
+            false,
+            true,
+          );
+        }
+      }
+    }
+    //#endregion
+  }
 
   //#region install locally
   async installLocallyVscodePlugin(): Promise<void> {
@@ -181,7 +221,10 @@ class $Release extends BaseCli {
     skipLibBuild: boolean,
     releaseOpt: Pick<
       EnvOptions['release'],
-      'targetArtifact' | 'removeReleaseOutputAfterLocalInstall' | 'envName' | 'envNumber'
+      | 'targetArtifact'
+      | 'removeReleaseOutputAfterLocalInstall'
+      | 'envName'
+      | 'envNumber'
     >,
   ): Promise<void> {
     await this.project.release(

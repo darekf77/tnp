@@ -115,6 +115,14 @@ export namespace Models {
      * select release type for automatic release
      */
     releaseType?: ReleaseType;
+    /**
+     * IP address of taon instance where to release
+     */
+    taonInstanceIp?: string;
+    /**
+     * friendly name of item in auto release list configuration
+     */
+    itemFriendlyName: string;
   }
 
   export type TaonArtifactInclude =
