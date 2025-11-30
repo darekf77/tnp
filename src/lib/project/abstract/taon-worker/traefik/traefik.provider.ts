@@ -13,7 +13,7 @@ import {
   UtilsTerminal,
 } from 'tnp-core/src';
 import { CoreModels, UtilsNetwork } from 'tnp-core/src';
-import { BaseCliWorker, Helpers } from 'tnp-helpers/src';
+import { BaseCliWorker, Helpers, UtilsDocker } from 'tnp-helpers/src';
 
 import {
   globalSpinner,
@@ -634,19 +634,79 @@ export class TraefikProvider {
     await this.deleteTraefikNetwork();
 
     const execAsync = promisify(child_process.exec);
+    const localDevFileBasename = `traefik-compose.local-dev.yml`;
+    const prodFileBasename = `traefik-compose.yml`;
     // Start traefik in detached mode
+    const devFileExists = Helpers.exists([
+      this.pathToTraefikComposeDestCwd,
+      localDevFileBasename,
+    ]);
+    const prodFileExists = Helpers.exists([
+      this.pathToTraefikComposeDestCwd,
+      prodFileBasename,
+    ]);
 
-    try {
-      await execAsync(
-        `docker compose -f traefik-compose${this.isDevMode ? '.local-dev' : ''}.yml down`,
+    let composeDownBothFiles = devFileExists && prodFileExists;
+    if (!Helpers.exists(this.pathToTraefikComposeDestCwd)) {
+      Helpers.copy(
+        this.pathToTraefikComposeSourceTemplateFilesCwd,
+        this.pathToTraefikComposeDestCwd,
         {
-          cwd: this.pathToTraefikComposeDestCwd,
+          recursive: true,
         },
       );
-    } catch (error) {
-      config.frameworkName === 'tnp' && console.error(error);
-      Helpers.warn('Error stopping Traefik');
+      composeDownBothFiles = true;
     }
+
+    const composeDownFile = async (filename: string) => {
+      return await execAsync(`docker compose -f ${filename} down`, {
+        cwd: this.pathToTraefikComposeDestCwd,
+      });
+    };
+
+    if (composeDownBothFiles) {
+      try {
+        await composeDownFile(localDevFileBasename);
+      } catch (error) {
+        console.log('Error stopping Traefik dev mode');
+      }
+      try {
+        await composeDownFile(prodFileBasename);
+      } catch (error) {
+        console.log('Error stopping Traefik production mode');
+      }
+    } else {
+      while (true) {
+        try {
+          if (
+            Helpers.exists([
+              this.pathToTraefikComposeDestCwd,
+              localDevFileBasename,
+            ])
+          ) {
+            await composeDownFile(localDevFileBasename);
+          }
+          if (
+            Helpers.exists([this.pathToTraefikComposeDestCwd, prodFileBasename])
+          ) {
+            await composeDownFile(prodFileBasename);
+          }
+          break;
+        } catch (error) {
+          console.log('Error stopping Traefik');
+          const tryAgain =
+            await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error);
+          if (!tryAgain) {
+            break;
+          }
+        }
+      }
+    }
+
+    await UtilsDocker.cleanImagesAndContainersByDockerLabel(
+      'org.opencontainers.image.title',
+      'Traefik',
+    );
 
     Helpers.removeFolderIfExists(this.pathToTraefikComposeDestCwd);
     this.taonCloudStatus = TaonCloudStatus.NOT_STARED;
