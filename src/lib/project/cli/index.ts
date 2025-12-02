@@ -5,6 +5,7 @@ import BUILD from './cli-BUILD';
 import CLOUD from './cli-CLOUD';
 import DOCKER from './cli-DOCKER';
 import DOCS from './cli-DOCS';
+import FILE_SYNC from './cli-FILE_SYNC';
 import GENERATE from './cli-GENERATE';
 import INIT from './cli-INIT';
 import LINK from './cli-LINK';
@@ -33,6 +34,7 @@ export default [
   VERSION,
   GENERATE,
   DOCKER,
+  FILE_SYNC,
 ];
 
 //#endregion
