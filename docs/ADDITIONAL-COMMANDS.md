@@ -23,13 +23,35 @@ Apply best global config for VScode
 ```bash
 tnp vscode:global
 ```
+## Install pip3 manually on linux
+```bash 
+sudo apt update # UBUNTU/DEBIAN ONLY
+sudo apt install python3-pip # UBUNTU/DEBIAN ONLY
+# or
+sudo dnf install python3-pip # FEDORA ONLY
+# or 
+sudo pacman -S python-pip # ARCH
+```
+
+## Install pipx manually on linux
+Only needed on debian/ubuntu 
+(if external-managed-environment problem and you can do pip3 install mkdocs)
+```bash
+sudo apt install pipx
+```
 
 ## Install mkdocs manually
+
+- Linux/Windows
 ```bash
 pip3 install mkdocs
 pip3 install mkdocs-material --user
+# or 
+pipx install mkdocs # ubuntu/debian linux with external managed environment
+pipx inject mkdocs mkdocs-material
 ```
 
+- MacOS
 ```bash
 brew install mkdocs
 brew install mkdocs-material

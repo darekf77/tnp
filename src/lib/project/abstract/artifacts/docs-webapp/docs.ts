@@ -1,9 +1,10 @@
 //#region imports
 import { ChangeOfFile } from 'incremental-compiler/src';
 import { RenameRule } from 'magic-renamer/src';
-import { config } from 'tnp-core/src';
+import { config, UtilsExecProc } from 'tnp-core/src';
 import { chalk, chokidar, fse, Utils } from 'tnp-core/src';
 import { _, crossPlatformPath, path } from 'tnp-core/src';
+import { UtilsOs } from 'tnp-core/src';
 import { UtilsMd } from 'tnp-helpers/src';
 import { BaseDebounceCompilerForProject } from 'tnp-helpers/src';
 import { Helpers, UtilsHttp } from 'tnp-helpers/src';
@@ -45,6 +46,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   //#region fields & getters
 
   protected mkdocsServePort: number;
+
   private linkedAlreadProjects = {};
 
   //#region fields & getters / docs config current proj abs path
@@ -89,6 +91,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   public readonly tmpDocsFolderRoot: string = `.${config.frameworkName}/temp-docs-folder`;
 
   public readonly combinedDocsFolder: string = `allmdfiles`;
+
   get tmpDocsFolderRootDocsDirRelativePath(): string {
     //#region @backendFunc
     return crossPlatformPath([this.tmpDocsFolderRoot, this.combinedDocsFolder]);
@@ -174,6 +177,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   //#endregion
 
   private envOptions: EnvOptions;
+
   initializeWatchers(envOptions: EnvOptions): void {
     this.envOptions = envOptions;
     const timestampContainer = crossPlatformPath(
@@ -199,6 +203,8 @@ export class Docs extends BaseDebounceCompilerForProject<
         project.pathFor('websql'),
         project.pathFor('projects/**/*.*'),
         project.pathFor('projects'),
+        project.pathFor('node_modules/**/*.*'),
+        project.pathFor('node_modules'),
         // QUICK_FIX I may include for example .ts files in md files with handlebars
         ...['ts', 'js', 'scss', 'css', 'html'].map(ext =>
           project.pathFor(`src/**/*.${ext}`),
@@ -454,14 +460,74 @@ markdown_extensions:
   }
   //#endregion
 
+  private async validateEnvironemntForMkdocsBuild(): Promise<boolean> {
+    //#region @backendFunc
+    const pythonExists = await UtilsOs.commandExistsAsync('python3');
+    if (!pythonExists) {
+      Helpers.error(
+        `Python3 is not installed. Please install Python3 to build mkdocs documentation.`,
+        true,
+        true,
+      );
+      return false;
+    }
+    let mkdocsExists = await UtilsOs.pythonModuleExists('mkdocs');
+    if (!mkdocsExists) {
+      Helpers.logWarn(
+        `Mkdocs module not found in python3 environment. Checking pipx..`,
+      );
+      mkdocsExists = await UtilsOs.pipxPackageExists('mkdocs');
+      if (!mkdocsExists) {
+        Helpers.error(
+          `Mkdocs is not installed in your Python3 environment. Please install mkdocs module.`,
+          true,
+          true,
+        );
+        return false;
+      }
+    }
+
+    let mkdocsMaterialExists =
+      await UtilsOs.pythonModuleExists('mkdocs-material');
+    if (!mkdocsMaterialExists) {
+      Helpers.logWarn(
+        `Mkdocs Material theme module not found in python3 environment. Checking pipx..`,
+      );
+      mkdocsMaterialExists = await UtilsOs.pipxPackageExists('mkdocs-material');
+      if (!mkdocsMaterialExists) {
+        Helpers.logWarn(`Mkdocs Material not found in pipx mkdocs package. Checking nested mkdocs..`);
+        mkdocsMaterialExists = await UtilsOs.pipxNestedPackageExists('mkdocs','mkdocs-material');
+      }
+
+      if (!mkdocsMaterialExists) {
+        Helpers.error(
+          `Mkdocs Material theme is not installed in your Python3 environment. Please install mkdocs-material module.`,
+          true,
+          true,
+        );
+        return false;
+      }
+    }
+    return true;
+    //#endregion
+  }
+
   //#region private methods / build mkdocs
   private async buildMkdocs({ watch }: { watch: boolean }) {
     //#region @backendFunc
-    this.project.setValueToJSONC(
-      config.file.package_json,
-      'scripts.mkdocs',
-      process.platform === 'darwin' ? 'mkdocs' : 'python3 -m mkdocs',
-    );
+
+    const isEnvValid = await this.validateEnvironemntForMkdocsBuild();
+    if (!isEnvValid) {
+      Helpers.error(`Cannot build mkdocs documentation. `, true, true);
+      process.exit(1);
+    }
+
+    // not needed probably
+    // this.project.setValueToJSONC(
+    //   config.file.package_json,
+    //   'scripts.mkdocs',
+    //   process.platform === 'darwin' ? 'mkdocs' : 'python3 -m mkdocs',
+    // );
     if (watch) {
       this.mkdocsServePort = await this.project.registerAndAssignPort(
         'mkdocs serve',
@@ -472,7 +538,7 @@ markdown_extensions:
       await Helpers.killOnPort(this.mkdocsServePort);
       // python3 -m
       Helpers.run(
-        process.platform === 'darwin'
+        process.platform !== 'win32'
           ? `mkdocs serve -a localhost:${this.mkdocsServePort} --quiet`
           : //--quiet
             `python3 -m mkdocs serve -a localhost:${this.mkdocsServePort} --quiet`,
@@ -489,7 +555,7 @@ markdown_extensions:
         Helpers.mkdirp(this.outDocsDistFolderAbs);
       }
       Helpers.run(
-        process.platform === 'darwin'
+        process.platform !== 'win32'
           ? `mkdocs build --site-dir ${this.outDocsDistFolderAbs}`
           : //
             `python3 -m mkdocs build --site-dir ${this.outDocsDistFolderAbs}`,
