@@ -41,8 +41,11 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
 > {
   //#region constructor
   private readonly baseSrcFolder: string;
+
   private lastTaonContexts: Models.TaonContext[] = [];
+
   private lastMigrationExported: UtilsTypescript.ExportInfo[] = [];
+
   constructor(project: Project) {
     super(project, {
       folderPath: [project.pathFor([config.folder.src])],
@@ -105,6 +108,7 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
     Helpers.taskDone(`Rebuilding app.hosts.ts Done`);
     //#endregion
   }
+
   async action({
     changeOfFiles,
     asyncEvent,

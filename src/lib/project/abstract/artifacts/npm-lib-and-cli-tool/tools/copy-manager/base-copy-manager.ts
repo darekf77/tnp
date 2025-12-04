@@ -1,5 +1,5 @@
 //#region imports
-import { IncCompiler } from 'incremental-compiler/src';
+import { ChangeOfFile } from 'incremental-compiler/src';
 import { Log } from 'ng2-logger/src';
 import { config } from 'tnp-core/src';
 import { crossPlatformPath, _ } from 'tnp-core/src';
@@ -237,7 +237,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   }
 
   //#region async action
-  async asyncAction(event: IncCompiler.Change) {
+  async asyncAction(event: ChangeOfFile): Promise<void> {
     //#region @backendFunc
     const absoluteFilePath = crossPlatformPath(event.fileAbsolutePath);
     // console.log('async event '+ absoluteFilePath)
@@ -290,7 +290,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   async syncAction(
     files: string[],
     initialParams: BaseCopyMangerInitialParams,
-  ) {
+  ): Promise<void> {
     //#region @backendFunc
 
     const startFromScratchFileBasename = 'tmp-already-started-copy-manager';

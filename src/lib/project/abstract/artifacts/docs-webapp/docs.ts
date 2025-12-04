@@ -1,10 +1,11 @@
 //#region imports
 import { ChangeOfFile } from 'incremental-compiler/src';
 import { RenameRule } from 'magic-renamer/src';
-import { config, UtilsExecProc } from 'tnp-core/src';
+import { config, UtilsExecProc, UtilsTerminal } from 'tnp-core/src';
 import { chalk, chokidar, fse, Utils } from 'tnp-core/src';
 import { _, crossPlatformPath, path } from 'tnp-core/src';
 import { UtilsOs } from 'tnp-core/src';
+import { UtilsStringRegex } from 'tnp-core/src';
 import { UtilsMd } from 'tnp-helpers/src';
 import { BaseDebounceCompilerForProject } from 'tnp-helpers/src';
 import { Helpers, UtilsHttp } from 'tnp-helpers/src';
@@ -44,6 +45,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   Project
 > {
   //#region fields & getters
+  private envOptions: EnvOptions;
 
   protected mkdocsServePort: number;
 
@@ -176,15 +178,9 @@ export class Docs extends BaseDebounceCompilerForProject<
   }
   //#endregion
 
-  private envOptions: EnvOptions;
-
+  //#region methods / initialize watchers
   initializeWatchers(envOptions: EnvOptions): void {
     this.envOptions = envOptions;
-    const timestampContainer = crossPlatformPath(
-      path.dirname(this.docsGlobalTimestampForWatcherAbsPath),
-    );
-    // console.log('timestampContainer', timestampContainer);
-    // process.exit(0);
     const project = this.project;
     this.initOptions({
       taskName: `DocsProviderFor${_.upperFirst(
@@ -192,30 +188,30 @@ export class Docs extends BaseDebounceCompilerForProject<
       )}`,
       folderPath: project.location,
       ignoreFolderPatter: [
-        project.pathFor('tmp-*/**/*.*'),
-        project.pathFor('tmp-*'),
-        project.pathFor('dist/**/*.*'),
+        project.pathFor('**/tmp-*/**'),
+        project.pathFor('**/tmp-*'),
+        project.pathFor('dist/**'),
         project.pathFor('dist'),
-        project.pathFor('dist-*/**/*.*'),
-        project.pathFor('browser/**/*.*'),
+        project.pathFor('dist-*/**'),
+        project.pathFor('browser/**'),
         project.pathFor('browser'),
-        project.pathFor('websql/**/*.*'),
+        project.pathFor('websql/**'),
         project.pathFor('websql'),
-        project.pathFor('projects/**/*.*'),
+        project.pathFor('projects/**'),
         project.pathFor('projects'),
-        project.pathFor('node_modules/**/*.*'),
-        project.pathFor('node_modules'),
-        // QUICK_FIX I may include for example .ts files in md files with handlebars
+        project.pathFor('.taon/**'),
+        project.pathFor('.taon'),
+        project.pathFor('.tnp/**'),
+        project.pathFor('.tnp'),
         ...['ts', 'js', 'scss', 'css', 'html'].map(ext =>
           project.pathFor(`src/**/*.${ext}`),
         ),
-        project.pathFor('.*/**/*.*'),
-        `${timestampContainer}`,
-        `${timestampContainer}/**/*.*`,
+        // TODO I may include in feature for example .ts files in md files with handlebars
       ],
-      subscribeOnlyFor: ['md', 'yml' as any],
+      subscribeOnlyFor: ['md', 'yml' as any, 'jpg', 'png', 'gif', 'svg'],
     });
   }
+  //#endregion
 
   //#region methods / action
   async action({
@@ -224,7 +220,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   }: {
     changeOfFiles: ChangeOfFile[];
     asyncEvent: boolean;
-  }) {
+  }): Promise<void> {
     //#region @backendFunc
     // if (asyncEvent) {
     //   console.log(
@@ -265,15 +261,32 @@ export class Docs extends BaseDebounceCompilerForProject<
           });
         });
 
+      Helpers.info(`Normal docs build done.`);
+
       if (
         this.initialParams.docsOutFolder &&
         !this.isWatchCompilation &&
         !this.initialParams.ciBuild
       ) {
-        await UtilsHttp.startHttpServer(
-          this.outDocsDistFolderAbs,
-          this.initialParams.port,
-        );
+        const startServing = await UtilsTerminal.confirm({
+          message: `Would you like to serve static pages of docs from now ?`,
+          defaultValue: true,
+        });
+        if (startServing) {
+          await UtilsHttp.startHttpServer(
+            this.outDocsDistFolderAbs,
+            this.initialParams.port,
+            {
+              startMessage: `
+
+            Serving static docs pages on http://localhost:${this.initialParams.port}
+
+            Press Ctrl+C to stop the server.
+
+            `,
+            },
+          );
+        }
       }
     }
     if (asyncEvent) {
@@ -460,12 +473,13 @@ markdown_extensions:
   }
   //#endregion
 
-  private async validateEnvironemntForMkdocsBuild(): Promise<boolean> {
+  async validateEnvironemntForMkdocsBuild(): Promise<boolean> {
     //#region @backendFunc
     const pythonExists = await UtilsOs.commandExistsAsync('python3');
     if (!pythonExists) {
       Helpers.error(
-        `Python3 is not installed. Please install Python3 to build mkdocs documentation.`,
+        `Python3 is not installed.
+        Please install Python3 to build mkdocs documentation.`,
         true,
         true,
       );
@@ -479,7 +493,8 @@ markdown_extensions:
       mkdocsExists = await UtilsOs.pipxPackageExists('mkdocs');
       if (!mkdocsExists) {
         Helpers.error(
-          `Mkdocs is not installed in your Python3 environment. Please install mkdocs module.`,
+          `Mkdocs is not installed in your Python3 environment.
+          Please install mkdocs module.`,
           true,
           true,
         );
@@ -487,28 +502,39 @@ markdown_extensions:
       }
     }
 
-    let mkdocsMaterialExists =
-      await UtilsOs.pythonModuleExists('mkdocs-material');
-    if (!mkdocsMaterialExists) {
-      Helpers.logWarn(
-        `Mkdocs Material theme module not found in python3 environment. Checking pipx..`,
-      );
-      mkdocsMaterialExists = await UtilsOs.pipxPackageExists('mkdocs-material');
-      if (!mkdocsMaterialExists) {
-        Helpers.logWarn(`Mkdocs Material not found in pipx mkdocs package. Checking nested mkdocs..`);
-        mkdocsMaterialExists = await UtilsOs.pipxNestedPackageExists('mkdocs','mkdocs-material');
-      }
-
-      if (!mkdocsMaterialExists) {
-        Helpers.error(
-          `Mkdocs Material theme is not installed in your Python3 environment. Please install mkdocs-material module.`,
-          true,
-          true,
-        );
-        return false;
-      }
-    }
     return true;
+
+    //#region TODO checking mkdocs-material cross platform
+    // let mkdocsMaterialExists =
+    //   await UtilsOs.pythonModuleExists('mkdocs-material');
+    // if (!mkdocsMaterialExists) {
+    //   Helpers.logWarn(
+    //     `Mkdocs Material theme module not found in python3 environment. Checking pipx..`,
+    //   );
+    //   mkdocsMaterialExists = await UtilsOs.pipxPackageExists('mkdocs-material');
+    //   if (!mkdocsMaterialExists) {
+    //     Helpers.logWarn(
+    //       `Mkdocs Material not found in pipx mkdocs package. Checking nested mkdocs..`,
+    //     );
+    //     mkdocsMaterialExists = await UtilsOs.pipxNestedPackageExists(
+    //       'mkdocs',
+    //       'mkdocs-material',
+    //     );
+    //   }
+
+    //   if (!mkdocsMaterialExists) {
+    //     Helpers.error(
+    //       `Mkdocs Material theme is not installed in your Python3 environment.
+    //       Please install mkdocs-material module.`,
+    //       true,
+    //       true,
+    //     );
+    //     return false;
+    //   }
+    // }
+    // return true;
+    //#endregion
+
     //#endregion
   }
 
@@ -528,6 +554,8 @@ markdown_extensions:
     //   'scripts.mkdocs',
     //   process.platform === 'darwin' ? 'mkdocs' : 'python3 -m mkdocs',
     // );
+    // console.log({ watch });
+
     if (watch) {
       this.mkdocsServePort = await this.project.registerAndAssignPort(
         'mkdocs serve',
@@ -656,8 +684,8 @@ markdown_extensions:
       }
 
       counterCopy++;
-      const assetsFromMdFile = UtilsMd.getAssets(
-        Helpers.readFile(asbFileSourcePath),
+      const assetsFromMdFile = UtilsMd.getAssetsFromFile(
+        asbFileSourcePath,
       );
       // if (path.basename(asbFilePath) === 'QA.md') {
       // console.log(`assets for ${relativeFileSourcePath}`, assetsFromMdFile);
@@ -667,10 +695,21 @@ markdown_extensions:
       for (const assetRelativePathFromFile of assetsFromMdFile) {
         const hasSlash = relativeFileSourcePath.includes('/');
         const slash = hasSlash ? '/' : '';
+
         const relativeAssetPath = relativeFileSourcePath.replace(
           slash + path.basename(relativeFileSourcePath),
           slash + assetRelativePathFromFile,
         );
+
+        if (UtilsStringRegex.containsNonAscii(relativeAssetPath)) {
+          // console.log({
+          //   assetRelativePathFromFile,
+          //   relativeAssetPath,
+          // })
+          Helpers.warn(`Omitting file with non-ascii characters in path: ${relativeAssetPath}`);
+          continue;
+        }
+
         const assetSourcetAbsPath = this.project.pathFor(relativeAssetPath);
 
         const assetDestLocationAbsPath = this.project.pathFor([
@@ -685,9 +724,13 @@ markdown_extensions:
         //   assetDestLocationAbsPath,
         // });
 
-        // console.log(
-        //   `Copy asset ${assetRelativePathFromFile} ${chalk.bold(relativeAssetPath)} to ${assetDestLocationAbsPath}`,
-        // );
+        console.log(
+          `Copy asset
+          "${assetRelativePathFromFile}"
+          "${chalk.bold(relativeAssetPath)}"
+          to "${assetDestLocationAbsPath}"
+          `,
+        );
 
         Helpers.copyFile(assetSourcetAbsPath, assetDestLocationAbsPath);
 
@@ -697,6 +740,7 @@ markdown_extensions:
     const asyncInfo = asyncEvent
       ? `\nRefreshing http://localhost:${this.mkdocsServePort}..`
       : '';
+
     Helpers.info(
       `(${
         asyncEvent ? 'async' : 'sync'
@@ -988,7 +1032,14 @@ markdown_extensions:
   //#region private methods / recreate files in temp folder
   private async recreateFilesInTempFolder(asyncEvent: boolean) {
     //#region @backendFunc
-    const files: string[] = this.exitedFilesAbsPathes;
+    const files: string[] = this.exitedFilesAbsPathes.filter(f => {
+      if (UtilsStringRegex.containsNonAscii(f)) {
+        Helpers.warn(`Omitting file with non-ascii characters in path: ${f}`);
+        return false;
+      }
+      return true;
+    });
+
     this.copyFilesToTempDocsFolder(files, asyncEvent);
 
     let rootFiles = await this.getRootFiles();

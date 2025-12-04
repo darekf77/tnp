@@ -1,5 +1,5 @@
 //#region imports
-import { IncCompiler } from 'incremental-compiler/src';
+import { BaseClientCompiler, ChangeOfFile } from 'incremental-compiler/src';
 import { JSON10 } from 'json10/src';
 import { config, extForSassLikeFiles } from 'tnp-core/src';
 import { TAGS } from 'tnp-core/src';
@@ -19,7 +19,7 @@ import { CodeCut } from '../code-cut/code-cut';
 import { codeCuttFn } from '../code-cut/cut-fn';
 //#endregion
 
-export class BrowserCompilation extends IncCompiler.Base {
+export class BrowserCompilation extends BaseClientCompiler {
   //#region fields & getters
   protected compilerName = 'Browser standard compiler';
   public codecutNORMAL: CodeCut;
@@ -161,7 +161,7 @@ export class BrowserCompilation extends IncCompiler.Base {
   }
 
   //#region methods / async action
-  async asyncAction(event: IncCompiler.Change) {
+  async asyncAction(event: ChangeOfFile) {
     if (!this.codecutWEBSQL || !this.codecutNORMAL) {
       // TODO QUICK - but I thin it make sense => there is not backedn compilation for websql
       return;
@@ -170,7 +170,7 @@ export class BrowserCompilation extends IncCompiler.Base {
     this.asyncActionFor(event, true);
   }
 
-  async asyncActionFor(event: IncCompiler.Change, websql: boolean) {
+  async asyncActionFor(event: ChangeOfFile, websql: boolean) {
     //#region @backendFunc
     // console.log('ASYNC ACTION CODE CUT ', event.fileAbsolutePath);
 

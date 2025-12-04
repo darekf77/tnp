@@ -1,5 +1,4 @@
 //#region imports
-import { IncCompiler } from 'incremental-compiler/src';
 import { config } from 'tnp-core/src';
 import {
   crossPlatformPath,

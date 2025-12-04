@@ -70,7 +70,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   async watchAndRecreate(onChange: () => any): Promise<void> {
     //#region @backendFunc
     if (this.project.framework.isStandaloneProject) {
-      const watcher = await incrementalWatcher(
+      const watcher = incrementalWatcher(
         [
           this.project.pathFor(`environments/**/*.ts`),
           this.project.pathFor(`env.ts`),

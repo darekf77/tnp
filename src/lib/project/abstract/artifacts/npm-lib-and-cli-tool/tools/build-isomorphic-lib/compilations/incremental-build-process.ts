@@ -1,5 +1,5 @@
 //#region imports
-import { IncCompiler } from 'incremental-compiler/src';
+import { StartAndWatchOptions } from 'incremental-compiler/src';
 import { config } from 'tnp-core/src';
 import { path, crossPlatformPath } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
@@ -17,6 +17,7 @@ export class IncrementalBuildProcess {
   //#region fields & getters
 
   protected backendCompilation: BackendCompilation;
+
   // protected browserCompilations: BrowserCompilation[];
   protected browserCompilationStandalone: BrowserCompilation;
 
@@ -152,7 +153,7 @@ export class IncrementalBuildProcess {
 
   async startAndWatch(
     taskName?: string,
-    options?: IncCompiler.Models.StartAndWatchOptions,
+    options?: StartAndWatchOptions,
   ) {
     //#region @backendFunc
     // console.log('[${config.frameworkName}][incremental-build-process] taskName' + taskName)

@@ -6,7 +6,7 @@ import {
 import { walk } from 'lodash-walk-object/src';
 import { MagicRenamer } from 'magic-renamer/src';
 import * as semver from 'semver';
-import { config } from 'tnp-core/src';
+import { config, fg } from 'tnp-core/src';
 import {
   TAGS,
   backendNodejsOnlyFiles,
@@ -280,34 +280,37 @@ export class $Global extends BaseGlobalCommandLine<
     ]);
     const options: IncrementalWatcherOptions = {
       name: `[taon]  properwatchtest (testing only)`,
-      ignoreInitial: true,
+      // ignoreInitial: true,
+      followSymlinks: false,
     };
 
+    Helpers.remove(watchLocation);
     Helpers.remove(symlinkCatalog);
     Helpers.writeFile(symlinkCatalogFile, 'hello aaa');
     Helpers.writeFile(
-      crossPlatformPath([cwd, config.folder.src, 'a1', 'aa']),
+      crossPlatformPath([watchLocation, 'a1', 'aa']),
       'asdasdasdhello aaa',
     );
     Helpers.writeFile(
-      crossPlatformPath([cwd, config.folder.src, 'a2', 'ccc']),
+      crossPlatformPath([watchLocation, 'a2', 'ccc']),
       'heasdasdllo asdasd',
     );
     Helpers.createSymLink(symlinkCatalog, symlinkCatalogInWatch);
 
-    (await incrementalWatcher(watchLocation, options)).on('all', (a, b) => {
-      console.log('FIRSTA', a, b);
+    incrementalWatcher([watchLocation], { ...options, engine: 'chokidar' }).on(
+      'all',
+      (a, b) => {
+        console.log('CHOKIDAR', a, b);
+      },
+    );
+
+    incrementalWatcher([watchLocation], {
+      ...options,
+      engine: '@parcel/watcher',
+    }).on('all', (a, b) => {
+      console.log('PARCEL', a, b);
     });
 
-    (await incrementalWatcher(watchLocation, options)).on('all', (a, b) => {
-      console.log('SECOND', a, b);
-    });
-
-    (await incrementalWatcher(symlinkCatalog, options)).on('all', (a, b) => {
-      console.log('THIRD', a, b);
-    });
-
-    console.log('await done');
     //#endregion
   }
   //#endregion
@@ -2059,6 +2062,56 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     //#endregion
   }
   //#endregion
+
+  testGlob() {
+    //#region @backendFunc
+    // Helpers.taskStarted('Testing glob...');
+    // const fullPattern = `${this.project.location}/**/*`;
+
+    // const ignorePatterns = [
+    //   '**/node_modules/**/*.*',
+    //   '**/node_modules',
+    //   '**/.git/**/*.*',
+    //   '**/.git',
+    //   '**/tmp-*/**',
+    //   '**/tmp-*',
+    //   '**/dist/**',
+    //   '**/dist',
+    //   '**/dist-*/**',
+    //   '**/browser/**',
+    //   '**/browser',
+    //   '**/websql/**',
+    //   '**/websql',
+    //   // '**/projects/**',
+    //   // '**/projects',
+    //   '**/.taon/**',
+    //   '**/.taon',
+    //   '**/.tnp/**',
+    //   '**/.tnp',
+    //   '**/src/**/*.ts',
+    //   '**/src/**/*.js',
+    //   '**/src/**/*.scss',
+    //   '**/src/**/*.css',
+    //   '**/src/**/*.html',
+    // ];
+
+    // const entries = fg.sync(fullPattern, {
+    //   absolute: true,
+    //   dot: true,
+    //   extglob: true,
+    //   globstar: true,
+    //   followSymbolicLinks: false,
+    //   ignore: [
+    //     // ...IGNORE_BY_DEFAULT
+    //     ...ignorePatterns,
+    //   ],
+    //   onlyFiles: false,
+    //   stats: true, // This is key!
+    // });
+
+    // Helpers.taskDone(`Found entries: ${entries.length}`);
+    //#endregion
+  }
 
   async killOthers() {
     //#region @backendFunc
