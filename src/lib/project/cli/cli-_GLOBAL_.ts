@@ -90,6 +90,22 @@ export class $Global extends BaseGlobalCommandLine<
     //#endregion
   }
 
+  anymatch() {
+    //#region @backendFunc
+    // const anymatch = require('anymatch');
+    // const f = '/home/dfilipiak/projects/npm/taon-dev/taon/tmp-all-assets-linked';
+    // const exclude = anymatch([
+    //   '/home/dfilipiak/projects/npm/taon-dev/taon/tmp-*/**',
+    //   '/home/dfilipiak/projects/npm/taon-dev/taon/tmp-*',
+    //   '/home/dfilipiak/projects/npm/taon-dev/taon/tmp-all-assets-linked',
+    // ], path.basename(f));
+    // Helpers.info(`
+    //           exclude folder ${f} : ${exclude}`);
+
+    // this._exit();
+    //#endregion
+  }
+
   //#region add etc hosts entry
   @UtilsCliClassMethod.decoratorMethod('addEtcHostsEntry')
   addEtcHostsEntry(): void {
