@@ -222,6 +222,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
           children,
           proj => [
             ...proj.taonJson.dependenciesNamesForNpmLib,
+            ...proj.taonJson.isomorphicDependenciesForNpmLib,
             proj.taonJson.peerDependenciesNamesForNpmLib,
           ],
           proj => proj.nameForNpmPackage,

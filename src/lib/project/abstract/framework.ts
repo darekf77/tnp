@@ -318,6 +318,7 @@ export class Framework extends BaseFeatureForProject<Project> {
   };
   //#endregion
 
+  //#region recreate vars scss
   recreateVarsScss(initOptions: EnvOptions): void {
     //#region @backendFunc
     if (!this.project.typeIs('isomorphic-lib')) {
@@ -344,7 +345,9 @@ export class Framework extends BaseFeatureForProject<Project> {
     //#endregion
     //#endregion
   }
+  //#endregion
 
+  //#region prevent not existed component and module in app.ts
   preventNotExistedComponentAndModuleInAppTs(): void {
     //#region @backendFunc
     const relativeAppTs = crossPlatformPath([config.folder.src, 'app.ts']);
@@ -361,6 +364,7 @@ export class Framework extends BaseFeatureForProject<Project> {
 
     //#endregion
   }
+  //#endregion
 
   //#region recreate from core project
 
@@ -655,10 +659,10 @@ export class Framework extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region detected contexts
   /**
    * @returns by default it will always return at least one context
    */
-  //#region detected contexts
   public getAllDetectedContextsNames(): string[] {
     return this.getAllDetectedTaonContexts()
       .map((f, i) =>
@@ -722,5 +726,49 @@ export class Framework extends BaseFeatureForProject<Project> {
     //#endregion
   }
 
+  //#endregion
+
+  //#region get all external isomorphic dependencies for npm lib
+  get allDetectedExternalIsomorphicDependenciesForNpmLib(): string[] {
+    //#region @backendFunc
+    const allFiles = Helpers.getFilesFrom(
+      this.project.pathFor(config.folder.src),
+      {
+        recursive: true,
+        followSymlinks: false,
+      },
+    ).filter(f => f.endsWith('.ts') || f.endsWith('.tsx'));
+
+    const allImports: UtilsTypescript.TsImportExport[] = [];
+    for (const fileAbsPath of allFiles) {
+      const imports = UtilsTypescript.recognizeImportsFromFile(fileAbsPath);
+      allImports.push(...imports);
+    }
+
+    const taonCoreImports = Object.keys(
+      this.project.framework.coreProject.packageJson.allDependencies,
+    );
+
+    const displayList = Utils.uniqArray(
+      allImports
+        .filter(
+          f =>
+            f.type === 'import' ||
+            f.type === 'require' ||
+            f.type === 'async-import',
+        )
+        .map(i => `${i.cleanEmbeddedPathToFile}`)
+        .filter(
+          i =>
+            !i.startsWith('.') &&
+            !taonCoreImports.includes(i.replace(/\/src$/, '')) &&
+            i.endsWith('/src'),
+        )
+        .map(i => i.replace(/\/src$/, '')),
+    ).sort();
+
+    return displayList;
+    //#endregion
+  }
   //#endregion
 }

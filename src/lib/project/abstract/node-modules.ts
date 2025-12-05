@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, fileName } from 'tnp-core/src';
 import {
   path,
   crossPlatformPath,
@@ -47,6 +47,18 @@ export class NodeModules extends BaseNodeModules {
         .run(`${config.frameworkName} reinstall ${SKIP_CORE_CHECK_PARAM}`)
         .sync();
     }
+    //#endregion
+  }
+
+  //#region has package installed
+  hasPackageInstalled(packageName: string): boolean {
+    //#region @backendFunc
+    const packagePath = crossPlatformPath([
+      this.path,
+      ...packageName.split('/'),
+      fileName.package_json
+    ]);
+    return Helpers.exists(packagePath);
     //#endregion
   }
 

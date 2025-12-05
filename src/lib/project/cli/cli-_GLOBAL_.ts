@@ -1014,10 +1014,32 @@ ${this.project.children
   //#endregion
 
   //#region update deps for core container
+
+  async depsupdate(): Promise<void> {
+    await this.updatedeps();
+  }
+
   async updatedeps(): Promise<void> {
     //#region @backendFunc
     if (!this.project || !this.project.framework.isCoreProject) {
-      Helpers.error(`This command is only for core projects`, false, true);
+      if (this.project && this.project.typeIs('isomorphic-lib')) {
+        await this.project.init(
+          EnvOptions.from({
+            purpose: 'updating isomorphic-lib external deps',
+          }),
+        );
+        this.project.taonJson.updateIsomorphicExternalDependencies();
+        UtilsTypescript.formatFile(this.project.taonJson.path);
+      } else {
+        Helpers.error(
+          `This command can be used only inside:` +
+            `\n- core container projects` +
+            `\n-isomorphic-lib projects`,
+          false,
+          true,
+        );
+      }
+      this._exit();
     }
     const allDeps = this.project.packageJson.allDependencies;
     // const overrideAndUpdateAllToLatest = false;
@@ -1697,7 +1719,10 @@ ${this.project.children
       recognizeImportExportRequire: {
         name: 'Recognize import/export/require',
         action: async () => {
-          const files = Helpers.filesFrom([this.cwd, config.folder.src], true);
+          const files = Helpers.getFilesFrom([this.cwd, config.folder.src], {
+            followSymlinks: false,
+            recursive: true,
+          });
           const selectedFileAbsPath = await UtilsTerminal.select({
             question: 'Select file to recognize imports/exports/requires',
             choices: files.map(f => {
@@ -1809,12 +1834,32 @@ ${this.project.children
   //#endregion
 
   //#region recognize imports from file
-  imports() {
+  /**
+   * Display all imports from specific project file
+   */
+  imports(): void {
     //#region @backendFunc
     const imports = UtilsTypescript.recognizeImportsFromFile(
       this.project.pathFor(this.firstArg),
     );
     console.log(imports);
+    this._exit();
+    //#endregion
+  }
+  //#endregion
+
+  //#region recognize imports from file
+  /**
+   * Display all imports from specific project
+   */
+  allImports() {
+    //#region @backendFunc
+    Helpers.taskStarted(`Recognizing all imports from project...`);
+    const displayList =
+      this.project.framework.allDetectedExternalIsomorphicDependenciesForNpmLib;
+
+    console.log(displayList.map(i => `"${i}"`).join('\n'));
+    Helpers.info(`Total unique imports found: ${displayList.length}`);
     this._exit();
     //#endregion
   }
@@ -2007,6 +2052,7 @@ ${this.project.children
         children,
         proj => [
           ...proj.taonJson.dependenciesNamesForNpmLib,
+          ...proj.taonJson.isomorphicDependenciesForNpmLib,
           proj.taonJson.peerDependenciesNamesForNpmLib,
         ],
         proj => proj.nameForNpmPackage,
@@ -2067,7 +2113,6 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     //#region @backendFunc
     // Helpers.taskStarted('Testing glob...');
     // const fullPattern = `${this.project.location}/**/*`;
-
     // const ignorePatterns = [
     //   '**/node_modules/**/*.*',
     //   '**/node_modules',
@@ -2094,7 +2139,6 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     //   '**/src/**/*.css',
     //   '**/src/**/*.html',
     // ];
-
     // const entries = fg.sync(fullPattern, {
     //   absolute: true,
     //   dot: true,
@@ -2108,7 +2152,6 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     //   onlyFiles: false,
     //   stats: true, // This is key!
     // });
-
     // Helpers.taskDone(`Found entries: ${entries.length}`);
     //#endregion
   }

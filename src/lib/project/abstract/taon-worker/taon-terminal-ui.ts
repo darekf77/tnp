@@ -249,6 +249,30 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
         },
       },
       //#endregion
+
+       //#region scheduler
+       scheduler: {
+        name: 'Manage Scheduler',
+        action: async () => {
+          console.log('Scheduler in progress... ');
+          await UtilsTerminal.pressAnyKeyToContinueAsync({
+            message: 'Press any key to go back to main menu',
+          });
+        },
+      },
+      //#endregion
+
+       //#region environments
+       settings: {
+        name: 'Settings',
+        action: async () => {
+          console.log('Setting in progress... ');
+          await UtilsTerminal.pressAnyKeyToContinueAsync({
+            message: 'Press any key to go back to main menu',
+          });
+        },
+      },
+      //#endregion
     };
 
     delete myActions.environments;
@@ -258,7 +282,6 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       myActions.enableCloud.name =
         'Enable Cloud (add possibility of deploying projects)';
       delete myActions.deployments;
-      delete myActions.environments;
       delete myActions.projects;
     }
 

@@ -126,6 +126,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
     if (!options.initingFromParent) {
       await this.project.init();
     }
+    this.project.taonJson.updateIsomorphicExternalDependencies();
     await this.changeCssToScss(options);
     await this.taonNames(options);
     await this.removeBrowserRegion(options);
@@ -359,10 +360,15 @@ export class Refactor extends BaseFeatureForProject<Project> {
         let content = Helpers.readFile(f);
         let fixedComponent = content;
         for (const taonClassName of BaseTaonClassesNames) {
-          fixedComponent = fixedComponent.replace(
-            new RegExp(`[\\s\\n]*${taonClassName}`, 'g'),
-            `Taon${taonClassName}`,
-          );
+          fixedComponent = fixedComponent
+            .replace(
+              new RegExp(`[\\s\\n]*${taonClassName}`, 'g'),
+              `Taon${taonClassName}`,
+            )
+            .replace(
+              new RegExp(`[\\s\\n]*TaonTaon${taonClassName}`, 'g'), // QUICK_FIX double Taon
+              `Taon${taonClassName}`,
+            );
         }
 
         if (fixedComponent.trim() !== content.trim()) {

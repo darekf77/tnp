@@ -202,12 +202,20 @@ export namespace Models {
     storeLocalReleaseFilesInRepository?: boolean;
 
     /**
+     * Non-isomorphic dependencies for npm lib.
+     *
      * At beginning after node_modules installation taon is checking is
      * packages are installed - if not it will throw error.
      * Also.. this dependencies are going to be included in released npm lib
      * as dependencies.
      */
     dependenciesNamesForNpmLib: string[];
+
+    /**
+     * Same as dependenciesNamesForNpmLib but these dependencies
+     * are isomorphic (can be used in browser and node)
+     */
+    isomorphicDependenciesForNpmLib: string[];
 
     /**
      * At beginning after node_modules installation taon is checking is

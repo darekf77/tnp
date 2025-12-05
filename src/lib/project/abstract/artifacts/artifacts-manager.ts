@@ -487,6 +487,28 @@ export class ArtifactManager {
       // });
       //#endregion
     } else {
+      const missingDependencies: string[] = [];
+      const isomorphicDependenciesForNpmLib =
+        this.project.taonJson.isomorphicDependenciesForNpmLib;
+      for (const packageName of isomorphicDependenciesForNpmLib) {
+        if (!this.project.nodeModules.hasPackageInstalled(packageName)) {
+          missingDependencies.push(packageName);
+        }
+      }
+
+      if (missingDependencies.length > 0) {
+        Helpers.error(
+          `
+          (taon.json) - isomorphicDependenciesForNpmLib property has defined packages
+          that are not installed in node_modules.
+
+          Please rebuild first your external dependency project(s):
+  ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join()}`,
+          false,
+          true,
+        );
+      }
+
       //#region partial build
       if (
         !buildOptions.release.targetArtifact ||
@@ -539,6 +561,7 @@ export class ArtifactManager {
         children,
         proj => [
           ...proj.taonJson.dependenciesNamesForNpmLib,
+          ...proj.taonJson.isomorphicDependenciesForNpmLib,
           proj.taonJson.peerDependenciesNamesForNpmLib,
         ],
         proj => proj.nameForNpmPackage,
@@ -776,9 +799,7 @@ export class ArtifactManager {
 
     if (releaseOutput.deploymentFunction) {
       if (releaseOptions.release.skipDeploy) {
-        Helpers.warn(
-          `Skipping deployment as per release.skipDeploy`,
-        );
+        Helpers.warn(`Skipping deployment as per release.skipDeploy`);
       } else {
         await releaseOutput.deploymentFunction();
       }

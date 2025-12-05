@@ -227,7 +227,12 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       } ` +
       ` ${`--port=${portAssignedToAppBuild}`} ${
         buildOptions.build.angularProd ? '--prod' : ''
-      }`;
+      }` +
+      ` --host 0.0.0.0`; // make it accessible in network for development
+
+    if (buildOptions.build.watch) {
+      Helpers.logInfo(`Using ng serve command: ${serveCommand}`);
+    }
 
     const angularBuildCommand =
       `${this.NPM_RUN_NG_COMMAND} build ${

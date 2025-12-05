@@ -166,6 +166,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   }> {
     //#region @backendFunc
     if (!this.project.framework.isStandaloneProject) {
+      Helpers.warn(`Project is not standalone. Skipping npm-lib-and-cli-tool build.`);
       return;
     }
     const orgParams = buildOptions.clone();
@@ -804,6 +805,14 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     if (this.project.taonJson.dependenciesNamesForNpmLib) {
       pj.setDependencies(
         this.project.taonJson.dependenciesNamesForNpmLib.reduce((a, b) => {
+          return { ...a, [b]: dependencies[b] };
+        }, {}),
+      );
+    }
+    pj.setDependencies({});
+    if (this.project.taonJson.isomorphicDependenciesForNpmLib) {
+      pj.setDependencies(
+        this.project.taonJson.isomorphicDependenciesForNpmLib.reduce((a, b) => {
           return { ...a, [b]: dependencies[b] };
         }, {}),
       );

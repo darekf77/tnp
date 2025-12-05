@@ -1,9 +1,13 @@
 import { walk } from 'lodash-walk-object/src';
-import { config } from 'tnp-core/src';
+import { config, fileName } from 'tnp-core/src';
 import { CoreModels, os, path } from 'tnp-core/src';
 import { Helpers, _ } from 'tnp-core/src';
 import { Utils } from 'tnp-core/src';
-import { BaseFeatureForProject, BasePackageJson } from 'tnp-helpers/src';
+import {
+  BaseFeatureForProject,
+  BasePackageJson,
+  UtilsTypescript,
+} from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
 import { OVERRIDE_FROM_TNP, scriptsCommands } from '../../constants';
@@ -20,6 +24,10 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    * package.json override
    */
   public readonly overridePackageJsonManager: BasePackageJson;
+
+  get path(): string {
+    return this.project.pathFor(fileName.taon_jsonc);
+  }
 
   //#region constructor
   //#region @backend
@@ -44,6 +52,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   //#endregion
   //#endregion
 
+  //#region reload from disk
   /**
    * ! TODO EXPERMIENTAL
    * @deprecated
@@ -67,10 +76,13 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     );
     //#endregion
   }
+  //#endregion
 
+  //#region exists
   get exists(): boolean {
     return Helpers.exists(this.project.pathFor(config.file.taon_jsonc));
   }
+  //#endregion
 
   //#region save
 
@@ -253,6 +265,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region store generated assets in repo
   get storeGeneratedAssetsInRepository(): boolean {
     //#region @backendFunc
 
@@ -260,7 +273,9 @@ export class TaonJson extends BaseFeatureForProject<Project> {
       ?.storeGeneratedAssetsInRepository;
     //#endregion
   }
+  //#endregion
 
+  //#region store local release files in repo
   get storeLocalReleaseFilesInRepository(): boolean {
     //#region @backendFunc
 
@@ -268,11 +283,11 @@ export class TaonJson extends BaseFeatureForProject<Project> {
       ?.storeLocalReleaseFilesInRepository;
     //#endregion
   }
+  //#endregion
 
   //#region dependencies names for npm lib
   /**
-   * deps to inlculde in npm lib
-   * (relative paths to files or folders)
+   * Dependencies for npm lib (non isomorphic)
    */
   get dependenciesNamesForNpmLib(): string[] {
     //#region @backendFunc
@@ -288,6 +303,40 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  private setDependenciesNamesForNpmLib(dependencies: string[]): void {
+    //#region @backendFunc
+    const data = this.data as Models.TaonJsonStandalone;
+    data.dependenciesNamesForNpmLib = dependencies;
+    this.saveToDisk('updating dependencies for npm lib');
+    //#endregion
+  }
+
+  //#region isomorphic dependencies names for npm lib
+  /**
+   * External isomorphic dependencies for npm lib
+   * (build-in/core taon isomorphic packages will not be here)
+   */
+  get isomorphicDependenciesForNpmLib(): string[] {
+    //#region @backendFunc
+    let res = (this.data as Models.TaonJsonStandalone)
+      ?.isomorphicDependenciesForNpmLib;
+
+    return res || [];
+    //#endregion
+  }
+  //#endregion
+
+  //#region set isomorphic dependencies for npm lib
+  private setIsomorphicDependenciesForNpmLib(dependencies: string[]): void {
+    //#region @backendFunc
+    const data = this.data as Models.TaonJsonStandalone;
+    data.isomorphicDependenciesForNpmLib = dependencies;
+    this.saveToDisk('updating isomorphic dependencies for npm lib');
+    //#endregion
+  }
+  //#endregion
+
+  //#region additional externals for
   additionalExternalsFor(artifactName: ReleaseArtifactTaon): string[] {
     //#region @backendFunc
     let res = (
@@ -303,7 +352,9 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     return res || [];
     //#endregion
   }
+  //#endregion
 
+  //#region additional replace with nothing for
   public additionalReplaceWithNothingFor(
     artifactName: ReleaseArtifactTaon,
   ): string[] {
@@ -323,7 +374,9 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     return res || [];
     //#endregion
   }
+  //#endregion
 
+  //#region native deps for
   public getNativeDepsFor(artifactName: ReleaseArtifactTaon): string[] {
     //#region @backendFunc
     let res = (
@@ -341,6 +394,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     return res || [];
     //#endregion
   }
+  //#endregion
 
   //#region peerDependencies names for npm lib
   /**
@@ -356,6 +410,14 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     //#endregion
   }
   //#endregion
+
+  private setPeerDependenciesNamesForNpmLib(dependencies: string[]): void {
+    //#region @backendFunc
+    const data = this.data as Models.TaonJsonStandalone;
+    data.peerDependenciesNamesForNpmLib = dependencies;
+    this.saveToDisk('updating peer dependencies for npm lib');
+    //#endregion
+  }
 
   //#region peerDependencies names for npm lib
   /**
@@ -443,12 +505,14 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region override name for cli
   get overrideNameForCli(): string | undefined {
     //#region @backendFunc
     const data = this.data as Models.TaonJsonStandalone;
     return data?.overrideNameForCli;
     //#endregion
   }
+  //#endregion
 
   //#region name when inside organization
   get overrideNpmName(): string | undefined {
@@ -523,6 +587,30 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     const data = this.data as Models.TaonJsonStandalone;
     data.autoReleaseConfigAllowedItems = items;
     this.saveToDisk('updating auto release config allowed items');
+  }
+  //#endregion
+
+  //#region update isomorphic external depenencies
+  public updateIsomorphicExternalDependencies(): void {
+    //#region @backendFunc
+    Helpers.taskStarted(`Updating isomorphic external dependencies`);
+    const allDetectedIsomorphicDeps =
+      this.project.framework.allDetectedExternalIsomorphicDependenciesForNpmLib;
+    this.setIsomorphicDependenciesForNpmLib(allDetectedIsomorphicDeps);
+
+    const isomorphicDependenciesForNpmLib =
+      this.dependenciesNamesForNpmLib.filter(
+        d => !allDetectedIsomorphicDeps.includes(d),
+      );
+    this.setDependenciesNamesForNpmLib(isomorphicDependenciesForNpmLib);
+
+    const peerDependenciesNamesForNpmLib =
+      this.peerDependenciesNamesForNpmLib.filter(
+        d => !allDetectedIsomorphicDeps.includes(d),
+      );
+    this.setPeerDependenciesNamesForNpmLib(peerDependenciesNamesForNpmLib);
+    Helpers.taskDone(`Done updating isomorphic external dependencies`);
+    //#endregion
   }
   //#endregion
 }
