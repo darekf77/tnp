@@ -57,11 +57,13 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     buildOptions = await this.project.artifactsManager.init(
       EnvOptions.from(buildOptions),
     );
+
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
     const combinedDocsHttpServerUrl: Url = void 0; // TODO implement
     const docsWebappDistOutPath: string = buildOptions.build.overrideOutputPath
       ? buildOptions.build.overrideOutputPath
       : this.getOutDirTempDocsPath(buildOptions);
+
     const port = await this.DOCS_ARTIFACT_PORT_UNIQ_KEY(buildOptions);
 
     if (!shouldSkipBuild) {

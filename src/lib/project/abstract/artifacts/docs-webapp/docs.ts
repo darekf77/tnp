@@ -94,6 +94,10 @@ export class Docs extends BaseDebounceCompilerForProject<
 
   public readonly combinedDocsFolder: string = `allmdfiles`;
 
+  /**
+   * Example:
+   * .taon/temp-docs-folder/allmdfiles
+   */
   get tmpDocsFolderRootDocsDirRelativePath(): string {
     //#region @backendFunc
     return crossPlatformPath([this.tmpDocsFolderRoot, this.combinedDocsFolder]);
@@ -188,8 +192,8 @@ export class Docs extends BaseDebounceCompilerForProject<
       )}`,
       folderPath: project.location,
       ignoreFolderPatter: [
-        project.pathFor('**/tmp-*/**'),
-        project.pathFor('**/tmp-*'),
+        project.pathFor('tmp-*/**'),
+        project.pathFor('tmp-*'),
         project.pathFor('dist/**'),
         project.pathFor('dist'),
         project.pathFor('dist-*/**'),
@@ -203,7 +207,7 @@ export class Docs extends BaseDebounceCompilerForProject<
         project.pathFor('.taon'),
         project.pathFor('.tnp/**'),
         project.pathFor('.tnp'),
-        ...['ts', 'js', 'scss', 'css', 'html'].map(ext =>
+        ...['ts', 'tsx', 'scss', 'html'].map(ext =>
           project.pathFor(`src/**/*.${ext}`),
         ),
         // TODO I may include in feature for example .ts files in md files with handlebars
@@ -261,7 +265,10 @@ export class Docs extends BaseDebounceCompilerForProject<
           });
         });
 
-      Helpers.info(`Normal docs build done.`);
+      Helpers.info(
+        `${this.isWatchCompilation ? 'Watch' : 'Normal'} docs build done` +
+          `${this.isWatchCompilation ? '. Watching..' : '.'}`,
+      );
 
       if (
         this.initialParams.docsOutFolder &&
@@ -564,19 +571,25 @@ markdown_extensions:
         },
       );
       await Helpers.killOnPort(this.mkdocsServePort);
-      // python3 -m
-      Helpers.run(
+      const quiet = true;
+      const serveCommand =
         process.platform !== 'win32'
-          ? `mkdocs serve -a localhost:${this.mkdocsServePort} --quiet`
+          ? `mkdocs serve -a localhost:${this.mkdocsServePort} ${quiet ? '--quiet' : ''}`
           : //--quiet
-            `python3 -m mkdocs serve -a localhost:${this.mkdocsServePort} --quiet`,
-        {
-          cwd: this.project.pathFor([this.tmpDocsFolderRoot]),
-        },
-      ).async();
+            `python3 -m mkdocs serve -a localhost:${this.mkdocsServePort} ${quiet ? '--quiet' : ''}`;
+
+      // console.log({
+      //   serveCommand,
+      // });
+
+      Helpers.run(serveCommand, {
+        cwd: this.project.pathFor([this.tmpDocsFolderRoot]),
+      }).async();
 
       Helpers.info(
-        `Mkdocs server started on  http://localhost:${this.mkdocsServePort}`,
+        `Mkdocs server started on  http://localhost:${this.mkdocsServePort}
+         Serving docs from temp folder: ${this.tmpDocsFolderRoot}
+        `,
       );
     } else {
       if (!Helpers.exists(this.outDocsDistFolderAbs)) {
@@ -607,6 +620,10 @@ markdown_extensions:
     let counterCopy = 0;
 
     //#region handle custom js/css files
+    Helpers.info(`Handling custom js/css custom files..
+      css: ${this.config.customCssPath || customDefaultCss}
+      js: ${this.config.customJsPath || customDefaultJs}
+      `);
     if (
       this.config.customCssPath &&
       this.project.hasFile(this.config.customCssPath)
@@ -684,9 +701,7 @@ markdown_extensions:
       }
 
       counterCopy++;
-      const assetsFromMdFile = UtilsMd.getAssetsFromFile(
-        asbFileSourcePath,
-      );
+      const assetsFromMdFile = UtilsMd.getAssetsFromFile(asbFileSourcePath);
       // if (path.basename(asbFilePath) === 'QA.md') {
       // console.log(`assets for ${relativeFileSourcePath}`, assetsFromMdFile);
       // }
@@ -706,7 +721,9 @@ markdown_extensions:
           //   assetRelativePathFromFile,
           //   relativeAssetPath,
           // })
-          Helpers.warn(`Omitting file with non-ascii characters in path: ${relativeAssetPath}`);
+          Helpers.warn(
+            `Omitting file with non-ascii characters in path: ${relativeAssetPath}`,
+          );
           continue;
         }
 
