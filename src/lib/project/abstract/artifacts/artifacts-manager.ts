@@ -490,6 +490,7 @@ export class ArtifactManager {
       const missingDependencies: string[] = [];
       const isomorphicDependenciesForNpmLib =
         this.project.taonJson.isomorphicDependenciesForNpmLib;
+
       for (const packageName of isomorphicDependenciesForNpmLib) {
         if (!this.project.nodeModules.hasPackageInstalled(packageName)) {
           missingDependencies.push(packageName);
@@ -562,7 +563,7 @@ export class ArtifactManager {
         proj => [
           ...proj.taonJson.dependenciesNamesForNpmLib,
           ...proj.taonJson.isomorphicDependenciesForNpmLib,
-          proj.taonJson.peerDependenciesNamesForNpmLib,
+          ...proj.taonJson.peerDependenciesNamesForNpmLib,
         ],
         proj => proj.nameForNpmPackage,
       );

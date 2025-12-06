@@ -2069,7 +2069,7 @@ ${this.project.children
         proj => [
           ...proj.taonJson.dependenciesNamesForNpmLib,
           ...proj.taonJson.isomorphicDependenciesForNpmLib,
-          proj.taonJson.peerDependenciesNamesForNpmLib,
+          ...proj.taonJson.peerDependenciesNamesForNpmLib,
         ],
         proj => proj.nameForNpmPackage,
       )
