@@ -3,7 +3,7 @@ import { TaonTempDatabasesFolder, TaonTempRoutesFolder } from 'taon/src';
 import { config } from 'tnp-core/src';
 import { glob, fse, chalk } from 'tnp-core/src';
 import { path, _, crossPlatformPath } from 'tnp-core/src';
-import { UtilsTypescript } from 'tnp-helpers/src';
+import { UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
 import { Helpers, BaseQuickFixes } from 'tnp-helpers/src';
 
 import {
@@ -468,6 +468,7 @@ ${THIS_IS_GENERATED_STRING}`,
   }
 
   /**
+   * @deprecated
    * FIX for missing npm packages from npmjs.com
    *
    * Extract each file: node_modules-<package Name>.zip
@@ -476,6 +477,7 @@ ${THIS_IS_GENERATED_STRING}`,
    */
   public unpackNodeModulesPackagesZipReplacements() {
     //#region @backendFunc
+    return; // TODO @UNCOMMENT zip refactored
     const nodeModulesPath = path.join(
       this.project.location,
       config.folder.node_modules,
@@ -502,7 +504,9 @@ ${THIS_IS_GENERATED_STRING}`,
             ` ${chalk.bold(this.project.genericName)}/${config.folder.node_modules}`,
         );
 
-        this.project.run(`extract-zip ${p} ${nodeModulesPath}`).sync();
+        UtilsZip.unzipArchive(p);
+        // TODO extract-zip removed - find alternative
+        // this.project.run(`extract-zip ${p} ${nodeModulesPath}`).sync();
       }
     });
     //#endregion
