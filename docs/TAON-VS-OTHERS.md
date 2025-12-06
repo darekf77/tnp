@@ -2,7 +2,7 @@ Taon’s isomorphic architecture with code splitting makes it unique
 in the world of TypeScript frameworks.
 
 ## Taon vs NestJS
-<table>
+<table style="width:100%">
   <tr>
     <th></th>
     <th>NestJS</th>
@@ -52,7 +52,7 @@ in the world of TypeScript frameworks.
 
 ## Taon Vs ExpressJS
 
-<table>
+<table style="width:100%">
   <tr>
     <th></th>
     <th>ExpressJS</th>
@@ -63,16 +63,62 @@ in the world of TypeScript frameworks.
     <td>Inside functions</td>
     <td>Inside classes</td>
   </tr>
-  <tr>
-    <td>Isomorphic middlewares</td>
+   <tr>
+    <td>Inheritance of controllers</td>
     <td>No</td>
     <td>Yes</td>
+  </tr>
+  <tr>
+    <td>Isomorphic middlewares</td>
+    <td>No (only backend middlewares)</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td>Auto generated rest api endpoint</td>
+    <td>No</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td>Can be started inside browser?</td>
+    <td>No</td>
+    <td>Yes (in websql mode)</td>
+  </tr>
+</table>
+
+
+## Taon CLI Vs Angular CLI
+
+<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Angular CLI</th>
+    <th>Taon CLI</th>
+  </tr>
+  <tr>
+    <td>All nice third party packages already included</td>
+    <td>No</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td>Building packages that can shared assets ?</td>
+    <td>No</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td>Building packages that can shared SCSS files (index.scss) ?</td>
+    <td>No</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td>Normal "npm install" just works</td>
+    <td>Yes</td>
+    <td>No (different approach -> stable packages base + you are putting your taon projects inside "organization" project so the can be build together  )</td>
   </tr>
 </table>
 
 ## Taon Vs NextJS
 
-<table>
+<table style="width:100%">
   <tr>
     <th></th>
     <th>NextJS</th>
@@ -84,7 +130,13 @@ in the world of TypeScript frameworks.
     <td>Angular</td>
   </tr>
   <tr>
-    <td>Isomorphic code cutting </td>
+    <td>Isomorphic TypeScript capability</td>
+    <td>Yes</td>
+    <td>Yes</td>
+  </tr>
+  <tr>
+    <td>Cutting backend code from isomorphic TypeScript files
+    (so the rest can go to frontend) </td>
     <td>No</td>
     <td>Yes</td>
   </tr>

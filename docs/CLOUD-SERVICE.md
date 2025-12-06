@@ -6,7 +6,7 @@ Taon, out of the box, provides users with a local service for easy project/port/
 By default, each Taon command checks if a working and healthy local Taon service is available. If not, a new terminal console inside the system starts with the Taon user-friendly UI console.
 
 
-![alt text](image-3.png)
+![alt text](./image-3.png)
 
 **Taon UI Console** – basically, it’s everything you would ever need for deploying and managing your remote projects through SSH. No need for a browser UI, no distractions, security concerns. 
 <style>
