@@ -918,13 +918,18 @@ markdown_extensions:
         file.packageNameWithPath,
       );
 
-      const sourceAbsPath = fse.realpathSync(
-        crossPlatformPath([
-          path.dirname(this.docsConfigGlobalContainerAbsPath),
-          packageName,
-          destRelativePath,
-        ]),
-      );
+      const filePath = crossPlatformPath([
+        path.dirname(this.docsConfigGlobalContainerAbsPath),
+        packageName,
+        destRelativePath,
+      ]);
+
+      if (!Helpers.exists(filePath)) {
+        Helpers.warn(`File not found: ${filePath}. Skipping..`);
+        continue;
+      }
+
+      const sourceAbsPath = fse.realpathSync(filePath);
 
       const destinationAbsPath = this.project.pathFor([
         this.tmpDocsFolderRootDocsDirRelativePath,
