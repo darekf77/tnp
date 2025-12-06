@@ -26,12 +26,15 @@ every time every crucial framework file/config! ✏️
 
 ... if you love VSCode => you are going to love it more! 👨‍💻
 
-## 7. Every package available everywhere - shared <b>node_modules</b> for similar projects
+## 7. Stable and shared npm node_modules packages container
 
-...one big npm packages container
-(located in: ~/.taon/taon/projects/container-v18) <br>
+=> one big/stable npm packages container as as 
+(located in: ~/.taon/taon/projects/container-*) ⚖️ <br>
 => many projects takes megabytes instead gigabytes 🐳<br>
-=> instant *node_modules* installation 🕙
+=> instant *node_modules* installation (just link) 🕙<br>
+=> no more npm installation problems 🚫<br>
+=> no more security issues with old npm packages 🛡 ️<br>
+
 
 ## 8. Cloud based projects releases (standalone and organization) to remote serves, npm's
 

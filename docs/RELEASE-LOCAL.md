@@ -17,7 +17,7 @@
     <td><b>npm lib and cli tool</b><br>(local/repo)</td>
     <td> 
      💡 Fully ready cli quickly globally linked in system (npm link)<br>
-     ⌛  - release lib and cli into:<br>
+     ✅  - release lib and cli into:<br>
       <u>repo-folder/local_release/npm-lib-and-cli-tool/project-name</u>  <br>
     </td>
   </tr>
@@ -33,7 +33,7 @@
     <td><b>vscode plugin</b><br>(local/repo)</td>
     <td>
     💡 Installable *.vsix VSCode extension for dev-s local development.<br>
-    🔲  - release *.vsix plugin file into: <br>
+    ✅  - release *.vsix plugin file into: <br>
     <u>repo-folder/local_release/vscode-plugin/project-name</u>  <br>
     </td>
   </tr>
@@ -41,7 +41,7 @@
     <td><b>electron app</b><br>(local/repo)</td>
     <td>
     💡 App needed for local development/projects management<br>
-    🔲  - release app installer (or executable) into: 
+    ✅  - release app installer (or executable) into: 
     <u>repo-folder/local_release/electron-app/(win/mac/linux)/project-name</u>  <br>
     <br>
     Don't forget to remove gatekeeper after 

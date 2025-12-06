@@ -1,4 +1,4 @@
-## Create new project
+## Create new taon project
 ```bash
 # create single standalone project
 tnp new my-standalone-project

@@ -20,6 +20,10 @@
         "overrideTitle": "Additional Commands",
       },
       {
+        "packageNameWithPath": "tnp/docs/PHILOSOPHY.md",
+        "overrideTitle": "PHILOSOPHY",
+      },
+      {
         "packageNameWithPath": [
           "tnp/docs/CI-CD.md",
           "tnp/docs/RELEASE-MANUAL.md",
@@ -31,7 +35,7 @@
       },
     ],
   },
-  "omitFilesPatters": ["BUILD-INFO.md", "README.md", "GIT-COMMANDS"],
+  "omitFilesPatters": ["BUILD-INFO.md", "README.md", "GIT-COMMANDS", "TODO"],
   "priorityOrder": ["Start"],
   "mapTitlesNames": {
     "README": "Start",

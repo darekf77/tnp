@@ -25,7 +25,7 @@ Take advantage of github pages (or similar solution) in a best possible way.
   <tr>
     <td><b>angular node app</b><br>(static-pages)</td>
     <td> 
-    ⌛ -  publish angular app with WEBSQL backend to <br>
+    ✅ -  publish angular app with WEBSQL backend to <br>
     <i>static_pages_branch</i>
     </td>
   </tr>
@@ -57,7 +57,7 @@ Take advantage of github pages (or similar solution) in a best possible way.
   <tr>
     <td><b>docs webapp</b><br>(static-pages)</td>
     <td>
-    ⌛ - publish documentation to<br>
+    ✅ - publish documentation to<br>
        <i>static_pages_branch/documentation</i> <br>
     </td>
   </tr>

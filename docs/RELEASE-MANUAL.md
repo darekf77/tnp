@@ -14,21 +14,21 @@
   <tr>
     <td><b>npm lib and cli tool</b><br>(manual)</td>
     <td> 
-      ⌛ - publish as normal package (project name as npm name) <br>
-      ⌛ - publish as organization package (container name as org. name) <br>
+      ✅ - publish as normal package (project name as npm name) <br>
+      ✅ - publish as organization package <br>
       ⌛ - handle public/private npm (login if needed), use .npmrc <br>
       ⌛ - build option: publish only cli without lib code <br>
-      🤔 - build option: minify/obscure library code file by file  <br>
+      ⌛ - build option: minify/obscure library code file by file  <br>
       ⌛ - build option: (single one file) minify/obscure whole library/cli<br>
     </td>
   </tr>
   <tr>
     <td><b>angular node app</b><br>(manual)</td>
     <td> 
-    ⌛ - build docker with router for NodeJs backend and Angular frontend <br>
-    ⌛ - docker can be use with any docker management system<br>
-    ⌛ - taon cloud handle start/stop/update/deployment of dockers/apps<br>
-    ⌛ - release docs webapp to github_pages special branch: <br>
+    ✅ - build docker with router for NodeJs backend and Angular frontend <br>
+    ✅ - docker can be use with any docker management system<br>
+    ✅ - taon cloud handle start/stop/update/deployment of dockers/apps<br>
+    ✅ - release docs webapp to github_pages special branch: <br>
     </td>
   </tr>
   <tr>

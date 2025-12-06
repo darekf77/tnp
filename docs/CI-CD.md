@@ -1,5 +1,4 @@
-**Taon** aside
-migrations - supports 4 types of release:<br>
+**Taon** supports 4 types of release:<br>
  + Manual<br>
  + Cloud<br>
  + Local/Repo<br>
@@ -21,8 +20,6 @@ Depending on initial state of project:<br>
 ----
 ✅ - DONE  <br>
 ⌛ - IN PROGRESS <br>
-🤔 - MAYBE TODO<br>
-
 💡 - Possible purpose <br>
 
 ---
@@ -37,7 +34,7 @@ The library code is shared across all other artifacts except docs webapp.
 
 ⭐ <b>vscode plugin </b> - Visual Studio Code extension/plugin with backend from *npm lib and cli tool*
 
-⭐ <b>electron app   </b> - Electron app with *angular node app* as frontend/backend (IPC or UDP/TCP)
+⭐ <b>electron app   </b> - Electron app with *angular node app* as IPC  `dfrontend/backend 
 
 ⭐ <b>mobile app  </b> - Ionic framework based mobile app with *angular node app* as frontend/backend.
 
