@@ -366,7 +366,13 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
         } else {
           const selectedEnv = await UtilsTerminal.select({
             choices: environments
-              .filter(e => e.envName !== '__') // filter out default env from selection
+              .filter(e => {
+                if (envOptions.release.targetArtifact !== 'angular-node-app') {
+                  return true;
+                }
+
+                return e.envName !== '__';
+              }) // filter out default env from selection
               .map(e => {
                 return {
                   name: e.envName === '__' ? '__ ( default )' : e.envName,
