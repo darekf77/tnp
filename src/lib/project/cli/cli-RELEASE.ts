@@ -166,6 +166,7 @@ class $Release extends BaseCli {
 
   //#endregion
 
+  //#region validate project auto release config
   private _validateProjectAutoReleaseConfig(): void {
     //#region @backendFunc
     if (
@@ -199,12 +200,12 @@ class $Release extends BaseCli {
     }
     //#endregion
   }
+  //#endregion
 
   //#region install locally
   async installLocallyVscodePlugin(): Promise<void> {
     await this._installLocally(true, {
       targetArtifact: 'vscode-plugin',
-      removeReleaseOutputAfterLocalInstall: true,
     });
     this._exit();
   }
@@ -312,24 +313,6 @@ class $Release extends BaseCli {
     //#endregion
   }
   //#endregion
-
-  // TODO
-  // async config() {
-  //   console.log(this.params);
-  //   this._exit();
-  //   this.project.releaseProcess.config.init();
-  //   this._exit();
-  // }
-
-  // TODO
-  // async configCreateFromTnp() {
-  //   if (this.project.name !== 'tnp') {
-  //     return;
-  //   }
-  //   this.project.releaseProcess.config.init();
-  //   this.project.releaseProcess.config.create();
-  //   this._exit();
-  // }
 }
 
 export default {
