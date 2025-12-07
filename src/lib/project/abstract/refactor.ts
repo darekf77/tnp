@@ -347,6 +347,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
 
   async taonNames(options: { fixSpecificFile?: string }) {
     //#region @backendFunc
+    const names = [...BaseTaonClassesNames, 'tnp-config'];
     options = this.prepareOptions(options);
     Helpers.info(`Fixing taon class names...`);
     Helpers.getFilesFrom(this.project.pathFor(config.folder.src), {
@@ -359,7 +360,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
       if (f.endsWith('.ts')) {
         let content = Helpers.readFile(f);
         let fixedComponent = content;
-        for (const taonClassName of BaseTaonClassesNames) {
+        for (const taonClassName of names) {
           fixedComponent = fixedComponent
             .replace(
               new RegExp(`[\\s\\n]*${taonClassName}`, 'g'),
