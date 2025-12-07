@@ -6,7 +6,7 @@ import {
 import { walk } from 'lodash-walk-object/src';
 import { MagicRenamer } from 'magic-renamer/src';
 import * as semver from 'semver';
-import { config, fg } from 'tnp-core/src';
+import { config, fg, UtilsFilesFoldersSync } from 'tnp-core/src';
 import {
   TAGS,
   backendNodejsOnlyFiles,
@@ -51,6 +51,7 @@ import {
   UtilsNpm,
   UtilsTypescript,
   BaseProject,
+  UtilsFileSync,
 } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartMode } from 'tnp-helpers/src';
 import { createGenerator, SchemaGenerator } from 'ts-json-schema-generator';
@@ -101,7 +102,6 @@ export class $Global extends BaseGlobalCommandLine<
     // ], path.basename(f));
     // Helpers.info(`
     //           exclude folder ${f} : ${exclude}`);
-
     // this._exit();
     //#endregion
   }
@@ -2175,6 +2175,27 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
   async killOthers() {
     //#region @backendFunc
     await UtilsProcess.killAllOtherNodeProcesses();
+    //#endregion
+  }
+
+  copyimage() {
+    //#region @backendFunc
+    // let source = this.args[0];
+    // let destination = this.args[1];
+    // if(!path.isAbsolute(source)){
+    //   source = this.project.pathFor(source);
+    // }
+    // if(!path.isAbsolute(destination)){
+    //   destination = this.project.pathFor(destination);
+    // }
+    // const content = UtilsFilesFoldersSync.readFile(this.args[0], {
+    //   readImagesWithoutEncodingUtf8: true,
+    // });
+    // UtilsFilesFoldersSync.writeFile(this.args[1], content,{
+    //   writeImagesWithoutEncodingUtf8: true,
+    // });
+    // Helpers.info(`Image copied from ${this.args[0]} to ${this.args[1]}`);
+    // this._exit();
     //#endregion
   }
 }

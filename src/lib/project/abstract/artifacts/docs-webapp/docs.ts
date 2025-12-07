@@ -6,6 +6,7 @@ import { chalk, chokidar, fse, Utils } from 'tnp-core/src';
 import { _, crossPlatformPath, path } from 'tnp-core/src';
 import { UtilsOs } from 'tnp-core/src';
 import { UtilsStringRegex } from 'tnp-core/src';
+import { UtilsFilesFoldersSync } from 'tnp-core/src';
 import { UtilsMd } from 'tnp-helpers/src';
 import { BaseDebounceCompilerForProject } from 'tnp-helpers/src';
 import { Helpers, UtilsHttp } from 'tnp-helpers/src';
@@ -269,32 +270,6 @@ export class Docs extends BaseDebounceCompilerForProject<
         `${this.isWatchCompilation ? 'Watch' : 'Normal'} docs build done` +
           `${this.isWatchCompilation ? '. Watching..' : '.'}`,
       );
-
-      if (
-        this.initialParams.docsOutFolder &&
-        !this.isWatchCompilation &&
-        !this.initialParams.ciBuild
-      ) {
-        const startServing = await UtilsTerminal.confirm({
-          message: `Would you like to serve static pages of docs from now ?`,
-          defaultValue: true,
-        });
-        if (startServing) {
-          await UtilsHttp.startHttpServer(
-            this.outDocsDistFolderAbs,
-            this.initialParams.port,
-            {
-              startMessage: `
-
-            Serving static docs pages on http://localhost:${this.initialParams.port}
-
-            Press Ctrl+C to stop the server.
-
-            `,
-            },
-          );
-        }
-      }
     }
     if (asyncEvent) {
       this.writeGlobalWatcherTimestamp();
@@ -587,7 +562,7 @@ markdown_extensions:
       }).async();
 
       Helpers.info(
-chalk.bold(        `Mkdocs server started on  http://localhost:${this.mkdocsServePort}
+        chalk.bold(`Mkdocs server started on  http://localhost:${this.mkdocsServePort}
          Serving docs from temp folder: ${this.tmpDocsFolderRoot}
         `),
       );
@@ -678,17 +653,18 @@ chalk.bold(        `Mkdocs server started on  http://localhost:${this.mkdocsServ
 
       if (isNotInRootMdFile) {
         // console.info('repalcign...');
-        const contentWithReplacedSomeLinks = UtilsMd.moveAssetsPathesToLevel(
-          Helpers.readFile(asbFileSourcePath),
-          2,
-        );
+        const contentWithReplacedSomeLinks =
+          UtilsMd.moveAssetsPathsToLevelFromFile(asbFileSourcePath, 2);
         // console.info('repalcign done...');
-        Helpers.writeFile(
+        UtilsFilesFoldersSync.writeFile(
           this.project.pathFor([
             this.tmpDocsFolderRootDocsDirRelativePath,
             relativeFileSourcePath,
           ]),
           contentWithReplacedSomeLinks,
+          {
+            writeImagesWithoutEncodingUtf8: true,
+          },
         );
       } else {
         Helpers.copyFile(
@@ -773,7 +749,9 @@ chalk.bold(        `Mkdocs server started on  http://localhost:${this.mkdocsServ
     //#region @backendFunc
 
     return [
-      ...Helpers.filesFrom(this.project.location)
+      ...Helpers.getFilesFrom(this.project.location, {
+        recursive: false,
+      })
         .filter(f => f.toLowerCase().endsWith('.md'))
         .map(f => path.basename(f)),
     ].map(f => ({

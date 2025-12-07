@@ -1,12 +1,12 @@
-import { watch } from 'fs'; // @backend
-
-import { _, chalk } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+//#region imports
+import { _, chalk, UtilsTerminal } from 'tnp-core/src';
+import { Helpers, UtilsHttp } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../options';
 
 import { BaseCli } from './base-cli';
+//#endregion
 
 // @ts-ignore TODO weird inheritance problem
 class $Docs extends BaseCli {
@@ -46,6 +46,32 @@ class $Docs extends BaseCli {
     //#endregion
   }
   //#endregion
+
+  async serve() {
+    //#region @backendFunc
+    const port = await this.project.registerAndAssignPort(
+      'serving static docs',
+      {
+        startFrom: 8000,
+      },
+    );
+    const buildedDocsFolder =
+      this.project.artifactsManager.artifact.docsWebapp.docs
+        .outDocsDistFolderAbs;
+
+    await UtilsHttp.startHttpServer(buildedDocsFolder, port, {
+      startMessage: `
+
+        Serving static docs pages on http://localhost:${port}
+        From folder:
+        ${buildedDocsFolder}
+
+        Press Ctrl+C to stop the server.
+
+        `,
+    });
+    //#endregion
+  }
 
   async envCheck(options: EnvOptions): Promise<void> {
     //#region @backendFunc
