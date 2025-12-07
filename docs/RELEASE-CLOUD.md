@@ -4,7 +4,7 @@
 
 > 🚀 *Cloud Release* actually uses *Manual Release* with config on remote (or localhost) *Taon Cloud* 
 
-<table>
+<table style="width: 100%">
   <tr>
     <th style="font-weight:normal;">Artifact name</th>
     <th><u>Cloud</u></th>
@@ -20,7 +20,7 @@
     <td><b>angular node app</b><br>(cloud)</td>
     <td> 
     ⌛ - trigger remote build based on config<br>
-    ⌛ - release is bumping versions and deploying to servers
+    ⌛ - release is bumping versions and deploying to servers<br>
     ⌛ - release and deployment is a same thing here
     </td>
   </tr>

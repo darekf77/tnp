@@ -24,6 +24,10 @@
         "overrideTitle": "PHILOSOPHY",
       },
       {
+        "packageNameWithPath": "tnp/docs/CLOUD-SERVICE.md",
+        "overrideTitle": "CLOUD-SERVICE",
+      },
+      {
         "packageNameWithPath": [
           "tnp/docs/CI-CD.md",
           "tnp/docs/RELEASE-MANUAL.md",

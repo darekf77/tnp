@@ -6,7 +6,7 @@
 
 > 🚀 This release creates a config that is used later in the Cloud Release.
 
-<table>
+<table style="width: 100%">
   <tr>
     <th style="font-weight:normal;">Artifact name</th>
     <th><u>Manual</u></th>
