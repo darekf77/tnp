@@ -401,7 +401,6 @@ ${THIS_IS_GENERATED_STRING}`,
       '@types/eslint',
       '@types/eslint-scope',
       '@types/inquirer',
-      '@types/fs-extra',
       'ts-json-schema-generator/node_modules/.bin', // problem with symlinks
     ].forEach(name => {
       Helpers.info(`Removing bad folders from node_modules: ${name}`);
