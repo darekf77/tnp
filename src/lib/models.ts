@@ -310,6 +310,11 @@ export namespace Models {
     resources?: string[];
 
     /**
+     * Don't release inside children -> only tag the version
+     */
+    createOnlyTagWhenRelease?: boolean;
+
+    /**
      * Project is monorepo
      */
     monorepo?: boolean;
@@ -320,6 +325,7 @@ export namespace Models {
     organization?: boolean;
 
     /**
+     * ! TODO implement this
      * Container projects can be used as micro frontends
      * with router:
      *  <site-path>/  (microFrontendMainProjectName)

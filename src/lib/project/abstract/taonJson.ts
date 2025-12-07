@@ -583,6 +583,11 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     return data?.autoReleaseConfigAllowedItems || [];
   }
 
+  get createOnlyTagWhenRelease(): boolean {
+    const data = this.data as Models.TaonJsonContainer;
+    return !!data?.createOnlyTagWhenRelease;
+  }
+
   set autoReleaseConfigAllowedItems(items: Models.TaonAutoReleaseItem[]) {
     const data = this.data as Models.TaonJsonStandalone;
     data.autoReleaseConfigAllowedItems = items;

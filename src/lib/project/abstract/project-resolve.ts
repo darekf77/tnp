@@ -12,6 +12,7 @@ import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { CLI, UtilsOs } from 'tnp-core/src';
 import { Helpers, BaseProjectResolver } from 'tnp-helpers/src';
 
+import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
 import {
   DEFAULT_FRAMEWORK_VERSION,
   SKIP_CORE_CHECK_PARAM,
@@ -91,8 +92,9 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     this.taonProjectsWorker = new TaonProjectsWorker(
       'taon-projects',
-      `${cliToolName} ${`startCliServiceTaonProjectsWorker ${SKIP_CORE_CHECK_PARAM}`
-      // as keyof $Global
+      `${cliToolName} ${
+        `startCliServiceTaonProjectsWorker ${SKIP_CORE_CHECK_PARAM}`
+        // as keyof $Global
       }`,
       this,
     );
@@ -402,7 +404,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     //#region pull master with tags
     try {
       Helpers.git.meltActionCommits(cwd);
-    } catch (error) { }
+    } catch (error) {}
     try {
       Helpers.run(
         `git reset --hard HEAD~2 && git reset --hard && git clean -df && git pull --tags origin master`,
@@ -413,63 +415,61 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       Helpers.log(error);
       Helpers.error(
         `[${config.frameworkName} Not able to pull master branch for :` +
-        `${urlRepoTaonContainers} in: ${crossPlatformPath(cwd)}`,
+          `${urlRepoTaonContainers} in: ${crossPlatformPath(cwd)}`,
         false,
         true,
       );
     }
     try {
       Helpers.git.meltActionCommits(cwd);
-    } catch (error) { }
+    } catch (error) {}
     try {
       Helpers.run(`git reset --hard`, { cwd, output: false }).sync();
-    } catch (error) { }
+    } catch (error) {}
     //#endregion
 
     //#region checkout lastest tag
     // TODO remove ? taon-containers gonna be constantly update and
     // no need for checking out specific tag
 
-    // const tagToCheckout = this.taonTagToCheckoutForCurrentCliVersion(cwd);
-    // const currentBranch = Helpers.git.currentBranchName(cwd);
-    // Helpers.taskStarted(
-    //   `Checking out lastest tag ${tagToCheckout} for taon framework...`,
-    // );
-    // if (currentBranch !== tagToCheckout) {
-    //   try {
-    //     Helpers.run(
-    //       `git reset --hard && git clean -df && git checkout ${tagToCheckout}`,
-    //       { cwd },
-    //     ).sync();
-    //   } catch (error) {
-    //     console.log(error);
-    //     Helpers.warn(
-    //       `[${config.frameworkName} Not ablt to checkout latest tag of taon framework: ${urlRepoTaonContainers} in: ${cwd}`,
-    //       false,
-    //     );
-    //   }
-    // }
+    const tagToCheckout = this.taonTagToCheckoutForCurrentCliVersion(cwd);
+    const currentBranch = Helpers.git.currentBranchName(cwd);
+
+    Helpers.taskStarted(
+      `Checking out latest tag ${tagToCheckout} for taon framework...`,
+    );
+    if (currentBranch !== tagToCheckout) {
+      try {
+        Helpers.run(
+          `git reset --hard && git clean -df && git checkout ${tagToCheckout}`,
+          { cwd },
+        ).sync();
+      } catch (error) {
+        console.log(error);
+        Helpers.warn(
+          `[${config.frameworkName} ERROR Not able to checkout latest tag of taon framework: ${urlRepoTaonContainers} in: ${cwd}`,
+          false,
+        );
+      }
+    }
     //#endregion
 
     //#region pull latest tag
-    // TODO remove ? taon-containers gonna be constantly update and
-    // no need for checking out specific tag
-
-    // try {
-    //   Helpers.run(`git pull origin ${tagToCheckout}`, { cwd }).sync();
-    // } catch (error) {
-    //   console.log(error);
-    //   Helpers.warn(
-    //     `[${config.frameworkName} Not ablt to pull latest tag of taon framework: ${urlRepoTaonContainers} in: ${cwd}`,
-    //     false,
-    //   );
-    // }
+    try {
+      Helpers.run(`git pull origin ${tagToCheckout}`, { cwd }).sync();
+    } catch (error) {
+      console.log(error);
+      Helpers.warn(
+        `[${config.frameworkName}] ERROR Not able to pull latest tag of taon framework: ${urlRepoTaonContainers} in: ${cwd}`,
+        false,
+      );
+    }
     //#endregion
 
     //#region remove vscode folder
     try {
       Helpers.run('rimraf .vscode', { cwd }).sync();
-    } catch (error) { }
+    } catch (error) {}
     //#endregion
 
     if (syncFromCommand) {
@@ -563,7 +563,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     if (
       (global['frameworkName'] &&
         global['frameworkName'] ===
-        config.frameworkNames.productionFrameworkName) ||
+          config.frameworkNames.productionFrameworkName) ||
       UtilsOs.isRunningInVscodeExtension()
     ) {
       const joined = partOfPath.join('/');
@@ -627,11 +627,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   //#region angular major version for current cli
   angularMajorVersionForCurrentCli(): number {
     //#region @backendFunc
-    const tnp = this.Tnp;
-    const angularFrameworkVersion = Number(
-      _.first(tnp.packageJson.version.replace('v', '').split('.')),
-    );
-    return angularFrameworkVersion;
+    return Number(CURRENT_PACKAGE_VERSION.split('.')[0]);
     //#endregion
   }
   //#endregion

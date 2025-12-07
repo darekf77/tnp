@@ -1621,13 +1621,14 @@ ${this.project.children
     const fileToWatch = this.project.pathFor(fileToWatchRelative);
 
     const recreate = async () => {
+
       await (async () => {
         const projectsOfInterest = [
           this.project.framework.coreProject,
-          ...this.project.parent.children,
+          this.project,
         ];
 
-        const schema = await this._createJsonSchemaFrom({
+        const schemaStandalone = await this._createJsonSchemaFrom({
           nameOfTypeOrInterface: 'Models.TaonJsonStandalone',
           project: this.project,
           relativePathToTsFile: fileToWatch,
@@ -1636,19 +1637,18 @@ ${this.project.children
           proj.vsCodeHelpers.recreateJsonSchemaForTaon();
           Helpers.writeFile(
             proj.pathFor(taonConfigSchemaJsonStandalone),
-            schema,
+            schemaStandalone,
           );
         }
       })();
 
       await (async () => {
         const projectsOfInterest = [
-          this.project.parent,
-          this.project.parent.parent,
           this.project.framework.coreContainer,
+          this.project.parent,
         ];
 
-        const schema = await this._createJsonSchemaFrom({
+        const schemaContainer = await this._createJsonSchemaFrom({
           nameOfTypeOrInterface: 'Models.TaonJsonContainer',
           project: this.project,
           relativePathToTsFile: fileToWatch,
@@ -1657,7 +1657,7 @@ ${this.project.children
           proj.vsCodeHelpers.recreateJsonSchemaForTaon();
           Helpers.writeFile(
             proj.pathFor(taonConfigSchemaJsonContainer),
-            schema,
+            schemaContainer,
           );
         }
       })();

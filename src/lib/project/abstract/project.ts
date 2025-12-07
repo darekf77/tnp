@@ -194,6 +194,10 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     //#region @backendFunc
     releaseOptions = EnvOptions.from(releaseOptions);
 
+    const endCallback = (): void => {
+      releaseOptions.finishCallback && releaseOptions.finishCallback();
+    };
+
     await this.npmHelpers.checkProjectReadyForNpmRelease();
     if (
       releaseOptions.release.targetArtifact === 'npm-lib-and-cli-tool' &&
@@ -210,13 +214,31 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     //#region prepare release children
     let children = releaseOptions.release.autoReleaseUsingConfig
       ? this.children.filter(
-          f => f.taonJson.autoReleaseConfigAllowedItems.length > 0,
+          f =>
+            f.taonJson.autoReleaseConfigAllowedItems.length > 0 ||
+            (f.framework.isContainer && f.taonJson.createOnlyTagWhenRelease),
         )
       : this.children;
 
     // console.log('before sorting ',children.map(c => c.name));
 
     if (this.framework.isContainer) {
+      if (this.taonJson.createOnlyTagWhenRelease) {
+        Helpers.warn(
+          `Container project is set to only create git tag during release process.` +
+            `No releases will be done inside children projects.`,
+        );
+        this.packageJson.setVersion(newVersion);
+        await Helpers.git.tagAndPushToGitRepo(this.location, {
+          newVersion,
+          autoReleaseUsingConfig: releaseOptions.release.autoReleaseUsingConfig,
+          isCiProcess: releaseOptions.isCiProcess,
+          skipTag: false,
+        });
+        endCallback();
+        return;
+      }
+
       children = this.ins // @ts-ignore BaseProject inheritace compatiblity with Project problem
         .sortGroupOfProject<Project>(
           children,
@@ -227,7 +249,11 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
           ],
           proj => proj.nameForNpmPackage,
         )
-        .filter(d => d.framework.isStandaloneProject);
+        .filter(
+          d =>
+            d.framework.isStandaloneProject ||
+            (d.framework.isContainer && d.taonJson.createOnlyTagWhenRelease),
+        );
 
       if (releaseOptions.container.only.length > 0) {
         children = children.filter(c => {
@@ -382,7 +408,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     }
     //#endregion
 
-    releaseOptions.finishCallback && releaseOptions.finishCallback();
+    endCallback();
     //#endregion
   }
   //#endregion
