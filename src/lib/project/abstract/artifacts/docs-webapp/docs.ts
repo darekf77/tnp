@@ -587,9 +587,9 @@ markdown_extensions:
       }).async();
 
       Helpers.info(
-        `Mkdocs server started on  http://localhost:${this.mkdocsServePort}
+chalk.bold(        `Mkdocs server started on  http://localhost:${this.mkdocsServePort}
          Serving docs from temp folder: ${this.tmpDocsFolderRoot}
-        `,
+        `),
       );
     } else {
       if (!Helpers.exists(this.outDocsDistFolderAbs)) {
