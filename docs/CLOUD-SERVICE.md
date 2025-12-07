@@ -34,7 +34,7 @@ By default, each Taon command checks if a working and healthy local Taon service
     </td>
   </tr>
   <tr>
-    <td><b>Projects</b></td>
+    <td><b>Manage Taon Projects</b></td>
     <td  >
     - discover/view/add/edit projects for deployments <br>
     - create new project (in future - automatic domain purchase ) <br>
@@ -42,7 +42,7 @@ By default, each Taon command checks if a working and healthy local Taon service
     <td><= same as on localhost</td>
   </tr>
   <tr>
-    <td><b>Deployments</b></td>
+    <td><b>Manage Deployments</b></td>
     <td  >
       - main place where you can specify quickly what to deploy and where<br />
       - deploy projects/artifacts<br />
@@ -51,7 +51,7 @@ By default, each Taon command checks if a working and healthy local Taon service
     <td><= same as on localhost</td>
   </tr>
   <tr>
-    <td><b>Domains</b></td>
+    <td><b>Manage Domains (and /etc/hosts file)</b></td>
     <td>
       - test domains assigned to server with ping<br>
       - simulate fake domains based on /etc/host  <br>      
@@ -62,7 +62,7 @@ By default, each Taon command checks if a working and healthy local Taon service
     </td>
   </tr>
   <tr>
-    <td><b>Ports</b></td>
+    <td><b>Manage Ports</b></td>
     <td >
       - assign automatically ports to projects when starting local build (no
       more --port needed, everything)<br />
@@ -74,18 +74,34 @@ By default, each Taon command checks if a working and healthy local Taon service
   </tr>
   
   <tr>
-    <td><b>Monitor</b></td>
+    <td><b>Manage Processes</b></td>
     <td   >
-    - monitor server resources <br>
-    - duplicate/scale container <br>
-    - set up warning <br>
-    - log for processes<br>
+    - see processes realtime logs<br>
+    - display log files
     </td>
     <td><= same as on localhost</td>
   </tr>
 
   <tr>
-    <td><b>Settings / Account</b></td>
+    <td><b>Manage Instances</b></td>
+    <td   >
+    - add/list/check/authenticated taon instances<br>
+    - each taon instance can be connected to other taon instances<br>    
+    </td>
+    <td><= same as on localhost</td>
+  </tr>
+
+  <tr>
+    <td><b>Manage Scheduler</b></td>
+    <td   >
+    - Start deployment of specific project on specific hour<br>
+    - Auto deploy after push to specific branch<br>    
+    </td>
+    <td><= same as on localhost</td>
+  </tr>
+
+  <tr>
+    <td><b>Settings</b></td>
     <td    >
       - setup password / 2fa authentication for server <br>
       - enable cloud optional container (etc. portainer)<br>

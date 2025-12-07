@@ -13,7 +13,7 @@
   <tr>
     <td><b>Cloud</b></td>
     <td> 
-     Everything that *Manual* does, but triggered on remote on server.
+     Everything that <strong>Manual</strong> does, but triggered on remote on server.
     </td>
   </tr>
   <tr>
@@ -25,7 +25,7 @@
   <tr>
     <td><b>Static pages</b></td>
     <td> 
-      Perfect for publishing stuff to github pages or similar solution
+      Perfect for publishing stuff to github pages (or similar solutions)
     </td>
   </tr>
 </table>
@@ -35,7 +35,7 @@ than can be used to achieve proper CI/CD<br>
 [*( Continuous Integration (CI) and Continuous Delivery (CD) )*.](https://en.wikipedia.org/wiki/CI/CD)
 <br>
 <br>
-Depending on initial state of project:<br>
+Depending on:<br>
 
 - type of project<br>
 - type of artifacts that you want to produce<br>
@@ -44,7 +44,7 @@ Depending on initial state of project:<br>
 - security level<br>
 <br>
 
-..each release type may suit you better than the others.
+each release type may suit you better than the others.
 
 ----
 ✅ - DONE  <br>

@@ -112,7 +112,7 @@ in the world of TypeScript frameworks.
   <tr>
     <td>Normal "npm install" just works</td>
     <td>Yes</td>
-    <td>No (different approach -> stable packages base + you are putting your taon projects inside "organization" project so the can be build together  )</td>
+    <td>No (different approach -> stable packages base + you are putting your taon projects (each taon project is a library also) inside "organization" parent project. By building and updating organization you have strict control over third party packages)</td>
   </tr>
 </table>
 
