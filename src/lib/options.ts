@@ -92,8 +92,11 @@ export const ReleaseTypeWithDevelopmentArr: (ReleaseType | 'development')[] = [
 //#region env options / build / pwa
 class EnvOptionsBuildPwa {
   declare disableServiceWorker: boolean;
+
   declare name?: string;
+
   declare short_name?: string;
+
   declare start_url?: string;
   // theme_color?: string;
   // background_color?: string;
@@ -108,18 +111,22 @@ class EnvOptionsBuildCli {
    * using esbuild (default false)
    */
   declare minify: boolean;
+
   /**
    *  using esbuild (default false)
    */
   declare includeNodeModules: boolean;
+
   /**
    * using uglifyjs
    */
   declare uglify: boolean;
+
   /**
    * using only works with uglify = true
    */
   declare compress: boolean;
+
   /**
    * using  obscurejs
    */
@@ -137,10 +144,15 @@ class EnvOptionsNodeBackendApp {
 //#region env options / build / cli
 class EnvOptionsBuildLib {
   declare removeDts: boolean;
+
   declare uglifyFileByFile: boolean;
+
   declare obscureFileByFile: boolean;
+
   declare includeSourceMaps: boolean;
+
   declare compress: boolean;
+
   /**
    * skip include lib files (only cli.js + bin stays)
    * Perfect for just releasing cli tool
@@ -155,6 +167,7 @@ class EnvOptionsBuild {
    * for combined/bundled build artifact
    */
   declare overrideOutputPath: string;
+
   /**
    * base-href -> is a part of lib code build
    *
@@ -167,11 +180,14 @@ class EnvOptionsBuild {
    * default for organizaion main other targets: '/<project-name-or-overwritten>/-/<other-target-name>/'
    */
   declare baseHref: string;
+
   declare websql: boolean;
+
   /**
    * watch build
    */
   declare watch: boolean;
+
   declare angularProd: boolean;
   // declare angularSsr: boolean;
 
@@ -179,6 +195,7 @@ class EnvOptionsBuild {
    * Do not generate backend code
    */
   declare genOnlyClientCode: boolean;
+
   declare pwa: Partial<EnvOptionsBuildPwa>;
 }
 //#endregion
@@ -279,10 +296,12 @@ export interface TaonDockerContainerConfig<ENV = {}> {
  */
 class EnvOptionsDocker {
   declare skipStartInOrder?: boolean;
+
   /**
    * each taon context will use sql.js file database
    */
   declare skipUsingMysqlDb?: boolean;
+
   declare additionalContainer: (
     | Partial<TaonDockerContainerConfig<any>>
     | keyof typeof taonBuiltinDockerImages
@@ -325,6 +344,7 @@ class EnvOptionsLoadingPreAngularBootstrap {
    * build in loader config
    */
   declare loader?: string | Models.TaonLoaderConfig;
+
   declare background?: string;
 }
 //#endregion
@@ -336,6 +356,7 @@ class EnvOptionsLoadingAfterAngularBootstrapConfig {
    * build in loader config
    */
   declare loader?: string | Models.TaonLoaderConfig;
+
   declare background?: string;
 }
 //#endregion
@@ -346,6 +367,7 @@ class EnvOptionsLoading {
    * at the beginning of first index.html fetch
    */
   declare preAngularBootstrap?: Partial<EnvOptionsLoadingPreAngularBootstrap>;
+
   /**
    * this loader is presented when
    * taon app data is being loader
@@ -358,50 +380,61 @@ class EnvOptionsLoading {
 //#region env options / release
 class EnvOptionsRelease {
   declare taonInstanceIp?: string;
+
   /**
    * new version resolve at the beginning of release process
    * and is used for all artifacts
    */
   declare readonly resolvedNewVersion: string;
+
   /**
    * skip npm publish
    */
   declare skipDeploy?: boolean;
+
   /**
    * skip npm publish
    */
   declare skipNpmPublish?: boolean;
+
   /**
    * skip git commit
    */
   declare skipTagGitPush?: boolean;
+
   /**
    * skip release question
    */
   declare skipReleaseQuestion?: boolean;
+
   /**
    * Useful if you just want to release static pages
    * without any versioning
    */
   declare skipStaticPagesVersioning?: boolean;
+
   /**
    * skip git commit
    */
   declare skipResolvingGitChanges?: boolean;
+
   /**
    * skip cuting @ n o t F o r N p m tags
    */
   declare skipCodeCutting?: boolean;
+
   /**
    * release artifact name
    * for example: "angular-node-app"
    */
   declare targetArtifact: ReleaseArtifactTaon;
+
   /**
    * true - skip all artifacts build
    * or array of artifacts to skip
    */
   declare skipBuildingArtifacts?: ReleaseArtifactTaon[] | boolean;
+
   /**
    * undefined  - means it is development build
    */
@@ -411,10 +444,16 @@ class EnvOptionsRelease {
    */
 
   declare releaseVersionBumpType: CoreModels.ReleaseVersionType;
+
   /**
    * quick automatic release of lib
    */
   declare autoReleaseUsingConfig: boolean;
+
+  /**
+   * Task of auto release from config
+   */
+  declare autoReleaseTaskName: string
 
   /**
    * Tell when to override (html,js,css) static pages files
@@ -431,6 +470,7 @@ class EnvOptionsRelease {
   declare staticPagesCustomRepoUrl?: string;
 
   declare envName: CoreModels.EnvironmentNameTaon;
+
   /**
    * undefined - prod
    * number   -  prod1
@@ -438,8 +478,11 @@ class EnvOptionsRelease {
   declare envNumber: number | undefined;
 
   declare cli: Partial<EnvOptionsBuildCli>;
+
   declare nodeBackendApp: Partial<EnvOptionsNodeBackendApp>;
+
   declare lib: Partial<EnvOptionsBuildLib>;
+
   /**
    * after release install locally
    * - vscode plugin -> to Local VSCode
@@ -450,6 +493,7 @@ class EnvOptionsRelease {
    * - docs-webapp -> as offline pwa app installed in current os
    */
   declare installLocally: boolean;
+
   /**
    * after local install remove release output
    * (for quick local test releases)
@@ -464,6 +508,7 @@ class EnvOptionsInit {
    * init only structure without external deps
    */
   declare struct: boolean;
+
   declare branding: boolean;
 }
 //#endregion
@@ -471,7 +516,9 @@ class EnvOptionsInit {
 //#region env options / copy to manager
 class EnvOptionsCopyToManager {
   declare skip: boolean;
+
   declare copyToLocations: string[];
+
   declare copyToProjects: string[];
 }
 //#endregion
@@ -479,7 +526,9 @@ class EnvOptionsCopyToManager {
 //#region env options / website
 class EnvOptionsWebsite {
   declare title: string;
+
   declare domain: string;
+
   declare useDomain: boolean;
 }
 //#endregion
@@ -490,18 +539,22 @@ class EnvOptionsContainer {
    * start release on project
    */
   declare start?: string;
+
   /**
    * release only specified projects
    */
   declare only?: string | string[];
+
   /**
    * skip specified projects
    */
   declare skip?: string | string[];
+
   /**
    * end release on project
    */
   declare end?: string;
+
   /**
    * skip just released projects (last commit starts with 'release: ')
    * and only release projects with new changes
@@ -696,32 +749,50 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 
   //#region fields
   declare finishCallback: () => any;
+
   declare paths?: PATHS;
+
   declare config?: CONFIGS;
+
   declare purpose?: string;
+
   /**
    * action is recursive
    */
   declare recursiveAction?: boolean;
+
   declare isCiProcess?: boolean;
+
   declare container: Partial<EnvOptionsContainer>;
+
   /**
    * @deprecated everything automatically handled by taon
    */
   declare ports: Partial<EnvOptionsPorts>;
+
   declare docker: Partial<EnvOptionsDocker>;
+
   declare release: Partial<EnvOptionsRelease>;
+
   declare init: Partial<EnvOptionsInit>;
+
   declare build: Partial<EnvOptionsBuild>;
+
   declare loading: Partial<EnvOptionsLoading>;
+
   declare copyToManager: Partial<EnvOptionsCopyToManager>;
+
   declare website: Partial<EnvOptionsWebsite>;
 
   //#region generated fields
   declare readonly name?: CoreModels.EnvironmentNameTaon; // generated
+
   declare readonly currentProjectName?: string;
+
   declare readonly currentProjectType?: CoreModels.LibType;
+
   declare readonly appId?: string;
+
   declare readonly buildInfo?: {
     // number?: number; // count commits takes time
     hash?: string;
@@ -956,6 +1027,7 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
       doNotIncludeLibFiles: '-' as any,
     },
     autoReleaseUsingConfig: '-' as any,
+    autoReleaseTaskName: '-' as any,
     taonInstanceIp: '-' as any,
     skipNpmPublish: '-' as any,
     skipDeploy: '-' as any,

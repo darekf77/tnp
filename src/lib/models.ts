@@ -122,7 +122,7 @@ export namespace Models {
     /**
      * friendly name of item in auto release list configuration
      */
-    itemFriendlyName: string;
+    taskName: string;
   }
 
   export type TaonArtifactInclude =

@@ -1525,12 +1525,12 @@ ${this.project.children
       child.taonJson.autoReleaseConfigAllowedItems = [
         {
           artifactName: 'npm-lib-and-cli-tool',
-          itemFriendlyName: 'npm library build',
+          taskName: 'npm library build',
         },
         {
           artifactName: 'angular-node-app',
           envName: 'dev',
-          itemFriendlyName: 'localhost-manual-dev-release',
+          taskName: 'localhost-manual-dev-release',
           releaseType: 'manual',
           taonInstanceIp: '127.0.0.1',
         },
@@ -1621,7 +1621,6 @@ ${this.project.children
     const fileToWatch = this.project.pathFor(fileToWatchRelative);
 
     const recreate = async () => {
-
       await (async () => {
         const projectsOfInterest = [
           this.project.framework.coreProject,
@@ -2196,6 +2195,23 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     // });
     // Helpers.info(`Image copied from ${this.args[0]} to ${this.args[1]}`);
     // this._exit();
+    //#endregion
+  }
+
+  setDefaultAutoConfigTaskName() {
+    //#region @backendFunc
+    Helpers.taskStarted(`Setting default autoReleaseConfig task names...`);
+    this.project.children.forEach(child => {
+      Helpers.info(`Processing project: ${child.name}`);
+      const items = child.taonJson.autoReleaseConfigAllowedItems;
+      items.forEach(item => {
+        if (!item.taskName && item.artifactName === 'npm-lib-and-cli-tool') {
+          item.taskName = 'npm';
+        }
+      });
+      child.taonJson.autoReleaseConfigAllowedItems = items;
+    });
+    this._exit();
     //#endregion
   }
 }

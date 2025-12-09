@@ -85,11 +85,11 @@ class $Release extends BaseCli {
 
   //#region auto release / auto
   async auto(): Promise<void> {
-    this._validateProjectAutoReleaseConfig();
     await this.project.release(
       this.params.clone({
         release: {
           autoReleaseUsingConfig: true,
+          autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'patch',
           releaseType: 'manual',
         },
@@ -101,12 +101,12 @@ class $Release extends BaseCli {
 
   //#region auto release / auto clear
   async autoClear(): Promise<void> {
-    this._validateProjectAutoReleaseConfig();
     await this.project.clear();
     await this.project.release(
       this.params.clone({
         release: {
           autoReleaseUsingConfig: true,
+          autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'patch',
           releaseType: 'manual',
         },
@@ -118,11 +118,11 @@ class $Release extends BaseCli {
 
   //#region auto release / major
   async major(): Promise<void> {
-    this._validateProjectAutoReleaseConfig();
     await this.project.release(
       this.params.clone({
         release: {
           autoReleaseUsingConfig: true,
+          autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'major',
           releaseType: 'manual',
         },
@@ -134,11 +134,11 @@ class $Release extends BaseCli {
 
   //#region auto release / minor
   async minor(): Promise<void> {
-    this._validateProjectAutoReleaseConfig();
     await this.project.release(
       this.params.clone({
         release: {
           autoReleaseUsingConfig: true,
+          autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'minor',
           releaseType: 'manual',
         },
@@ -150,11 +150,11 @@ class $Release extends BaseCli {
 
   //#region auto release / patch
   async patch(): Promise<void> {
-    this._validateProjectAutoReleaseConfig();
     await this.project.release(
       this.params.clone({
         release: {
           autoReleaseUsingConfig: true,
+          autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'patch',
           releaseType: 'manual',
         },
@@ -164,42 +164,6 @@ class $Release extends BaseCli {
   }
   //#endregion
 
-  //#endregion
-
-  //#region validate project auto release config
-  private _validateProjectAutoReleaseConfig(): void {
-    //#region @backendFunc
-    if (
-      friendlyNameForReleaseAutoConfigIsRequired &&
-      this.project.taonJson.autoReleaseConfigAllowedItems
-    ) {
-      for (const item of this.project.taonJson.autoReleaseConfigAllowedItems) {
-        if (!item.itemFriendlyName) {
-          Helpers.error(
-            `${chalk.bold('itemFriendlyName')} is required property in "autoReleaseConfigAllowedItems" in taon.json `,
-            false,
-            true,
-          );
-        }
-        const regexContainerOnlySmallLettersAndDash = /^[a-z\-]+$/;
-        if (
-          regexContainerOnlySmallLettersAndDash.test(item.itemFriendlyName) ===
-          false
-        ) {
-          Helpers.error(
-            `
-
-            invalid item ${chalk.bold(item.itemFriendlyName)} in "autoReleaseConfigAllowedItems" in taon.json
-
-            ${chalk.bold('itemFriendlyName')} can contains only small letters and dash(-). Current value: "${item.itemFriendlyName}"`,
-            false,
-            true,
-          );
-        }
-      }
-    }
-    //#endregion
-  }
   //#endregion
 
   //#region install locally

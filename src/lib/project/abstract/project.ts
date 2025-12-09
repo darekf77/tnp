@@ -27,6 +27,7 @@ import type { ReleaseProcess } from './release-process';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
 import { UtilsTerminal } from 'tnp-core/src';
+import e from 'express';
 
 //#endregion
 let frameworkName = '';
@@ -198,6 +199,14 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       releaseOptions.finishCallback && releaseOptions.finishCallback();
     };
 
+    if (
+      this.framework.isStandaloneProject &&
+      !this.hasValidAutoReleaseConfig(releaseOptions)
+    ) {
+      endCallback();
+      return;
+    }
+
     await this.npmHelpers.checkProjectReadyForNpmRelease();
     if (
       releaseOptions.release.targetArtifact === 'npm-lib-and-cli-tool' &&
@@ -291,6 +300,19 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
           return !lastCommitMessage?.startsWith('release: ');
         });
       }
+    }
+
+    if (releaseOptions.release.autoReleaseUsingConfig) {
+      children = children.filter(child => {
+        if (!child.framework.isStandaloneProject) {
+          return true;
+        }
+        const hasConfigForAutoRelease = child.hasValidAutoReleaseConfig(
+          releaseOptions,
+          { project: child, hideTaskErrors: true },
+        );
+        return hasConfigForAutoRelease;
+      });
     }
 
     // console.log('after sorting ',children.map(c => c.name));
@@ -428,6 +450,68 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     }
   }
   //#endregion
+
+  protected hasValidAutoReleaseConfig(
+    envOptions: EnvOptions,
+    options?: {
+      project?: Project;
+      hideTaskErrors?: boolean;
+    },
+  ): boolean {
+    //#region @backendFunc
+    options = options || {};
+    const project = options.project || this;
+
+    if (!envOptions.release.autoReleaseTaskName) {
+      Helpers.error(
+        `When using auto releae config (from taon.json) you have to provide task name as argument.`,
+        false,
+        true,
+      );
+    }
+
+    const task = project.taonJson.autoReleaseConfigAllowedItems.find(
+      i => i.taskName === envOptions.release.autoReleaseTaskName,
+    );
+    const taskNames = project.taonJson.autoReleaseConfigAllowedItems
+      .filter(f => f.taskName)
+      .map(i => i.taskName);
+
+    if (!task) {
+      if (!options.hideTaskErrors) {
+        Helpers.error(
+          `Auto release task name: "${envOptions.release.autoReleaseTaskName}" is not ` +
+            `present in project auto release configuration.` +
+            ` Available task names are: ${taskNames.join(', ')}`,
+          true,
+          true,
+        );
+      }
+      return false;
+    }
+    const regexContainerOnlySmallLettersAndDash = /^[a-z\-]+$/;
+    if (regexContainerOnlySmallLettersAndDash.test(task.taskName) === false) {
+      if (!options.hideTaskErrors) {
+        Helpers.error(
+          `
+
+            invalid item ${chalk.bold(task.taskName)} in "autoReleaseConfigAllowedItems" in taon.json
+
+            ${chalk.bold('taskName')} can contains only small letters and dash(-).
+
+            Current value: "${chalk.bold(task.taskName)}"
+
+            `,
+          true,
+          true,
+        );
+      }
+      return false;
+    }
+    return true;
+
+    //#endregion
+  }
 
   // get env(): EnvOptions  //
   //   return this.environmentConfig.config;
