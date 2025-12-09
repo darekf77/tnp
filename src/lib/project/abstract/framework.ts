@@ -194,7 +194,9 @@ export class Framework extends BaseFeatureForProject<Project> {
     let componentName: string | null = null;
     let tooMuchToProcess = false;
 
-    const newComponentName = `${_.upperFirst(_.camelCase(projectName))}Component`;
+    const newComponentName = `${_.upperFirst(
+      _.camelCase(projectName),
+    )}Component`;
     const newModuleName = `${_.upperFirst(_.camelCase(projectName))}Module`;
     let orignalComponentClassName: string;
     let orignalModuleClassName: string;
@@ -303,14 +305,20 @@ export class Framework extends BaseFeatureForProject<Project> {
     return appTsContent
       .replace(
         new RegExp(
-          `IsomorphicLibV${project.framework.frameworkVersion.replace('v', '')}`,
+          `IsomorphicLibV${project.framework.frameworkVersion.replace(
+            'v',
+            '',
+          )}`,
           'g',
         ),
         `${coreName}`,
       )
       .replace(
         new RegExp(
-          `isomorphic-lib-v${project.framework.frameworkVersion.replace('v', '')}`,
+          `isomorphic-lib-v${project.framework.frameworkVersion.replace(
+            'v',
+            '',
+          )}`,
           'g',
         ),
         `${coreNameKebab}`,
@@ -579,11 +587,28 @@ export class Framework extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region generate index.ts
+  private resolveAbsPath(relativePath: string): string {
+    //#region @backendFunc
+    if (!relativePath || relativePath === '') {
+      return this.project.location;
+    }
+    if (path.isAbsolute(relativePath)) {
+      return relativePath;
+    }
+    return this.project.pathFor(relativePath);
+    //#endregion
+  }
+
   generateIndexTs(relativePath: string = '') {
     //#region @backendFunc
-    const absPath = relativePath
-      ? this.project.pathFor(relativePath)
-      : this.project.location;
+    const absPath = this.resolveAbsPath(relativePath);
+
+    // const absPath = path.isAbsolute(relativePath)
+    //   ? relativePath
+    //   : relativePath
+    //   ? this.project.pathFor(relativePath)
+    //   : this.project.location;
+
     const folders = [
       ...Helpers.foldersFrom(absPath).map(f => path.basename(f)),
       ...Helpers.filesFrom(absPath, false).map(f => path.basename(f)),
@@ -609,7 +634,9 @@ export class Framework extends BaseFeatureForProject<Project> {
             !_.isUndefined(frontendFiles.find(bigExt => f.endsWith(bigExt)))
           ) {
             // `${TAGS.COMMENT_REGION} ${TAGS.BROWSER}\n` +
-            return `export * from './${f.replace(path.extname(f), '')}'; // ${TAGS.BROWSER}`;
+            return `export * from './${f.replace(path.extname(f), '')}'; // ${
+              TAGS.BROWSER
+            }`;
             // +`\n${TAGS.COMMENT_END_REGION}\n`;
           }
           if (
@@ -619,7 +646,9 @@ export class Framework extends BaseFeatureForProject<Project> {
           ) {
             return (
               // `${TAGS.COMMENT_REGION} ${TAGS.BACKEND}\n` +
-              `export * from './${f.replace(path.extname(f), '')}'; // ${TAGS.BACKEND}`
+              `export * from './${f.replace(path.extname(f), '')}'; // ${
+                TAGS.BACKEND
+              }`
               // +`\n${TAGS.COMMENT_END_REGION}\n`
             );
           }
