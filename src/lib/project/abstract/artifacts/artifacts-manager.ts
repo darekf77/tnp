@@ -625,10 +625,20 @@ export class ArtifactManager {
 
     //#region handle autorelease
     if (!autoReleaseProcess && releaseOptions.release.autoReleaseUsingConfig) {
-      const autoReleaseConfigAllowedItems =
-        this.project.taonJson.autoReleaseConfigAllowedItems;
+      let artifactsToRelease =
+        this.project.taonJson.autoReleaseConfigAllowedItems.filter(item => {
+          if (!releaseOptions.release.autoReleaseTaskName) {
+            return true;
+          }
+          const allowed =
+            item.taskName === releaseOptions.release.autoReleaseTaskName;
+          if (!allowed) {
+            Helpers.logWarn(`Skipping task ${item.taskName}`);
+          }
+          return allowed;
+        });
 
-      for (const item of autoReleaseConfigAllowedItems) {
+      for (const item of artifactsToRelease) {
         const clonedOptions = releaseOptions.clone({
           release: {
             targetArtifact: item.artifactName,
