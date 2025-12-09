@@ -654,7 +654,7 @@ markdown_extensions:
       if (isNotInRootMdFile) {
         // console.info('repalcign...');
         const contentWithReplacedSomeLinks =
-          UtilsMd.moveAssetsPathsToLevelFromFile(asbFileSourcePath, 2);
+          UtilsMd.moveAssetsPathsToLevelFromFile(asbFileSourcePath);
         // console.info('repalcign done...');
         UtilsFilesFoldersSync.writeFile(
           this.project.pathFor([
@@ -1003,6 +1003,13 @@ markdown_extensions:
                 orgLocation,
                 destRelativePath,
               ]);
+
+              // if (singlePackageNameWithPath === 'taon/README.md') {
+              //   debugger;
+              // }
+
+              fileContent = UtilsMd.moveAssetsPathsToLevel(fileContent);
+
               const exterFileConfig = this.config.externalDocs.mdfiles.find(
                 f => f.packageNameWithPath === singlePackageNameWithPath,
               );
