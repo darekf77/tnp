@@ -247,6 +247,8 @@ export async function start(
       show: 'vscode:temp:show',
       simulate: 'simulateDomain',
       taonjson: 'recreateTaonJsonSchema',
+      p: 'push',
+      pl: 'pull',
       //#endregion
     },
   });
