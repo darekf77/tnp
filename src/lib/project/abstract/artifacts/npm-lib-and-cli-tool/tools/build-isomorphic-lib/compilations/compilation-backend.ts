@@ -10,6 +10,7 @@ import {
 } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
+import { tmpSourceDist } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 //#endregion
@@ -21,10 +22,13 @@ export class BackendCompilation {
 
   //#region fields & getters
   public isEnableCompilation = true;
+
   protected compilerName = 'Backend Compiler';
+
   get tsConfigName() {
     return 'tsconfig.json';
   }
+
   get tsConfigBrowserName() {
     return 'tsconfig.browser.json';
   }
@@ -205,9 +209,9 @@ Starting (${
     const additionalReplace = (line: string) => {
       const [tmpSource, dashOrFile, childName] = line.split('/');
       // console.log({ tmpSource, dashOrFile, childName });
-      if (tmpSource === 'tmp-source-dist' && dashOrFile === '-') {
+      if (tmpSource === tmpSourceDist && dashOrFile === '-') {
         return line.replace(
-          `tmp-source-dist/-/${childName}/`,
+          `${tmpSourceDist}/-/${childName}/`,
           `${childName}/src/`,
         );
       }
@@ -221,7 +225,7 @@ Starting (${
           outDir,
           parent.name,
           project.name,
-          `tmp-source-${outDir}/libs`,
+          `${tmpSourceDist}/libs`,
         ),
       );
 
@@ -261,14 +265,14 @@ Starting (${
       },
       outputLineReplace: (line: string) => {
         if (isStandalone) {
-          if (line.startsWith(`tmp-source-${outDir}/`)) {
+          if (line.startsWith(`${tmpSourceDist}/`)) {
             return additionalReplace(
-              line.replace(`tmp-source-${outDir}/`, `./src/`),
+              line.replace(`${tmpSourceDist}/`, `./src/`),
             );
           }
 
           return additionalReplace(
-            line.replace(`../tmp-source-${outDir}/`, `./src/`),
+            line.replace(`../${tmpSourceDist}/`, `./src/`),
           );
         } else {
           line = line.trimLeft();
@@ -281,26 +285,26 @@ Starting (${
                 `./${moduleName}/src/lib/`,
               ),
             );
-          } else if (line.startsWith(`../tmp-source-${outDir}/libs/`)) {
+          } else if (line.startsWith(`../${tmpSourceDist}/libs/`)) {
             const [__, ___, ____, moduleName] = line.split('/');
             return additionalReplace(
               line.replace(
-                `../tmp-source-${outDir}/libs/${moduleName}/`,
+                `../${tmpSourceDist}/libs/${moduleName}/`,
                 `./${moduleName}/src/lib/`,
               ),
             );
-          } else if (line.startsWith(`../tmp-source-${outDir}/`)) {
+          } else if (line.startsWith(`../${tmpSourceDist}/`)) {
             return additionalReplace(
               line.replace(
-                `../tmp-source-${outDir}/`,
+                `../${tmpSourceDist}/`,
                 `./${project.name}/src/`,
               ),
             );
-          } else if (line.startsWith(`tmp-source-${outDir}/libs/`)) {
+          } else if (line.startsWith(`${tmpSourceDist}/libs/`)) {
             const [__, ___, moduleName] = line.split('/');
             return additionalReplace(
               line.replace(
-                `tmp-source-${outDir}/libs/${moduleName}/`,
+                `${tmpSourceDist}/libs/${moduleName}/`,
                 `./${moduleName}/src/lib/`,
               ),
             );

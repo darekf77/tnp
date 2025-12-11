@@ -32,8 +32,10 @@ import {
   keysMap,
   THIS_IS_GENERATED_INFO_COMMENT,
   THIS_IS_GENERATED_STRING,
-  tmpBaseHrefOverwriteRelPath,
-  tmpBuildPort,
+  tmpBaseHrefOverwrite,
+
+  tmpSrcDist,
+  tmpSrcDistWebsql,
 } from '../../../../constants';
 import { Development, EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
@@ -113,9 +115,12 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         `app/src/assets/${fileName}`,
       ]);
 
+      const browserTsCode = initOptions.build.websql
+        ? tmpSrcDistWebsql
+        : tmpSrcDist;
+
       const tmpDest = this.project.pathFor(
-        `tmp-src-dist${initOptions.build.websql ? '-websql' : ''}` +
-          `/assets/${fileName}`,
+        `${browserTsCode}/assets/${fileName}`,
       );
       Helpers.copyFile(coreSource, tmpDest);
     };
@@ -194,7 +199,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         : this.getOutDirAngularBrowserAppAbsPath(buildOptions);
 
     const fromFileBaseHref = Helpers.readFile(
-      this.project.pathFor(tmpBaseHrefOverwriteRelPath),
+      this.project.pathFor(tmpBaseHrefOverwrite),
     );
     buildOptions.build.baseHref = buildOptions.build.baseHref
       ? buildOptions.build.baseHref

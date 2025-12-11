@@ -2,8 +2,17 @@ import { config, PREFIXES } from 'tnp-core/src';
 import { crossPlatformPath, glob, path, _, fse } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { THIS_IS_GENERATED_INFO_COMMENT } from '../../../../../../constants';
-import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../../../../../options';
+import {
+  THIS_IS_GENERATED_INFO_COMMENT,
+  tmpLibsForDist,
+  tmpLocalCopytoProjDist,
+  tmpSourceDist,
+} from '../../../../../../constants';
+import {
+  EnvOptions,
+  ReleaseArtifactTaon,
+  ReleaseType,
+} from '../../../../../../options';
 import type { Project } from '../../../../project';
 
 import { CopyManager } from './copy-manager';
@@ -116,9 +125,10 @@ export class CopyManagerStandalone extends CopyManager {
   //#region local temp proj path
   get localTempProjPath() {
     //#region @backendFunc
-    const localProjPath = crossPlatformPath(
-      path.join(this.project.location, this.tempProjName),
-    );
+    const localProjPath = crossPlatformPath([
+      this.project.location,
+      tmpLocalCopytoProjDist,
+    ]);
     return localProjPath;
     //#endregion
   }
@@ -233,8 +243,8 @@ export class CopyManagerStandalone extends CopyManager {
     }
 
     let toReplaceString2 = isBrowser
-      ? `../tmp-libs-for-${config.folder.dist}/${this.project.name}/projects/${this.project.name}/${config.folder.src}`
-      : `../tmp-source-${config.folder.dist}`;
+      ? `../${tmpLibsForDist}/${this.project.name}/projects/${this.project.name}/${config.folder.src}`
+      : `../${tmpSourceDist}`;
 
     let toReplaceString1 = `"${toReplaceString2}`;
 
@@ -298,7 +308,8 @@ export class CopyManagerStandalone extends CopyManager {
             return '';
           }
 
-          const localProjFolderName = `tmp-local-copyto-proj-${config.folder.dist}/${config.folder.node_modules}/${this.rootPackageName}`;
+          const localProjFolderName = `${tmpLocalCopytoProjDist}/${config.folder.node_modules}/${this.rootPackageName}`;
+
           let dirnameAbs = crossPlatformPath(path.dirname(absFilePath));
           if (dirnameAbs.includes(localProjFolderName)) {
             dirnameAbs = dirnameAbs.replace(
@@ -382,7 +393,7 @@ export class CopyManagerStandalone extends CopyManager {
       : this.localTempProj.nodeModules.pathFor(this.rootPackageName);
 
     if (isTempLocalProj) {
-      // when destination === tmp-local-proj => fix d.ts imports in (dist)
+      // when destination === tmpLocalCopytoProjDist => fix d.ts imports in (dist)
       this.dtsFixer.processFolderWithBrowserWebsqlFolders(monitorDir);
     }
 
@@ -493,7 +504,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   copySourceMaps(destination: Project, isTempLocalProj: boolean) {
     //#region @backendFunc
     if (isTempLocalProj) {
-      // destination === tmp-local-proj
+      // destination === tmpLocalCopytoProjDist
       this.fixBackendAndBrowserJsMapFilesInLocalProj();
     } else {
       this.copyBackendAndBrowserJsMapFilesFromLocalProjTo(destination);
@@ -541,11 +552,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   /**
    *  fix backend and browser js (m)js.map files (for proper debugging)
    *
-   * destination is (should be) tmp-local-project
+   * destination is (should be) tmpLocalCopytoProjDist
    *
    * Fix for 2 things:
    * - debugging when in cli mode (fix in actual (dist)/(browser/websql)  )
-   * - debugging when in node_modules of other project (fixing only tmp-local-project)
+   * - debugging when in node_modules of other project (fixing only tmpLocalCopytoProjDist)
    * @param destinationPackageLocation desitnation/node_modues/< rootPackageName >
    */
   fixBackendAndBrowserJsMapFilesInLocalProj() {
@@ -617,9 +628,9 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
   //#region copy backend and browser jsM (m)js.map files to destination location
   /**
-   * Copy fixed maps from tmp-local-project to other projects
+   * Copy fixed maps from tmpLocalCopytoProjDist to other projects
    *
-   * @param destination any project other than tmp-local-proj
+   * @param destination any project other than tmpLocalCopytoProjDist
    */
   copyBackendAndBrowserJsMapFilesFromLocalProjTo(destination: Project) {
     //#region @backendFunc

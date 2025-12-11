@@ -15,7 +15,7 @@ export class CodeCut {
   //#region @backend
   constructor(
     /**
-     * absoulte path ex: <project-path>/tmp-src-dist
+     * absolute path ex: <project-path>/tmpSrcDist(Websql)
      */
     protected absPathTmpSrcDistFolder: string,
     protected options: ReplaceOptionsExtended,

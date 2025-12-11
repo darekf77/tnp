@@ -41,7 +41,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
 
   //#region clear partial
   async clearPartial(clearOption: EnvOptions) {
-    [this.project.pathFor('tmp-vscode-proj')].forEach(f => {
+    [this.project.pathFor(tmpVscodeProj)].forEach(f => {
       Helpers.removeSymlinks(f);
       Helpers.removeFolderIfExists(f);
     });

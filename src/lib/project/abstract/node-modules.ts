@@ -15,7 +15,7 @@ import {
   Helpers,
 } from 'tnp-helpers/src';
 
-import { SKIP_CORE_CHECK_PARAM } from '../../constants';
+import { SKIP_CORE_CHECK_PARAM, tmpLocalCopytoProjDist } from '../../constants';
 
 import type { NpmHelpers } from './npm-helpers';
 import type { Project } from './project';
@@ -56,7 +56,7 @@ export class NodeModules extends BaseNodeModules {
     const packagePath = crossPlatformPath([
       this.path,
       ...packageName.split('/'),
-      fileName.package_json
+      fileName.package_json,
     ]);
     return Helpers.exists(packagePath);
     //#endregion
@@ -304,7 +304,9 @@ export class NodeModules extends BaseNodeModules {
       config.folder.dist,
       'project',
       sourceOfCompiledProject.name,
-      `tmp-local-copyto-proj-${config.folder.dist}/${config.folder.node_modules}/${sourceOfCompiledProject.name}`,
+      tmpLocalCopytoProjDist,
+      config.folder.node_modules,
+      sourceOfCompiledProject.name,
     ]);
 
     //#endregion

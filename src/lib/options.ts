@@ -4,7 +4,11 @@ import { config, UtilsTerminal } from 'tnp-core/src';
 import { Helpers } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
 
-import { DOCKER_TEMPLATES } from './constants';
+import {
+  DOCKER_TEMPLATES,
+  tmpCutReleaseSrcDist,
+  tmpCutReleaseSrcDistWebsql,
+} from './constants';
 import { Models } from './models';
 import type { Project } from './project/abstract/project';
 
@@ -453,7 +457,7 @@ class EnvOptionsRelease {
   /**
    * Task of auto release from config
    */
-  declare autoReleaseTaskName: string
+  declare autoReleaseTaskName: string;
 
   /**
    * Tell when to override (html,js,css) static pages files
@@ -974,7 +978,9 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
   //#region getters
   get temporarySrcForReleaseCutCode(): string {
     //#region @backendFunc
-    return `tmp-cut-release-src-${config.folder.dist}${this.build.websql ? '-websql' : ''}`;
+    return this.build.websql
+      ? tmpCutReleaseSrcDistWebsql
+      : tmpCutReleaseSrcDist;
     //#endregion
   }
   //#endregion

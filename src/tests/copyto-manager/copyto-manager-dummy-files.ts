@@ -56,13 +56,4 @@ exports.default = default_1;
 `.trim() + '\n'
     );
   }
-
-  export function file_dist_lib_index_js_map(index: string | number = '') {
-    return (
-      `
-{ "version": 3, "file": "index.js", "sourceRoot": "", "sources": ["../tmp-source-dist/index.ts"], "names": [], "mappings": ";;;AAAA,6BAAwB;AACxB,qDAAsB;AACtB,kBAAe,aAAG,CAAC" }
-
-`.trim() + '\n'
-    );
-  }
 }

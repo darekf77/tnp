@@ -26,7 +26,6 @@ export class QuickFixes extends BaseQuickFixes<Project> {
   //#region recreate temp source necessary files for tests
   recreateTempSourceNecessaryFilesForTesting(): void {
     //#region @backendFunc
-    const outDir = config.folder.dist as 'dist';
     if (this.project.typeIsNot('isomorphic-lib')) {
       return;
     }
@@ -37,10 +36,10 @@ export class QuickFixes extends BaseQuickFixes<Project> {
         'tsconfig.browser.json',
       );
       const tempDirs = [
-        tempSourceFolder(outDir, true, true),
-        tempSourceFolder(outDir, false, false),
-        tempSourceFolder(outDir, true, false),
-        tempSourceFolder(outDir, false, true),
+        tempSourceFolder(true, true),
+        tempSourceFolder(false, false),
+        tempSourceFolder(true, false),
+        tempSourceFolder(false, true),
       ];
       tempDirs.forEach(dirName => {
         // console.log(`
@@ -72,59 +71,6 @@ export class QuickFixes extends BaseQuickFixes<Project> {
         });
       });
     })();
-
-    // const componentsFolder = path.join(this.project.location, config.folder.components)
-    // if (fse.existsSync(componentsFolder)) {
-    //   // TODO join isomorphic part with tsconfig.isomorphic.json
-    //   Helpers.writeFile(path.join(componentsFolder, config.file.tsconfig_json), {
-    //     "compileOnSave": true,
-    //     "compilerOptions": {
-    //       "declaration": true,
-    //       "experimentalDecorators": true,
-    //       "emitDecoratorMetadata": true,
-    //       "allowSyntheticDefaultImports": true,
-    //       'importHelpers': true,
-    //       "moduleResolution": "node",
-    //       "module": "commonjs",
-    //       "skipLibCheck": true,
-    //       "sourceMap": true,
-    //       "target": "es5",
-    //       "lib": [
-    //         "es2015",
-    //         "es2015.promise",
-    //         "es2015.generator",
-    //         "es2015.collection",
-    //         "es2015.core",
-    //         "es2015.reflect",
-    //         "es2016",
-    //         "dom"
-    //       ],
-    //       "types": [
-    //         "node"
-    //       ],
-    //     },
-    //     "include": [
-    //       "./**/*"
-    //     ],
-    //     "exclude": [
-    //       "node_modules",
-    //       "preview",
-    //       "projects",
-    //       "docs",
-    //       "dist",
-    //       "example",
-    //       "examples",
-    //       "browser",
-    //       "module",
-    //       "tmp-src",
-    //       "src/tests",
-    //       "src/**/*.spec.ts",
-    //       "tmp-site-src",
-    //       "tmp-tests-context"
-    //     ]
-    //   })
-    // }
-    // }
     //#endregion
   }
   //#endregion
@@ -351,7 +297,11 @@ ${THIS_IS_GENERATED_STRING}`,
     );
 
     Helpers.writeFile(
-      [this.project.location, TaonTempDatabasesFolder, 'databases-folder-info.md'],
+      [
+        this.project.location,
+        TaonTempDatabasesFolder,
+        'databases-folder-info.md',
+      ],
       `${THIS_IS_GENERATED_STRING}
 
 # PURPOSE OF THIS FOLDER
@@ -362,7 +312,7 @@ that uses HOST_CONFIG from src/app.hosts.ts
 ${THIS_IS_GENERATED_STRING}`,
     );
 
-     Helpers.writeFile(
+    Helpers.writeFile(
       [this.project.location, TaonTempRoutesFolder, 'routes-folder-info.md'],
       `${THIS_IS_GENERATED_STRING}
 

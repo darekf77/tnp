@@ -1,16 +1,18 @@
 //#region imports
 import { RegionRemover } from 'isomorphic-region-loader/src';
 import { ReplaceOptionsExtended } from 'isomorphic-region-loader/src';
-import {
-  config,
-  extAllowedToReplace,
-  frontEndOnly,
-  TAGS,
-} from 'tnp-core/src';
+import { config, extAllowedToReplace, frontEndOnly, TAGS } from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 
-import { TO_REMOVE_TAG } from '../../../../../../../constants';
+import {
+  tmpSourceDist,
+  tmpSrcAppDist,
+  tmpSrcAppDistWebsql,
+  tmpSrcDist,
+  tmpSrcDistWebsql,
+  TO_REMOVE_TAG,
+} from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
@@ -41,21 +43,31 @@ export class BrowserCodeCut {
    * slighted modifed app release dist
    */
   protected absFileSourcePathBrowserOrWebsqlAPPONLY: string;
+
   private rawContentForBrowser: string;
+
   private rawContentForAPPONLYBrowser: string;
+
   private rawContentBackend: string;
+
   public get importExportsFromOrgContent(): UtilsTypescript.TsImportExport[] {
     return this.splitFileProcess?._importExports || [];
   }
+
   private splitFileProcess: SplitFileProcess;
+
   /**
    * ex. path/to/file-somewhere.ts or assets/something/here
-   * in src or tmp-src-dist etc.
+   * in src or tmpSrcDist etc.
    */
   private readonly relativePath: string;
+
   private readonly isWebsqlMode: boolean;
+
   private readonly isAssetsFile: boolean = false;
+
   private readonly absoluteBackendDestFilePath: string;
+
   private readonly debug: boolean = false;
 
   //#endregion
@@ -68,11 +80,11 @@ export class BrowserCodeCut {
      */
     protected absSourcePathFromSrc: string,
     /**
-     * ex. < project location >/tmp-src-dist-websql/my/relative/path.ts
+     * ex. < project location >/tmpSrcDistWebsql/my/relative/path.ts
      */
     protected absFileSourcePathBrowserOrWebsql: string,
     /**
-     * ex. < project location >/tmp-src-dist-websql
+     * ex. < project location >/tmpSrcDist
      */
     protected absPathTmpSrcDistFolder: string,
     private project: Project,
@@ -84,13 +96,15 @@ export class BrowserCodeCut {
     this.absFileSourcePathBrowserOrWebsql = crossPlatformPath(
       absFileSourcePathBrowserOrWebsql,
     );
+    const replaceFrom = buildOptions.build.websql
+      ? tmpSrcDistWebsql
+      : tmpSrcDist;
+    const replaceTo = buildOptions.build.websql
+      ? tmpSrcAppDistWebsql
+      : tmpSrcAppDist;
+
     this.absFileSourcePathBrowserOrWebsqlAPPONLY =
-      this.absFileSourcePathBrowserOrWebsql.replace(
-        `tmp-src-${config.folder.dist}${buildOptions.build.websql ? '-websql' : ''}`,
-        `tmp-src-app-${config.folder.dist}${
-          buildOptions.build.websql ? '-websql' : ''
-        }`,
-      );
+      this.absFileSourcePathBrowserOrWebsql.replace(replaceFrom, replaceTo);
 
     this.absSourcePathFromSrc = crossPlatformPath(absSourcePathFromSrc);
 
@@ -112,15 +126,13 @@ export class BrowserCodeCut {
 
     this.absoluteBackendDestFilePath = crossPlatformPath([
       this.project.location,
-      'tmp-source-dist',
+      tmpSourceDist,
       this.relativePath,
     ]);
 
     // console.log('RELATIVE ', this.relativePath)
 
-    this.isWebsqlMode = this.relativePath.startsWith(
-      `tmp-src-${config.folder.dist}-${config.folder.websql}`,
-    );
+    this.isWebsqlMode = this.relativePath.startsWith(tmpSrcDistWebsql);
   }
   //#endregion
   //#endregion
@@ -196,7 +208,7 @@ export class BrowserCodeCut {
           this.absSourcePathFromSrc,
           this.replaceAssetsPath(this.absFileSourcePathBrowserOrWebsqlAPPONLY),
         );
-        // final straight copy to tmp-source-folder
+        // final straight copy to tmpSourceFolder
         Helpers.copyFile(
           this.absSourcePathFromSrc,
           this.replaceAssetsPath(this.absoluteBackendDestFilePath),

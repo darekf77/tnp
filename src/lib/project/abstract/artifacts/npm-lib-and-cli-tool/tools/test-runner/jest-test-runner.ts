@@ -24,11 +24,10 @@ export class JestTestRunner
 
   getCWD(args: string): string {
     const websql: boolean = true;
-    const outDir: 'dist' = 'dist';
 
     const projCwd = crossPlatformPath([
       this.project.location,
-      tempSourceFolder(outDir, true, websql),
+      tempSourceFolder(true, websql),
     ]);
 
     // console.log(`

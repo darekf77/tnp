@@ -89,10 +89,12 @@ export class $Open extends BaseCli {
   }
 
   DB() {
+    // ! TODO @LAST refactor
     this._openThing('tmp-db.sqlite');
   }
 
   ROUTES() {
+    // ! TODO @LAST refactor
     this._openThing('tmp-routes.json');
   }
 

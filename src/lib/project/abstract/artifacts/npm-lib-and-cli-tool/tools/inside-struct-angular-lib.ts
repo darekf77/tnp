@@ -4,12 +4,17 @@ import { crossPlatformPath, path, _ } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
+import {
+  tmpLibsForDist,
+  tmpLibsForDistWebsql,
+  tmpSrcDist,
+  tmpSrcDistWebsql,
+} from '../../../../../constants';
 import { Models } from '../../../../../models';
 import { EnvOptions } from '../../../../../options';
 import type { Project } from '../../../project';
 import { InsideStruct } from '../../__helpers__/inside-structures/inside-struct';
 import { BaseInsideStruct } from '../../__helpers__/inside-structures/structs/base-inside-struct';
-
 
 //#endregion
 
@@ -59,9 +64,15 @@ export class InsideStructAngularLib extends BaseInsideStruct {
   insideStruct(): InsideStruct {
     //#region @backendFunc
     const project = this.project;
-    const tmpProjectsStandalone =
-      `tmp-libs-for-${config.folder.dist}` +
-      `${this.initOptions.build.websql ? '-websql' : ''}/${project.name}`;
+
+    const browserLibsTsCode = this.initOptions.build.websql
+      ? tmpLibsForDistWebsql
+      : tmpLibsForDist;
+
+    const tmpProjectsStandalone = crossPlatformPath([
+      browserLibsTsCode,
+      project.name,
+    ]);
 
     const result = InsideStruct.from(
       {
@@ -116,10 +127,13 @@ export class InsideStructAngularLib extends BaseInsideStruct {
 
           (() => {
             //#region hande / src / migrations
+            const browserTsCode = this.initOptions.build.websql
+              ? tmpSrcDistWebsql
+              : tmpSrcDist;
+
             const source = path.join(
               this.project.location,
-              `tmp-src-${config.folder.dist}` +
-                `${this.initOptions.build.websql ? '-websql' : ''}`,
+              browserTsCode,
               'migrations',
             );
 
@@ -137,10 +151,13 @@ export class InsideStructAngularLib extends BaseInsideStruct {
 
           (() => {
             //#region hande / src / lib
+            const browserTsCode = this.initOptions.build.websql
+              ? tmpSrcDistWebsql
+              : tmpSrcDist;
+
             const source = path.join(
               this.project.location,
-              `tmp-src-${config.folder.dist}` +
-                `${this.initOptions.build.websql ? '-websql' : ''}`,
+              browserTsCode,
               'lib',
             );
 
@@ -251,7 +268,6 @@ export * from './lib';
 
             Helpers.writeJson(ngPackageJson, json);
           })();
-
         },
       },
       project,

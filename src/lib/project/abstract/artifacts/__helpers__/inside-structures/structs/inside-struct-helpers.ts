@@ -17,12 +17,14 @@ export function resolveBrowserPathToAssetFrom(
   //#region @backendFunc
   let resultBrowserPath = '';
 
-  // `tmp-src-${outFolder}${websql ? '-websql' : ''}/assets/assets-for/${project.name}/`
-  const relatievPath = absolutePath.replace(
+  /**
+   * example tmpSrcDist(Websql)/assets/assets-for/${project.name}/`
+   */
+  const relativePath = absolutePath.replace(
     `${crossPlatformPath(projectTargetOrStandalone.location)}/`,
     '',
   );
-  resultBrowserPath = `/${relatievPath}`;
+  resultBrowserPath = `/${relativePath}`;
   resultBrowserPath = resultBrowserPath.replace(
     `/${config.folder.src}/${config.folder.assets}/`,
     `/${config.folder.assets}/${config.folder.assets}-for/${projectTargetOrStandalone.name}/`,

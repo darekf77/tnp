@@ -13,6 +13,11 @@ import {
 } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
+import {
+  tmpSourceDist,
+  tmpSrcDist,
+  tmpSrcDistWebsql,
+} from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 import { CodeCut } from '../code-cut/code-cut';
@@ -22,7 +27,9 @@ import { codeCuttFn } from '../code-cut/cut-fn';
 export class BrowserCompilation extends BaseClientCompiler {
   //#region fields & getters
   protected compilerName = 'Browser standard compiler';
+
   public codecutNORMAL: CodeCut;
+
   public codecutWEBSQL: CodeCut;
 
   get customCompilerName(): string {
@@ -34,15 +41,16 @@ export class BrowserCompilation extends BaseClientCompiler {
   //#endregion
 
   //#region constructor
-  readonly sourceOutBrowserWEBSQL: string;
-  readonly sourceOutBrowserNORMAL: string;
+
   readonly absPathTmpSrcDistFolderWEBSQL: string;
+
   readonly absPathTmpSrcDistFolderNORMAL: string;
+
   //#region @backend
   constructor(
     public project: Project,
     /**
-     * tmp-src-for-(dist)-browser
+     * tmpSrcDist(Websql)
      */
 
     protected srcFolder: string,
@@ -58,13 +66,11 @@ export class BrowserCompilation extends BaseClientCompiler {
     this.project = project;
     this.compilerName = this.customCompilerName;
 
-    this.sourceOutBrowserWEBSQL = `tmp-src-dist-websql`;
-    this.sourceOutBrowserNORMAL = `tmp-src-dist`;
     this.absPathTmpSrcDistFolderWEBSQL = crossPlatformPath(
-      path.join(this.project.location || '', this.sourceOutBrowserWEBSQL || ''),
+      path.join(this.project.location || '', tmpSrcDistWebsql),
     );
     this.absPathTmpSrcDistFolderNORMAL = crossPlatformPath(
-      path.join(this.project.location || '', this.sourceOutBrowserNORMAL || ''),
+      path.join(this.project.location || '', tmpSrcDist),
     );
   }
   //#endregion
@@ -119,7 +125,7 @@ export class BrowserCompilation extends BaseClientCompiler {
       buildOptForWebsql,
     );
 
-    const tmpSource = this.project.pathFor('tmp-source-dist');
+    const tmpSource = this.project.pathFor(tmpSourceDist);
     Helpers.removeFolderIfExists(this.absPathTmpSrcDistFolderWEBSQL);
     Helpers.removeFolderIfExists(this.absPathTmpSrcDistFolderNORMAL);
     Helpers.mkdirp(this.absPathTmpSrcDistFolderNORMAL);
@@ -191,7 +197,7 @@ export class BrowserCompilation extends BaseClientCompiler {
       (() => {
         const destinationFileBackendPath = crossPlatformPath([
           this.project.location,
-          'tmp-source-dist',
+          tmpSourceDist,
           relativeFilePath,
         ]);
 
@@ -293,7 +299,7 @@ export class BrowserCompilation extends BaseClientCompiler {
       const destinationFilePath = crossPlatformPath(
         path.join(
           this.project.location,
-          websql ? this.sourceOutBrowserWEBSQL : this.sourceOutBrowserNORMAL,
+          websql ? tmpSrcDistWebsql : tmpSrcDist,
           relativeFilePath,
         ),
       );

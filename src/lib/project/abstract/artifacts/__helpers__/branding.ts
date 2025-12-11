@@ -6,7 +6,7 @@ import { _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
-import { iconVscode128Basename } from '../../../../constants';
+import { iconVscode128Basename, tmpVscodeProj } from '../../../../constants';
 import { ReleaseTypeWithDevelopmentArr } from '../../../../options';
 import type { Project } from '../../project';
 //#endregion
@@ -234,7 +234,7 @@ export class Branding extends BaseFeatureForProject<Project> {
     const destinationDirnames = ReleaseTypeWithDevelopmentArr.map(
       releaseType => {
         return this.project.pathFor([
-          'tmp-vscode-proj',
+          tmpVscodeProj,
           releaseType,
           this.project.name,
         ]);

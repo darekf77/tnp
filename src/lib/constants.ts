@@ -7,7 +7,8 @@ import { _, UtilsOs } from 'tnp-core/src';
 import { crossPlatformPath, path, Utils } from 'tnp-core/src';
 
 import { CURRENT_PACKAGE_VERSION } from './build-info._auto-generated_';
-import { ReleaseArtifactTaon, ReleaseType } from './options';
+import type { EnvOptions, ReleaseArtifactTaon, ReleaseType } from './options';
+import type { Project } from './project/abstract/project';
 import { DeploymentReleaseData } from './project/abstract/taon-worker/deployments/deployments.models';
 // import type { Project } from './project/abstract/project';
 //#endregion
@@ -233,14 +234,6 @@ export const DEFAULT_PORT = {
   DEBUGGING_ELECTRON: 9888,
 };
 
-export const tmpVscodeProj = `tmp-vscode-proj`;
-export const tmpAppsForDist = `tmp-apps-for-dist`;
-export const tmpAppsForDistWebsql = `${tmpAppsForDist}-websql`;
-export const tmpAppsForDistElectron = `${tmpAppsForDist}-electron`;
-
-export const tmpBuildPort = 'tmp-build-port';
-export const tmpBaseHrefOverwriteRelPath = 'tmp-base-href-overwrite';
-
 export const docsConfigJsonFileName = 'docs-config.jsonc';
 export const docsConfigSchema = 'docs-config.schema.json';
 export const customDefaultCss = 'custom-default.css';
@@ -275,13 +268,145 @@ export const getBrowserVerPath = (websql: boolean = false) => {
 };
 //#endregion
 
-export function tempSourceFolder(
-  outDir: 'dist',
-  appForLib: boolean,
-  websql: boolean,
-) {
-  return `tmp-src-${appForLib ? 'app-' : ''}${outDir}${websql ? '-websql' : ''}`;
+/**
+ * If exist - copy manager will clean copy bundled package to destinations
+ */
+export const tmpAlreadyStartedCopyManager = 'tmp-already-started-copy-manager';
+
+export const tmpAllAssetsLinked = 'tmp-all-assets-linked';
+
+/**
+ * Destination place for all taon processes (tsc, ng build, etc)
+ * From this folder code is copied to final destinations node_modules
+ */
+export const tmpLocalCopytoProjDist = 'tmp-local-copyto-proj-dist';
+
+/**
+ * Folder where tmpSrdDist code is cutted file by file before publishing
+ */
+export const tmpCutReleaseSrcDist = 'tmp-cut-release-src-dist';
+
+/**
+ * Folder where tmpSrdDist code is cutted file by file before publishing (websql version)
+ */
+export const tmpCutReleaseSrcDistWebsql = 'tmp-cut-release-src-dist-websql';
+
+/**
+ * Temporary folder for base href overwrite during build
+ * (taon library build sets it)
+ */
+export const tmpBaseHrefOverwrite = 'tmp-base-href-overwrite';
+
+/**
+ * Temporary folder for vscode project files
+ */
+export const tmpVscodeProj = `tmp-vscode-proj`;
+
+/**
+ * Taon code transformed for backend
+ */
+export const tmpSourceDist = 'tmp-source-dist';
+/**
+ * Taon code transformed for backend in websql mode
+ * (this code is probably never used)
+ */
+export const tmpSourceDistWebsql = 'tmp-source-dist-websql';
+
+/**
+ * Taon code transformed for browser
+ */
+export const tmpSrcDist = 'tmp-src-dist';
+/**
+ * Taon code transformed for browser in websql mode
+ */
+export const tmpSrcDistWebsql = 'tmp-src-dist-websql';
+
+/**
+ * Taon code transformed for browser (angular app uses this)
+ */
+
+export const tmpSrcAppDist = 'tmp-src-app-dist';
+
+/**
+ * Taon code transformed for browser (angular app in websql uses this)
+ */
+export const tmpSrcAppDistWebsql = 'tmp-src-app-dist-websql';
+
+/**
+ * ng build for library from /src/lib
+ */
+export const tmpLibsForDist = 'tmp-libs-for-dist';
+/**
+ * ng build for library from /src/lib (websql code)
+ */
+export const tmpLibsForDistWebsql = 'tmp-libs-for-dist-websql';
+
+/**
+ * normal angular app build
+ */
+export const tmpAppsForDist = 'tmp-apps-for-dist';
+/**
+ * websql angular app build
+ */
+export const tmpAppsForDistWebsql = 'tmp-apps-for-dist-websql';
+/**
+ * electron angular app build
+ */
+export const tmpAppsForDistElectron = `tmp-apps-for-dist-electron`;
+
+export const tmpAppsForDistElectronWebsql = `tmp-apps-for-dist-websql-electron`;
+
+/**
+ *
+ * @param appForLib if true code is for angular (ng server/build) app build, false for lib ng build
+ * @param websql if true websql version
+ * @returns relative path to temp browser source folder
+ */
+export function tempSourceFolder(appForLib: boolean, websql: boolean): string {
+  if (appForLib && websql) {
+    return tmpSrcAppDistWebsql;
+  }
+  if (appForLib && !websql) {
+    return tmpSrcAppDist;
+  }
+  if (!appForLib && websql) {
+    return tmpSrcDistWebsql;
+  }
+  if (!appForLib && !websql) {
+    return tmpSrcDist;
+  }
 }
+
+/**
+ * @returns relative path to proxy angular project build folder
+ */
+export const angularProjProxyPath = (options: {
+  project: Project;
+  websql: boolean;
+  targetArtifact: EnvOptions['release']['targetArtifact'];
+}): string => {
+  //#region @backendFunc
+  const { websql, targetArtifact, project } = options;
+
+  if (websql && targetArtifact === 'electron-app') {
+    Helpers.warn(`Electron app with websql is not supported`, true);
+    return crossPlatformPath([tmpAppsForDistElectronWebsql, project.name]);
+  }
+  if (!websql && targetArtifact === 'electron-app') {
+    return crossPlatformPath([tmpAppsForDistElectron, project.name]);
+  }
+  if (!websql && targetArtifact === 'angular-node-app') {
+    return crossPlatformPath([tmpAppsForDist, project.name]);
+  }
+  if (websql && targetArtifact === 'angular-node-app') {
+    return crossPlatformPath([tmpAppsForDistWebsql, project.name]);
+  }
+  return crossPlatformPath([
+    websql ? tmpLibsForDistWebsql : tmpLibsForDist,
+    project.name,
+  ]);
+  //#endregion
+};
 
 export const clientCodeVersionFolder = [
   config.folder.browser,

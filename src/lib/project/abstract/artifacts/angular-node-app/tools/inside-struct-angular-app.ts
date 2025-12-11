@@ -3,7 +3,13 @@ import { config } from 'tnp-core/src';
 import { crossPlatformPath, path, _, CoreModels, fse } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 
-import { tmpAppsForDist } from '../../../../../constants';
+import {
+  tmpAppsForDist,
+  tmpSrcAppDist,
+  tmpSrcAppDistWebsql,
+  tmpSrcDist,
+  tmpSrcDistWebsql,
+} from '../../../../../constants';
 import { EnvOptions } from '../../../../../options';
 import type { Project } from '../../../project';
 import { InsideStruct } from '../../__helpers__/inside-structures/inside-struct';
@@ -81,12 +87,15 @@ export class InsideStructAngularApp extends BaseInsideStruct {
         linksFuncs: [
           //#region what and where needs to linked
           [
+            // from this
             opt => {
-              const standalonePath =
-                `tmp-src-app-${config.folder.dist}` +
-                `${this.initOptions.build.websql ? '-websql' : ''}`;
-              return standalonePath;
+              const browserTsAppCode = this.initOptions.build.websql
+                ? tmpSrcAppDistWebsql
+                : tmpSrcAppDist;
+
+              return browserTsAppCode;
             },
+            // to this
             opt => {
               const standalonePath = `app/src/app/${this.project.name}`;
               return standalonePath;
@@ -97,10 +106,6 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           //#region link not containter target clients
           [
             opt => {
-              const standalonePath =
-                `tmp-src-${config.folder.dist}` +
-                `${this.initOptions.build.websql ? '-websql' : ''}`;
-
               return '';
             },
             opt => {
@@ -463,12 +468,14 @@ ${appComponentFile}
 
           //#region link assets
           (() => {
+            const browserTsCode = this.initOptions.build.websql
+              ? tmpSrcDistWebsql
+              : tmpSrcDist;
+
             const assetsSource = crossPlatformPath(
               path.join(
                 project.location,
-                replacement(
-                  `tmp-src-${config.folder.dist}${this.initOptions.build.websql ? '-websql' : ''}`,
-                ),
+                replacement(browserTsCode),
                 config.folder.assets,
               ),
             );

@@ -22,7 +22,10 @@ import {
   DEFAULT_PORT,
   MESSAGES,
   THIS_IS_GENERATED_INFO_COMMENT,
-  tmpBaseHrefOverwriteRelPath,
+  tmpBaseHrefOverwrite,
+  tmpLocalCopytoProjDist,
+  tmpSrcDist,
+  tmpSrcDistWebsql,
 } from '../../../../constants';
 import { EnvOptions, ReleaseType } from '../../../../options';
 import type { Project } from '../../project';
@@ -46,8 +49,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   {
     //#region build output options
     /**
-     * for non org: <path-to-release-folder>/tmp-local-temp-proj/my-library/node_modules/my-library
-     * for org: <path-to-release-folder>/tmp-local-temp-proj/my-library/node_modules/@my-library
+     * for non org: <path-to-release-folder>/tmpLocalCopytoProjDist/my-library/node_modules/my-library
+     * for org: <path-to-release-folder>/tmpLocalCopytoProjDist/my-library/node_modules/@my-library
      */
     tmpProjNpmLibraryInNodeModulesAbsPath: string;
     /**
@@ -194,11 +197,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
     const packageName = this.project.nameForNpmPackage;
-    const tmpProjNpmLibraryInNodeModulesAbsPath = this.project.pathFor(
-      `tmp-local-copyto-proj-${config.folder.dist}/` +
-        `${config.folder.node_modules}/` +
-        `${packageName}`,
-    );
+    const tmpProjNpmLibraryInNodeModulesAbsPath = this.project.pathFor([
+      tmpLocalCopytoProjDist,
+      config.folder.node_modules,
+      packageName,
+    ]);
     const isOrganizationPackage =
       this.project.nameForNpmPackage.startsWith('@');
 
@@ -284,7 +287,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       : this.artifacts.angularNodeApp.angularFeBasenameManager.rootBaseHref;
 
     this.project.writeFile(
-      tmpBaseHrefOverwriteRelPath,
+      tmpBaseHrefOverwrite,
       buildOptions.build.baseHref,
     );
 
@@ -896,12 +899,12 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         }
         line = line.replace(`projects/${this.project.name}/src/`, `./src/`);
 
-        // ../../../../tmp-src-dist-websql/lib/layout-proj-ng-related/layout-proj-ng-related.component.scss
-        if (line.includes('../../../../tmp-src-dist-websql/')) {
-          line = line.replace('../../../../tmp-src-dist-websql/', `./src/`);
+        // ../../../../tmpSrcDistWebsql/lib/layout-proj-ng-related/layout-proj-ng-related.component.scss
+        if (line.includes(`../../../../${tmpSrcDistWebsql}/`)) {
+          line = line.replace(`../../../../${tmpSrcDistWebsql}/`, `./src/`);
         }
-        if (line.includes('../../../../tmp-src-dist/')) {
-          line = line.replace('../../../../tmp-src-dist/', `./src/`);
+        if (line.includes(`../../../../${tmpSrcDist}/`)) {
+          line = line.replace(`../../../../${tmpSrcDist}/`, `./src/`);
         }
 
         if (line.search(`/src/libs/`) !== -1) {

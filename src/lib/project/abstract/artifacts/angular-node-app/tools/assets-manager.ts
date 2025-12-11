@@ -6,10 +6,18 @@ import { Helpers } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 import { BaseDebounceCompilerForProject } from 'tnp-helpers/src';
 
+import {
+  tmpAllAssetsLinked,
+  tmpSourceDist,
+  tmpSourceDistWebsql,
+  tmpSrcAppDist,
+  tmpSrcAppDistWebsql,
+  tmpSrcDist,
+  tmpSrcDistWebsql,
+} from '../../../../../constants';
 import type { Project } from '../../../project';
 
 const assetsFor = `${config.folder.assets}-for`;
-const tmpAllAssetsLinked = 'tmp-all-assets-linked';
 
 export class AssetsManager extends BaseDebounceCompilerForProject<
   {},
@@ -18,13 +26,16 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
 > {
   //#region fields & getters
   private tmpFolders = [
-    `tmp-src-${config.folder.dist}`,
-    `tmp-src-${config.folder.dist}-websql`,
-    `tmp-src-app-${config.folder.dist}`,
-    `tmp-src-app-${config.folder.dist}-websql`,
-    `tmp-source-${config.folder.dist}`, //  tmp-source-dist-websql not in use
+    tmpSrcDist,
+    tmpSrcDistWebsql,
+    tmpSrcAppDist,
+    tmpSrcAppDistWebsql,
+    tmpSourceDist,
+    tmpSourceDistWebsql,
   ];
+
   private readonly currentProjectNodeModulesPath: string;
+
   get tmpAllAssetsLinkedInCoreContainerAbsPath(): string {
     //#region @backendFunc
     const containerCoreBase =

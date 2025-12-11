@@ -11,6 +11,7 @@ import { PackageJson } from 'type-fest';
 
 import {
   dirnameFromSourceToProject,
+  tmpAlreadyStartedCopyManager,
   TO_REMOVE_TAG,
   whatToLinkFromCore,
 } from '../../../../../../constants';
@@ -100,15 +101,6 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
       whatToLinkFromCore,
     ]);
     return sourceToLink;
-    //#endregion
-  }
-  //#endregion
-
-  //#region getters / temp project name
-  get tempProjName() {
-    //#region @backendFunc
-    const tempProjName = this.project.framework.getTempProjectNameForCopyTo();
-    return tempProjName;
     //#endregion
   }
   //#endregion
@@ -293,15 +285,15 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   ): Promise<void> {
     //#region @backendFunc
 
-    const startFromScratchFileBasename = 'tmp-already-started-copy-manager';
+
     if (
-      this.project.hasFile(startFromScratchFileBasename) &&
-      this.project.readFile(startFromScratchFileBasename) === '-'
+      this.project.hasFile(tmpAlreadyStartedCopyManager) &&
+      this.project.readFile(tmpAlreadyStartedCopyManager) === '-'
     ) {
       // @ts-ignore
       this.isStartFromScratch = false;
     } else {
-      this.project.writeFile(startFromScratchFileBasename, '-');
+      this.project.writeFile(tmpAlreadyStartedCopyManager, '-');
       // @ts-ignore
       this.isStartFromScratch = true;
     }
