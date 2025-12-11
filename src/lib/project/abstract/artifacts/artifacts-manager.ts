@@ -270,7 +270,10 @@ export class ArtifactManager {
           })
           .sync();
       } catch (error) {}
+      this.project.removeFile('tsconfig.isomorphic-flat-bundle.json');
+      this.project.removeFile('webpack.backend-bundle-build.js');
       this.project.removeFile('.eslintrc.json');
+      this.project.removeFile('tslint.json');
       this.project.removeFile('.vscode/launch-backup.json');
       this.project.removeFile('run-org.js');
       if (this.project.typeIs('container')) {
