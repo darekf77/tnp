@@ -33,7 +33,6 @@ import {
   THIS_IS_GENERATED_INFO_COMMENT,
   THIS_IS_GENERATED_STRING,
   tmpBaseHrefOverwrite,
-
   tmpSrcDist,
   tmpSrcDistWebsql,
 } from '../../../../constants';
@@ -83,7 +82,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
   //#region clear partial
   async clearPartial(options: EnvOptions): Promise<void> {
-    return void 0; // TODO implement
+    this.project.remove('routes/*.rest', false);
+    this.project.remove('databases/*.sqlite', false);
   }
   //#endregion
 
