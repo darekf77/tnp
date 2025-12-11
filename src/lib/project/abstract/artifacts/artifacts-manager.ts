@@ -86,6 +86,12 @@ export class ArtifactManager {
       Clearing artifacts temp data in ${this.project.name}
 
       `);
+
+    if (this.project.framework.isStandaloneProject) {
+      this.project.removeFolderByRelativePath(`.tnp`);
+      this.project.removeFolderByRelativePath(`.taon`);
+    }
+
     await this.artifact.npmLibAndCliTool.clearPartial(options);
     await this.artifact.angularNodeApp.clearPartial(options);
     await this.artifact.electronApp.clearPartial(options);
