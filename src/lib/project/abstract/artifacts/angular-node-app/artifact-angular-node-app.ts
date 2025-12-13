@@ -1,7 +1,7 @@
 //#region imports
 import type { AxiosProgressEvent } from 'axios';
 import { TaonBaseContext, MulterFileUploadResponse, Taon } from 'taon/src';
-import { config } from 'tnp-core/src';
+import { config, dotTaonFolder } from 'tnp-core/src';
 import {
   crossPlatformPath,
   path,
@@ -14,6 +14,7 @@ import {
 import { UtilsOs, UtilsTerminal } from 'tnp-core/src';
 import { UtilsDotFile } from 'tnp-core/src';
 import { FilePathMetaData } from 'tnp-core/src';
+import { LibTypeEnum } from 'tnp-core/src';
 import {
   Helpers,
   UtilsTypescript,
@@ -25,18 +26,52 @@ import { UtilsDocker } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
 import {
+  getProxyNgProj,
+  templateFolderForArtifact,
+} from '../../../../app-utils';
+import {
   ACTIVE_CONTEXT,
+  AngularJsonTaskName,
+  appFromSrc,
+  appFromSrcInsideNgApp,
+  assetsFromNgProj,
+  assetsFromSrc,
   COMPILATION_COMPLETE_APP_NG_SERVE,
+  CoreAssets,
+  databases,
   DEFAULT_PORT,
+  distFromNgBuild,
+  distFromSassLoader,
+  distMainProject,
+  dotEnvFile,
   globalSpinner,
   keysMap,
+  libFromCompiledDist,
+  localReleaseMainProject,
+  ngProjectStylesScss,
+  packageJsonMainProject,
+  packageJsonNpmLib,
+  readmeMdMainProject,
+  routes,
+  runJsMainProject,
+  srcMainProject,
+  srcNgProxyProject,
+  suffixLatest,
+  TaonCommands,
+  TaonGeneratedFiles,
+  TemplateFolder,
   THIS_IS_GENERATED_INFO_COMMENT,
   THIS_IS_GENERATED_STRING,
   tmpBaseHrefOverwrite,
   tmpSrcDist,
   tmpSrcDistWebsql,
 } from '../../../../constants';
-import { Development, EnvOptions, ReleaseType } from '../../../../options';
+import {
+  Development,
+  EnvOptions,
+  ReleaseArtifactTaon,
+  ReleaseType,
+} from '../../../../options';
 import type { Project } from '../../project';
 import { DeploymentsController } from '../../taon-worker/deployments';
 import type { DeploymentReleaseData } from '../../taon-worker/deployments/deployments.models';
@@ -61,17 +96,20 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 > {
   //#region fields & getters
   public readonly migrationHelper: MigrationHelper;
+
   public readonly angularFeBasenameManager: AngularFeBasenameManager;
 
   public readonly insideStructureApp: InsideStructuresApp;
+
   public readonly insideStructureElectron: InsideStructuresElectron;
+
   public readonly appHostsRecreateHelper: AppHostsRecreateHelper;
 
   //#endregion
 
   //#region constructor
   constructor(readonly project: Project) {
-    super(project, 'angular-node-app');
+    super(project, ReleaseArtifactTaon.ANGULAR_NODE_APP);
     this.migrationHelper = new MigrationHelper(project);
     this.angularFeBasenameManager = new AngularFeBasenameManager(project);
     this.insideStructureApp = new InsideStructuresApp(project);
@@ -82,8 +120,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
   //#region clear partial
   async clearPartial(options: EnvOptions): Promise<void> {
-    this.project.remove('routes/*.rest', false);
-    this.project.remove('databases/*.sqlite', false);
+    this.project.remove(`${routes}/*.rest`, false);
+    this.project.remove(`${databases}/*.sqlite`, false);
   }
   //#endregion
 
@@ -91,9 +129,11 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
     if (!initOptions.release.targetArtifact) {
-      initOptions.release.targetArtifact = 'angular-node-app';
+      initOptions.release.targetArtifact = ReleaseArtifactTaon.ANGULAR_NODE_APP;
     }
-    if (initOptions.release.targetArtifact === 'electron-app') {
+    if (
+      initOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
+    ) {
       await this.insideStructureElectron.init(initOptions);
     } else {
       await this.insideStructureApp.init(initOptions);
@@ -108,11 +148,19 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     const copyFromCoreAssets = (fileName: string) => {
       const coreSource = crossPlatformPath([
-        this.project.ins.by(
-          'isomorphic-lib',
-          this.project.framework.frameworkVersion,
-        ).location,
-        `app/src/assets/${fileName}`,
+        this.project.ins
+          .by(
+            LibTypeEnum.ISOMORPHIC_LIB,
+            this.project.framework.frameworkVersion,
+          )
+          .pathFor(
+            `${templateFolderForArtifact(
+              initOptions.release.targetArtifact ===
+                ReleaseArtifactTaon.ELECTRON_APP
+                ? ReleaseArtifactTaon.ELECTRON_APP
+                : ReleaseArtifactTaon.ANGULAR_NODE_APP,
+            )}/${srcNgProxyProject}/${assetsFromNgProj}/${fileName}`,
+          ),
       ]);
 
       const browserTsCode = initOptions.build.websql
@@ -120,13 +168,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         : tmpSrcDist;
 
       const tmpDest = this.project.pathFor(
-        `${browserTsCode}/assets/${fileName}`,
+        `${browserTsCode}/${assetsFromNgProj}/${fileName}`,
       );
       Helpers.copyFile(coreSource, tmpDest);
     };
 
-    copyFromCoreAssets('sql-wasm.wasm');
-    copyFromCoreAssets('flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2');
+    copyFromCoreAssets(CoreAssets.sqlWasmFile);
+    copyFromCoreAssets(CoreAssets.mainFont);
 
     return initOptions;
     //#endregion
@@ -143,7 +191,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     //#region @backendFunc
 
     // TODO @REMOVE when microfrontends for container ready
-    if (this.project.typeIsNot('isomorphic-lib')) {
+    if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
       Helpers.error(
         `Only project type isomorphic-lib can use artifact angular-node-app!`,
         false,
@@ -182,20 +230,21 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       this.getOutDirNodeBackendAppAbsPath(buildOptions);
 
     if (
-      buildOptions.release.releaseType === 'local' ||
-      buildOptions.release.releaseType === 'manual'
+      buildOptions.release.releaseType === ReleaseType.LOCAL ||
+      buildOptions.release.releaseType === ReleaseType.MANUAL
     ) {
       await this.buildBackend(buildOptions, appDistOutBackendNodeAbsPath);
     }
 
-    const angularTempProj = this.globalHelper.getProxyNgProj(
+    const angularTempProj = getProxyNgProj(
+      this.project,
       buildOptions,
       buildOptions.release.targetArtifact,
     );
 
     const appDistOutBrowserAngularAbsPath =
-      buildOptions.release.targetArtifact === 'electron-app'
-        ? angularTempProj.pathFor('dist')
+      buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
+        ? angularTempProj.pathFor(distFromNgBuild)
         : this.getOutDirAngularBrowserAppAbsPath(buildOptions);
 
     const fromFileBaseHref = Helpers.readFile(
@@ -226,9 +275,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     const serveCommand =
       `${this.NPM_RUN_NG_COMMAND} serve ${
-        buildOptions.release.targetArtifact === 'electron-app'
-          ? 'angular-electron'
-          : 'app'
+        buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
+          ? AngularJsonTaskName.ELECTRON_APP
+          : AngularJsonTaskName.ANGULAR_APP
       } ` +
       ` ${`--port=${portAssignedToAppBuild}`} ${
         buildOptions.build.angularProd ? '--prod' : ''
@@ -241,9 +290,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     const angularBuildCommand =
       `${this.NPM_RUN_NG_COMMAND} build ${
-        buildOptions.release.targetArtifact === 'electron-app'
-          ? 'angular-electron'
-          : 'app'
+        buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
+          ? AngularJsonTaskName.ELECTRON_APP
+          : AngularJsonTaskName.ANGULAR_APP
         // : buildOptions.build.angularSsr
         //   ? 'ssr'
       }` +
@@ -272,7 +321,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     if (!shouldSkipBuild) {
       await angularTempProj.execute(angularBuildAppCmd, {
-        similarProcessKey: 'ng',
+        similarProcessKey: TaonCommands.NG,
         resolvePromiseMsg: {
           stdout: COMPILATION_COMPLETE_APP_NG_SERVE,
         },
@@ -298,16 +347,19 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
           // TODO QUICK_FIXES for clean errors
           if (
-            line.includes('styles.scss?ngGlobalStyle') ||
-            (line.includes('./src/styles.scss') &&
-              line.includes('/sass-loader/dist/cjs.js')) ||
+            line.includes(`${ngProjectStylesScss}?ngGlobalStyle`) ||
+            (line.includes(`./${srcMainProject}/${ngProjectStylesScss}`) &&
+              line.includes(`/sass-loader/${distFromSassLoader}/cjs.js`)) ||
             (line.includes('HookWebpackError: Module build failed') &&
-              line.includes('/sass-loader/dist/cjs.js'))
+              line.includes(`/sass-loader/${distFromSassLoader}/cjs.js`))
           ) {
             return '';
           }
 
-          line = line.replace(`src/app/${this.project.name}/`, `./src/`);
+          line = line.replace(
+            `${srcNgProxyProject}/${appFromSrcInsideNgApp}/${this.project.name}/`,
+            `./${srcMainProject}/`,
+          );
 
           return line;
           //#endregion
@@ -359,20 +411,22 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         minify: buildOptions.release.nodeBackendApp.minify,
         strategy: 'node-app',
         additionalExternals: [
-          ...this.project.taonJson.additionalExternalsFor('angular-node-app'),
+          ...this.project.taonJson.additionalExternalsFor(
+            ReleaseArtifactTaon.ANGULAR_NODE_APP,
+          ),
         ],
         additionalReplaceWithNothing: [
           ...this.project.taonJson.additionalReplaceWithNothingFor(
-            'angular-node-app',
+            ReleaseArtifactTaon.ANGULAR_NODE_APP,
           ),
         ],
       },
     );
 
     const copyToBackendBundle = [
-      'run.js',
-      'README.md',
-      'dist/lib/build-info._auto-generated_.js',
+      runJsMainProject,
+      readmeMdMainProject,
+      `${distMainProject}/${libFromCompiledDist}/${TaonGeneratedFiles.BUILD_INFO_AUTO_GENERATED_JS}`,
     ];
 
     for (const relativePathBundleBackend of copyToBackendBundle) {
@@ -386,7 +440,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     }
 
     const nodeJsAppNativeDeps = [
-      ...this.project.taonJson.getNativeDepsFor('angular-node-app'),
+      ...this.project.taonJson.getNativeDepsFor(
+        ReleaseArtifactTaon.ANGULAR_NODE_APP,
+      ),
       'lodash',
       'minimist',
       'fs-extra',
@@ -414,14 +470,11 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       }
     }
 
-    Helpers.writeJson(
-      [appDistOutBackendNodeAbsPath, config.file.package_json],
-      {
-        name: this.project.packageJson.name,
-        version: this.project.packageJson.version,
-        dependencies: dependenciesNodeJsApp,
-      } as PackageJson,
-    );
+    Helpers.writeJson([appDistOutBackendNodeAbsPath, packageJsonNpmLib], {
+      name: this.project.packageJson.name,
+      version: this.project.packageJson.version,
+      dependencies: dependenciesNodeJsApp,
+    } as PackageJson);
 
     this.project.framework.recreateFileFromCoreProject({
       relativePathInCoreProject: 'docker-templates/backend-app-node/Dockerfile',
@@ -429,10 +482,12 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     });
 
     this.project.framework.recreateFileFromCoreProject({
-      relativePathInCoreProject: 'app/src/assets/sql-wasm.wasm',
+      relativePathInCoreProject: `${templateFolderForArtifact(
+        buildOptions.release.targetArtifact,
+      )}/${srcNgProxyProject}/${assetsFromNgProj}/${CoreAssets.sqlWasmFile}`,
       customDestinationLocation: [
         appDistOutBackendNodeAbsPath,
-        'dist/sql-wasm.wasm',
+        `${distFromNgBuild}/${CoreAssets.sqlWasmFile}`,
       ],
     });
 
@@ -471,7 +526,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       : releaseOptions.release.skipStaticPagesVersioning;
     //#endregion
 
-    if (releaseOptions.release.releaseType === 'static-pages') {
+    if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
       //#region static pages release
       const releaseData = await this.staticPagesDeploy(
         appDistOutBrowserAngularAbsPath,
@@ -481,16 +536,16 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       projectsReposToPush.push(...releaseData.projectsReposToPush);
       //#endregion
     } else if (
-      releaseOptions.release.releaseType === 'local' ||
-      releaseOptions.release.releaseType === 'manual'
+      releaseOptions.release.releaseType === ReleaseType.LOCAL ||
+      releaseOptions.release.releaseType === ReleaseType.MANUAL
     ) {
       //#region copy to local release folder
       const localReleaseOutputBasePath =
-        releaseOptions.release.releaseType === 'local'
+        releaseOptions.release.releaseType === ReleaseType.LOCAL
           ? this.project.pathFor([
-              config.folder.local_release,
+              localReleaseMainProject,
               this.currentArtifactName,
-              `${this.project.name}-latest`,
+              `${this.project.name}${suffixLatest}`,
             ])
           : this.project.pathFor([
               `.${config.frameworkName}`,
@@ -514,7 +569,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         [
           localReleaseOutputBasePath,
           path.basename(appDistOutBackendNodeAbsPath),
-          config.file.package_json,
+          packageJsonNpmLib,
         ],
         'name',
         path.basename(appDistOutBackendNodeAbsPath),
@@ -524,7 +579,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         [
           localReleaseOutputBasePath,
           path.basename(appDistOutBackendNodeAbsPath),
-          config.file.package_json,
+          packageJsonNpmLib,
         ],
         'version',
         releaseOptions.release.resolvedNewVersion,
@@ -594,7 +649,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           : `http://localhost:${portBackendRelease}`;
 
         UtilsDotFile.setValuesKeysFromObject(
-          [localReleaseOutputBasePath, '.env'],
+          [localReleaseOutputBasePath, dotEnvFile],
           {
             [`HOST_BACKEND_PORT_${contextRealIndex}`]: portBackendRelease,
             [`HOST_URL_${contextRealIndex}`]: domainForContextBE,
@@ -614,19 +669,19 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         );
 
         UtilsDotFile.setCommentToKeyInDotFile(
-          [localReleaseOutputBasePath, '.env'],
+          [localReleaseOutputBasePath, dotEnvFile],
           `HOST_BACKEND_PORT_${contextRealIndex}`,
           `${CoreModels.tagForTaskName}="${taskNameBackendReleasePort}"`,
         );
         if (i === 0) {
           UtilsDotFile.setCommentToKeyInDotFile(
-            [localReleaseOutputBasePath, '.env'],
+            [localReleaseOutputBasePath, dotEnvFile],
             `HOST_BACKEND_PORT`,
             `${CoreModels.tagForTaskName}="${taskNameBackendReleasePort}"`,
           );
         }
         UtilsDotFile.setCommentToKeyInDotFile(
-          [localReleaseOutputBasePath, '.env'],
+          [localReleaseOutputBasePath, dotEnvFile],
           `FRONTEND_NORMAL_APP_PORT_${contextRealIndex}`,
           `${CoreModels.tagForTaskName}="${taskNameFrontendreleasePort}"`,
         );
@@ -634,7 +689,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
       if (!useDomain) {
         UtilsDotFile.addCommentAtTheBeginningOfDotFile(
-          [localReleaseOutputBasePath, '.env'],
+          [localReleaseOutputBasePath, dotEnvFile],
           `HINT! IF YOU NEED DOMAIN USE userDomain=true in env.ts`,
         );
       }
@@ -659,13 +714,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       );
 
       UtilsDotFile.setValueToDotFile(
-        [localReleaseOutputBasePath, '.env'],
+        [localReleaseOutputBasePath, dotEnvFile],
         'BUILD_DATE',
         `${dateformat(new Date(), 'dd-mm-yyyy_HH:MM:ss')}`,
       );
 
       UtilsDotFile.setValueToDotFile(
-        [localReleaseOutputBasePath, '.env'],
+        [localReleaseOutputBasePath, dotEnvFile],
         'NODE_ENV',
         `production`,
       );
@@ -673,7 +728,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
       const allValuesDotEnv = UtilsDotFile.getValuesKeysAsJsonObject([
         localReleaseOutputBasePath,
-        '.env',
+        dotEnvFile,
       ]);
 
       //#region update docker-compose file with env variables
@@ -684,6 +739,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       //#region prepare backend containers
       const backendTemplapteObj =
         dockerComposeFile.services['backend-app-node'];
+
       delete dockerComposeFile.services['backend-app-node'];
 
       const containerLabel = `${UtilsDocker.DOCKER_LABEL_KEY}="\${COMPOSE_PROJECT_NAME}"`;
@@ -743,16 +799,17 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         })();
 
         const specificForProjectSQliteDbLocation = crossPlatformPath([
-          `~/.${config.frameworkNames.productionFrameworkName}`,
+          UtilsOs.getRealHomeDir(),
+          dotTaonFolder,
           'cloud/docker-backend-databases',
           releaseOptions.website.domain,
           this.project.packageJson.version,
           contextName,
-          'databases',
+          databases,
         ]);
 
         ctxBackend.volumes = [
-          `${specificForProjectSQliteDbLocation}:/app/databases`,
+          `${specificForProjectSQliteDbLocation}:/app/${databases}`,
         ];
         //#endregion
 
@@ -825,18 +882,18 @@ ${dockerComposeYmlFileContent}
       //#endregion
 
       //#region create package.json with start script for whole build
-      Helpers.copyFile(this.project.pathFor(config.file.package_json), [
+      Helpers.copyFile(this.project.pathFor(packageJsonMainProject), [
         localReleaseOutputBasePath,
-        config.file.package_json,
+        packageJsonNpmLib,
       ]);
       Helpers.setValueToJSON(
-        [localReleaseOutputBasePath, config.file.package_json],
+        [localReleaseOutputBasePath, packageJsonNpmLib],
         'scripts',
         {},
       );
 
       Helpers.setValueToJSON(
-        [localReleaseOutputBasePath, config.file.package_json],
+        [localReleaseOutputBasePath, packageJsonNpmLib],
         'scripts.start',
         `taon preview ./docker-compose.yml`,
       );
@@ -874,10 +931,10 @@ ${dockerComposeYmlFileContent}
       `);
       //#endregion
 
-      if (releaseOptions.release.releaseType === 'local') {
+      if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
         Helpers.taskDone(`Local release done!`);
         // TODO
-      } else if (releaseOptions.release.releaseType === 'manual') {
+      } else if (releaseOptions.release.releaseType === ReleaseType.MANUAL) {
         Helpers.taskDone(`Manual release prepared!`);
         deploymentFunction = async () => {
           await this.deployToTaonCloud({

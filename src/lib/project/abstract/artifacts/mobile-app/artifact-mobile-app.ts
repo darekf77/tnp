@@ -1,4 +1,8 @@
-import { EnvOptions, ReleaseType } from '../../../../options';
+import {
+  EnvOptions,
+  ReleaseArtifactTaon,
+  ReleaseType,
+} from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
@@ -10,18 +14,20 @@ export class ArtifactMobileApp extends BaseArtifact<
   ReleasePartialOutput
 > {
   constructor(project: Project) {
-    super(project, 'mobile-app');
+    super(project, ReleaseArtifactTaon.MOBILE_APP);
   }
+
   async clearPartial(options: EnvOptions): Promise<void> {
     return void 0; // TODO implement
   }
 
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     if (!initOptions.release.targetArtifact) {
-      initOptions.release.targetArtifact = 'mobile-app'
+      initOptions.release.targetArtifact = ReleaseArtifactTaon.MOBILE_APP;
     }
     return initOptions;
   }
+
   async buildPartial(buildOptions: EnvOptions): Promise<{
     androidMobileAppApkPath: string;
     iosMobileAppIpaPath: string;

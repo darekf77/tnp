@@ -1,19 +1,29 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, fileName, LibTypeEnum } from 'tnp-core/src';
 import { CoreModels, crossPlatformPath, path } from 'tnp-core/src';
 import { fse } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
-import { iconVscode128Basename, tmpVscodeProj } from '../../../../constants';
+import {
+  assetsFor,
+  assetsFromNgProj,
+  assetsFromNpmLib,
+  assetsFromSrc,
+  generatedFromAssets,
+  iconVscode128Basename,
+  pwaGeneratedFolder,
+  srcMainProject,
+  tmpVscodeProj,
+} from '../../../../constants';
 import { ReleaseTypeWithDevelopmentArr } from '../../../../options';
 import type { Project } from '../../project';
 //#endregion
 
 const htmlBasename = 'html-pwa.html';
-const generatedPwa = [config.folder.generated, 'pwa'];
-const subPath = [config.folder.src, config.folder.assets, ...generatedPwa];
+const generatedPwa = [generatedFromAssets, pwaGeneratedFolder];
+const subPath = [srcMainProject, assetsFromSrc, ...generatedPwa];
 
 /**
  * Automatically brand you project (based on logo.png, taon.json, etc)
@@ -56,7 +66,7 @@ export class Branding extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     const manifest = Helpers.readJson([
       this.path,
-      config.file.manifest_webmanifest,
+      fileName.manifest_webmanifest,
     ]) as CoreModels.PwaManifest;
     return manifest.icons;
     //#endregion
@@ -66,26 +76,21 @@ export class Branding extends BaseFeatureForProject<Project> {
   //#region apply
   async apply(force = false): Promise<void> {
     //#region @backendFunc
-    if (this.project.typeIsNot('isomorphic-lib')) {
+    if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
       console.error(`Branding is only available for isomorphic-lib projects`);
       return;
     }
     const proj = this.project;
 
-    const sourceLogoPng = crossPlatformPath([
-      proj.location,
-      config.file.logo_png,
-    ]);
+    const sourceLogoPng = proj.pathFor(fileName.logo_png);
 
     if (!Helpers.exists(sourceLogoPng)) {
       const coreLogoProj = this.project.ins.by(
-        'isomorphic-lib',
+        LibTypeEnum.ISOMORPHIC_LIB,
         this.project.framework.frameworkVersion,
       );
-      const coreLogoPath = crossPlatformPath([
-        coreLogoProj.location,
-        config.file.logo_png,
-      ]);
+      const coreLogoPath = coreLogoProj.pathFor(fileName.logo_png);
+
       Helpers.copyFile(coreLogoPath, sourceLogoPng);
     }
 
@@ -100,7 +105,7 @@ export class Branding extends BaseFeatureForProject<Project> {
       }
     }
 
-    let pathIcons = `/${['assets', 'assets-for', proj.nameForNpmPackage, 'assets', ...generatedPwa].join('/')}`;
+    let pathIcons = `/${[assetsFromNgProj, assetsFor, proj.nameForNpmPackage, assetsFromNpmLib, ...generatedPwa].join('/')}`;
 
     const configuration = {
       path: pathIcons, // Path for overriding default icons path. `string`

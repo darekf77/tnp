@@ -2,7 +2,7 @@
 import { _, UtilsTerminal } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { EnvOptions } from '../../options';
+import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
 
 import { BaseCli } from './base-cli';
 //#endregion
@@ -24,7 +24,7 @@ class $Build extends BaseCli {
     await this.project.build(
       this.params.clone({
         release: {
-          targetArtifact: 'npm-lib-and-cli-tool',
+          targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
         },
         recursiveAction,
         finishCallback: () => this._exit(),
@@ -59,7 +59,7 @@ class $Build extends BaseCli {
     await this.project.build(
       this.params.clone({
         release: {
-          targetArtifact: 'npm-lib-and-cli-tool',
+          targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
         },
         build: {
           watch: true,
@@ -77,7 +77,7 @@ class $Build extends BaseCli {
         ...this.params,
         release: {
           ...this.params.release,
-          targetArtifact: 'npm-lib-and-cli-tool',
+          targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
         },
         finishCallback: () => this._exit(),
       }),
@@ -100,7 +100,7 @@ class $Build extends BaseCli {
           watch,
         },
         release: {
-          targetArtifact: 'vscode-plugin',
+          targetArtifact: ReleaseArtifactTaon.VSCODE_PLUGIN,
         },
         finishCallback: () => this._exit(),
       }),
@@ -117,7 +117,7 @@ class $Build extends BaseCli {
           websql: true,
         },
         release: {
-          targetArtifact: 'angular-node-app',
+          targetArtifact: ReleaseArtifactTaon.ANGULAR_NODE_APP,
         },
         finishCallback: () => this._exit(),
       }),
@@ -133,7 +133,7 @@ class $Build extends BaseCli {
           watch: true,
         },
         release: {
-          targetArtifact: 'angular-node-app',
+          targetArtifact: ReleaseArtifactTaon.ANGULAR_NODE_APP,
         },
         finishCallback: () => this._exit(),
       }),
@@ -152,7 +152,7 @@ class $Build extends BaseCli {
     await this.project.build(
       this.params.clone({
         release: {
-          targetArtifact: 'electron-app',
+          targetArtifact: ReleaseArtifactTaon.ELECTRON_APP,
         },
         build: {
           websql,
@@ -174,7 +174,7 @@ class $Build extends BaseCli {
     //       skipCodeCutting: true,
     //       skipTagGitPush: true,
     //       skipResolvingGitChanges: true,
-    //       targetArtifact: 'electron-app',
+    //       targetArtifact: ReleaseArtifactTaon.ELECTRON_APP,
     //       releaseType: 'local',
     //       envName: '__',
     //     },
@@ -197,14 +197,14 @@ class $Build extends BaseCli {
     //       skip: true,
     //     },
     //     release: {
-    //       targetArtifact: 'electron-app',
+    //       targetArtifact: ReleaseArtifactTaon.ELECTRON_APP,
     //     },
     //   }),
     // );
     // await this.project.build(
     //   this.params.clone({
     //     release: {
-    //       targetArtifact: 'electron-app',
+    //       targetArtifact: ReleaseArtifactTaon.ELECTRON_APP,
     //       releaseType: 'local',
     //     },
     //     build: {
@@ -273,8 +273,8 @@ class $Build extends BaseCli {
           skipNpmPublish: true,
           skipTagGitPush: true,
           skipReleaseQuestion: true,
-          targetArtifact: 'angular-node-app',
-          releaseType: 'manual',
+          targetArtifact: ReleaseArtifactTaon.ANGULAR_NODE_APP,
+          releaseType: ReleaseType.MANUAL,
         },
         build: {
           watch: false,
@@ -292,7 +292,7 @@ class $Build extends BaseCli {
     await this.project.build(
       this.params.clone({
         release: {
-          targetArtifact: 'angular-node-app',
+          targetArtifact: ReleaseArtifactTaon.ANGULAR_NODE_APP,
         },
         build: {
           watch: true,
@@ -308,7 +308,7 @@ class $Build extends BaseCli {
     await this.project.build(
       this.params.clone({
         release: {
-          targetArtifact: 'npm-lib-and-cli-tool',
+          targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
         },
         build: {
           watch: true,
@@ -318,7 +318,7 @@ class $Build extends BaseCli {
     await this.project.build(
       this.params.clone({
         release: {
-          targetArtifact: 'angular-node-app',
+          targetArtifact: ReleaseArtifactTaon.ANGULAR_NODE_APP,
         },
         build: {
           watch: true,
@@ -332,7 +332,7 @@ class $Build extends BaseCli {
     await this.project.build(
       this.params.clone({
         release: {
-          targetArtifact: 'npm-lib-and-cli-tool',
+          targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
         },
         build: {
           watch: true,
@@ -342,7 +342,7 @@ class $Build extends BaseCli {
     await this.project.build(
       this.params.clone({
         release: {
-          targetArtifact: 'electron-app',
+          targetArtifact: ReleaseArtifactTaon.ELECTRON_APP,
         },
         build: {
           watch: true,

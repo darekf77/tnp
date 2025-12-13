@@ -1,6 +1,6 @@
 //#region imports
 import axios from 'axios';
-import { config } from 'tnp-core/src';
+import { config, taonPackageName } from 'tnp-core/src';
 import { chalk, Helpers, UtilsNetwork, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { UtilsOs } from 'tnp-core/src';
@@ -40,7 +40,7 @@ export async function start(
     });
   }
 
-  if (config.frameworkNames.productionFrameworkName === config.frameworkName) {
+  if (taonPackageName === config.frameworkName) {
     /**
      * ISSUE largest http request sometime are failing ... but with second try everything is OK
      */

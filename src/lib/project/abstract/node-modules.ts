@@ -1,5 +1,5 @@
 //#region imports
-import { config, fileName } from 'tnp-core/src';
+import { config, fileName, LibTypeEnum, taonPackageName } from 'tnp-core/src';
 import {
   path,
   crossPlatformPath,
@@ -15,7 +15,28 @@ import {
   Helpers,
 } from 'tnp-helpers/src';
 
-import { SKIP_CORE_CHECK_PARAM, tmpLocalCopytoProjDist } from '../../constants';
+import {
+  assetsFromNgProj,
+  binMainProject,
+  browserMainProject,
+  distMainProject,
+  dotGitIgnoreMainProject,
+  dotInstallDate,
+  dotNpmIgnoreMainProject,
+  dotNpmrcMainProject,
+  libFromCompiledDist,
+  libFromSrc,
+  nodeModulesMainProject,
+  packageJsonLockMainProject,
+  packageJsonMainProject,
+  SKIP_CORE_CHECK_PARAM,
+  srcDtsFromNpmPackage,
+  srcFromTaonImport,
+  taonJsonMainProject,
+  tmpLocalCopytoProjDist,
+  websqlMainProject,
+  yarnLockMainProject,
+} from '../../constants';
 
 import type { NpmHelpers } from './npm-helpers';
 import type { Project } from './project';
@@ -98,8 +119,7 @@ export class NodeModules extends BaseNodeModules {
     } else {
       //#region display message about long process for core container
       if (
-        config.frameworkName ===
-          config.frameworkNames.productionFrameworkName &&
+        config.frameworkName === taonPackageName &&
         this.project.framework.isContainerCoreProject
       ) {
         Helpers.info(`
@@ -124,11 +144,11 @@ export class NodeModules extends BaseNodeModules {
       await this.project.packagesRecognition.start('after npm install');
       if (!options.generateYarnOrPackageJsonLock) {
         if (options.useYarn) {
-          const yarnLockPath = this.project.pathFor(config.file.yarn_lock);
+          const yarnLockPath = this.project.pathFor(yarnLockMainProject);
           const yarnLockExists = fse.existsSync(yarnLockPath);
           if (yarnLockExists) {
             if (this.project.git.isInsideGitRepo) {
-              this.project.git.resetFiles(config.file.yarn_lock);
+              this.project.git.resetFiles(yarnLockMainProject);
             }
           } else {
             fse.existsSync(yarnLockPath) &&
@@ -136,7 +156,7 @@ export class NodeModules extends BaseNodeModules {
           }
         } else {
           const packageLockPath = this.project.pathFor(
-            config.file.package_lock_json,
+            packageJsonLockMainProject,
           );
           fse.existsSync(packageLockPath) &&
             Helpers.removeFileIfExists(packageLockPath);
@@ -144,7 +164,7 @@ export class NodeModules extends BaseNodeModules {
       }
 
       Helpers.writeFile(
-        [this.project.nodeModules.path, '.install-date'],
+        [this.project.nodeModules.path, dotInstallDate],
         `[${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}]`,
       );
       if (this.project.nodeModules.shouldDedupePackages) {
@@ -171,7 +191,7 @@ export class NodeModules extends BaseNodeModules {
   async linkFromCoreContainer(): Promise<void> {
     //#region @backendFunc
     const coreContainer = this.project.ins.by(
-      'container',
+      LibTypeEnum.CONTAINER,
       this.project.framework.frameworkVersion,
     );
     if (this.project.location === coreContainer.location) {
@@ -187,11 +207,7 @@ export class NodeModules extends BaseNodeModules {
     await coreContainer.nodeModules.makeSureInstalled();
 
     //#region respect other proper core container linked node_modules
-    if (
-      config.frameworkNames.productionFrameworkName.includes(
-        config.frameworkName,
-      )
-    ) {
+    if (taonPackageName === config.frameworkName) {
       try {
         const realpathCCfromCurrentProj = fse.realpathSync(
           this.project.nodeModules.path,
@@ -265,20 +281,20 @@ export class NodeModules extends BaseNodeModules {
     const jsDtsMapsArr = ['.js', '.js.map', '.d.ts'];
     if (this.project.framework.isStandaloneProject) {
       return [
-        config.folder.bin,
-        config.folder.lib,
-        config.folder.assets,
-        config.folder.websql,
-        config.folder.browser,
-        config.file.taon_jsonc,
-        config.file.tnpEnvironment_json,
-        config.file._gitignore,
-        config.file._npmignore,
-        config.file._npmrc,
-        'src.d.ts',
+        binMainProject,
+        libFromCompiledDist,
+        assetsFromNgProj,
+        websqlMainProject,
+        browserMainProject,
+        taonJsonMainProject,
+        fileName.tnpEnvironment_json,
+        dotGitIgnoreMainProject,
+        dotNpmIgnoreMainProject,
+        dotNpmrcMainProject,
+        srcDtsFromNpmPackage,
         ...this.project.taonJson.resources,
-        config.file.package_json,
-        config.file.package_lock_json,
+        packageJsonMainProject,
+        packageJsonLockMainProject,
         ...jsDtsMapsArr.reduce((a, b) => {
           return a.concat([
             ...['cli', 'index', 'start', 'run', 'global-typings'].map(
@@ -289,57 +305,6 @@ export class NodeModules extends BaseNodeModules {
       ];
     }
     return [];
-    //#endregion
-  }
-  //#endregion
-
-  //#region update from release dist
-  async updateFromReleaseDist(sourceOfCompiledProject: Project): Promise<void> {
-    //#region @backendFunc
-
-    //#region source folder
-    const sourcePathToLocalProj = crossPlatformPath([
-      sourceOfCompiledProject.location,
-      config.folder.tmpDistRelease,
-      config.folder.dist,
-      'project',
-      sourceOfCompiledProject.name,
-      tmpLocalCopytoProjDist,
-      config.folder.node_modules,
-      sourceOfCompiledProject.name,
-    ]);
-
-    //#endregion
-
-    //#region copy process
-    const destBasePath = crossPlatformPath([
-      this.project.nodeModules.path,
-      sourceOfCompiledProject.name,
-    ]);
-    for (const fileOrFolder of sourceOfCompiledProject.nodeModules
-      .compiledProjectFilesAndFolders) {
-      const dest = crossPlatformPath([destBasePath, fileOrFolder]);
-      const source = crossPlatformPath([sourcePathToLocalProj, fileOrFolder]);
-
-      if (Helpers.exists(source)) {
-        // Helpers.info(`Release update copying
-        // EXISTS ${Helpers.exists(source)}
-        // ${source}
-        //  to
-        // ${dest}`);
-        if (Helpers.isFolder(source)) {
-          Helpers.copy(source, dest, { overwrite: true, recursive: true });
-        } else {
-          Helpers.copyFile(source, dest);
-        }
-      }
-    }
-    //#endregion
-
-    await sourceOfCompiledProject.packagesRecognition.start(
-      'after release update',
-    );
-
     //#endregion
   }
   //#endregion

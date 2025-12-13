@@ -395,7 +395,7 @@ export function activateMenuTnp(
         //             },
         //           },
         //         ),
-        // ...(CURRENT_PROJECT.typeIs('isomorphic-lib', 'container')
+        // ...(CURRENT_PROJECT.typeIs(LibTypeEnum.ISOMORPHIC_LIB, LibTypeEnum.CONTAINER)
         //   ? [
         //       !isContainerOrganizationCurrentProj ? coreProjectItem : void 0,
         //       coreContainerItem,

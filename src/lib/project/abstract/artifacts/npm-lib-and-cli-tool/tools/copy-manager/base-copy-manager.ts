@@ -1,7 +1,13 @@
 //#region imports
 import { ChangeOfFile } from 'incremental-compiler/src';
 import { Log } from 'ng2-logger/src';
-import { config } from 'tnp-core/src';
+import {
+  config,
+  folderName,
+  LibTypeEnum,
+  taonPackageName,
+  tnpPackageName,
+} from 'tnp-core/src';
 import { crossPlatformPath, _ } from 'tnp-core/src';
 import { fse } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
@@ -11,7 +17,14 @@ import { PackageJson } from 'type-fest';
 
 import {
   dirnameFromSourceToProject,
+  distFromNgBuild,
+  nodeModulesMainProject,
+  packageJsonMainProject,
+  packageJsonNpmLib,
+  sourceLinkInNodeModules,
+  srcMainProject,
   tmpAlreadyStartedCopyManager,
+  tmpSrcDist,
   TO_REMOVE_TAG,
   whatToLinkFromCore,
 } from '../../../../../../constants';
@@ -43,8 +56,11 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 > {
   //#region fields
   public _isomorphicPackages = [] as string[];
+
   protected buildOptions: EnvOptions;
+
   protected copyto: Project[] = [];
+
   protected renameDestinationFolder?: string;
 
   //#region getters & methods / select all project to copy to
@@ -54,7 +70,10 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 
     const independentProjects = [containerCoreProj];
 
-    if (config.frameworkName === 'tnp' && this.project.name !== 'tnp') {
+    if (
+      config.frameworkName === tnpPackageName &&
+      this.project.name !== tnpPackageName
+    ) {
       // tnp in tnp is not being used at all
       independentProjects.push(this.project.ins.Tnp);
     }
@@ -71,19 +90,17 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 
   protected readonly notAllowedFiles: string[] = [
     '.DS_Store',
-    // config.file.index_d_ts,
+    // fileName.index_d_ts,
   ];
 
   protected readonly sourceFolders = [
     //#region @backend
-    config.folder.src,
-    config.folder.source,
-    config.folder.node_modules,
-    config.folder.tempSrcDist,
+    srcMainProject,
+    sourceLinkInNodeModules,
+    nodeModulesMainProject,
+    tmpSrcDist,
     ...CopyMangerHelpers.browserwebsqlFolders.map(currentBrowserFolder => {
-      return crossPlatformPath(
-        path.join(currentBrowserFolder, config.folder.src),
-      );
+      return crossPlatformPath([currentBrowserFolder, srcMainProject]);
     }),
     //#endregion
   ];
@@ -129,14 +146,14 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 
     let result: Project[] = [];
 
-    const isTaonProdCli =
-      config.frameworkNames.productionFrameworkName.includes(
-        config.frameworkName,
-      );
+    const isTaonProdCli = taonPackageName === config.frameworkName;
 
     //#region resolve all possible project for package distribution
     let projectForNodeModulesPkgUpdate: Project[] = [
-      this.project.ins.by('container', this.project.framework.frameworkVersion),
+      this.project.ins.by(
+        LibTypeEnum.CONTAINER,
+        this.project.framework.frameworkVersion,
+      ),
       this.project.framework.coreContainer,
     ];
     //#endregion
@@ -153,7 +170,11 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
       try {
         const possibleTnpLocation = crossPlatformPath(
           dirnameFromSourceToProject(
-            this.project.pathFor([config.folder.node_modules, 'tnp', 'source']),
+            this.project.pathFor([
+              nodeModulesMainProject,
+              tnpPackageName,
+              sourceLinkInNodeModules,
+            ]),
           ),
         );
         const tnpProject = this.project.ins.From(possibleTnpLocation);
@@ -177,7 +198,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
       result = [this.localTempProj, ...projectForNodeModulesPkgUpdate];
     }
 
-    return Helpers.uniqArray<Project>(result, 'location');
+    return Helpers.uniqArray<Project>(result, 'location' as keyof Project);
     //#endregion
   }
   //#endregion
@@ -237,7 +258,6 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 
     SourceMappingUrl.fixContent(absoluteFilePath, this.buildOptions);
 
-    const outDir = config.folder.dist;
     let specificFileRelativePath: string;
     let absoluteAssetFilePath: string;
     if (absoluteFilePath.startsWith(this.monitoredOutDir)) {
@@ -267,7 +287,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
       this._copyBuildedDistributionTo(projectToCopy, {
         absoluteAssetFilePath,
         specificFileRelativePath: event && specificFileRelativePath,
-        outDir: outDir as any,
+        outDir: distFromNgBuild as 'dist',
         event,
       });
     }
@@ -285,7 +305,6 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   ): Promise<void> {
     //#region @backendFunc
 
-
     if (
       this.project.hasFile(tmpAlreadyStartedCopyManager) &&
       this.project.readFile(tmpAlreadyStartedCopyManager) === '-'
@@ -302,9 +321,6 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
       this.contentReplaced(fileAbsPath);
     }
 
-    // files: string[]
-    const outDir = config.folder.dist;
-
     const projectToCopyTo = this.projectToCopyTo;
     if (initialParams?.skipCopyDistToLocalTempProject) {
       projectToCopyTo.splice(
@@ -315,7 +331,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
       );
     }
 
-    // (${proj.location}/${config.folder.node_modules}/${this.rootPackageName})
+    // (${proj.location}/${folderName.node_modules}/${this.rootPackageName})
 
     if (projectToCopyTo.length > 0) {
       const porjectINfo =
@@ -338,7 +354,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       const projectToCopy = projectToCopyTo[index];
       log.data(`copying to ${projectToCopy?.name}`);
       this._copyBuildedDistributionTo(projectToCopy, {
-        outDir: outDir as any,
+        outDir: distFromNgBuild as 'dist',
       });
       // if (this.buildOptions.buildForRelease && !global.tnpNonInteractive) {
       //   Helpers.info('Things copied to :' + projectToCopy?.name);
@@ -362,6 +378,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
     return this._copyBuildedDistributionTo(destination);
     //#endregion
   }
+
   /**
    * There are 3 typese of --copyto build
    * 1. dist build (wihout source maps buit without links)
@@ -458,15 +475,14 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       }
 
       //#region copy/link package.json
-      const destPackageInNodeModules = crossPlatformPath([
-        destination.location,
-        config.folder.node_modules,
+      const destPackageInNodeModules = destination.pathFor([
+        nodeModulesMainProject,
         this.rootPackageName,
       ]);
 
       const packageJsonInDest = crossPlatformPath([
         destPackageInNodeModules,
-        config.file.package_json,
+        packageJsonNpmLib,
       ]);
 
       try {
@@ -474,12 +490,12 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       } catch (e) {}
       if (this.isWatchCompilation && !isTempLocalProj) {
         Helpers.createSymLink(
-          this.project.pathFor(config.file.package_json),
+          this.project.pathFor(packageJsonMainProject),
           packageJsonInDest,
         );
       } else {
         Helpers.copyFile(
-          this.project.pathFor(config.file.package_json),
+          this.project.pathFor(packageJsonMainProject),
           packageJsonInDest,
         );
       }
@@ -487,15 +503,15 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
 
       // TODO not working werid tsc issue with browser/index
       // {const projectOudBorwserSrc = path.join(destination.location,
-      //   config.folder.node_modules,
+      //   folderName.node_modules,
       //   rootPackageName,
-      //   config.file.package_json
+      //   fileName.package_json
       // );
       // const projectOudBorwserDest = path.join(destination.location,
-      //   config.folder.node_modules,
+      //   folderName.node_modules,
       //   rootPackageName,
-      //   config.folder.browser,
-      //   config.file.package_json
+      //   folderName.browser,
+      //   fileName.package_json
       // );
       // Helpers.copyFile(projectOudBorwserSrc, projectOudBorwserDest);}
       //#endregion
@@ -511,10 +527,12 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
    * project/node_modules/<rootPackageName> # like 'ng2-rest' or '@angular'
    */
   abstract get rootPackageName(): string;
+
   /**
    * Path for local-temp-project-path
    */
   abstract get localTempProjPath(): string;
+
   /**
    * connected with specificRelativeFilePath
    * gives file in compilation folder... meaning:
@@ -534,19 +552,26 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
   ): string;
 
   abstract initalFixForDestination(destination: Project): void;
+
   abstract copySourceMaps(destination: Project, isTempLocalProj: boolean);
+
   abstract addSourceSymlinks(destination: Project);
+
   abstract removeSourceSymlinks(destination: Project);
+
   abstract handleCopyOfSingleFile(
     destination: Project,
     isTempLocalProj: boolean,
     specificFileRelativePath: string,
   );
+
   abstract handleCopyOfAssetFile(
     absoluteAssetFilePath: string,
     destination: Project,
   );
+
   abstract replaceIndexDtsForEntryProjectIndex(destination: Project);
+
   /**
    * fix d.ts files in angular build - problem with require() in d.ts with wrong name
    */
@@ -554,8 +579,11 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
     destination: Project,
     isTempLocalProj: boolean,
   );
+
   abstract copySharedAssets(destination: Project, isTempLocalProj: boolean);
+
   abstract linksForPackageAreOk(destination: Project): boolean;
+
   abstract updateBackendFullDtsFiles(destinationOrDist: Project | string): void;
 
   //#endregion

@@ -1,8 +1,21 @@
-import { config, PREFIXES } from 'tnp-core/src';
+import { config, folderName, PREFIXES } from 'tnp-core/src';
 import { crossPlatformPath, glob, path, _, fse } from 'tnp-core/src';
+import { fileName } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
 import {
+  assetsFromNpmPackage,
+  assetsFromSrc,
+  distMainProject,
+  distNoCutSrcMainProject,
+  indexDtsMainProject,
+  indexDtsNpmPackage,
+  nodeModulesMainProject,
+  packageJsonNpmLib,
+  projectsFromNgTemplate,
+  sharedFromAssets,
+  sourceLinkInNodeModules,
+  srcMainProject,
   THIS_IS_GENERATED_INFO_COMMENT,
   tmpLibsForDist,
   tmpLocalCopytoProjDist,
@@ -69,14 +82,11 @@ export class CopyManagerStandalone extends CopyManager {
   //#region links ofr packages are ok
   linksForPackageAreOk(destination: Project): boolean {
     //#region @backendFunc
-    const destPackageLinkSourceLocation = crossPlatformPath(
-      path.join(
-        destination.location,
-        config.folder.node_modules,
-        this.rootPackageName,
-        config.folder.source,
-      ),
-    );
+    const destPackageLinkSourceLocation = destination.pathFor([
+      nodeModulesMainProject,
+      this.rootPackageName,
+      sourceLinkInNodeModules,
+    ]);
     // console.log({ destPackageLinkSourceLocation });
 
     return Helpers.exists(destPackageLinkSourceLocation);
@@ -92,17 +102,17 @@ export class CopyManagerStandalone extends CopyManager {
       fse.unlinkSync(
         crossPlatformPath([
           this.project.framework.tmpLocalProjectFullPath,
-          config.file.package_json,
+          packageJsonNpmLib,
         ]),
       );
     } catch (error) {}
     Helpers.removeSymlinks(this.localTempProjPath); // QUICK_FIX remove symlinks
     Helpers.remove(this.localTempProjPath);
-    Helpers.writeFile([this.localTempProjPath, config.file.package_json], {
+    Helpers.writeFile([this.localTempProjPath, packageJsonNpmLib], {
       name: path.basename(this.localTempProjPath),
       version: '0.0.0',
     });
-    Helpers.mkdirp([this.localTempProjPath, config.folder.node_modules]);
+    Helpers.mkdirp([this.localTempProjPath, nodeModulesMainProject]);
     //#endregion
   }
   //#endregion
@@ -125,11 +135,7 @@ export class CopyManagerStandalone extends CopyManager {
   //#region local temp proj path
   get localTempProjPath() {
     //#region @backendFunc
-    const localProjPath = crossPlatformPath([
-      this.project.location,
-      tmpLocalCopytoProjDist,
-    ]);
-    return localProjPath;
+    return this.project.pathFor(tmpLocalCopytoProjDist);
     //#endregion
   }
   //#endregion
@@ -156,23 +162,17 @@ export class CopyManagerStandalone extends CopyManager {
   //#region monitored out dir
   get monitoredOutDir(): string {
     //#region @backendFunc
-    const monitorDir: string = crossPlatformPath(
-      path.join(this.project.location, config.folder.dist),
-    );
-    return monitorDir;
+    return this.project.pathFor(distMainProject);
     //#endregion
   }
 
   get monitoredOutDirSharedAssets(): string[] {
     //#region @backendFunc
-    const monitorDir: string = crossPlatformPath(
-      path.join(
-        this.project.location,
-        config.folder.src,
-        config.folder.assets,
-        config.folder.shared,
-      ),
-    );
+    const monitorDir = this.project.pathFor([
+      srcMainProject,
+      assetsFromSrc,
+      sharedFromAssets,
+    ]);
     return [monitorDir];
     //#endregion
   }
@@ -182,9 +182,8 @@ export class CopyManagerStandalone extends CopyManager {
   initalFixForDestination(destination: Project): void {
     //#region @backendFunc
 
-    const destPackageInNodeModules = crossPlatformPath([
-      destination.location,
-      config.folder.node_modules,
+    const destPackageInNodeModules = destination.pathFor([
+      nodeModulesMainProject,
       this.rootPackageName,
     ]);
 
@@ -243,22 +242,23 @@ export class CopyManagerStandalone extends CopyManager {
     }
 
     let toReplaceString2 = isBrowser
-      ? `../${tmpLibsForDist}/${this.project.name}/projects/${this.project.name}/${config.folder.src}`
+      ? `../${tmpLibsForDist}/${this.project.name}` +
+        `/${projectsFromNgTemplate}/${this.project.name}/${srcMainProject}`
       : `../${tmpSourceDist}`;
 
     let toReplaceString1 = `"${toReplaceString2}`;
 
     if (isBrowser) {
       // TODO is angular maps not working in chrome debugger
-      // content = content.replace(regex1, `"./${config.folder.src}`);
-      // content = content.replace(regex2, config.folder.src);
+      // content = content.replace(regex1, `"./${folderName.src}`);
+      // content = content.replace(regex2, folderName.src);
     } else {
       if (isForLaunchJsonDebugging) {
         const regex2 = new RegExp(
           Helpers.escapeStringForRegEx(toReplaceString2),
           'g',
         );
-        content = content.replace(regex2, `../${config.folder.src}`);
+        content = content.replace(regex2, `../${srcMainProject}`);
       } else {
         const regex1 = new RegExp(
           Helpers.escapeStringForRegEx(toReplaceString1),
@@ -268,8 +268,8 @@ export class CopyManagerStandalone extends CopyManager {
           Helpers.escapeStringForRegEx(toReplaceString2),
           'g',
         );
-        content = content.replace(regex1, `"./${config.folder.src}`);
-        content = content.replace(regex2, config.folder.src);
+        content = content.replace(regex1, `"./${srcMainProject}`);
+        content = content.replace(regex2, srcMainProject);
       }
     }
 
@@ -308,7 +308,7 @@ export class CopyManagerStandalone extends CopyManager {
             return '';
           }
 
-          const localProjFolderName = `${tmpLocalCopytoProjDist}/${config.folder.node_modules}/${this.rootPackageName}`;
+          const localProjFolderName = `${tmpLocalCopytoProjDist}/${nodeModulesMainProject}/${this.rootPackageName}`;
 
           let dirnameAbs = crossPlatformPath(path.dirname(absFilePath));
           if (dirnameAbs.includes(localProjFolderName)) {
@@ -369,7 +369,7 @@ export class CopyManagerStandalone extends CopyManager {
             : `${this.rootPackageName}/${path.basename(
                 path.dirname(path.dirname(path.dirname(sharedAssetsPath))),
               )}`
-        }/${config.folder.assets}/${config.folder.shared}`,
+        }/${assetsFromSrc}/${sharedFromAssets}`,
       );
 
       Helpers.copy(sharedAssetsPath, dest, {
@@ -419,15 +419,11 @@ export class CopyManagerStandalone extends CopyManager {
   //#region replace d.ts files in destination after copy
   replaceIndexDtsForEntryProjectIndex(destination: Project) {
     //#region @backendFunc
-    const location = destination.nodeModules.pathFor(this.rootPackageName);
-    Helpers.writeFile(
-      path.join(
-        // override dts to easly debugging
-        location,
-        config.file.index_d_ts,
-      ),
-      `export * from './${config.folder.src}';\n`,
-    );
+    const location = destination.nodeModules.pathFor([
+      this.rootPackageName,
+      indexDtsNpmPackage,
+    ]);
+    Helpers.writeFile(location, `export * from './${srcMainProject}';\n`);
     //#endregion
   }
   //#endregion
@@ -435,12 +431,10 @@ export class CopyManagerStandalone extends CopyManager {
   //#region add source symlinks
   addSourceSymlinks(destination: Project) {
     //#region @backendFunc
-    const source = crossPlatformPath(
-      path.join(
-        destination.nodeModules.pathFor(this.rootPackageName),
-        config.folder.source,
-      ),
-    );
+    const source = crossPlatformPath([
+      destination.nodeModules.pathFor(this.rootPackageName),
+      sourceLinkInNodeModules,
+    ]);
 
     const srcDts = crossPlatformPath([
       destination.nodeModules.pathFor(this.rootPackageName),
@@ -486,7 +480,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     const source = crossPlatformPath(
       path.join(
         destination.nodeModules.pathFor(this.rootPackageName),
-        config.folder.source,
+        sourceLinkInNodeModules,
       ),
     );
 
@@ -533,7 +527,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     const mapFiles = glob.sync(filesPattern, {
       ignore: forBrowser
         ? []
-        : [`${config.folder.browser}/**/*.*`, `${config.folder.websql}/**/*.*`],
+        : [`${folderName.browser}/**/*.*`, `${folderName.websql}/**/*.*`],
     });
 
     for (let index = 0; index < mapFiles.length; index++) {
@@ -600,10 +594,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
     const mapBackendFilesPattern = `${tmpLocalProjPackageLocation}/**/*.js.map`;
     const mapBackendFiles = glob.sync(mapBackendFilesPattern, {
-      ignore: [
-        `${config.folder.browser}/**/*.*`,
-        `${config.folder.websql}/**/*.*`,
-      ],
+      ignore: [`${folderName.browser}/**/*.*`, `${folderName.websql}/**/*.*`],
     });
 
     const toCopy = [...allMjsBrowserFiles, ...mapBackendFiles];
@@ -687,7 +678,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
           '',
         );
         const dest = destination.nodeModules.pathFor(
-          `${this.rootPackageName}/${config.folder.assets}/${config.folder.shared}/${relativePath}`,
+          `${this.rootPackageName}/${assetsFromNpmPackage}/${sharedFromAssets}/${relativePath}`,
         );
         Helpers.remove(dest, true);
         if (Helpers.exists(absoluteAssetFilePath)) {
@@ -750,11 +741,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
     let absOrgFilePathInDist = crossPlatformPath(
       path.normalize(
-        path.join(
-          this.project.location,
-          config.folder.dist,
-          specificFileRelativePath,
-        ),
+        this.project.pathFor([distMainProject, specificFileRelativePath]),
       ),
     );
 
@@ -762,8 +749,8 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     // and do not allow
     if (destinationFilePath.endsWith('d.ts')) {
       const newAbsOrgFilePathInDist = absOrgFilePathInDist.replace(
-        `/${config.folder.dist}/${specificFileRelativePath}`,
-        `/${config.folder.dist}-nocutsrc/${specificFileRelativePath}`,
+        `/${distMainProject}/${specificFileRelativePath}`,
+        `/${distNoCutSrcMainProject}/${specificFileRelativePath}`,
       );
       if (!Helpers.exists(newAbsOrgFilePathInDist)) {
         // Helpers.log(
@@ -805,9 +792,9 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     }
 
     // TODO check this
-    if (specificFileRelativePath === config.file.package_json) {
+    if (specificFileRelativePath === fileName.package_json) {
       // TODO this is VSCODE/typescirpt new fucking issue
-      // Helpers.copyFile(sourceFile, path.join(path.dirname(destinationFile), config.folder.browser, path.basename(destinationFile)));
+      // Helpers.copyFile(sourceFile, path.join(path.dirname(destinationFile), folderName.browser, path.basename(destinationFile)));
     }
     //#endregion
   }
@@ -920,7 +907,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         absMapFilePathInLocalProjNodeModulesPackage,
       ) &&
       path.basename(absMapFilePathInLocalProjNodeModulesPackage) !==
-        config.file.package_json // TODO QUICK_FIX
+        packageJsonNpmLib // TODO QUICK_FIX
     ) {
       const fixedContentNonCLI = this.changedJsMapFilesInternalPathesForDebug(
         Helpers.readFile(absMapFilePathInLocalProjNodeModulesPackage),
@@ -962,7 +949,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         monitoredOutDirFileToReplaceBack,
       ) &&
       path.basename(monitoredOutDirFileToReplaceBack) !==
-        config.file.package_json // TODO QUICK_FIX
+        packageJsonNpmLib // TODO QUICK_FIX
     ) {
       const fixedContentCLIDebug = this.changedJsMapFilesInternalPathesForDebug(
         Helpers.readFile(monitoredOutDirFileToReplaceBack),
@@ -1010,10 +997,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   //#region update backend full dts files
   updateBackendFullDtsFiles(destinationOrDist: Project | string) {
     //#region @backendFunc
-    const base = crossPlatformPath([
-      this.project.location,
-      `${config.folder.dist}-nocutsrc`,
-    ]);
+    const base = this.project.pathFor(distNoCutSrcMainProject);
 
     const filesToUpdate = Helpers.filesFrom(base, true)
       .filter(f => f.endsWith('.d.ts'))

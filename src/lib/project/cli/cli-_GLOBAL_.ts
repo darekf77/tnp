@@ -6,7 +6,15 @@ import {
 import { walk } from 'lodash-walk-object/src';
 import { MagicRenamer } from 'magic-renamer/src';
 import * as semver from 'semver';
-import { config, fg, UtilsFilesFoldersSync } from 'tnp-core/src';
+import {
+  config,
+  dotTaonFolder,
+  fg,
+  LibTypeEnum,
+  taonContainers,
+  tnpPackageName,
+  UtilsFilesFoldersSync,
+} from 'tnp-core/src';
 import {
   TAGS,
   backendNodejsOnlyFiles,
@@ -57,13 +65,21 @@ import { BaseCLiWorkerStartMode } from 'tnp-helpers/src';
 import { createGenerator, SchemaGenerator } from 'ts-json-schema-generator';
 
 import {
+  containerPrefix,
   DEFAULT_FRAMEWORK_VERSION,
   keysMap,
+  nodeModulesMainProject,
+  packageJsonMainProject,
+  readmeMdMainProject,
+  result_packages_json,
+  srcMainProject,
   taonConfigSchemaJsonContainer,
   taonConfigSchemaJsonStandalone,
+  taonJsonMainProject,
+  tmpIsomorphicPackagesJson,
 } from '../../constants';
 import { Models } from '../../models';
-import { EnvOptions } from '../../options';
+import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
 import { Project } from '../abstract/project';
 import type { TaonProjectResolve } from '../abstract/project-resolve';
 //#endregion
@@ -139,7 +155,7 @@ export class $Global extends BaseGlobalCommandLine<
   //#region detect packages
   async detectPackages() {
     //#region @backendFunc
-    this.project.removeFile(config.file.tmpIsomorphicPackagesJson);
+    this.project.removeFile(tmpIsomorphicPackagesJson);
     await this.project.packagesRecognition.start('detecting packages');
     this._exit();
     //#endregion
@@ -193,6 +209,8 @@ export class $Global extends BaseGlobalCommandLine<
   //#region fork
   async fork() {
     //#region @backendFunc
+    Helpers.error(`Not implemented yet`, false, true);
+    return; // TODO @LAST
     const argv = this.args;
     const githubUrl = _.first(argv);
     let projectName = _.last(githubUrl.replace('.git', '').split('/'));
@@ -205,40 +223,18 @@ export class $Global extends BaseGlobalCommandLine<
       path.join(this.project.location, projectName),
     ) as Project;
     Helpers.setValueToJSON(
-      path.join(newProj.location, config.file.package_json),
+      path.join(newProj.location, packageJsonMainProject),
       'name',
       projectName,
     );
     Helpers.setValueToJSON(
-      path.join(newProj.location, config.file.package_json),
+      path.join(newProj.location, packageJsonMainProject),
       'version',
       '0.0.0',
     );
-    if (newProj.containsFile('angular.json')) {
-      Helpers.setValueToJSON(
-        path.join(newProj.location, config.file.package_json),
-        'tnp.type',
-        'angular-lib',
-      );
-      Helpers.setValueToJSON(
-        path.join(newProj.location, config.file.package_json),
-        'tnp.version',
-        'v2',
-      );
-      Helpers.setValueToJSON(
-        path.join(newProj.location, config.file.package_json),
-        'scripts',
-        {},
-      );
-      // const dependencies = Helpers.readValueFromJson(path.join(newProj.location, config.file.package_json), 'dependencies') as Object;
-      await newProj.init(EnvOptions.from({ purpose: 'initing after fork' }));
-      newProj = this.ins.From(
-        path.join(this.project.location, projectName),
-      ) as Project;
-      newProj.removeFile('.browserslistrc');
-    }
+
     Helpers.writeFile(
-      path.join(newProj.location, config.file.README_MD),
+      newProj.pathFor(readmeMdMainProject),
       `
   # ${projectName}
 
@@ -262,6 +258,7 @@ export class $Global extends BaseGlobalCommandLine<
     this._exit();
     //#endregion
   }
+
   watchers() {
     //#region @backendFunc
     Helpers.run(
@@ -286,7 +283,7 @@ export class $Global extends BaseGlobalCommandLine<
     //#region @backendFunc
     // const proj = this.project as Project;
     const cwd = this.cwd;
-    const watchLocation = crossPlatformPath([cwd, config.folder.src]);
+    const watchLocation = crossPlatformPath([cwd, srcMainProject]);
     const symlinkCatalog = crossPlatformPath([cwd, 'symlinkCatalog']);
     const symlinkCatalogInWatch = crossPlatformPath([watchLocation, 'symlink']);
     const symlinkCatalogFile = crossPlatformPath([
@@ -627,16 +624,17 @@ export class $Global extends BaseGlobalCommandLine<
 
   dedupecore() {
     //#region @backendFunc
-    const coreProject = Project.ins.by('container') as Project;
+    const coreProject = Project.ins.by(LibTypeEnum.CONTAINER) as Project;
     coreProject.nodeModules.dedupe(
       this.args.join(' ').trim() === '' ? void 0 : this.args,
     );
     this._exit();
     //#endregion
   }
+
   dedupecorefake() {
     //#region @backendFunc
-    const coreProject = Project.ins.by('container') as Project;
+    const coreProject = Project.ins.by(LibTypeEnum.CONTAINER) as Project;
     coreProject.nodeModules.dedupe(
       this.args.join(' ').trim() === '' ? void 0 : this.args,
       true,
@@ -679,7 +677,7 @@ export class $Global extends BaseGlobalCommandLine<
    */
   DEPS_JSON() {
     //#region @backendFunc
-    const node_moduels = path.join(this.cwd, config.folder.node_modules);
+    const node_moduels = crossPlatformPath([this.cwd, nodeModulesMainProject]);
     const result = {};
     Helpers.foldersFrom(node_moduels)
       .filter(f => path.basename(f) !== '.bin')
@@ -691,7 +689,7 @@ export class $Global extends BaseGlobalCommandLine<
             try {
               result[`${orgPackageRootName}/${path.basename(f2)}`] =
                 Helpers.readValueFromJson(
-                  path.join(f2, config.file.package_json),
+                  path.join(f2, packageJsonMainProject),
                   'version',
                   '',
                 );
@@ -700,17 +698,14 @@ export class $Global extends BaseGlobalCommandLine<
         } else {
           try {
             result[packageName] = Helpers.readValueFromJson(
-              path.join(f, config.file.package_json),
+              path.join(f, packageJsonMainProject),
               'version',
               '',
             );
           } catch (error) {}
         }
       });
-    Helpers.writeJson(
-      path.join(this.cwd, config.file.result_packages_json),
-      result,
-    );
+    Helpers.writeJson(path.join(this.cwd, result_packages_json), result);
     this._exit();
     //#endregion
   }
@@ -736,13 +731,13 @@ export class $Global extends BaseGlobalCommandLine<
   async reinstallCoreContainers(): Promise<void> {
     //#region @backendFunc
     const toReinstallCoreContainers = crossPlatformPath([
-      Project.ins.by('container').location,
+      Project.ins.by(LibTypeEnum.CONTAINER).location,
       '..',
     ]);
     const foldersAbsPaths = Helpers.foldersFrom(toReinstallCoreContainers, {
       recursive: false,
     })
-      .filter(f => path.basename(f).startsWith('container'))
+      .filter(f => path.basename(f).startsWith(LibTypeEnum.CONTAINER))
       .filter(f => {
         const project = this.ins.From(f) as Project;
         return project && project.framework.frameworkVersionAtLeast('v18');
@@ -892,11 +887,14 @@ export class $Global extends BaseGlobalCommandLine<
 
   async TNP_SYNC() {
     //#region @backendFunc
-    const isomorphicPackagesFile = config.file.tmpIsomorphicPackagesJson; // 'tmp-isomorphic-packages.json';
+
     const currentFrameworkVersion = this.project.taonJson.frameworkVersion;
     const pathToTaonContainerNodeModules = crossPlatformPath([
       UtilsOs.getRealHomeDir(),
-      `.taon/taon-containers/container-${currentFrameworkVersion}/${config.folder.node_modules}`,
+      dotTaonFolder,
+      taonContainers,
+      `${containerPrefix}${currentFrameworkVersion}`,
+      nodeModulesMainProject,
     ]);
     Helpers.taskStarted(`Syncing node_modules from taon container to tnp...`);
 
@@ -909,9 +907,9 @@ export class $Global extends BaseGlobalCommandLine<
     Helpers.copyFile(
       crossPlatformPath([
         pathToTaonContainerNodeModules,
-        `../${isomorphicPackagesFile}`,
+        `../${tmpIsomorphicPackagesJson}`,
       ]),
-      this.project.pathFor(isomorphicPackagesFile),
+      this.project.pathFor(tmpIsomorphicPackagesJson),
     );
     //#endregion
 
@@ -924,22 +922,22 @@ export class $Global extends BaseGlobalCommandLine<
     await Helpers.copyFolderOsNative(
       this.project.nodeModules.path,
       crossPlatformPath(
-        `${this.absPathToLocalTaonContainers}/container-${currentFrameworkVersion}/${config.folder.node_modules}`,
+        `${this.absPathToLocalTaonContainers}/${containerPrefix}${currentFrameworkVersion}/${nodeModulesMainProject}`,
       ),
       { removeDestination: true },
     );
 
     Helpers.copyFile(
-      this.project.pathFor(isomorphicPackagesFile),
+      this.project.pathFor(tmpIsomorphicPackagesJson),
       crossPlatformPath(
-        `${this.absPathToLocalTaonContainers}/container-${currentFrameworkVersion}/${isomorphicPackagesFile}`,
+        `${this.absPathToLocalTaonContainers}/${containerPrefix}${currentFrameworkVersion}/${tmpIsomorphicPackagesJson}`,
       ),
     );
 
     //#endregion
 
     Helpers.taskDone(
-      `Done syncing node_modules from tnp to ../taon-containers...`,
+      `Done syncing node_modules from tnp to ../${taonContainers} ...`,
     );
     this._exit();
     //#endregion
@@ -963,7 +961,7 @@ export class $Global extends BaseGlobalCommandLine<
     const updateTnpAndLocalTona =
       isInsideTnpAndTaonDev &&
       (await UtilsTerminal.confirm({
-        message: `Would you like to update tnp and ../taon-containers (after sync command) ?`,
+        message: `Would you like to update tnp and ../${taonContainers} (after sync command) ?`,
         defaultValue: true,
       }));
 
@@ -1038,7 +1036,7 @@ ${this.project.children
   async updatedeps(): Promise<void> {
     //#region @backendFunc
     if (!this.project || !this.project.framework.isCoreProject) {
-      if (this.project && this.project.typeIs('isomorphic-lib')) {
+      if (this.project && this.project.typeIs(LibTypeEnum.ISOMORPHIC_LIB)) {
         await this.project.init(
           EnvOptions.from({
             purpose: 'updating isomorphic-lib external deps',
@@ -1155,7 +1153,7 @@ ${this.project.children
       const packageName = allDepsKeys[index];
       const currentPackageVersion = allDeps[packageName];
       const currentVerObj = getVerObj(currentPackageVersion);
-      const taonJsonContent = this.project.readFile(config.file.taon_jsonc);
+      const taonJsonContent = this.project.readFile(taonJsonMainProject);
       const tags = UtilsJson.getAtrributiesFromJsonWithComments(
         packageName,
         taonJsonContent,
@@ -1446,8 +1444,14 @@ ${this.project.children
     //#region @backendFunc
     Helpers.clearConsole();
     const [c1ver, c2ver] = this.args;
-    const c1 = this.ins.by('container', `v${c1ver.replace('v', '')}` as any);
-    const c2 = this.ins.by('container', `v${c2ver.replace('v', '')}` as any);
+    const c1 = this.ins.by(
+      LibTypeEnum.CONTAINER,
+      `v${c1ver.replace('v', '')}` as any,
+    );
+    const c2 = this.ins.by(
+      LibTypeEnum.CONTAINER,
+      `v${c2ver.replace('v', '')}` as any,
+    );
     const c1Deps = c1.packageJson.allDependencies;
     const c2Deps = c2.packageJson.allDependencies;
     const displayCompare = (
@@ -1489,7 +1493,7 @@ ${this.project.children
   getJsonCAttrs() {
     //#region @backendFunc
     console.log(`Scannign for args in jsonc files...`);
-    const jsoncContent = this.project.readFile(config.file.taon_jsonc);
+    const jsoncContent = this.project.readFile(taonJsonMainProject);
     walk.Object(Helpers.parse(jsoncContent, true), (value, jsonPath) => {
       if (!this.firstArg || jsonPath.includes(this.firstArg)) {
         // console.log('PATH: ' + jsonPath);
@@ -1524,14 +1528,14 @@ ${this.project.children
     for (const child of this.project.children) {
       child.taonJson.autoReleaseConfigAllowedItems = [
         {
-          artifactName: 'npm-lib-and-cli-tool',
+          artifactName: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
           taskName: 'npm library build',
         },
         {
-          artifactName: 'angular-node-app',
+          artifactName: ReleaseArtifactTaon.ANGULAR_NODE_APP,
           envName: 'dev',
           taskName: 'localhost-manual-dev-release',
-          releaseType: 'manual',
+          releaseType: ReleaseType.MANUAL,
           taonInstanceIp: '127.0.0.1',
         },
       ];
@@ -1687,6 +1691,7 @@ ${this.project.children
     return this.schemaJson();
     //#endregion
   }
+
   async _createJsonSchemaFrom(options: Models.CreateJsonSchemaOptions) {
     //#region @backendFunc
     const { project, relativePathToTsFile, nameOfTypeOrInterface } = options;
@@ -1734,7 +1739,7 @@ ${this.project.children
       recognizeImportExportRequire: {
         name: 'Recognize import/export/require',
         action: async () => {
-          const files = Helpers.getFilesFrom([this.cwd, config.folder.src], {
+          const files = Helpers.getFilesFrom([this.cwd, srcMainProject], {
             followSymlinks: false,
             recursive: true,
           });
@@ -1767,7 +1772,7 @@ ${this.project.children
     //#region @backendFunc
     if (
       this.project.name !== 'taon' &&
-      this.project?.parent?.typeIsNot('container')
+      this.project?.parent?.typeIsNot(LibTypeEnum.CONTAINER)
     ) {
       Helpers.error(
         `This command is only for taon project in taon-dev container`,
@@ -1831,7 +1836,7 @@ ${this.project.children
   linkNodeModulesFromCoreContainer() {
     //#region @backendFunc
     const coreContainer = this.project.ins.by(
-      'container',
+      LibTypeEnum.CONTAINER,
       this.firstArg as any,
     );
     if (!coreContainer) {
@@ -1971,7 +1976,7 @@ ${this.project.children
     //   question: 'Select something',
     // });
     //   const coreProject1 = this.project.framework.coreProject;
-    //   const coreProject2 = Project.ins.by('isomorphic-lib');
+    //   const coreProject2 = Project.ins.by(LibTypeEnum.ISOMORPHIC_LIB);
     //   console.log('coreProject2');
     //   console.log(coreProject1.pathFor(`docker-templates/terafik`));
     //   console.log('coreProject2');
@@ -2028,29 +2033,33 @@ ${this.project.children
     }
     await UtilsProcess.killAllOtherNodeProcesses();
 
-    const tnp = this.project.children.find(c => c.name === 'tnp');
+    const tnpProjectInTaonDev = this.project.children.find(
+      c => c.name === tnpPackageName,
+    );
     const taonContainersProj = this.project.ins.From(
-      this.project.pathFor('taon-containers'),
+      this.project.pathFor(taonContainers),
     );
     if (!taonContainersProj) {
       Helpers.error(
-        `No taon-containers project found in ${this.project.pathFor('taon-containers')}`,
+        `No taon-containers project found in ${this.project.pathFor(taonContainers)}`,
         false,
         true,
       );
     }
-    if (!tnp) {
+    if (!tnpProjectInTaonDev) {
       Helpers.error(`No tnp project found inside taon-dev`, false, true);
     }
     const tnpContainer = taonContainersProj.children.find(
-      c => c.name === 'container-' + tnp.taonJson.frameworkVersion,
+      c =>
+        c.name ===
+        `${containerPrefix}${tnpProjectInTaonDev.taonJson.frameworkVersion}`,
     );
     await tnpContainer.nodeModules.reinstall();
-    tnpContainer.nodeModules.copyToProject(tnp as any);
+    tnpContainer.nodeModules.copyToProject(tnpProjectInTaonDev as any);
     // Helpers.info(`Done syncing node_modules from container to tnp...`);
 
     let children = this.project.children.filter(c =>
-      c.typeIs('isomorphic-lib'),
+      c.typeIs(LibTypeEnum.ISOMORPHIC_LIB),
     );
 
     for (const child of children) {
@@ -2111,7 +2120,7 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
               watch: false,
             },
             release: {
-              targetArtifact: 'npm-lib-and-cli-tool',
+              targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
             },
           }),
         );

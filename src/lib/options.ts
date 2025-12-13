@@ -1,6 +1,6 @@
 import type axiosType from 'axios';
 import { walk } from 'lodash-walk-object/src';
-import { config, UtilsTerminal } from 'tnp-core/src';
+import { config, LibTypeEnum, UtilsTerminal } from 'tnp-core/src';
 import { Helpers } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
 
@@ -17,73 +17,77 @@ import type { Project } from './project/abstract/project';
  * All possible release types for taon
  * for MANUAL/CLOUD release
  */
-export const ReleaseArtifactTaonNames = Object.freeze({
+export enum ReleaseArtifactTaon {
   /**
    * Npm lib package and global cli tool
    */
-  NPM_LIB_PKG_AND_CLI_TOOL: 'npm-lib-and-cli-tool',
+  NPM_LIB_PKG_AND_CLI_TOOL = 'npm-lib-and-cli-tool',
+
   /**
    * Angular frontend webapp (pwa) + nodejs backend inside docker
    */
-  ANGULAR_NODE_APP: 'angular-node-app',
+  ANGULAR_NODE_APP = 'angular-node-app',
   /**
    * Angular + Electron app
    */
-  ELECTRON_APP: 'electron-app',
+  ELECTRON_APP = 'electron-app',
   /**
    * Angular + Ionic
    */
-  MOBILE_APP: 'mobile-app',
+  MOBILE_APP = 'mobile-app',
   /**
    * Visual Studio Code extension/plugin
    */
-  VSCODE_PLUGIN: 'vscode-plugin',
+  VSCODE_PLUGIN = 'vscode-plugin',
   /**
    * Documentation (MkDocs + compodoc + storybook)
    * webapp (pwa) inside docker
    */
-  DOCS_DOCS_WEBAPP: 'docs-webapp',
-});
+  DOCS_DOCS_WEBAPP = 'docs-webapp',
+}
 
-export type ReleaseArtifactTaon =
-  (typeof ReleaseArtifactTaonNames)[keyof typeof ReleaseArtifactTaonNames];
-
-export const ReleaseArtifactTaonNamesArr: ReleaseArtifactTaon[] = Object.values(
-  ReleaseArtifactTaonNames,
-);
+export const ReleaseArtifactTaonNamesArr: ReleaseArtifactTaon[] = [
+  ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
+  ReleaseArtifactTaon.ANGULAR_NODE_APP,
+  ReleaseArtifactTaon.ELECTRON_APP,
+  ReleaseArtifactTaon.MOBILE_APP,
+  ReleaseArtifactTaon.VSCODE_PLUGIN,
+  ReleaseArtifactTaon.DOCS_DOCS_WEBAPP,
+];
 //#endregion
 
 //#region release type
-export const ReleaseTypeNames = Object.freeze({
+export enum ReleaseType {
   /**
    * Manual release (happen physically on local machine)
    */
-  MANUAL: 'manual',
+  MANUAL = 'manual',
   /**
    * Releases artifact to local repository <project-location>/local_release/<artifact-name>/<release build files>
    */
-  LOCAL: 'local',
+  LOCAL = 'local',
   /**
    * Trigger cloud release (happen on cloud server)
    * Cloud release actually start "Manual" release process on cloud server
    */
-  CLOUD: 'cloud',
+  CLOUD = 'cloud',
   /**
    * Trigger cloud release (happen on cloud server)
    * Cloud release actually start "Manual" release process on cloud server
    */
-  STATIC_PAGES: 'static-pages',
-});
+  STATIC_PAGES = 'static-pages',
+}
 
-export type ReleaseType =
-  (typeof ReleaseTypeNames)[keyof typeof ReleaseTypeNames];
-
-export const ReleaseTypeNamesArr: ReleaseType[] =
-  Object.values(ReleaseTypeNames);
+export const ReleaseTypeArr: ReleaseType[] = [
+  ReleaseType.MANUAL,
+  ReleaseType.LOCAL,
+  ReleaseType.CLOUD,
+  ReleaseType.STATIC_PAGES,
+];
 
 export const Development = 'development';
 export const ReleaseTypeWithDevelopmentArr: (ReleaseType | 'development')[] = [
-  ...ReleaseTypeNamesArr,
+  ...ReleaseTypeArr,
   Development,
 ];
 
@@ -212,7 +216,7 @@ export const dockerBackendAppNode = {
   pathToProjectWithDockerfile: (project: Project) => {
     //#region @backendFunc
     return project.ins
-      .by('isomorphic-lib')
+      .by(LibTypeEnum.ISOMORPHIC_LIB)
       .pathFor([DOCKER_TEMPLATES, 'backend-app-node']);
     //#endregion
   },
@@ -224,7 +228,7 @@ export const dockerFrontendNginx = {
   pathToProjectWithDockerfile: (project: Project) => {
     //#region @backendFunc
     return project.ins
-      .by('isomorphic-lib')
+      .by(LibTypeEnum.ISOMORPHIC_LIB)
       .pathFor([DOCKER_TEMPLATES, 'frontend-app-node']);
     //#endregion
   },
@@ -235,7 +239,7 @@ export const dockerDatabaseMysql = {
   pathToProjectWithDockerfile: (project: Project) => {
     //#region @backendFunc
     return project.ins
-      .by('isomorphic-lib')
+      .by(LibTypeEnum.ISOMORPHIC_LIB)
       .pathFor([DOCKER_TEMPLATES, 'database-mysql']);
     //#endregion
   },
@@ -635,12 +639,12 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
       options.release.skipBuildingArtifacts || [];
     if (optionsToSet.includes('skipBuildingArtifactsNpmLibAndCliTool')) {
       (options.release.skipBuildingArtifacts as string[]).push(
-        ReleaseArtifactTaonNames.NPM_LIB_PKG_AND_CLI_TOOL,
+        ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
       );
     }
     if (optionsToSet.includes('skipBuildingArtifactsAngularNodeApp')) {
       (options.release.skipBuildingArtifacts as string[]).push(
-        ReleaseArtifactTaonNames.ANGULAR_NODE_APP,
+        ReleaseArtifactTaon.ANGULAR_NODE_APP,
       );
     }
 

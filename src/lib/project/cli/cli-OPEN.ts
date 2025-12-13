@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import {
   CoreModels,
   _,
@@ -12,7 +12,7 @@ import {
 import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import { MESSAGES, TEMP_DOCS } from '../../constants';
+import { MESSAGES, packageJsonMainProject, taonJsonMainProject, TEMP_DOCS } from '../../constants';
 import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 
@@ -37,7 +37,7 @@ export class $Open extends BaseCli {
   CORE_CONTAINER() {
     const proj = this.project;
     const container = this.project.ins.by(
-      'container',
+      LibTypeEnum.CONTAINER,
       proj.framework.frameworkVersion,
     );
     if (container) {
@@ -76,79 +76,15 @@ export class $Open extends BaseCli {
   UNSTAGE() {
     const proj = this.project.ins.Current;
     const childrenThanAreLibs = proj.children.filter(c => {
-      return c.typeIs(...(['isomorphic-lib'] as CoreModels.LibType[]));
+      return c.typeIs(...([LibTypeEnum.ISOMORPHIC_LIB] as CoreModels.LibType[]));
     });
-    const libs = childrenThanAreLibs.filter(f =>
+    const unstageFiles = childrenThanAreLibs.filter(f =>
       f.git.thereAreSomeUncommitedChangeExcept([
-        config.file.package_json,
-        config.file.taon_jsonc,
+        packageJsonMainProject,
+        taonJsonMainProject,
       ]),
     );
-    libs.forEach(l => l.vsCodeHelpers.openInVscode());
-    this._exit();
-  }
-
-  DB() {
-    // ! TODO @LAST refactor
-    this._openThing('tmp-db.sqlite');
-  }
-
-  ROUTES() {
-    // ! TODO @LAST refactor
-    this._openThing('tmp-routes.json');
-  }
-
-  private _openThing(fileName: string) {
-    const proj = this.project;
-
-    const openFn = pathToTHing => {
-      if (fileName.endsWith('.json')) {
-        Helpers.run(`code ${pathToTHing}`, { biggerBuffer: false }).sync();
-      } else {
-        Helpers.openFolderInFileExplorer(pathToTHing);
-      }
-    };
-
-    if (proj.framework.isStandaloneProject) {
-      const pathToDB = path.join(proj.location, fileName);
-      openFn(pathToDB);
-    }
-
-    const smartContainerFn = (project: Project) => {
-      const patternPath = `${path.join(project.location, config.folder.dist, project.name)}/*`;
-      const folderPathes = glob.sync(patternPath);
-
-      const lastFolder = _.first(
-        folderPathes
-          .map(f => {
-            return {
-              folderPath: f,
-              mtimeMs: fse.lstatSync(f).mtimeMs,
-            };
-          })
-          .sort((a, b) => {
-            if (a.mtimeMs > b.mtimeMs) return 1;
-            if (a.mtimeMs < b.mtimeMs) return -1;
-            return 0;
-          }),
-      );
-
-      if (!lastFolder) {
-        Helpers.error(
-          `Last project not started...
-
-          not porjects here in "${patternPath}"
-
-          `,
-          false,
-          true,
-        );
-      }
-
-      const pathToTHing = path.join(lastFolder.folderPath, fileName);
-      openFn(pathToTHing);
-    };
-
+    unstageFiles.forEach(l => l.vsCodeHelpers.openInVscode());
     this._exit();
   }
 }

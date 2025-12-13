@@ -11,6 +11,12 @@ import {
   frameworkBuildFolders,
   taonConfigSchemaJsonStandalone,
   taonConfigSchemaJsonContainer,
+  dotFileTemplateExt,
+  tsconfigJsonMainProject,
+  tsconfigBackendDistJson,
+  tsconfigJsonIsomorphicMainProject,
+  tsconfigIsomorphicFlatDistMainProject,
+  tsconfigJsonBrowserMainProject,
 } from '../../../../../../constants';
 import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
@@ -152,15 +158,15 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
   filesTemplatesForStandalone(): string[] {
     let templates = [];
     templates = [
-      'tsconfig.json.filetemplate',
-      'tsconfig.backend.dist.json.filetemplate',
+      `${tsconfigJsonMainProject}${dotFileTemplateExt}`,
+      `${tsconfigBackendDistJson}${dotFileTemplateExt}`,
     ];
 
     if (this.project.framework.frameworkVersionAtLeast('v2')) {
       templates = [
-        'tsconfig.isomorphic.json.filetemplate',
-        'tsconfig.isomorphic-flat-dist.json.filetemplate',
-        'tsconfig.browser.json.filetemplate',
+        `${tsconfigJsonIsomorphicMainProject}${dotFileTemplateExt}`,
+        `${tsconfigIsomorphicFlatDistMainProject}${dotFileTemplateExt}`,
+        `${tsconfigJsonBrowserMainProject}${dotFileTemplateExt}`,
         ...this.project.vsCodeHelpers.__vscodeFileTemplates,
         ...templates,
       ];

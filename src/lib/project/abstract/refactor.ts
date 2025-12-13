@@ -5,6 +5,7 @@ import { _, CoreModels, crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
+import { srcMainProject } from '../../constants';
 import type { Project } from '../abstract/project';
 //#endregion
 
@@ -148,9 +149,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
       Helpers.info(`Prettier done for file ${options.fixSpecificFile}`);
       return;
     }
-    UtilsTypescript.fixHtmlTemplatesInDir(
-      this.project.pathFor(config.folder.src),
-    );
+    UtilsTypescript.fixHtmlTemplatesInDir(this.project.pathFor(srcMainProject));
     this.project.formatAllFiles();
     Helpers.info(`Prettier done`);
     //#endregion
@@ -167,7 +166,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
       return;
     }
     await UtilsTypescript.eslintFixAllFilesInsideFolder([
-      this.project.pathFor(config.folder.src),
+      this.project.pathFor(srcMainProject),
     ]);
     Helpers.info(`Eslint fix done`);
     //#endregion
@@ -176,7 +175,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
   async removeBrowserRegion(options: { fixSpecificFile?: string }) {
     //#region @backendFunc
     options = this.prepareOptions(options);
-    Helpers.info(`Running @browser region fixer...`);
+    Helpers.info(`Running ${'@bro' + 'wser'} region fixer...`);
     const removeBrowserRegion = (content: string): string => {
       const lines = content.trim().split('\n');
 
@@ -194,7 +193,10 @@ export class Refactor extends BaseFeatureForProject<Project> {
       return lines.join('\n').trim();
     };
 
-    Helpers.filesFrom(this.project.pathFor(config.folder.src), true)
+    Helpers.getFilesFrom(this.project.pathFor(srcMainProject), {
+      recursive: true,
+      // followSymlinks: false TODO ? maybe ?
+    })
       .filter(f => {
         return (
           f.endsWith('.ts') &&
@@ -222,7 +224,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
     options = this.prepareOptions(options);
     Helpers.info(`Changing css to scss replacer.`);
 
-    Helpers.getFilesFrom(this.project.pathFor(config.folder.src), {
+    Helpers.getFilesFrom(this.project.pathFor(srcMainProject), {
       recursive: true,
       followSymlinks: false,
     }).forEach(f => {
@@ -297,7 +299,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
     options = this.prepareOptions(options);
     Helpers.info(`Setting proper standalone property for ng19+...`);
 
-    Helpers.getFilesFrom(this.project.pathFor(config.folder.src), {
+    Helpers.getFilesFrom(this.project.pathFor(srcMainProject), {
       recursive: true,
       followSymlinks: false,
     }).forEach(f => {
@@ -323,7 +325,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
     options = this.prepareOptions(options);
     Helpers.info(`Wrapping first imports with imports region...`);
 
-    Helpers.getFilesFrom(this.project.pathFor(config.folder.src), {
+    Helpers.getFilesFrom(this.project.pathFor(srcMainProject), {
       recursive: true,
       followSymlinks: false,
     }).forEach(f => {
@@ -350,7 +352,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
     const names = [...BaseTaonClassesNames, 'tnp-config'];
     options = this.prepareOptions(options);
     Helpers.info(`Fixing taon class names...`);
-    Helpers.getFilesFrom(this.project.pathFor(config.folder.src), {
+    Helpers.getFilesFrom(this.project.pathFor(srcMainProject), {
       recursive: true,
       followSymlinks: false,
     }).forEach(f => {

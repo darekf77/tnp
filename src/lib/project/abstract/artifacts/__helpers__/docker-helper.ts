@@ -11,11 +11,16 @@ import {
   BaseDebounceCompilerForProject,
 } from 'tnp-helpers/src';
 
-import { DOCKER_COMPOSE_FILE_NAME, DOCKER_FOLDER } from '../../../../constants';
+import {
+  DOCKER_COMPOSE_FILE_NAME,
+  DOCKER_FOLDER,
+  dotEnvFile,
+  srcMainProject,
+} from '../../../../constants';
 import {
   Development,
   EnvOptions,
-  ReleaseArtifactTaonNames,
+  ReleaseArtifactTaon,
 } from '../../../../options';
 import { Project } from '../../project';
 //#endregion
@@ -36,7 +41,7 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
    */
   getOutDirDockersRelease(buildOptions: EnvOptions): string {
     let outDirApp =
-      `.${config.frameworkName}/${ReleaseArtifactTaonNames.ANGULAR_NODE_APP}/` +
+      `.${config.frameworkName}/${ReleaseArtifactTaon.ANGULAR_NODE_APP}/` +
       `${buildOptions.release.releaseType ? buildOptions.release.releaseType : Development}/` +
       `dockers-to-build`;
 
@@ -47,7 +52,7 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
   //#region constructor
   constructor(project: Project) {
     super(project, {
-      folderPath: project.pathFor([config.folder.src, DOCKER_FOLDER]),
+      folderPath: project.pathFor([srcMainProject, DOCKER_FOLDER]),
       taskName: 'MigrationHelper',
       notifyOnFileUnlink: true,
     });
@@ -58,9 +63,10 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
   get envOptions(): EnvOptions {
     return this.initialParams.envOptions;
   }
+
   get dockerComposeAbsPath(): string {
     return this.project.pathFor([
-      config.folder.src,
+      srcMainProject,
       DOCKER_FOLDER,
       DOCKER_COMPOSE_FILE_NAME,
     ]);
@@ -72,28 +78,24 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
     //#region @backendFunc
     return;
     this.project.framework.recreateFileFromCoreProject({
-      fileRelativePath: [config.folder.src, DOCKER_FOLDER, '.env'],
+      fileRelativePath: [srcMainProject, DOCKER_FOLDER, dotEnvFile],
     });
     this.project.framework.recreateFileFromCoreProject({
       fileRelativePath: [
-        config.folder.src,
+        srcMainProject,
         DOCKER_FOLDER,
         DOCKER_COMPOSE_FILE_NAME,
       ],
     });
     this.project.framework.recreateFileFromCoreProject({
       fileRelativePath: [
-        config.folder.src,
+        srcMainProject,
         DOCKER_FOLDER,
         'hello-world/Dockerfile',
       ],
     });
     this.project.framework.recreateFileFromCoreProject({
-      fileRelativePath: [
-        config.folder.src,
-        DOCKER_FOLDER,
-        'hello-world/index.js',
-      ],
+      fileRelativePath: [srcMainProject, DOCKER_FOLDER, 'hello-world/index.js'],
     });
 
     const dockerFolder = this.getOutDirDockersRelease(this.envOptions);

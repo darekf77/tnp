@@ -6,6 +6,7 @@ import { _ } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 import { Helpers } from 'tnp-helpers/src';
 
+import { dotFileTemplateExt } from '../../../../../../constants';
 import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
 
@@ -86,10 +87,7 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
   ): void {
     //#region @backendFunc
     // lodash
-    const filePath = orgFilePath.replace(
-      `.${config.filesExtensions.filetemplate}`,
-      '',
-    );
+    const filePath = orgFilePath.replace(dotFileTemplateExt, '');
     // if (filePath.endsWith('tsconfig.json')) {
     //   debugger;
     // }

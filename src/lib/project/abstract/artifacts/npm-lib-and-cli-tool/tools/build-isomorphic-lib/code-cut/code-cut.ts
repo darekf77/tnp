@@ -4,6 +4,7 @@ import { config, PREFIXES } from 'tnp-core/src';
 import { extAllowedToReplace } from 'tnp-core/src';
 import { crossPlatformPath, fse, path, _ } from 'tnp-core/src';
 
+import { srcMainProject } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
@@ -63,7 +64,7 @@ export class CodeCut {
 
     const absSourceFromSrc = crossPlatformPath([
       path.dirname(this.absPathTmpSrcDistFolder),
-      config.folder.src,
+      srcMainProject,
       relativePathToFile,
     ]);
 

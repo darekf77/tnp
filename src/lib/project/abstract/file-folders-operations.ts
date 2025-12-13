@@ -1,7 +1,11 @@
 import { fileName, folderName } from 'tnp-core/src';
 import { BaseFileFoldersOperations } from 'tnp-helpers/src';
 
-import { environments } from '../../constants';
+import {
+  dotVscodeMainProject,
+  environmentsFolder,
+  envTs,
+} from '../../constants';
 
 // @ts-ignore TODO weird inheritance problem
 export class FileFoldersOperations extends BaseFileFoldersOperations<Project> {
@@ -11,11 +15,11 @@ export class FileFoldersOperations extends BaseFileFoldersOperations<Project> {
       ...original,
       fileName.taon_jsonc,
       `__${folderName.assets}`,
-      '.vscode',
-      'env.ts',
+      dotVscodeMainProject,
+      envTs,
       'logo.png',
       'logo.svg',
-      environments,
+      environmentsFolder,
     ];
   }
 }

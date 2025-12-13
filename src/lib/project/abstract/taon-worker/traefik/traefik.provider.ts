@@ -1,7 +1,7 @@
 //#region imports
 import { promisify } from 'util';
 
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import {
   _,
   chalk,
@@ -28,8 +28,11 @@ import { TraefikServiceProvider } from './treafik-service.provider';
 export class TraefikProvider {
   //#region fields & getters
   public service = new TraefikServiceProvider(this);
+
   public readonly cloudIps: string[] = [];
+
   protected taonCloudStatus: TaonCloudStatus = TaonCloudStatus.NOT_STARED;
+
   protected reverseProxyNetworkName = 'traefik-net';
 
   //#region fields & getters / cloud is enabled
@@ -81,7 +84,7 @@ export class TraefikProvider {
   private get pathToTraefikComposeSourceTemplateFilesCwd(): string {
     //#region @backendFunc
     const pathToComposeSource = this.taonProjectsWorker.ins
-      .by('isomorphic-lib')
+      .by(LibTypeEnum.ISOMORPHIC_LIB)
       .pathFor(`docker-templates/traefik`);
 
     return pathToComposeSource;

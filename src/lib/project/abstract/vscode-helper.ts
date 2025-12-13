@@ -18,6 +18,12 @@ import {
   frameworkBuildFolders,
   docsConfigJsonFileName,
   docsConfigSchema,
+  distMainProject,
+  nodeModulesMainProject,
+  sourceLinkInNodeModules,
+  taonJsonMainProject,
+  updateVscodePackageJsonJsMainProject,
+  appVscodeJSFromBuild,
 } from '../../constants';
 import { Models } from '../../models';
 import { Development, EnvOptions } from '../../options';
@@ -142,7 +148,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       .filter(
         (x, i) => x =>
           (_.first(x.fileMatch) as string)?.startsWith(
-            `/${config.file.taon_jsonc}`,
+            `/${taonJsonMainProject}`,
           ),
       )
       .map((_, i) => i);
@@ -193,13 +199,8 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
           .getTmpVscodeProjPath()
           .replace(this.project.location + '/', '')}` +
         ` && node --no-deprecation ${
-          this.project.artifactsManager.artifact.vscodePlugin
-            .vcodeProjectUpdatePackageJsonFilename
-        } ` +
-        `${this.project.artifactsManager.artifact.vscodePlugin.appVscodeJsName.replace(
-          '.js',
-          '',
-        )}`,
+          updateVscodePackageJsonJsMainProject
+        } ${appVscodeJSFromBuild.replace('.js', '')}`,
       presentation: {
         reveal: 'always',
         panel: 'shared',
@@ -491,7 +492,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   get outFiles() {
     //#region @backendFunc
     return [
-      '${workspaceFolder}/dist/**/*.js',
+      `\${workspaceFolder}/${distMainProject}/**/*.js`,
       // '!**/node_modules/**',
       // TODO this allow debugging thir party modules.. but it is not reliable
       ...Helpers.uniqArray(
@@ -499,12 +500,12 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
           .filter(f => this.project.name !== f) // TODO or other names of this project
           .map(packageName => {
             const p = this.project.pathFor([
-              config.folder.node_modules,
+              nodeModulesMainProject,
               packageName,
-              config.folder.source,
+              sourceLinkInNodeModules,
             ]);
             return Helpers.isExistedSymlink(p)
-              ? `${dirnameFromSourceToProject(p)}/dist/${whatToLinkFromCoreDeepPart}/**/*.js`.replace(
+              ? `${dirnameFromSourceToProject(p)}/${distMainProject}/${whatToLinkFromCoreDeepPart}/**/*.js`.replace(
                   /\/\//g,
                   '/',
                 )
@@ -527,9 +528,9 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       .filter(f => this.project.name !== f) // TODO or other names of this project
       .forEach(packageName => {
         const p = this.project.pathFor([
-          config.folder.node_modules,
+          nodeModulesMainProject,
           packageName,
-          config.folder.source,
+          sourceLinkInNodeModules,
         ]);
         if (!Helpers.isExistedSymlink(p)) {
           return;
@@ -539,7 +540,8 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
         // Somehow this work if debuggable path
         sourceMapPathOverrides[
           `*/${path.basename(realPathToPackage)}/${whatToLinkFromCore}/*`
-        ] = `\${workspaceFolder}/node_modules/${packageName}/source/*`;
+        ] =
+          `\${workspaceFolder}/${nodeModulesMainProject}/${packageName}/${sourceLinkInNodeModules}/*`;
 
         // that thing should work
         // sourceMapPathOverrides[`${realPathToPackage}/${whatToLinkFromCore}/*`] =
@@ -555,8 +557,8 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   }
   //#endregion
 
-  //#region vscode *.filetemplate
-  get __vscodeFileTemplates() {
+  //#region vscode all file template files
+  get __vscodeFileTemplates(): string[] {
     //#region @backendFunc
     if (this.project.framework.frameworkVersionAtLeast('v2')) {
       return [];

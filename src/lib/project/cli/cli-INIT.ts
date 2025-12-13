@@ -1,4 +1,4 @@
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import {
   CoreModels,
   UtilsTerminal,
@@ -12,8 +12,11 @@ import { BaseCommandLineFeature } from 'tnp-helpers/src';
 import {
   DEFAULT_FRAMEWORK_VERSION,
   MESSAGES,
+  packageJsonMainProject,
+  taonJsonMainProject,
   TEMP_DOCS,
 } from '../../constants';
+import { Models } from '../../models';
 import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 
@@ -79,7 +82,7 @@ export class $Init extends BaseCli {
     if (
       Helpers.exists(
         crossPlatformPath(
-          path.join(crossPlatformPath(this.cwd), config.file.package_json),
+          path.join(crossPlatformPath(this.cwd), packageJsonMainProject),
         ),
       )
     ) {
@@ -94,14 +97,14 @@ export class $Init extends BaseCli {
         await Helpers.autocompleteAsk<CoreModels.LibType>(
           `Choose type of project`,
           [
-            { name: 'Container', value: 'container' },
-            { name: 'Isomorphic Lib', value: 'isomorphic-lib' },
+            { name: 'Container', value: LibTypeEnum.CONTAINER },
+            { name: 'Isomorphic Lib', value: LibTypeEnum.ISOMORPHIC_LIB },
           ],
         );
-      let smart = false;
+      let organization = false;
       let monorepo = false;
-      if (responseProjectType === 'container') {
-        smart = await UtilsTerminal.confirm({
+      if (responseProjectType === LibTypeEnum.CONTAINER) {
+        organization = await UtilsTerminal.confirm({
           message:
             'Do you wanna use smart container for organization project ?',
           defaultValue: false,
@@ -111,21 +114,22 @@ export class $Init extends BaseCli {
           defaultValue: false,
         });
         Helpers.writeFile(
-          [crossPlatformPath(this.cwd), config.file.package_json],
+          [crossPlatformPath(this.cwd), packageJsonMainProject],
           {
             name: crossPlatformPath(path.basename(crossPlatformPath(this.cwd))),
             version: '0.0.0',
-            tnp: {
-              type: responseProjectType,
-              monorepo,
-              smart,
-              version: DEFAULT_FRAMEWORK_VERSION, // OK
-            },
           },
         );
+
+        Helpers.writeFile([crossPlatformPath(this.cwd), taonJsonMainProject], {
+          type: LibTypeEnum.CONTAINER,
+          monorepo,
+          organization,
+          version: DEFAULT_FRAMEWORK_VERSION, // OK
+        } as Partial<Models.TaonJsonContainer>);
       } else {
         Helpers.writeFile(
-          [crossPlatformPath(this.cwd), config.file.package_json],
+          [crossPlatformPath(this.cwd), packageJsonMainProject],
           {
             name: crossPlatformPath(path.basename(crossPlatformPath(this.cwd))),
             version: '0.0.0',
@@ -135,6 +139,10 @@ export class $Init extends BaseCli {
             },
           },
         );
+        Helpers.writeFile([crossPlatformPath(this.cwd), taonJsonMainProject], {
+          type: LibTypeEnum.ISOMORPHIC_LIB,
+          version: DEFAULT_FRAMEWORK_VERSION, // OK
+        } as Partial<Models.TaonJsonStandalone>);
       }
 
       proj = this.ins.From(crossPlatformPath(this.cwd)) as Project;

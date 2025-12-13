@@ -1,4 +1,4 @@
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
@@ -34,7 +34,7 @@ export class CypressTestRunner
   }
 
   async startAndWatch(files?: string[], debug = false) {
-    if (this.project.typeIsNot('isomorphic-lib')) {
+    if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
       Helpers.error(
         `Tests not impolemented for ${this.project.type}`,
         false,

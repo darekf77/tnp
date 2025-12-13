@@ -2,7 +2,7 @@
 import { incrementalWatcher } from 'incremental-compiler/src';
 import { walk } from 'lodash-walk-object/src';
 import { from } from 'rxjs';
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum, tnpPackageName } from 'tnp-core/src';
 import { chalk, CoreModels, crossPlatformPath, fse, Utils } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
@@ -13,8 +13,13 @@ import { register } from 'ts-node';
 import {
   coreRequiredEnvironments,
   DUMMY_LIB,
-  environments,
+  environmentsFolder,
   envTs,
+  libFromImport,
+  libFromSrc,
+  srcFromTaonImport,
+  srcMainProject,
+  TaonGeneratedFolders,
   THIS_IS_GENERATED_INFO_COMMENT,
   THIS_IS_GENERATED_STRING,
 } from '../../../../../constants';
@@ -55,7 +60,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   ): Promise<void> {
     //#region @backendFunc
     const environmentsAbsPath = this.project.pathFor([
-      environments,
+      environmentsFolder,
       artifactName,
       `env.${artifactName}.${envName}${envNumber ?? ''}.ts`,
     ]);
@@ -72,8 +77,8 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     if (this.project.framework.isStandaloneProject) {
       const watcher = incrementalWatcher(
         [
-          this.project.pathFor(`environments/**/*.ts`),
-          this.project.pathFor(`env.ts`),
+          this.project.pathFor(`${environmentsFolder}/**/*.ts`),
+          this.project.pathFor(`${envTs}`),
         ],
         {
           name: 'Environment Config Watcher',
@@ -135,7 +140,9 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
         this.saveEnvironmentConfig(configResultForTarget);
       }
 
-      this.project.framework.generateIndexTs('src/lib/env');
+      this.project.framework.generateIndexTs(
+        `${srcMainProject}/${libFromSrc}/${TaonGeneratedFolders.ENV_FOLDER}`,
+      );
     }
 
     Helpers.taskDone(
@@ -201,7 +208,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
 
     try {
       const pathToEnvTs = this.project.pathFor(
-        `environments/${artifactName}/` +
+        `${environmentsFolder}/${artifactName}/` +
           `env.${artifactName}.${environmentName}${envNum === undefined ? '' : envNum}.ts`,
       );
 
@@ -280,8 +287,8 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   private getBaseEnvTemplate(jsonString = '{ ...baseEnv }'): string {
     //#region @backendFunc
     const isBase = jsonString === '{ ...baseEnv }';
-    const fileToSave = `${'import'} type { EnvOptions } from '${'tnp'}/${'src'}';
-  ${isBase ? `${'import'} baseEnv from '../../env';` : ''}
+    const fileToSave = `${'import'} type { EnvOptions } from '${tnpPackageName}/${'src'}';
+  ${isBase ? `${'import'} baseEnv from '../../${envTs.replace('.ts', '')}';` : ''}
   const env: Partial<EnvOptions> = ${jsonString};
   export default env;
   `;
@@ -313,10 +320,14 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       envOptions['pathsTsconfig'] =
         `"paths": ` +
         JSON.stringify({
-          [`${DUMMY_LIB}`]: ['./src/lib'],
-          [`${DUMMY_LIB}/*`]: ['./src/lib/*'],
-          [`${this.project.nameForNpmPackage}/src`]: ['./src/lib'],
-          [`${this.project.nameForNpmPackage}/src/*`]: ['./src/lib/*'],
+          [`${DUMMY_LIB}`]: [`./${srcMainProject}/${libFromSrc}`],
+          [`${DUMMY_LIB}/*`]: [`./${srcFromTaonImport}/${libFromImport}/*`],
+          [`${this.project.nameForNpmPackage}/${srcMainProject}`]: [
+            `./${srcFromTaonImport}/${libFromImport}`,
+          ],
+          [`${this.project.nameForNpmPackage}/${srcMainProject}/*`]: [
+            `./${srcFromTaonImport}/${libFromImport}/*`,
+          ],
         });
     } else if (this.project.framework.isContainer) {
       // TODO
@@ -373,7 +384,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       }
 
       this.project.writeFile(
-        `src/lib/env/${backendConfigFileName}`,
+        `${srcMainProject}/${libFromImport}/${TaonGeneratedFolders.ENV_FOLDER}/${backendConfigFileName}`,
         `${THIS_IS_GENERATED_INFO_COMMENT}
 ${backendConstants.join('\n')}
 ${THIS_IS_GENERATED_INFO_COMMENT}`,
@@ -386,12 +397,12 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
 
   makeSureEnvironmentExists(): void {
     //#region @backendFunc
-    if (!this.project.hasFolder(environments)) {
+    if (!this.project.hasFolder(environmentsFolder)) {
       const coreEnv = this.project.ins
-        .by('isomorphic-lib')
-        .pathFor(environments);
+        .by(LibTypeEnum.ISOMORPHIC_LIB)
+        .pathFor(environmentsFolder);
 
-      Helpers.copy(coreEnv, this.project.pathFor(environments), {
+      Helpers.copy(coreEnv, this.project.pathFor(environmentsFolder), {
         recursive: true,
       });
     }
@@ -415,7 +426,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
     for (const artifactName of ReleaseArtifactTaonNamesArr) {
       for (const envName of coreRequiredEnvironments) {
         const relativePathToArtifacEnv = crossPlatformPath([
-          environments,
+          environmentsFolder,
           artifactName,
           `env.${artifactName}.${envName}.ts`,
         ]);

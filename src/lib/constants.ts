@@ -1,15 +1,21 @@
 //#region imports
 import type * as ora from 'ora';
-import { config } from 'tnp-core/src';
-import { Helpers } from 'tnp-core/src';
-import { CoreModels, fse, os } from 'tnp-core/src';
+import { TaonTempDatabasesFolder, TaonTempRoutesFolder } from 'taon/src';
+import {
+  config,
+  dockerTemplates,
+  dotTaonFolder,
+  fileName,
+  folderName,
+  taonContainers,
+} from 'tnp-core/src';
+import { CoreModels, fse } from 'tnp-core/src';
 import { _, UtilsOs } from 'tnp-core/src';
 import { crossPlatformPath, path, Utils } from 'tnp-core/src';
 
 import { CURRENT_PACKAGE_VERSION } from './build-info._auto-generated_';
-import type { EnvOptions, ReleaseArtifactTaon, ReleaseType } from './options';
-import type { Project } from './project/abstract/project';
 import { DeploymentReleaseData } from './project/abstract/taon-worker/deployments/deployments.models';
+
 // import type { Project } from './project/abstract/project';
 //#endregion
 
@@ -79,25 +85,6 @@ export const DOCKER_TEMPLATES = 'docker-templates';
 export const ACTIVE_CONTEXT = 'ACTIVE_CONTEXT';
 
 export const friendlyNameForReleaseAutoConfigIsRequired = false;
-
-export const ALLOWED_TO_RELEASE: {
-  [releaseType in ReleaseType]: ReleaseArtifactTaon[];
-} = {
-  manual: ['npm-lib-and-cli-tool', 'angular-node-app'],
-  local: [
-    'electron-app',
-    'npm-lib-and-cli-tool',
-    'vscode-plugin',
-    'angular-node-app',
-  ],
-  cloud: [],
-  'static-pages': [
-    'angular-node-app',
-    'docs-webapp',
-    'electron-app',
-    'vscode-plugin',
-  ],
-};
 
 export const iconVscode128Basename = 'icon-vscode.png';
 
@@ -187,15 +174,15 @@ let taonRepoPathUserInUserDir: string = '';
 //#region @backend
 taonRepoPathUserInUserDir = crossPlatformPath([
   UtilsOs.getRealHomeDir(),
-  `.${config.frameworkNames.productionFrameworkName}`,
-  'taon-containers',
+  dotTaonFolder,
+  taonContainers,
 ]);
 //#endregion
 
 const taonBasePathToGlobalDockerTemplates: string = crossPlatformPath([
   UtilsOs.getRealHomeDir(),
-  `.${config.frameworkNames.productionFrameworkName}`,
-  `docker-templates`,
+  dotTaonFolder,
+  dockerTemplates,
 ]);
 
 export { taonRepoPathUserInUserDir, taonBasePathToGlobalDockerTemplates };
@@ -250,7 +237,7 @@ export const frameworkBuildFolders = Utils.uniqArray([
 
 export const envTs = 'env.ts';
 
-export const environments = 'environments';
+export const environmentsFolder = 'environments';
 
 export const coreRequiredEnvironments = [
   '__',
@@ -267,6 +254,15 @@ export const getBrowserVerPath = (websql: boolean = false) => {
   //#endregion
 };
 //#endregion
+
+/**
+ * @deprecated not needed probably
+ */
+export const result_packages_json = 'result-packages.json';
+
+export const readmeMdMainProject = 'README.md';
+
+export const tmpIsomorphicPackagesJson = 'tmp-isomorphic-packages.json';
 
 /**
  * If exist - copy manager will clean copy bundled package to destinations
@@ -333,6 +329,285 @@ export const tmpSrcAppDist = 'tmp-src-app-dist';
 export const tmpSrcAppDistWebsql = 'tmp-src-app-dist-websql';
 
 /**
+ * template folders from isomorphic lib
+ */
+export enum TemplateFolder {
+  /**
+   * Core project for angular app
+   */
+  templateApp = 'template-app',
+
+  /**
+   * Core project angular library
+   */
+  templateLib = 'template-lib',
+
+  /**
+   * Core project template for electron app
+   */
+  templateElectron = 'template-electron',
+}
+
+export enum AngularJsonTaskName {
+  ANGULAR_APP = 'app',
+  ELECTRON_APP = 'angular-electron',
+  /**
+   * TODO angular ssr build
+   */
+  SSR = 'ssr',
+}
+
+export enum CoreAssets {
+  sqlWasmFile = 'sql-wasm.wasm',
+  mainFont = 'flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2',
+}
+
+export enum CoreNgTemplateFiles {
+  sqlJSLoaderTs = 'sqljs-loader.ts',
+  JEST_CONFIG_JS = 'jest.config.js',
+  SETUP_JEST_TS = 'setupJest.ts',
+  JEST_GLOBAL_MOCKS_TS = 'jestGlobalMocks.ts',
+  NG_PACKAGE_JSON = 'ng-package.json',
+  PACKAGE_JSON = 'package.json', // fileName.package_json,
+  ANGULAR_JSON = 'angular.json', // fileName.angular_json,
+}
+
+export enum TaonGeneratedFiles {
+  BUILD_INFO_MD = 'BUILD-INFO.md',
+  build_info_generated_ts = 'build-info._auto-generated_.ts',
+  index_generated_ts = 'index._auto-generated_.ts',
+  BUILD_INFO_AUTO_GENERATED_JS = 'build-info._auto-generated_.js',
+  MIGRATIONS_INFO_MD = 'migrations-info.md',
+  MOCHA_TESTS_INFO_MD = 'mocha-tests-info.md',
+  SHARED_FOLDER_INFO_TXT = 'shared_folder_info.txt',
+  APP_HOSTS_TS = 'app.hosts.ts',
+  LAUNCH_JSON = 'launch.json',
+  LAUNCH_BACKUP_JSON = 'launch-backup.json',
+  VARS_SCSS = 'vars.scss',
+  LIB_INFO_MD = 'lib-info.md',
+  APP_FOLDER_INFO_MD = 'app-folder-info.md',
+}
+
+export enum TaonGeneratedFolders {
+  ENV_FOLDER = 'env',
+}
+
+/**
+ * Main project /dist folder
+ */
+export const nodeModulesMainProject = folderName.node_modules;
+
+/**
+ * Main project /dist folder
+ */
+export const distMainProject = folderName.dist;
+
+/**
+ * Main project /dist-nocutsrc folder (d.ts files without code cutting)
+ */
+export const distNoCutSrcMainProject = `dist-nocutsrc`;
+
+/**
+ * Vscode project dist folder
+ */
+export const distVscodeProj = folderName.dist;
+
+/**
+ * Electron project dist folder
+ */
+export const distElectronProj = folderName.dist;
+
+export const electronNgProj = 'electron';
+
+export const combinedDocsAllMdFilesFolder = `allmdfiles`;
+
+/**
+ * Normal angular app build
+ */
+export const distFromNgBuild = folderName.dist;
+
+/**
+ * Dist from sass loader
+ */
+export const distFromSassLoader = folderName.dist;
+
+/**
+ * Vscode project dist folder
+ */
+export const outVscodeProj = folderName.out;
+
+/**
+ * Main project /docs folder
+ */
+export const docsMainProject = folderName.docs;
+
+/**
+ * Main project /bin folder
+ */
+export const binMainProject = folderName.bin;
+
+/**
+ * Main project /src folder
+ */
+export const srcMainProject = folderName.src;
+
+/**
+ * src from template proxy project
+ */
+export const srcNgProxyProject = folderName.src;
+
+/**
+ * each taon import ends with /src
+ */
+export const srcFromTaonImport = folderName.src;
+
+/**
+ * each taon import ends with /src
+ */
+export const srcDtsFromNpmPackage = 'src.d.ts';
+
+/**
+ * projects/my-lib form angular lib template
+ */
+export const projectsFromNgTemplate = folderName.projects;
+
+/**
+ * @deprecated special place in standalone project for projects
+ */
+export const projectsFromMainProject = folderName.projects;
+
+/**
+ * Main project app folder from /src/app folder
+ */
+export const migrationsFromSrc = folderName.migrations;
+
+/**
+ * Main project app folder from /tmp-*src folders
+ */
+export const migrationsFromTempSrc = folderName.migrations;
+
+/**
+ * Main project app folder from /src/app folder
+ */
+export const appFromSrc = folderName.app;
+
+/**
+ * Generated app inside angular app (comes from /src/app folder)
+ */
+export const appFromSrcInsideNgApp = folderName.app;
+
+/**
+ * Main project lib folder from /src/lib folder
+ */
+export const libFromSrc = folderName.lib;
+
+/**
+ * Lib from taon import
+ */
+export const libFromImport = folderName.lib;
+
+/**
+ * Lib from dist/lib
+ */
+export const libFromCompiledDist = folderName.lib;
+
+/**
+ * Lib from npm packages
+ */
+export const libFromNpmPackages = folderName.lib;
+
+/**
+ * Main project tests folder from /src/tests folder
+ */
+export const testsFromSrc = folderName.tests;
+
+/**
+ * Main project assets from /src/assets folder
+ */
+export const assetsFromSrc = folderName.assets;
+
+/**
+ * Assets stored in taon isomorphic npm package with
+ */
+export const assetsFromNpmLib = folderName.assets;
+
+/**
+ * Main project assets from /tmp-*\/src/assets folder
+ */
+export const assetsFromTempSrc = folderName.assets;
+
+/**
+ * Assets from ng template project
+ */
+export const assetsFromNgProj = folderName.assets;
+
+/**
+ * Assets from npm package
+ */
+export const assetsFromNpmPackage = folderName.assets;
+
+/**
+ * Shared from assets from /src/assets/shared folder
+ */
+export const sharedFromAssets = folderName.shared;
+
+/**
+ * Generated folder in assets from /src/assets/generated folder
+ */
+export const generatedFromAssets = folderName.generated;
+
+/**
+ * Generated pwa assets from /src/assets/generated/pwa folder
+ */
+export const pwaGeneratedFolder = 'pwa';
+
+/**
+ * Generated assets-for folder
+ */
+export const assetsFor = 'assets-for';
+
+/**
+ * @deprecated it was probably needed for old container build
+ * Folder for all browser libs
+ */
+export const libs = folderName.libs;
+
+export enum BundledFiles {
+  CNAME = 'CNAME',
+  README_MD = 'README.md',
+  CLI_README_MD = 'CLI-README.md',
+  INDEX_HTML = 'index.html',
+}
+
+export enum BundledDocsFolders {
+  VERSION = 'version',
+}
+
+export enum TaonCommands {
+  NPM_RUN_NG = 'npm-run ng',
+  NG = 'ng',
+}
+
+export const appTsFromSrc = 'app.ts';
+
+export const appScssFromSrc = 'app.scss';
+
+export const globalScssFromSrc = 'global.scss';
+
+export const ngProjectStylesScss = 'styles.scss';
+
+export const appElectronTsFromSrc = 'app.electron.ts';
+
+export const appVscodeTsFromSrc = 'app.vscode.ts';
+
+export const appVscodeJSFromBuild = 'app.vscode.js';
+
+export enum TaonFileExtension {
+  DOT_WORKER_TS = '.worker.ts',
+  DOT_CONTEXT_TS = '.context.ts',
+}
+
+/**
  * ng build for library from /src/lib
  */
 export const tmpLibsForDist = 'tmp-libs-for-dist';
@@ -357,6 +632,31 @@ export const tmpAppsForDistElectron = `tmp-apps-for-dist-electron`;
 export const tmpAppsForDistElectronWebsql = `tmp-apps-for-dist-websql-electron`;
 
 /**
+ * Dummy auto generated /src/index.ts
+ */
+export const indexTsFromSrc = fileName.index_ts;
+
+/**
+ * Entry point for angular lib from /src/lib/index.ts
+ */
+export const indexTsFromLibFromSrc = fileName.index_ts;
+
+/**
+ * Entry point for scss from /src/index.scss
+ */
+export const indexScssFromSrc = fileName.index_ts;
+
+/**
+ * Index for autogenerated migrations /src/migrations/index.ts
+ */
+export const indexTsFromMigrationsFromSrc = fileName.index_ts;
+
+/**
+ * Entry point for scss from /src/lib/index.scss
+ */
+export const indexScssFromSrcLib = 'index.scss';
+
+/**
  *
  * @param appForLib if true code is for angular (ng server/build) app build, false for lib ng build
  * @param websql if true websql version
@@ -377,51 +677,112 @@ export function tempSourceFolder(appForLib: boolean, websql: boolean): string {
   }
 }
 
-/**
- * @returns relative path to proxy angular project build folder
- */
-export const angularProjProxyPath = (options: {
-  project: Project;
-  websql: boolean;
-  targetArtifact: EnvOptions['release']['targetArtifact'];
-}): string => {
-  //#region @backendFunc
-  const { websql, targetArtifact, project } = options;
+export const isomorphicPackagesJsonKey = 'isomorphicPackages';
 
-  if (websql && targetArtifact === 'electron-app') {
-    Helpers.warn(`Electron app with websql is not supported`, true);
-    return crossPlatformPath([tmpAppsForDistElectronWebsql, project.name]);
-  }
-  if (!websql && targetArtifact === 'electron-app') {
-    return crossPlatformPath([tmpAppsForDistElectron, project.name]);
-  }
-  if (!websql && targetArtifact === 'angular-node-app') {
-    return crossPlatformPath([tmpAppsForDist, project.name]);
-  }
-  if (websql && targetArtifact === 'angular-node-app') {
-    return crossPlatformPath([tmpAppsForDistWebsql, project.name]);
-  }
-  return crossPlatformPath([
-    websql ? tmpLibsForDistWebsql : tmpLibsForDist,
-    project.name,
-  ]);
-  //#endregion
-};
+export const browserMainProject = config.folder.browser;
+export const websqlMainProject = config.folder.websql;
 
-export const clientCodeVersionFolder = [
-  config.folder.browser,
-  config.folder.websql,
-];
+export const clientCodeVersionFolder = [browserMainProject, websqlMainProject];
 
-export const notAllowedAsPacakge = [
-  ...clientCodeVersionFolder,
-  config.folder.assets,
-];
+export const notAllowedAsPacakge = [...clientCodeVersionFolder, assetsFromSrc];
 
 export const MESSAGES = {
   SHUT_DOWN_FOLDERS_AND_DEBUGGERS:
     'Please shut down your code debugger and any open windows from node_modules and press any key...',
 };
+
+export const localReleaseMainProject = 'local_release';
+
+export const dotInstallDate = '.install-date';
+
+export const dotVscodeMainProject = '.vscode';
+
+export const packageJsonLockMainProject = fileName.package_lock_json;
+
+export const yarnLockMainProject = fileName.yarn_lock;
+
+export const packageJsonMainProject = fileName.package_json;
+
+export const packageJsonNpmLib = fileName.package_json;
+
+export const packageJsonVscodePlugin = fileName.package_json;
+
+export const packageJsonNpmLibAngular = fileName.package_json;
+
+export const packageJsonNgProject = fileName.package_json;
+
+export const tsconfigJsonMainProject = 'tsconfig.json';
+export const tsconfigNgProject = 'tsconfig.json';
+
+export const tsconfigSpecNgProject = 'tsconfig.spec.json';
+
+export const tsconfigForUnitTestsNgProject = 'tsconfig.spec-for-unit.json';
+
+export const tsconfigJsonBrowserMainProject = 'tsconfig.browser.json';
+
+export const tsconfigBackendDistJson = 'tsconfig.backend.dist.json';
+
+export const tsconfigJsonIsomorphicMainProject = 'tsconfig.isomorphic.json';
+
+export const tsconfigIsomorphicFlatDistMainProject =
+  'tsconfig.isomorphic-flat-dist.json';
+
+export const dotNpmrcMainProject = fileName._npmrc;
+
+export const dotGitIgnoreMainProject = fileName._gitignore;
+
+export const dotNpmIgnoreMainProject = fileName._npmignore;
+
+export const runJsMainProject = 'run.js';
+
+export const indexDtsMainProject = fileName.index_d_ts;
+
+export const indexDtsNpmPackage = fileName.index_d_ts;
+
+export const indexJSNpmPackage = fileName.index_js;
+
+export const cliTsFromSrc = 'cli.ts';
+
+export const cliJSNpmPackage = 'cli.js';
+
+export const cliJSMapNpmPackage = 'cli.js.map';
+
+export const cliDtsNpmPackage = 'cli.d.js';
+
+export const indexJsMainProject = fileName.index_js;
+
+export const indexJsMapMainProject = fileName.index_js_map;
+
+export const sourceLinkInNodeModules = folderName.source;
+
+export const taonJsonMainProject = fileName.taon_jsonc;
+
+export const updateVscodePackageJsonJsMainProject =
+  'update-vscode-package-json.js';
+
+export const routes = TaonTempRoutesFolder;
+
+export const databases = TaonTempDatabasesFolder;
+
+export const dotFileTemplateExt = '.filetemplate';
+
+export const dotEnvFile = '.env';
+
+export const suffixLatest = '-latest';
+
+export const releaseSuffix = '-release';
+
+export const debugSuffix = '--debug';
+
+export const debugBrkSuffix = '--debug-brk';
+
+export const inspectSuffix = '--inspect';
+
+export const inspectBrkSuffix = '--inspect-brk';
+
+export const containerPrefix = 'container-';
+
+export const testEnvironmentsMainProject = folderName.testsEnvironments;
 
 export const ONLY_COPY_ALLOWED = [
   // 'background-worker-process',

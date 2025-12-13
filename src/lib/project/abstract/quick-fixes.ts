@@ -1,16 +1,37 @@
 //#region imports
 import { TaonTempDatabasesFolder, TaonTempRoutesFolder } from 'taon/src';
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import { glob, fse, chalk } from 'tnp-core/src';
 import { path, _, crossPlatformPath } from 'tnp-core/src';
 import { UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
 import { Helpers, BaseQuickFixes } from 'tnp-helpers/src';
 
 import {
+  appFromSrc,
+  appFromSrcInsideNgApp,
+  assetsFromSrc,
+  CoreNgTemplateFiles,
+  distMainProject,
   folder_shared_folder_info,
+  indexScssFromSrc,
+  indexScssFromSrcLib,
+  indexTsFromLibFromSrc,
+  libFromSrc,
+  migrationsFromSrc,
+  nodeModulesMainProject,
+  sharedFromAssets,
+  srcMainProject,
+  srcNgProxyProject,
+  TaonGeneratedFiles,
   tempSourceFolder,
+  testsFromSrc,
   THIS_IS_GENERATED_INFO_COMMENT,
   THIS_IS_GENERATED_STRING,
+  tsconfigForUnitTestsNgProject,
+  tsconfigJsonBrowserMainProject,
+  tsconfigJsonMainProject,
+  tsconfigNgProject,
+  tsconfigSpecNgProject,
 } from '../../constants';
 import type { Project } from '../abstract/project';
 //#endregion
@@ -26,14 +47,14 @@ export class QuickFixes extends BaseQuickFixes<Project> {
   //#region recreate temp source necessary files for tests
   recreateTempSourceNecessaryFilesForTesting(): void {
     //#region @backendFunc
-    if (this.project.typeIsNot('isomorphic-lib')) {
+    if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
       return;
     }
 
     (() => {
       const tsconfigBrowserPath = path.join(
         this.project.location,
-        'tsconfig.browser.json',
+        tsconfigJsonBrowserMainProject,
       );
       const tempDirs = [
         tempSourceFolder(true, true),
@@ -41,33 +62,43 @@ export class QuickFixes extends BaseQuickFixes<Project> {
         tempSourceFolder(true, false),
         tempSourceFolder(false, true),
       ];
-      tempDirs.forEach(dirName => {
+      tempDirs.forEach(tempSrcDirName => {
         // console.log(`
 
         //   REBUILDING: ${dirName}
 
         //   `)
-        const dest = path.join(this.project.location, dirName, 'tsconfig.json');
+        const dest = path.join(
+          this.project.location,
+          tempSrcDirName,
+          tsconfigNgProject,
+        );
         Helpers.copyFile(tsconfigBrowserPath, dest);
 
         this.project.framework.recreateFileFromCoreProject({
-          fileRelativePath: [dirName, 'tsconfig.spec.json'],
-          relativePathInCoreProject: 'app/tsconfig.spec-for-unit.json',
+          fileRelativePath: [tempSrcDirName, tsconfigSpecNgProject],
+          relativePathInCoreProject: `${appFromSrcInsideNgApp}/${tsconfigForUnitTestsNgProject}`,
         });
 
         this.project.framework.recreateFileFromCoreProject({
-          fileRelativePath: [dirName, 'jest.config.js'],
-          relativePathInCoreProject: 'app/jest.config.js',
+          fileRelativePath: [
+            tempSrcDirName,
+            CoreNgTemplateFiles.JEST_CONFIG_JS,
+          ],
+          relativePathInCoreProject: `${appFromSrcInsideNgApp}/${CoreNgTemplateFiles.JEST_CONFIG_JS}`,
         });
 
         this.project.framework.recreateFileFromCoreProject({
-          fileRelativePath: [dirName, 'setupJest.ts'],
-          relativePathInCoreProject: 'app/src/setupJest.ts',
+          fileRelativePath: [tempSrcDirName, CoreNgTemplateFiles.SETUP_JEST_TS],
+          relativePathInCoreProject: `${appFromSrcInsideNgApp}/${srcNgProxyProject}/${CoreNgTemplateFiles.SETUP_JEST_TS}`,
         });
 
         this.project.framework.recreateFileFromCoreProject({
-          fileRelativePath: [dirName, 'jestGlobalMocks.ts'],
-          relativePathInCoreProject: 'app/src/jestGlobalMocks.ts',
+          fileRelativePath: [
+            tempSrcDirName,
+            CoreNgTemplateFiles.JEST_GLOBAL_MOCKS_TS,
+          ],
+          relativePathInCoreProject: `${appFromSrcInsideNgApp}/${srcNgProxyProject}/${CoreNgTemplateFiles.JEST_GLOBAL_MOCKS_TS}`,
         });
       });
     })();
@@ -78,7 +109,7 @@ export class QuickFixes extends BaseQuickFixes<Project> {
   //#region fix build dirs
   makeSureDistFolderExists(): void {
     //#region @backendFunc
-    const p = crossPlatformPath([this.project.location, config.folder.dist]);
+    const p = this.project.pathFor(distMainProject);
     if (!Helpers.isFolder(p)) {
       Helpers.remove(p);
       Helpers.mkdirp(p);
@@ -93,18 +124,17 @@ export class QuickFixes extends BaseQuickFixes<Project> {
     Helpers.taskStarted(`[quick fixes] missing angular lib fles start`, true);
     if (
       this.project.framework.frameworkVersionAtLeast('v3') &&
-      this.project.typeIs('isomorphic-lib')
+      this.project.typeIs(LibTypeEnum.ISOMORPHIC_LIB)
     ) {
       (() => {
         if (this.project.framework.isStandaloneProject) {
           (() => {
-            const indexTs = crossPlatformPath(
-              path.join(
-                this.project.location,
-                config.folder.src,
-                'lib/index.ts',
-              ),
-            );
+            const indexTs = crossPlatformPath([
+              this.project.location,
+              srcMainProject,
+              libFromSrc,
+              indexTsFromLibFromSrc,
+            ]);
             if (!Helpers.exists(indexTs)) {
               Helpers.writeFile(
                 indexTs,
@@ -115,13 +145,12 @@ export class QuickFixes extends BaseQuickFixes<Project> {
             }
           })();
           (() => {
-            const indexTs = crossPlatformPath(
-              path.join(
-                this.project.location,
-                config.folder.src,
-                'lib/index.scss',
-              ),
-            );
+            const indexTs = this.project.pathFor([
+              srcMainProject,
+              libFromSrc,
+              indexScssFromSrcLib,
+            ]);
+
             if (!Helpers.exists(indexTs)) {
               Helpers.writeFile(
                 indexTs,
@@ -134,12 +163,13 @@ export class QuickFixes extends BaseQuickFixes<Project> {
           })();
 
           (() => {
-            const indexTs = crossPlatformPath(
-              path.join(this.project.location, config.folder.src, 'index.scss'),
-            );
-            if (!Helpers.exists(indexTs)) {
+            const indexScss = this.project.pathFor([
+              srcMainProject,
+              indexScssFromSrc,
+            ]);
+            if (!Helpers.exists(indexScss)) {
               Helpers.writeFile(
-                indexTs,
+                indexScss,
                 `
 // EXPORT SCSS STYLES FOR THIS APP or LIBRARY IN THIS FILE
 @forward './lib/index.scss';
@@ -152,11 +182,10 @@ export class QuickFixes extends BaseQuickFixes<Project> {
       })();
 
       (() => {
-        const shared_folder_info = crossPlatformPath([
-          this.project.location,
-          config.folder.src,
-          config.folder.assets,
-          config.folder.shared,
+        const shared_folder_info = this.project.pathFor([
+          srcMainProject,
+          assetsFromSrc,
+          sharedFromAssets,
           folder_shared_folder_info,
         ]);
 
@@ -174,11 +203,10 @@ ${THIS_IS_GENERATED_STRING}
       })();
 
       (() => {
-        const shared_folder_info = crossPlatformPath([
-          this.project.location,
-          config.folder.src,
-          config.folder.migrations,
-          'migrations-info.md',
+        const shared_folder_info = this.project.pathFor([
+          srcMainProject,
+          migrationsFromSrc,
+          TaonGeneratedFiles.MIGRATIONS_INFO_MD,
         ]);
 
         Helpers.writeFile(
@@ -194,11 +222,10 @@ ${THIS_IS_GENERATED_STRING}
       })();
 
       (() => {
-        const shared_folder_info = crossPlatformPath([
-          this.project.location,
-          config.folder.src,
-          config.folder.lib,
-          'lib-info.md',
+        const shared_folder_info = this.project.pathFor([
+          srcMainProject,
+          libFromSrc,
+          TaonGeneratedFiles.LIB_INFO_MD,
         ]);
 
         Helpers.writeFile(
@@ -217,11 +244,10 @@ ${THIS_IS_GENERATED_STRING}
       })();
 
       (() => {
-        const shared_folder_info = crossPlatformPath([
-          this.project.location,
-          config.folder.src,
-          'tests',
-          'mocha-tests-info.md',
+        const shared_folder_info = this.project.pathFor([
+          srcMainProject,
+          testsFromSrc,
+          TaonGeneratedFiles.MOCHA_TESTS_INFO_MD,
         ]);
 
         Helpers.writeFile(
@@ -279,8 +305,14 @@ ${THIS_IS_GENERATED_STRING}
       })();
     }
 
+    const appFolderInfoMdAbsPath = this.project.pathFor([
+      srcMainProject,
+      appFromSrc,
+      TaonGeneratedFiles.APP_FOLDER_INFO_MD,
+    ]);
+
     Helpers.writeFile(
-      [this.project.location, config.folder.src, 'app', 'app-folder-info.md'],
+      appFolderInfoMdAbsPath,
       `${THIS_IS_GENERATED_STRING}
 
 # HOW TO USE THIS FOLDER
@@ -394,10 +426,10 @@ ${THIS_IS_GENERATED_STRING}`,
       return;
     }
     if (this.project.framework.isStandaloneProject) {
-      const srcFolder = path.join(this.project.location, config.folder.src);
+      const srcFolderAbsPath = this.project.pathFor(srcMainProject);
 
-      if (!fse.existsSync(srcFolder)) {
-        Helpers.mkdirp(srcFolder);
+      if (!fse.existsSync(srcFolderAbsPath)) {
+        Helpers.mkdirp(srcFolderAbsPath);
       }
     }
     Helpers.taskDone(`[quick fixes] missing source folder end`);
@@ -409,7 +441,7 @@ ${THIS_IS_GENERATED_STRING}`,
   public get nodeModulesPkgsReplacements() {
     //#region @backendFunc
     const npmReplacements = glob
-      .sync(`${this.project.location} /${config.folder.node_modules}-*.zip`)
+      .sync(`${this.project.pathFor(nodeModulesMainProject)}-*.zip`)
       .map(p => p.replace(this.project.location, '').slice(1));
 
     return npmReplacements;
@@ -427,30 +459,31 @@ ${THIS_IS_GENERATED_STRING}`,
   public unpackNodeModulesPackagesZipReplacements() {
     //#region @backendFunc
     return; // TODO @UNCOMMENT zip refactored
-    const nodeModulesPath = path.join(
-      this.project.location,
-      config.folder.node_modules,
-    );
+    const nodeModulesPath = this.project.pathFor(nodeModulesMainProject);
 
     if (!fse.existsSync(nodeModulesPath)) {
       Helpers.mkdirp(nodeModulesPath);
     }
     this.nodeModulesPkgsReplacements.forEach(p => {
-      const name = p.replace(`${config.folder.node_modules}-`, '');
-      const moduleInNodeMdules = path.join(
-        this.project.location,
-        config.folder.node_modules,
-        name,
+      const nameZipReplacementPackage = p.replace(
+        `${nodeModulesMainProject}-`,
+        '',
       );
-      if (fse.existsSync(moduleInNodeMdules)) {
+
+      const moduleInNodeModules = this.project.pathFor([
+        nodeModulesMainProject,
+        nameZipReplacementPackage,
+      ]);
+
+      if (fse.existsSync(moduleInNodeModules)) {
         Helpers.info(
-          `Extraction ${chalk.bold(name)} already exists in ` +
-            ` ${chalk.bold(this.project.genericName)}/${config.folder.node_modules}`,
+          `Extraction ${chalk.bold(nameZipReplacementPackage)} already exists in ` +
+            ` ${chalk.bold(this.project.genericName)}/${nodeModulesMainProject}`,
         );
       } else {
         Helpers.info(
-          `Extraction before instalation ${chalk.bold(name)} in ` +
-            ` ${chalk.bold(this.project.genericName)}/${config.folder.node_modules}`,
+          `Extraction before installation ${chalk.bold(nameZipReplacementPackage)} in ` +
+            ` ${chalk.bold(this.project.genericName)}/${nodeModulesMainProject}`,
         );
 
         UtilsZip.unzipArchive(p);

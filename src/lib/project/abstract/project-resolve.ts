@@ -1,5 +1,14 @@
 //#region imports
-import { config, urlRepoTaonContainers } from 'tnp-core/src';
+import {
+  config,
+  dotTaonFolder,
+  LibTypeEnum,
+  taonContainers,
+  taonPackageName,
+  taonProjects,
+  tnpPackageName,
+  urlRepoTaonContainers,
+} from 'tnp-core/src';
 import { LibTypeArr } from 'tnp-core/src';
 import {
   child_process,
@@ -10,12 +19,19 @@ import {
 } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { CLI, UtilsOs } from 'tnp-core/src';
+import { fileName } from 'tnp-core/src';
 import { Helpers, BaseProjectResolver } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
 import {
+  containerPrefix,
   DEFAULT_FRAMEWORK_VERSION,
+  distMainProject,
+  dotVscodeMainProject,
+  nodeModulesMainProject,
+  packageJsonMainProject,
   SKIP_CORE_CHECK_PARAM,
+  taonJsonMainProject,
   taonRepoPathUserInUserDir,
 } from '../../constants';
 // import { $Global } from '../cli/cli-_GLOBAL_';
@@ -42,40 +58,36 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     // }
     if (UtilsOs.isRunningInVscodeExtension()) {
       //#region @backend
-      config.frameworkName =
-        config.frameworkName ||
-        (config.frameworkNames.productionFrameworkName as any);
+      config.frameworkName = config.frameworkName || (taonPackageName as any);
 
-      const taonContinaers = Helpers.foldersFrom(
-        [
-          UtilsOs.getRealHomeDir(),
-          `.${config.frameworkNames.productionFrameworkName}`,
-          'taon-containers',
-        ],
+      const allTaonContainersCoreContainers = Helpers.foldersFrom(
+        [UtilsOs.getRealHomeDir(), dotTaonFolder, taonContainers],
         { recursive: false },
       )
         .map(c => this.From(c))
-        .filter(c => c?.typeIs('container'))
+        .filter(c => c?.typeIs(LibTypeEnum.CONTAINER))
         .sort((a, b) => {
           const numA =
             Number(
               a.name
-                ?.replace('container', '')
+                ?.replace(LibTypeEnum.CONTAINER, '')
                 .replace('-', '')
                 .replace('v', ''),
             ) || 0;
           const numB =
             Number(
               b.name
-                ?.replace('container', '')
+                ?.replace(LibTypeEnum.CONTAINER, '')
                 .replace('-', '')
                 .replace('v', ''),
             ) || 0;
           return numB - numA; // highest numbers first
         });
-      const firstContainer = _.first(taonContinaers);
+      const firstContainer = _.first(allTaonContainersCoreContainers);
       config.dirnameForTnp =
-        firstContainer?.pathFor('node_modules/tnp') || config.dirnameForTnp;
+        firstContainer?.pathFor(
+          `${nodeModulesMainProject}/${tnpPackageName}`,
+        ) || config.dirnameForTnp;
       //#endregion
     }
 
@@ -91,7 +103,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     // }`;
 
     this.taonProjectsWorker = new TaonProjectsWorker(
-      'taon-projects',
+      taonProjects,
       `${cliToolName} ${
         `startCliServiceTaonProjectsWorker ${SKIP_CORE_CHECK_PARAM}`
         // as keyof $Global
@@ -109,11 +121,11 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       return void 0;
     }
 
-    const taonJson = Helpers.readJsonC([location, config.file.taon_jsonc]);
+    const taonJson = Helpers.readJsonC([location, taonJsonMainProject]);
     if (!_.isObject(taonJson) || !taonJson.type) {
-      return Helpers.exists([location, config.file.package_json])
-        ? 'unknown-npm-project'
-        : 'unknown';
+      return Helpers.exists([location, packageJsonMainProject])
+        ? LibTypeEnum.UNKNOWN_NPM_PROJECT
+        : LibTypeEnum.UNKNOWN;
     }
     const type = taonJson.type;
     return type;
@@ -144,7 +156,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     }
     location = crossPlatformPath(path.resolve(location));
     if (this.emptyLocations.includes(location)) {
-      if (location.search(`/${config.folder.dist}`) === -1) {
+      if (location.search(`/${distMainProject}`) === -1) {
         Helpers.log(`[project.from] empty location ${location}`, 2);
         return;
       }
@@ -170,13 +182,13 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     // console.log(`type ${type} for location ${location}`);
 
     let resultProject: Project;
-    if (type === 'isomorphic-lib') {
+    if (type === LibTypeEnum.ISOMORPHIC_LIB) {
       resultProject = new this.classFn(location);
     }
-    if (type === 'container') {
+    if (type === LibTypeEnum.CONTAINER) {
       resultProject = new this.classFn(location);
     }
-    if (type === 'unknown-npm-project') {
+    if (type === LibTypeEnum.UNKNOWN_NPM_PROJECT) {
       resultProject = new this.classFn(location);
     }
 
@@ -298,13 +310,13 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     // console.log({ libraryType, version });
 
-    if (libraryType === 'container') {
+    if (libraryType === LibTypeEnum.CONTAINER) {
       const pathToContainer = this.resolveCoreProjectsPathes(version).container;
       // console.log({ pathToContainer });
       const containerProject = this.From(pathToContainer);
       return containerProject as any;
     }
-    if (libraryType !== 'isomorphic-lib') {
+    if (libraryType !== LibTypeEnum.ISOMORPHIC_LIB) {
       return void 0;
     }
 
@@ -336,8 +348,8 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     //#region @backendFunc
     const projectsInUserFolder = crossPlatformPath([
       UtilsOs.getRealHomeDir(),
-      `.${config.frameworkNames.productionFrameworkName}`,
-      'taon-containers',
+      dotTaonFolder,
+      taonContainers,
     ]);
     return projectsInUserFolder;
     //#endregion
@@ -468,7 +480,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     //#region remove vscode folder
     try {
-      Helpers.run('rimraf .vscode', { cwd }).sync();
+      Helpers.run(`rimraf ${dotVscodeMainProject}`, { cwd }).sync();
     } catch (error) {}
     //#endregion
 
@@ -499,7 +511,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     }
     const morhiVscode = crossPlatformPath([
       path.dirname(taonRepoPathUserInUserDir),
-      'taon-projects/.vscode',
+      `${taonProjects}/${dotVscodeMainProject}`,
     ]);
 
     if (!fse.existsSync(taonRepoPathUserInUserDir) && !global.skipCoreCheck) {
@@ -562,8 +574,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     if (
       (global['frameworkName'] &&
-        global['frameworkName'] ===
-          config.frameworkNames.productionFrameworkName) ||
+        global['frameworkName'] === taonPackageName) ||
       UtilsOs.isRunningInVscodeExtension()
     ) {
       const joined = partOfPath.join('/');
@@ -586,17 +597,19 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   private resolveCoreProjectsPathes(version?: CoreModels.FrameworkVersion) {
     //#region @backendFunc
 
-    version = !version || version === 'v1' ? '' : (`-${version}` as any);
-    if (version === 'v4') {
+    if (Number(version.replace('v', '')) < 18) {
       Helpers.warn(
-        `[taon/project] v4 is not supported anymore.. use v16 instead`,
+        `[taon/project] ${version} is not supported anymore.. use v19 instead`,
       );
     }
+
+    version = !version || version === 'v1' ? ('' as any) : version;
+
     // console.log(({ dirnameForTnp: config.dirnameForTnp, taonProjectsRelative: this.taonProjectsRelative, version }));
 
     const coreContainerPath = this.pathResolved(
       config.dirnameForTnp,
-      `${this.taonProjectsRelative}/container${version}`,
+      `${this.taonProjectsRelative}/${containerPrefix}${version}`,
     );
 
     const result = {
@@ -604,7 +617,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       projectByType: (libType: CoreModels.NewFactoryType) => {
         const resultByType = this.pathResolved(
           config.dirnameForTnp,
-          `${this.taonProjectsRelative}/container${version}/${libType}${version}`,
+          `${this.taonProjectsRelative}/${containerPrefix}${version}/${libType}-${version}`,
         );
         // console.log(`resultByType ${libType}`, resultByType);
         return resultByType;
@@ -620,7 +633,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
    * only for tnp dev mode cli
    */
   public get taonProjectsRelative(): string {
-    return `../taon-containers`;
+    return `../${taonContainers}`;
   }
   //#endregion
 

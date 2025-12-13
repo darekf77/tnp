@@ -6,12 +6,23 @@ import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
+  appFromSrc,
+  assetsFor,
+  assetsFromNgProj,
+  assetsFromNpmPackage,
+  assetsFromSrc,
+  assetsFromTempSrc,
+  browserMainProject,
+  libFromImport,
+  srcFromTaonImport,
+  srcMainProject,
   tmpSourceDist,
   tmpSrcAppDist,
   tmpSrcAppDistWebsql,
   tmpSrcDist,
   tmpSrcDistWebsql,
   TO_REMOVE_TAG,
+  websqlMainProject,
 } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
@@ -111,8 +122,8 @@ export class BrowserCodeCut {
     if (project.framework.isStandaloneProject) {
       if (
         absSourcePathFromSrc
-          .replace(crossPlatformPath([project.location, config.folder.src]), '')
-          .startsWith('/assets/')
+          .replace(project.pathFor(srcMainProject), '')
+          .startsWith(`/${assetsFromTempSrc}/`)
       ) {
         this.isAssetsFile = true;
       }
@@ -390,8 +401,8 @@ export class BrowserCodeCut {
 
     if (isTsFile) {
       if (
-        !this.relativePath.startsWith('app/') &&
-        !this.relativePath.startsWith('app.')
+        !this.relativePath.startsWith(`${appFromSrc}/`) &&
+        !this.relativePath.startsWith(`${appFromSrc}.`)
       ) {
         fse.writeFileSync(
           this.absFileSourcePathBrowserOrWebsql,
@@ -413,7 +424,7 @@ export class BrowserCodeCut {
         'utf8',
       );
     } else {
-      if (!this.relativePath.startsWith('app/')) {
+      if (!this.relativePath.startsWith(`${appFromSrc}/`)) {
         fse.writeFileSync(
           this.absFileSourcePathBrowserOrWebsql,
           this.rawContentForBrowser,
@@ -443,11 +454,11 @@ export class BrowserCodeCut {
       const toReplace = this.importExportsFromOrgContent.filter(imp => {
         imp.embeddedPathToFileResult = imp.wrapInParenthesis(
           imp.cleanEmbeddedPathToFile.replace(
-            '/src',
+            `/${srcMainProject}`,
             `/${
               this.buildOptions.build.websql
-                ? config.folder.websql
-                : config.folder.browser
+                ? websqlMainProject
+                : browserMainProject
             }`,
           ),
         );
@@ -466,7 +477,10 @@ export class BrowserCodeCut {
     if (_.isString(this.rawContentBackend)) {
       const toReplace = this.importExportsFromOrgContent.filter(imp => {
         imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-          imp.cleanEmbeddedPathToFile.replace('/src', `/${config.folder.lib}`),
+          imp.cleanEmbeddedPathToFile.replace(
+            `/${srcFromTaonImport}`,
+            `/${libFromImport}`,
+          ),
         );
         return imp.isIsomorphic;
       });
@@ -779,7 +793,7 @@ export class BrowserCodeCut {
 
     for (const imp of toReplace) {
       imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-        `${back}${config.folder.lib}`,
+        `${back}${libFromImport}`,
       );
     }
     content = this.splitFileProcess.replaceInFile(content, toReplace);
@@ -792,13 +806,13 @@ export class BrowserCodeCut {
   //#region private / methods & getters / replace assets path
   private replaceAssetsPath(absDestinationPath: string): string {
     //#region @backendFunc
-    const isAsset = this.relativePath.startsWith(`${config.folder.assets}/`);
+    const isAsset = this.relativePath.startsWith(`${assetsFromTempSrc}/`);
 
     // isAsset && console.log('isAsset', absDestinationPath);
     return isAsset
       ? absDestinationPath.replace(
-          '/assets/',
-          `/assets/assets-for/${this.project.nameForNpmPackage}/assets/`,
+          `/${assetsFromTempSrc}/`,
+          `/${assetsFromNgProj}/${assetsFor}/${this.project.nameForNpmPackage}/${assetsFromNpmPackage}/`,
         )
       : absDestinationPath;
     //#endregion

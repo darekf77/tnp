@@ -1,5 +1,5 @@
 //#region imports
-import { config, PREFIXES } from 'tnp-core/src';
+import { config, PREFIXES, taonPackageName, tnpPackageName, Utils } from 'tnp-core/src';
 import {
   _,
   path,
@@ -8,9 +8,16 @@ import {
   chalk,
   UtilsCliClassMethod,
 } from 'tnp-core/src';
+import { fileName } from 'tnp-core/src';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
-import { notAllowedAsPacakge } from '../../constants';
+import {
+  browserMainProject,
+  isomorphicPackagesJsonKey,
+  notAllowedAsPacakge,
+  tmpIsomorphicPackagesJson,
+  websqlMainProject,
+} from '../../constants';
 // import { $Global } from '../cli/cli-_GLOBAL_';
 
 import type { Project } from './project';
@@ -39,18 +46,18 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     return crossPlatformPath([
       this.coreContainer.location,
-      config.tempFiles.FILE_NAME_ISOMORPHIC_PACKAGES,
+      tmpIsomorphicPackagesJson,
     ]);
     //#endregion
   }
   //#endregion
 
-  //#region libs from json
-  public get libsFromJson(): string[] {
+  //#region isomorphic packages names from json
+  public get isomorphicPackagesFromJson(): string[] {
     const json = Helpers.readJson(this.jsonPath) || {};
     // console.log(`json: `,this.jsonPath )
-    const arr = json[config.array.isomorphicPackages] || [];
-    // console.log(`libs from json: `,arr);
+    const arr = json[isomorphicPackagesJsonKey] || [];
+    // console.log(`isomorphicPackagess from json: `,arr);
     return arr;
   }
   //#endregion
@@ -76,8 +83,8 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     const readCurrent = (): string[] => {
       try {
         const pj = Helpers.readJson(this.jsonPath);
-        if (_.isArray(pj[config.array.isomorphicPackages])) {
-          return Helpers.uniqArray(pj[config.array.isomorphicPackages]);
+        if (_.isArray(pj[isomorphicPackagesJsonKey])) {
+          return Helpers.uniqArray(pj[isomorphicPackagesJsonKey]);
         }
       } catch (error) {
         Helpers.log(`[${config.frameworkName}] ERROR not recognized in`);
@@ -97,9 +104,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
         if (path.basename(b).startsWith('@')) {
           const foldersFromB = Helpers.foldersFrom(b)
             .filter(f => !notAllowedAsPacakge.includes(path.basename(f)))
-            .filter(f =>
-              Helpers.exists([path.dirname(f), config.file.index_d_ts]),
-            ) // QUICK_FIX @angular/animation
+            .filter(f => Helpers.exists([path.dirname(f), fileName.index_d_ts])) // QUICK_FIX @angular/animation
             .map(f => {
               return `${path.basename(b)}/${path.basename(f)}`;
             });
@@ -129,13 +134,14 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       });
     //#endregion
 
-    recognizedPackages = Helpers.uniqArray(
+    recognizedPackages = Utils.uniqArray(
       [
         ...(recognizedPackages || []),
         this.project.name,
         this.project.nameForNpmPackage,
         ...(fromNodeModulesFolderSearch || []),
-        ...Object.values(config.frameworkNames),
+        taonPackageName,
+        tnpPackageName,,
       ].filter(f => !f.startsWith(PREFIXES.RESTORE_NPM)),
     );
 
@@ -172,10 +178,10 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     const alreadyExistsJson = Helpers.readJsonC(this.jsonPath) || {};
     const alreadyExistsJsonArr =
-      alreadyExistsJson[config.array.isomorphicPackages] || [];
+      alreadyExistsJson[isomorphicPackagesJsonKey] || [];
 
     Helpers.writeJson(this.jsonPath, {
-      [config.array.isomorphicPackages]: Helpers.uniqArray(
+      [isomorphicPackagesJsonKey]: Helpers.uniqArray(
         alreadyExistsJsonArr.concat(recognizedPackagesNewPackages),
       ),
     });
@@ -184,13 +190,13 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
 
   //#endregion
 
-  //#region resolve and add isomorphic libs to memory
+  //#region resolve and add isomorphic isomorphic packages names to memory
   public resolveAndAddIsomorphicLibsToMemory(
-    libsNames: string[],
+    isomorphicPackagesNames: string[],
     informAboutDiff = false,
   ): void {
     //#region @backendFunc
-    // console.log(`add ed isomorphic libs to memory: ${libsNames.join(', ')}`);
+    // console.log(`add ed isomorphic isomorphic packages names to memory: ${isomorphicPackagesNames.join(', ')}`);
     if (!this.coreContainer) {
       return;
     }
@@ -199,7 +205,9 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       const current =
         this.coreContainer.packagesRecognition.inMemoryIsomorphicLibs;
 
-      const newAdded = libsNames.filter(l => !current.includes(l));
+      const newAdded = isomorphicPackagesNames.filter(
+        l => !current.includes(l),
+      );
       for (const packageName of newAdded) {
         Helpers.info(
           `[${config.frameworkName}] ${packageName} added to isomorphic packages...`,
@@ -210,7 +218,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     this.coreContainer.packagesRecognition.inMemoryIsomorphicLibs =
       Helpers.uniqArray([
         ...this.coreContainer.packagesRecognition.inMemoryIsomorphicLibs,
-        ...libsNames,
+        ...isomorphicPackagesNames,
         this.project.name,
         this.project.nameForNpmPackage,
       ]);
@@ -220,7 +228,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
 
   //#region all isomorphic packages from memory
   /**
-   * main source of isomorphic libs
+   * main source of isomorphic isomorphic packages
    */
   public get allIsomorphicPackagesFromMemory(): string[] {
     //#region @backendFunc
@@ -229,7 +237,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       0
     ) {
       this.resolveAndAddIsomorphicLibsToMemory(
-        this.coreContainer?.packagesRecognition.libsFromJson,
+        this.coreContainer?.packagesRecognition.isomorphicPackagesFromJson,
         false,
       );
 
@@ -250,7 +258,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
           .sync();
 
         this.resolveAndAddIsomorphicLibsToMemory(
-          this.coreContainer?.packagesRecognition.libsFromJson,
+          this.coreContainer?.packagesRecognition.isomorphicPackagesFromJson,
           false,
         );
         if (
@@ -284,12 +292,14 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     const packageInNodeModulesPath = crossPlatformPath(
       fse.realpathSync(path.join(node_modules, packageName)),
     );
-    const browser = crossPlatformPath(
-      path.join(packageInNodeModulesPath, config.folder.browser),
-    );
-    const websql = crossPlatformPath(
-      path.join(packageInNodeModulesPath, config.folder.websql),
-    );
+    const browser = crossPlatformPath([
+      packageInNodeModulesPath,
+      browserMainProject,
+    ]);
+    const websql = crossPlatformPath([
+      packageInNodeModulesPath,
+      websqlMainProject,
+    ]);
     isIsomorphic = Helpers.exists(browser) || Helpers.exists(websql);
     if (isIsomorphic && !Helpers.exists(websql)) {
       Helpers.removeIfExists(websql);

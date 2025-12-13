@@ -3,6 +3,11 @@ import { config } from 'tnp-core/src';
 import { _, crossPlatformPath } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
+import {
+  assetsFor,
+  assetsFromSrc,
+  srcMainProject,
+} from '../../../../../../constants';
 import type { Project } from '../../../../project';
 //#endregion
 
@@ -13,7 +18,7 @@ import type { Project } from '../../../../project';
 export function resolveBrowserPathToAssetFrom(
   projectTargetOrStandalone: Project,
   absolutePath: string,
-) {
+): string {
   //#region @backendFunc
   let resultBrowserPath = '';
 
@@ -21,13 +26,13 @@ export function resolveBrowserPathToAssetFrom(
    * example tmpSrcDist(Websql)/assets/assets-for/${project.name}/`
    */
   const relativePath = absolutePath.replace(
-    `${crossPlatformPath(projectTargetOrStandalone.location)}/`,
+    `${projectTargetOrStandalone.location}/`,
     '',
   );
   resultBrowserPath = `/${relativePath}`;
   resultBrowserPath = resultBrowserPath.replace(
-    `/${config.folder.src}/${config.folder.assets}/`,
-    `/${config.folder.assets}/${config.folder.assets}-for/${projectTargetOrStandalone.name}/`,
+    `/${srcMainProject}/${assetsFromSrc}/`,
+    `/${assetsFromSrc}/${assetsFor}/${projectTargetOrStandalone.name}/`,
   );
 
   return resultBrowserPath;
@@ -44,7 +49,7 @@ export function resolveBrowserPathToAssetFrom(
 export function resolvePathToAsset(
   project: Project,
   relativePathToLoader: string | string[],
-) {
+): string {
   //#region @backendFunc
   relativePathToLoader = crossPlatformPath(relativePathToLoader);
 

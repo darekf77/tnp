@@ -5,6 +5,7 @@ import {
   config,
   extAllowedToExportAndReplaceTSJSCodeFiles,
   frontendFiles,
+  LibTypeEnum,
   notNeededForExportFiles,
   TAGS,
 } from 'tnp-core/src';
@@ -53,12 +54,12 @@ export class $Generate extends BaseCli {
     //   nearestProj: nearestProj?.location
     // })
     let container = this.project.ins.by(
-      'container',
+      LibTypeEnum.CONTAINER,
       nearestProj.framework.frameworkVersion,
     ) as Project;
     if (container.framework.frameworkVersionLessThan('v3')) {
       container = this.project.ins.by(
-        'container',
+        LibTypeEnum.CONTAINER,
         DEFAULT_FRAMEWORK_VERSION,
       ) as Project;
     }

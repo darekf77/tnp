@@ -11,17 +11,26 @@ import {
 import { Helpers, UtilsQuickFixes } from 'tnp-helpers/src';
 
 import {
+  appVscodeJSFromBuild,
+  appVscodeTsFromSrc,
   DEFAULT_PORT,
+  distMainProject,
+  distVscodeProj,
   iconVscode128Basename,
+  nodeModulesMainProject,
+  outVscodeProj,
+  packageJsonVscodePlugin,
+  srcMainProject,
   tmpVscodeProj,
+  updateVscodePackageJsonJsMainProject,
 } from '../../../../constants';
 import { Models } from '../../../../models';
 import {
-  ReleaseArtifactTaonNames,
   ReleaseArtifactTaonNamesArr,
   EnvOptions,
   ReleaseType,
   Development,
+  ReleaseArtifactTaon,
 } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
@@ -34,10 +43,8 @@ export class ArtifactVscodePlugin extends BaseArtifact<
   ReleasePartialOutput
 > {
   constructor(project: Project) {
-    super(project, 'vscode-plugin');
+    super(project, ReleaseArtifactTaon.VSCODE_PLUGIN);
   }
-
-  public readonly appVscodeJsName = 'app.vscode.js';
 
   //#region clear partial
   async clearPartial(clearOption: EnvOptions) {
@@ -52,7 +59,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
     if (!initOptions.release.targetArtifact) {
-      initOptions.release.targetArtifact = 'vscode-plugin';
+      initOptions.release.targetArtifact = ReleaseArtifactTaon.VSCODE_PLUGIN;
     }
     if (!this.project.framework.isStandaloneProject) {
       return initOptions;
@@ -79,6 +86,9 @@ export class ArtifactVscodePlugin extends BaseArtifact<
         this.project.packageJson.description ||
         `Description of ${this.project.nameForNpmPackage} extension`,
       engines: {
+        /**
+         * ! TODO increase this !!!
+         */
         vscode: '^1.30.0',
       },
       repository: this.project.packageJson.repository || {
@@ -94,7 +104,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     }
 
     Helpers.writeJson(
-      crossPlatformPath([tmpVscodeProjPath, config.file.package_json]),
+      crossPlatformPath([tmpVscodeProjPath, packageJsonVscodePlugin]),
       packageJsonForVscode,
     );
 
@@ -106,39 +116,41 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     }
 
     Helpers.createSymLink(
-      this.project.pathFor(config.folder.dist),
+      this.project.pathFor(distMainProject),
       crossPlatformPath([
         tmpVscodeProjPath,
-        initOptions.release.releaseType
-          ? config.folder.dist
-          : config.folder.out,
+        initOptions.release.releaseType ? distVscodeProj : outVscodeProj,
       ]),
       { tryRemoveDesPath: true, continueWhenExistedFolderDoesntExists: true },
     );
 
     Helpers.createSymLink(
-      this.project.pathFor(config.folder.node_modules),
-      crossPlatformPath([tmpVscodeProjPath, config.folder.node_modules]),
+      this.project.pathFor(nodeModulesMainProject),
+      crossPlatformPath([tmpVscodeProjPath, nodeModulesMainProject]),
       { tryRemoveDesPath: true, continueWhenExistedFolderDoesntExists: true },
     );
 
     Helpers.createSymLink(
-      this.project.pathFor(this.vcodeProjectUpdatePackageJsonFilename),
+      this.project.pathFor(updateVscodePackageJsonJsMainProject),
       crossPlatformPath([
         tmpVscodeProjPath,
-        this.vcodeProjectUpdatePackageJsonFilename,
+        updateVscodePackageJsonJsMainProject,
       ]),
       { tryRemoveDesPath: true, continueWhenExistedFolderDoesntExists: true },
     );
 
     //#region recreate app.vscode.js
 
-    const relativeAppVscodeJsPath = crossPlatformPath('src/app.vscode.ts');
+    const relativeAppVscodeJsPath = crossPlatformPath(
+      `${srcMainProject}/${appVscodeTsFromSrc}`,
+    );
     if (!this.project.hasFile(relativeAppVscodeJsPath)) {
       const coreName = _.upperFirst(_.camelCase(this.project.name));
       const coreNameKebab = _.kebabCase(this.project.name);
-      const contentOrgVscode =
-        this.project.framework.coreProject.readFile('src/app.vscode.ts');
+      const contentOrgVscode = this.project.framework.coreProject.readFile(
+        `${srcMainProject}/${appVscodeTsFromSrc}`,
+      );
+
       this.project.writeFile(
         relativeAppVscodeJsPath,
         contentOrgVscode
@@ -203,20 +215,20 @@ export class ArtifactVscodePlugin extends BaseArtifact<
           await Helpers.bundleCodeIntoSingleFile(
             crossPlatformPath([
               tmpVscodeProjPath,
-              config.folder.dist,
-              'app.vscode.js',
+              distMainProject,
+              appVscodeJSFromBuild,
             ]),
             destExtensionJs,
             {
               strategy: 'vscode-ext',
               additionalExternals: [
                 ...this.project.taonJson.additionalExternalsFor(
-                  'vscode-plugin',
+                  ReleaseArtifactTaon.VSCODE_PLUGIN,
                 ),
               ],
               additionalReplaceWithNothing: [
                 ...this.project.taonJson.additionalReplaceWithNothingFor(
-                  'vscode-plugin',
+                  ReleaseArtifactTaon.VSCODE_PLUGIN,
                 ),
               ],
             },
@@ -227,8 +239,8 @@ export class ArtifactVscodePlugin extends BaseArtifact<
       if (!shouldSkipBuild) {
         extProj
           .run(
-            `node ${this.vcodeProjectUpdatePackageJsonFilename} ` +
-              `${!buildOptions.release.releaseType ? 'app.vscode' : ''} `,
+            `node ${updateVscodePackageJsonJsMainProject} ` +
+              `${!buildOptions.release.releaseType ? appVscodeJSFromBuild.replace('.js', '') : ''} `,
           )
           .sync();
       }
@@ -270,7 +282,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
       EnvOptions.fromRelease(releaseOptions),
     );
 
-    if (releaseOptions.release.releaseType === 'local') {
+    if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
       //#region local release
       const releaseData = await this.localReleaseDeploy(
         path.dirname(vscodeVsixOutPath),
@@ -291,7 +303,7 @@ local VSCode instance.
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
     }
-    if (releaseOptions.release.releaseType === 'static-pages') {
+    if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
       //#region local release
       const releaseData = await this.staticPagesDeploy(
         path.dirname(vscodeVsixOutPath),
@@ -305,10 +317,10 @@ local VSCode instance.
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
     }
-    if (releaseOptions.release.releaseType === 'manual') {
+    if (releaseOptions.release.releaseType === ReleaseType.MANUAL) {
       // TODO release to microsoft store or serve with place to put assets
     }
-    if (releaseOptions.release.releaseType === 'cloud') {
+    if (releaseOptions.release.releaseType === ReleaseType.CLOUD) {
       // TODO trigger cloud release (it will actually be manual on remote server)
     }
 
@@ -349,12 +361,6 @@ local VSCode instance.
     const tmpVscodeProjPath = this.getTmpVscodeProjPath(releaseType);
     const res = crossPlatformPath([tmpVscodeProjPath, 'out/extension.js']);
     return res;
-  }
-  //#endregion
-
-  //#region private methods / get VSCode project update package json filename
-  public get vcodeProjectUpdatePackageJsonFilename(): string {
-    return 'update-vscode-package-json.js';
   }
   //#endregion
 

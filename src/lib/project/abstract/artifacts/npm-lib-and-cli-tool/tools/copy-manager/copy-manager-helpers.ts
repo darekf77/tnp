@@ -6,6 +6,7 @@ import { path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
 import type { Project } from '../.././../../project';
+import { browserMainProject, websqlMainProject } from '../../../../../../constants';
 import { Models } from '../../../../../../models';
 //#endregion
 
@@ -21,8 +22,8 @@ export namespace CopyMangerHelpers {
 
   //#region helpers / browser websql folders
   export const browserwebsqlFolders = [
-    config.folder.browser,
-    config.folder.websql,
+    browserMainProject,
+    websqlMainProject,
   ] as ('browser' | 'websql' | string)[];
   //#endregion
 

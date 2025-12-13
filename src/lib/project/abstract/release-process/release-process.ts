@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import {
   chalk,
   CoreModels,
@@ -12,7 +12,8 @@ import { Helpers } from 'tnp-helpers/src';
 import { BaseReleaseProcess } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
-import { ALLOWED_TO_RELEASE, environments } from '../../../constants';
+import { ALLOWED_TO_RELEASE } from '../../../app-utils';
+import { environmentsFolder, releaseSuffix } from '../../../constants';
 import {
   ReleaseArtifactTaon,
   ReleaseArtifactTaonNamesArr,
@@ -138,7 +139,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
           autocomplete: false,
           question:
             `Select release type for this ` +
-            `${this.project.framework.isContainer ? 'container' : 'standalone'} project ?`,
+            `${this.project.framework.isContainer ? LibTypeEnum.CONTAINER : 'standalone'} project ?`,
         },
       );
     }
@@ -169,14 +170,15 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     if (releaseArtifactsTaon.length > 0) {
       if (!envOptions.release.releaseVersionBumpType) {
         if (envOptions.release.autoReleaseUsingConfig) {
-          envOptions.release.releaseVersionBumpType = 'patch';
+          envOptions.release.releaseVersionBumpType =
+            CoreModels.ReleaseVersionTypeEnum.PATCH;
         } else {
           envOptions.release.releaseVersionBumpType =
             await this.selectReleaseType(
               bumpType =>
                 this.project.packageJson.resolvePossibleNewVersion(bumpType),
               {
-                quesitonPrefixMessage: `${envOptions.release.releaseType}-release`,
+                quesitonPrefixMessage: `${envOptions.release.releaseType}${releaseSuffix}`,
               },
             );
         }
@@ -206,8 +208,13 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     if (!artifact) {
       throw new Error('Artifact is required');
     }
-    const pathToEnvFolder = this.project.pathFor([environments, artifact]);
-    const files = Helpers.filesFrom(pathToEnvFolder);
+    const pathToEnvFolder = this.project.pathFor([
+      environmentsFolder,
+      artifact,
+    ]);
+    const files = Helpers.getFilesFrom(pathToEnvFolder, {
+      recursive: false,
+    });
 
     return files
       .map(f => path.basename(f))

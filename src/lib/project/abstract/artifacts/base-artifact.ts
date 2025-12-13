@@ -2,12 +2,33 @@
 import { RegionRemover } from 'isomorphic-region-loader/src';
 import { config, extAllowedToReplace, TAGS } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath, glob, path } from 'tnp-core/src';
+import { fileName } from 'tnp-core/src';
 import { Helpers, UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
 
 import {
+  binMainProject,
+  BundledFiles,
+  BundledDocsFolders,
+  dotGitIgnoreMainProject,
+  dotNpmIgnoreMainProject,
+  dotNpmrcMainProject,
+  dotVscodeMainProject,
+  localReleaseMainProject,
+  packageJsonMainProject,
+  readmeMdMainProject,
+  srcMainProject,
+  suffixLatest,
+  TaonCommands,
+  taonJsonMainProject,
+  TemplateFolder,
+  tsconfigIsomorphicFlatDistMainProject,
+  tsconfigJsonBrowserMainProject,
+  tsconfigJsonIsomorphicMainProject,
+  tsconfigJsonMainProject,
+} from '../../../constants';
+
+import {
   ReleaseArtifactTaon,
-  ReleaseArtifactTaonNames,
-  ReleaseArtifactTaonNamesArr,
   EnvOptions,
   ReleaseType,
 } from './../../../options';
@@ -65,9 +86,13 @@ export abstract class BaseArtifact<
     protected readonly project: Project,
     protected readonly currentArtifactName: ReleaseArtifactTaon,
   ) {}
+
   protected readonly artifacts: IArtifactProcessObj;
+
   protected readonly globalHelper: ArtifactsGlobalHelper;
-  protected readonly NPM_RUN_NG_COMMAND: string = `npm-run ng`; // when there is not global "ng" command -> npm-run ng.js works
+
+  // when there is not global "ng" command -> npm-run ng.js works
+  protected readonly NPM_RUN_NG_COMMAND: string = TaonCommands.NPM_RUN_NG;
 
   //#region  public abstract methods / init
   /**
@@ -177,18 +202,18 @@ export abstract class BaseArtifact<
   protected get __allResources(): string[] {
     //#region @backendFunc
     const res = [
-      config.file.package_json,
-      'tsconfig.json',
-      'tsconfig.browser.json',
-      'tsconfig.isomorphic.json',
-      'tsconfig.isomorphic-flat-dist.json',
-      config.file._npmrc,
-      config.file._npmignore,
-      config.file._gitignore,
-      config.file.environment_js,
-      config.file.tnpEnvironment_json,
-      config.folder.bin,
-      config.folder._vscode,
+      packageJsonMainProject,
+      tsconfigJsonMainProject,
+      tsconfigJsonBrowserMainProject,
+      tsconfigJsonIsomorphicMainProject,
+      tsconfigIsomorphicFlatDistMainProject,
+      dotNpmrcMainProject,
+      dotNpmIgnoreMainProject,
+      dotGitIgnoreMainProject,
+      fileName.environment_js,
+      fileName.tnpEnvironment_json, // TODO NOT NEEDED ?
+      binMainProject,
+      dotVscodeMainProject,
       ...this.project.taonJson.resources,
     ];
     return res;
@@ -199,14 +224,10 @@ export abstract class BaseArtifact<
   //#region getters & methods / cut release code
   protected __restoreCuttedReleaseCodeFromSrc(buildOptions: EnvOptions) {
     //#region @backend
-    const releaseSrcLocation = crossPlatformPath(
-      path.join(this.project.location, config.folder.src),
-    );
-    const releaseSrcLocationOrg = crossPlatformPath(
-      path.join(
-        this.project.location,
-        buildOptions.temporarySrcForReleaseCutCode,
-      ),
+    const releaseSrcLocation = this.project.pathFor(srcMainProject);
+
+    const releaseSrcLocationOrg = this.project.pathFor(
+      buildOptions.temporarySrcForReleaseCutCode,
     );
 
     Helpers.removeFolderIfExists(releaseSrcLocation);
@@ -214,17 +235,15 @@ export abstract class BaseArtifact<
 
     //#endregion
   }
+
   protected __cutReleaseCodeFromSrc(buildOptions: EnvOptions) {
     //#region @backend
-    const releaseSrcLocation = crossPlatformPath(
-      path.join(this.project.location, config.folder.src),
+    const releaseSrcLocation = this.project.pathFor(srcMainProject);
+
+    const releaseSrcLocationOrg = this.project.pathFor(
+      buildOptions.temporarySrcForReleaseCutCode,
     );
-    const releaseSrcLocationOrg = crossPlatformPath(
-      path.join(
-        this.project.location,
-        buildOptions.temporarySrcForReleaseCutCode,
-      ),
-    );
+
     Helpers.removeFolderIfExists(releaseSrcLocationOrg);
     Helpers.copy(releaseSrcLocation, releaseSrcLocationOrg, {
       copySymlinksAsFiles: true,
@@ -304,9 +323,9 @@ export abstract class BaseArtifact<
     );
 
     const localReleaseOutputBasePath = this.project.pathFor([
-      config.folder.local_release,
+      localReleaseMainProject,
       this.currentArtifactName,
-      `${this.project.name}-latest`,
+      `${this.project.name}${suffixLatest}`,
       architecturePrefix,
     ]);
     Helpers.remove(localReleaseOutputBasePath);
@@ -340,7 +359,7 @@ export abstract class BaseArtifact<
 
     if (options.createReadme) {
       Helpers.writeFile(
-        crossPlatformPath([localReleaseOutputBasePath, 'README.md']),
+        crossPlatformPath([localReleaseOutputBasePath, readmeMdMainProject]),
         options.createReadme,
       );
     }
@@ -386,7 +405,7 @@ export abstract class BaseArtifact<
         exitOnError: false,
       });
     } catch (error) {}
-    if (Helpers.exists([staticPagesProjLocation, config.file.taon_jsonc])) {
+    if (Helpers.exists([staticPagesProjLocation, taonJsonMainProject])) {
       Helpers.git.cleanRepoFromAnyFilesExceptDotGitFolder(
         staticPagesProjLocation,
       );
@@ -398,13 +417,14 @@ export abstract class BaseArtifact<
     let versionFolderName = this.project.packageJson.version;
 
     const versionType =
-      releaseOptions.release.overrideStaticPagesReleaseType || 'patch';
+      releaseOptions.release.overrideStaticPagesReleaseType ||
+      CoreModels.ReleaseVersionTypeEnum.PATCH;
 
-    if (versionType === 'major') {
+    if (versionType === CoreModels.ReleaseVersionTypeEnum.MAJOR) {
       versionFolderName = this.project.packageJson.majorVersion?.toString();
     }
 
-    if (versionType === 'minor') {
+    if (versionType === CoreModels.ReleaseVersionTypeEnum.MINOR) {
       versionFolderName = [
         this.project.packageJson.majorVersion?.toString(),
         this.project.packageJson.minorVersion?.toString(),
@@ -417,7 +437,7 @@ export abstract class BaseArtifact<
       ? staticPagesProjLocation
       : crossPlatformPath([
           staticPagesProjLocation,
-          'version',
+          BundledDocsFolders.VERSION,
           versionFolderName,
           architecturePrefix,
         ]);
@@ -450,13 +470,13 @@ export abstract class BaseArtifact<
 
     if (!releaseOptions.release.skipStaticPagesVersioning) {
       const versions = Helpers.foldersFrom(
-        [staticPagesProjLocation, 'version'],
+        [staticPagesProjLocation, BundledDocsFolders.VERSION],
         {
           recursive: false,
         },
       );
       Helpers.writeFile(
-        [staticPagesProjLocation, 'index.html'],
+        [staticPagesProjLocation, BundledFiles.INDEX_HTML],
         `
         <html>
         <head>
@@ -469,7 +489,7 @@ export abstract class BaseArtifact<
             ${versions
               .map(version => {
                 return (
-                  `<li><a href="version/` +
+                  `<li><a href="${BundledDocsFolders.VERSION}/` +
                   `${path.basename(version)}${architecturePrefix ? `/${architecturePrefix}` : ''}">` +
                   `${path.basename(version)}${architecturePrefix ? `/${architecturePrefix}` : ''}</a></li>`
                 );
@@ -482,14 +502,17 @@ export abstract class BaseArtifact<
         `,
       );
 
-      UtilsTypescript.formatFile([staticPagesProjLocation, 'index.html']);
+      UtilsTypescript.formatFile([
+        staticPagesProjLocation,
+        BundledFiles.INDEX_HTML,
+      ]);
     }
 
-    Helpers.git.revertFileChanges(staticPagesProjLocation, 'CNAME');
+    Helpers.git.revertFileChanges(staticPagesProjLocation, BundledFiles.CNAME);
 
     if (options.createReadme) {
       Helpers.writeFile(
-        crossPlatformPath([staticPagesProjLocation, 'README.md']),
+        crossPlatformPath([staticPagesProjLocation, BundledFiles.README_MD]),
         options.createReadme,
       );
     }
@@ -507,4 +530,6 @@ export abstract class BaseArtifact<
     //#endregion
   }
   //#endregion
+
+
 }

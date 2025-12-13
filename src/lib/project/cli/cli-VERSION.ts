@@ -1,4 +1,4 @@
-import { config } from 'tnp-core/src';
+import { config, taonPackageName } from 'tnp-core/src';
 import { CoreModels, fse, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
@@ -45,7 +45,7 @@ export class $Version extends BaseCli {
     //
     const taonProj = Project.ins.From([
       fse.realpathSync(path.dirname(tnpProj.location)),
-      config.frameworkNames.productionFrameworkName,
+      taonPackageName,
     ]);
     Helpers.success(`
 

@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, folderName } from 'tnp-core/src';
 import {
   crossPlatformPath,
   fse,
@@ -10,7 +10,15 @@ import {
 } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { tmpSourceDist } from '../../../../../../../constants';
+import {
+  distMainProject,
+  distNoCutSrcMainProject,
+  libFromSrc,
+  libs,
+  srcMainProject,
+  tmpSourceDist,
+  tsconfigBackendDistJson,
+} from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 //#endregion
@@ -24,14 +32,6 @@ export class BackendCompilation {
   public isEnableCompilation = true;
 
   protected compilerName = 'Backend Compiler';
-
-  get tsConfigName() {
-    return 'tsconfig.json';
-  }
-
-  get tsConfigBrowserName() {
-    return 'tsconfig.browser.json';
-  }
 
   //#endregion
 
@@ -75,9 +75,8 @@ export class BackendCompilation {
   //#region methods / sync action
   async syncAction(filesPathes: string[]) {
     //#region @backendFunc
-    const outDistPath = crossPlatformPath(
-      path.join(this.project.location, config.folder.dist),
-    );
+    const outDistPath = this.project.pathFor(distMainProject);
+
     // Helpers.System.Operations.tryRemoveDir(outDistPath)
     try {
       fse.unlinkSync(outDistPath);
@@ -87,7 +86,6 @@ export class BackendCompilation {
     }
     await this.libCompilation(this.buildOptions, {
       cwd: this.project.location,
-      outDir: config.folder.dist as any,
       generateDeclarations: true,
     });
     //#endregion
@@ -99,7 +97,6 @@ export class BackendCompilation {
     buildOptions: EnvOptions,
     {
       cwd,
-      outDir,
       generateDeclarations = false,
       tsExe = 'npm-run tsc',
       diagnostics = false,
@@ -119,7 +116,7 @@ export class BackendCompilation {
 
     //#region prepare params
     const paramsNoWatch = [
-      outDir ? ` --outDir ${outDir} ` : '',
+      ` --outDir ${distMainProject} `,
       !watch ? ' --noEmitOnError true ' : '',
       diagnostics ? ' --extendedDiagnostics ' : '',
       ` --preserveWatchOutput `,
@@ -136,7 +133,7 @@ export class BackendCompilation {
     //#region cmd
     let prepareCmd = (specificTsconfig?: string) => {
       let commandJs, commandMaps, commandDts;
-      const nocutsrcFolder = `${project.location}/${outDir}-nocutsrc`;
+      const nocutsrcFolder = `${project.location}/${distNoCutSrcMainProject}`;
       // commandJs = `${tsExe} -d false  --mapRoot ${nocutsrc} ${params.join(' ')} `
       //   + (specificTsconfig ? `--project ${specificTsconfig}` : '');
 
@@ -163,7 +160,7 @@ export class BackendCompilation {
     };
 
     const tsconfigBackendPath = crossPlatformPath(
-      project.pathFor(`tsconfig.backend.dist.json`),
+      project.pathFor(tsconfigBackendDistJson),
     );
     tscCommands = prepareCmd(tsconfigBackendPath);
 
@@ -188,9 +185,9 @@ export class BackendCompilation {
       cwd: string;
       project: Project;
     },
-  ) {
+  ): Promise<void> {
     //#region @backendFunc
-    const outDir = 'dist';
+
     let { commandJs, commandMaps, cwd, project } = options;
 
     // console.log({ commandMaps, commandJs, cwd, outDir, watch });
@@ -207,46 +204,7 @@ Starting (${
 
     `);
     const additionalReplace = (line: string) => {
-      const [tmpSource, dashOrFile, childName] = line.split('/');
-      // console.log({ tmpSource, dashOrFile, childName });
-      if (tmpSource === tmpSourceDist && dashOrFile === '-') {
-        return line.replace(
-          `${tmpSourceDist}/-/${childName}/`,
-          `${childName}/src/`,
-        );
-      }
-
-      if (!parent) {
-        return line;
-      }
-      const beforeModule = crossPlatformPath(
-        path.join(
-          parent.location,
-          outDir,
-          parent.name,
-          project.name,
-          `${tmpSourceDist}/libs`,
-        ),
-      );
-
-      if (line.search(beforeModule)) {
-        const [__, filepath] = line.split(`'`);
-        // console.log({
-        //   filepath
-        // })
-        if (filepath) {
-          const moduleName = _.first(
-            filepath.replace(beforeModule + '/', '').split('/'),
-          );
-          if (moduleName) {
-            return line.replace(
-              crossPlatformPath(path.join(beforeModule, moduleName)),
-              `./${path.join(moduleName, 'src/lib')}`,
-            );
-          }
-        }
-      }
-
+      // nothing to replace for now
       return line;
     };
 
@@ -267,50 +225,50 @@ Starting (${
         if (isStandalone) {
           if (line.startsWith(`${tmpSourceDist}/`)) {
             return additionalReplace(
-              line.replace(`${tmpSourceDist}/`, `./src/`),
+              line.replace(`${tmpSourceDist}/`, `./${srcMainProject}/`),
             );
           }
 
           return additionalReplace(
-            line.replace(`../${tmpSourceDist}/`, `./src/`),
+            line.replace(`../${tmpSourceDist}/`, `./${srcMainProject}/`),
           );
         } else {
           line = line.trimLeft();
           // console.log({ line })
-          if (line.startsWith('./src/libs/')) {
+          if (line.startsWith(`./${srcMainProject}/${libs}/`)) {
             const [__, ___, moduleName] = line.split('/');
             return additionalReplace(
               line.replace(
-                `./src/libs/${moduleName}/`,
-                `./${moduleName}/src/lib/`,
+                `./${srcMainProject}/${libs}/${moduleName}/`,
+                `./${moduleName}/${srcMainProject}/${libFromSrc}/`,
               ),
             );
-          } else if (line.startsWith(`../${tmpSourceDist}/libs/`)) {
+          } else if (line.startsWith(`../${tmpSourceDist}/${libs}/`)) {
             const [__, ___, ____, moduleName] = line.split('/');
             return additionalReplace(
               line.replace(
-                `../${tmpSourceDist}/libs/${moduleName}/`,
-                `./${moduleName}/src/lib/`,
+                `../${tmpSourceDist}/${libs}/${moduleName}/`,
+                `./${moduleName}/${srcMainProject}/${libFromSrc}/`,
               ),
             );
           } else if (line.startsWith(`../${tmpSourceDist}/`)) {
             return additionalReplace(
-              line.replace(
-                `../${tmpSourceDist}/`,
-                `./${project.name}/src/`,
-              ),
+              line.replace(`../${tmpSourceDist}/`, `./${project.name}/src/`),
             );
-          } else if (line.startsWith(`${tmpSourceDist}/libs/`)) {
+          } else if (line.startsWith(`${tmpSourceDist}/${libs}/`)) {
             const [__, ___, moduleName] = line.split('/');
             return additionalReplace(
               line.replace(
-                `${tmpSourceDist}/libs/${moduleName}/`,
-                `./${moduleName}/src/lib/`,
+                `${tmpSourceDist}/${libs}/${moduleName}/`,
+                `./${moduleName}/${srcMainProject}/${libFromSrc}/`,
               ),
             );
           } else {
             return additionalReplace(
-              line.replace(`./src/`, `./${project.name}/src/lib/`),
+              line.replace(
+                `./${srcMainProject}/`,
+                `./${project.name}/${srcMainProject}/${libFromSrc}/`,
+              ),
             );
           }
         }
@@ -320,7 +278,7 @@ Starting (${
       },
     });
 
-    Helpers.logInfo(`* Typescirpt compilation first part done`);
+    Helpers.logInfo(`* Typescript compilation first part done`);
 
     await Helpers.execute(commandMaps, cwd, {
       similarProcessKey: 'tsc',

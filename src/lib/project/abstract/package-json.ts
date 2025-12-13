@@ -1,5 +1,5 @@
 import { gt, gte, valid } from 'semver';
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import {
   CoreModels,
   Helpers,
@@ -17,7 +17,7 @@ import {
 } from 'tnp-helpers/src';
 import { PackageJson, PackageJson as PackageJsonType } from 'type-fest';
 
-import { scriptsCommands } from '../../constants';
+import { binMainProject, scriptsCommands } from '../../constants';
 import { EnvOptions } from '../../options';
 
 import type { Project } from './project';
@@ -62,7 +62,7 @@ export class PackageJSON extends BasePackageJson {
 
   recreateBin(): any {
     // Helpers.taskStarted('Recreating bin...');
-    const pattern = `${this.project.pathFor(config.folder.bin)}/*`;
+    const pattern = `${this.project.pathFor(binMainProject)}/*`;
     const countLinkInPackageJsonBin = fg
       .sync(pattern)
       .map(f => crossPlatformPath(f))
@@ -71,7 +71,7 @@ export class PackageJSON extends BasePackageJson {
       });
     const bin = {};
     countLinkInPackageJsonBin.forEach(p => {
-      bin[path.basename(p)] = `bin/${path.basename(p)}`;
+      bin[path.basename(p)] = `${binMainProject}/${path.basename(p)}`;
     });
     // Helpers.taskDone('done recreating bin...');
     return bin;
@@ -123,7 +123,7 @@ export class PackageJSON extends BasePackageJson {
       };
 
       destinationObject.scripts = destinationObject.scripts || {};
-      if (this.project.taonJson.type === 'isomorphic-lib') {
+      if (this.project.taonJson.type === LibTypeEnum.ISOMORPHIC_LIB) {
         for (const command of scriptsCommands) {
           destinationObject.scripts[command] = command;
         }

@@ -1,64 +1,41 @@
 //#region imports
 import { config } from 'tnp-core/src';
 import { crossPlatformPath, path, _ } from 'tnp-core/src';
+import { fileName } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
+import { templateFolderForArtifact } from '../../../../../app-utils';
 import {
+  browserMainProject,
+  CoreNgTemplateFiles,
+  distFromNgBuild,
+  distMainProject,
+  libFromSrc,
+  migrationsFromSrc,
+  migrationsFromTempSrc,
+  packageJsonNgProject,
+  projectsFromNgTemplate,
+  srcMainProject,
+  TemplateFolder,
   tmpLibsForDist,
   tmpLibsForDistWebsql,
   tmpSrcDist,
   tmpSrcDistWebsql,
+  tsconfigNgProject,
+  tsconfigSpecNgProject,
+  websqlMainProject,
 } from '../../../../../constants';
 import { Models } from '../../../../../models';
-import { EnvOptions } from '../../../../../options';
+import { EnvOptions, ReleaseArtifactTaon } from '../../../../../options';
 import type { Project } from '../../../project';
 import { InsideStruct } from '../../__helpers__/inside-structures/inside-struct';
 import { BaseInsideStruct } from '../../__helpers__/inside-structures/structs/base-inside-struct';
-
 //#endregion
 
 export class InsideStructAngularLib extends BaseInsideStruct {
-  relativePaths(): string[] {
-    return [
-      //#region files to copy from core isomorphic lib
-      'lib/src/app/app.component.html',
-      'lib/src/app/app.component.scss',
-      // 'lib/src/app/app.component.spec.ts', // not working -> something better needed
-      'lib/src/app/app.component.ts',
-      // 'lib/src/app/app.module.ts',
-      'lib/src/environments/environment.prod.ts',
-
-      'lib/src/environments/environment.ts',
-      'lib/src/app',
-      'lib/src/environments',
-      'lib/src/favicon.ico',
-      'lib/src/index.html',
-      'lib/src/main.ts',
-      'lib/src/polyfills.ts',
-      'lib/src/styles.scss',
-      // 'lib/src/test.ts', // node needed for jest test - (but the don' work wit symlinks)
-      'lib/.browserslistrc',
-      'lib/.editorconfig',
-      'lib/.gitignore',
-      // 'app/README.md',
-      'lib/angular.json',
-      'lib/karma.conf.js',
-      'lib/package-lock.json',
-      'lib/package.json',
-      'lib/tsconfig.app.json',
-      'lib/tsconfig.json',
-      'lib/tsconfig.spec.json',
-      'lib/projects/my-lib/src',
-      'lib/projects/my-lib/tsconfig.spec.json',
-      'lib/projects/my-lib/tsconfig.lib.prod.json',
-      'lib/projects/my-lib/tsconfig.lib.json',
-      'lib/projects/my-lib/README.md',
-      'lib/projects/my-lib/package.json',
-      'lib/projects/my-lib/ng-package.json',
-      'lib/projects/my-lib/karma.conf.js',
-      //#endregion
-    ];
+  getCurrentArtifact(): ReleaseArtifactTaon {
+    return ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL;
   }
 
   insideStruct(): InsideStruct {
@@ -83,20 +60,20 @@ export class InsideStructAngularLib extends BaseInsideStruct {
         frameworkVersion: project.framework.frameworkVersion,
         pathReplacements: [
           [
-            new RegExp('^lib\\/'),
+            new RegExp(`^${TemplateFolder.templateLib}\\/`),
             () => {
               return `${tmpProjectsStandalone}/`;
             },
           ],
         ],
-        linkNodeModulesTo: ['lib/'],
+        linkNodeModulesTo: [`${TemplateFolder.templateLib}/`],
         endAction: ({ replacement }) => {
           //#region fixing package json dependencies in target proj
           (() => {
             const jsonPath = path.join(
               this.project.location,
               replacement(tmpProjectsStandalone),
-              config.file.package_json,
+              packageJsonNgProject,
             );
 
             const container = this.project.framework.coreContainer;
@@ -112,13 +89,13 @@ export class InsideStructAngularLib extends BaseInsideStruct {
             const source = path.join(
               this.project.location,
               replacement(tmpProjectsStandalone),
-              `projects/my-lib`,
+              `${projectsFromNgTemplate}/my-lib`,
             );
 
             const dest = path.join(
               this.project.location,
               replacement(tmpProjectsStandalone),
-              `projects/${this.project.name}`,
+              `${projectsFromNgTemplate}/${this.project.name}`,
             );
             Helpers.remove(dest);
             Helpers.move(source, dest);
@@ -134,13 +111,13 @@ export class InsideStructAngularLib extends BaseInsideStruct {
             const source = path.join(
               this.project.location,
               browserTsCode,
-              'migrations',
+              migrationsFromTempSrc,
             );
 
             const dest = path.join(
               this.project.location,
               replacement(tmpProjectsStandalone),
-              `projects/${this.project.name}/src/migrations`,
+              `${projectsFromNgTemplate}/${this.project.name}/${srcMainProject}/${migrationsFromTempSrc}`,
             );
             Helpers.remove(dest);
             Helpers.createSymLink(source, dest, {
@@ -158,13 +135,13 @@ export class InsideStructAngularLib extends BaseInsideStruct {
             const source = path.join(
               this.project.location,
               browserTsCode,
-              'lib',
+              libFromSrc,
             );
 
             const dest = path.join(
               this.project.location,
               replacement(tmpProjectsStandalone),
-              `projects/${this.project.name}/src/lib`,
+              `${projectsFromNgTemplate}/${this.project.name}/${srcMainProject}/${libFromSrc}`,
             );
             Helpers.remove(dest);
             Helpers.createSymLink(source, dest, {
@@ -176,7 +153,7 @@ export class InsideStructAngularLib extends BaseInsideStruct {
             const sourcePublicApi = path.join(
               this.project.location,
               replacement(tmpProjectsStandalone),
-              `projects/${this.project.name}/src/${config.file.public_api_ts}`,
+              `${projectsFromNgTemplate}/${this.project.name}/${srcMainProject}/${fileName.public_api_ts}`,
             );
 
             let publicApiFile = Helpers.readFile(sourcePublicApi);
@@ -184,10 +161,13 @@ export class InsideStructAngularLib extends BaseInsideStruct {
             const sourceTsconfig = path.join(
               this.project.location,
               replacement(tmpProjectsStandalone),
-              `tsconfig.json`,
+              tsconfigSpecNgProject,
             );
 
             let tsconfigJson = Helpers.readJson(sourceTsconfig, void 0, true);
+            // console.log({
+            //   sourceTsconfig
+            // })
 
             if (tsconfigJson) {
               tsconfigJson.compilerOptions ? tsconfigJson.compilerOptions : {};
@@ -198,7 +178,7 @@ export class InsideStructAngularLib extends BaseInsideStruct {
               tsconfigJson.compilerOptions.paths = void 0;
             }
             publicApiFile = `
-export * from './lib';
+export * from './${libFromSrc}';
 `.trimLeft();
 
             if (tsconfigJson) {
@@ -211,25 +191,25 @@ export * from './lib';
           const libPackageJson = crossPlatformPath([
             this.project.location,
             replacement(tmpProjectsStandalone),
-            `projects/${this.project.name}/package.json`,
+            `${projectsFromNgTemplate}/${this.project.name}/${CoreNgTemplateFiles.PACKAGE_JSON}`,
           ]);
 
           const ngPackageJson = crossPlatformPath([
             this.project.location,
             replacement(tmpProjectsStandalone),
-            `projects/${this.project.name}/ng-package.json`,
+            `${projectsFromNgTemplate}/${this.project.name}/${CoreNgTemplateFiles.NG_PACKAGE_JSON}`,
           ]);
 
           const angularJson = crossPlatformPath([
             this.project.location,
             replacement(tmpProjectsStandalone),
-            `angular.json`,
+            CoreNgTemplateFiles.ANGULAR_JSON,
           ]);
 
           const tsconfigJson = crossPlatformPath([
             this.project.location,
             replacement(tmpProjectsStandalone),
-            `tsconfig.json`,
+            tsconfigNgProject,
           ]);
 
           [libPackageJson, ngPackageJson, angularJson, tsconfigJson].forEach(
@@ -239,17 +219,17 @@ export * from './lib';
                 new RegExp('my\\-lib', 'g'),
                 this.project.name,
               );
-              if (path.basename(f) === 'tsconfig.json') {
+              if (path.basename(f) === tsconfigNgProject) {
                 // debugger;
                 content = content.replace(
                   new RegExp(
                     Helpers.escapeStringForRegEx(
-                      `"${config.folder.dist}/${this.project.name}`,
+                      `"${distFromNgBuild}/${this.project.name}`,
                     ),
                     'g',
                   ),
-                  `"../../${config.folder.dist}/` +
-                    `${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}` +
+                  `"../../${distMainProject}/` +
+                    `${this.initOptions.build.websql ? websqlMainProject : browserMainProject}` +
                     `/${this.project.name}`,
                 );
               }
@@ -261,9 +241,9 @@ export * from './lib';
           (() => {
             const json = Helpers.readJson(ngPackageJson); // dist is on purpose
             json.dest = json.dest.replace(
-              `/${config.folder.dist}/${this.project.name}`,
-              `/../../${config.folder.dist}/` +
-                `${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}`,
+              `/${distFromNgBuild}/${this.project.name}`,
+              `/../../${distMainProject}/` +
+                `${this.initOptions.build.websql ? websqlMainProject : browserMainProject}`,
             );
 
             Helpers.writeJson(ngPackageJson, json);

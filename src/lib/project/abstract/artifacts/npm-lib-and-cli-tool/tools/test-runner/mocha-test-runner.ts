@@ -1,4 +1,4 @@
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
@@ -40,7 +40,7 @@ export class MochaTestRunner
 
   async startAndWatch(files?: string[], debug = false) {
     //#region @backendFunc
-    if (this.project.typeIsNot('isomorphic-lib')) {
+    if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
       Helpers.error(
         `Tests not impolemented for ${this.project.type}`,
         false,

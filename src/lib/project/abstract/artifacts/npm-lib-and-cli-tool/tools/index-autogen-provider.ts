@@ -1,10 +1,16 @@
 import { ChangeOfFile } from 'incremental-compiler/src';
-import { config, extAllowedToReplace } from 'tnp-core/src';
+import { config, extAllowedToReplace, fileName } from 'tnp-core/src';
 import { crossPlatformPath, Helpers, _, path } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 import { BaseCompilerForProject } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
+import {
+  libFromSrc,
+  srcMainProject,
+  TaonGeneratedFiles,
+  taonJsonMainProject,
+} from '../../../../../constants';
 import type { Project } from '../../../project';
 
 // @ts-ignore TODO weird inheritance problem
@@ -14,7 +20,7 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
   //#region @backend
   constructor(project: Project) {
     super(project, {
-      folderPath: project.pathFor([config.folder.src, config.folder.lib]),
+      folderPath: project.pathFor([srcMainProject, libFromSrc]),
       subscribeOnlyFor: ['ts', 'tsx'],
       taskName: 'IndexAutogenProvider',
     });
@@ -30,9 +36,9 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
   get indexAutogenFileRelativePath() {
     //#region @backendFunc
     return crossPlatformPath([
-      config.folder.src,
-      config.folder.lib,
-      config.file.index_generated_ts,
+      srcMainProject,
+      libFromSrc,
+      TaonGeneratedFiles.index_generated_ts,
     ]);
     //#endregion
   }
@@ -46,7 +52,7 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
       const exportString =
         `export * from ` +
         `'./${absFilePath
-          .replace(this.project.location + '/src/lib/', '')
+          .replace(this.project.pathFor([srcMainProject, libFromSrc]), '')
           .replace(path.extname(absFilePath), '')}';`;
 
       if (exportsFounded.length > 0) {
@@ -74,10 +80,10 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
         isPlaceholderOnly
           ? `This is only placeholder.` +
             `\n// Use property "${this.propertyInTaonJsonc}: true" ` +
-            `\n// in ${config.file.taon_jsonc} to enable ts exports auto generation.`
+            `\n// in ${taonJsonMainProject} to enable ts exports auto generation.`
           : `This disable this auto generate file.` +
             `\n// set property "${this.propertyInTaonJsonc}: false" ` +
-            `\n// in ${config.file.taon_jsonc} of your project.`
+            `\n// in ${taonJsonMainProject} of your project.`
       } \n` + this.exportsToSave.join('\n'),
     );
     //#endregion

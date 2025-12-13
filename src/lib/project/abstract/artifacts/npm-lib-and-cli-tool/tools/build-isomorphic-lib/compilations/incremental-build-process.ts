@@ -5,6 +5,7 @@ import { path, crossPlatformPath } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
+import { srcMainProject } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
@@ -32,7 +33,6 @@ export class IncrementalBuildProcess {
     );
 
     //#region init variables
-    const srcFolder = config.folder.src;
 
     Helpers.log(
       `[incremental-build-process]  this.project.grandpa: ${this.project.grandpa?.genericName} `,
@@ -49,7 +49,7 @@ export class IncrementalBuildProcess {
 
     this.backendCompilation = new BackendCompilation(
       buildOptions,
-      srcFolder,
+      srcMainProject,
       project,
     );
 
@@ -68,7 +68,7 @@ export class IncrementalBuildProcess {
     if (project.framework.isStandaloneProject) {
       this.browserCompilationStandalone = new BrowserCompilation(
         this.project,
-        srcFolder,
+        srcMainProject,
         buildOptions,
       );
     }

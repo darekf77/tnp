@@ -1,6 +1,6 @@
 //#region imports
 
-import { config } from 'tnp-core/src';
+import { config, folderName, LibTypeEnum } from 'tnp-core/src';
 import {
   chalk,
   CoreModels,
@@ -14,20 +14,64 @@ import {
   UtilsTerminal,
 } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
+import { fileName } from 'tnp-core/src';
 import { BasePackageJson, Helpers, UtilsQuickFixes } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
 import {
+  getProxyNgProj,
+  templateFolderForArtifact,
+} from '../../../../app-utils';
+import {
+  appFromSrc,
+  assetsFromNgProj,
+  assetsFromSrc,
+  binMainProject,
+  browserMainProject,
+  BundledFiles,
+  cliDtsNpmPackage,
+  cliJSMapNpmPackage,
+  cliJSNpmPackage,
   COMPILATION_COMPLETE_LIB_NG_BUILD,
+  CoreAssets,
   DEFAULT_PORT,
+  distMainProject,
+  dotFileTemplateExt,
+  dotGitIgnoreMainProject,
+  dotNpmIgnoreMainProject,
+  dotNpmrcMainProject,
+  indexDtsNpmPackage,
+  indexJSNpmPackage,
+  libFromCompiledDist,
+  libFromSrc,
+  libs,
+  localReleaseMainProject,
   MESSAGES,
+  migrationsFromSrc,
+  nodeModulesMainProject,
+  packageJsonMainProject,
+  packageJsonNpmLib,
+  packageJsonNpmLibAngular,
+  sourceLinkInNodeModules,
+  srcMainProject,
+  srcNgProxyProject,
+  suffixLatest,
+  TaonCommands,
+  TaonGeneratedFiles,
+  taonJsonMainProject,
+  testsFromSrc,
   THIS_IS_GENERATED_INFO_COMMENT,
   tmpBaseHrefOverwrite,
   tmpLocalCopytoProjDist,
   tmpSrcDist,
   tmpSrcDistWebsql,
+  websqlMainProject,
 } from '../../../../constants';
-import { EnvOptions, ReleaseType } from '../../../../options';
+import {
+  EnvOptions,
+  ReleaseArtifactTaon,
+  ReleaseType,
+} from '../../../../options';
 import type { Project } from '../../project';
 import { AssetsManager } from '../angular-node-app/tools/assets-manager';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
@@ -69,13 +113,19 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#region fields
 
   public readonly __tests: MochaTestRunner;
+
   public readonly __testsJest: JestTestRunner;
+
   public readonly __testsCypress: CypressTestRunner;
 
   public readonly copyNpmDistLibManager: CopyManager;
+
   public readonly insideStructureLib: InsideStructuresLib;
+
   protected readonly indexAutogenProvider: IndexAutogenProvider;
+
   public readonly filesTemplatesBuilder: FilesTemplatesBuilder;
+
   public readonly assetsManager: AssetsManager;
 
   //#endregion
@@ -83,7 +133,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#region constructor
   //#region @backend
   constructor(project: Project) {
-    super(project, 'npm-lib-and-cli-tool');
+    super(project, ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL);
 
     this.__tests = new MochaTestRunner(project);
     this.__testsJest = new JestTestRunner(project);
@@ -154,7 +204,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     // Helpers.info(`[buildLib] start of building ${websql ? '[WEBSQL]' : ''}`);
 
     this.copyEssentialFilesTo([
-      crossPlatformPath([this.project.pathFor(config.folder.dist)]),
+      crossPlatformPath([this.project.pathFor(distMainProject)]),
     ]);
     return initOptions;
     //#endregion
@@ -199,7 +249,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     const packageName = this.project.nameForNpmPackage;
     const tmpProjNpmLibraryInNodeModulesAbsPath = this.project.pathFor([
       tmpLocalCopytoProjDist,
-      config.folder.node_modules,
+      nodeModulesMainProject,
       packageName,
     ]);
     const isOrganizationPackage =
@@ -232,25 +282,25 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#endregion
 
     //#region init proxy projects
-    const proxyProject =
-      this.project.artifactsManager.globalHelper.getProxyNgProj(
-        buildOptions.clone({
-          build: {
-            websql: false,
-          },
-        }),
-        'npm-lib-and-cli-tool',
-      );
+    const proxyProject = getProxyNgProj(
+      this.project,
+      buildOptions.clone({
+        build: {
+          websql: false,
+        },
+      }),
+      ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
+    );
 
-    const proxyProjectWebsql =
-      this.project.artifactsManager.globalHelper.getProxyNgProj(
-        buildOptions.clone({
-          build: {
-            websql: true,
-          },
-        }),
-        'npm-lib-and-cli-tool',
-      );
+    const proxyProjectWebsql = getProxyNgProj(
+      this.project,
+      buildOptions.clone({
+        build: {
+          websql: true,
+        },
+      }),
+      ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
+    );
     Helpers.log(`
 
     proxy Proj = ${proxyProject?.location}
@@ -286,10 +336,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       ? buildOptions.build.baseHref
       : this.artifacts.angularNodeApp.angularFeBasenameManager.rootBaseHref;
 
-    this.project.writeFile(
-      tmpBaseHrefOverwrite,
-      buildOptions.build.baseHref,
-    );
+    this.project.writeFile(tmpBaseHrefOverwrite, buildOptions.build.baseHref);
 
     Helpers.logInfo(`
 
@@ -329,7 +376,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     const runNgBuild = async () => {
       await proxyProject.execute(commandForLibraryBuild, {
-        similarProcessKey: 'ng',
+        similarProcessKey: TaonCommands.NG,
         resolvePromiseMsg: {
           stdout: buildOptions.build.watch
             ? COMPILATION_COMPLETE_LIB_NG_BUILD
@@ -338,7 +385,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         ...outputOptions,
       });
       await proxyProjectWebsql.execute(commandForLibraryBuild, {
-        similarProcessKey: 'ng',
+        similarProcessKey: TaonCommands.NG,
         resolvePromiseMsg: {
           stdout: buildOptions.build.watch
             ? COMPILATION_COMPLETE_LIB_NG_BUILD
@@ -444,7 +491,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     //#endregion
 
-    if (releaseOptions.release.releaseType !== 'local') {
+    if (releaseOptions.release.releaseType !== ReleaseType.LOCAL) {
       this.removeNotNpmRelatedFilesFromReleaseBundle(releaseProjPath);
     }
 
@@ -470,7 +517,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       tmpProjNpmLibraryInNodeModulesAbsPath,
     );
 
-    const allowedToNpmReleases: ReleaseType[] = ['manual', 'cloud'];
+    const allowedToNpmReleases: ReleaseType[] = [
+      ReleaseType.MANUAL,
+      ReleaseType.CLOUD,
+    ];
 
     // console.log(`
 
@@ -479,31 +529,31 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //   `);
 
     const clearLibFiles = (folderAbsPath: string) => {
-      Helpers.remove([folderAbsPath, 'lib']);
-      Helpers.remove([folderAbsPath, 'source']);
-      Helpers.remove([folderAbsPath, 'assets']);
-      Helpers.remove([folderAbsPath, config.folder.browser]);
-      Helpers.remove([folderAbsPath, config.folder.client]);
-      Helpers.remove([folderAbsPath, config.folder.websql]);
-      Helpers.remove([folderAbsPath, 'migrations']);
-      Helpers.remove([folderAbsPath, 'src']);
+      Helpers.remove([folderAbsPath, libFromSrc]);
+      Helpers.remove([folderAbsPath, sourceLinkInNodeModules]);
+      Helpers.remove([folderAbsPath, assetsFromSrc]);
+      Helpers.remove([folderAbsPath, browserMainProject]);
+      Helpers.remove([folderAbsPath, folderName.client]); // TODO REMOVE
+      Helpers.remove([folderAbsPath, websqlMainProject]);
+      Helpers.remove([folderAbsPath, migrationsFromSrc]);
+      Helpers.remove([folderAbsPath, srcMainProject]);
       Helpers.remove([folderAbsPath, 'src.*']);
       Helpers.remove([folderAbsPath, 'index.*']);
-      Helpers.remove([folderAbsPath, 'cli.d.ts']);
-      Helpers.remove([folderAbsPath, 'cli.js.map']);
-      Helpers.setValueToJSON([folderAbsPath, 'package.json'], 'scripts', {});
+      Helpers.remove([folderAbsPath, cliDtsNpmPackage]);
+      Helpers.remove([folderAbsPath, cliJSMapNpmPackage]);
+      Helpers.setValueToJSON([folderAbsPath, packageJsonNpmLib], 'scripts', {});
     };
 
     if (
       releaseOptions.release.lib.doNotIncludeLibFiles &&
-      releaseOptions.release.releaseType !== 'local'
+      releaseOptions.release.releaseType !== ReleaseType.LOCAL
     ) {
       clearLibFiles(releaseProjPath);
     }
 
     Helpers.remove([
       tmpProjNpmLibraryInNodeModulesAbsPath,
-      config.file.taon_jsonc,
+      taonJsonMainProject,
     ]);
     Helpers.remove([tmpProjNpmLibraryInNodeModulesAbsPath, 'firedev.jsonc']);
     Helpers.remove([tmpProjNpmLibraryInNodeModulesAbsPath, 'client']);
@@ -516,12 +566,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         );
       }
     } else {
-      if (releaseOptions.release.releaseType === 'local') {
+      if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
         //#region local release
         const releaseDest = this.project.pathFor([
-          config.folder.local_release,
+          localReleaseMainProject,
           this.currentArtifactName,
-          `${this.project.name}-latest`,
+          `${this.project.name}${suffixLatest}`,
         ]);
         Helpers.remove(releaseDest, true);
         Helpers.copy(releaseProjPath, releaseDest);
@@ -567,9 +617,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#region clear partial
   async clearPartial(options?: EnvOptions): Promise<void> {
     // TODO make it better
-    rimraf.sync(this.project.pathFor('dist') + '*');
-    rimraf.sync(this.project.pathFor('tmp') + '*');
+    rimraf.sync(this.project.pathFor(distMainProject) + '*');
+    rimraf.sync(this.project.pathFor(folderName.tmp) + '*');
   }
+
   /**
    * TODO
    * @param options
@@ -580,8 +631,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     Helpers.taskStarted(`Cleaning project: ${this.project.genericName}`);
 
     if (
-      this.project.typeIs('unknown') ||
-      this.project.typeIs('unknown-npm-project')
+      this.project.typeIs(LibTypeEnum.UNKNOWN) ||
+      this.project.typeIs(LibTypeEnum.UNKNOWN_NPM_PROJECT)
     ) {
       return;
     }
@@ -589,33 +640,31 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     while (true) {
       try {
         rimraf.sync(
-          crossPlatformPath([this.project.location, config.folder.tmp + '*']),
+          crossPlatformPath([this.project.location, folderName.tmp + '*']),
         );
         rimraf.sync(
-          crossPlatformPath([this.project.location, config.folder.dist + '*']),
+          crossPlatformPath([this.project.location, folderName.dist + '*']),
         );
         try {
-          this.project.removeFile(config.folder.node_modules);
+          this.project.removeFile(nodeModulesMainProject);
         } catch (error) {
-          this.project.remove(config.folder.node_modules);
+          this.project.remove(nodeModulesMainProject);
         }
-        this.project.removeFile(config.folder.browser);
-        this.project.removeFile(config.folder.websql);
-        this.project.removeFile(config.file.tnpEnvironment_json);
+        this.project.removeFile(browserMainProject);
+        this.project.removeFile(websqlMainProject);
+        this.project.removeFile(fileName.tnpEnvironment_json);
         if (this.project.framework.isCoreProject) {
           return;
         }
 
         glob
-          .sync(`${this.project.location}/*.filetemplate`)
+          .sync(`${this.project.location}/*${dotFileTemplateExt}`)
           .forEach(fileTemplate => {
             Helpers.remove(fileTemplate);
-            Helpers.remove(fileTemplate.replace('.filetemplate', ''));
+            Helpers.remove(fileTemplate.replace(dotFileTemplateExt, ''));
           });
 
-        Helpers.removeIfExists(
-          path.join(this.project.location, config.file.tnpEnvironment_json),
-        );
+        this.project.removeFile(fileName.tnpEnvironment_json);
         break;
       } catch (error) {
         Helpers.pressKeyAndContinue(MESSAGES.SHUT_DOWN_FOLDERS_AND_DEBUGGERS);
@@ -695,11 +744,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     newVersion: string,
   ): void {
     //#region @backendFunc
-    const folderToFix = [config.folder.browser, config.folder.websql];
+    const folderToFix = [browserMainProject, websqlMainProject];
 
     for (const folder of folderToFix) {
       const folderAbsPath = crossPlatformPath([releaseProjPath, folder]);
-      Helpers.remove([folderAbsPath, '.npmignore']);
+      Helpers.remove([folderAbsPath, dotNpmIgnoreMainProject]);
 
       const rootPackageNameForChildBrowser = crossPlatformPath([
         this.project.nameForNpmPackage,
@@ -725,7 +774,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         },
         sideEffects: this.project.packageJson.sideEffects,
       };
-      Helpers.writeJson([folderAbsPath, config.file.package_json], pj);
+      Helpers.writeJson([folderAbsPath, packageJsonNpmLibAngular], pj);
     }
     //#endregion
   }
@@ -797,11 +846,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#region private methods / prepare package json for release publish
   private preparePackageJsonForReleasePublish(relaseAbsPath: string): void {
     //#region @backendFunc
-    const pathInRelease = crossPlatformPath([
-      relaseAbsPath,
-      config.file.package_json,
-    ]);
+    const pathInRelease = crossPlatformPath([relaseAbsPath, packageJsonNpmLib]);
     Helpers.copyFile(this.project.packageJson.path, pathInRelease);
+
     const pj = new BasePackageJson({
       cwd: relaseAbsPath,
     });
@@ -855,9 +902,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     releaseAbsPath: string,
   ): void {
     //#region @backendFunc
-    Helpers.remove(`${releaseAbsPath}/app*`); // QUICK_FIX
-    Helpers.remove(`${releaseAbsPath}/tests*`); // QUICK_FIX
-    Helpers.remove(`${releaseAbsPath}/src`, true); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/${appFromSrc}*`); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/${testsFromSrc}*`); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/${srcMainProject}`, true); // QUICK_FIX
     // Helpers.removeFileIfExists(`${relaseAbsPath}/source`);
 
     // regenerate src.d.ts
@@ -865,7 +912,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       crossPlatformPath([releaseAbsPath, 'src.d.ts']),
       `
 ${THIS_IS_GENERATED_INFO_COMMENT}
-export * from './lib';
+export * from './${libFromSrc}';
 ${THIS_IS_GENERATED_INFO_COMMENT}
 // please use command: taon build:watch to see here links for your globally builded lib code files
 ${THIS_IS_GENERATED_INFO_COMMENT}
@@ -897,25 +944,34 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         if (line.startsWith('WARNING: postcss-url')) {
           return ' --- [taon] IGNORED WARN ---- ';
         }
-        line = line.replace(`projects/${this.project.name}/src/`, `./src/`);
+        line = line.replace(
+          `projects/${this.project.name}/${srcMainProject}/`,
+          `./${srcMainProject}/`,
+        );
 
         // ../../../../tmpSrcDistWebsql/lib/layout-proj-ng-related/layout-proj-ng-related.component.scss
         if (line.includes(`../../../../${tmpSrcDistWebsql}/`)) {
-          line = line.replace(`../../../../${tmpSrcDistWebsql}/`, `./src/`);
+          line = line.replace(
+            `../../../../${tmpSrcDistWebsql}/`,
+            `./${srcMainProject}/`,
+          );
         }
         if (line.includes(`../../../../${tmpSrcDist}/`)) {
-          line = line.replace(`../../../../${tmpSrcDist}/`, `./src/`);
+          line = line.replace(
+            `../../../../${tmpSrcDist}/`,
+            `./${srcMainProject}/`,
+          );
         }
 
-        if (line.search(`/src/libs/`) !== -1) {
+        if (line.search(`/${srcMainProject}/${libs}/`) !== -1) {
           const [__, ___, ____, moduleName] = line.split('/');
           // console.log({
           //   moduleName,
           //   standalone: 'inlib'
           // })
           return line.replace(
-            `/src/libs/${moduleName}/`,
-            `/${moduleName}/src/lib/`,
+            `/${srcMainProject}/${libs}/${moduleName}/`,
+            `/${moduleName}/${srcMainProject}/${libFromSrc}/`,
           );
         }
 
@@ -959,22 +1015,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         fse.copyFileSync(file, dest);
       }
     });
-    Helpers.logInfo(
-      `Resources copied to release folder: ${config.folder.dist}`,
-    );
-    //#endregion
-  }
-  //#endregion
-
-  //#region private methods / create client folder from browser folder
-  private createClientVersionAsCopyOfBrowser(releaseDestAbsPath: string): void {
-    //#region @backendFunc
-    const browser = path.join(releaseDestAbsPath, config.folder.browser);
-    const client = path.join(releaseDestAbsPath, config.folder.client);
-    Helpers.remove(client);
-    if (fse.existsSync(browser)) {
-      Helpers.copy(browser, client, { recursive: true });
-    }
+    Helpers.logInfo(`Resources copied to release folder: ${distMainProject}`);
     //#endregion
   }
   //#endregion
@@ -982,12 +1023,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   //#region private methods / copy essential files
   private copyEssentialFilesTo(toDestinations: string[]): void {
     //#region @backendFunc
-    this.copyWhenExist('bin', toDestinations);
-    // this.copyWhenExist(config.file.taon_jsonc, toDestinations);
-    this.copyWhenExist('.npmrc', toDestinations);
-    this.copyWhenExist('.npmignore', toDestinations);
-    this.copyWhenExist('.gitignore', toDestinations);
-    this.copyWhenExist(config.file.tnpEnvironment_json, toDestinations);
+    this.copyWhenExist(binMainProject, toDestinations);
+
+    this.copyWhenExist(dotNpmrcMainProject, toDestinations);
+    this.copyWhenExist(dotNpmIgnoreMainProject, toDestinations);
+    this.copyWhenExist(dotGitIgnoreMainProject, toDestinations);
     //#endregion
   }
   //#endregion
@@ -1005,9 +1045,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
           Helpers.copy(absPath, dest, { recursive: true });
         } else {
           Helpers.copyFile(absPath, dest);
-          if (path.basename(absPath) === config.file.tnpEnvironment_json) {
-            Helpers.setValueToJSON(dest, 'currentProjectLocation', void 0);
-          }
         }
       } else {
         Helpers.log(`[isomorphic-lib][copyWhenExist] not exists: ${absPath}`);
@@ -1137,11 +1174,13 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     absPathReleaseDistFolder: string,
   ): Promise<void> {
     //#region @backendFunc
-    Helpers.filesFrom([absPathReleaseDistFolder, 'lib'], true)
+    Helpers.getFilesFrom([absPathReleaseDistFolder, libFromCompiledDist], {
+      recursive: true,
+    })
       .filter(f => f.endsWith('.js.map') || f.endsWith('.mjs.map'))
       .forEach(f => Helpers.removeFileIfExists(f));
 
-    Helpers.removeFileIfExists([absPathReleaseDistFolder, 'cli.js.map']);
+    Helpers.removeFileIfExists([absPathReleaseDistFolder, cliJSMapNpmPackage]);
     //#endregion
   }
   //#endregion
@@ -1151,18 +1190,20 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
    * remove dts files from release
    */
   private async backendReleaseRemoveDts(
-    releseFolderAbsPath: string,
+    releaseFolderAbsPath: string,
   ): Promise<void> {
     //#region @backendFunc
 
-    Helpers.filesFrom([releseFolderAbsPath, 'lib'], true)
+    Helpers.getFilesFrom([releaseFolderAbsPath, libFromCompiledDist], {
+      recursive: true,
+    })
       .filter(f => f.endsWith('.d.ts'))
       .forEach(f => Helpers.removeFileIfExists(f));
 
-    Helpers.removeFileIfExists([releseFolderAbsPath, 'cli.d.ts']);
+    Helpers.removeFileIfExists([releaseFolderAbsPath, cliDtsNpmPackage]);
 
     Helpers.writeFile(
-      [releseFolderAbsPath, 'lib/index.d.ts'],
+      [releaseFolderAbsPath, `${libFromSrc}/${indexDtsNpmPackage}`],
       `export declare const dummy${new Date().getTime()};`,
     );
     //#endregion
@@ -1175,9 +1216,9 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     initOptions = EnvOptions.from(initOptions);
     if (this.project.framework.isStandaloneProject) {
       const dest = this.project.pathFor([
-        config.folder.src,
-        config.folder.lib,
-        config.file.build_info_generated_ts,
+        srcMainProject,
+        libFromSrc,
+        TaonGeneratedFiles.build_info_generated_ts,
       ]);
       Helpers.writeFile(
         dest,
@@ -1256,37 +1297,45 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   ): Promise<void> {
     //#region @backendFunc
 
-    const destCli = crossPlatformPath([releaseAbsLocation, 'index.js']);
-    const destCliMin = crossPlatformPath([releaseAbsLocation, 'cli.js']);
+    const destCli = crossPlatformPath([releaseAbsLocation, indexJSNpmPackage]);
+    const destCliMin = crossPlatformPath([releaseAbsLocation, cliJSNpmPackage]);
 
     await Helpers.bundleCodeIntoSingleFile(destCli, destCliMin, {
       minify,
       additionalExternals: [
-        ...this.project.taonJson.additionalExternalsFor('npm-lib-and-cli-tool'),
+        ...this.project.taonJson.additionalExternalsFor(
+          ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
+        ),
       ],
       additionalReplaceWithNothing: [
         ...this.project.taonJson.additionalReplaceWithNothingFor(
-          'npm-lib-and-cli-tool',
+          ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
         ),
       ],
     });
 
     // copy wasm file for dest
     const wasmfileSource = crossPlatformPath([
-      this.project.ins.by(
-        'isomorphic-lib',
-        this.project.framework.frameworkVersion,
-      ).location,
-      'app/src/assets/sql-wasm.wasm',
+      this.project.ins
+        .by(LibTypeEnum.ISOMORPHIC_LIB, this.project.framework.frameworkVersion)
+        .pathFor([
+          templateFolderForArtifact(this.currentArtifactName),
+          srcNgProxyProject,
+          assetsFromNgProj,
+          CoreAssets.sqlWasmFile,
+        ]),
     ]);
 
     const wasmfileDest = crossPlatformPath([
       releaseAbsLocation,
-      'sql-wasm.wasm',
+      CoreAssets.sqlWasmFile,
     ]);
     Helpers.copyFile(wasmfileSource, wasmfileDest);
 
-    const destStartJS = crossPlatformPath([releaseAbsLocation, 'bin/start.js']);
+    const destStartJS = crossPlatformPath([
+      releaseAbsLocation,
+      `${binMainProject}/start.js`,
+    ]);
     Helpers.writeFile(
       destStartJS,
       `console.log('<<< USING BUNDLED CLI >>>');global.taonUsingBundledCliMode = true;` +
@@ -1294,7 +1343,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     );
 
     Helpers.writeFile(
-      crossPlatformPath([releaseAbsLocation, 'CLI-README.md']),
+      crossPlatformPath([releaseAbsLocation, BundledFiles.CLI_README_MD]),
       `# ${this.project.name} CLI\n\n
 ## Installation as global tool
 \`\`\`bash

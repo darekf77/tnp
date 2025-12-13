@@ -5,7 +5,12 @@ import { config } from 'tnp-core/src';
 import { crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 
-import { Development, EnvOptions, ReleaseType } from '../../../../options';
+import {
+  Development,
+  EnvOptions,
+  ReleaseArtifactTaon,
+  ReleaseType,
+} from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
@@ -22,7 +27,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
   public docs: Docs;
 
   constructor(protected readonly project: Project) {
-    super(project, 'docs-webapp');
+    super(project, ReleaseArtifactTaon.DOCS_DOCS_WEBAPP);
     this.docs = new Docs(this.project);
   }
 
@@ -40,7 +45,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
   //#region init partial
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     if (!initOptions.release.targetArtifact) {
-      initOptions.release.targetArtifact = 'docs-webapp';
+      initOptions.release.targetArtifact = ReleaseArtifactTaon.DOCS_DOCS_WEBAPP;
     }
     await this.docs.initializeWatchers(initOptions);
     await this.docs.init();
@@ -109,7 +114,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
       ? releaseOptions.release.overrideStaticPagesReleaseType
       : 'major';
 
-    if (releaseOptions.release.releaseType === 'static-pages') {
+    if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
       //#region static-pages release
       const releaseData = await this.staticPagesDeploy(
         docsWebappDistOutPath,
@@ -121,7 +126,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
       //#endregion
     }
 
-    if (releaseOptions.release.releaseType === 'local') {
+    if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
       //#region static-pages release
       const releaseData = await this.localReleaseDeploy(
         docsWebappDistOutPath,

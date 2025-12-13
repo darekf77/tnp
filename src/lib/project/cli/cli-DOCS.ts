@@ -3,7 +3,7 @@ import { _, chalk, UtilsTerminal } from 'tnp-core/src';
 import { Helpers, UtilsHttp } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import { EnvOptions } from '../../options';
+import { EnvOptions, ReleaseArtifactTaon } from '../../options';
 
 import { BaseCli } from './base-cli';
 //#endregion
@@ -19,7 +19,7 @@ class $Docs extends BaseCli {
           watch: false,
         },
         release: {
-          targetArtifact: 'docs-webapp',
+          targetArtifact: ReleaseArtifactTaon.DOCS_DOCS_WEBAPP,
         },
         finishCallback: () => this._exit(),
       }),
@@ -38,7 +38,7 @@ class $Docs extends BaseCli {
           watch: true,
         },
         release: {
-          targetArtifact: 'docs-webapp',
+          targetArtifact: ReleaseArtifactTaon.DOCS_DOCS_WEBAPP,
         },
         finishCallback: () => this._exit(),
       }),

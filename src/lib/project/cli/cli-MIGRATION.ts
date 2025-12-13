@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, taonPackageName } from 'tnp-core/src';
 import {
   Utils,
   UtilsMigrations,
@@ -10,6 +10,11 @@ import {
 } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 
+import {
+  migrationsFromSrc,
+  srcFromTaonImport,
+  srcMainProject,
+} from '../../constants';
 import { EnvOptions } from '../../options';
 
 import { BaseCli } from './base-cli';
@@ -53,8 +58,11 @@ class $Migration extends BaseCli {
     } else if (resp === 'run') {
       await this.run();
     } else if (resp === 'revert') {
-      const allMigrationsOptions = Helpers.filesFrom(
-        this.project.pathFor([config.folder.src, config.folder.migrations]),
+      const allMigrationsOptions = Helpers.getFilesFrom(
+        this.project.pathFor([srcMainProject, migrationsFromSrc]),
+        {
+          recursive: true,
+        },
       )
         .filter(f => {
           const timestampRegex = /\d{13}/;
@@ -88,7 +96,9 @@ class $Migration extends BaseCli {
         .sort((a, b) => {
           return b.value - a.value;
         });
-      const detectedContexts = this.project.framework.getAllDetectedContextsNames();
+      const detectedContexts =
+        this.project.framework.getAllDetectedContextsNames();
+
       console.info(`
 
       Detected databases that can be reverted:
@@ -121,7 +131,8 @@ ${detectedContexts.map(db => `- ${db}`).join('\n')}
       Helpers.error(`Migration name (as parameter) is required.`, false, true);
     }
     const migrationFileName = `${timestamp}_${migrationName}.ts`;
-    const detectedContexts = this.project.framework.getAllDetectedContextsNames();
+    const detectedContexts =
+      this.project.framework.getAllDetectedContextsNames();
 
     if (detectedContexts.length === 0) {
       Helpers.error(
@@ -189,14 +200,14 @@ export class ${contextName}_${timestamp}_${migrationName} extends Taon.Base.Migr
     });
 
     const absPathToNewMigrationFile = this.project.pathFor([
-      config.folder.src,
-      config.folder.migrations,
+      srcMainProject,
+      migrationsFromSrc,
       migrationFileName,
     ]);
     Helpers.writeFile(
       absPathToNewMigrationFile,
-      `import { Taon } from 'taon/src';\n` +
-        `import { QueryRunner } from 'taon-typeorm/src';\n\n` +
+      `import { Taon } from '${taonPackageName}/${srcFromTaonImport}';\n` +
+        `import { QueryRunner } from 'taon-typeorm/${srcFromTaonImport}';\n\n` +
         `${classes.join('\n\n')}`,
     );
     UtilsTypescript.formatFile(absPathToNewMigrationFile);
@@ -241,7 +252,8 @@ export class ${contextName}_${timestamp}_${migrationName} extends Taon.Base.Migr
   //#region detect contexts
   contexts() {
     Helpers.taskStarted('Detecting contexts...');
-    const detectedContexts = this.project.framework.getAllDetectedContextsNames();
+    const detectedContexts =
+      this.project.framework.getAllDetectedContextsNames();
     Helpers.taskDone(`
 
     Detected contexts:

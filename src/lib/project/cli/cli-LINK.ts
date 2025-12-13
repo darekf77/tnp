@@ -1,8 +1,23 @@
-import { config } from 'tnp-core/src';
+import { config, fileName, folderName } from 'tnp-core/src';
 import { chalk, _, crossPlatformPath, glob, path, UtilsOs } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { BaseCommandLineFeature, Helpers } from 'tnp-helpers/src';
 
+import {
+  binMainProject,
+  cliTsFromSrc,
+  distMainProject,
+  libFromImport,
+  libFromNpmPackages,
+  localReleaseMainProject,
+  nodeModulesMainProject,
+  srcMainProject,
+  debugSuffix,
+  debugBrkSuffix,
+  suffixLatest,
+  inspectSuffix,
+  inspectBrkSuffix,
+} from '../../constants';
 import { EnvOptions, ReleaseArtifactTaon } from '../../options';
 import type { Project } from '../abstract/project';
 
@@ -54,7 +69,7 @@ export class $Link extends BaseCli {
 
   _getDetectedLocalCLi() {
     const destBaseLatest = this.project.pathFor(
-      `${config.folder.local_release}/${'npm-lib-and-cli-tool' as ReleaseArtifactTaon}`,
+      `${nodeModulesMainProject}/${ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL}`,
     );
     return Helpers.foldersFrom(destBaseLatest).filter(f => {
       const proj = this.ins.From(f);
@@ -66,7 +81,9 @@ export class $Link extends BaseCli {
     const localReleaseFolder =
       pathToFolder ||
       this.firstArg ||
-      `local_release/npm-lib-and-cli-tool/${this.project.nameForCli}-latest`;
+      `${localReleaseMainProject}/${
+        ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL
+      }/${this.project.nameForCli}${suffixLatest}`;
 
     Helpers.info(`Linking
 
@@ -118,8 +135,8 @@ export class $Link extends BaseCli {
       path.join(
         globalBinFolderPath,
         process.platform === 'win32'
-          ? config.folder.node_modules
-          : `../lib/${config.folder.node_modules}`,
+          ? folderName.node_modules
+          : `../${libFromNpmPackages}/${folderName.node_modules}`,
       ),
     );
 
@@ -131,11 +148,11 @@ export class $Link extends BaseCli {
     Helpers.removeIfExists(packageInGlobalNodeModules);
     project.linkTo(packageInGlobalNodeModules);
 
-    if (!Helpers.exists(project.pathFor(config.folder.bin))) {
-      Helpers.mkdirp(project.pathFor(config.folder.bin));
+    if (!Helpers.exists(project.pathFor(binMainProject))) {
+      Helpers.mkdirp(project.pathFor(binMainProject));
     }
 
-    const pattern = `${project.pathFor(config.folder.bin)}/*`;
+    const pattern = `${project.pathFor(binMainProject)}/*`;
     const countLinkInPackageJsonBin = glob
       .sync(pattern)
       .map(f => crossPlatformPath(f))
@@ -145,36 +162,33 @@ export class $Link extends BaseCli {
 
     if (countLinkInPackageJsonBin.length === 0) {
       const pathNormalLink = Helpers.path.create(
-        project.location,
-        config.folder.bin,
-        `${project.name}`,
+        project.pathFor([binMainProject, project.name]),
       );
       Helpers.writeFile(pathNormalLink, this._templateBin());
       countLinkInPackageJsonBin.push(pathNormalLink);
 
       const pathDebugLink = Helpers.path.create(
-        project.location,
-        config.folder.bin,
-        `${project.name}-debug`,
+        project.pathFor([
+          binMainProject,
+          `${project.name}${debugSuffix.replace('--', '-')}`,
+        ]),
       );
       Helpers.writeFile(pathDebugLink, this._templateBin(true));
       countLinkInPackageJsonBin.push(pathDebugLink);
 
       const cliTsFile = Helpers.path.create(
-        project.location,
-        config.folder.src,
-        config.file.cli_ts,
+        project.pathFor([srcMainProject, fileName.cli_ts]),
       );
       if (!Helpers.exists(cliTsFile)) {
         this.project.framework.recreateFileFromCoreProject({
-          fileRelativePath: 'src/cli.ts',
+          fileRelativePath: crossPlatformPath([srcMainProject, cliTsFromSrc]),
         });
       }
     }
 
     const bin = {};
     countLinkInPackageJsonBin.forEach(p => {
-      bin[path.basename(p)] = `bin/${path.basename(p)}`;
+      bin[path.basename(p)] = `${binMainProject}/${path.basename(p)}`;
     });
     project.packageJson.bin = bin;
 
@@ -191,14 +205,17 @@ export class $Link extends BaseCli {
         Helpers.removeIfExists(destinationGlobalLink);
 
         const inspect =
-          globalName.endsWith('debug') || globalName.endsWith('inspect');
-        const inspectBrk: boolean =
-          globalName.endsWith('debug-brk') ||
-          globalName.endsWith('inspect-brk');
+          globalName.endsWith(debugSuffix.replace('--', '')) ||
+          globalName.endsWith(inspectSuffix.replace('--', ''));
+
+        const selectedInspect: boolean =
+          globalName.endsWith(debugBrkSuffix.replace('--', '')) ||
+          globalName.endsWith(inspectBrkSuffix.replace('--', ''));
+
         const attachDebugParam: '--inspect' | '--inspect-brk' | '' = inspect
-          ? '--inspect'
-          : inspectBrk
-            ? '--inspect-brk'
+          ? inspectSuffix
+          : selectedInspect
+            ? inspectBrkSuffix
             : '';
 
         if (process.platform === 'win32') {
@@ -212,7 +229,7 @@ export class $Link extends BaseCli {
         } else {
           Helpers.createSymLink(localPath, destinationGlobalLink);
           const command = `chmod +x ${destinationGlobalLink}`;
-          Helpers.log(`Trying to make file exacutable global command "${chalk.bold(
+          Helpers.log(`Trying to make file executable global command "${chalk.bold(
             globalName,
           )}".
 
@@ -287,7 +304,7 @@ $exe = if ($PSVersionTable.PSVersion -lt "6.0" -or $IsWindows) { ".exe" } else {
 $nodePath = if (Test-Path "$basedir/node$exe") { "$basedir/node$exe" } else { "node$exe" }
 $scriptToRun = "$basedir/node_modules/${
               project.nameForNpmPackage
-            }/bin/${globalName}"
+            }/${binMainProject}/${globalName}"
 
 $ret = & $nodePath ${`"${attachDebugParam}"`} $scriptToRun @args
 exit $ret
@@ -306,12 +323,12 @@ $ret=0
 if (Test-Path "$basedir/node$exe") {
 & "$basedir/node$exe"  "$basedir/node_modules/${
               project.nameForNpmPackage
-            }/bin/${globalName}" $args
+            }/${binMainProject}/${globalName}" $args
 $ret=$LASTEXITCODE
 } else {
 & "node$exe"  "$basedir/node_modules/${
               project.nameForNpmPackage
-            }/bin/${globalName}" $args
+            }/${binMainProject}/${globalName}" $args
 $ret=$LASTEXITCODE
 }
 exit $ret
@@ -361,7 +378,7 @@ EXIT /b
     return `#!/usr/bin/env node ${debug ? '--inspect' : ''}
   var { fse, crossPlatformPath, path } = require('tnp-core/src');
   var path = {
-    dist: path.join(crossPlatformPath(__dirname), '../dist/index.js'),
+    dist: path.join(crossPlatformPath(__dirname), '../${distMainProject}/index.js'),
     npm: path.join(crossPlatformPath(__dirname), '../index.js')
   }
   var p = fse.existsSync(path.dist) ? path.dist : path.npm;

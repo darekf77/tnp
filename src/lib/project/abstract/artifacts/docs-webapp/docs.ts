@@ -1,26 +1,33 @@
 //#region imports
 import { ChangeOfFile } from 'incremental-compiler/src';
 import { RenameRule } from 'magic-renamer/src';
-import { config, UtilsExecProc, UtilsTerminal } from 'tnp-core/src';
+import { config, LibTypeEnum, UtilsExecProc, UtilsTerminal } from 'tnp-core/src';
 import { chalk, chokidar, fse, Utils } from 'tnp-core/src';
 import { _, crossPlatformPath, path } from 'tnp-core/src';
 import { UtilsOs } from 'tnp-core/src';
 import { UtilsStringRegex } from 'tnp-core/src';
 import { UtilsFilesFoldersSync } from 'tnp-core/src';
+import { dotTaonFolder, dotTnpFolder } from 'tnp-core/src';
 import { UtilsMd } from 'tnp-helpers/src';
 import { BaseDebounceCompilerForProject } from 'tnp-helpers/src';
 import { Helpers, UtilsHttp } from 'tnp-helpers/src';
 
 import {
+  browserMainProject,
+  combinedDocsAllMdFilesFolder,
   customDefaultCss,
   customDefaultJs,
+  distMainProject,
   docsConfigJsonFileName,
   docsConfigSchema,
+  projectsFromMainProject,
+  projectsFromNgTemplate,
+  srcMainProject,
+  websqlMainProject,
 } from '../../../../constants';
 import { Models } from '../../../../models';
 import { EnvOptions } from '../../../../options';
 import type { Project } from '../../project';
-
 //#endregion
 
 //#region models / EntrypointFile
@@ -69,7 +76,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   //#endregion
 
   //#region fields & getters / linkd docs to global container
-  private linkDocsToGlobalContainer() {
+  private linkDocsToGlobalContainer(): void {
     //#region @backendFunc
     if (!Helpers.exists(path.dirname(this.docsConfigGlobalContainerAbsPath))) {
       Helpers.mkdirp(path.dirname(this.docsConfigGlobalContainerAbsPath));
@@ -93,15 +100,16 @@ export class Docs extends BaseDebounceCompilerForProject<
    */
   public readonly tmpDocsFolderRoot: string = `.${config.frameworkName}/temp-docs-folder`;
 
-  public readonly combinedDocsFolder: string = `allmdfiles`;
-
   /**
    * Example:
    * .taon/temp-docs-folder/allmdfiles
    */
   get tmpDocsFolderRootDocsDirRelativePath(): string {
     //#region @backendFunc
-    return crossPlatformPath([this.tmpDocsFolderRoot, this.combinedDocsFolder]);
+    return crossPlatformPath([
+      this.tmpDocsFolderRoot,
+      combinedDocsAllMdFilesFolder,
+    ]);
     //#endregion
   }
 
@@ -121,7 +129,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   get docsConfigGlobalContainerAbsPath() {
     //#region @backendFunc
     const globalContainer = this.project.ins.by(
-      'container',
+      LibTypeEnum.CONTAINER,
       this.project.framework.frameworkVersion,
     );
     return globalContainer.pathFor(
@@ -145,7 +153,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   get docsConfigSchemaPath(): string {
     //#region @backendFunc
     return this.project.ins
-      .by('isomorphic-lib', this.project.framework.frameworkVersion)
+      .by(LibTypeEnum.ISOMORPHIC_LIB, this.project.framework.frameworkVersion)
       .pathFor(docsConfigSchema);
     //#endregion
   }
@@ -195,21 +203,21 @@ export class Docs extends BaseDebounceCompilerForProject<
       ignoreFolderPatter: [
         project.pathFor('tmp-*/**'),
         project.pathFor('tmp-*'),
-        project.pathFor('dist/**'),
-        project.pathFor('dist'),
-        project.pathFor('dist-*/**'),
-        project.pathFor('browser/**'),
-        project.pathFor('browser'),
-        project.pathFor('websql/**'),
-        project.pathFor('websql'),
-        project.pathFor('projects/**'),
-        project.pathFor('projects'),
-        project.pathFor('.taon/**'),
-        project.pathFor('.taon'),
-        project.pathFor('.tnp/**'),
-        project.pathFor('.tnp'),
+        project.pathFor(`${distMainProject}/**`),
+        project.pathFor(distMainProject),
+        project.pathFor(`${distMainProject}-*/**`),
+        project.pathFor(`${browserMainProject}/**`),
+        project.pathFor(browserMainProject),
+        project.pathFor(`${websqlMainProject}/**`),
+        project.pathFor(websqlMainProject),
+        project.pathFor(`${projectsFromMainProject}/**`),
+        project.pathFor(projectsFromMainProject),
+        project.pathFor(`${dotTaonFolder}/**`),
+        project.pathFor(dotTaonFolder),
+        project.pathFor(`${dotTnpFolder}/**`),
+        project.pathFor(dotTnpFolder),
         ...['ts', 'tsx', 'scss', 'html'].map(ext =>
-          project.pathFor(`src/**/*.${ext}`),
+          project.pathFor(`${srcMainProject}/**/*.${ext}`),
         ),
         // TODO I may include in feature for example .ts files in md files with handlebars
       ],
@@ -385,7 +393,7 @@ ${this.applyPriorityOrder(entryPointFilesRelativePaths)
     return `  - ${_.replace(p.title, /[_\s]/g, ' ')}: ${p.relativePath}`;
   })
   .join('\n')}
-docs_dir: ./${this.combinedDocsFolder}
+docs_dir: ./${combinedDocsAllMdFilesFolder}
 theme:
   name: material
   features:
@@ -529,14 +537,6 @@ markdown_extensions:
       Helpers.error(`Cannot build mkdocs documentation. `, true, true);
       process.exit(1);
     }
-
-    // not needed probably
-    // this.project.setValueToJSONC(
-    //   config.file.package_json,
-    //   'scripts.mkdocs',
-    //   process.platform === 'darwin' ? 'mkdocs' : 'python3 -m mkdocs',
-    // );
-    // console.log({ watch });
 
     if (watch) {
       this.mkdocsServePort = await this.project.registerAndAssignPort(
@@ -1117,7 +1117,7 @@ markdown_extensions:
   private getTimestampWatcherForPackageName(universalPackageName: string) {
     //#region @backendFunc
     const globalContainer = this.project.ins.by(
-      'container',
+      LibTypeEnum.CONTAINER,
       this.project.framework.frameworkVersion,
     );
     return globalContainer.pathFor(

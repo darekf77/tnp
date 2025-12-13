@@ -7,6 +7,12 @@ import { BaseFeatureForProject } from 'tnp-helpers/src';
 import { BaseDebounceCompilerForProject } from 'tnp-helpers/src';
 
 import {
+  assetsFor,
+  assetsFromNgProj,
+  assetsFromNpmPackage,
+  assetsFromSrc,
+  nodeModulesMainProject,
+  sharedFromAssets,
   tmpAllAssetsLinked,
   tmpSourceDist,
   tmpSourceDistWebsql,
@@ -16,8 +22,6 @@ import {
   tmpSrcDistWebsql,
 } from '../../../../../constants';
 import type { Project } from '../../../project';
-
-const assetsFor = `${config.folder.assets}-for`;
 
 export class AssetsManager extends BaseDebounceCompilerForProject<
   {},
@@ -66,7 +70,7 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
       const [pkgName, relativePathInSharedAssets] =
         changeOfFile.fileAbsolutePath
           .replace(this.currentProjectNodeModulesPath + '/', '')
-          .split(`/assets/shared/`);
+          .split(`/${assetsFromSrc}/${sharedFromAssets}/`);
 
       if (asyncAction) {
         this.tmpFolders
@@ -74,11 +78,11 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
             return crossPlatformPath([
               this.project.location,
               tmpFolder,
-              config.folder.assets,
+              assetsFromNgProj,
               assetsFor,
               pkgName,
-              config.folder.assets,
-              config.folder.shared,
+              assetsFromNpmPackage,
+              sharedFromAssets,
               relativePathInSharedAssets,
             ]);
           })
@@ -144,10 +148,11 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
                 crossPlatformPath([
                   this.project.location,
                   tmpFolder,
-                  config.folder.assets,
+                  assetsFromSrc,
                   assetsFor,
                   packageName,
-                  'assets/shared',
+                  assetsFromNgProj,
+                  sharedFromAssets,
                   relative,
                 ]),
               );
@@ -200,9 +205,10 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
         Helpers.createSymLink(
           crossPlatformPath([
             coreContainerPath,
-            config.folder.node_modules,
+            nodeModulesMainProject,
             pkgName,
-            'assets/shared',
+            assetsFromNpmPackage,
+            sharedFromAssets,
           ]),
           crossPlatformPath([
             this.tmpAllAssetsLinkedInCoreContainerAbsPath,

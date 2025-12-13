@@ -1,7 +1,7 @@
-import { crossPlatformPath, UtilsOs } from 'tnp-core/src';
+import { crossPlatformPath, dotTaonFolder, UtilsOs } from 'tnp-core/src';
 
 export const DEPLOYMENT_LOCAL_FOLDER_PATH = crossPlatformPath([
   UtilsOs.getRealHomeDir(),
-  '.taon',
+  dotTaonFolder,
   'deployments',
 ]);

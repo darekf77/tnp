@@ -47,37 +47,49 @@ class $Release extends BaseCli {
 
   //#region local
   async local(): Promise<void> {
-    await this._releaseProcess(this.params, 'local');
+    await this._releaseProcess(this.params, ReleaseType.LOCAL);
   }
 
   async localNpm(): Promise<void> {
-    await this._releaseProcess(this.params, 'local', 'npm-lib-and-cli-tool');
+    await this._releaseProcess(
+      this.params,
+      ReleaseType.LOCAL,
+      ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
+    );
   }
 
   async localVscode(): Promise<void> {
-    await this._releaseProcess(this.params, 'local', 'vscode-plugin');
+    await this._releaseProcess(
+      this.params,
+      ReleaseType.LOCAL,
+      ReleaseArtifactTaon.VSCODE_PLUGIN,
+    );
   }
 
   async localElectron(): Promise<void> {
-    await this._releaseProcess(this.params, 'local', 'electron-app');
+    await this._releaseProcess(
+      this.params,
+      ReleaseType.LOCAL,
+      ReleaseArtifactTaon.ELECTRON_APP,
+    );
   }
   //#endregion
 
   //#region cloud
   async cloud(): Promise<void> {
-    await this._releaseProcess(this.params, 'cloud');
+    await this._releaseProcess(this.params, ReleaseType.CLOUD);
   }
   //#endregion
 
   //#region manual
   async manual(): Promise<void> {
-    await this._releaseProcess(this.params, 'manual');
+    await this._releaseProcess(this.params, ReleaseType.MANUAL);
   }
   //#endregion
 
   //#region static pages
   async staticPages(): Promise<void> {
-    await this._releaseProcess(this.params, 'static-pages');
+    await this._releaseProcess(this.params, ReleaseType.STATIC_PAGES);
   }
   //#endregion
 
@@ -91,7 +103,7 @@ class $Release extends BaseCli {
           autoReleaseUsingConfig: true,
           autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'patch',
-          releaseType: 'manual',
+          releaseType: ReleaseType.MANUAL,
         },
       }),
     );
@@ -108,7 +120,7 @@ class $Release extends BaseCli {
           autoReleaseUsingConfig: true,
           autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'patch',
-          releaseType: 'manual',
+          releaseType: ReleaseType.MANUAL,
         },
       }),
     );
@@ -124,7 +136,7 @@ class $Release extends BaseCli {
           autoReleaseUsingConfig: true,
           autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'major',
-          releaseType: 'manual',
+          releaseType: ReleaseType.MANUAL,
         },
       }),
     );
@@ -140,7 +152,7 @@ class $Release extends BaseCli {
           autoReleaseUsingConfig: true,
           autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'minor',
-          releaseType: 'manual',
+          releaseType: ReleaseType.MANUAL,
         },
       }),
     );
@@ -156,7 +168,7 @@ class $Release extends BaseCli {
           autoReleaseUsingConfig: true,
           autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'patch',
-          releaseType: 'manual',
+          releaseType: ReleaseType.MANUAL,
         },
       }),
     );
@@ -169,14 +181,14 @@ class $Release extends BaseCli {
   //#region install locally
   async installLocallyVscodePlugin(): Promise<void> {
     await this._installLocally(true, {
-      targetArtifact: 'vscode-plugin',
+      targetArtifact: ReleaseArtifactTaon.VSCODE_PLUGIN,
     });
     this._exit();
   }
 
   async installLocallyCliTool(): Promise<void> {
     await this._installLocally(true, {
-      targetArtifact: 'npm-lib-and-cli-tool',
+      targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
       envName: 'dev',
     });
     this._exit();
@@ -205,11 +217,13 @@ class $Release extends BaseCli {
           targetArtifact: releaseOpt.targetArtifact,
           removeReleaseOutputAfterLocalInstall:
             releaseOpt.removeReleaseOutputAfterLocalInstall,
-          releaseType: 'local',
+          releaseType: ReleaseType.LOCAL,
           releaseVersionBumpType: 'patch',
           installLocally: true,
           skipReleaseQuestion: skipLibBuild,
-          skipBuildingArtifacts: skipLibBuild ? ['npm-lib-and-cli-tool'] : [],
+          skipBuildingArtifacts: skipLibBuild
+            ? [ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL]
+            : [],
         },
       }),
     );
@@ -218,8 +232,8 @@ class $Release extends BaseCli {
   async installLocally() {
     //#region @backendFunc
     const allowedArtifacts: ReleaseArtifactTaon[] = [
-      'vscode-plugin',
-      'npm-lib-and-cli-tool',
+      ReleaseArtifactTaon.VSCODE_PLUGIN,
+      ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
     ];
 
     const options = {

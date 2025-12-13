@@ -3,72 +3,73 @@ import { config } from 'tnp-core/src';
 import { crossPlatformPath, path, _, CoreModels, fse } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 
+import { templateFolderForArtifact } from '../../../../../app-utils';
 import {
+  appFromSrc,
+  appFromSrcInsideNgApp,
+  assetsFromNgProj,
+  assetsFromSrc,
+  browserMainProject,
+  CoreAssets,
+  CoreNgTemplateFiles,
+  distMainProject,
+  electronNgProj,
+  ngProjectStylesScss,
+  packageJsonNgProject,
+  packageJsonNpmLib,
+  srcMainProject,
+  srcNgProxyProject,
+  TemplateFolder,
   tmpAppsForDist,
+  tmpAppsForDistElectron,
+  tmpAppsForDistElectronWebsql,
+  tmpAppsForDistWebsql,
   tmpSrcAppDist,
   tmpSrcAppDistWebsql,
   tmpSrcDist,
   tmpSrcDistWebsql,
+  tsconfigNgProject,
+  websqlMainProject,
 } from '../../../../../constants';
-import { EnvOptions } from '../../../../../options';
+import { libs } from '../../../../../constants';
+import { ReleaseArtifactTaon } from '../../../../../options';
 import type { Project } from '../../../project';
 import { InsideStruct } from '../../__helpers__/inside-structures/inside-struct';
 import { BaseInsideStruct } from '../../__helpers__/inside-structures/structs/base-inside-struct';
 import { resolvePathToAsset } from '../../__helpers__/inside-structures/structs/inside-struct-helpers';
 import { imageLoader } from '../../__helpers__/inside-structures/structs/loaders/image-loader';
 import { getLoader } from '../../__helpers__/inside-structures/structs/loaders/loaders';
-
 //#endregion
 
 export class InsideStructAngularApp extends BaseInsideStruct {
-  isElectron = false;
-  relativePaths(): string[] {
-    return [
-      //#region releative pathes from core project
-      'app/src/app/app.component.html',
-      'app/src/app/app.component.scss',
-      // 'app/src/app/app.component.spec.ts', -> something better needed
-      'app/src/app/app.component.ts',
-      // 'app/src/app/app.module.ts',
-      'app/src/environments/environment.prod.ts',
-      'app/src/environments/environment.dev.ts',
-      'app/src/environments/environment.ts',
-      'app/src/app',
-      'app/src/environments',
-      'app/src/favicon.ico',
-      'app/src/index.html',
-      'app/src/sqljs-loader.ts',
-      'app/src/main.ts',
-      'app/src/polyfills.ts',
-      'app/src/styles.scss',
-      'app/src/jestGlobalMocks.ts',
-      'app/src/setupJest.ts',
-      // 'app/src/test.ts',  // node needed for jest test - (but the don' work wit symlinks)
-      'app/src/manifest.webmanifest',
-      'app/ngsw-config.json',
-      'app/.browserslistrc',
-      'app/.editorconfig',
-      'app/.gitignore',
-      // 'app/README.md',
-      'app/angular.json',
-      'app/jest.config.js',
-      'app/karma.conf.js',
-      'app/package-lock.json',
-      `app/${config.file.package_json}`,
-      'app/tsconfig.app.json',
-      'app/tsconfig.json',
-      'app/tsconfig.spec.json',
-      //#endregion
-    ];
+  getCurrentArtifact(): ReleaseArtifactTaon {
+    return ReleaseArtifactTaon.ANGULAR_NODE_APP;
+  }
+
+  get isElectron(): boolean {
+    return this.getCurrentArtifact() === ReleaseArtifactTaon.ELECTRON_APP;
+  }
+
+  private resolveTmpProjectStandalonePath(): string {
+    if (this.initOptions.build.websql) {
+      if (this.isElectron) {
+        return tmpAppsForDistElectronWebsql + `/${this.project.name}`;
+      } else {
+        return tmpAppsForDistWebsql + `/${this.project.name}`;
+      }
+    } else {
+      if (this.isElectron) {
+        return tmpAppsForDistElectron + `/${this.project.name}`;
+      } else {
+        return tmpAppsForDist + `/${this.project.name}`;
+      }
+    }
   }
 
   insideStruct(): InsideStruct {
     //#region @backendFunc
     const project = this.project;
-    const tmpProjectsStandalone =
-      tmpAppsForDist +
-      `${this.initOptions.build.websql ? '-websql' : ''}` +
-      `${this.isElectron ? '-electron' : ''}/${project.name}`;
+    const tmpProjectsStandalone = this.resolveTmpProjectStandalonePath();
 
     const result = InsideStruct.from(
       {
@@ -77,13 +78,22 @@ export class InsideStructAngularApp extends BaseInsideStruct {
         frameworkVersion: project.framework.frameworkVersion,
         pathReplacements: [
           [
-            'app/',
+            new RegExp(
+              `^${templateFolderForArtifact(
+                this.initOptions.release.targetArtifact ===
+                  ReleaseArtifactTaon.ELECTRON_APP
+                  ? ReleaseArtifactTaon.ELECTRON_APP
+                  : ReleaseArtifactTaon.ANGULAR_NODE_APP,
+              )}\\/`,
+            ),
             () => {
               return `${tmpProjectsStandalone}/`;
             },
           ],
         ],
-        linkNodeModulesTo: ['app/'],
+        linkNodeModulesTo: [
+          `${templateFolderForArtifact(this.initOptions.release.targetArtifact)}/`,
+        ],
         linksFuncs: [
           //#region what and where needs to linked
           [
@@ -97,30 +107,8 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             },
             // to this
             opt => {
-              const standalonePath = `app/src/app/${this.project.name}`;
+              const standalonePath = `${templateFolderForArtifact(this.initOptions.release.targetArtifact)}/${srcNgProxyProject}/${appFromSrcInsideNgApp}/${this.project.name}`;
               return standalonePath;
-            },
-          ],
-          //#endregion
-
-          //#region link not containter target clients
-          [
-            opt => {
-              return '';
-            },
-            opt => {
-              return '';
-            },
-          ],
-          //#endregion
-
-          //#region link not containter target clients - whole dist
-          [
-            opt => {
-              return '';
-            },
-            opt => {
-              return '';
             },
           ],
           //#endregion
@@ -130,7 +118,9 @@ export class InsideStructAngularApp extends BaseInsideStruct {
 
           //#region action after recreating/updating inside strcut
           (() => {
-            [`/src/app/app.module.ts`].forEach(appModuleFileRelative => {
+            [
+              `/${srcNgProxyProject}/${appFromSrcInsideNgApp}/app.module.ts`,
+            ].forEach(appModuleFileRelative => {
               const appModuleFilePath = path.join(
                 project.location,
                 replacement(tmpProjectsStandalone),
@@ -142,7 +132,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
               const moduleName =
                 _.upperFirst(_.camelCase(project.name)) + 'Module';
               appModuleFile = `
-  import { ${moduleName} } from './${this.project.name}/app';
+  import { ${moduleName} } from './${this.project.name}/${appFromSrcInsideNgApp}';
   ${appModuleFile}
   `;
               appModuleFile = appModuleFile.replace(
@@ -150,13 +140,11 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                 `${moduleName},`,
               );
 
-              appModuleFile = appModuleFile.replace(
-                `${'import'} { TaonAdminModeConfigurationModule } from 'taon';`,
-                `${'import'} { TaonAdminModeConfigurationModule } from 'taon/${
-                  this.initOptions.build.websql
-                    ? config.folder.websql
-                    : config.folder.browser
-                }';`,
+              appModuleFile = this.replaceImportsForBrowserOrWebsql(
+                appModuleFile,
+                {
+                  websql: this.initOptions.build.websql,
+                },
               );
 
               // const enableServiceWorker =
@@ -189,40 +177,27 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             const appComponentFilePath = path.join(
               project.location,
               replacement(tmpProjectsStandalone),
-              `/src/app/app.component.ts`,
+              `/${srcNgProxyProject}/${appFromSrcInsideNgApp}/app.component.ts`,
             );
 
             let appComponentFile = Helpers.readFile(appComponentFilePath);
 
-            appComponentFile = appComponentFile.replace(
-              `${'import'} { Taon } from 'taon';`,
-              `${'import'} { Taon } from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
+            appComponentFile = this.replaceImportsForBrowserOrWebsql(
+              appComponentFile,
+              {
+                websql: this.initOptions.build.websql,
+              },
             );
 
             appComponentFile = appComponentFile.replace(
-              `${'import'} 'taon';`,
-              `${'import'} 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
-            );
-
-            appComponentFile = appComponentFile.replace(
-              `${'import'} { CoreModels } from 'tnp-core';`,
-              `${'import'} { CoreModels } from 'tnp-core/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
-            );
-
-            appComponentFile = appComponentFile.replace(
-              `${'import'} { ContextsEndpointStorage } from 'taon';`,
-              `${'import'} { ContextsEndpointStorage } from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
-            );
-
-            appComponentFile = appComponentFile.replace(
-              `${'import'} start from './---projectname---/app';`,
-              `${'import'} start from './${this.project.name}/app';`,
+              `${'import'} start from './---projectname---/${appFromSrcInsideNgApp}';`,
+              `${'import'} start from './${this.project.name}/${appFromSrcInsideNgApp}';`,
             );
 
             const componentName =
               _.upperFirst(_.camelCase(project.name)) + 'Component';
             appComponentFile = `
-${'import'} { ${componentName} } from './${this.project.name}/app';
+${'import'} { ${componentName} } from './${this.project.name}/${appFromSrcInsideNgApp}';
 ${appComponentFile}
 `;
 
@@ -237,7 +212,9 @@ ${appComponentFile}
 
           //#region replace sqljs-loader.ts
           (() => {
-            ['/src/sqljs-loader.ts'].forEach(mainTsFileRelative => {
+            [
+              `/${srcNgProxyProject}/${CoreNgTemplateFiles.sqlJSLoaderTs}`,
+            ].forEach(mainTsFileRelative => {
               const appMainFilePath = path.join(
                 project.location,
                 replacement(tmpProjectsStandalone),
@@ -261,20 +238,9 @@ ${appComponentFile}
                 );
               }
 
-              appMainFile = appMainFile.replace(
-                `${'import'} { Helpers } from 'tnp-core';`,
-                `${'import'} { Helpers } from 'tnp-core/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
-              );
-
-              appMainFile = appMainFile.replace(
-                `${'import'} { TaonAdmin } from 'taon';`,
-                `${'import'} { TaonAdmin } from 'taon/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
-              );
-
-              appMainFile = appMainFile.replace(
-                `${'import'} { Stor } from 'taon-storage';`,
-                `${'import'} { Stor } from 'taon-storage/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}';`,
-              );
+              appMainFile = this.replaceImportsForBrowserOrWebsql(appMainFile, {
+                websql: this.initOptions.build.websql,
+              });
 
               Helpers.writeFile(appMainFilePath, appMainFile);
             });
@@ -293,7 +259,7 @@ ${appComponentFile}
               const appModuleHtmlPath = path.join(
                 project.location,
                 replacement(tmpProjectsStandalone),
-                `/src/app/app.component.html`,
+                `/${srcNgProxyProject}/${appFromSrcInsideNgApp}/app.component.html`,
               );
 
               let appHtmlFile = Helpers.readFile(appModuleHtmlPath);
@@ -332,7 +298,7 @@ ${appComponentFile}
               const appComponentAbsFilePath = path.join(
                 project.location,
                 replacement(tmpProjectsStandalone),
-                `/src/app/app.component.ts`,
+                `/${srcNgProxyProject}/${appFromSrcInsideNgApp}/app.component.ts`,
               );
 
               let appComponentFileContent = Helpers.readFile(
@@ -359,7 +325,7 @@ ${appComponentFile}
               const appModuleFilePath = path.join(
                 project.location,
                 replacement(tmpProjectsStandalone),
-                `/src/index.html`,
+                `/${srcNgProxyProject}/index.html`,
               );
 
               let indexHtmlFile = Helpers.readFile(appModuleFilePath);
@@ -412,7 +378,7 @@ ${appComponentFile}
             const indexHtmlFilePath = path.join(
               project.location,
               replacement(tmpProjectsStandalone),
-              `/src/index.html`,
+              `/${srcNgProxyProject}/index.html`,
             );
 
             let indexHtmlFile = Helpers.readFile(indexHtmlFilePath);
@@ -438,7 +404,7 @@ ${appComponentFile}
             const stylesFilePath = path.join(
               project.location,
               replacement(tmpProjectsStandalone),
-              `/src/styles.scss`,
+              `/${srcNgProxyProject}/${ngProjectStylesScss}`,
             );
             this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.replaceBaseHrefInFile(
               stylesFilePath,
@@ -452,12 +418,12 @@ ${appComponentFile}
             const faviconPathDest = crossPlatformPath([
               project.location,
               replacement(tmpProjectsStandalone),
-              `/src/favicon.ico`,
+              `/${srcNgProxyProject}/favicon.ico`,
             ]);
 
             const source = crossPlatformPath([
               project.location,
-              `/src/assets/favicon.ico`,
+              `/${srcNgProxyProject}/${assetsFromNgProj}/favicon.ico`,
             ]);
 
             if (Helpers.exists(source)) {
@@ -472,13 +438,10 @@ ${appComponentFile}
               ? tmpSrcDistWebsql
               : tmpSrcDist;
 
-            const assetsSource = crossPlatformPath(
-              path.join(
-                project.location,
-                replacement(browserTsCode),
-                config.folder.assets,
-              ),
-            );
+            const assetsSource = project.pathFor([
+              replacement(browserTsCode),
+              assetsFromSrc,
+            ]);
 
             if (!Helpers.exists(assetsSource)) {
               Helpers.mkdirp(assetsSource);
@@ -488,7 +451,7 @@ ${appComponentFile}
               path.join(
                 project.location,
                 replacement(tmpProjectsStandalone),
-                `/src/assets`,
+                `/${srcNgProxyProject}/${assetsFromNgProj}`,
               ),
             );
             Helpers.remove(assetsDest);
@@ -499,8 +462,8 @@ ${appComponentFile}
           if (this.isElectron) {
             //#region electron
             (() => {
-              const electronBackend = crossPlatformPath(
-                path.join(project.location, replacement(config.folder.dist)),
+              const electronBackend = project.pathFor(
+                replacement(distMainProject),
               );
 
               if (!Helpers.exists(electronBackend)) {
@@ -511,7 +474,7 @@ ${appComponentFile}
                 path.join(
                   project.location,
                   replacement(tmpProjectsStandalone),
-                  `/electron/compiled`,
+                  `/${electronNgProj}/compiled`,
                 ),
               );
               try {
@@ -526,7 +489,7 @@ ${appComponentFile}
                   path.join(
                     project.location,
                     replacement(tmpProjectsStandalone),
-                    `/${config.file.package_json}`,
+                    `/${packageJsonNgProject}`,
                   ),
                 ),
               });
@@ -534,7 +497,7 @@ ${appComponentFile}
               packageJson.setName(this.project.name);
 
               if (this.initOptions.release.releaseType) {
-                packageJson.setMainProperty('electron/index.js');
+                packageJson.setMainProperty(`${electronNgProj}/index.js`);
               }
               packageJson.setVersion(this.project.packageJson.version);
             })();
@@ -544,7 +507,7 @@ ${appComponentFile}
               const appModuleFilePath = path.join(
                 project.location,
                 replacement(tmpProjectsStandalone),
-                `/src/index.html`,
+                `/${srcNgProxyProject}/index.html`,
               );
 
               let indexHtmlFile = Helpers.readFile(appModuleFilePath);
@@ -564,7 +527,7 @@ ${appComponentFile}
               path.join(
                 project.location,
                 replacement(tmpProjectsStandalone),
-                `/src/manifest.webmanifest`,
+                `/${srcNgProxyProject}/manifest.webmanifest`,
               ),
             );
 
@@ -572,7 +535,7 @@ ${appComponentFile}
               path.join(
                 project.location,
                 replacement(tmpProjectsStandalone),
-                `/src/index.html`,
+                `/${srcNgProxyProject}/index.html`,
               ),
             );
 
@@ -589,13 +552,7 @@ ${appComponentFile}
             manifestJson.short_name =
               this.initOptions.build.pwa.short_name || project.name;
 
-            const assetsPath = crossPlatformPath(
-              path.join(
-                project.location,
-                config.folder.src,
-                config.folder.assets,
-              ),
-            );
+            const assetsPath = project.pathFor([srcMainProject, assetsFromSrc]);
 
             if (this.project.artifactsManager.globalHelper.branding.exist) {
               //#region apply pwa generated icons
@@ -669,7 +626,7 @@ ${appComponentFile}
               path.join(
                 project.location,
                 replacement(tmpProjectsStandalone),
-                `/angular.json`,
+                `/${CoreNgTemplateFiles.ANGULAR_JSON}`,
               ),
             );
             Helpers.setValueToJSON(
@@ -712,39 +669,43 @@ ${appComponentFile}
               path.join(
                 project.location,
                 replacement(tmpProjectsStandalone),
-                `/tsconfig.json`,
+                `/${tsconfigNgProject}`,
               ),
             );
 
-            const libsPathes = crossPlatformPath(
-              path.join(project.location, `src/libs`),
+            const librariesPaths = crossPlatformPath(
+              path.join(project.location, `${srcMainProject}/${libs}`),
             );
 
             const content = Helpers.readJson(tsconfigJSONpath, void 0, true);
 
-            let libs = Helpers.linksToFoldersFrom(libsPathes);
+            let libraries = Helpers.linksToFoldersFrom(librariesPaths);
             const parentPath = crossPlatformPath(
               path.resolve(path.join(project.location, '../../..')),
             );
 
             const parent = this.project.ins.From(parentPath) as Project;
-            if (parent && libs.length > 0 && content.compilerOptions) {
+            if (parent && libraries.length > 0 && content.compilerOptions) {
               // console.log('tsconfigJSON', tsconfigJSONpath, content)
-              // console.log('libsPathes', libsPathes)
-              // console.log(`libs`, libs)
+              // console.log(`libraries`, libraries)
               // console.log(`PARENT PATH: ${parentPath}  `)
 
-              content.compilerOptions.paths = libs.reduce((a, b) => {
+              content.compilerOptions.paths = libraries.reduce((a, b) => {
                 const pathRelative = b
                   .replace(parent.location, '')
                   .split('/')
                   .slice(4)
                   .join('/')
-                  .replace('src/', `src/app/${project.name}/`);
+                  .replace(
+                    `${srcMainProject}/`,
+                    `${srcMainProject}/${appFromSrc}/${project.name}/`,
+                  );
                 return _.merge(a, {
-                  [`@${parent.name}/${path.basename(b)}/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}`]:
+                  [`@${parent.name}/${path.basename(b)}/` +
+                  `${this.initOptions.build.websql ? websqlMainProject : browserMainProject}`]:
                     [`./${pathRelative}`],
-                  [`@${parent.name}/${path.basename(b)}/${this.initOptions.build.websql ? config.folder.websql : config.folder.browser}/*`]:
+                  [`@${parent.name}/${path.basename(b)}/` +
+                  `${this.initOptions.build.websql ? websqlMainProject : browserMainProject}/*`]:
                     [`./${pathRelative}/*`],
                 });
               }, {});

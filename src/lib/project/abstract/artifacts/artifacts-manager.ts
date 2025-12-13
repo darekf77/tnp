@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, dotTaonFolder, dotTnpFolder, LibTypeEnum } from 'tnp-core/src';
 import {
   Utils,
   UtilsTerminal,
@@ -9,9 +9,25 @@ import {
   fse,
   path,
 } from 'tnp-core/src';
+import { fileName } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { ReleaseArtifactTaon, EnvOptions } from '../../../options';
+import {
+  appElectronTsFromSrc,
+  appTsFromSrc,
+  distMainProject,
+  dotFileTemplateExt,
+  dotVscodeMainProject,
+  globalScssFromSrc,
+  indexTsFromLibFromSrc,
+  indexTsFromSrc,
+  libFromSrc,
+  nodeModulesMainProject,
+  srcMainProject,
+  TaonGeneratedFiles,
+  taonJsonMainProject,
+} from '../../../constants';
+import { ReleaseArtifactTaon, EnvOptions, ReleaseType } from '../../../options';
 import { EXPORT_TEMPLATE } from '../../../templates';
 import { Project } from '../project';
 
@@ -22,6 +38,7 @@ import type {
   ReleasePartialOutput,
 } from './base-artifact';
 import { FilesRecreator } from './npm-lib-and-cli-tool/tools/files-recreation';
+import { tnpPackageName } from 'tnp-core/src';
 //#endregion
 
 /**
@@ -88,8 +105,8 @@ export class ArtifactManager {
       `);
 
     if (this.project.framework.isStandaloneProject) {
-      this.project.removeFolderByRelativePath(`.tnp`);
-      this.project.removeFolderByRelativePath(`.taon`);
+      this.project.removeFolderByRelativePath(dotTnpFolder);
+      this.project.removeFolderByRelativePath(dotTaonFolder);
     }
 
     await this.artifact.npmLibAndCliTool.clearPartial(options);
@@ -101,13 +118,13 @@ export class ArtifactManager {
 
     if (this.project.framework.isContainer) {
       [
-        'src',
+        srcMainProject,
         ...this.filesRecreator.projectSpecificFilesForContainer(),
         ...this.filesRecreator.projectSpecificFilesForStandalone(),
         ...this.filesRecreator.filesTemplatesForStandalone(),
         ...this.filesRecreator
           .filesTemplatesForStandalone()
-          .map(f => f.replace('.filetemplate', '')),
+          .map(f => f.replace(dotFileTemplateExt, '')),
       ].forEach(f => {
         console.log('removing', f);
         this.project.remove(f, true);
@@ -165,9 +182,9 @@ export class ArtifactManager {
         `Please upgrade taon framework version to to at least v18
         in project: ${this.project.name}
 
-        ${config.file.taon_jsonc} => version => should be at least 18
+        ${taonJsonMainProject} => version => should be at least 18
         inside file
-        ${chalk.underline(this.project.pathFor(config.file.taon_jsonc))}
+        ${chalk.underline(this.project.pathFor(taonJsonMainProject))}
 
         `,
         false,
@@ -178,7 +195,7 @@ export class ArtifactManager {
 
     if (!initOptions.init.struct) {
       //#region prevent incorrect node_modules with tnp dev mode
-      if (config.frameworkName === 'tnp') {
+      if (config.frameworkName === tnpPackageName) {
         let node_modules_path = this.project.nodeModules.path;
         let node_modules_real_path = this.project.nodeModules.realPath;
         if (node_modules_path !== node_modules_real_path) {
@@ -190,7 +207,7 @@ export class ArtifactManager {
               config.dirnameForTnp,
               this.project.ins.taonProjectsRelative,
               containerName,
-              config.folder.node_modules,
+              nodeModulesMainProject,
             ),
           );
           if (node_modules_real_path !== properRelativeNodeModulesPath) {
@@ -240,7 +257,8 @@ export class ArtifactManager {
 
     initOptions = await this.project.environmentConfig.update(initOptions, {
       saveEnvToLibEnv:
-        initOptions.release.targetArtifact === 'npm-lib-and-cli-tool' ||
+        initOptions.release.targetArtifact ===
+          ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL ||
         !initOptions.release.targetArtifact,
     });
 
@@ -248,7 +266,7 @@ export class ArtifactManager {
 
     // TODO QUICK_FIX change env to something else
     Helpers.removeFileIfExists(
-      path.join(this.project.location, config.file.tnpEnvironment_json),
+      path.join(this.project.location, fileName.tnpEnvironment_json),
     );
 
     if (!initOptions.isCiProcess && !this.project.framework.isCoreProject) {
@@ -264,34 +282,44 @@ export class ArtifactManager {
       // make electron use node_modules from dist no from ./node_modules
       try {
         fse.unlinkSync(
-          this.project.pathFor(`dist/${config.folder.node_modules}`),
+          this.project.pathFor(`${distMainProject}/${nodeModulesMainProject}`),
         );
       } catch (error) {}
 
       try {
         this.project
-          .run(`git rm -f .vscode/launch.json`, {
-            output: false,
-            silence: true,
-          })
+          .run(
+            `git rm -f ${dotVscodeMainProject}/${TaonGeneratedFiles.LAUNCH_JSON}`,
+            {
+              output: false,
+              silence: true,
+            },
+          )
           .sync();
       } catch (error) {}
       this.project.removeFile('tsconfig.isomorphic-flat-bundle.json');
       this.project.removeFile('webpack.backend-bundle-build.js');
       this.project.removeFile('.eslintrc.json');
       this.project.removeFile('tslint.json');
-      this.project.removeFile('.vscode/launch-backup.json');
+      this.project.removeFile(
+        `${dotVscodeMainProject}/${TaonGeneratedFiles.LAUNCH_BACKUP_JSON}`,
+      );
       this.project.removeFile('run-org.js');
-      if (this.project.typeIs('container')) {
-        this.project.removeFile('src/vars.scss');
+      if (this.project.typeIs(LibTypeEnum.CONTAINER)) {
+        this.project.removeFile(
+          `${srcMainProject}/${TaonGeneratedFiles.VARS_SCSS}`,
+        );
       }
-      this.project.remove('src/docker', true);
+      this.project.remove(`${srcMainProject}/docker`, true);
       try {
         this.project
-          .run(`git rm -f .vscode/launch-backup.json`, {
-            output: false,
-            silence: true,
-          })
+          .run(
+            `git rm -f ${dotVscodeMainProject}/${TaonGeneratedFiles.LAUNCH_BACKUP_JSON}`,
+            {
+              output: false,
+              silence: true,
+            },
+          )
           .sync();
       } catch (error) {}
     }
@@ -345,39 +373,45 @@ export class ArtifactManager {
     const targetArtifact = initOptions.release.targetArtifact;
 
     if (this.project.framework.isStandaloneProject) {
-      if (!targetArtifact || targetArtifact === 'docs-webapp') {
+      if (
+        !targetArtifact ||
+        targetArtifact === ReleaseArtifactTaon.DOCS_DOCS_WEBAPP
+      ) {
         initOptions = await this.artifact.docsWebapp.initPartial(initOptions);
       }
-      if (!targetArtifact || targetArtifact === 'npm-lib-and-cli-tool') {
+      if (
+        !targetArtifact ||
+        targetArtifact === ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL
+      ) {
         initOptions =
           await this.artifact.npmLibAndCliTool.initPartial(initOptions);
       }
       if (
         !targetArtifact ||
-        targetArtifact === 'npm-lib-and-cli-tool' ||
-        targetArtifact === 'angular-node-app'
+        targetArtifact === ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL ||
+        targetArtifact === ReleaseArtifactTaon.ANGULAR_NODE_APP
       ) {
         initOptions =
           await this.artifact.angularNodeApp.initPartial(initOptions);
       }
       if (
         !targetArtifact ||
-        targetArtifact === 'npm-lib-and-cli-tool' ||
-        targetArtifact === 'electron-app'
+        targetArtifact === ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL ||
+        targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
       ) {
         initOptions = await this.artifact.electronApp.initPartial(initOptions);
       }
       if (
         !targetArtifact ||
-        targetArtifact === 'npm-lib-and-cli-tool' ||
-        targetArtifact === 'mobile-app'
+        targetArtifact === ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL ||
+        targetArtifact === ReleaseArtifactTaon.MOBILE_APP
       ) {
         initOptions = await this.artifact.mobileApp.initPartial(initOptions);
       }
       if (
         !targetArtifact ||
-        targetArtifact === 'npm-lib-and-cli-tool' ||
-        targetArtifact === 'vscode-plugin'
+        targetArtifact === ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL ||
+        targetArtifact === ReleaseArtifactTaon.VSCODE_PLUGIN
       ) {
         initOptions = await this.artifact.vscodePlugin.initPartial(initOptions);
       }
@@ -526,37 +560,40 @@ export class ArtifactManager {
       //#region partial build
       if (
         !buildOptions.release.targetArtifact ||
-        buildOptions.release.targetArtifact === 'docs-webapp'
+        buildOptions.release.targetArtifact ===
+          ReleaseArtifactTaon.DOCS_DOCS_WEBAPP
       ) {
         await this.artifact.docsWebapp.buildPartial(buildOptions.clone());
       }
       if (
         !buildOptions.release.targetArtifact ||
-        buildOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
+        buildOptions.release.targetArtifact ===
+          ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL
       ) {
         await this.artifact.npmLibAndCliTool.buildPartial(buildOptions.clone());
       }
       if (
         !buildOptions.release.targetArtifact ||
-        buildOptions.release.targetArtifact === 'angular-node-app'
+        buildOptions.release.targetArtifact ===
+          ReleaseArtifactTaon.ANGULAR_NODE_APP
       ) {
         await this.artifact.angularNodeApp.buildPartial(buildOptions.clone());
       }
       if (
         !buildOptions.release.targetArtifact ||
-        buildOptions.release.targetArtifact === 'electron-app'
+        buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
       ) {
         await this.artifact.electronApp.buildPartial(buildOptions.clone());
       }
       if (
         !buildOptions.release.targetArtifact ||
-        buildOptions.release.targetArtifact === 'mobile-app'
+        buildOptions.release.targetArtifact === ReleaseArtifactTaon.MOBILE_APP
       ) {
         await this.artifact.mobileApp.buildPartial(buildOptions.clone());
       }
       if (
         !buildOptions.release.targetArtifact ||
-        buildOptions.release.targetArtifact === 'vscode-plugin'
+        buildOptions.release.targetArtifact === ReleaseArtifactTaon.MOBILE_APP
       ) {
         await this.artifact.vscodePlugin.buildPartial(buildOptions.clone());
       }
@@ -677,7 +714,7 @@ export class ArtifactManager {
           },
           release: {
             skipCodeCutting: true,
-            targetArtifact: 'npm-lib-and-cli-tool',
+            targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
           },
         }),
       );
@@ -687,7 +724,8 @@ export class ArtifactManager {
     //#region docs app
     if (
       !releaseOptions.release.targetArtifact ||
-      releaseOptions.release.targetArtifact === 'docs-webapp'
+      releaseOptions.release.targetArtifact ===
+        ReleaseArtifactTaon.DOCS_DOCS_WEBAPP
     ) {
       releaseOutput =
         await this.artifact.docsWebapp.releasePartial(releaseOptions);
@@ -697,7 +735,8 @@ export class ArtifactManager {
     //#region npm lib and cli tool
     if (
       !releaseOptions.release.targetArtifact ||
-      releaseOptions.release.targetArtifact === 'npm-lib-and-cli-tool'
+      releaseOptions.release.targetArtifact ===
+        ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL
     ) {
       releaseOutput =
         await this.artifact.npmLibAndCliTool.releasePartial(releaseOptions);
@@ -707,9 +746,10 @@ export class ArtifactManager {
     //#region angular-node-app
     if (
       !releaseOptions.release.targetArtifact ||
-      releaseOptions.release.targetArtifact === 'angular-node-app'
+      releaseOptions.release.targetArtifact ===
+        ReleaseArtifactTaon.ANGULAR_NODE_APP
     ) {
-      if (releaseOptions.release.releaseType === 'static-pages') {
+      if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
         releaseOptions.build.baseHref =
           this.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
             releaseOptions,
@@ -724,7 +764,7 @@ export class ArtifactManager {
     //#region electron app
     if (
       !releaseOptions.release.targetArtifact ||
-      releaseOptions.release.targetArtifact === 'electron-app'
+      releaseOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
     ) {
       await npmLibBUild(
         releaseOptions.clone({
@@ -738,7 +778,7 @@ export class ArtifactManager {
             skip: true,
           },
           release: {
-            targetArtifact: 'electron-app',
+            targetArtifact: ReleaseArtifactTaon.ELECTRON_APP,
           },
         }),
       );
@@ -751,7 +791,7 @@ export class ArtifactManager {
     //#region mobile app
     if (
       !releaseOptions.release.targetArtifact ||
-      releaseOptions.release.targetArtifact === 'mobile-app'
+      releaseOptions.release.targetArtifact === ReleaseArtifactTaon.MOBILE_APP
     ) {
       await npmLibBUild(releaseOptions);
       releaseOutput =
@@ -762,7 +802,8 @@ export class ArtifactManager {
     //#region vscode plugin
     if (
       !releaseOptions.release.targetArtifact ||
-      releaseOptions.release.targetArtifact === 'vscode-plugin'
+      releaseOptions.release.targetArtifact ===
+        ReleaseArtifactTaon.VSCODE_PLUGIN
     ) {
       await npmLibBUild(releaseOptions);
       releaseOutput =
@@ -778,7 +819,7 @@ export class ArtifactManager {
         );
         await this.project.releaseProcess.checkBundleQuestion(
           releaseOutput.releaseProjPath,
-          `[${releaseOptions.release.releaseType}] Check ${chalk.bold('bundle')} before tagging/pushing`,
+          `[${releaseOptions.release.releaseType}] Check ${chalk.bold('bundled code')} before tagging/pushing`,
         );
       }
 
@@ -919,25 +960,23 @@ export class ArtifactManager {
       project.framework.isStandaloneProject
     ) {
       project.framework.recreateFileFromCoreProject({
-        fileRelativePath: [config.folder.src, 'app.ts'],
+        fileRelativePath: [srcMainProject, appTsFromSrc],
       });
 
       project.framework.preventNotExistedComponentAndModuleInAppTs();
 
       project.framework.recreateFileFromCoreProject({
-        fileRelativePath: [config.folder.src, 'global.scss'],
+        fileRelativePath: [srcMainProject, globalScssFromSrc],
       });
 
       project.framework.recreateFileFromCoreProject({
-        fileRelativePath: [config.folder.src, 'app.electron.ts'],
+        fileRelativePath: [srcMainProject, appElectronTsFromSrc],
       });
 
-      const indexInSrcFile = crossPlatformPath(
-        path.join(project.location, config.folder.src, config.file.index_ts),
-      );
+      const indexInSrcFile = project.pathFor([srcMainProject, indexTsFromSrc]);
 
       if (!Helpers.exists(indexInSrcFile)) {
-        Helpers.writeFile(indexInSrcFile, EXPORT_TEMPLATE('lib'));
+        Helpers.writeFile(indexInSrcFile, EXPORT_TEMPLATE(libFromSrc));
       }
     }
     //#endregion

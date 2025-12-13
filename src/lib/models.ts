@@ -1,7 +1,7 @@
 import { CoreModels, _ } from 'tnp-core/src';
 import { PackageJson } from 'tnp-helpers/src';
 
-import type { ReleaseType } from './options';
+import type { ReleaseArtifactTaon, ReleaseType } from './options';
 import type { Project } from './project/abstract/project';
 
 export namespace Models {
@@ -67,19 +67,14 @@ export namespace Models {
 
   export class TaonContext {
     contextName: string;
+
     fileRelativePath: string;
   }
 
   //#region taon json
   export interface TaonAutoReleaseItem {
-    artifactName:
-      | 'npm-lib-and-cli-tool'
-      | 'angular-node-app'
-      | 'electron-app'
-      | 'mobile-app'
-      | 'vscode-plugin'
-      | 'docs-webapp';
-    // | ReleaseArtifactTaon; // TODO this alone should be enough but parese crate invalid schema
+    artifactName: ReleaseArtifactTaon;
+
     /**
      * if not proviede default  env.<artifact-name>.__.ts will be in use
      */

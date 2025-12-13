@@ -1,10 +1,20 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
+import { UtilsTerminal } from 'tnp-core/src';
 import { Helpers, BaseProject } from 'tnp-helpers/src';
 
+import {
+  binMainProject,
+  containerPrefix,
+  distMainProject,
+  docsMainProject,
+  nodeModulesMainProject,
+  srcMainProject,
+  taonJsonMainProject,
+} from '../../constants';
 import { EnvOptions, ReleaseType } from '../../options';
 
 import { EnvironmentConfig } from './artifacts/__helpers__/environment-config/environment-config';
@@ -26,10 +36,8 @@ import { Refactor } from './refactor';
 import type { ReleaseProcess } from './release-process';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
-import { UtilsTerminal } from 'tnp-core/src';
-import e from 'express';
-
 //#endregion
+
 let frameworkName = '';
 //#region @backend
 frameworkName = global.frameworkName;
@@ -48,6 +56,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#region fields
   // @ts-ignore TODO weird inheritance problem
   public readonly type: CoreModels.LibType;
+
   // @ts-ignore TODO weird inheritance problem
   public readonly vsCodeHelpers: Vscode;
 
@@ -60,23 +69,32 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   get packageJson(): PackageJSON {
     return this.npmHelpers.packageJson as any;
   }
+
   // @ts-ignore TODO weird inheritance problem
   get nodeModules(): NodeModules {
     return this.npmHelpers.nodeModules as any;
   }
+
   // @ts-ignore TODO weird inheritance problem
   public readonly linter: Linter;
+
   public readonly framework: Framework;
 
   // @ts-ignore TODO weird inheritance problem
   public readonly quickFixes: QuickFixes;
+
   public readonly artifactsManager: ArtifactManager;
+
   // @ts-ignore TODO weird inheritance problem
   public readonly git: Git;
+
   // @ts-ignore TODO weird inheritance problem
   public readonly ignoreHide: IgnoreHide;
+
   public readonly taonJson: TaonJson;
+
   public readonly packagesRecognition: PackagesRecognition;
+
   public readonly environmentConfig: EnvironmentConfig;
 
   public readonly refactor: Refactor;
@@ -89,7 +107,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     super(crossPlatformPath(_.isString(location) ? location : ''));
     this.taonJson = new TaonJson(this);
 
-    this.setType(this.taonJson.type || 'unknown');
+    this.setType(this.taonJson.type || LibTypeEnum.UNKNOWN);
 
     this.framework = new Framework(this);
 
@@ -344,7 +362,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     //#region resolve taon instances
     if (
-      (['manual', 'cloud'] as ReleaseType[]).includes(
+      ([ReleaseType.MANUAL, ReleaseType.CLOUD] as ReleaseType[]).includes(
         releaseOptions.release.releaseType,
       ) &&
       releaseOptions.release.targetArtifact === 'angular-node-app'
@@ -528,7 +546,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   get tnpCurrentCoreContainer(): Project {
     return this.ins.From(
       this.pathFor(
-        `${this.ins.taonProjectsRelative}/container-${this.framework.frameworkVersion}`,
+        `${this.ins.taonProjectsRelative}/${containerPrefix}${this.framework.frameworkVersion}`,
       ),
     );
   }
@@ -541,7 +559,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
    */
   public get name(): string {
     //#region @backendFunc
-    if (this.typeIs('unknown-npm-project')) {
+    if (this.typeIs(LibTypeEnum.UNKNOWN_NPM_PROJECT)) {
       if (
         this.packageJson.name !== path.basename(this.location) &&
         path.basename(path.dirname(this.location)) === 'external'
@@ -668,18 +686,18 @@ ${gitChildren}
    */
   get children(): Project[] {
     //#region @backendFunc
-    if (this.pathExists(config.file.taon_jsonc)) {
+    if (this.pathExists(taonJsonMainProject)) {
       const folders = Helpers.foldersFrom(this.location).filter(
         f =>
           crossPlatformPath(f) !== crossPlatformPath(this.location) &&
           !path.basename(f).startsWith('.') &&
           !path.basename(f).startsWith('__') &&
-          !path.basename(f).startsWith(config.folder.dist) &&
-          !path.basename(f).startsWith(config.folder.src) &&
-          !path.basename(f).startsWith(config.folder.bin) &&
-          !path.basename(f).startsWith(config.folder.docs) &&
+          !path.basename(f).startsWith(distMainProject) &&
+          !path.basename(f).startsWith(srcMainProject) &&
+          !path.basename(f).startsWith(binMainProject) &&
+          !path.basename(f).startsWith(docsMainProject) &&
           !path.basename(f).startsWith('tmp') &&
-          ![config.folder.node_modules].includes(path.basename(f)),
+          ![nodeModulesMainProject].includes(path.basename(f)),
       );
       // console.log({ folders });
       const taonChildren = folders

@@ -6,6 +6,7 @@ import {
   path,
   UtilsOs,
   _,
+  LibTypeEnum,
 } from 'tnp-core/src';
 import { CommandType } from 'tnp-helpers/src';
 import type { Uri } from 'vscode';
@@ -291,7 +292,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
           titleWhenProcessing: `taon is adding new migration..`,
           cancellable: false,
           findNearestProject: true,
-          findNearestProjectType: 'isomorphic-lib',
+          findNearestProjectType: LibTypeEnum.ISOMORPHIC_LIB,
           resolveVariables: [
             { variable: 'migrationname', placeholder: `my new db change` },
           ],

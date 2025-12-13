@@ -1,5 +1,5 @@
 import { walk } from 'lodash-walk-object/src';
-import { config, fileName } from 'tnp-core/src';
+import { config, crossPlatformPath, fileName, LibTypeEnum } from 'tnp-core/src';
 import { CoreModels, os, path } from 'tnp-core/src';
 import { Helpers, _ } from 'tnp-core/src';
 import { Utils } from 'tnp-core/src';
@@ -10,7 +10,11 @@ import {
 } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
-import { OVERRIDE_FROM_TNP, scriptsCommands } from '../../constants';
+import {
+  OVERRIDE_FROM_TNP,
+  scriptsCommands,
+  taonJsonMainProject,
+} from '../../constants';
 import { Models } from '../../models';
 import { ReleaseArtifactTaon, EnvOptions } from '../../options';
 
@@ -34,7 +38,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   constructor(project: Project, defaultValue?: Partial<Models.TaonJson>) {
     super(project);
 
-    this.data = Helpers.readJson5([project.pathFor(config.file.taon_jsonc)]);
+    this.data = Helpers.readJson5([project.pathFor(taonJsonMainProject)]);
     if (!this.data && defaultValue) {
       this.data = _.cloneDeep(defaultValue as any);
     }
@@ -60,7 +64,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   public reloadFromDisk(): void {
     //#region @backendFunc
     const newData =
-      Helpers.readJson5([this.project.pathFor(config.file.taon_jsonc)]) ||
+      Helpers.readJson5([this.project.pathFor(taonJsonMainProject)]) ||
       this.data;
 
     walk.Object(
@@ -80,7 +84,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
   //#region exists
   get exists(): boolean {
-    return Helpers.exists(this.project.pathFor(config.file.taon_jsonc));
+    return Helpers.exists(this.project.pathFor(taonJsonMainProject));
   }
   //#endregion
 
@@ -177,7 +181,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     //#region @backend
     Helpers.log(`Saving taon.jsonc ${purpose ? `(${purpose})` : ''}`);
     if (this.isCoreProject && this.project.framework.isContainer) {
-      this.project.writeJsonC(config.file.taon_jsonc, this.data);
+      this.project.writeJsonC(taonJsonMainProject, this.data);
     } else {
       const sorted = Utils.sortKeys(_.cloneDeep(this.data)) as typeof this.data;
       const packageJsonOverride = sorted.packageJsonOverride || {};
@@ -208,7 +212,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
         ];
       });
 
-      this.project.writeJsonC(config.file.taon_jsonc, destinationObject);
+      this.project.writeJsonC(taonJsonMainProject, destinationObject);
     }
 
     this.project.packageJson.saveToDisk();
@@ -222,10 +226,10 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     if (_.isString(res)) {
       return res as CoreModels.LibType;
     }
-    if (_.isString(this.project.hasFile(config.file.package_json))) {
-      return 'unknown-npm-project';
+    if (_.isString(this.project.hasFile(taonJsonMainProject))) {
+      return LibTypeEnum.UNKNOWN_NPM_PROJECT
     }
-    return 'unknown';
+    return LibTypeEnum.UNKNOWN;
   }
   //#endregion
 
@@ -569,8 +573,8 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   //#region link to
   linkTo(destination: string): void {
     //#region @backendFunc
-    const source = path.join(this.project.location, config.file.taon_jsonc);
-    const dest = path.join(destination, config.file.taon_jsonc);
+    const source = this.project.pathFor(taonJsonMainProject);
+    const dest = crossPlatformPath([destination, taonJsonMainProject]);
     Helpers.removeFileIfExists(dest);
     Helpers.createSymLink(source, dest);
     //#endregion

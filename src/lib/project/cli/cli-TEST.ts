@@ -1,10 +1,10 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath, os, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import { MESSAGES, TEMP_DOCS } from '../../constants';
+import { appFromSrc, MESSAGES, srcMainProject, TEMP_DOCS, testsFromSrc } from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
@@ -66,7 +66,7 @@ export class $Test extends BaseCli {
     const proj = this.project;
     if (
       !this.project.framework.isStandaloneProject ||
-      this.project.typeIsNot('isomorphic-lib')
+      this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)
     ) {
       Helpers.error(
         `[${config.frameworkName}] tests for organization in progress `,
@@ -87,15 +87,15 @@ export class $Test extends BaseCli {
           } ${debug ? '- with debugger connected' : '- without debugger'})`,
           [
             {
-              name: 'Mocha (backend tests from /src/tests/**/*.test.ts)',
+              name: `Mocha (backend tests from /${srcMainProject}/${testsFromSrc}/**/*.test.ts)`,
               value: 'mocha',
             },
             {
-              name: 'Jest (angular unit/integration tests from /src/**/*.spec.ts )   ',
+              name: `Jest (angular unit/integration tests from /${srcMainProject}/**/*.spec.ts )   `,
               value: 'jest',
             },
             {
-              name: 'Cypress (e2e tests from /src/app//**/*.e2e.ts )',
+              name: `Cypress (e2e tests from /${srcMainProject}/${appFromSrc}//**/*.e2e.ts )`,
               value: 'cypress',
             },
           ],

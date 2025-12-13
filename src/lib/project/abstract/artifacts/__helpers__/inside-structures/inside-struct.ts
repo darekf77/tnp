@@ -37,14 +37,20 @@ export class InsideStruct {
     public projectType?: CoreModels.NewFactoryType,
     public frameworkVersion?: CoreModels.FrameworkVersion,
     /**
+     * TODO @LAST this is confusing
      * Replace pathes while copying relateivePathesFromContainer
      * to destination project
      */
-    public pathReplacements: [
-      string | RegExp,
-      InsideStructLinkTypePathRep,
-    ][] = [],
+    public pathReplacements: [RegExp, InsideStructLinkTypePathRep][] = [],
+    /**
+     * TODO @LAST this is confusing
+     * Link node_modules to destination project (use template project path)
+     * Example: template-app/node_modules -> tmp-apps-for-dist/project-name/node_modules
+     */
     public linkNodeModulesTo: string[] = [],
+    /**
+     * Array of link functions [fromRelative, toRelative]
+     */
     public linksFuncs: [
       /**
        * original real path

@@ -14,6 +14,7 @@ import {
 import { Helpers } from 'tnp-helpers/src';
 
 import {
+  assetsFromTempSrc,
   tmpSourceDist,
   tmpSrcDist,
   tmpSrcDistWebsql,
@@ -205,7 +206,7 @@ export class BrowserCompilation extends BaseClientCompiler {
           Helpers.removeFolderIfExists(destinationFileBackendPath);
         } else {
           if (event.eventName === 'unlink') {
-            if (relativeFilePath.startsWith(`${config.folder.assets}/`)) {
+            if (relativeFilePath.startsWith(`${assetsFromTempSrc}/`)) {
               // nothing
             } else {
               try {
@@ -258,7 +259,7 @@ export class BrowserCompilation extends BaseClientCompiler {
           }
         } else {
           if (event.eventName === 'unlink') {
-            if (relativeFilePath.startsWith(`${config.folder.assets}/`)) {
+            if (relativeFilePath.startsWith(`${assetsFromTempSrc}/`)) {
               // nothing
             } else {
               try {
@@ -308,7 +309,7 @@ export class BrowserCompilation extends BaseClientCompiler {
         Helpers.removeFolderIfExists(destinationFilePath);
       } else {
         if (event.eventName === 'unlink') {
-          if (relativeFilePath.startsWith(`${config.folder.assets}/`)) {
+          if (relativeFilePath.startsWith(`${assetsFromTempSrc}/`)) {
             websql
               ? this.codecutWEBSQL.files([relativeFilePath], true)
               : this.codecutNORMAL.files([relativeFilePath], true);

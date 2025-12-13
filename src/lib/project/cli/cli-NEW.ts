@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import { notAllowedProjectNames } from 'tnp-core/src';
 import {
   CoreModels,
@@ -16,10 +16,13 @@ import { PackageJson } from 'type-fest';
 import {
   DEFAULT_FRAMEWORK_VERSION,
   MESSAGES,
+  packageJsonMainProject,
+  readmeMdMainProject,
+  taonJsonMainProject,
   TEMP_DOCS,
 } from '../../constants';
 import { Models } from '../../models';
-import { EnvOptions } from '../../options';
+import { EnvOptions, ReleaseArtifactTaon } from '../../options';
 import { Project } from '../abstract/project';
 import { TaonJson } from '../abstract/taonJson';
 
@@ -92,8 +95,8 @@ export class $New extends BaseCli {
     const autoCreateNormalContainersPathName = (
       hasAutoCreateNormalContainersFromArgs
         ? allProjectFromArgs
-            .join('/')
-            .replace(standaloneOrOrgWithStanalonePathName, '')
+          .join('/')
+          .replace(standaloneOrOrgWithStanalonePathName, '')
         : ''
     ).replace(/\/$/, '');
 
@@ -118,11 +121,11 @@ export class $New extends BaseCli {
        Name ${chalk.bold(notAllowedNameForApp)} is not allowed.
 
        Use different name: ${chalk.bold(
-         crossPlatformPath(allProjectFromArgs.join('/')).replace(
-           notAllowedNameForApp,
-           'my-app-or-something-else',
-         ),
-       )}
+          crossPlatformPath(allProjectFromArgs.join('/')).replace(
+            notAllowedNameForApp,
+            'my-app-or-something-else',
+          ),
+        )}
 
        `,
         false,
@@ -158,12 +161,12 @@ export class $New extends BaseCli {
         }
         const packageJsonPath = path.join(
           currentContainerPath,
-          config.file.package_json,
+          packageJsonMainProject,
         );
 
         const taonJsoncPath = path.join(
           currentContainerPath,
-          config.file.taon_jsonc,
+          taonJsonMainProject,
         );
 
         if (!Helpers.exists(packageJsonPath)) {
@@ -174,7 +177,7 @@ export class $New extends BaseCli {
 
           Helpers.writeJson(taonJsoncPath, {
             version: DEFAULT_FRAMEWORK_VERSION,
-            type: 'container' as any,
+            type: LibTypeEnum.CONTAINER,
             monorepo: true,
             organization: shouldBeOrganization(
               path.basename(path.dirname(taonJsoncPath)),
@@ -204,7 +207,7 @@ export class $New extends BaseCli {
               if (currentContainer.git.currentBranchName !== 'master') {
                 currentContainer.run('git checkout -b master').sync();
               }
-            } catch (error) {}
+            } catch (error) { }
           } catch (error) {
             Helpers.warn(
               `Not able to init git inside container: ${currentContainer?.location}`,
@@ -235,7 +238,7 @@ export class $New extends BaseCli {
       : crossPlatformPath([cwd, lastProjectFromArgName]);
 
     const packageJson = new BasePackageJson({
-      cwd: crossPlatformPath([appLocation, config.file.package_json]),
+      cwd: crossPlatformPath([appLocation, packageJsonMainProject]),
       defaultValue: {},
     });
 
@@ -244,7 +247,7 @@ export class $New extends BaseCli {
     packageJson.setName(path.basename(lastProjectFromArgName));
 
     const taonJson = new TaonJson(Project.ins.From(packageJson.cwd), {});
-    taonJson.setType('isomorphic-lib');
+    taonJson.setType(LibTypeEnum.ISOMORPHIC_LIB);
     taonJson.setFrameworkVersion(DEFAULT_FRAMEWORK_VERSION);
     taonJson.overridePackageJsonManager.setIsPrivate(true);
 
@@ -295,7 +298,7 @@ export class $New extends BaseCli {
         if (appProj.git.currentBranchName !== 'master') {
           appProj.run('git checkout -b master').sync();
         }
-      } catch (error) {}
+      } catch (error) { }
     }
 
     appProj.artifactsManager.globalHelper.addSrcFolderFromCoreProject();
@@ -307,12 +310,15 @@ export class $New extends BaseCli {
     // });
 
     if (lastContainer) {
-      lastContainer.taonJson.setType('container');
+      lastContainer.taonJson.setType(LibTypeEnum.CONTAINER);
     }
 
     await appProj.init(
       this.params.clone({
         purpose: 'initing new app',
+        release: {
+          targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
+        }
       }),
     );
 
@@ -338,7 +344,7 @@ export class $New extends BaseCli {
     if (appProj.git.isGitRoot) {
       try {
         this._addRemoteToStandalone(appProj);
-      } catch (error) {}
+      } catch (error) { }
     }
 
     return {
@@ -373,7 +379,7 @@ export class $New extends BaseCli {
               silence: true,
             })
             .sync();
-        } catch (error) {}
+        } catch (error) { }
       }
     }
   }
@@ -388,7 +394,7 @@ export class $New extends BaseCli {
       await this._initContainersAndApps(cwd, nameFromArgs);
 
     Helpers.writeFile(
-      [appProj.location, 'README.md'],
+      [appProj.location, readmeMdMainProject],
       `# ${appProj.name}
 
 Hello from Standalone Project
@@ -401,12 +407,12 @@ Hello from Standalone Project
         appProj
           .run(`git add --all . && git commit -m "docs: README.md update"`)
           .sync();
-      } catch (error) {}
+      } catch (error) { }
     }
 
     if (lastIsBrandNew) {
       lastContainer.writeFile(
-        'README.md',
+        readmeMdMainProject,
         `# @${lastContainer.name}
 
 Hello from Container Project

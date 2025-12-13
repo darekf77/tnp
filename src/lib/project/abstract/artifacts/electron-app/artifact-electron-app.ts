@@ -1,28 +1,34 @@
 //#region imports
 import { Configuration as ElectronBuilderConfig } from 'electron-builder';
-import { config } from 'tnp-core/src';
-import {
-  crossPlatformPath,
-  fse,
-  path,
-  Utils,
-  UtilsString,
-  UtilsTerminal,
-} from 'tnp-core/src';
-import { Helpers, UtilsQuickFixes, UtilsTypescript } from 'tnp-helpers/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
+import { crossPlatformPath, path, Utils } from 'tnp-core/src';
+import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
-import { tmpAppsForDistElectron } from '../../../../constants';
+import { templateFolderForArtifact } from '../../../../app-utils';
 import {
-  ReleaseArtifactTaonNames,
-  ReleaseArtifactTaonNamesArr,
+  assetsFor,
+  assetsFromNgProj,
+  assetsFromNpmLib,
+  assetsFromSrc,
+  BundledFiles,
+  CoreAssets,
+  CoreNgTemplateFiles,
+  distElectronProj,
+  electronNgProj,
+  packageJsonNgProject,
+  srcNgProxyProject,
+  TemplateFolder,
+  tmpAppsForDistElectron,
+} from '../../../../constants';
+import {
   EnvOptions,
+  ReleaseArtifactTaon,
   ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
-import { InsideStructuresElectron } from './tools/inside-struct-electron';
 //#endregion
 
 export class ArtifactElectronApp extends BaseArtifact<
@@ -32,7 +38,7 @@ export class ArtifactElectronApp extends BaseArtifact<
   ReleasePartialOutput
 > {
   constructor(project: Project) {
-    super(project, 'electron-app');
+    super(project, ReleaseArtifactTaon.ELECTRON_APP);
   }
 
   //#region clear partial
@@ -47,7 +53,7 @@ export class ArtifactElectronApp extends BaseArtifact<
   //#region init partial
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     if (!initOptions.release.targetArtifact) {
-      initOptions.release.targetArtifact = 'electron-app';
+      initOptions.release.targetArtifact = ReleaseArtifactTaon.ELECTRON_APP;
     }
     const result = await this.artifacts.angularNodeApp.initPartial(initOptions);
     return result;
@@ -109,8 +115,9 @@ export class ArtifactElectronApp extends BaseArtifact<
       await this.buildPartial(releaseOptions);
 
     //#region set native dependencies
-    const electronNativeDeps =
-      this.project.taonJson.getNativeDepsFor('electron-app');
+    const electronNativeDeps = this.project.taonJson.getNativeDepsFor(
+      ReleaseArtifactTaon.ELECTRON_APP,
+    );
 
     for (const nativeDepName of electronNativeDeps) {
       const version = this.project.packageJson.dependencies[nativeDepName];
@@ -119,7 +126,7 @@ export class ArtifactElectronApp extends BaseArtifact<
           `Setting native dependency ${nativeDepName} to version ${version}`,
         );
         Helpers.setValueToJSON(
-          proxyProj.pathFor('electron/package.json'),
+          proxyProj.pathFor(`${electronNgProj}/package.json`),
           'dependencies',
           {
             [nativeDepName]:
@@ -136,24 +143,26 @@ export class ArtifactElectronApp extends BaseArtifact<
 
     //#region bundling backend node_modules
     await Helpers.bundleCodeIntoSingleFile(
-      proxyProj.pathFor('electron/main.js'),
-      proxyProj.pathFor('electron/index.js'),
+      proxyProj.pathFor(`${electronNgProj}/main.js`),
+      proxyProj.pathFor(`${electronNgProj}/index.js`),
       {
         additionalExternals: [
           ...electronNativeDeps,
-          ...this.project.taonJson.additionalExternalsFor('electron-app'),
+          ...this.project.taonJson.additionalExternalsFor(
+            ReleaseArtifactTaon.ELECTRON_APP,
+          ),
         ],
         additionalReplaceWithNothing: [
           ...this.project.taonJson.additionalReplaceWithNothingFor(
-            'electron-app',
+            ReleaseArtifactTaon.ELECTRON_APP,
           ),
         ],
-        strategy: 'electron-app',
+        strategy: ReleaseArtifactTaon.ELECTRON_APP,
       },
     );
     //#endregion
 
-    proxyProj.run(`cd electron && npm install`).sync();
+    proxyProj.run(`cd ${electronNgProj} && npm install`).sync();
 
     //#region modify electron-builder.json
     const electronConfigPath = proxyProj.pathFor(`electron-builder.json`);
@@ -178,30 +187,36 @@ export class ArtifactElectronApp extends BaseArtifact<
     Helpers.writeJson(electronConfigPath, electronConfig);
     let electronConfigFile = Helpers.readFile(electronConfigPath);
     electronConfigFile = electronConfigFile.replace(
-      new RegExp(Utils.escapeStringForRegEx('assets/'), 'g'),
-      `dist/assets/assets-for/${this.project.nameForNpmPackage}/assets/`,
+      new RegExp(Utils.escapeStringForRegEx(`${assetsFromSrc}/`), 'g'),
+      `${distElectronProj}/${assetsFromNgProj}/${assetsFor}/${this.project.nameForNpmPackage}/${assetsFromNpmLib}/`,
     );
     Helpers.writeFile(electronConfigPath, electronConfigFile);
     //#endregion
 
     //#region Copy wasm file
     const wasmfileSource = crossPlatformPath([
-      this.project.ins.by(
-        'isomorphic-lib',
-        this.project.framework.frameworkVersion,
-      ).location,
-      'app/src/assets/sql-wasm.wasm',
+      this.project.ins
+        .by(LibTypeEnum.ISOMORPHIC_LIB, this.project.framework.frameworkVersion)
+        .pathFor([
+          templateFolderForArtifact(ReleaseArtifactTaon.ELECTRON_APP),
+          srcNgProxyProject,
+          assetsFromNgProj,
+          CoreAssets.sqlWasmFile,
+        ]),
     ]);
     const wasmfileDest = crossPlatformPath([
       proxyProj.location,
-      'electron',
-      'sql-wasm.wasm',
+      electronNgProj,
+      CoreAssets.sqlWasmFile,
     ]);
     Helpers.copyFile(wasmfileSource, wasmfileDest);
     //#endregion
 
     //#region modify index.html
-    const indexHtmlPath = proxyProj.pathFor(['dist', 'index.html']);
+    const indexHtmlPath = proxyProj.pathFor([
+      distElectronProj,
+      BundledFiles.INDEX_HTML,
+    ]);
 
     Helpers.writeFile(
       indexHtmlPath,
@@ -223,7 +238,7 @@ export class ArtifactElectronApp extends BaseArtifact<
     //#endregion
 
     //#region modify package.json
-    const electronPackageJson = proxyProj.pathFor(`package.json`);
+    const electronPackageJson = proxyProj.pathFor(packageJsonNgProject);
     const electronPackageJsonContent = Helpers.readJson(
       electronPackageJson,
     ) as PackageJson;
@@ -240,7 +255,7 @@ export class ArtifactElectronApp extends BaseArtifact<
 
     let releaseProjPath: string;
 
-    if (releaseOptions.release.releaseType === 'local') {
+    if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
       //#region local release
       const releaseData = await this.localReleaseDeploy(
         electronDistOutAppPath,
@@ -254,7 +269,7 @@ export class ArtifactElectronApp extends BaseArtifact<
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
     }
-    if (releaseOptions.release.releaseType === 'static-pages') {
+    if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
       //#region static pages release
       const releaseData = await this.staticPagesDeploy(
         electronDistOutAppPath,

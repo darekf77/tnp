@@ -93,8 +93,10 @@ export class Git extends BaseGit<Project> {
 
     if (absPaths.length > 0) {
       if (
-        await UtilsTerminal.confirm({
-          message: `[taon][after-pull-action] Do you want to remove old folders: ${absPaths.join(', ')}?`,
+         await UtilsTerminal.confirm({
+          message:
+            `[taon][after-pull-action] Do you want to remove old folders: ` +
+            `\n${absPaths.map(c => `- /${c}`).join('\n, ')}\n?`,
         })
       ) {
         for (let index = 0; index < absPaths.length; index++) {

@@ -1,7 +1,7 @@
 //#region imports
 import { URL } from 'url'; // @backend
 
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import {
   Helpers,
   UtilsNetwork,
@@ -40,7 +40,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
     while (true) {
       try {
         consoleLogoPath = this.worker.ins
-          .by('container', `v${currentVersion}` as any)
+          .by(LibTypeEnum.CONTAINER, `v${currentVersion}` as any)
           .pathFor('../__images/logo/logo-console.png');
         break;
       } catch (error) {

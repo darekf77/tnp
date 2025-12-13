@@ -8,7 +8,32 @@ import {
   Helpers,
 } from 'tnp-helpers/src';
 
-import { docsConfigSchema, frameworkBuildFolders } from '../../constants';
+import {
+  assetsFromSrc,
+  browserMainProject,
+  distNoCutSrcMainProject,
+  docsConfigSchema,
+  dotFileTemplateExt,
+  dotVscodeMainProject,
+  frameworkBuildFolders,
+  generatedFromAssets,
+  indexDtsMainProject,
+  indexJsMainProject,
+  indexJsMapMainProject,
+  libFromSrc,
+  localReleaseMainProject,
+  migrationsFromSrc,
+  packageJsonLockMainProject,
+  runJsMainProject,
+  sharedFromAssets,
+  srcMainProject,
+  TaonGeneratedFiles,
+  TaonGeneratedFolders,
+  testEnvironmentsMainProject,
+  testsFromSrc,
+  updateVscodePackageJsonJsMainProject,
+  websqlMainProject,
+} from '../../constants';
 
 import type { Project } from './project';
 //#endregion
@@ -26,25 +51,25 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       ...super.getPatternsIgnoredInRepoButVisibleToUser(),
       ...frameworkBuildFolders.filter(c => !!c).map(c => `/${c}`),
       this.project.framework.isStandaloneProject
-        ? `/${config.folder.testsEnvironments}`
+        ? `/${testEnvironmentsMainProject}`
         : void 0,
-      '/src/app.hosts.ts',
-      '/src/vars.scss',
-      '/BUILD-INFO.md',
+      `/${srcMainProject}/${TaonGeneratedFiles.APP_HOSTS_TS}`,
+      `/${srcMainProject}/${TaonGeneratedFiles.VARS_SCSS}`,
+      `/${TaonGeneratedFiles.BUILD_INFO_MD}`,
       `/${docsConfigSchema}`,
       `/${TaonTempDatabasesFolder}/*.sqlite`,
       `/${TaonTempRoutesFolder}/*.rest`,
-      '/src/lib/lib-info.md',
-      '/src/lib/env/**/*.*',
-      '/src/migrations/migrations-info.md',
-      '/src/tests/mocha-tests-info.md',
-      '/src/assets/shared/shared_folder_info.txt',
-      '/.vscode/launch.json',
+      `/${srcMainProject}/${libFromSrc}/${TaonGeneratedFiles.LIB_INFO_MD}`,
+      `/${srcMainProject}/${libFromSrc}/${TaonGeneratedFolders.ENV_FOLDER}/**/*.*`,
+      `/${srcMainProject}/${migrationsFromSrc}/${TaonGeneratedFiles.MIGRATIONS_INFO_MD}`,
+      `/${srcMainProject}/${testsFromSrc}/${TaonGeneratedFiles.MOCHA_TESTS_INFO_MD}`,
+      `/${srcMainProject}/${assetsFromSrc}/${sharedFromAssets}/${TaonGeneratedFiles.SHARED_FOLDER_INFO_TXT}`,
+      `/${dotVscodeMainProject}/${TaonGeneratedFiles.LAUNCH_JSON}`,
       !this.project.taonJson.storeGeneratedAssetsInRepository
-        ? `/src/assets/generated`
+        ? `/${srcMainProject}/${assetsFromSrc}/${generatedFromAssets}`
         : void 0,
       !this.project.taonJson.storeLocalReleaseFilesInRepository
-        ? `/local_release`
+        ? `/${localReleaseMainProject}`
         : void 0,
       ...(this.project.isMonorepo
         ? []
@@ -57,32 +82,32 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
   protected alwaysIgnoredHiddenPatterns(): string[] {
     return [
       ...super.alwaysIgnoredHiddenPatterns(),
-      !this.project.framework.isCoreProject ? '*.filetemplate' : void 0,
+      !this.project.framework.isCoreProject ? `*${dotFileTemplateExt}` : void 0,
     ].filter(f => !!f) as string[];
   }
 
   protected alwaysIgnoredAndHiddenFilesAndFolders(): string[] {
     return [
       ...super.alwaysIgnoredAndHiddenFilesAndFolders(),
-      'browser',
-      'websql',
-      'dist-nocutsrc',
-      'package-lock.json',
+      browserMainProject,
+      websqlMainProject,
+      distNoCutSrcMainProject,
+      packageJsonLockMainProject,
     ];
   }
 
   alwaysUseRecursivePattern(): string[] {
-    return [...super.alwaysUseRecursivePattern(), '*.filetemplate'];
+    return [...super.alwaysUseRecursivePattern(), `*${dotFileTemplateExt}`];
   }
 
   protected hiddenButNotNecessaryIgnoredInRepoFilesAndFolders(): string[] {
     return [
       ...super.hiddenButNotNecessaryIgnoredInRepoFilesAndFolders(),
-      'run.js',
-      'index.d.ts',
-      'index.js',
-      'index.js.map',
-      'update-vscode-package-json.js',
+      runJsMainProject,
+      indexDtsMainProject,
+      indexJsMainProject,
+      indexJsMapMainProject,
+      updateVscodePackageJsonJsMainProject,
     ];
   }
 
