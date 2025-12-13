@@ -62,11 +62,22 @@ export class $New extends BaseCli {
     nameFromArgs = nameFromArgs.replace(/\\$/g, '/');
     const orgArgName = nameFromArgs;
     const shouldBeOrganization = (containerName: string): boolean => {
-      return !_.isUndefined(
+      // console.log(`Checking if ${containerName} should be organization`);
+
+      const shouldBeOrg = !_.isUndefined(
         orgArgName.split('/').find(f => {
-          return f.includes('@') || f.replace('@', '') === containerName;
+          return f.includes('@') && f.replace('@', '') === containerName;
         }),
       );
+
+      if (shouldBeOrg) {
+        Helpers.info(
+          `Container: ${containerName} will be mark as organization container`,
+        );
+      }
+
+      // console.log({ orgArgName, containerName, shouldBeOrg });
+      return shouldBeOrg;
     };
 
     nameFromArgs = nameFromArgs.replace(/\@/g, '');
@@ -95,8 +106,8 @@ export class $New extends BaseCli {
     const autoCreateNormalContainersPathName = (
       hasAutoCreateNormalContainersFromArgs
         ? allProjectFromArgs
-          .join('/')
-          .replace(standaloneOrOrgWithStanalonePathName, '')
+            .join('/')
+            .replace(standaloneOrOrgWithStanalonePathName, '')
         : ''
     ).replace(/\/$/, '');
 
@@ -121,11 +132,11 @@ export class $New extends BaseCli {
        Name ${chalk.bold(notAllowedNameForApp)} is not allowed.
 
        Use different name: ${chalk.bold(
-          crossPlatformPath(allProjectFromArgs.join('/')).replace(
-            notAllowedNameForApp,
-            'my-app-or-something-else',
-          ),
-        )}
+         crossPlatformPath(allProjectFromArgs.join('/')).replace(
+           notAllowedNameForApp,
+           'my-app-or-something-else',
+         ),
+       )}
 
        `,
         false,
@@ -207,7 +218,7 @@ export class $New extends BaseCli {
               if (currentContainer.git.currentBranchName !== 'master') {
                 currentContainer.run('git checkout -b master').sync();
               }
-            } catch (error) { }
+            } catch (error) {}
           } catch (error) {
             Helpers.warn(
               `Not able to init git inside container: ${currentContainer?.location}`,
@@ -298,7 +309,7 @@ export class $New extends BaseCli {
         if (appProj.git.currentBranchName !== 'master') {
           appProj.run('git checkout -b master').sync();
         }
-      } catch (error) { }
+      } catch (error) {}
     }
 
     appProj.artifactsManager.globalHelper.addSrcFolderFromCoreProject();
@@ -318,7 +329,7 @@ export class $New extends BaseCli {
         purpose: 'initing new app',
         release: {
           targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
-        }
+        },
       }),
     );
 
@@ -344,7 +355,7 @@ export class $New extends BaseCli {
     if (appProj.git.isGitRoot) {
       try {
         this._addRemoteToStandalone(appProj);
-      } catch (error) { }
+      } catch (error) {}
     }
 
     return {
@@ -379,7 +390,7 @@ export class $New extends BaseCli {
               silence: true,
             })
             .sync();
-        } catch (error) { }
+        } catch (error) {}
       }
     }
   }
@@ -407,7 +418,7 @@ Hello from Standalone Project
         appProj
           .run(`git add --all . && git commit -m "docs: README.md update"`)
           .sync();
-      } catch (error) { }
+      } catch (error) {}
     }
 
     if (lastIsBrandNew) {
