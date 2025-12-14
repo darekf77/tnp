@@ -1,11 +1,10 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, Utils } from 'tnp-core/src';
 import { crossPlatformPath, path, _ } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
-import { templateFolderForArtifact } from '../../../../../app-utils';
 import {
   browserMainProject,
   CoreNgTemplateFiles,
@@ -60,7 +59,9 @@ export class InsideStructAngularLib extends BaseInsideStruct {
         frameworkVersion: project.framework.frameworkVersion,
         pathReplacements: [
           [
-            new RegExp(`^${TemplateFolder.templateLib}\\/`),
+            new RegExp(
+              `^${Utils.escapeStringForRegEx(TemplateFolder.templateLib + '/')}`,
+            ),
             () => {
               return `${tmpProjectsStandalone}/`;
             },

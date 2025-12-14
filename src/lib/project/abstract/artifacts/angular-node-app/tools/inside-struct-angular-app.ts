@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, Utils } from 'tnp-core/src';
 import { crossPlatformPath, path, _, CoreModels, fse } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 
@@ -70,6 +70,11 @@ export class InsideStructAngularApp extends BaseInsideStruct {
     //#region @backendFunc
     const project = this.project;
     const tmpProjectsStandalone = this.resolveTmpProjectStandalonePath();
+    const templateFolderInCoreProject = templateFolderForArtifact(
+      this.isElectron
+        ? ReleaseArtifactTaon.ELECTRON_APP
+        : ReleaseArtifactTaon.ANGULAR_NODE_APP,
+    );
 
     const result = InsideStruct.from(
       {
@@ -79,26 +84,21 @@ export class InsideStructAngularApp extends BaseInsideStruct {
         pathReplacements: [
           [
             new RegExp(
-              `^${templateFolderForArtifact(
-                this.initOptions.release.targetArtifact ===
-                  ReleaseArtifactTaon.ELECTRON_APP
-                  ? ReleaseArtifactTaon.ELECTRON_APP
-                  : ReleaseArtifactTaon.ANGULAR_NODE_APP,
-              )}\\/`,
+              `^${Utils.escapeStringForRegEx(
+                templateFolderInCoreProject + '/',
+              )}`,
             ),
             () => {
               return `${tmpProjectsStandalone}/`;
             },
           ],
         ],
-        linkNodeModulesTo: [
-          `${templateFolderForArtifact(this.initOptions.release.targetArtifact)}/`,
-        ],
+        linkNodeModulesTo: [`${templateFolderInCoreProject}/`],
         linksFuncs: [
           //#region what and where needs to linked
           [
             // from this
-            opt => {
+            () => {
               const browserTsAppCode = this.initOptions.build.websql
                 ? tmpSrcAppDistWebsql
                 : tmpSrcAppDist;
@@ -106,8 +106,13 @@ export class InsideStructAngularApp extends BaseInsideStruct {
               return browserTsAppCode;
             },
             // to this
-            opt => {
-              const standalonePath = `${templateFolderForArtifact(this.initOptions.release.targetArtifact)}/${srcNgProxyProject}/${appFromSrcInsideNgApp}/${this.project.name}`;
+            () => {
+              const standalonePath = crossPlatformPath([
+                templateFolderInCoreProject,
+                srcNgProxyProject,
+                appFromSrcInsideNgApp,
+                this.project.name,
+              ]);
               return standalonePath;
             },
           ],
