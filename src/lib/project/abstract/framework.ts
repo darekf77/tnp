@@ -527,7 +527,11 @@ export class Framework extends BaseFeatureForProject<Project> {
   get coreContainer(): Project {
     //#region @backendFunc
     // use core container from node_modules link first - if it is proper
-    if (taonPackageName === config.frameworkName) {
+
+    // TODO QUICK_FIX FOR 'update-vscode-package-json.js'
+    const emptyFrameworkName = !config.frameworkName;
+
+    if (taonPackageName === config.frameworkName || emptyFrameworkName) {
       const { isCoreContainer, coreContainerFromNodeModules } =
         this.containerDataFromNodeModulesLink;
 
