@@ -17,6 +17,13 @@ import {
   tsconfigJsonIsomorphicMainProject,
   tsconfigIsomorphicFlatDistMainProject,
   tsconfigJsonBrowserMainProject,
+  runJsMainProject,
+  updateVscodePackageJsonJsMainProject,
+  esLintConfigJsonMainProject,
+  webpackConfigJsMainProject,
+  indexJsMainProject,
+  indexDtsMainProject,
+  indexJsMapMainProject,
 } from '../../../../../../constants';
 import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
@@ -36,27 +43,31 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
   //#endregion
 
   projectSpecificFilesForStandalone(): string[] {
-    let files = ['index.js', 'index.d.ts', 'index.js.map'];
+    let files = [
+      indexJsMainProject,
+      indexDtsMainProject,
+      indexJsMapMainProject,
+    ];
 
     files = files.concat([
       taonConfigSchemaJsonStandalone,
-      'tsconfig.browser.json',
-      'webpack.config.js',
-      'run.js',
-      'update-vscode-package-json.js',
-      'eslint.config.js',
+      tsconfigJsonBrowserMainProject,
+      webpackConfigJsMainProject,
+      runJsMainProject,
+      updateVscodePackageJsonJsMainProject,
+      esLintConfigJsonMainProject,
       ...this.filesTemplates(),
     ]);
 
     if (this.project.framework.frameworkVersionAtLeast('v2')) {
-      files = files.filter(f => f !== 'tsconfig.browser.json');
+      files = files.filter(f => f !== tsconfigJsonBrowserMainProject);
     }
 
     return files;
   }
 
   projectSpecificFilesForContainer(): string[] {
-    return [taonConfigSchemaJsonContainer, 'eslint.config.js'];
+    return [taonConfigSchemaJsonContainer, esLintConfigJsonMainProject];
   }
 
   //#region getters & methods / project specify files

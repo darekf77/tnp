@@ -733,6 +733,10 @@ export const dotGitIgnoreMainProject = fileName._gitignore;
 
 export const dotNpmIgnoreMainProject = fileName._npmignore;
 
+export const webpackConfigJsMainProject = 'webpack.config.js';
+
+export const esLintConfigJsonMainProject = 'eslint.config.js';
+
 export const runJsMainProject = 'run.js';
 
 export const indexDtsMainProject = fileName.index_d_ts;
