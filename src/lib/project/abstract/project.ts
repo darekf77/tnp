@@ -480,7 +480,10 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     options = options || {};
     const project = options.project || this;
 
-    if (!envOptions.release.autoReleaseTaskName) {
+    if (
+      envOptions.release.autoReleaseUsingConfig &&
+      !envOptions.release.autoReleaseTaskName
+    ) {
       Helpers.error(
         `When using auto releae config (from taon.json) you have to provide task name as argument.`,
         false,
