@@ -668,6 +668,7 @@ export class TraefikProvider {
     };
 
     if (composeDownBothFiles) {
+      Helpers.logInfo('Composing down both dev and production mode traefik...');
       try {
         await composeDownFile(localDevFileBasename);
       } catch (error) {
@@ -687,16 +688,18 @@ export class TraefikProvider {
               localDevFileBasename,
             ])
           ) {
+            Helpers.logInfo('Composing down dev mode traefik...');
             await composeDownFile(localDevFileBasename);
           }
           if (
             Helpers.exists([this.pathToTraefikComposeDestCwd, prodFileBasename])
           ) {
+            Helpers.logInfo('Composing down production mode traefik...');
             await composeDownFile(prodFileBasename);
           }
           break;
         } catch (error) {
-          console.log('Error stopping Traefik');
+          Helpers.error('Error stopping Traefik', true, true);
           const tryAgain =
             await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error);
           if (!tryAgain) {
