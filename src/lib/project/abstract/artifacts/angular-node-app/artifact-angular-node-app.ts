@@ -483,7 +483,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     this.project.framework.recreateFileFromCoreProject({
       relativePathInCoreProject: `${templateFolderForArtifact(
-        buildOptions.release.targetArtifact,
+        buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
+          ? ReleaseArtifactTaon.ELECTRON_APP
+          : ReleaseArtifactTaon.ANGULAR_NODE_APP,
       )}/${srcNgProxyProject}/${assetsFromNgProj}/${CoreAssets.sqlWasmFile}`,
       customDestinationLocation: [
         appDistOutBackendNodeAbsPath,

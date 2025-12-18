@@ -6,6 +6,7 @@ import { InsideStructAngularApp } from './inside-struct-angular-app';
 
 export class InsideStructuresApp extends InsideStructuresProcess {
   private insideStructAngular13AppNormal: InsideStructAngularApp;
+
   private insideStructAngular13AppWebsql: InsideStructAngularApp;
 
   //#region api / recreate

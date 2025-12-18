@@ -5,6 +5,7 @@ import { fileName } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
+import { templateFolderForArtifact } from '../../../../../app-utils';
 import {
   browserMainProject,
   CoreNgTemplateFiles,
@@ -60,14 +61,16 @@ export class InsideStructAngularLib extends BaseInsideStruct {
         pathReplacements: [
           [
             new RegExp(
-              `^${Utils.escapeStringForRegEx(TemplateFolder.templateLib + '/')}`,
+              `^${Utils.escapeStringForRegEx(templateFolderForArtifact(this.getCurrentArtifact()) + '/')}`,
             ),
             () => {
               return `${tmpProjectsStandalone}/`;
             },
           ],
         ],
-        linkNodeModulesTo: [`${TemplateFolder.templateLib}/`],
+        linkNodeModulesTo: [
+          `${templateFolderForArtifact(this.getCurrentArtifact())}/`,
+        ],
         endAction: ({ replacement }) => {
           //#region fixing package json dependencies in target proj
           (() => {
