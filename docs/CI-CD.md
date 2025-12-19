@@ -13,7 +13,7 @@
   <tr>
     <td><b>Cloud</b></td>
     <td> 
-     Everything that <strong>Manual</strong> does, but triggered on remote on server.
+     Everything that <strong>Manual</strong> does, but triggered on remote server.
     </td>
   </tr>
   <tr>
