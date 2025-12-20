@@ -3,6 +3,7 @@ import GLOBAL from './cli-_GLOBAL_';
 import BRANDING from './cli-BRANDING';
 import BUILD from './cli-BUILD';
 import CLOUD from './cli-CLOUD';
+import CORE from './cli-CORE';
 import DOCKER from './cli-DOCKER';
 import DOCS from './cli-DOCS';
 import FILE_SYNC from './cli-FILE_SYNC';
@@ -35,6 +36,7 @@ export default [
   GENERATE,
   DOCKER,
   FILE_SYNC,
+  CORE,
 ];
 
 //#endregion

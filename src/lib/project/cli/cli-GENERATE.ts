@@ -116,7 +116,7 @@ export class $Generate extends BaseCli {
       //#endregion
     } else {
       const ins = MagicRenamer.Instance(exampleLocation);
-      ins.start(`${myEntity} -> ${newEntityName}`, true);
+      ins.start(`${myEntity} -> ${newEntityName}`);
       if (isFlat) {
         const files = Helpers.filesFrom(generatedCodeAbsLoc, true);
         for (let index = 0; index < files.length; index++) {

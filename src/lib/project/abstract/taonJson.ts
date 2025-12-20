@@ -1,11 +1,19 @@
 import { walk } from 'lodash-walk-object/src';
-import { config, crossPlatformPath, fileName, LibTypeEnum } from 'tnp-core/src';
+import {
+  chalk,
+  config,
+  crossPlatformPath,
+  fileName,
+  LibTypeEnum,
+  UtilsJson,
+} from 'tnp-core/src';
 import { CoreModels, os, path } from 'tnp-core/src';
 import { Helpers, _ } from 'tnp-core/src';
 import { Utils } from 'tnp-core/src';
 import {
   BaseFeatureForProject,
   BasePackageJson,
+  UtilsNpm,
   UtilsTypescript,
 } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
@@ -19,6 +27,7 @@ import { Models } from '../../models';
 import { ReleaseArtifactTaon, EnvOptions } from '../../options';
 
 import type { Project } from './project';
+import { UtilsTerminal } from 'tnp-core/src';
 
 // @ts-ignore TODO weird inheritance problem
 export class TaonJson extends BaseFeatureForProject<Project> {
@@ -227,7 +236,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
       return res as CoreModels.LibType;
     }
     if (_.isString(this.project.hasFile(taonJsonMainProject))) {
-      return LibTypeEnum.UNKNOWN_NPM_PROJECT
+      return LibTypeEnum.UNKNOWN_NPM_PROJECT;
     }
     return LibTypeEnum.UNKNOWN;
   }
@@ -622,4 +631,116 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     //#endregion
   }
   //#endregion
+
+  async updateDependenciesFromNpm(options?: {
+    onlyPackageNames?: string[];
+  }): Promise<void> {
+    //#region @backendFunc
+    options = options || {};
+    options.onlyPackageNames = options.onlyPackageNames || [];
+    const allDeps = this.project.packageJson.allDependencies;
+    // const overrideAndUpdateAllToLatest = false;
+    // await Helpers.questionYesNo(
+    //   'update all to latest ?',
+    // );
+
+    const allDepsKeys = Object.keys(allDeps);
+    for (let index = 0; index < allDepsKeys.length; index++) {
+      Helpers.clearConsole();
+
+      const packageName = allDepsKeys[index];
+      if (
+        options.onlyPackageNames.length > 0 &&
+        !options.onlyPackageNames.includes(packageName)
+      ) {
+        continue;
+      }
+
+      const currentPackageVersion = allDeps[packageName];
+      // const currentVerObj = UtilsNpm.getVerObj(currentPackageVersion);
+      const taonJsonContent = this.project.readFile(taonJsonMainProject);
+      const tags = UtilsJson.getAtrributiesFromJsonWithComments(
+        packageName,
+        taonJsonContent,
+      );
+
+      Helpers.info(
+        `(${index + 1} / ${allDepsKeys.length}) ` +
+          `Downloading info about "${packageName}" (current ver: ${currentPackageVersion})`,
+      );
+
+      if (currentPackageVersion === 'latest') {
+        console.log(`Package "${packageName}" is set to latest. Skipping.`);
+        continue;
+      }
+
+      //#region resolve tags
+      const updateToContainerMajor = tags.find(
+        c => c.name === '@updateToContainerMajor',
+      );
+
+      const trustedMajor = !!tags.find(
+        c => c.name === '@trusted' && c.value === 'major',
+      );
+
+      const trustedMinor = !!tags.find(
+        c => c.name === '@trusted' && c.value === 'minor',
+      );
+
+      const trustedPath = !!tags.find(
+        c => c.name === '@trusted' && c.value === 'patch',
+      );
+      //#endregion
+
+      //#region check for @updateToContainerMajor
+      if (updateToContainerMajor) {
+        const containerMajorVersion = `~${this.project.taonJson.frameworkVersion.replace('v', '')}.0.0`;
+        this.project.packageJson.updateDependency({
+          packageName,
+          version: containerMajorVersion,
+        });
+        this.project.taonJson.overridePackageJsonManager.updateDependency({
+          packageName,
+          version: containerMajorVersion,
+        });
+        continue;
+      }
+      //#endregion
+
+      if (!trustedMajor && !trustedMinor && !trustedPath) {
+        console.log(
+          `Package "${packageName}" is not trusted for any updates. Skipping.`,
+        );
+        continue;
+      }
+
+      const latestType = trustedMajor
+        ? 'major'
+        : trustedMinor
+          ? 'minor'
+          : 'patch';
+
+      let latestToUpdate = await UtilsNpm.getLatestVersionFromNpm(packageName, {
+        currentPackageVersion,
+        latestType,
+        skipAlphaBetaNext: true,
+      });
+
+      const prefix = currentPackageVersion.startsWith('^')
+        ? '^'
+        : currentPackageVersion.startsWith('~')
+          ? '~'
+          : '';
+
+      this.project.packageJson.updateDependency({
+        packageName,
+        version: `${prefix}${latestToUpdate}`,
+      });
+      this.project.taonJson.overridePackageJsonManager.updateDependency({
+        packageName,
+        version: `${prefix}${latestToUpdate}`,
+      });
+    }
+    //#endregion
+  }
 }

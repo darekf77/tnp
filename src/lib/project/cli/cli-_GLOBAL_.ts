@@ -4,7 +4,6 @@ import {
   incrementalWatcher,
 } from 'incremental-compiler/src';
 import { walk } from 'lodash-walk-object/src';
-import { MagicRenamer } from 'magic-renamer/src';
 import * as semver from 'semver';
 import {
   config,
@@ -974,17 +973,6 @@ export class $Global extends BaseGlobalCommandLine<
   }
   //#endregion
 
-  //#region copy and rename (vscode option)
-  async $COPY_AND_RENAME() {
-    //#region @backendFunc
-    // console.log(`>> ${args} <<`)
-    const ins = MagicRenamer.Instance(this.cwd);
-    await ins.start(this.args.join(''), true);
-    this._exit();
-    //#endregion
-  }
-  //#endregion
-
   //#region clear
   async CLEAN() {
     //#region @backendFunc
@@ -1055,385 +1043,9 @@ ${this.project.children
       }
       this._exit();
     }
-    const allDeps = this.project.packageJson.allDependencies;
-    // const overrideAndUpdateAllToLatest = false;
-    // await Helpers.questionYesNo(
-    //   'update all to latest ?',
-    // );
-
-    //#region helpers
-
-    //#region helpers / getLatestVersionFromNpm
-    const getLatestVersionFromNpm = async (
-      packageName: string,
-    ): Promise<string> => {
-      const res = await fetch(
-        `https://registry.npmjs.org/${packageName}/latest`,
-      );
-      const json = await res.json();
-      return json.version;
-    };
-    //#endregion
-
-    //#region helpers / checkIfPackageVersionAvailable
-    const checkIfPackageVersionAvailable = async (
-      pkgName: string,
-      pkgVersion: string,
-    ): Promise<boolean> => {
-      const res = await fetch(
-        `https://registry.npmjs.org/${pkgName}/${pkgVersion}`,
-      );
-      return res.status === 200;
-    };
-    //#endregion
-
-    //#region helpers / getLastMajorVersions
-    const getLastMajorVersions = async (pkgName: string): Promise<string[]> => {
-      try {
-        const res = await fetch(`https://registry.npmjs.org/${pkgName}`);
-        const json = await res.json();
-        return Object.keys(json.versions).filter(v =>
-          v.startsWith(json['dist-tags'].latest.split('.')[0]),
-        );
-      } catch (error) {
-        return [];
-      }
-    };
-    //#endregion
-
-    //#region helpers / getLastMinorVersionsForMajor
-    const getLastMinorVersionsForMajor = async (
-      majorVer: number,
-      pkgName: string,
-    ): Promise<string[]> => {
-      try {
-        const res = await fetch(`https://registry.npmjs.org/${pkgName}`);
-        const json = await res.json();
-        return Object.keys(json.versions).filter(v =>
-          v.startsWith(`${majorVer}.`),
-        );
-      } catch (error) {
-        return [];
-      }
-    };
-    //#endregion
-
-    //#region helpers / getVerObj
-    const getVerObj = (
-      version: string,
-    ): {
-      major: number;
-      minor: number;
-      patch: number;
-    } => {
-      return version
-        .replace('^', '')
-        .replace('~', '')
-        .split('.')
-        .map(Number)
-        .reduce((acc, c, i) => {
-          if (i === 0) {
-            return { ...acc, ['major']: c };
-          } else if (i === 1) {
-            return { ...acc, ['minor']: c };
-          } else {
-            return { ...acc, ['patch']: c };
-          }
-        }, {}) as any;
-    };
-    //#endregion
-
-    //#endregion
-
-    const allDepsKeys = Object.keys(allDeps);
-    for (let index = 0; index < allDepsKeys.length; index++) {
-      Helpers.clearConsole();
-
-      //#region resolve variables
-      const packageName = allDepsKeys[index];
-      const currentPackageVersion = allDeps[packageName];
-      const currentVerObj = getVerObj(currentPackageVersion);
-      const taonJsonContent = this.project.readFile(taonJsonMainProject);
-      const tags = UtilsJson.getAtrributiesFromJsonWithComments(
-        packageName,
-        taonJsonContent,
-      );
-      Helpers.info(
-        `(${index + 1} / ${allDepsKeys.length}) ` +
-          `Downloading info about "${packageName}" (current ver: ${currentPackageVersion})`,
-      );
-      const getLastVersions = async (pkgName: string): Promise<string[]> => {
-        let someLastVersion = Helpers.uniqArray([
-          ...(await getLastMajorVersions(pkgName)),
-          ...(await getLastMinorVersionsForMajor(
-            latestVerObj.major - 1,
-            pkgName,
-          )),
-          ...(await getLastMinorVersionsForMajor(
-            latestVerObj.major - 2,
-            pkgName,
-          )),
-          ...(await getLastMinorVersionsForMajor(currentVerObj.major, pkgName)),
-          ...(await getLastMinorVersionsForMajor(
-            currentVerObj.major - 1,
-            pkgName,
-          )),
-          ...(await getLastMinorVersionsForMajor(
-            currentVerObj.major - 2,
-            pkgName,
-          )),
-        ])
-          .sort((a, b) => {
-            const aVerObj = getVerObj(a);
-            const bVerObj = getVerObj(b);
-            if (aVerObj.major === bVerObj.major) {
-              if (aVerObj.minor === bVerObj.minor) {
-                return aVerObj.patch - bVerObj.patch;
-              }
-              return aVerObj.minor - bVerObj.minor;
-            }
-            return aVerObj.major - bVerObj.major;
-          })
-          .reverse();
-        return someLastVersion;
-      };
-
-      let latestToUpdate = await getLatestVersionFromNpm(packageName);
-
-      const latestVerObj = getVerObj(latestToUpdate);
-      const isTheSameVersion =
-        latestVerObj.major === currentVerObj.major &&
-        latestVerObj.minor === currentVerObj.minor &&
-        latestVerObj.patch === currentVerObj.patch;
-
-      const isOnlyMajorpdate = latestVerObj.major >= currentVerObj.major;
-
-      const isOnlyMinorUpdate =
-        latestVerObj.major === currentVerObj.major &&
-        latestVerObj.minor > currentVerObj.minor;
-
-      const isOnlyPatchUpdate =
-        latestVerObj.major === currentVerObj.major &&
-        latestVerObj.minor === currentVerObj.minor &&
-        latestVerObj.patch > currentVerObj.patch;
-
-      const trustedMajor = !!tags.find(
-        c => c.name === '@trusted' && c.value === 'major',
-      );
-
-      const trustedMinor = !!tags.find(
-        c => c.name === '@trusted' && c.value === 'minor',
-      );
-
-      const trustedPath = !!tags.find(
-        c => c.name === '@trusted' && c.value === 'patch',
-      );
-
-      const notTrusted = !tags.find(c => c.name === '@trusted');
-      if (notTrusted) {
-        console.log(`Package "${packageName}" is not trusted. Skipping.`);
-        continue;
-      }
-
-      let automaticallyUpdate =
-        (isOnlyMajorpdate && trustedMajor) ||
-        (isOnlyMinorUpdate && (trustedMajor || trustedMinor)) ||
-        (isOnlyPatchUpdate && (trustedMajor || trustedMinor || trustedPath));
-      //#endregion
-
-      if (currentPackageVersion === 'latest') {
-        console.log(`Package "${packageName}" is set to latest. Skipping.`);
-        continue;
-      }
-
-      if (isTheSameVersion) {
-        // await Helpers.questionYesNo('package is the same, continue ?');
-        this.project.packageJson.updateDependency({
-          packageName,
-          version: currentPackageVersion,
-        });
-        this.project.taonJson.overridePackageJsonManager.updateDependency({
-          packageName,
-          version: currentPackageVersion,
-        });
-        continue;
-      }
-
-      if (!automaticallyUpdate) {
-        //#region display last versions
-        const someLastVersion = await getLastVersions(packageName);
-        if (trustedMinor) {
-          // if (someLastVersion.some(a => a.startsWith(currentPackageVersion))) {
-          //   console.log(
-          //     `Package "${packageName}" on the highest minor version. Skipping.`,
-          //   );
-          //   continue;
-          // }
-          const trustedMinorVersion = someLastVersion.find(
-            v => getVerObj(v).minor > currentVerObj.minor,
-          );
-          if (trustedMinorVersion) {
-            latestToUpdate = trustedMinorVersion;
-            automaticallyUpdate = true;
-          }
-        }
-        if (trustedPath) {
-          // if (someLastVersion.some(a => a.startsWith(currentPackageVersion))) {
-          //   console.log(
-          //     `Package "${packageName}" on the highest patch version. Skipping.`,
-          //   );
-          //   continue;
-          // }
-          const trustedPatchVersion = someLastVersion.find(
-            v => getVerObj(v).patch > currentVerObj.patch,
-          );
-          if (trustedPatchVersion) {
-            latestToUpdate = trustedPatchVersion;
-            automaticallyUpdate = true;
-          }
-        }
-        if (!automaticallyUpdate) {
-          console.log(
-            `Can't update automatically. Latest versions for ${packageName}:\n\n` +
-              someLastVersion.map(v => `- ${v}`).join('\n') +
-              '\n',
-          );
-        }
-        //#endregion
-      }
-
-      const questionsForUpdate = {
-        //#region question for update options
-        update: {
-          name:
-            `Update to latest version "${currentPackageVersion}=>` +
-            `${chalk.bold.underline(latestToUpdate)}" ` +
-            `${
-              tags.length > 0
-                ? '(' +
-                  tags
-                    .map(c => c.name + (c.value ? '=' + c.value : ''))
-                    .join(',') +
-                  ')'
-                : ''
-            }`,
-        },
-        skip: {
-          name: 'Skip this package ?',
-        },
-        skipTo: {
-          name: 'Skip and got to package with index ?',
-        },
-        delete: {
-          name: 'Delete this package ?',
-        },
-        manual: {
-          name: 'Set version manually ?',
-        },
-        //#endregion
-      };
-
-      const whatToDo = automaticallyUpdate
-        ? 'update'
-        : await Helpers.selectChoicesAsk<keyof typeof questionsForUpdate>(
-            `(${index + 1} / ${allDepsKeys.length}) ` +
-              `${chalk.gray('What to do with package ')}` +
-              ` "${chalk.bold(packageName)} ${currentPackageVersion}" ?`,
-            questionsForUpdate,
-          );
-
-      // Helpers.pressKeyAndContinue('Press any key to continue');
-      if (whatToDo === 'update') {
-        const prefixOpt = {
-          //#region prefix options
-          '~': {
-            name: `tilde (~) => ${chalk.bold(`~${latestToUpdate}`)}`,
-          },
-          '^': {
-            name: `caret (^)  => ${chalk.bold(`^${latestToUpdate}`)}`,
-          },
-          '': {
-            name: `no prefix => ${chalk.bold(`${latestToUpdate}`)}`,
-          },
-          back: {
-            name: `-- go back -- => ${chalk.bold(`${latestToUpdate}`)}`,
-          },
-          //#endregion
-        };
-        const prefix = automaticallyUpdate
-          ? '~'
-          : await Helpers.selectChoicesAsk<keyof typeof prefixOpt>(
-              'Select prefix',
-              prefixOpt,
-            );
-
-        if (prefix === 'back') {
-          index--;
-          continue;
-        }
-        await this.project.packageJson.updateDependency({
-          packageName,
-          version: `${prefix}${latestToUpdate}`,
-        });
-        this.project.taonJson.overridePackageJsonManager.updateDependency({
-          packageName,
-          version: `${prefix}${latestToUpdate}`,
-        });
-      } else if (whatToDo === 'delete') {
-        this.project.packageJson.updateDependency({
-          packageName,
-          version: null,
-        });
-
-        this.project.taonJson.overridePackageJsonManager.updateDependency({
-          packageName,
-          version: null,
-        });
-      } else if (whatToDo === 'manual') {
-        while (true) {
-          const version = await Helpers.input({
-            question: `Enter version for ${packageName}`,
-            defaultValue: allDeps[packageName],
-          });
-          console.log('Checking version...');
-          const isAvailable = await checkIfPackageVersionAvailable(
-            packageName,
-            version,
-          );
-          if (isAvailable) {
-            await this.project.packageJson.updateDependency({
-              packageName,
-              version,
-            });
-
-            await this.project.taonJson.overridePackageJsonManager.updateDependency(
-              {
-                packageName,
-                version,
-              },
-            );
-
-            break;
-          } else {
-            Helpers.error(`Version ${version} not available on npm...`);
-          }
-        }
-      } else if (whatToDo === 'skipTo') {
-        while (true) {
-          const indexToSkip = await Helpers.input({
-            question: `Enter index to skip to`,
-            defaultValue: `${index}`,
-          });
-          index = Number(indexToSkip) - 1;
-          if (index >= 0 && index < allDepsKeys.length) {
-            break;
-          }
-        }
-      } else {
-        Helpers.info(`Skipping ${packageName}`);
-      }
-    }
-
+    await this.project.taonJson.updateDependenciesFromNpm({
+      onlyPackageNames: this.args,
+    });
     this._exit();
     //#endregion
   }
@@ -2133,6 +1745,19 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
   }
   //#endregion
 
+  tagsFor() {
+    //#region @backendFunc
+    const taonJsonContent = this.project.readFile(taonJsonMainProject);
+    const tags = UtilsJson.getAtrributiesFromJsonWithComments(
+      `[zone.js]`,
+      taonJsonContent,
+    );
+
+    console.log(tags);
+    this._exit();
+    //#endregion
+  }
+
   testGlob() {
     //#region @backendFunc
     // Helpers.taskStarted('Testing glob...');
@@ -2220,6 +1845,48 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
       });
       child.taonJson.autoReleaseConfigAllowedItems = items;
     });
+    this._exit();
+    //#endregion
+  }
+
+  getFilesFrom() {
+    //#region @backendFunc
+    const pathForFiles = crossPlatformPath([this.cwd, this.firstArg]);
+    Helpers.taskStarted(`Getting files from path...
+
+      ${pathForFiles}
+
+      `);
+    const files = UtilsFilesFoldersSync.getFilesFrom(pathForFiles, {
+      recursive: true,
+      followSymlinks: false,
+      omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
+    });
+
+    Helpers.taskDone(`Files found: ${files.length}`);
+    this._exit();
+    //#endregion
+  }
+
+  getFoldersFrom() {
+    //#region @backendFunc
+    const pathForFolders = crossPlatformPath([this.cwd, this.firstArg]);
+    Helpers.taskStarted(`Getting folders from path...
+
+      ${pathForFolders}
+
+      `);
+
+    const folders = UtilsFilesFoldersSync.getFoldersFrom(
+      crossPlatformPath([this.cwd, this.firstArg]),
+      {
+        recursive: true,
+        followSymlinks: false,
+        omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
+      },
+    );
+
+    Helpers.taskDone(`Folders found: ${folders.length}`);
     this._exit();
     //#endregion
   }
