@@ -67,21 +67,7 @@ export class $Version extends BaseCli {
     this._exit();
   }
 
-  //#region set framework version
-  async setFrameworkVersion() {
-    const newFrameworkVersion =
-      `v${this.firstArg.replace('v', '')}` as CoreModels.FrameworkVersion;
-    Helpers.info(
-      `Setting framework version (${newFrameworkVersion}) for ${this.project.name}... and children`,
-    );
-    await this.project.taonJson.setFrameworkVersion(newFrameworkVersion);
-    for (const child of this.project.children) {
-      await child.taonJson.setFrameworkVersion(newFrameworkVersion);
-    }
-    Helpers.taskDone(`Framework version set to ${newFrameworkVersion}`);
-    this._exit();
-  }
-  //#endregion
+
 }
 
 export default {

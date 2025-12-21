@@ -8,6 +8,7 @@ import {
   notNeededForExportFiles,
   TAGS,
   taonPackageName,
+  UtilsTerminal,
 } from 'tnp-core/src';
 import {
   CoreModels,
@@ -21,7 +22,11 @@ import {
   UtilsOs,
 } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
-import { BaseFeatureForProject, UtilsTypescript } from 'tnp-helpers/src';
+import {
+  BaseFeatureForProject,
+  UtilsNpm,
+  UtilsTypescript,
+} from 'tnp-helpers/src';
 import {
   createSourceFile,
   isClassDeclaration,
@@ -805,4 +810,79 @@ export class Framework extends BaseFeatureForProject<Project> {
     //#endregion
   }
   //#endregion
+
+  async setFrameworkVersion(
+    newFrameworkVersion: CoreModels.FrameworkVersion,
+    options?: { confirm?: boolean },
+  ): Promise<void> {
+    //#region @backendFunc
+    if (!newFrameworkVersion || !newFrameworkVersion.startsWith('v')) {
+      Helpers.error(
+        `Invalid framework version: ${newFrameworkVersion}`,
+        false,
+        true,
+      );
+    }
+    const rawNumber = Number(newFrameworkVersion.replace('v', ''));
+    if (isNaN(rawNumber) || rawNumber < 1) {
+      Helpers.error(
+        `Invalid framework version: ${newFrameworkVersion}`,
+        false,
+        true,
+      );
+    }
+
+    options = options || {};
+    Helpers.info(
+      `Setting framework version (${newFrameworkVersion}) for ${this.project.name}... and children`,
+    );
+    const confirm = !options.confirm
+      ? true
+      : await UtilsTerminal.confirm({
+          message: `Are you sure you want to set framework version to ${newFrameworkVersion} for project ${this.project.name} and all its children ?`,
+          defaultValue: false,
+        });
+
+    if (!confirm) {
+      Helpers.warn(`Operation cancelled by user.`);
+      return;
+    }
+    await this.project.taonJson.setFrameworkVersion(newFrameworkVersion);
+    for (const child of this.project.children) {
+      await child.taonJson.setFrameworkVersion(newFrameworkVersion);
+    }
+    Helpers.taskDone(`Framework version set to ${newFrameworkVersion}`);
+    //#endregion
+  }
+
+  async setNpmVersion(
+    npmVersion: string,
+    options?: { confirm?: boolean },
+  ): Promise<void> {
+    //#region @backendFunc
+
+    if (!UtilsNpm.isProperVersion(npmVersion)) {
+      Helpers.error(`Invalid npm version: ${npmVersion}`, false, true);
+    }
+
+    options = options || {};
+    Helpers.info(
+      `Setting npm version (${npmVersion}) for ${this.project.name}... and children`,
+    );
+    const confirm = !options.confirm
+      ? true
+      : await UtilsTerminal.confirm({
+          message: `Are you sure you want to set npm version to ${npmVersion} for project ${this.project.name} and all its children ?`,
+          defaultValue: false,
+        });
+    if (!confirm) {
+      Helpers.warn(`Operation cancelled by user.`);
+      return;
+    }
+    await this.project.packageJson.setVersion(npmVersion);
+    for (const child of this.project.children) {
+      await child.packageJson.setVersion(npmVersion);
+    }
+    //#endregion
+  }
 }

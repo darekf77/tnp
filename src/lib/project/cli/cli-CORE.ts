@@ -1,6 +1,6 @@
 //#region imports
 import { MagicRenamer } from 'magic-renamer/src';
-import { containerPrefix } from 'tnp/src';
+import { containerPrefix, tmpIsomorphicPackagesJson } from 'tnp/src';
 import {
   config,
   CoreModels,
@@ -19,7 +19,7 @@ import { UtilsCliClassMethod } from 'tnp-core/src';
 import { BaseCLiWorkerStartMode, Helpers, UtilsZip } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartParams } from 'tnp-helpers/src';
 
-import { EnvOptions } from '../../options';
+import { EnvOptions, ReleaseType } from '../../options';
 // import { ProcessWorker } from '../abstract/taon-worker/processes/process/process.worker';
 
 import { BaseCli } from './base-cli';
@@ -50,6 +50,29 @@ export class $Core extends BaseCli {
 
   async createNext(): Promise<void> {
     //#region @backendFunc
+    if (config.frameworkName !== tnpPackageName) {
+      Helpers.error(
+        `
+        This command is only for ${tnpPackageName} dev cli.
+      `,
+        false,
+        true,
+      );
+    }
+    if (
+      !this.project ||
+      this.project.name !== 'taon-dev' ||
+      !this.project.framework.isContainer
+    ) {
+      Helpers.error(
+        `
+        This command is only for ${tnpPackageName} container project 'taon-dev'.
+      `,
+        false,
+        true,
+      );
+    }
+
     const latestCoreContainer = this.project.framework.coreContainer;
 
     const coreContainerParentLocation = path.dirname(
@@ -67,14 +90,14 @@ export class $Core extends BaseCli {
       `Latest core container version: ${latestCoreContainerVersion}`,
     );
 
-    const continueOperatino = await UtilsTerminal.confirm({
+    const continueOperation = await UtilsTerminal.confirm({
       message: `Create new core container version v${
         latestCoreContainerVersion + 1
       } based on v${latestCoreContainerVersion}?`,
       defaultValue: true,
     });
 
-    if (!continueOperatino) {
+    if (!continueOperation) {
       Helpers.warn(`Operation cancelled by user.`);
       this._exit();
       return;
@@ -106,12 +129,73 @@ export class $Core extends BaseCli {
     // });
     Helpers.taskDone(`Dependencies updated.`);
 
+    Helpers.taskStarted(
+      `Copying node_modules and isomorphic packages from old to new container...`,
+    );
+    this.project.framework.coreContainer.nodeModules.copyToProject(
+      newContainer as any,
+    );
+    Helpers.copyFile(
+      this.project.framework.coreContainer.pathFor(tmpIsomorphicPackagesJson),
+      newContainer.pathFor(tmpIsomorphicPackagesJson),
+    );
+    Helpers.taskDone(`Copy done.`);
+
+    Helpers.taskStarted(
+      `Setting new NPM and framework version... for this project and children`,
+    );
+    await this.project.framework.setNpmVersion(`${newVersionOfCore}.0.0`);
+
+    Helpers.taskStarted(
+      `Setting framework version... for this project and children`,
+    );
+    await newContainer.framework.setFrameworkVersion(
+      `v${newVersionOfCore}` as CoreModels.FrameworkVersion,
+    );
+
+    Helpers.taskStarted(`Creating new core release for all projects...`);
+    await this.project.release(
+      this.params.clone({
+        release: {
+          autoReleaseUsingConfig: true,
+          autoReleaseTaskName: 'npm',
+          releaseVersionBumpType: 'patch',
+          releaseType: ReleaseType.MANUAL,
+        },
+      }),
+    );
+    Helpers.taskDone(`New core release created.`);
+
     Helpers.taskDone(
       `Done creating new core ${containerPrefix}v${newVersionOfCore}`,
     );
+
     this._exit();
     //#endregion
   }
+
+  //#region set npm clean major version
+  async setNpmVersion(): Promise<void> {
+    let npmVersion = this.firstArg;
+
+    await this.project.framework.setNpmVersion(npmVersion, {
+      confirm: true,
+    });
+    this._exit();
+  }
+  //#endregion
+
+  //#region set framework version
+  async setFrameworkVersion(): Promise<void> {
+    const newFrameworkVersion =
+      `v${this.firstArg.replace('v', '')}` as CoreModels.FrameworkVersion;
+
+    await this.project.framework.setFrameworkVersion(newFrameworkVersion, {
+      confirm: true,
+    });
+    this._exit();
+  }
+  //#endregion
 }
 
 export default {
