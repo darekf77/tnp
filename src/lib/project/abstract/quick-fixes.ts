@@ -1,6 +1,6 @@
 //#region imports
 import { TaonTempDatabasesFolder, TaonTempRoutesFolder } from 'taon/src';
-import { config, LibTypeEnum } from 'tnp-core/src';
+import { config, LibTypeEnum, UtilsFilesFoldersSync } from 'tnp-core/src';
 import { glob, fse, chalk } from 'tnp-core/src';
 import { path, _, crossPlatformPath } from 'tnp-core/src';
 import { UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
@@ -41,6 +41,27 @@ export class QuickFixes extends BaseQuickFixes<Project> {
   removeHuskyHooks(): void {
     //#region @backendFunc
     this.project.removeFolderByRelativePath('node_modules/husky');
+    //#endregion
+  }
+
+  fixPrettierCreatingConfigInNodeModules(): void {
+    //#region @backendFunc
+    const node_modules_path = this.project.nodeModules.path;
+    if (
+      Helpers.exists(node_modules_path) &&
+      Helpers.isFolder(node_modules_path) &&
+      !fse.lstatSync(node_modules_path).isSymbolicLink() &&
+      UtilsFilesFoldersSync.getFoldersFrom(node_modules_path, {
+        followSymlinks: false,
+        recursive: false,
+      }).length === 1 &&
+      path.basename(
+        UtilsFilesFoldersSync.getFoldersFrom(node_modules_path)[0],
+      ) === '.cache'
+    ) {
+      Helpers.info(`QUICK FIX: removing empty node_modules with only .cache`);
+      Helpers.removeFolderIfExists(node_modules_path);
+    }
     //#endregion
   }
 

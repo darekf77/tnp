@@ -1,5 +1,11 @@
 //#region imports
-import { config, dotTaonFolder, dotTnpFolder, LibTypeEnum } from 'tnp-core/src';
+import {
+  config,
+  dotTaonFolder,
+  dotTnpFolder,
+  LibTypeEnum,
+  UtilsFilesFoldersSync,
+} from 'tnp-core/src';
 import {
   Utils,
   UtilsTerminal,
@@ -194,6 +200,9 @@ export class ArtifactManager {
     //#endregion
 
     if (!initOptions.init.struct) {
+
+      this.project.quickFixes.fixPrettierCreatingConfigInNodeModules();
+
       //#region prevent incorrect node_modules with tnp dev mode
       if (config.frameworkName === tnpPackageName) {
         let node_modules_path = this.project.nodeModules.path;
