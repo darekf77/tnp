@@ -89,8 +89,10 @@ export class $Link extends BaseCli {
 
       ${localReleaseFolder}
 
-    as global cli tool... `);
-    Helpers.run(`npm link`, { cwd: localReleaseFolder }).sync();
+    as global cli tool, please wait...
+
+    `);
+    Helpers.run(`npm link`, { cwd: localReleaseFolder, output: true }).sync();
     Helpers.info(
       `Global link created for ` +
         `local/repo version of ${chalk.bold(this.project.nameForCli)}`,
