@@ -1,26 +1,11 @@
 //#region imports
 import { MagicRenamer } from 'magic-renamer/src';
 import { containerPrefix, tmpIsomorphicPackagesJson } from 'tnp/src';
-import {
-  config,
-  CoreModels,
-  frameworkName,
-  path,
-  tnpPackageName,
-} from 'tnp-core/src';
-import {
-  _,
-  crossPlatformPath,
-  isElevated,
-  UtilsNetwork,
-  UtilsTerminal,
-} from 'tnp-core/src';
-import { UtilsCliClassMethod } from 'tnp-core/src';
-import { BaseCLiWorkerStartMode, Helpers, UtilsZip } from 'tnp-helpers/src';
-import { BaseCLiWorkerStartParams } from 'tnp-helpers/src';
+import { config, CoreModels, path, tnpPackageName } from 'tnp-core/src';
+import { _, crossPlatformPath, UtilsTerminal } from 'tnp-core/src';
+import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 
-import { EnvOptions, ReleaseType } from '../../options';
-// import { ProcessWorker } from '../abstract/taon-worker/processes/process/process.worker';
+import { ReleaseType } from '../../options';
 
 import { BaseCli } from './base-cli';
 //#endregion
@@ -196,6 +181,48 @@ export class $Core extends BaseCli {
     this._exit();
   }
   //#endregion
+
+  updateDepsFrom() {
+    //#region @backendFunc
+    const pathToSourceProject = crossPlatformPath(
+      path.isAbsolute(this.firstArg)
+        ? this.firstArg
+        : path.join(this.cwd, this.firstArg),
+    );
+
+    Helpers.info(`Updating dependencies from: ${pathToSourceProject}`);
+
+    const proj = this.project.ins.From(pathToSourceProject);
+    const pjSource = new BasePackageJson({
+      cwd: proj.packageJson.cwd,
+    });
+
+    const alldeps = Object.keys(pjSource.allDependencies);
+
+    const currentDeps =
+      this.project.taonJson.overridePackageJsonManager.allDependencies;
+
+    for (const depnName of alldeps) {
+      const depVersion = pjSource.allDependencies[depnName];
+      const currentVersion = currentDeps[depnName];
+      const curretnPrefix = currentVersion
+        ? currentVersion.startsWith('^')
+          ? '^'
+          : currentVersion.startsWith('~')
+            ? '~'
+            : ''
+        : '';
+
+      this.project.taonJson.overridePackageJsonManager.updateDependency({
+        packageName: depnName,
+        version: `${curretnPrefix}${depVersion}`,
+        createNewEntryIfNotExist: true,
+      });
+    }
+    Helpers.taskDone(`Dependencies updated from ${pathToSourceProject}`);
+    this._exit();
+    //#endregion
+  }
 }
 
 export default {
