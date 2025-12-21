@@ -733,13 +733,19 @@ export class $Global extends BaseGlobalCommandLine<
       Project.ins.by(LibTypeEnum.CONTAINER).location,
       '..',
     ]);
+
+    const ommitedVersion = ['v20'] as CoreModels.FrameworkVersion[];
     const foldersAbsPaths = Helpers.foldersFrom(toReinstallCoreContainers, {
       recursive: false,
     })
       .filter(f => path.basename(f).startsWith(LibTypeEnum.CONTAINER))
       .filter(f => {
         const project = this.ins.From(f) as Project;
-        return project && project.framework.frameworkVersionAtLeast('v18');
+        return (
+          project &&
+          project.framework.frameworkVersionAtLeast('v18') &&
+          !ommitedVersion.includes(project.framework.frameworkVersion)
+        );
       });
 
     const projectsFoldersAbsPaths =
