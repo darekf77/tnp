@@ -39,39 +39,41 @@ import type { Project } from '../abstract/project';
 // @ts-ignore TODO weird inheritance problem
 export class QuickFixes extends BaseQuickFixes<Project> {
   removeHuskyHooks(): void {
-
     //#region @backendFunc
     this.project.removeFolderByRelativePath('node_modules/husky');
     //#endregion
-
   }
 
   fixPrettierCreatingConfigInNodeModules(): void {
-
     //#region @backendFunc
     const node_modules_path = this.project.nodeModules.path;
+
+    const folderExists =
+      Helpers.exists(node_modules_path) && Helpers.isFolder(node_modules_path);
+    const isNotSymlink =
+      folderExists && !fse.lstatSync(node_modules_path).isSymbolicLink();
+
+    const allFolders = isNotSymlink
+      ? UtilsFilesFoldersSync.getFoldersFrom(node_modules_path, {
+          followSymlinks: false,
+          recursive: false,
+        })
+      : [];
+
     if (
-      Helpers.exists(node_modules_path) &&
-      Helpers.isFolder(node_modules_path) &&
-      !fse.lstatSync(node_modules_path).isSymbolicLink() &&
-      UtilsFilesFoldersSync.getFoldersFrom(node_modules_path, {
-        followSymlinks: false,
-        recursive: false,
-      }).length === 1 &&
-      path.basename(
-        UtilsFilesFoldersSync.getFoldersFrom(node_modules_path)[0],
-      ) === '.cache'
+      folderExists &&
+      isNotSymlink &&
+      allFolders.length === 1 &&
+      path.basename(allFolders[0]) === '.cache'
     ) {
       Helpers.info(`QUICK FIX: removing empty node_modules with only .cache`);
-      Helpers.removeFolderIfExists(node_modules_path);
+      Helpers.remove(node_modules_path);
     }
     //#endregion
-
   }
 
   //#region recreate temp source necessary files for tests
   recreateTempSourceNecessaryFilesForTesting(): void {
-
     //#region @backendFunc
     if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
       return;
@@ -129,13 +131,11 @@ export class QuickFixes extends BaseQuickFixes<Project> {
       });
     })();
     //#endregion
-
   }
   //#endregion
 
   //#region fix build dirs
   makeSureDistFolderExists(): void {
-
     //#region @backendFunc
     const p = this.project.pathFor(distMainProject);
     if (!Helpers.isFolder(p)) {
@@ -143,13 +143,11 @@ export class QuickFixes extends BaseQuickFixes<Project> {
       Helpers.mkdirp(p);
     }
     //#endregion
-
   }
   //#endregion
 
   //#region add missing angular files
   public missingAngularLibFiles(): void {
-
     //#region @backendFunc
     Helpers.taskStarted(`[quick fixes] missing angular lib fles start`, true);
     if (
@@ -385,13 +383,11 @@ ${THIS_IS_GENERATED_STRING}`,
 
     Helpers.taskDone(`[quick fixes] missing angular lib fles end`);
     //#endregion
-
   }
   //#endregion
 
   //#region bad types in node modules
   removeBadTypesInNodeModules(): void {
-
     //#region @backendFunc
     if (!fse.existsSync(this.project.nodeModules.path)) {
       Helpers.warn(
@@ -439,13 +435,11 @@ ${THIS_IS_GENERATED_STRING}`,
     }
 
     //#endregion
-
   }
   //#endregion
 
   //#region add missing source folder
   public addMissingSrcFolderToEachProject(): void {
-
     //#region @backendFunc
     /// QUCIK_FIX make it more generic
     if (this.project.framework.frameworkVersionEquals('v1')) {
@@ -464,13 +458,11 @@ ${THIS_IS_GENERATED_STRING}`,
     }
     Helpers.taskDone(`[quick fixes] missing source folder end`);
     //#endregion
-
   }
   //#endregion
 
   //#region node_modules replacements zips
   public get nodeModulesPkgsReplacements() {
-
     //#region @backendFunc
     const npmReplacements = glob
       .sync(`${this.project.pathFor(nodeModulesMainProject)}-*.zip`)
@@ -478,7 +470,6 @@ ${THIS_IS_GENERATED_STRING}`,
 
     return npmReplacements;
     //#endregion
-
   }
 
   /**
@@ -490,7 +481,6 @@ ${THIS_IS_GENERATED_STRING}`,
    * This will prevent packages deletion from npm
    */
   public unpackNodeModulesPackagesZipReplacements() {
-
     //#region @backendFunc
     return; // TODO @UNCOMMENT zip refactored
     const nodeModulesPath = this.project.pathFor(nodeModulesMainProject);
@@ -526,8 +516,6 @@ ${THIS_IS_GENERATED_STRING}`,
       }
     });
     //#endregion
-
   }
   //#endregion
-
 }

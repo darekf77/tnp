@@ -254,6 +254,11 @@ export class NodeModules extends BaseNodeModules {
     } catch (error) {
       Helpers.remove(this.project.nodeModules.path);
     }
+    try {
+      if (Helpers.exists(this.project.nodeModules.path)) {
+        Helpers.removeFolderIfExists(this.project.nodeModules.path);
+      }
+    } catch (error) {}
     Helpers.createSymLink(
       coreContainer.nodeModules.path,
       this.project.nodeModules.path,

@@ -56,7 +56,6 @@ export class ArtifactManager {
   public readonly filesRecreator: FilesRecreator;
 
   static for(project: Project): ArtifactManager {
-
     //#region @backendFunc
     const artifactProcess = {
       angularNodeApp:
@@ -87,7 +86,6 @@ export class ArtifactManager {
 
     return manager as ArtifactManager;
     //#endregion
-
   }
 
   //#region constructor
@@ -159,13 +157,11 @@ export class ArtifactManager {
    * struct() <=> init() with struct flag
    */
   async struct(initOptions: EnvOptions): Promise<EnvOptions> {
-
     //#region @backendFunc
     initOptions.purpose = 'only structure init';
     initOptions.init.struct = true;
     return await this.init(initOptions);
     //#endregion
-
   }
 
   /**
@@ -180,7 +176,6 @@ export class ArtifactManager {
 
   //#region public methods / init
   public async init(initOptions: EnvOptions): Promise<EnvOptions> {
-
     //#region @backendFunc
 
     //#region prevent not requested framework version
@@ -204,10 +199,8 @@ export class ArtifactManager {
     }
     //#endregion
 
+    this.project.quickFixes.fixPrettierCreatingConfigInNodeModules();
     if (!initOptions.init.struct) {
-
-      this.project.quickFixes.fixPrettierCreatingConfigInNodeModules();
-
       //#region prevent incorrect node_modules with tnp dev mode
       if (config.frameworkName === tnpPackageName) {
         let node_modules_path = this.project.nodeModules.path;
@@ -432,7 +425,6 @@ export class ArtifactManager {
     }
     return initOptions;
     //#endregion
-
   }
 
   public async initAllChildren(options: EnvOptions): Promise<void> {
@@ -474,7 +466,6 @@ export class ArtifactManager {
   //#region public methods / build standalone
   async build(buildOptions: EnvOptions): Promise<void> {
     if (!buildOptions.release.targetArtifact) {
-
       //#region  build Menu
       // TODO for unified build menu is not efficient enouth
       Helpers.error(
@@ -572,9 +563,7 @@ export class ArtifactManager {
       //   ],
       // });
       //#endregion
-
     } else {
-
       //#region partial build
       if (
         !buildOptions.release.targetArtifact ||
@@ -616,7 +605,6 @@ export class ArtifactManager {
         await this.artifact.vscodePlugin.buildPartial(buildOptions.clone());
       }
       //#endregion
-
     }
   }
   //#endregion
@@ -686,7 +674,6 @@ export class ArtifactManager {
     releaseOptions: EnvOptions,
     autoReleaseProcess = false,
   ): Promise<void> {
-
     //#region @backendFunc
 
     //#region handle autorelease
@@ -892,14 +879,12 @@ export class ArtifactManager {
     //#endregion
 
     //#endregion
-
   }
 
   async releaseAllChildren(
     options: EnvOptions,
     children = this.project.children,
   ): Promise<void> {
-
     //#region @backendFunc
     const howManyChildren = children.length;
     for (let index = 0; index < children.length; index++) {
@@ -920,7 +905,6 @@ export class ArtifactManager {
     }
 
     //#endregion
-
   }
   //#endregion
 
@@ -930,7 +914,6 @@ export class ArtifactManager {
     actionName: 'release' | 'build' | 'init' | 'clear' | 'struct' | 'brand',
     project: Project = this.project,
   ): Promise<void> {
-
     //#region @backendFunc
     while (true) {
       try {
@@ -972,13 +955,11 @@ export class ArtifactManager {
       }
     }
     //#endregion
-
   }
   //#endregion
 
   //#region private methods / recreation and fixing core files
   private recreateAndFixCoreFiles(): void {
-
     //#region @backendFunc
     const project = this.project;
     if (
@@ -1006,8 +987,6 @@ export class ArtifactManager {
       }
     }
     //#endregion
-
   }
   //#endregion
-
 }
