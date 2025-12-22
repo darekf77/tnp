@@ -67,6 +67,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
   }
 
   insideStruct(): InsideStruct {
+
     //#region @backendFunc
     const project = this.project;
     const tmpProjectsStandalone = this.resolveTmpProjectStandalonePath();
@@ -95,6 +96,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
         ],
         linkNodeModulesTo: [`${templateFolderInCoreProject}/`],
         linksFuncs: [
+
           //#region what and where needs to linked
           [
             // from this
@@ -117,8 +119,10 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             },
           ],
           //#endregion
+
         ],
         endAction: async ({ replacement }) => {
+
           //#region @backendFunc
 
           //#region action after recreating/updating inside strcut
@@ -375,6 +379,7 @@ ${appComponentFile}
               Helpers.writeFile(appModuleFilePath, indexHtmlFile);
             })();
             //#endregion
+
           })();
           //#endregion
 
@@ -465,6 +470,7 @@ ${appComponentFile}
           //#endregion
 
           if (this.isElectron) {
+
             //#region electron
             (() => {
               const electronBackend = project.pathFor(
@@ -560,10 +566,12 @@ ${appComponentFile}
             const assetsPath = project.pathFor([srcMainProject, assetsFromSrc]);
 
             if (this.project.artifactsManager.globalHelper.branding.exist) {
+
               //#region apply pwa generated icons
               manifestJson.icons =
                 this.project.artifactsManager.globalHelper.branding.iconsToAdd;
               //#endregion
+
               indexHtml = indexHtml.replace(
                 `<link rel="icon" type="image/x-icon" href="favicon.ico">`,
                 '',
@@ -580,6 +588,7 @@ ${appComponentFile}
                 `<link rel="icon" type="image/x-icon" href="`,
               );
             } else {
+
               //#region apply default icons
               const iconsPath = crossPlatformPath(
                 path.join(assetsPath, 'icons'),
@@ -604,6 +613,7 @@ ${appComponentFile}
                 };
               });
               //#endregion
+
             }
 
             manifestJson.icons = manifestJson.icons.map(c => {
@@ -728,5 +738,6 @@ ${appComponentFile}
     );
     return result;
     //#endregion
+
   }
 }

@@ -9,6 +9,7 @@ import { BaseCli } from './base-cli';
 
 // @ts-ignore TODO weird inheritance problem
 class $Build extends BaseCli {
+
   //#region initialize
   async __initialize__(): Promise<void> {
     await super.__initialize__();
@@ -371,6 +372,7 @@ class $Build extends BaseCli {
    */
   async mkdocs() {
     const mkdocsActions = {
+
       //#region @notForNpm
       SELECT_COMMAND: {
         name: '< select command >',
@@ -440,6 +442,7 @@ class $Build extends BaseCli {
   //#endregion
 
   //#endregion
+
 }
 
 export default {

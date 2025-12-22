@@ -1,4 +1,5 @@
 //#region imports
+import 'reflect-metadata';
 import axios from 'axios';
 import { config, taonPackageName } from 'tnp-core/src';
 import { chalk, Helpers, UtilsNetwork, UtilsTerminal } from 'tnp-core/src';
@@ -150,6 +151,7 @@ export async function start(
       }
     },
     shortArgsReplaceConfig: {
+
       //#region short args replacement
       // TODO use UtilsCliClassMethod !!!
       il: 'release:install:locally',

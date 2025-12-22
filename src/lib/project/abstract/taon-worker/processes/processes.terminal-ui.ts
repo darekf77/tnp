@@ -23,6 +23,7 @@ import { ProcessesWorker } from './processes.worker';
 
 let dummyProcessCreate = false;
 export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker> {
+
   //#region header text
   protected async headerText(): Promise<string> {
     return 'Processes';
@@ -37,6 +38,7 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
 
   //#region dummy process params
   async getDummyProcessParams(): Promise<{ command: string; cwd: string }> {
+
     //#region @backendFunc
     const { $Global } = await import('../../../cli/cli-_GLOBAL_');
     const dummyDummyCommand = `${config.frameworkName} ${UtilsCliClassMethod.getFrom(
@@ -46,6 +48,7 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
     const dummyProcessCwd = UtilsOs.getRealHomeDir();
     return { command: dummyDummyCommand, cwd: dummyProcessCwd };
     //#endregion
+
   }
   //#endregion
 
@@ -54,6 +57,7 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
     process: Processes,
     processesController: ProcessesController,
   ): Promise<Processes> {
+
     //#region @backendFunc
     while (true) {
       try {
@@ -72,6 +76,7 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
       }
     }
     //#endregion
+
   }
   //#endregion
 
@@ -80,6 +85,7 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
     processFromDb: Processes,
     processesController: ProcessesController,
   ): Promise<void> {
+
     //#region @backendFunc
     while (true) {
       Helpers.info(`Fetching processes data...`);
@@ -187,6 +193,7 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
       }
     }
     //#endregion
+
   }
   //#endregion
 
@@ -194,9 +201,11 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
     exitIsOnlyReturn?: boolean;
     chooseAction?: boolean;
   }): BaseWorkerTerminalActionReturnType {
+
     //#region @backendFunc
 
     const myActions: BaseWorkerTerminalActionReturnType = {
+
       //#region get all processes from backend
       getStuffFromBackend: {
         name: 'Get all processes from backend',
@@ -456,6 +465,7 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
         },
       },
       //#endregion
+
     };
 
     if (!dummyProcessCreate) {
@@ -471,5 +481,6 @@ export class ProcessesTerminalUI extends BaseCliWorkerTerminalUI<ProcessesWorker
       ...super.getWorkerTerminalActions({ ...options, chooseAction: false }),
     };
     //#endregion
+
   }
 }

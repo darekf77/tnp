@@ -24,6 +24,7 @@ import { BaseCli } from './base-cli';
 
 // @ts-ignore TODO weird inheritance problem
 export class $Init extends BaseCli {
+
   //#region prepare args
   async __initialize__(): Promise<void> {
     await super.__initialize__();
@@ -151,6 +152,7 @@ export class $Init extends BaseCli {
     this.project = proj;
   }
   //#endregion
+
 }
 
 export default {

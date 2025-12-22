@@ -54,11 +54,14 @@ import type { Project } from './project';
 
 // @ts-ignore TODO weird inheritance problem
 export class Framework extends BaseFeatureForProject<Project> {
+
   //#region is unknown npm project
   get isUnknownNpmProject(): boolean {
+
     //#region @backendFunc
     return this.project.typeIs(LibTypeEnum.UNKNOWN_NPM_PROJECT);
     //#endregion
+
   }
   //#endregion
 
@@ -67,12 +70,14 @@ export class Framework extends BaseFeatureForProject<Project> {
    * TODO make this more robust
    */
   get isTnp(): boolean {
+
     //#region @backendFunc
     if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
       return false;
     }
     return this.project.location === this.project.ins.Tnp.location;
     //#endregion
+
   }
   //#endregion
 
@@ -81,19 +86,23 @@ export class Framework extends BaseFeatureForProject<Project> {
    * Core project with basic tested functionality
    */
   get isCoreProject(): boolean {
+
     //#region @backendFunc
     return this.project.taonJson.isCoreProject;
     //#endregion
+
   }
   //#endregion
 
   //#region is container or workspace with linked projects
   get isContainerWithLinkedProjects(): boolean {
+
     //#region @backendFunc
     return (
       this.isContainer && this.project.linkedProjects.linkedProjects.length > 0
     );
     //#endregion
+
   }
   //#endregion
 
@@ -102,27 +111,33 @@ export class Framework extends BaseFeatureForProject<Project> {
    * is normal or smart container
    */
   get isContainer(): boolean {
+
     //#region @backendFunc
     return this.project.typeIs(LibTypeEnum.CONTAINER);
     //#endregion
+
   }
   //#endregion
 
   //#region is container core project
   get isContainerCoreProject(): boolean {
+
     //#region @backendFunc
     return this.isContainer && this.isCoreProject;
     //#endregion
+
   }
   //#endregion
 
   //#region is container child
   get isContainerChild(): boolean {
+
     //#region @backendFunc
     return (
       !!this.project.parent && this.project.parent.typeIs(LibTypeEnum.CONTAINER)
     );
     //#endregion
+
   }
   //#endregion
 
@@ -134,25 +149,30 @@ export class Framework extends BaseFeatureForProject<Project> {
    * - angular-lib: frontend ui lib with angular preview
    */
   get isStandaloneProject(): boolean {
+
     //#region @backendFunc
     if (this.project.typeIs(LibTypeEnum.UNKNOWN)) {
       return false;
     }
     return !this.isContainer && !this.isUnknownNpmProject;
     //#endregion
+
   }
   //#endregion
 
   //#region get framework version
   public get frameworkVersion(): CoreModels.FrameworkVersion {
+
     //#region @backendFunc
     return this.project.taonJson.frameworkVersion;
     //#endregion
+
   }
   //#endregion
 
   //#region get framework version minus 1
   public get frameworkVersionMinusOne(): CoreModels.FrameworkVersion {
+
     //#region @backendFunc
     const curr = Number(
       _.isString(this.frameworkVersion) &&
@@ -163,11 +183,13 @@ export class Framework extends BaseFeatureForProject<Project> {
     }
     return 'v1';
     //#endregion
+
   }
   //#endregion
 
   //#region framework version equals
   public frameworkVersionEquals(version: CoreModels.FrameworkVersion): boolean {
+
     //#region @backendFunc
     const ver = Number(_.isString(version) && version.replace('v', ''));
 
@@ -177,6 +199,7 @@ export class Framework extends BaseFeatureForProject<Project> {
     );
     return !isNaN(ver) && !isNaN(curr) && curr === ver;
     //#endregion
+
   }
   //#endregion
 
@@ -184,6 +207,7 @@ export class Framework extends BaseFeatureForProject<Project> {
   public frameworkVersionAtLeast(
     version: CoreModels.FrameworkVersion,
   ): boolean {
+
     //#region @backendFunc
     const ver = Number(_.isString(version) && version.replace('v', ''));
     const curr = Number(
@@ -192,11 +216,13 @@ export class Framework extends BaseFeatureForProject<Project> {
     );
     return !isNaN(ver) && !isNaN(curr) && curr >= ver;
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / add missing components/modules
   public replaceModuleAndComponentName(tsFileContent: string): string {
+
     //#region @backendFunc
     // Parse the source file using TypeScript API
     const projectName = this.project.name;
@@ -311,6 +337,7 @@ export class Framework extends BaseFeatureForProject<Project> {
 
     return tsFileContent;
     //#endregion
+
   }
   //#endregion
 
@@ -345,6 +372,7 @@ export class Framework extends BaseFeatureForProject<Project> {
 
   //#region recreate vars scss
   recreateVarsScss(initOptions: EnvOptions): void {
+
     //#region @backendFunc
     if (!this.project.typeIs(LibTypeEnum.ISOMORPHIC_LIB)) {
       return;
@@ -368,12 +396,15 @@ export class Framework extends BaseFeatureForProject<Project> {
   `,
     );
     //#endregion
+
     //#endregion
+
   }
   //#endregion
 
   //#region prevent not existed component and module in app.ts
   preventNotExistedComponentAndModuleInAppTs(): void {
+
     //#region @backendFunc
     const relativeAppTs = crossPlatformPath([srcMainProject, appTsFromSrc]);
     const appFile = this.project.pathFor(relativeAppTs);
@@ -388,6 +419,7 @@ export class Framework extends BaseFeatureForProject<Project> {
     } catch (error) {}
 
     //#endregion
+
   }
   //#endregion
 
@@ -405,6 +437,7 @@ export class Framework extends BaseFeatureForProject<Project> {
     relativePathInCoreProject?: string | string[];
     customDestinationLocation?: string | string[];
   }): void => {
+
     //#region @backendFunc
     let {
       fileRelativePath,
@@ -443,6 +476,7 @@ export class Framework extends BaseFeatureForProject<Project> {
       }
     }
     //#endregion
+
   };
   //#endregion
 
@@ -450,12 +484,14 @@ export class Framework extends BaseFeatureForProject<Project> {
   public frameworkVersionLessThanOrEqual(
     version: CoreModels.FrameworkVersion,
   ): boolean {
+
     //#region @backendFunc
     return (
       this.frameworkVersionEquals(version) ||
       this.frameworkVersionLessThan(version)
     );
     //#endregion
+
   }
   //#endregion
 
@@ -463,6 +499,7 @@ export class Framework extends BaseFeatureForProject<Project> {
   public frameworkVersionLessThan(
     version: CoreModels.FrameworkVersion,
   ): boolean {
+
     //#region @backendFunc
     const ver = Number(_.isString(version) && version.replace('v', ''));
     const curr = Number(
@@ -471,6 +508,7 @@ export class Framework extends BaseFeatureForProject<Project> {
     );
     return !isNaN(ver) && !isNaN(curr) && curr < ver;
     //#endregion
+
   }
   //#endregion
 
@@ -479,6 +517,7 @@ export class Framework extends BaseFeatureForProject<Project> {
     isCoreContainer: boolean;
     coreContainerFromNodeModules: Project;
   } {
+
     //#region @backendFunc
     const realpathCCfromCurrentProj =
       fse.existsSync(this.project.nodeModules.path) &&
@@ -497,19 +536,23 @@ export class Framework extends BaseFeatureForProject<Project> {
 
     return { isCoreContainer, coreContainerFromNodeModules };
     //#endregion
+
   }
   //#endregion
 
   //#region core project
   get coreProject(): Project {
+
     //#region @backendFunc
     return this.project.ins.by(this.project.type, this.frameworkVersion) as any;
     //#endregion
+
   }
   //#endregion
 
   //#region is link to node modules different than core container
   get isLinkToNodeModulesDifferentThanCoreContainer() {
+
     //#region @backendFunc
     const { isCoreContainer, coreContainerFromNodeModules } =
       this.containerDataFromNodeModulesLink;
@@ -521,6 +564,7 @@ export class Framework extends BaseFeatureForProject<Project> {
           .location
     );
     //#endregion
+
   }
   //#endregion
 
@@ -530,6 +574,7 @@ export class Framework extends BaseFeatureForProject<Project> {
    * WHEN NODE_MODULES BELONG TO TNP -> it uses tnp core container
    */
   get coreContainer(): Project {
+
     //#region @backendFunc
     // use core container from node_modules link first - if it is proper
 
@@ -579,6 +624,7 @@ export class Framework extends BaseFeatureForProject<Project> {
     // coreContainer.nodeModules.reinstallSync();
     return coreContainer;
     //#endregion
+
   }
   //#endregion
 
@@ -594,6 +640,7 @@ export class Framework extends BaseFeatureForProject<Project> {
 
   //#region generate index.ts
   private resolveAbsPath(relativePath: string): string {
+
     //#region @backendFunc
     if (!relativePath || relativePath === '') {
       return this.project.location;
@@ -603,9 +650,11 @@ export class Framework extends BaseFeatureForProject<Project> {
     }
     return this.project.pathFor(relativePath);
     //#endregion
+
   }
 
   generateIndexTs(relativePath: string = '') {
+
     //#region @backendFunc
     const absPath = this.resolveAbsPath(relativePath);
 
@@ -663,11 +712,13 @@ export class Framework extends BaseFeatureForProject<Project> {
         .join('\n') + '\n',
     );
     //#endregion
+
   }
   //#endregion
 
   //#region global
   async global(globalPackageName: string, packageOnly = false) {
+
     //#region @backendFunc
     const oldContainer = this.project.ins.by(
       LibTypeEnum.CONTAINER,
@@ -694,6 +745,7 @@ export class Framework extends BaseFeatureForProject<Project> {
       ),
     );
     //#endregion
+
   }
   //#endregion
 
@@ -734,6 +786,7 @@ export class Framework extends BaseFeatureForProject<Project> {
   private _allDetectedNestedContexts(options?: {
     skipLibFolder?: boolean;
   }): Models.TaonContext[] {
+
     //#region @backendFunc
     options = options || {};
     const basePath = this.project.pathFor([srcMainProject]);
@@ -763,12 +816,14 @@ export class Framework extends BaseFeatureForProject<Project> {
     }, [] as Models.TaonContext[]);
     return detectedDatabaseFiles;
     //#endregion
+
   }
 
   //#endregion
 
   //#region get all external isomorphic dependencies for npm lib
   get allDetectedExternalIsomorphicDependenciesForNpmLib(): string[] {
+
     //#region @backendFunc
     const allFiles = Helpers.getFilesFrom(
       this.project.pathFor(srcMainProject),
@@ -808,6 +863,7 @@ export class Framework extends BaseFeatureForProject<Project> {
 
     return displayList;
     //#endregion
+
   }
   //#endregion
 
@@ -815,6 +871,7 @@ export class Framework extends BaseFeatureForProject<Project> {
     newFrameworkVersion: CoreModels.FrameworkVersion,
     options?: { confirm?: boolean },
   ): Promise<void> {
+
     //#region @backendFunc
     if (!newFrameworkVersion || !newFrameworkVersion.startsWith('v')) {
       Helpers.error(
@@ -853,12 +910,14 @@ export class Framework extends BaseFeatureForProject<Project> {
     }
     Helpers.taskDone(`Framework version set to ${newFrameworkVersion}`);
     //#endregion
+
   }
 
   async setNpmVersion(
     npmVersion: string,
     options?: { confirm?: boolean },
   ): Promise<void> {
+
     //#region @backendFunc
 
     if (!UtilsNpm.isProperVersion(npmVersion)) {
@@ -884,5 +943,6 @@ export class Framework extends BaseFeatureForProject<Project> {
       await child.packageJson.setVersion(npmVersion);
     }
     //#endregion
+
   }
 }

@@ -16,6 +16,7 @@ export const CallBackProcess = (
  * TODO In progress documentation for whole code split process
  */
 export namespace CODE_SPLIT_PROCESS {
+
   //#region BEFORE
   export namespace BEFORE {
     export namespace SPLIT {
@@ -231,5 +232,6 @@ export namespace CODE_SPLIT_PROCESS {
     };
   }
   //#endregion
+
 }
 //#endregion

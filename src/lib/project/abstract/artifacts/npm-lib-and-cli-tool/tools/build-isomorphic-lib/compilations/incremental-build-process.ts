@@ -15,6 +15,7 @@ import { BrowserCompilation } from './compilation-browser';
 //#endregion
 
 export class IncrementalBuildProcess {
+
   //#region fields & getters
 
   protected backendCompilation: BackendCompilation;
@@ -23,6 +24,7 @@ export class IncrementalBuildProcess {
   protected browserCompilationStandalone: BrowserCompilation;
 
   //#region constructor
+
   //#region @backend
   constructor(
     private project: Project,
@@ -74,22 +76,28 @@ export class IncrementalBuildProcess {
     }
   }
   //#endregion
+
   //#endregion
 
   //#region  methods
   protected browserTaksName(taskName: string, bc: BrowserCompilation) {
+
     //#region @backendFunc
     return `browser ${taskName} in ${path.basename(this.project.location)}`;
     //#endregion
+
   }
 
   protected backendTaskName(taskName) {
+
     //#region @backendFunc
     return `${taskName} in ${path.basename(this.project.location)}`;
     //#endregion
+
   }
 
   private recreateBrowserLinks(bc: BrowserCompilation) {
+
     //#region @backendFunc
     // TODO does not make sense anymore ?
     // const outDistPath = crossPlatformPath(
@@ -105,6 +113,7 @@ export class IncrementalBuildProcess {
     //   continueWhenExistedFolderDoesntExists: true,
     // });
     //#endregion
+
   }
 
   async runTask(options: {
@@ -112,6 +121,7 @@ export class IncrementalBuildProcess {
     watch?: boolean;
     afterInitCallBack?: () => void;
   }): Promise<void> {
+
     //#region @backendFunc
     const { taskName, watch, afterInitCallBack } = options;
     if (watch) {
@@ -123,9 +133,11 @@ export class IncrementalBuildProcess {
       await this.start(taskName, afterInitCallBack);
     }
     //#endregion
+
   }
 
   async start(taskName?: string, afterInitCallBack?: () => void) {
+
     //#region @backendFunc
     if (this.project.framework.isStandaloneProject) {
       await this.browserCompilationStandalone.start({
@@ -149,12 +161,14 @@ export class IncrementalBuildProcess {
       await Helpers.runSyncOrAsync({ functionFn: afterInitCallBack });
     }
     //#endregion
+
   }
 
   async startAndWatch(
     taskName?: string,
     options?: StartAndWatchOptions,
   ) {
+
     //#region @backendFunc
     // console.log('[${config.frameworkName}][incremental-build-process] taskName' + taskName)
 
@@ -182,7 +196,9 @@ export class IncrementalBuildProcess {
       await Helpers.runSyncOrAsync({ functionFn: afterInitCallBack });
     }
     //#endregion
+
   }
 
   //#endregion
+
 }

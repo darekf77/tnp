@@ -1,17 +1,18 @@
-import { Taon } from 'taon/src';
+import { Taon, TaonController } from 'taon/src';
+import { GET } from 'taon/src';
 import { TaonBaseCliWorkerController } from 'tnp-helpers/src';
 
 import { TaonBuild } from './taon-build.entity';
 import { TaonEnv } from './taon-env.entity';
 
 //#region ports controller
-@Taon.Controller({
+@TaonController({
   className: 'TaonProjectsController',
 })
 export class TaonProjectsController extends TaonBaseCliWorkerController {
   taonEnvRepo = this.injectRepo(TaonEnv);
 
-  @Taon.Http.GET()
+  @GET()
   getEnvironments(): Taon.Response<TaonEnv[]> {
     //#region @backendFunc
     return async (req, res) => {

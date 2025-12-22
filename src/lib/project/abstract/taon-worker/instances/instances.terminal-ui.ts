@@ -28,6 +28,7 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
     exitIsOnlyReturn?: boolean;
     chooseAction?: boolean;
   }): BaseWorkerTerminalActionReturnType {
+
     //#region @backendFunc
     const myActions: BaseWorkerTerminalActionReturnType = {
       getStuffFromBackend: {
@@ -113,6 +114,7 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
 
           while (true) {
             try {
+
               //#region terminal form
               const ipAddress = await UtilsTerminal.input({
                 required: true,
@@ -155,6 +157,7 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
               });
               break;
             } catch (error) {
+
               //#region error handling
               if (
                 await UtilsTerminal.confirm({
@@ -166,6 +169,7 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
                 break;
               }
               //#endregion
+
             }
           }
         },
@@ -181,5 +185,6 @@ export class InstancesTerminalUI extends BaseCliWorkerTerminalUI<InstancesWorker
       }),
     };
     //#endregion
+
   }
 }

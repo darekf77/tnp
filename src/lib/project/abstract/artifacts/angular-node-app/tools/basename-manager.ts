@@ -18,6 +18,7 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
   }
 
   private resolveBaseHrefForProj(envOptions: EnvOptions): string {
+
     //#region @backendFunc
     const overrideBaseHref: string = envOptions.build.baseHref;
     let baseHref = this.rootBaseHref;
@@ -40,9 +41,11 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
 
     return baseHref;
     //#endregion
+
   }
 
   getBaseHref(envOptions: EnvOptions): string {
+
     //#region @backendFunc
     let baseHref = this.resolveBaseHrefForProj(envOptions);
 
@@ -51,9 +54,11 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
     baseHref = baseHref.replace(/\/\//g, '/');
     return baseHref;
     //#endregion
+
   }
 
   replaceBaseHrefInFile(fileAbsPath: string, initOptions: EnvOptions) {
+
     //#region @backendFunc
     let fileContent = Helpers.readFile(fileAbsPath);
     const frontendBaseHref =
@@ -65,5 +70,6 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
       .replace('<<<TO_REPLACE_PROJ_NAME>>>', this.project.name);
     Helpers.writeFile(fileAbsPath, fileContent);
     //#endregion
+
   }
 }

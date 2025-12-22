@@ -39,12 +39,14 @@ import { Vscode } from './vscode-helper';
 //#endregion
 
 let frameworkName = '';
+
 //#region @backend
 frameworkName = global.frameworkName;
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
 export class Project extends BaseProject<Project, CoreModels.LibType> {
+
   //#region static
 
   //#region static / instance of resolve
@@ -102,6 +104,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#endregion
 
   //#region constructor
+
   //#region @backend
   constructor(location?: string) {
     super(crossPlatformPath(_.isString(location) ? location : ''));
@@ -149,6 +152,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     Project.ins.add(this);
   }
   //#endregion
+
   //#endregion
 
   //#region api / struct
@@ -210,6 +214,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
   //#region api / release
   public async release(releaseOptions: EnvOptions): Promise<void> {
+
     //#region @backendFunc
     releaseOptions = EnvOptions.from(releaseOptions);
 
@@ -450,6 +455,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     endCallback();
     //#endregion
+
   }
   //#endregion
 
@@ -476,6 +482,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       hideTaskErrors?: boolean;
     },
   ): boolean {
+
     //#region @backendFunc
     options = options || {};
     const project = options.project || this;
@@ -532,6 +539,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     return true;
 
     //#endregion
+
   }
 
   // get env(): EnvOptions  //
@@ -561,6 +569,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
    * @overload
    */
   public get name(): string {
+
     //#region @backendFunc
     if (this.typeIs(LibTypeEnum.UNKNOWN_NPM_PROJECT)) {
       if (
@@ -572,6 +581,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     }
     return path.basename(this.location);
     //#endregion
+
   }
   //#endregion
 
@@ -587,6 +597,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
    * @overload
    */
   get nameForNpmPackage(): string {
+
     //#region @backendFunc
     if (
       this.framework.isStandaloneProject &&
@@ -607,11 +618,13 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       ? this.taonJson.overrideNpmName
       : this.name;
     //#endregion
+
   }
   //#endregion
 
   //#region info
   async info(): Promise<string> {
+
     //#region @backendFunc
     const children = (this.children || [])
       .map(c => '- ' + c.genericName)
@@ -671,6 +684,7 @@ ${gitChildren}
     `;
 
     //#endregion
+
   }
   //#endregion
 
@@ -688,6 +702,7 @@ ${gitChildren}
    * @overload
    */
   get children(): Project[] {
+
     //#region @backendFunc
     if (this.pathExists(taonJsonMainProject)) {
       const folders = Helpers.foldersFrom(this.location).filter(
@@ -713,6 +728,7 @@ ${gitChildren}
     }
     return [];
     //#endregion
+
   }
   //#endregion
 
@@ -721,4 +737,5 @@ ${gitChildren}
     return this.taonJson?.isMonorepo;
   }
   //#endregion
+
 }

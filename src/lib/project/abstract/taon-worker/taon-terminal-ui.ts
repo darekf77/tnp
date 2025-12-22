@@ -25,6 +25,7 @@ import type { TaonProjectsWorker } from './taon.worker';
 //#endregion
 
 export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> {
+
   //#region methods / header text
   protected async headerText(): Promise<string> {
     return 'Taon.dev';
@@ -33,6 +34,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
 
   //#region methods / header
   async header(): Promise<void> {
+
     //#region @backendFunc
     // return super.header();
     let consoleLogoPath: string;
@@ -70,11 +72,13 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       });
     });
     //#endregion
+
   }
   //#endregion
 
   //#region methods / get domains menu
   protected async getDomainsMenu(): Promise<void> {
+
     //#region @backendFunc
     while (true) {
       UtilsTerminal.clearConsole();
@@ -129,14 +133,17 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       }
     }
     //#endregion
+
   }
   //#endregion
 
   //#region methods / get worker terminal actions
   getWorkerTerminalActions(): BaseWorkerTerminalActionReturnType {
+
     //#region @backendFunc
 
     const myActions = {
+
       //#region enableCloud
       enableCloud: {
         name: '',
@@ -273,6 +280,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
         },
       },
       //#endregion
+
     };
 
     delete myActions.environments;
@@ -291,6 +299,8 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       ...super.getWorkerTerminalActions({ chooseAction: false }),
     };
     //#endregion
+
   }
   //#endregion
+
 }

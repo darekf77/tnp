@@ -36,9 +36,11 @@ import { BaseCli } from './base-cli';
  * TODO refactor move to tnp-helpers
  */ // @ts-ignore TODO weird inheritance problem
 export class $Generate extends BaseCli {
+
   //#region generate
   // @ts-ignore TODO weird inheritance problem
   async _() {
+
     //#region @backendFunc
     let [absPath, moduleName, entityName] = this.args;
     if (!Helpers.exists(absPath)) {
@@ -98,6 +100,7 @@ export class $Generate extends BaseCli {
     }
 
     if (isCustom) {
+
       //#region handle custom cases
       if (moduleName === 'generated-index-exports') {
         this.project.framework.generateIndexTs(absPath);
@@ -114,6 +117,7 @@ export class $Generate extends BaseCli {
         }
       }
       //#endregion
+
     } else {
       const ins = MagicRenamer.Instance(exampleLocation);
       ins.start(`${myEntity} -> ${newEntityName}`);
@@ -133,6 +137,7 @@ export class $Generate extends BaseCli {
     console.info('GENERATION DONE');
     this._exit(0);
     //#endregion
+
   }
   //#endregion
 

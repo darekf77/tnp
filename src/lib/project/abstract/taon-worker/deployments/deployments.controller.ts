@@ -6,7 +6,9 @@ import {
   MulterFileUploadResponse,
   Models,
   EndpointContext,
+  TaonController,
 } from 'taon/src';
+import { GET, POST, DELETE, Query, Body } from 'taon/src';
 import { config } from 'tnp-core/src';
 import { _, crossPlatformPath, Helpers } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
@@ -29,9 +31,10 @@ import {
   DeploymentsStatus,
 } from './deployments.models';
 import { DeploymentsRepository } from './deployments.repository';
+
 //#endregion
 
-@Taon.Controller({
+@TaonController({
   className: 'DeploymentsController',
 })
 export class DeploymentsController extends TaonBaseCliWorkerController<DeploymentReleaseData> {
@@ -50,7 +53,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
   /**
    * Not available in production environment
    */
-  @Taon.Http.DELETE()
+  @DELETE()
   triggerAllDeploymentsRemove(): Taon.Response<void> {
     //#region @backendFunc
     return async (req, res) => {
@@ -66,7 +69,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
   //#endregion
 
   //#region remove all deployments / status check
-  @Taon.Http.GET()
+  @GET()
   protected removingAllDeploymentsStatus(): Taon.Response<AllDeploymentsRemoveStatusObj> {
     //#region @backendFunc
     return async (req, res) => {
@@ -96,7 +99,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
   //#endregion
 
   //#region get all entities
-  @Taon.Http.GET()
+  @GET()
   getEntities(): Taon.Response<Deployments[]> {
     //#region @backendFunc
     return async (req, res) => {
@@ -108,9 +111,9 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
   //#endregion
 
   //#region get deployment by id
-  @Taon.Http.GET()
+  @GET()
   getByDeploymentId(
-    @Taon.Http.Param.Query('deploymentId') deploymentId: number | string,
+    @Query('deploymentId') deploymentId: number | string,
   ): Taon.Response<Deployments> {
     //#region @backendFunc
     return async (req, res) => {
@@ -140,7 +143,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
   /**
    * @deprecated delete this
    */
-  @Taon.Http.POST()
+  @POST()
   insertEntity(): Taon.Response<string> {
     return async (req, res) => {
       //#region @backendFunc
@@ -153,7 +156,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
   //#endregion
 
   //#region upload deployment files to server
-  @Taon.Http.POST({
+  @POST({
     overrideContentType: 'multipart/form-data',
     middlewares: ({ parentMiddlewares }) => ({
       ...parentMiddlewares,
@@ -161,8 +164,8 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
     }),
   }) // @ts-ignore TODO weird inheritance problem
   uploadFormDataToServer(
-    @Taon.Http.Param.Body() formData: FormData,
-    @Taon.Http.Param.Query() queryParams?: DeploymentReleaseData,
+    @Body() formData: FormData,
+    @Query() queryParams?: DeploymentReleaseData,
   ): Models.Http.Response<MulterFileUploadResponse[]> {
     //#region @backendFunc
     // @ts-ignore TODO weird inheritance problem
@@ -198,11 +201,11 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
   //#endregion
 
   //#region trigger deployment start process
-  @Taon.Http.POST()
+  @POST()
   triggerDeploymentStart(
-    @Taon.Http.Param.Body('baseFileNameWithHashDatetime')
+    @Body('baseFileNameWithHashDatetime')
     baseFileNameWithHashDatetime: string,
-    @Taon.Http.Param.Body('forceStart') forceStart: boolean = false,
+    @Body('forceStart') forceStart: boolean = false,
   ): Taon.Response<Deployments> {
     //#region @backendFunc
     return async (req, res) => {
@@ -222,9 +225,9 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
   //#endregion
 
   //#region trigger deployment stop process
-  @Taon.Http.POST()
+  @POST()
   triggerDeploymentStop(
-    @Taon.Http.Param.Body('baseFileNameWithHashDatetime')
+    @Body('baseFileNameWithHashDatetime')
     baseFileNameWithHashDatetime: string,
   ): Taon.Response<void> {
     //#region @backendFunc
@@ -313,9 +316,9 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
   //#endregion
 
   //#region trigger remove deployment
-  @Taon.Http.POST()
+  @POST()
   triggerDeploymentRemove(
-    @Taon.Http.Param.Body('baseFileNameWithHashDatetime')
+    @Body('baseFileNameWithHashDatetime')
     baseFileNameWithHashDatetime: string,
   ): Taon.Response<void> {
     //#region @backendFunc
@@ -338,7 +341,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
   //#endregion
 
   //#region trigger adding existed deployments
-  @Taon.Http.POST()
+  @POST()
   triggerTableClearAndAddExistedDeployments(): Taon.Response<void> {
     //#region @backendFunc
     return async (req, res) => {
@@ -349,7 +352,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
   //#endregion
 
   //#region check if adding deployments is in progress
-  @Taon.Http.GET()
+  @GET()
   protected isClearingAndAddingDeployments(): Taon.Response<DeploymentsAddingStatusObj> {
     //#region @backendFunc
     return async (req, res) => {

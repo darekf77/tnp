@@ -20,6 +20,7 @@ interface CopyPasteTaonProjectJson {
 }
 
 export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
+
   //#region @backendFunc
   const toolName = `${FRAMEWORK_NAME.toUpperCase()} CLI `;
   const group = `${toolName}`;
@@ -47,6 +48,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
     vscode: typeof import('vscode'),
     uri: Uri,
   ): Promise<void> => {
+
     //#region @backendFunc
 
     const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
@@ -82,11 +84,13 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
             `);
 
     //#endregion
+
   };
   //#endregion
 
   return (
     [
+
       //#region COPY/CUT PASTE PROJECT
       // {
       //   group: groupGroupOperations,
@@ -140,6 +144,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         },
         title: `paste project`,
         async exec({ vscode, uri, rootFolderPath }) {
+
           //#region @backendFunc
 
           let MAIN_CLICKED_PATH =
@@ -631,6 +636,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         },
       },
       //#endregion
+
     ] as CommandType[]
   ).map(c => {
     if (!c.command) {
@@ -642,4 +648,5 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
     return c;
   }) as CommandType[];
   //#endregion
+
 };

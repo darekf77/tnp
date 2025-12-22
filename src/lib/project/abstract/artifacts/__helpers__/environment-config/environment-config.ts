@@ -50,6 +50,7 @@ try {
 export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   extends BaseFeatureForProject<Project>
 {
+
   //#region api
 
   //#region api / create artifact
@@ -58,6 +59,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     envName: CoreModels.EnvironmentNameTaon = CoreModels.EnvironmentName.__,
     envNumber: number = undefined,
   ): Promise<void> {
+
     //#region @backendFunc
     const environmentsAbsPath = this.project.pathFor([
       environmentsFolder,
@@ -69,10 +71,12 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
 
     UtilsTypescript.formatFile(environmentsAbsPath);
     //#endregion
+
   }
   //#endregion
 
   async watchAndRecreate(onChange: () => any): Promise<void> {
+
     //#region @backendFunc
     if (this.project.framework.isStandaloneProject) {
       const watcher = incrementalWatcher(
@@ -92,6 +96,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     }
 
     //#endregion
+
   }
 
   //#region api / update
@@ -102,6 +107,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       saveEnvToLibEnv?: boolean;
     },
   ): Promise<EnvOptions> {
+
     //#region @backendFunc
     options = options || {};
     Helpers.taskStarted(
@@ -151,6 +157,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
 
     return configResult;
     //#endregion
+
   }
   //#endregion
 
@@ -163,6 +170,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     envOptions: EnvOptions,
     fromWatcher = false,
   ): EnvOptions {
+
     //#region @backendFunc
     if (!envOptions.release.envName) {
       envOptions.release.envName = '__';
@@ -189,6 +197,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       return mainConfig;
     }
     //#endregion
+
   }
   //#endregion
 
@@ -199,6 +208,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     envNum: number = undefined,
     fromWatcher = false,
   ): Partial<EnvOptions> {
+
     //#region @backendFunc
     let env: Partial<EnvOptions>;
     // Helpers.taskStarted(
@@ -246,11 +256,13 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     // );
     return env;
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / get env main
   public getEnvMain(): Partial<EnvOptions> {
+
     //#region @backendFunc
 
     // Helpers.taskStarted(`Reading environment config for ${this.project.name}`);
@@ -280,11 +292,13 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
 
     return configStandaloneEnv;
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / get base env template
   private getBaseEnvTemplate(jsonString = '{ ...baseEnv }'): string {
+
     //#region @backendFunc
     const isBase = jsonString === '{ ...baseEnv }';
     const fileToSave = `${'import'} type { EnvOptions } from '${tnpPackageName}/${'src'}';
@@ -294,11 +308,13 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   `;
     return fileToSave;
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / update generated values
   public updateGeneratedValues(envOptions: EnvOptions): void {
+
     //#region @backendFunc
     if (this.project.git.isInsideGitRepo && envOptions.release.targetArtifact) {
       // @ts-expect-error overriding readonly property
@@ -343,11 +359,13 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       envOptions['pathsTsconfig'] = `${envOptions['pathsTsconfig']},`;
     }
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / save config workspace
   private saveEnvironmentConfig(projectEnvConfig: EnvOptions): void {
+
     //#region @backendFunc
 
     if (this.project.framework.isStandaloneProject) {
@@ -392,10 +410,12 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
     }
 
     //#endregion
+
   }
   //#endregion
 
   makeSureEnvironmentExists(): void {
+
     //#region @backendFunc
     if (!this.project.hasFolder(environmentsFolder)) {
       const coreEnv = this.project.ins
@@ -444,6 +464,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
     }
 
     //#endregion
+
   }
 
   private get absPathToEnvTs(): string {
@@ -451,4 +472,5 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
   }
 
   //#endregion
+
 }

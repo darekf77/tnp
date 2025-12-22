@@ -1,11 +1,12 @@
-import { Taon } from 'taon/src';
+import { Taon, TaonEntity } from 'taon/src';
+import { TaonBaseEntity, PrimaryColumn, Column, BooleanColumn } from 'taon/src';
 import { _, CoreModels } from 'tnp-core/src';
 
-@Taon.Entity({
+@TaonEntity({
   className: 'TaonProject',
   uniqueKeyProp: 'location',
 })
-export class TaonProject extends Taon.Base.Entity {
+export class TaonProject extends TaonBaseEntity {
   static from(
     opt: Omit<TaonProject, 'id' | 'version' | '_' | 'clone'>,
   ): TaonProject {
@@ -13,30 +14,37 @@ export class TaonProject extends Taon.Base.Entity {
   }
 
   //#region port entity / columns /  serviceId
+
   //#region @websql
-  @Taon.Orm.Column.Primary({
+  @PrimaryColumn({
     type: 'varchar',
     length: 150,
     unique: true,
   })
   //#endregion
+
   location: string;
   //#endregion
 
   //#region port entity / columns /  type
+
   //#region @websql
-  @Taon.Orm.Column.Custom({
+  @Column({
     type: 'varchar',
     length: 20,
   })
   //#endregion
+
   type: CoreModels.LibType;
   //#endregion
 
   //#region port entity / columns /  type
+
   //#region @websql
-  @Taon.Orm.Column.Boolean(false)
+  @BooleanColumn(false)
   //#endregion
+
   isTemporary: boolean;
   //#endregion
+
 }

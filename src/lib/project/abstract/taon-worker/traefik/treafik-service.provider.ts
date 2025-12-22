@@ -22,6 +22,7 @@ export class TraefikServiceProvider {
     publicOrLocalIp: string;
     worker?: BaseCliWorker<any, any>;
   }): string {
+
     //#region @backendFunc
     options = options || ({} as any);
     if (options.worker) {
@@ -32,6 +33,7 @@ export class TraefikServiceProvider {
     return `"Host(\`${options.publicOrLocalIp}\`)"`;
     // can be also rule: "Host(`33.44.55.66`) || HostRegexp(`{subdomain:.+}.33.44.55.66.sslip.io`)"
     //#endregion
+
   }
   //#endregion
 
@@ -39,6 +41,7 @@ export class TraefikServiceProvider {
   protected yamlPathForServiceName(options: {
     ipAsServiceName: string;
   }): string {
+
     //#region @backendFunc
     options = options || ({} as any);
     const yamlPath = path.join(
@@ -48,11 +51,13 @@ export class TraefikServiceProvider {
     );
     return yamlPath;
     //#endregion
+
   }
   //#endregion
 
   //#region protected methods / get ip from yml
   public getIpFromYml(): string | undefined {
+
     //#region @backendFunc
     const ymlFileAbsPath = _.first(
       Helpers.getFilesFrom([
@@ -71,6 +76,7 @@ export class TraefikServiceProvider {
       .replace(/\_/g, '.');
     return ip;
     //#endregion
+
   }
   //#endregion
 
@@ -80,6 +86,7 @@ export class TraefikServiceProvider {
 
   //#region public methods / init service readme
   initServiceReadme(): void {
+
     //#region @backendFunc
     Helpers.writeFile(
       [
@@ -90,6 +97,7 @@ export class TraefikServiceProvider {
       `# Dynamic services folder for Traefik.`,
     );
     //#endregion
+
   }
   //#endregion
 
@@ -104,6 +112,7 @@ export class TraefikServiceProvider {
       restartTraefikAfterRegister?: boolean;
     },
   ): Promise<void> {
+
     //#region @backendFunc
     options = options || {};
     const routers: Record<string, any> = {};
@@ -158,6 +167,7 @@ export class TraefikServiceProvider {
     }
 
     //#endregion
+
   }
   //#endregion
 
@@ -175,6 +185,7 @@ export class TraefikServiceProvider {
       restartTraefikAfterRegister?: boolean;
     },
   ): Promise<boolean> {
+
     //#region @backendFunc
     options = options || {};
     const ipAsServiceName = _.snakeCase(publicOrLocalIp);
@@ -221,6 +232,7 @@ http:
       return false;
     }
     //#endregion
+
   }
   //#endregion
 
@@ -230,6 +242,7 @@ http:
    * @param serviceId service name to unregister (kebab-case)
    */
   public async unregister(publicOrLocalIp: string): Promise<void> {
+
     //#region @backendFunc
     const ipAsServiceName = _.snakeCase(publicOrLocalIp);
     try {
@@ -246,6 +259,7 @@ http:
       Helpers.error(err, true, true);
     }
     //#endregion
+
   }
   //#endregion
 
@@ -255,6 +269,7 @@ http:
    * (by verifying if dynamic YAML config exists)
    */
   public async isRegistered(publicOrLocalIp: string): Promise<boolean> {
+
     //#region @backendFunc
     try {
       const ipAsServiceName = _.snakeCase(publicOrLocalIp);
@@ -268,8 +283,10 @@ http:
       return false;
     }
     //#endregion
+
   }
   //#endregion
 
   //#endregion
+
 }

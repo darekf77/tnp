@@ -9,6 +9,7 @@ import type { Project } from './project';
 
 // @ts-ignore TODO weird inheritance problem
 export class Git extends BaseGit<Project> {
+
   //#region overridden is using action commit
   /**
    * @overload
@@ -23,6 +24,7 @@ export class Git extends BaseGit<Project> {
    * @deprecated
    */
   __removeTagAndCommit(autoReleaseUsingConfig: boolean) {
+
     //#region @backendFunc
     // Helpers.error(`PLEASE RUN: `, true, true);
     // if (!tagOnly) {
@@ -33,6 +35,7 @@ export class Git extends BaseGit<Project> {
     //   Helpers.error('release problem...', false, true);
     // }
     //#endregion
+
   }
   //#endregion
 
@@ -52,6 +55,7 @@ export class Git extends BaseGit<Project> {
 
   //#region OVERRIDE / before push action
   protected async _beforePushProcessAction(setOrigin: 'ssh' | 'http') {
+
     //#region @backendFunc
     await super._beforePushProcessAction(setOrigin);
 
@@ -72,10 +76,12 @@ export class Git extends BaseGit<Project> {
     this.project.quickFixes.removeHuskyHooks();
 
     //#endregion
+
   }
   //#endregion
 
   protected async removeUnnecessaryFoldersAfterPullingFromGit(): Promise<void> {
+
     //#region @backendFunc
     this.project.taonJson.reloadFromDisk();
     const absPaths = (this.project.taonJson.removeAfterPullingFromGit || [])
@@ -113,6 +119,7 @@ export class Git extends BaseGit<Project> {
       }
     }
     //#endregion
+
   }
 
   protected async _afterPullProcessAction(
@@ -145,4 +152,5 @@ export class Git extends BaseGit<Project> {
   //#endregion
 
   //#endregion
+
 }

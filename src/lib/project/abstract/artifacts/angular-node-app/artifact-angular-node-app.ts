@@ -94,6 +94,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   },
   ReleasePartialOutput
 > {
+
   //#region fields & getters
   public readonly migrationHelper: MigrationHelper;
 
@@ -127,6 +128,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
   //#region init partial
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
+
     //#region @backendFunc
     if (!initOptions.release.targetArtifact) {
       initOptions.release.targetArtifact = ReleaseArtifactTaon.ANGULAR_NODE_APP;
@@ -178,6 +180,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     return initOptions;
     //#endregion
+
   }
   //#endregion
 
@@ -188,6 +191,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     appDistOutBackendNodeAbsPath: string;
     angularNgServeAddress: URL;
   }> {
+
     //#region @backendFunc
 
     // TODO @REMOVE when microfrontends for container ready
@@ -325,6 +329,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         resolvePromiseMsg: {
           stdout: COMPILATION_COMPLETE_APP_NG_SERVE,
         },
+
         //#region command execute params
         exitOnErrorCallback: async code => {
           if (buildOptions.release.releaseType) {
@@ -338,6 +343,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           }
         },
         outputLineReplace: (line: string) => {
+
           //#region replace outut line for better debugging
           // console.log('LINE:', line);
 
@@ -365,6 +371,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           //#endregion
         },
         //#endregion
+
       });
     }
 
@@ -396,12 +403,14 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       ),
     };
     //#endregion
+
   }
 
   private async buildBackend(
     buildOptions: EnvOptions,
     appDistOutBackendNodeAbsPath,
   ): Promise<void> {
+
     //#region @backendFunc
     Helpers.remove(appDistOutBackendNodeAbsPath);
     await Helpers.bundleCodeIntoSingleFile(
@@ -494,6 +503,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     });
 
     //#endregion
+
   }
 
   //#endregion
@@ -502,6 +512,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   async releasePartial(
     releaseOptions: EnvOptions,
   ): Promise<ReleasePartialOutput> {
+
     //#region @backendFunc
     let deploymentFunction: () => Promise<void> = void 0;
 
@@ -529,6 +540,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     //#endregion
 
     if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
+
       //#region static pages release
       const releaseData = await this.staticPagesDeploy(
         appDistOutBrowserAngularAbsPath,
@@ -537,10 +549,12 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       releaseProjPath = releaseData.releaseProjPath;
       projectsReposToPush.push(...releaseData.projectsReposToPush);
       //#endregion
+
     } else if (
       releaseOptions.release.releaseType === ReleaseType.LOCAL ||
       releaseOptions.release.releaseType === ReleaseType.MANUAL
     ) {
+
       //#region copy to local release folder
       const localReleaseOutputBasePath =
         releaseOptions.release.releaseType === ReleaseType.LOCAL
@@ -956,6 +970,7 @@ ${dockerComposeYmlFileContent}
       deploymentFunction,
     };
     //#endregion
+
   }
   //#endregion
 
@@ -967,6 +982,7 @@ ${dockerComposeYmlFileContent}
     releaseOptions: EnvOptions;
     localReleaseOutputBasePath?: string;
   }): Promise<void> {
+
     //#region @backendFunc
 
     //#region prepare zip newZipFileName file for upload
@@ -1118,9 +1134,7 @@ ${path.dirname(newZipFileName)}
     if (!releaseOptions.isCiProcess) {
       Helpers.info(`
 
-
 STARTING DEPLOYMENT PREVIEW (PRESS ANY KEY TO MOVE BACK TO RELEASE FINISH SCREEN)
-
 
               `);
 
@@ -1135,6 +1149,7 @@ STARTING DEPLOYMENT PREVIEW (PRESS ANY KEY TO MOVE BACK TO RELEASE FINISH SCREEN
     //#endregion
 
     //#endregion
+
   }
   //#endregion
 
@@ -1173,4 +1188,5 @@ STARTING DEPLOYMENT PREVIEW (PRESS ANY KEY TO MOVE BACK TO RELEASE FINISH SCREEN
   //#endregion
 
   //#endregion
+
 }

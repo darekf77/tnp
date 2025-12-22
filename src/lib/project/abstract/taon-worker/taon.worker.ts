@@ -25,16 +25,22 @@ export class TaonProjectsWorker extends BaseCliWorker<
   TaonProjectsController,
   TaonTerminalUI
 > {
+
   //#region properties
 
   // @ts-ignore
   terminalUI = new TaonTerminalUI(this);
 
   workerContextTemplate = TaonProjectsContextTemplate as any; // TODO for some reason as any is nessesary
+
   controllerClass = TaonProjectsController;
+
   public deploymentsWorker: DeploymentsWorker;
+
   public instancesWorker: InstancesWorker;
+
   public processesWorker: ProcessesWorker;
+
   public traefikProvider = new TraefikProvider(this);
   //#endregion
 
@@ -107,6 +113,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
     );
 
     //#endregion
+
   }
 
   //#endregion
@@ -117,6 +124,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
    * this will crash if process already started
    */
   async startNormallyInCurrentProcess(): Promise<void> {
+
     //#region @backendFunc
 
     Helpers.taskStarted(`Waiting for ports manager to be started...`);
@@ -170,11 +178,13 @@ export class TaonProjectsWorker extends BaseCliWorker<
       },
     });
     //#endregion
+
   }
   //#endregion
 
   //#region methods / enable cloud
   async enableCloud(): Promise<void> {
+
     //#region @backendFunc
     UtilsTerminal.clearConsole();
     const isTraefikStarted = await this.traefikProvider.startTraefik();
@@ -184,7 +194,6 @@ export class TaonProjectsWorker extends BaseCliWorker<
 
           Please pull the latest version of Taon to get the latest docker templates
           Use command: ${config.frameworkName} sync
-
 
           `,
         true,
@@ -196,11 +205,13 @@ export class TaonProjectsWorker extends BaseCliWorker<
     Helpers.taskDone(`Taon cloud started! Enjoy deploying new projects!`);
     await UtilsTerminal.pressAnyKeyToContinueAsync();
     //#endregion
+
   }
   //#endregion
 
   //#region methods / disable cloud
   async disableCloud(): Promise<void> {
+
     //#region @backendFunc
     while (true) {
       UtilsTerminal.clearConsole();
@@ -214,6 +225,8 @@ export class TaonProjectsWorker extends BaseCliWorker<
       break;
     }
     //#endregion
+
   }
   //#endregion
+
 }

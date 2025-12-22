@@ -8,6 +8,7 @@ import { Deployments } from './deployments';
 import { DeploymentsController } from './deployments.controller';
 
 export namespace DeploymentsUtils {
+
   //#region display deployment progress
   export const displayRealtimeProgressMonitor = async (
     deployment: Deployments,
@@ -16,6 +17,7 @@ export namespace DeploymentsUtils {
       resolveWhenTextInOutput?: string;
     },
   ): Promise<void> => {
+
     //#region @backendFunc
     if (!deployment) {
       throw new Error(`deployment is required`);
@@ -30,6 +32,8 @@ export namespace DeploymentsUtils {
       options,
     );
     //#endregion
+
   };
   //#endregion
+
 }

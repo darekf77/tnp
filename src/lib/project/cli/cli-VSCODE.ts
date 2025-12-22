@@ -20,6 +20,7 @@ export class $Vscode extends BaseCli {
 
   //#region display menu
   async _displayMenu(): Promise<void> {
+
     //#region @backendFunc
     try {
       while (true) {
@@ -74,6 +75,7 @@ export class $Vscode extends BaseCli {
       this._exit();
     }
     //#endregion
+
   }
   //#endregion
 

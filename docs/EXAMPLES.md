@@ -11,10 +11,10 @@ By enabling code reuse on both the client and server sides, it enhances efficien
 
 <b>user.entity.ts</b>
 ```ts
-import { Taon } from 'taon';
+import { Taon, TaonEntity, TaonBaseEntity } from 'taon/src';
 
-@Taon.Entity()
-class User extends Taon.Entity {
+@TaonEntity()
+class User extends TaonBaseEntity {
   //#region @backend
   @Taon.Orm.Column.Generated()
   //#endregion
@@ -25,10 +25,10 @@ class User extends Taon.Entity {
 
 your browser will get code below:
 ```ts
-import { Taon } from 'taon/browser';
+import { Taon, TaonBaseEntity, TaonEntity } from 'taon/browser';
 
-@Taon.Entity()
-class User extends Taon.Entity {
+@TaonEntity()
+class User extends TaonBaseEntity {
   /* */
   /* */
   /* */
@@ -42,15 +42,13 @@ class User extends Taon.Entity {
 <b>common.service.ts</b>
 
 ```ts
-import { Taon } from 'taon';
-//@region @browser
-import { Injectable } from '@angular/core';
-//#endregion
+import { Taon, TaonBaseAngularService } from 'taon/src';
+import { Injectable } from '@angular/core'; // @browser
 
 //@region @browser
 @Injectable()
 //#endregion 
-class CommonService { 
+class CommonService extends TaonBaseAngularService { 
   helloWorld() { 
     console.log('Hello on backend and frontend')
   }
@@ -82,12 +80,12 @@ class CommonService {
 <b>user.entity.ts</b>
 
 ```ts
-import { Taon } from 'taon';
+import { Taon, TaonEntity, PrimarGeneratedColumn } from 'taon/src';
 
-@Taon.Entity()
+@TaonEntity()
 class User {
   //#region @websql
-  @Taon.Orm.Column.Generated()
+  @PrimarGeneratedColumn()
   //#endregion
   id: string;
 }
@@ -95,12 +93,12 @@ class User {
 
 your browser in WEBSQL mode will get code below:
 ```ts
-import { Taon } from 'taon/websql';
+import { Taon, TaonEntity } from 'taon/websql';
 
-@Taon.Entity()
+@TaonEntity()
 class User {
  //#region @websql
-  @Taon.Orm.Column.Generated()
+  @PrimarGeneratedColumn()
   //#endregion
   id: string;
 }
@@ -108,9 +106,9 @@ class User {
 
 your browser in NORMAL NodeJS mode will get code below:
 ```ts
-import { Taon } from 'taon/websql';
+import { Taon, TaonEntity } from 'taon/websql';
 
-@Taon.Entity()
+@TaonEntity()
 class User {
   /* */
   /* */
@@ -129,8 +127,8 @@ Database columns can be created in browser/frontend with sql.js !
 
 **user.controller.ts**
 ```ts
-@Taon.Controller({ className: 'UserController' })
-class UserController extends Taon.Base.CrudController<User> {
+@TaonController({ className: 'UserController' })
+class UserController extends TaonBaseCrudController<User> {
   entityClassResolveFn = ()=> User;
   //#region @websql
   async initExampleDbData(): Promise<void> {
@@ -278,17 +276,17 @@ export class SingleFileModule {}
 ```
 **app.ts** (*user entity*)
 ```ts
-@Taon.Entity({
+@TaonEntity({
   className: 'UserEntity',
 })
-export class UserEntity extends Taon.Base.Entity {
-  //#region @websql1
-  @Taon.Orm.Column.Generated()
+export class UserEntity extends TaonBaseEntity {
+  //#region @websql
+  @PrimarGeneratedColumn()
   //#endregion
   id: number;
 
   //#region @websql
-  @Taon.Orm.Column.String()
+  @StringColumn()
   //#endregion
   name: string;
 }
@@ -313,11 +311,10 @@ export class RealtimeClassSubscriber extends Taon.Base.SubscriberForEntity {
 
 **app.ts** (*user controller*)
 ```ts
-@Taon.Controller({
+@TaonController({
   className: 'RealtimeUserController',
 })
-export class RealtimeUserController extends Taon.Base
-  .CrudController<UserEntity> {
+export class RealtimeUserController extends TaonBaseCrudController<UserEntity> {
   entityClassResolveFn = () => UserEntity;
 
   realtimeClassSubscriber = this.injectSubscriber( ()=> UserContext.getClass(RealtimeClassSubscriber));

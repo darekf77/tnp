@@ -57,6 +57,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
 
   //#region init partial
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
+
     //#region @backendFunc
     if (!initOptions.release.targetArtifact) {
       initOptions.release.targetArtifact = ReleaseArtifactTaon.VSCODE_PLUGIN;
@@ -174,6 +175,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
 
     return initOptions;
     //#endregion
+
   }
   //#endregion
 
@@ -181,6 +183,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
   async buildPartial(buildOptions: EnvOptions): Promise<{
     vscodeVsixOutPath: string;
   }> {
+
     //#region @backendFunc
 
     buildOptions = await this.project.artifactsManager.init(
@@ -264,6 +267,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
 
     return { vscodeVsixOutPath };
     //#endregion
+
   }
   //#endregion
 
@@ -271,6 +275,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
   async releasePartial(
     releaseOptions: EnvOptions,
   ): Promise<ReleasePartialOutput> {
+
     //#region @backendFunc
     let releaseProjPath: string;
     let releaseType: ReleaseType = releaseOptions.release.releaseType;
@@ -283,6 +288,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     );
 
     if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
+
       //#region local release
       const releaseData = await this.localReleaseDeploy(
         path.dirname(vscodeVsixOutPath),
@@ -302,8 +308,10 @@ local VSCode instance.
       projectsReposToPushAndTag.push(...releaseData.projectsReposToPushAndTag);
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
+
     }
     if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
+
       //#region local release
       const releaseData = await this.staticPagesDeploy(
         path.dirname(vscodeVsixOutPath),
@@ -316,6 +324,7 @@ local VSCode instance.
       projectsReposToPush.push(...releaseData.projectsReposToPush);
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
+
     }
     if (releaseOptions.release.releaseType === ReleaseType.MANUAL) {
       // TODO release to microsoft store or serve with place to put assets
@@ -340,6 +349,7 @@ local VSCode instance.
       projectsReposToPush,
     };
     //#endregion
+
   }
   //#endregion
 
@@ -377,6 +387,7 @@ local VSCode instance.
    * TODO move this to local release
    */
   public async installLocally(pathToVsixFile: string): Promise<void> {
+
     //#region @backendFunc
     Helpers.info(
       `Installing extension: ${path.basename(pathToVsixFile)} ` +
@@ -386,8 +397,10 @@ local VSCode instance.
       cwd: crossPlatformPath(path.dirname(pathToVsixFile)),
     }).sync();
     //#endregion
+
   }
   //#endregion
 
   //#endregion
+
 }

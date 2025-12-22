@@ -58,6 +58,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     docsWebappDistOutPath: string;
     combinedDocsHttpServerUrl: Url;
   }> {
+
     //#region @backendFunc
     buildOptions = await this.project.artifactsManager.init(
       EnvOptions.from(buildOptions),
@@ -91,6 +92,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
 
     return { docsWebappDistOutPath, combinedDocsHttpServerUrl };
     //#endregion
+
   }
   //#endregion
 
@@ -98,6 +100,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
   async releasePartial(
     releaseOptions: EnvOptions,
   ): Promise<ReleasePartialOutput> {
+
     //#region @backendFunc
     let releaseProjPath: string;
     const releaseType: ReleaseType = releaseOptions.release.releaseType;
@@ -115,6 +118,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
       : 'major';
 
     if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
+
       //#region static-pages release
       const releaseData = await this.staticPagesDeploy(
         docsWebappDistOutPath,
@@ -124,9 +128,11 @@ export class ArtifactDocsWebapp extends BaseArtifact<
       projectsReposToPush.push(...releaseData.projectsReposToPush);
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
+
     }
 
     if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
+
       //#region static-pages release
       const releaseData = await this.localReleaseDeploy(
         docsWebappDistOutPath,
@@ -135,6 +141,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
 
       projectsReposToPushAndTag.push(...releaseData.projectsReposToPushAndTag);
       //#endregion
+
     }
 
     return {
@@ -169,4 +176,5 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     return this.project.pathFor(outDirApp);
   }
   //#endregion
+
 }

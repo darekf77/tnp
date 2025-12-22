@@ -34,11 +34,14 @@ export type RecreateFile = { where: string; from: string };
 export class FilesRecreator // @ts-ignore TODO weird inheritance problem
   extends BaseFeatureForProject<Project>
 {
+
   //#region recreate simple files
   public async init(): Promise<void> {
+
     //#region @backendFunc
     this.handleProjectSpecyficFiles();
     //#endregion
+
   }
   //#endregion
 
@@ -77,6 +80,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
    * @returns list of relative paths
    */
   projectSpecyficFiles(): string[] {
+
     //#region @backendFunc
     let files = [];
 
@@ -90,11 +94,13 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
 
     return files;
     //#endregion
+
   }
   //#endregion
 
   //#region handle project specyfic files
   handleProjectSpecyficFiles(): void {
+
     //#region @backendFunc
     let defaultProjectProptotype: Project;
 
@@ -163,6 +169,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
       });
     }
     //#endregion
+
   }
   //#endregion
 
@@ -194,6 +201,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
    * property ENV can be used to check files
    */
   public filesTemplates(): string[] {
+
     //#region @backendFunc
     // TODO should be abstract
     let templates = [];
@@ -204,6 +212,8 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
 
     return templates;
     //#endregion
+
   }
   //#endregion
+
 }

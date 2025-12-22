@@ -1,5 +1,6 @@
 //#region imports
-import { MulterFileUploadResponse, Taon } from 'taon/src';
+import { MulterFileUploadResponse, Taon, TaonEntity } from 'taon/src';
+import { TaonBaseEntity, PrimaryGeneratedColumn, CreateDateColumn, Column, String100Column, String45Column, String200Column, NumberColumn, VersionColumn } from 'taon/src';
 import { _, chalk, CoreModels, dateformat, path } from 'tnp-core/src';
 import { FilePathMetaData } from 'tnp-core/src';
 
@@ -8,116 +9,145 @@ import { ReleaseArtifactTaon, ReleaseType } from '../../../../options';
 
 import { DeploymentsDefaultsValues } from './deployments.defaults-values';
 import { DeploymentReleaseData, DeploymentsStatus } from './deployments.models';
+
 //#endregion
 
-@Taon.Entity({
+@TaonEntity({
   className: 'Deployments',
 })
 export class Deployments
-  extends Taon.Base.Entity<Deployments>
+  extends TaonBaseEntity<Deployments>
   implements DeploymentReleaseData
 {
+
   //#region @websql
-  @Taon.Orm.Column.Generated()
+  @PrimaryGeneratedColumn()
   //#endregion
+
   id: string;
 
   //#region base file name with hash datetime
+
   //#region @websql
-  @Taon.Orm.Column.Custom({
+  @Column({
     type: 'varchar',
     length: 500,
     unique: true,
   })
   //#endregion
+
   baseFileNameWithHashDatetime?: string;
   //#endregion
 
   //#region size
+
   //#region @websql
-  @Taon.Orm.Column.Number()
+  @NumberColumn()
   //#endregion
+
   size: MulterFileUploadResponse['size'];
   //#endregion
 
   //#region status
+
   //#region @websql
-  @Taon.Orm.Column.Custom({
+  @Column({
     type: 'varchar',
     length: 20,
     default: DeploymentsStatus.NOT_STARTED,
   })
   //#endregion
+
   status: DeploymentsStatus;
   //#endregion
 
   //#region project name
+
   //#region @websql
-  @Taon.Orm.Column.String100()
+  @String100Column()
   //#endregion
+
   projectName: string;
   //#endregion
 
   //#region environment name
+
   //#region @websql
-  @Taon.Orm.Column.String100()
+  @String100Column()
   //#endregion
+
   envName: CoreModels.EnvironmentNameTaon;
   //#endregion
 
   //#region environment number
+
   //#region @websql
-  @Taon.Orm.Column.String45()
+  @String45Column()
   //#endregion
+
   envNumber: string;
   //#endregion
 
   //#region target artifact
+
   //#region @websql
-  @Taon.Orm.Column.String45()
+  @String45Column()
   //#endregion
+
   targetArtifact: ReleaseArtifactTaon;
   //#endregion
 
   //#region target artifact
+
   //#region @websql
-  @Taon.Orm.Column.String45()
+  @String45Column()
   //#endregion
+
   releaseType: ReleaseType;
   //#endregion
 
   //#region project version
+
   //#region @websql
-  @Taon.Orm.Column.Version()
+  @VersionColumn()
   //#endregion
+
   version: string;
   //#endregion
 
   //#region destination domain
+
   //#region @websql
-  @Taon.Orm.Column.String200()
+  @String200Column()
   //#endregion
+
   destinationDomain: string;
   //#endregion
 
   //#region process compose up id
+
   //#region @websql
-  @Taon.Orm.Column.String45()
+  @String45Column()
   //#endregion
+
   processIdComposeUp?: string | null;
   //#endregion
 
   //#region process compose down id
+
   //#region @websql
-  @Taon.Orm.Column.String45()
+  @String45Column()
   //#endregion
+
   processIdComposeDown?: string | null;
   //#endregion
 
   //#region arrival date
+
   //#region @websql
-  @Taon.Orm.Column.CreateDate()
+  @CreateDateColumn()
   //#endregion
+
   arrivalDate?: Date;
   //#endregion
 
@@ -144,6 +174,7 @@ export class Deployments
   //#endregion
 
   fullPreviewString(options?: { boldValues?: boolean }): string {
+
     //#region @websqlFunc
     options = options || {};
     const boldValues = !!options.boldValues;
@@ -174,5 +205,6 @@ export class Deployments
       )})`,
     ].join('\n');
     //#endregion
+
   }
 }

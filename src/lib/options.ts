@@ -214,6 +214,7 @@ export const dockerBackendAppNode = {
   name: 'backend-app-node',
   skipStartInDevMode: true,
   pathToProjectWithDockerfile: (project: Project) => {
+
     //#region @backendFunc
     return project.ins
       .by(LibTypeEnum.ISOMORPHIC_LIB)
@@ -226,6 +227,7 @@ export const dockerFrontendNginx = {
   name: 'frontend-app-node',
   skipStartInDevMode: true,
   pathToProjectWithDockerfile: (project: Project) => {
+
     //#region @backendFunc
     return project.ins
       .by(LibTypeEnum.ISOMORPHIC_LIB)
@@ -237,6 +239,7 @@ export const dockerFrontendNginx = {
 export const dockerDatabaseMysql = {
   name: 'database-mysql',
   pathToProjectWithDockerfile: (project: Project) => {
+
     //#region @backendFunc
     return project.ins
       .by(LibTypeEnum.ISOMORPHIC_LIB)
@@ -244,6 +247,7 @@ export const dockerDatabaseMysql = {
     //#endregion
   },
   healthCheck: async ({ axios, env }) => {
+
     //#region @backendFunc
     const res = await axios.get(`http://localhost:${env.HEALTH_PORT}/health`);
     return res.data === 'OK';
@@ -572,6 +576,7 @@ class EnvOptionsContainer {
 //#endregion
 
 export class EnvOptions<PATHS = {}, CONFIGS = {}> {
+
   //#region static / from
 
   static async releaseSkipMenu(
@@ -707,19 +712,24 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     options: Partial<EnvOptions>,
     absFilePath: string,
   ): void {
+
     //#region @backendFunc
     Helpers.writeJson(absFilePath, options);
     //#endregion
+
   }
 
   public static loadFromFile(absFilePath: string): EnvOptions {
+
     //#region @backendFunc
     const options = Helpers.readJson(absFilePath);
     return EnvOptions.from(options);
     //#endregion
+
   }
 
   public static getParamsString(options: Partial<EnvOptions>): string {
+
     //#region @backendFunc
     const env = EnvOptions.from(options);
     let pathWithParams = '';
@@ -751,6 +761,7 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     );
     return pathWithParams ? ` ${pathWithParams.trim()} ` : ' ';
     //#endregion
+
   }
 
   //#endregion
@@ -938,18 +949,22 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 
   //#region save to file
   public saveToFile(absFilePath: string): void {
+
     //#region @backendFunc
     EnvOptions.saveToFile(this as any, absFilePath);
     //#endregion
+
   }
   //#endregion
 
   //#region load from file
   public loadFromFile(absFilePath: string): void {
+
     //#region @backendFunc
     const data = EnvOptions.loadFromFile(absFilePath);
     this.applyFieldsFrom(data);
     //#endregion
+
   }
   //#endregion
 
@@ -960,6 +975,7 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
       skipPreservingFinishCallback?: boolean;
     },
   ): EnvOptions {
+
     //#region @backendFunc
     options = options || {};
     override = override || {};
@@ -976,18 +992,22 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     }
     return result;
     //#endregion
+
   }
   //#endregion
 
   //#region getters
   get temporarySrcForReleaseCutCode(): string {
+
     //#region @backendFunc
     return this.build.websql
       ? tmpCutReleaseSrcDistWebsql
       : tmpCutReleaseSrcDist;
     //#endregion
+
   }
   //#endregion
+
 }
 //#endregion
 

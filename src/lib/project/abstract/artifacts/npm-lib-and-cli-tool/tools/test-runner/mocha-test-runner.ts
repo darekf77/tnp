@@ -39,6 +39,7 @@ export class MochaTestRunner
   }
 
   async startAndWatch(files?: string[], debug = false) {
+
     //#region @backendFunc
     if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
       Helpers.error(
@@ -59,5 +60,6 @@ export class MochaTestRunner
       cwd: this.project.location,
     }).async();
     //#endregion
+
   }
 }

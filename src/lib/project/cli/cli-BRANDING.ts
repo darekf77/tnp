@@ -16,7 +16,6 @@ import { BaseCli } from './base-cli';
   + create splashscreens
   + create logos inside apps
 
-
 # Branding of existed modules/projects
   - rename to create similar module or project:
     + files
@@ -33,12 +32,15 @@ export class $Branding extends BaseCli {
 
   //#region create vscode icons
   async logoVscode() {
+
     //#region @backendFunc
     await this.project.artifactsManager.globalHelper.branding.generateLogoFroVscodeLocations();
     this._exit();
     //#endregion
+
   }
   //#endregion
+
 }
 
 export default {

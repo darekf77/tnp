@@ -13,6 +13,7 @@ export class InstancesWorker extends BaseCliWorker<
   InstancesController,
   InstancesTerminalUI
 > {
+
   //#region properties
   // TODO 'as any' for some reason is necessary
   // TypeScript d.ts generation bug
@@ -41,6 +42,7 @@ export class InstancesWorker extends BaseCliWorker<
   //#endregion
 
   public async startNormallyInCurrentProcess(): Promise<void> {
+
     //#region @backendFunc
     await super.startNormallyInCurrentProcess();
     const ctrl = await this.getRemoteControllerFor({
@@ -49,5 +51,6 @@ export class InstancesWorker extends BaseCliWorker<
       },
     });
     //#endregion
+
   }
 }

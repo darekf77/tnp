@@ -24,6 +24,7 @@ export function activateMenuTnp(
   vscode: typeof import('vscode'),
   FRAMEWORK_NAME: string,
 ) {
+
   //#region focus first element function
   const focustFirstElement = () => {
     treeView.reveal(treeProvider.getDummy(), {
@@ -32,7 +33,9 @@ export function activateMenuTnp(
     });
   };
   //#endregion
+
   const FRAMEWORK_NAME_UPPER_FIST = _.upperFirst(FRAMEWORK_NAME);
+
   //#region open / click item command
   vscode.commands.registerCommand(
     `projectsView${FRAMEWORK_NAME_UPPER_FIST}.openItem`,
@@ -88,13 +91,19 @@ export function activateMenuTnp(
   //#region project item class
   class ProjectItem extends vscode.TreeItem {
     public readonly clickLink: string;
+
     public readonly project?: Project;
+
     public readonly clickLinkFn?: (project: Project) => string;
+
     public readonly refreshLinkOnClick?: boolean;
+
     public readonly triggerActionOnClick?: TriggerActionFn;
+
     public readonly processTitle?: string;
 
     public readonly progressLocation: vscode.ProgressLocation;
+
     //#region constructor
     constructor(
       public readonly label: string,
@@ -164,13 +173,16 @@ export function activateMenuTnp(
       }
     }
     //#endregion
+
   }
   //#endregion
 
   //#region tree provider class
   class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectItem> {
+
     //#region get children
     async getChildren(element?: ProjectItem): Promise<ProjectItem[]> {
+
       //#region resolve variables
       // if (!element) {
       // root → workspace folders
@@ -314,6 +326,7 @@ export function activateMenuTnp(
         ...currentProjectProjects,
         currentProjectProjects.length > 0 && this.empty,
         this.getInfoItem('Click item below to trigger action', true),
+
         //#region items with actions
         new ProjectItem(
           `$ ${FRAMEWORK_NAME} refresh:vscode:colors`,
@@ -402,6 +415,7 @@ export function activateMenuTnp(
         //     ].filter(f => !!f)
         //   : []),
         //#endregion
+
         parentForParentChildren.length > 0 && this.empty,
         parentForParentChildren.length > 0 &&
           this.getInfoItem('Choose parent project children to switch', true),
@@ -413,6 +427,7 @@ export function activateMenuTnp(
     //#region methods & fields
     private _onDidChangeTreeData =
       new vscode.EventEmitter<ProjectItem | void>();
+
     // @ts-ignore
     readonly onDidChangeTreeData: vscode.EventEmitter<void | ProjectItem> =
       this._onDidChangeTreeData.event;
@@ -463,6 +478,7 @@ export function activateMenuTnp(
       return this.dummy;
     }
     //#endregion
+
   }
   //#endregion
 
@@ -480,6 +496,7 @@ export function activateMenuTnp(
   );
   context.subscriptions.push(treeView);
   //#endregion
+
 }
 
 export function deactivateMenuTnp() {}

@@ -1,12 +1,19 @@
 import { Taon } from 'taon/src';
+import {
+  TaonBaseAbstractEntity,
+  Column,
+  NumberColumn,
+  SimpleJsonColumn,
+  TaonEntity,
+} from 'taon/src';
 import { _ } from 'tnp-core/src';
 
 import { EnvOptions } from '../../../options';
 
-@Taon.Entity({
+@TaonEntity({
   className: 'TaonBuild',
 })
-export class TaonBuild extends Taon.Base.AbstractEntity {
+export class TaonBuild extends TaonBaseAbstractEntity {
   static from(
     opt: Omit<TaonBuild, 'id' | 'version' | '_' | 'clone'>,
   ): TaonBuild {
@@ -14,15 +21,17 @@ export class TaonBuild extends Taon.Base.AbstractEntity {
   }
 
   //#region port entity / columns /  pid
+
   //#region @websql
-  @Taon.Orm.Column.Number()
+  @NumberColumn()
   //#endregion
   processInfoPort: number;
   //#endregion
 
   //#region port entity / columns /  serviceId
+
   //#region @websql
-  @Taon.Orm.Column.Custom({
+  @Column({
     type: 'varchar',
     length: 150,
     unique: true,
@@ -32,8 +41,9 @@ export class TaonBuild extends Taon.Base.AbstractEntity {
   //#endregion
 
   //#region port entity / columns /  type
+
   //#region @websql
-  @Taon.Orm.Column.SimpleJson()
+  @SimpleJsonColumn()
   //#endregion
   type: EnvOptions;
   //#endregion

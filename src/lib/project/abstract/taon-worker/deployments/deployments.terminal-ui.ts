@@ -30,6 +30,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     deployment: Deployments,
     ctrl: DeploymentsController,
   ): Promise<void> {
+
     //#region @backendFunc
     console.log(`Stopping deployment... please wait...`);
     await ctrl
@@ -41,6 +42,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     console.log(`Stopping done..`);
     await UtilsTerminal.pressAnyKeyToContinueAsync();
     //#endregion
+
   }
   //#endregion
 
@@ -49,6 +51,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     deployment: Deployments,
     ctrl: DeploymentsController,
   ): Promise<void> {
+
     //#region @backendFunc
     while (true) {
       console.log(`Removing deployment... please wait...`);
@@ -69,6 +72,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     }
     await UtilsTerminal.pressAnyKeyToContinueAsync();
     //#endregion
+
   }
   //#endregion
 
@@ -78,6 +82,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     ctrl: DeploymentsController,
     options?: { forceStart?: boolean },
   ): Promise<void> {
+
     //#region @backendFunc
     options = options || {};
     console.log(`Starting deployment...`);
@@ -95,6 +100,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
       console.error('Fail to start deployment');
     }
     //#endregion
+
   }
   //#endregion
 
@@ -103,6 +109,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     deployment: Deployments,
     deploymentsController: DeploymentsController,
   ): Promise<Deployments> {
+
     //#region @backendFunc
     while (true) {
       try {
@@ -121,6 +128,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
       }
     }
     //#endregion
+
   }
   //#endregion
 
@@ -130,6 +138,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     deploymentsController: DeploymentsController,
     processesController: ProcessesController,
   ): Promise<void> {
+
     //#region @backendFunc
     while (true) {
       UtilsTerminal.clearConsole();
@@ -300,6 +309,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
       }
     }
     //#endregion
+
   }
   //#endregion
 
@@ -308,6 +318,7 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
     exitIsOnlyReturn?: boolean;
     chooseAction?: boolean;
   }): BaseWorkerTerminalActionReturnType {
+
     //#region @backendFunc
     const myActions: BaseWorkerTerminalActionReturnType = {
       getStuffFromBackend: {
@@ -438,6 +449,8 @@ export class DeploymentsTerminalUI extends BaseCliWorkerTerminalUI<DeploymentsWo
       }),
     };
     //#endregion
+
   }
   //#endregion
+
 }

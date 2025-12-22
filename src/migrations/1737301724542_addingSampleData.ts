@@ -1,14 +1,13 @@
-import { Taon } from 'taon/src';
+import { Taon, TaonBaseMigration, TaonMigration } from 'taon/src';
 import { QueryRunner } from 'taon-typeorm/src';
 import { CoreModels } from 'tnp-core/src';
 
 import { TaonEnv } from '../lib/project/abstract/taon-worker/taon-env.entity';
 
-@Taon.Migration({
+@TaonMigration({
   className: 'TaonProjectsContext_1737301724542_addingSampleData',
 })
-export class TaonProjectsContext_1737301724542_addingSampleData extends Taon
-  .Base.Migration {
+export class TaonProjectsContext_1737301724542_addingSampleData extends TaonBaseMigration {
   repoEnv = this.injectRepo(TaonEnv);
 
   /**

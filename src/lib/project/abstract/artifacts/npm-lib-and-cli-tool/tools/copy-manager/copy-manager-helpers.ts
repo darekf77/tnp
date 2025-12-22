@@ -29,9 +29,12 @@ export namespace CopyMangerHelpers {
 
   //#region helpers / pure child name
   export function childPureName(child: Project) {
+
     //#region @backendFunc
     return child.name.startsWith('@') ? child.name.split('/')[1] : child.name; // pure name
     //#endregion
+
   }
   //#endregion
+
 }

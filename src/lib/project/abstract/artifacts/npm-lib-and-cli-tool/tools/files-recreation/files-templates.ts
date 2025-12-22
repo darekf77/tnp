@@ -14,16 +14,20 @@ import type { Project } from '../../../../project';
 
 // @ts-ignore TODO weird inheritance problem
 export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
+
   //#region files
   get files() {
+
     //#region @backendFunc
     return this.project.artifactsManager.filesRecreator.filesTemplates();
     //#endregion
+
   }
   //#endregion
 
   //#region rebuild
   rebuild(initOptions: EnvOptions, soft = false) {
+
     //#region @backendFunc
     const files = this.files;
     // Helpers.info(`Files templates for project:
@@ -51,6 +55,7 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
     }
     this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting();
     //#endregion
+
   }
   //#endregion
 
@@ -85,6 +90,7 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
     reservedExpOne: any,
     soft: boolean,
   ): void {
+
     //#region @backendFunc
     // lodash
     const filePath = orgFilePath.replace(dotFileTemplateExt, '');
@@ -138,7 +144,6 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
 
                 err: ${err}
 
-
                 `);
                 Helpers.error(
                   `Error during filtemplate parse: ${orgFilePath}`,
@@ -182,6 +187,8 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
     //   fse.unlinkSync(orgFilePath);
     // }
     //#endregion
+
   }
   //#endregion
+
 }

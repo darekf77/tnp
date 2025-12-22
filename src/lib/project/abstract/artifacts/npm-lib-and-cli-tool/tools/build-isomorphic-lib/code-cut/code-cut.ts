@@ -12,7 +12,9 @@ import { BrowserCodeCut } from './browser-code-cut';
 //#endregion
 
 export class CodeCut {
+
   //#region constructor
+
   //#region @backend
   constructor(
     /**
@@ -27,11 +29,13 @@ export class CodeCut {
     private buildOptions: EnvOptions,
   ) {}
   //#endregion
+
   //#endregion
 
   //#region methods
 
   private isAllowedPathForSave(relativePath: string) {
+
     //#region @backendFunc
     // console.log({ relativePath })
     return (
@@ -40,12 +44,14 @@ export class CodeCut {
       !relativePath.replace(/^\\/, '').startsWith(`tests/`)
     );
     //#endregion
+
   }
 
   /**
    * ex: assets/file.png or my-app/component.ts
    */
   files(relativeFilesToProcess: string[], remove: boolean = false) {
+
     //#region @backendFunc
     for (let index = 0; index < relativeFilesToProcess.length; index++) {
       const relativeFilePath = relativeFilesToProcess[index];
@@ -53,10 +59,12 @@ export class CodeCut {
       this.file(relativeFilePath, remove);
     }
     //#endregion
+
   }
 
   file(relativePathToFile: string, remove: boolean = false): void {
     // console.log('CUT: ', relativePathToFile);
+
     //#region @backendFunc
     if (!this.isAllowedPathForSave(relativePathToFile)) {
       return;
@@ -103,7 +111,9 @@ export class CodeCut {
       regionReplaceOptions: this.options,
     });
     //#endregion
+
   }
 
   //#endregion
+
 }

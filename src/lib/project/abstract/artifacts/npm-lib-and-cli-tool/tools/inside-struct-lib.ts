@@ -10,6 +10,7 @@ export class InsideStructuresLib extends InsideStructuresProcess {
 
   //#region api / recreate
   public async init(initOptions: EnvOptions): Promise<void> {
+
     //#region @backendFunc
     initOptions = EnvOptions.from(initOptions);
 
@@ -32,6 +33,8 @@ export class InsideStructuresLib extends InsideStructuresProcess {
     ];
     await this.process(structs, initOptions);
     //#endregion
+
   }
   //#endregion
+
 }

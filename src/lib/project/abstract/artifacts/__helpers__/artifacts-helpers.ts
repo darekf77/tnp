@@ -23,6 +23,7 @@ export class ArtifactsGlobalHelper {
 
   //#region add sources from core
   addSrcFolderFromCoreProject(): void {
+
     //#region @backend
     const corePath = this.project.framework.coreProject.pathFor(srcMainProject);
     const dest = this.project.pathFor(srcMainProject);
@@ -35,6 +36,7 @@ export class ArtifactsGlobalHelper {
       },
     });
     //#endregion
+
   }
   //#endregion
 
@@ -45,12 +47,15 @@ export class ArtifactsGlobalHelper {
    * TODO
    */
   __removeJsMapsFrom(absPathReleaseDistFolder: string) {
+
     //#region @backendFunc
     return; // TODO not a good idea
     Helpers.filesFrom(absPathReleaseDistFolder, true)
       .filter(f => f.endsWith('.js.map') || f.endsWith('.mjs.map'))
       .forEach(f => Helpers.removeFileIfExists(f));
     //#endregion
+
   }
   //#endregion
+
 }

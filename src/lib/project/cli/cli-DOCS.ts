@@ -10,8 +10,10 @@ import { BaseCli } from './base-cli';
 
 // @ts-ignore TODO weird inheritance problem
 class $Docs extends BaseCli {
+
   //#region _
   public async _(): Promise<void> {
+
     //#region @backendFunc
     await this.project.build(
       this.params.clone({
@@ -26,11 +28,13 @@ class $Docs extends BaseCli {
     );
     this._exit(0);
     //#endregion
+
   }
   //#endregion
 
   //#region watch
   async watch() {
+
     //#region @backendFunc
     await this.project.build(
       this.params.clone({
@@ -44,10 +48,12 @@ class $Docs extends BaseCli {
       }),
     );
     //#endregion
+
   }
   //#endregion
 
   async serve() {
+
     //#region @backendFunc
     const port = await this.project.registerAndAssignPort(
       'serving static docs',
@@ -71,9 +77,11 @@ class $Docs extends BaseCli {
         `,
     });
     //#endregion
+
   }
 
   async envCheck(options: EnvOptions): Promise<void> {
+
     //#region @backendFunc
     const envOK =
       await this.project.artifactsManager.artifact.docsWebapp.docs.validateEnvironemntForMkdocsBuild();
@@ -82,6 +90,7 @@ class $Docs extends BaseCli {
     );
     this._exit();
     //#endregion
+
   }
 }
 

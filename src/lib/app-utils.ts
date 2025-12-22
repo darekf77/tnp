@@ -42,6 +42,7 @@ export const angularProjProxyPath = (options: {
   websql: boolean;
   targetArtifact: EnvOptions['release']['targetArtifact'];
 }): string => {
+
   //#region @backendFunc
   const { websql, targetArtifact, project } = options;
 
@@ -63,6 +64,7 @@ export const angularProjProxyPath = (options: {
     project.name,
   ]);
   //#endregion
+
 };
 
 //#region get proxy ng projects
@@ -71,6 +73,7 @@ export const getProxyNgProj = (
   buildOptions: EnvOptions,
   targetArtifact: EnvOptions['release']['targetArtifact'],
 ): Project => {
+
   //#region @backendFunc
   const projPath = crossPlatformPath([
     project.location,
@@ -83,12 +86,14 @@ export const getProxyNgProj = (
   const proj = project.ins.From(projPath);
   return proj as Project;
   //#endregion
+
 };
 //#endregion
 
 export const templateFolderForArtifact = (
   artifact: ReleaseArtifactTaon,
 ): TemplateFolder => {
+
   //#region @backendFunc
 
   if (artifact === ReleaseArtifactTaon.ANGULAR_NODE_APP) {
@@ -102,4 +107,5 @@ export const templateFolderForArtifact = (
   }
   Helpers.error(`Cannot Template folder for current artifact "${artifact}"`);
   //#endregion
+
 };

@@ -1,7 +1,7 @@
 //#region imports
 import type { ChildProcess } from 'child_process';
 
-import { Taon } from 'taon/src';
+import { Taon, TaonRepository } from 'taon/src';
 import { Raw } from 'taon-typeorm/src';
 import {
   _,
@@ -13,6 +13,8 @@ import {
 import { UtilsProcessLogger } from 'tnp-core/src';
 
 import { Processes } from './processes';
+import { TaonBaseRepository } from 'taon/src';
+
 import {
   ProcessesState,
   ProcessesStatesAllowedStart,
@@ -20,10 +22,11 @@ import {
 } from './processes.models';
 //#endregion
 
-@Taon.Repository({
+@TaonRepository({
   className: 'ProcessesRepository',
 })
-export class ProcessesRepository extends Taon.Base.Repository<Processes> {
+export class ProcessesRepository extends TaonBaseRepository<Processes> {
+
   //#region fields and getters
   entityClassResolveFn: () => typeof Processes = () => Processes;
 
@@ -36,6 +39,7 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
   public async getByProcessID(
     processId: number | string,
   ): Promise<Processes | null> {
+
     //#region @websqlFunc
     const proc = await this.findOne({
       where: {
@@ -44,6 +48,7 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
     });
     return proc;
     //#endregion
+
   }
   //#endregion
 
@@ -55,6 +60,7 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
     cwd: string;
     command: string;
   }): Promise<Processes | null> {
+
     //#region @websqlFunc
     const proc = await this.findOne({
       where: {
@@ -64,6 +70,7 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
     });
     return proc;
     //#endregion
+
   }
   //#endregion
 
@@ -74,6 +81,7 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
       processName?: string;
     },
   ): Promise<void> {
+
     //#region @backendFunc
     options = options || {};
 
@@ -177,9 +185,11 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
         );
       });
       //#endregion
+
     });
 
     //#endregion
+
   }
   //#endregion
 
@@ -190,6 +200,7 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
       deleteAfterKill?: boolean;
     },
   ): Promise<void> {
+
     //#region @websqlFunc
     options = options || {};
     await this.getAndUpdateProcess(processId, proc => {
@@ -222,6 +233,7 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
       }, 1000);
     });
     //#endregion
+
   }
   //#endregion
 
@@ -240,6 +252,7 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
       executeCallbackWhenNoProcess?: boolean;
     },
   ): Promise<void> {
+
     //#region @backendFunc
     options = options || {};
     const proc = await this.findOne({
@@ -261,8 +274,10 @@ export class ProcessesRepository extends Taon.Base.Repository<Processes> {
       'outputLast40lines' as keyof Processes,
     );
     //#endregion
+
   }
   //#endregion
 
   //#endregion
+
 }

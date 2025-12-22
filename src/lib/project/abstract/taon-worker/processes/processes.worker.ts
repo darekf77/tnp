@@ -12,6 +12,7 @@ export class ProcessesWorker extends BaseCliWorker<
   ProcessesWorkerController,
   ProcessesTerminalUI
 > {
+
   //#region properties
   // TODO 'as any' for some reason is necessary
   // TypeScript d.ts generation bug
@@ -40,6 +41,7 @@ export class ProcessesWorker extends BaseCliWorker<
   //#endregion
 
   public async startNormallyInCurrentProcess(): Promise<void> {
+
     //#region @backendFunc
     await super.startNormallyInCurrentProcess({
       actionBeforeTerminalUI: async () => {
@@ -56,5 +58,6 @@ export class ProcessesWorker extends BaseCliWorker<
 
     // await UtilsTerminal.pressAnyKeyToContinueAsync();
     //#endregion
+
   }
 }

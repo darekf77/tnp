@@ -12,6 +12,7 @@ export function getLoader(
   color?: string,
   preload?: boolean,
 ) {
+
   //#region @backendFunc
   if (_.isString(color)) {
     color = color.replace('##', '');
@@ -26,4 +27,5 @@ export function getLoader(
   };
   return loaders[loaderName ? loaderName : defaultLoader];
   //#endregion
+
 }

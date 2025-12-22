@@ -44,6 +44,7 @@ export abstract class BaseInsideStruct {
     fileContent: string,
     { websql }: { websql: boolean },
   ): string {
+
     //#region @backendFunc
     const importExports =
       UtilsTypescript.recognizeImportsFromContent(fileContent);
@@ -60,11 +61,13 @@ export abstract class BaseInsideStruct {
     }
     return fileContent;
     //#endregion
+
   }
   //#endregion
 
   //#region replace imports for backend
   replaceImportsForBackend(fileContent: string): string {
+
     //#region @backendFunc
     const importExports =
       UtilsTypescript.recognizeImportsFromContent(fileContent);
@@ -81,6 +84,8 @@ export abstract class BaseInsideStruct {
     }
     return fileContent;
     //#endregion
+
   }
   //#endregion
+
 }

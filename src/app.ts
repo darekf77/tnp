@@ -1,3 +1,4 @@
+// @ts-nocheck
 //#region imports
 import { CommonModule } from '@angular/common';
 import { NgModule, inject, Injectable } from '@angular/core';
@@ -5,6 +6,11 @@ import { Component, OnInit } from '@angular/core';
 import { VERSION } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { Taon, TaonBaseContext } from 'taon/src';
+import {
+  TaonBaseCrudController,
+  TaonBaseAbstractEntity,
+  StringColumn,
+} from 'taon/src';
 import { Helpers, UtilsOs } from 'tnp-core/src';
 
 import {
@@ -22,6 +28,7 @@ const frontendHost =
   (Helpers.isWebSQL ? CLIENT_DEV_WEBSQL_APP_PORT : CLIENT_DEV_NORMAL_APP_PORT);
 
 //#region tnp component
+
 //#region @browser
 @Component({
   selector: 'app-tnp',
@@ -45,19 +52,24 @@ export class TnpComponent {
   angularVersion =
     VERSION.full +
     ` mode: ${UtilsOs.isRunningInWebSQL() ? ' (websql)' : '(normal)'}`;
+
   userApiService = inject(UserApiService);
+
   readonly users$: Observable<User[]> = this.userApiService.getAll();
 }
 //#endregion
+
 //#endregion
 
 //#region  tnp api service
+
 //#region @browser
 @Injectable({
   providedIn: 'root',
 })
 export class UserApiService {
   userController = Taon.inject(() => MainContext.getClass(UserController));
+
   getAll() {
     return this.userController
       .getAll()
@@ -66,9 +78,11 @@ export class UserApiService {
   }
 }
 //#endregion
+
 //#endregion
 
 //#region  tnp module
+
 //#region @browser
 @NgModule({
   exports: [TnpComponent],
@@ -77,13 +91,14 @@ export class UserApiService {
 })
 export class TnpModule {}
 //#endregion
+
 //#endregion
 
 //#region  tnp entity
 @Taon.Entity({ className: 'User' })
-class User extends Taon.Base.AbstractEntity {
+class User extends TaonBaseAbstractEntity {
   //#region @websql
-  @Taon.Orm.Column.String()
+  @StringColumn()
   //#endregion
   name?: string;
 }
@@ -91,8 +106,9 @@ class User extends Taon.Base.AbstractEntity {
 
 //#region  tnp controller
 @Taon.Controller({ className: 'UserController' })
-class UserController extends Taon.Base.CrudController<User> {
+class UserController extends TaonBaseCrudController<User> {
   entityClassResolveFn = () => User;
+
   //#region @websql
   async initExampleDbData(): Promise<void> {
     const superAdmin = new User();

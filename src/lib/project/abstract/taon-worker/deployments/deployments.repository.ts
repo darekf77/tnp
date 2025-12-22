@@ -2,7 +2,7 @@
 import { ChildProcess } from 'child_process';
 
 import { Subscription } from 'rxjs';
-import { EndpointContext, MulterFileUploadResponse, Taon } from 'taon/src';
+import { EndpointContext, MulterFileUploadResponse, Taon, TaonRepository } from 'taon/src';
 import { baseTaonDevProjectsNames, config } from 'tnp-core/src';
 import {
   _,
@@ -29,6 +29,8 @@ import { ProcessesRepository } from '../processes/processes.repository';
 
 import { Deployments } from './deployments';
 import { DEPLOYMENT_LOCAL_FOLDER_PATH } from './deployments.constants';
+import { TaonBaseRepository } from 'taon/src';
+
 import {
   DeploymentsAddingStatus as DeploymentsIsAddingStatus,
   DeploymentsAddingStatusObj,
@@ -41,10 +43,10 @@ import {
 } from './deployments.models';
 //#endregion
 
-@Taon.Repository({
+@TaonRepository({
   className: 'DeploymentsRepository',
 })
-export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
+export class DeploymentsRepository extends TaonBaseRepository<Deployments> {
   entityClassResolveFn: () => typeof Deployments = () => Deployments;
 
   //#region protected methods
@@ -53,6 +55,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
   protected async waitUntilDeploymentRemoved(
     deploymentId: string,
   ): Promise<void> {
+
     //#region @backendFunc
     while (true) {
       const deployment = await this.findOne({
@@ -67,6 +70,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       await Utils.waitMilliseconds(800);
     }
     //#endregion
+
   }
   //#endregion
 
@@ -111,6 +115,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
     file?: MulterFileUploadResponse,
     queryParams?: DeploymentReleaseData,
   ): Promise<Deployments> {
+
     //#region @backendFunc
     const baseFileNameWithHashDatetime = path.basename(file.savedAs);
     const partialDeployment = {
@@ -133,6 +138,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
     );
     return deployment;
     //#endregion
+
   }
   //#endregion
 
@@ -141,6 +147,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
     processId: string | number,
     callback: () => void | Promise<void>,
   ): Promise<void> {
+
     //#region @backendFunc
     setTimeout(async () => {
       const processController = await this.getProcessesController();
@@ -164,6 +171,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       }
     });
     //#endregion
+
   }
   //#endregion
 
@@ -182,6 +190,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       callback?: () => void | Promise<void>;
     },
   ): void {
+
     //#region @backendFunc
     options = options || ({} as any);
     options.refreshEveryMs = options.refreshEveryMs || 2000;
@@ -200,6 +209,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       }
     }, 1000);
     //#endregion
+
   }
   //#endregion
 
@@ -214,6 +224,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       operation: DeploymentsStatus;
     },
   ): Promise<boolean> {
+
     //#region @backendFunc
     options = options || ({} as any);
 
@@ -302,6 +313,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
     return false; // not achieved final state
     //#endregion
+
   }
   //#endregion
 
@@ -319,6 +331,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
   }
 
   protected async clearAllDeployments(): Promise<void> {
+
     //#region @backendFunc
     const allDeployments = await this.find();
     for (const deployment of allDeployments) {
@@ -343,9 +356,11 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
     Helpers.mkdirp(DEPLOYMENT_LOCAL_FOLDER_PATH);
     this.allDeploymentRemoveStatus = AllDeploymentsRemoveStatus.DONE;
     //#endregion
+
   }
 
   async triggerAllDeploymentsRemove(): Promise<void> {
+
     //#region @backendFunc
     if (config.frameworkName === 'taon') {
       Taon.error({
@@ -357,6 +372,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       await this.clearAllDeployments();
     }, 1000);
     //#endregion
+
   }
   //#endregion
 
@@ -368,6 +384,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       skipStatusCheck?: boolean;
     },
   ): Promise<Deployments> {
+
     //#region @backendFunc
     options = options || {};
     options.removeAfterStop = options.removeAfterStop || false;
@@ -486,6 +503,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
     return deployment;
     //#endregion
+
   }
   //#endregion
 
@@ -496,6 +514,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       // forceStart?: boolean;
     },
   ): Promise<Deployments> {
+
     //#region @backendFunc
 
     //#region find deployment
@@ -595,6 +614,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
     return deployment;
     //#endregion
+
   }
   //#endregion
 
@@ -602,6 +622,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
   //#region add existed deployments process
   async clearAndAddExistedDeploymentsProcess(): Promise<void> {
+
     //#region @backendFunc
 
     // clear all deployments first
@@ -641,6 +662,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
 
     this.deploymentsIsAddingStatus = DeploymentsIsAddingStatus.DONE;
     //#endregion
+
   }
   //#endregion
 
@@ -649,6 +671,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
     DeploymentsIsAddingStatus.NOT_STARTED;
 
   triggerAddExistedDeployments(): void {
+
     //#region @backendFunc
     this.deploymentsIsAddingStatus = DeploymentsIsAddingStatus.IN_PROGRESS;
     setTimeout(async () => {
@@ -661,6 +684,7 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
       }
     }, 1000);
     //#endregion
+
   }
 
   isAddingDeploymentStatus(): DeploymentsAddingStatusObj {
@@ -672,4 +696,5 @@ export class DeploymentsRepository extends Taon.Base.Repository<Deployments> {
   //#endregion
 
   //#endregion
+
 }

@@ -35,6 +35,7 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
   }, // @ts-ignore TODO weird inheritance problem
   Project
 > {
+
   //#region private methods / get out dir app
   /**
    * Absolute path to the output directory for the app
@@ -75,6 +76,7 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
 
   //#region rebuild base files
   public rebuildBaseFiles(): void {
+
     //#region @backendFunc
     return;
     this.project.framework.recreateFileFromCoreProject({
@@ -103,11 +105,13 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
     console.log(`Rebuilding docker files in ${dockerFolder}`);
 
     //#endregion
+
   }
   //#endregion
 
   //#region rebuild
   private rebuild(changeOfFiles: ChangeOfFile[], asyncEvent: boolean): void {
+
     //#region @backendFunc
 
     Helpers.taskStarted(`Rebuilding docker environment`);
@@ -118,6 +122,7 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
     }
     Helpers.taskDone(`Rebuilding docker environment Done`);
     //#endregion
+
   }
   //#endregion
 
@@ -129,9 +134,12 @@ export class DockerHelper extends BaseDebounceCompilerForProject<
     changeOfFiles: ChangeOfFile[];
     asyncEvent: boolean;
   }): void {
+
     //#region @backendFunc
     this.rebuild(changeOfFiles, asyncEvent);
     //#endregion
+
   }
   //#endregion
+
 }

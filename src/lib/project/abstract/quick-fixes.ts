@@ -39,12 +39,15 @@ import type { Project } from '../abstract/project';
 // @ts-ignore TODO weird inheritance problem
 export class QuickFixes extends BaseQuickFixes<Project> {
   removeHuskyHooks(): void {
+
     //#region @backendFunc
     this.project.removeFolderByRelativePath('node_modules/husky');
     //#endregion
+
   }
 
   fixPrettierCreatingConfigInNodeModules(): void {
+
     //#region @backendFunc
     const node_modules_path = this.project.nodeModules.path;
     if (
@@ -63,10 +66,12 @@ export class QuickFixes extends BaseQuickFixes<Project> {
       Helpers.removeFolderIfExists(node_modules_path);
     }
     //#endregion
+
   }
 
   //#region recreate temp source necessary files for tests
   recreateTempSourceNecessaryFilesForTesting(): void {
+
     //#region @backendFunc
     if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
       return;
@@ -124,11 +129,13 @@ export class QuickFixes extends BaseQuickFixes<Project> {
       });
     })();
     //#endregion
+
   }
   //#endregion
 
   //#region fix build dirs
   makeSureDistFolderExists(): void {
+
     //#region @backendFunc
     const p = this.project.pathFor(distMainProject);
     if (!Helpers.isFolder(p)) {
@@ -136,11 +143,13 @@ export class QuickFixes extends BaseQuickFixes<Project> {
       Helpers.mkdirp(p);
     }
     //#endregion
+
   }
   //#endregion
 
   //#region add missing angular files
   public missingAngularLibFiles(): void {
+
     //#region @backendFunc
     Helpers.taskStarted(`[quick fixes] missing angular lib fles start`, true);
     if (
@@ -258,7 +267,6 @@ This folder is an entry point for npm Angular/NodeJS library
 
 DON'T USE STUFF FROM PARENT FOLDER app.* FILES HERE (except src/migrations/** files).
 
-
 ${THIS_IS_GENERATED_STRING}
           `.trimLeft(),
         );
@@ -285,7 +293,6 @@ folder inside project.
 /src/lib/my-feature/tests/features.test.ts                    # -> OK
 /src/lib/my-feature/nested-feature/tests/features.test.ts     # -> OK
 \`\`\`
-
 
 # How to test your isomorphic backend ?
 
@@ -338,7 +345,6 @@ ${THIS_IS_GENERATED_STRING}
 
 # HOW TO USE THIS FOLDER
 
-
 Put here files that you don't want to share through npm package.
 
 *src/lib* - it is for **npm library** code
@@ -374,17 +380,18 @@ ${THIS_IS_GENERATED_STRING}`,
 You will see here *.rest routes for each context/controller of your application
 that uses HOST_CONFIG from src/app.hosts.ts
 
-
 ${THIS_IS_GENERATED_STRING}`,
     );
 
     Helpers.taskDone(`[quick fixes] missing angular lib fles end`);
     //#endregion
+
   }
   //#endregion
 
   //#region bad types in node modules
   removeBadTypesInNodeModules(): void {
+
     //#region @backendFunc
     if (!fse.existsSync(this.project.nodeModules.path)) {
       Helpers.warn(
@@ -432,11 +439,13 @@ ${THIS_IS_GENERATED_STRING}`,
     }
 
     //#endregion
+
   }
   //#endregion
 
   //#region add missing source folder
   public addMissingSrcFolderToEachProject(): void {
+
     //#region @backendFunc
     /// QUCIK_FIX make it more generic
     if (this.project.framework.frameworkVersionEquals('v1')) {
@@ -455,11 +464,13 @@ ${THIS_IS_GENERATED_STRING}`,
     }
     Helpers.taskDone(`[quick fixes] missing source folder end`);
     //#endregion
+
   }
   //#endregion
 
   //#region node_modules replacements zips
   public get nodeModulesPkgsReplacements() {
+
     //#region @backendFunc
     const npmReplacements = glob
       .sync(`${this.project.pathFor(nodeModulesMainProject)}-*.zip`)
@@ -467,6 +478,7 @@ ${THIS_IS_GENERATED_STRING}`,
 
     return npmReplacements;
     //#endregion
+
   }
 
   /**
@@ -478,6 +490,7 @@ ${THIS_IS_GENERATED_STRING}`,
    * This will prevent packages deletion from npm
    */
   public unpackNodeModulesPackagesZipReplacements() {
+
     //#region @backendFunc
     return; // TODO @UNCOMMENT zip refactored
     const nodeModulesPath = this.project.pathFor(nodeModulesMainProject);
@@ -513,6 +526,8 @@ ${THIS_IS_GENERATED_STRING}`,
       }
     });
     //#endregion
+
   }
   //#endregion
+
 }

@@ -43,6 +43,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
 
   //#region constructor
+
   //#region @backend
   constructor(project: Project, defaultValue?: Partial<Models.TaonJson>) {
     super(project);
@@ -63,6 +64,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     });
   }
   //#endregion
+
   //#endregion
 
   //#region reload from disk
@@ -71,6 +73,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    * @deprecated
    */
   public reloadFromDisk(): void {
+
     //#region @backendFunc
     const newData =
       Helpers.readJson5([this.project.pathFor(taonJsonMainProject)]) ||
@@ -88,6 +91,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
       { walkGetters: false },
     );
     //#endregion
+
   }
   //#endregion
 
@@ -187,6 +191,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
 
   public saveToDisk(purpose?: string): void {
+
     //#region @backend
     Helpers.log(`Saving taon.jsonc ${purpose ? `(${purpose})` : ''}`);
     if (this.isCoreProject && this.project.framework.isContainer) {
@@ -226,6 +231,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
     this.project.packageJson.saveToDisk();
     //#endregion
+
   }
   //#endregion
 
@@ -248,9 +254,11 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    * (relative paths to files or folders)
    */
   get resources(): string[] {
+
     //#region @backendFunc
     return this.data?.resources || [];
     //#endregion
+
   }
   //#endregion
 
@@ -260,9 +268,11 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    * Required if README.md has relative pathes to links
    */
   get baseContentUrl(): string | undefined {
+
     //#region @backendFunc
     return (this.data as Models.TaonJsonStandalone)?.baseContentUrl;
     //#endregion
+
   }
   //#endregion
 
@@ -272,29 +282,35 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    * Required if README.md has relative pathes to images
    */
   get baseImagesUrl(): string | undefined {
+
     //#region @backendFunc
     return (this.data as Models.TaonJsonStandalone)?.baseImagesUrl;
     //#endregion
+
   }
   //#endregion
 
   //#region store generated assets in repo
   get storeGeneratedAssetsInRepository(): boolean {
+
     //#region @backendFunc
 
     return !!(this.data as Models.TaonJsonStandalone)
       ?.storeGeneratedAssetsInRepository;
     //#endregion
+
   }
   //#endregion
 
   //#region store local release files in repo
   get storeLocalReleaseFilesInRepository(): boolean {
+
     //#region @backendFunc
 
     return !!(this.data as Models.TaonJsonStandalone)
       ?.storeLocalReleaseFilesInRepository;
     //#endregion
+
   }
   //#endregion
 
@@ -303,6 +319,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    * Dependencies for npm lib (non isomorphic)
    */
   get dependenciesNamesForNpmLib(): string[] {
+
     //#region @backendFunc
     let res = (this.data as Models.TaonJsonStandalone)
       ?.dependenciesNamesForNpmLib;
@@ -313,15 +330,18 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
     return res || [];
     //#endregion
+
   }
   //#endregion
 
   private setDependenciesNamesForNpmLib(dependencies: string[]): void {
+
     //#region @backendFunc
     const data = this.data as Models.TaonJsonStandalone;
     data.dependenciesNamesForNpmLib = dependencies;
     this.saveToDisk('updating dependencies for npm lib');
     //#endregion
+
   }
 
   //#region isomorphic dependencies names for npm lib
@@ -330,27 +350,32 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    * (build-in/core taon isomorphic packages will not be here)
    */
   get isomorphicDependenciesForNpmLib(): string[] {
+
     //#region @backendFunc
     let res = (this.data as Models.TaonJsonStandalone)
       ?.isomorphicDependenciesForNpmLib;
 
     return res || [];
     //#endregion
+
   }
   //#endregion
 
   //#region set isomorphic dependencies for npm lib
   private setIsomorphicDependenciesForNpmLib(dependencies: string[]): void {
+
     //#region @backendFunc
     const data = this.data as Models.TaonJsonStandalone;
     data.isomorphicDependenciesForNpmLib = dependencies;
     this.saveToDisk('updating isomorphic dependencies for npm lib');
     //#endregion
+
   }
   //#endregion
 
   //#region additional externals for
   additionalExternalsFor(artifactName: ReleaseArtifactTaon): string[] {
+
     //#region @backendFunc
     let res = (
       this.data as Models.TaonJsonStandalone
@@ -364,6 +389,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
     return res || [];
     //#endregion
+
   }
   //#endregion
 
@@ -371,6 +397,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   public additionalReplaceWithNothingFor(
     artifactName: ReleaseArtifactTaon,
   ): string[] {
+
     //#region @backendFunc
     let res = (
       this.data as Models.TaonJsonStandalone
@@ -386,11 +413,13 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
     return res || [];
     //#endregion
+
   }
   //#endregion
 
   //#region native deps for
   public getNativeDepsFor(artifactName: ReleaseArtifactTaon): string[] {
+
     //#region @backendFunc
     let res = (
       this.data as Models.TaonJsonStandalone
@@ -406,6 +435,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
     return res || [];
     //#endregion
+
   }
   //#endregion
 
@@ -415,21 +445,25 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    * (relative paths to files or folders)
    */
   get peerDependenciesNamesForNpmLib(): string[] {
+
     //#region @backendFunc
     let res = (this.data as Models.TaonJsonStandalone)
       ?.peerDependenciesNamesForNpmLib;
 
     return res || [];
     //#endregion
+
   }
   //#endregion
 
   private setPeerDependenciesNamesForNpmLib(dependencies: string[]): void {
+
     //#region @backendFunc
     const data = this.data as Models.TaonJsonStandalone;
     data.peerDependenciesNamesForNpmLib = dependencies;
     this.saveToDisk('updating peer dependencies for npm lib');
     //#endregion
+
   }
 
   //#region peerDependencies names for npm lib
@@ -438,17 +472,20 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    * (relative paths to files or folders)
    */
   get optionalDependenciesNamesForNpmLib(): string[] {
+
     //#region @backendFunc
     let res = (this.data as Models.TaonJsonStandalone)
       ?.optionalDependenciesNamesForNpmLib;
 
     return res || [];
     //#endregion
+
   }
   //#endregion
 
   //#region set new version
   setType(type: CoreModels.LibType): void {
+
     //#region @backendFunc
     const data = this.data as Models.TaonJsonContainer;
     Helpers.info(
@@ -458,6 +495,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
     this.saveToDisk(`setting new type "${type}"`);
     //#endregion
+
   }
   //#endregion
 
@@ -465,128 +503,156 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   async setFrameworkVersion(
     frameworkVersionArg: CoreModels.FrameworkVersion,
   ): Promise<void> {
+
     //#region @backendFunc
     this.data.version = frameworkVersionArg;
     this.saveToDisk('updating framework version');
     //#endregion
+
   }
   //#endregion
 
   //#region uses its own node_modules
   get isUsingOwnNodeModulesInsteadCoreContainer(): boolean {
     const data = this.data as Models.TaonJsonStandalone;
+
     //#region @backendFunc
     let res = data?.isUsingOwnNodeModulesInsteadCoreContainer;
     return !!res;
     //#endregion
+
   }
   //#endregion
 
   //#region uses its own node_modules
   get shouldGenerateAutogenIndexFile(): boolean {
     const data = this.data as Models.TaonJsonStandalone;
+
     //#region @backendFunc
     return !!data?.shouldGenerateAutogenIndexFile;
     //#endregion
+
   }
   //#endregion
 
   //#region is monorepo
   get isMonorepo(): boolean {
+
     //#region @backendFunc
     const data = this.data as Models.TaonJsonContainer;
     return !!data?.monorepo;
     //#endregion
+
   }
   //#endregion
 
   //#region is organization
   get isOrganization(): boolean {
+
     //#region @backendFunc
     const data = this.data as Models.TaonJsonContainer;
     return !!data?.organization;
     //#endregion
+
   }
   //#endregion
 
   //#region name when inside organization
   get nameWhenInsideOrganiation(): string | undefined {
+
     //#region @backendFunc
     const data = this.data as Models.TaonJsonStandalone;
     return data?.overrideNameWhenInsideOrganization;
     //#endregion
+
   }
   //#endregion
 
   //#region override name for cli
   get overrideNameForCli(): string | undefined {
+
     //#region @backendFunc
     const data = this.data as Models.TaonJsonStandalone;
     return data?.overrideNameForCli;
     //#endregion
+
   }
   //#endregion
 
   //#region name when inside organization
   get overrideNpmName(): string | undefined {
+
     //#region @backendFunc
     const data = this.data as Models.TaonJsonStandalone;
     return data?.overrideNpmName;
     //#endregion
+
   }
   //#endregion
 
   //#region is core project
   get isCoreProject(): boolean {
+
     //#region @backendFunc
     return !!this.data?.isCoreProject;
     //#endregion
+
   }
   //#endregion
 
   //#region framework version
   get frameworkVersion(): CoreModels.FrameworkVersion | undefined {
+
     //#region @backendFunc
     return this.data?.version;
     //#endregion
+
   }
   //#endregion
 
   //#region app id
   get appId(): string {
+
     //#region @backendFunc
     return (this.data as Models.TaonJsonStandalone)?.appId;
     //#endregion
+
   }
 
   set appId(value: string) {
+
     //#region @backend
     const data = this.data as Models.TaonJsonStandalone;
     data.appId = value;
     this.saveToDisk('updating appId');
     //#endregion
+
   }
   //#endregion
 
   //#region folders to remove after pulling from git
   get removeAfterPullingFromGit(): string[] {
+
     //#region @backendFunc
     const data = this.data as Models.TaonJsonContainer;
     return Array.isArray(data?.removeAfterPullingFromGit)
       ? data?.removeAfterPullingFromGit
       : [];
     //#endregion
+
   }
   //#endregion
 
   //#region link to
   linkTo(destination: string): void {
+
     //#region @backendFunc
     const source = this.project.pathFor(taonJsonMainProject);
     const dest = crossPlatformPath([destination, taonJsonMainProject]);
     Helpers.removeFileIfExists(dest);
     Helpers.createSymLink(source, dest);
     //#endregion
+
   }
   //#endregion
 
@@ -610,6 +676,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
   //#region update isomorphic external depenencies
   public updateIsomorphicExternalDependencies(): void {
+
     //#region @backendFunc
     Helpers.taskStarted(`Updating isomorphic external dependencies`);
     const allDetectedIsomorphicDeps =
@@ -629,12 +696,14 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     this.setPeerDependenciesNamesForNpmLib(peerDependenciesNamesForNpmLib);
     Helpers.taskDone(`Done updating isomorphic external dependencies`);
     //#endregion
+
   }
   //#endregion
 
   async updateDependenciesFromNpm(options?: {
     onlyPackageNames?: string[];
   }): Promise<void> {
+
     //#region @backendFunc
     options = options || {};
     options.onlyPackageNames = options.onlyPackageNames || [];
@@ -742,5 +811,6 @@ export class TaonJson extends BaseFeatureForProject<Project> {
       });
     }
     //#endregion
+
   }
 }

@@ -1,18 +1,25 @@
 //#region imports
-import { Taon } from 'taon/src';
+import { CustomColumn, Taon, TaonEntity } from 'taon/src';
+import {
+  TaonBaseAbstractEntity,
+  Column,
+  String500Column,
+  SimpleJsonColumn,
+} from 'taon/src';
 import { _, chalk, dateformat } from 'tnp-core/src';
 
 import { ProcessesDefaultsValues } from './processes.defaults-values';
 import { ProcessesState } from './processes.models';
+
 //#endregion
 
-@Taon.Entity({
+@TaonEntity({
   className: 'Processes',
   createTable: true,
 })
-export class Processes extends Taon.Base.AbstractEntity<Processes> {
+export class Processes extends TaonBaseAbstractEntity<Processes> {
   //#region @websql
-  @Taon.Orm.Column.Custom({
+  @CustomColumn({
     type: 'varchar',
     length: 1500,
     nullable: false,
@@ -21,7 +28,7 @@ export class Processes extends Taon.Base.AbstractEntity<Processes> {
   command: string;
 
   //#region @websql
-  @Taon.Orm.Column.Custom({
+  @CustomColumn({
     type: 'varchar',
     length: 500,
     default: process.cwd(),
@@ -30,7 +37,7 @@ export class Processes extends Taon.Base.AbstractEntity<Processes> {
   cwd: string;
 
   //#region @websql
-  @Taon.Orm.Column.Custom({
+  @CustomColumn({
     type: 'varchar',
     length: 20,
     default: ProcessesState.NOT_STARTED,
@@ -40,7 +47,7 @@ export class Processes extends Taon.Base.AbstractEntity<Processes> {
   state: ProcessesState;
 
   //#region @websql
-  @Taon.Orm.Column.Custom({
+  @CustomColumn({
     type: 'int',
     default: null,
     nullable: true,
@@ -49,7 +56,7 @@ export class Processes extends Taon.Base.AbstractEntity<Processes> {
   pid: number;
 
   //#region @websql
-  @Taon.Orm.Column.Custom({
+  @CustomColumn({
     type: 'int',
     default: null,
     nullable: true,
@@ -58,21 +65,22 @@ export class Processes extends Taon.Base.AbstractEntity<Processes> {
   ppid: number;
 
   //#region @websql
-  @Taon.Orm.Column.SimpleJson()
+  @SimpleJsonColumn()
   //#endregion
   conditionProcessActiveStdout: string[];
 
   //#region @websql
-  @Taon.Orm.Column.SimpleJson()
+  @SimpleJsonColumn()
   //#endregion
   conditionProcessActiveStderr: string[];
 
   //#region @websql
-  @Taon.Orm.Column.Custom({
+  @CustomColumn({
     type: 'text',
     default: '',
   })
   //#endregion
+
   /**
    * last 40 lines of output
    * (combined stdout + stderr)
@@ -80,8 +88,9 @@ export class Processes extends Taon.Base.AbstractEntity<Processes> {
   outputLast40lines: string;
 
   //#region @websql
-  @Taon.Orm.Column.String500()
+  @String500Column()
   //#endregion
+
   /**
    * absolute path to file where stdout + stderr is logged
    */

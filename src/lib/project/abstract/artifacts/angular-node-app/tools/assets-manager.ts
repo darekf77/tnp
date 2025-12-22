@@ -28,6 +28,7 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
   // @ts-ignore
   Project
 > {
+
   //#region fields & getters
   private tmpFolders = [
     tmpSrcDist,
@@ -41,11 +42,13 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
   private readonly currentProjectNodeModulesPath: string;
 
   get tmpAllAssetsLinkedInCoreContainerAbsPath(): string {
+
     //#region @backendFunc
     const containerCoreBase =
       this.project.framework.coreContainer.pathFor(tmpAllAssetsLinked);
     return containerCoreBase;
     //#endregion
+
   }
   //#endregion
 
@@ -65,6 +68,7 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
     changeOfFiles: ChangeOfFile[],
     asyncAction: boolean,
   ): void {
+
     //#region @backendFunc
     for (const changeOfFile of changeOfFiles) {
       const [pkgName, relativePathInSharedAssets] =
@@ -116,8 +120,6 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
       ${config.frameworkName} build:clean:lib
       ${config.frameworkName} build:clean:watch:lib
 
-
-
                     `,
                 );
               }
@@ -163,6 +165,7 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
     }
 
     //#endregion
+
   }
   //#endregion
 
@@ -185,6 +188,7 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
 
   //#region link joinded assets
   linkAssetToJoindedProject(): void {
+
     //#region @backendFunc
     if (!Helpers.exists(this.tmpAllAssetsLinkedInCoreContainerAbsPath)) {
       Helpers.mkdirp(this.tmpAllAssetsLinkedInCoreContainerAbsPath);
@@ -222,6 +226,8 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
       },
     );
     //#endregion
+
   }
   //#endregion
+
 }

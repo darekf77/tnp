@@ -49,6 +49,7 @@ const debugFile = [
  *
  */
 export class BrowserCodeCut {
+
   //#region fields
   /**
    * slighted modifed app release dist
@@ -84,6 +85,7 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region constructor
+
   //#region @backend
   constructor(
     /**
@@ -146,6 +148,7 @@ export class BrowserCodeCut {
     this.isWebsqlMode = this.relativePath.startsWith(tmpSrcDistWebsql);
   }
   //#endregion
+
   //#endregion
 
   //#region public / methods & getters / process file
@@ -158,6 +161,7 @@ export class BrowserCodeCut {
     isCuttableFile: boolean;
     regionReplaceOptions: ReplaceOptionsExtended;
   }) {
+
     //#region @backendFunc
     if (isCuttableFile) {
       this.initAndSaveCuttableFile(regionReplaceOptions);
@@ -165,23 +169,27 @@ export class BrowserCodeCut {
       this.initAndSaveAssetFile(fileRemovedEvent);
     }
     //#endregion
+
   }
   //#endregion
 
   //#region private / methods & getters / init and save cuttabl file
   private initAndSaveCuttableFile(options: ReplaceOptionsExtended): void {
+
     //#region @backendFunc
     return this.init()
       .REPLACERegionsForIsomorphicLib(_.cloneDeep(options) as any)
       .REPLACERegionsFromTsImportExport()
       .save();
     //#endregion
+
   }
   //#endregion
 
   //#region private / methods & getters / init and save
   private initAndSaveAssetFile(remove = false): BrowserCodeCut {
     // const debugFiles = ['assets/cutsmall.jpg'];
+
     //#region @backendFunc
     if (remove) {
       Helpers.removeIfExists(
@@ -231,11 +239,13 @@ export class BrowserCodeCut {
       }
     }
     //#endregion
+
   }
   //#endregion
 
   //#region private / methods & getters / init
   private init(): BrowserCodeCut {
+
     //#region @backendFunc
     const orgContent =
       Helpers.readFile(this.absSourcePathFromSrc, void 0, true) || '';
@@ -281,39 +291,47 @@ export class BrowserCodeCut {
     this.rawContentBackend = this.rawContentForBrowser; // at the beginning those are normal files from src
     return this;
     //#endregion
+
   }
 
   //#endregion
 
   //#region private / methods & getters / project own smart packages
   get projectOwnSmartPackages(): string[] {
+
     //#region @backendFunc
     return [this.project.nameForNpmPackage];
     //#endregion
+
   }
   //#endregion
 
   //#region private / methods & getters / is empty browser file
   private get isEmptyBrowserFile(): boolean {
+
     //#region @backendFunc
     return this.rawContentForBrowser.replace(/\s/g, '').trim() === '';
     //#endregion
+
   }
   //#endregion
 
   //#region private / methods & getters / is empty module backend file
   private get isEmptyModuleBackendFile(): boolean {
+
     //#region @backendFunc
     return (
       (this.rawContentBackend || '').replace(/\/\*\ \*\//g, '').trim()
         .length === 0
     );
     //#endregion
+
   }
   //#endregion
 
   //#region private / methods & getters / save empty file
   private saveEmptyFile(isTsFile: boolean): void {
+
     //#region @backendFunc
     if (!fse.existsSync(path.dirname(this.absFileSourcePathBrowserOrWebsql))) {
       // write empty instead unlink
@@ -361,11 +379,13 @@ export class BrowserCodeCut {
       );
     }
     //#endregion
+
   }
   //#endregion
 
   //#region private / methods & getters / save normal file
   private saveNormalFile(isTsFile: boolean): void {
+
     //#region @backendFunc
     // console.log('SAVE NORMAL FILE')
     if (this.isAssetsFile) {
@@ -438,11 +458,13 @@ export class BrowserCodeCut {
       );
     }
     //#endregion
+
   }
   //#endregion
 
   //#region private / methods & getters / replace regions from ts import export
   private REPLACERegionsFromTsImportExport(): BrowserCodeCut {
+
     //#region @backendFunc
     if (this.isAssetsFile) {
       return this;
@@ -496,6 +518,7 @@ export class BrowserCodeCut {
 
     return this;
     //#endregion
+
   }
   //#endregion
 
@@ -503,6 +526,7 @@ export class BrowserCodeCut {
   private REPLACERegionsForIsomorphicLib(
     options: ReplaceOptionsExtended,
   ): BrowserCodeCut {
+
     //#region @backendFunc
     if (this.isAssetsFile) {
       return this;
@@ -558,11 +582,13 @@ export class BrowserCodeCut {
 
     return this;
     //#endregion
+
   }
   //#endregion
 
   //#region private / methods & getters / processing asset link for app
   private processAssetsLinksForApp(): void {
+
     //#region @backendFunc
     this.rawContentForAPPONLYBrowser = this.rawContentForBrowser.replace(
       new RegExp(Helpers.escapeStringForRegEx(TO_REMOVE_TAG), 'g'),
@@ -687,11 +713,13 @@ export class BrowserCodeCut {
     })();
 
     //#endregion
+
   }
   //#endregion
 
   //#region private / methods & getters / save
   private save(): void {
+
     //#region @backendFunc
     if (this.isAssetsFile) {
       this.saveNormalFile(false);
@@ -741,6 +769,7 @@ export class BrowserCodeCut {
       fse.writeFileSync(absoluteBackendDestFilePath, contentStandalone, 'utf8');
     }
     //#endregion
+
   }
   //#endregion
 
@@ -752,6 +781,7 @@ export class BrowserCodeCut {
       isBrowser: boolean;
     },
   ): string {
+
     //#region @backendFunc
     if (!absFilePath.endsWith('.ts')) {
       // console.log(`NOT_FIXING: ${absFilePath}`)
@@ -800,11 +830,13 @@ export class BrowserCodeCut {
 
     return content;
     //#endregion
+
   }
   //#endregion
 
   //#region private / methods & getters / replace assets path
   private replaceAssetsPath(absDestinationPath: string): string {
+
     //#region @backendFunc
     const isAsset = this.relativePath.startsWith(`${assetsFromTempSrc}/`);
 
@@ -816,6 +848,8 @@ export class BrowserCodeCut {
         )
       : absDestinationPath;
     //#endregion
+
   }
   //#endregion
+
 }

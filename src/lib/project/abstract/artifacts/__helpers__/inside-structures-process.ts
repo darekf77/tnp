@@ -38,6 +38,7 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
     structs: BaseInsideStruct[],
     initOptions: EnvOptions,
   ): Promise<void> {
+
     //#region @backendFunc
     for (let index = 0; index < structs.length; index++) {
       const insideStruct = structs[index];
@@ -128,7 +129,9 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
         await struct.endAction(opt);
       }
       //#endregion
+
     }
     //#endregion
+
   }
 }

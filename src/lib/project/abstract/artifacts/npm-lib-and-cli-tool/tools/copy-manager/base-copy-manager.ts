@@ -54,6 +54,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   // @ts-ignore TODO weird inheritance problem
   Project
 > {
+
   //#region fields
   public _isomorphicPackages = [] as string[];
 
@@ -65,6 +66,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 
   //#region getters & methods / select all project to copy to
   protected async selectAllProjectCopyto() {
+
     //#region  @backendFunc
     const containerCoreProj = this.project.framework.coreContainer;
 
@@ -81,6 +83,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     this.copyto = [...independentProjects];
     // console.log(this.copyto.map(c => 'COPYTO ' + c.nodeModules.path))
     //#endregion
+
   }
   //#endregion
 
@@ -94,6 +97,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   ];
 
   protected readonly sourceFolders = [
+
     //#region @backend
     srcMainProject,
     sourceLinkInNodeModules,
@@ -103,6 +107,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
       return crossPlatformPath([currentBrowserFolder, srcMainProject]);
     }),
     //#endregion
+
   ];
 
   //#endregion
@@ -112,6 +117,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   //#region getters / source path to link
 
   get sourcePathToLink(): string {
+
     //#region @backendFunc
     const sourceToLink = crossPlatformPath([
       this.project.location,
@@ -119,15 +125,18 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     ]);
     return sourceToLink;
     //#endregion
+
   }
   //#endregion
 
   //#region getters / local temp proj path
   get localTempProj() {
+
     //#region @backendFunc
     let localProj = this.project.ins.From(this.localTempProjPath) as Project;
     return localProj;
     //#endregion
+
   }
   //#endregion
 
@@ -142,6 +151,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
    * inside project (instead normally from taon.json[frameworkVersion] property)
    */
   get projectToCopyTo() {
+
     //#region @backendFunc
 
     let result: Project[] = [];
@@ -200,11 +210,13 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
 
     return Helpers.uniqArray<Project>(result, 'location' as keyof Project);
     //#endregion
+
   }
   //#endregion
 
   //#region getters / isomorphic pacakges
   get isomorphicPackages() {
+
     //#region @backendFunc
     const isomorphicPackages = [
       ...this._isomorphicPackages,
@@ -212,6 +224,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     ];
     return isomorphicPackages;
     //#endregion
+
   }
   //#endregion
 
@@ -225,6 +238,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
    * @returns if trus - skip futher processing
    */
   protected contentReplaced(fileAbsolutePath: string): void {
+
     //#region @backendFunc
     // console.log('processing', fileAbsolutePath);
     if (
@@ -247,10 +261,12 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
       // console.log(`[copy-manager] content replaced in ${fileAbsolutePath}`);
     }
     //#endregion
+
   }
 
   //#region async action
   async asyncAction(event: ChangeOfFile): Promise<void> {
+
     //#region @backendFunc
     const absoluteFilePath = crossPlatformPath(event.fileAbsolutePath);
     // console.log('async event '+ absoluteFilePath)
@@ -293,6 +309,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     }
     this.updateTriggered();
     //#endregion
+
   }
   //#endregion
 
@@ -303,6 +320,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     files: string[],
     initialParams: BaseCopyMangerInitialParams,
   ): Promise<void> {
+
     //#region @backendFunc
 
     if (
@@ -369,14 +387,17 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
     }
     this.updateTriggered();
     //#endregion
+
   }
   //#endregion
 
   //#region copy builded distribution to
   public copyBuildedDistributionTo(destination: Project) {
+
     //#region @backendFunc
     return this._copyBuildedDistributionTo(destination);
     //#endregion
+
   }
 
   /**
@@ -394,7 +415,9 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       event?: any;
     },
   ) {
+
     //#region @backendFunc
+
     //#region init & prepare parameters
     const {
       specificFileRelativePath = void 0,
@@ -435,6 +458,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       if (absoluteAssetFilePath) {
         this.handleCopyOfAssetFile(absoluteAssetFilePath, destination);
       } else {
+
         //#region handle single file
 
         this.handleCopyOfSingleFile(
@@ -451,8 +475,10 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
           this.replaceIndexDtsForEntryProjectIndex(destination);
         }
         //#endregion
+
       }
     } else {
+
       //#region handle all files
       // Helpers.log('copying all files');
       this.copyCompiledSourcesAndDeclarations(destination, isTempLocalProj);
@@ -515,8 +541,10 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       // );
       // Helpers.copyFile(projectOudBorwserSrc, projectOudBorwserDest);}
       //#endregion
+
     }
     //#endregion
+
   }
   //#endregion
 
@@ -587,4 +615,5 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
   abstract updateBackendFullDtsFiles(destinationOrDist: Project | string): void;
 
   //#endregion
+
 }

@@ -2,7 +2,7 @@
 import * as crypto from 'crypto';
 
 import * as multer from 'multer';
-import { Taon, TaonBaseFileUploadMiddleware } from 'taon/src';
+import { Taon, TaonBaseFileUploadMiddleware, TaonMiddleware } from 'taon/src';
 import { fse, path, UtilsOs } from 'tnp-core/src';
 import { _, crossPlatformPath } from 'tnp-core/src';
 
@@ -10,7 +10,7 @@ import { DEPLOYMENT_LOCAL_FOLDER_PATH } from './deployments.constants';
 
 //#endregion
 
-@Taon.Middleware({
+@TaonMiddleware({
   className: 'DeploymentsMiddleware',
 })
 export class DeploymentsMiddleware extends TaonBaseFileUploadMiddleware {
@@ -19,6 +19,7 @@ export class DeploymentsMiddleware extends TaonBaseFileUploadMiddleware {
   }
 
   storage(): multer.StorageEngine {
+
     //#region @backendFunc
     const uploadDir = this.uploadDir();
     if (!fse.existsSync(uploadDir)) {
@@ -38,5 +39,6 @@ export class DeploymentsMiddleware extends TaonBaseFileUploadMiddleware {
       },
     });
     //#endregion
+
   }
 }

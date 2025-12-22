@@ -57,6 +57,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     //   Helpers.throw(`cliToolName is not provided`);
     // }
     if (UtilsOs.isRunningInVscodeExtension()) {
+
       //#region @backend
       config.frameworkName = config.frameworkName || (taonPackageName as any);
 
@@ -89,6 +90,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
           `${nodeModulesMainProject}/${tnpPackageName}`,
         ) || config.dirnameForTnp;
       //#endregion
+
     }
 
     // TODO $Global not available here
@@ -115,6 +117,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
   //#region methods / type from
   typeFrom(location: string): CoreModels.LibType {
+
     //#region @backendFunc
     location = crossPlatformPath(location);
     if (!fse.existsSync(location)) {
@@ -130,6 +133,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     const type = taonJson.type;
     return type;
     //#endregion
+
   }
   //#endregion
 
@@ -138,6 +142,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
    * TODO use base resolve
    */
   From(locationOfProj: string | string[]): Project {
+
     //#region @backendFunc
     if (Array.isArray(locationOfProj)) {
       locationOfProj = locationOfProj.join('/');
@@ -194,6 +199,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     return resultProject as any;
     //#endregion
+
   }
   //#endregion
 
@@ -206,6 +212,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       onlyOutSideNodeModules?: boolean;
     },
   ): T {
+
     //#region @backendFunc
 
     options = options || {};
@@ -278,11 +285,13 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     }
     return project as any;
     //#endregion
+
   }
   //#endregion
 
   //#region methods / tnp
   get Tnp(): Project {
+
     //#region @backendFunc
     let tnpProject = this.From(config.dirnameForTnp);
     Helpers.log(
@@ -296,16 +305,20 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     }
     return tnpProject;
     //#endregion
+
   }
   //#endregion
 
   //#region by
   public by(
     libraryType: CoreModels.NewFactoryType,
+
     //#region @backend
     version: CoreModels.FrameworkVersion = DEFAULT_FRAMEWORK_VERSION,
     //#endregion
+
   ): Project {
+
     //#region @backendFunc
 
     // console.log({ libraryType, version });
@@ -340,11 +353,13 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     }
     return this.From(projectPath);
     //#endregion
+
   }
   //#endregion
 
   //#region projects in user folder
   private get projectsInUserFolder() {
+
     //#region @backendFunc
     const projectsInUserFolder = crossPlatformPath([
       UtilsOs.getRealHomeDir(),
@@ -353,6 +368,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     ]);
     return projectsInUserFolder;
     //#endregion
+
   }
   //#endregion
 
@@ -361,6 +377,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
    * taon sync command
    */
   sync({ syncFromCommand }: { syncFromCommand?: boolean } = {}): void {
+
     //#region @backendFunc
     const cwd = taonRepoPathUserInUserDir;
 
@@ -500,11 +517,13 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     Helpers.success('taon framework synced ok');
     //#endregion
+
   }
   //#endregion
 
   //#region initial check
   public initialCheck() {
+
     //#region @backendFunc
     if (this.hasResolveCoreDepsAndFolder) {
       return;
@@ -564,11 +583,13 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     }
 
     //#endregion
+
   }
   //#endregion
 
   //#region path resolved
   private pathResolved(...partOfPath: string[]) {
+
     //#region @backendFunc
     // console.log('pathResolved', partOfPath);
 
@@ -590,11 +611,13 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     }
     return crossPlatformPath(path.resolve(path.join(...partOfPath)));
     //#endregion
+
   }
   //#endregion
 
   //#region resolve core projects paths
   private resolveCoreProjectsPathes(version?: CoreModels.FrameworkVersion) {
+
     //#region @backendFunc
 
     if (Number(version.replace('v', '')) < 18) {
@@ -625,6 +648,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     };
     return result;
     //#endregion
+
   }
   //#endregion
 
@@ -639,14 +663,17 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
   //#region angular major version for current cli
   angularMajorVersionForCurrentCli(): number {
+
     //#region @backendFunc
     return Number(CURRENT_PACKAGE_VERSION.split('.')[0]);
     //#endregion
+
   }
   //#endregion
 
   //#region taon tag to checkout for current cli version
   taonTagToCheckoutForCurrentCliVersion(cwd: string): string {
+
     //#region @backendFunc
     const ngVer = this.angularMajorVersionForCurrentCli();
     const lastTagForVer = (
@@ -654,6 +681,8 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     ).git.lastTagNameForMajorVersion(ngVer);
     return lastTagForVer;
     //#endregion
+
   }
   //#endregion
+
 }

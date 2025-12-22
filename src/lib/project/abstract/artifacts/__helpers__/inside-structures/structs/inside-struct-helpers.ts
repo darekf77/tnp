@@ -19,6 +19,7 @@ export function resolveBrowserPathToAssetFrom(
   projectTargetOrStandalone: Project,
   absolutePath: string,
 ): string {
+
   //#region @backendFunc
   let resultBrowserPath = '';
 
@@ -37,6 +38,7 @@ export function resolveBrowserPathToAssetFrom(
 
   return resultBrowserPath;
   //#endregion
+
 }
 //#endregion
 
@@ -50,6 +52,7 @@ export function resolvePathToAsset(
   project: Project,
   relativePathToLoader: string | string[],
 ): string {
+
   //#region @backendFunc
   relativePathToLoader = crossPlatformPath(relativePathToLoader);
 
@@ -72,5 +75,6 @@ export function resolvePathToAsset(
 
   return browserPath;
   //#endregion
+
 }
 //#endregion

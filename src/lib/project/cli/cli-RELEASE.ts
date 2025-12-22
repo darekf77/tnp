@@ -230,6 +230,7 @@ class $Release extends BaseCli {
   }
 
   async installLocally() {
+
     //#region @backendFunc
     const allowedArtifacts: ReleaseArtifactTaon[] = [
       ReleaseArtifactTaon.VSCODE_PLUGIN,
@@ -289,8 +290,10 @@ class $Release extends BaseCli {
 
     this._exit();
     //#endregion
+
   }
   //#endregion
+
 }
 
 export default {

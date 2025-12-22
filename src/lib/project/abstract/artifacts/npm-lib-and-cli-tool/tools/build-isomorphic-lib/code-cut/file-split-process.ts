@@ -28,6 +28,7 @@ export class SplitFileProcess {
 
   //#region get content
   get content(): { modifiedContent: string; rewriteFile: boolean } {
+
     //#region @backendFunc
     if (
       _.isUndefined(
@@ -66,6 +67,7 @@ export class SplitFileProcess {
     const result = this.replaceInFile(this.fileContent, this._importExports);
     return { modifiedContent: result, rewriteFile: this.rewriteFile };
     //#endregion
+
   }
   //#endregion
 

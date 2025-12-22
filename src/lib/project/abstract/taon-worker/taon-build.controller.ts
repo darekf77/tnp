@@ -1,4 +1,5 @@
-import { Taon } from 'taon/src';
+import { Taon, TaonController } from 'taon/src';
+import { TaonBaseCrudController } from 'taon/src';
 import { _ } from 'tnp-core/src';
 
 import { EnvOptions } from '../../../options';
@@ -6,11 +7,11 @@ import { EnvOptions } from '../../../options';
 import { TaonBuild } from './taon-build.entity';
 
 //#region port entity
-@Taon.Controller({
+@TaonController({
   className: 'TaonBuildController',
 })
-export class TaonBuildController extends Taon.Base.CrudController<TaonBuild> {
-  // eslint-disable-next-line @typescript-eslint/typedef
+export class TaonBuildController extends TaonBaseCrudController<TaonBuild> {
+
   entityClassResolveFn = (): typeof TaonBuild => TaonBuild;
 }
 //#endregion

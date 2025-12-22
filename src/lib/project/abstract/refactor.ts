@@ -1,5 +1,5 @@
 //#region imports
-import { BaseTaonClassesNames } from 'taon/src';
+import { BaseTaonClassesNames, TAON_FLATTEN_MAPPING } from 'taon/src';
 import { config, fileName, frontendFiles } from 'tnp-core/src';
 import { _, CoreModels, crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
@@ -134,6 +134,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
     await this.properStandaloneNg19(options);
     await this.eslint(options);
     await this.importsWrap(options);
+    await this.flattenImports(options);
     await this.prettier(options);
     this.project.vsCodeHelpers.toogleFilesVisibilityInVscode({
       action: 'hide-files',
@@ -344,6 +345,33 @@ export class Refactor extends BaseFeatureForProject<Project> {
       }
     });
     Helpers.taskDone(`Done wrapping first imports with region...`);
+    //#endregion
+  }
+
+  async flattenImports(options: { fixSpecificFile?: string }) {
+    //#region @backendFunc
+    options = this.prepareOptions(options);
+    Helpers.info(`Flattening imports...`);
+
+    Helpers.getFilesFrom(this.project.pathFor(srcMainProject), {
+      recursive: true,
+      followSymlinks: false,
+    }).forEach(f => {
+      if (options.fixSpecificFile && f !== options.fixSpecificFile) {
+        return;
+      }
+      if (f.endsWith('.ts')) {
+        let content = Helpers.readFile(f);
+        const fixedComponent = formatRegions(
+          UtilsTypescript.transformFlatImports(content, TAON_FLATTEN_MAPPING),
+        );
+        if (fixedComponent.trim() !== content.trim()) {
+          Helpers.info(`Fixing imports region in ${f}`);
+          Helpers.writeFile(f, fixedComponent);
+        }
+      }
+    });
+    Helpers.taskDone(`Done flattening imports...`);
     //#endregion
   }
 

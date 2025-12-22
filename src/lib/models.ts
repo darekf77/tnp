@@ -5,6 +5,7 @@ import type { ReleaseArtifactTaon, ReleaseType } from './options';
 import type { Project } from './project/abstract/project';
 
 export namespace Models {
+
   //#region taon test type
   export type TestTypeTaon = 'mocha' | 'jest' | 'cypress';
   export const TestTypeTaonArr = ['mocha', 'jest', 'cypress'] as TestTypeTaon[];
@@ -437,4 +438,5 @@ export namespace Models {
     customCssPath?: string;
   }
   //#endregion
+
 }

@@ -39,6 +39,7 @@ export class InsideStructAngularLib extends BaseInsideStruct {
   }
 
   insideStruct(): InsideStruct {
+
     //#region @backendFunc
     const project = this.project;
 
@@ -53,9 +54,11 @@ export class InsideStructAngularLib extends BaseInsideStruct {
 
     const result = InsideStruct.from(
       {
+
         //#region pathes from container codere isomrophic lib
         relateivePathesFromContainer: this.relativePaths(),
         //#endregion
+
         projectType: project.type,
         frameworkVersion: project.framework.frameworkVersion,
         pathReplacements: [
@@ -72,6 +75,7 @@ export class InsideStructAngularLib extends BaseInsideStruct {
           `${templateFolderForArtifact(this.getCurrentArtifact())}/`,
         ],
         endAction: ({ replacement }) => {
+
           //#region fixing package json dependencies in target proj
           (() => {
             const jsonPath = path.join(
@@ -107,6 +111,7 @@ export class InsideStructAngularLib extends BaseInsideStruct {
           //#endregion
 
           (() => {
+
             //#region hande / src / migrations
             const browserTsCode = this.initOptions.build.websql
               ? tmpSrcDistWebsql
@@ -128,9 +133,11 @@ export class InsideStructAngularLib extends BaseInsideStruct {
               continueWhenExistedFolderDoesntExists: true,
             });
             //#endregion
+
           })();
 
           (() => {
+
             //#region hande / src / lib
             const browserTsCode = this.initOptions.build.websql
               ? tmpSrcDistWebsql
@@ -258,6 +265,7 @@ export * from './${libFromSrc}';
     );
     return result;
     //#endregion
+
   }
 }
 

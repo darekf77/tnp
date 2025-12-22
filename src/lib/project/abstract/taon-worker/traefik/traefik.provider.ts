@@ -26,6 +26,7 @@ import { TraefikServiceProvider } from './treafik-service.provider';
 //#endregion
 
 export class TraefikProvider {
+
   //#region fields & getters
   public service = new TraefikServiceProvider(this);
 
@@ -37,17 +38,20 @@ export class TraefikProvider {
 
   //#region fields & getters / cloud is enabled
   public get cloudIsEnabled(): boolean {
+
     //#region @backendFunc
     return (
       this.taonCloudStatus === TaonCloudStatus.ENABLED_NOT_SECURE ||
       this.taonCloudStatus === TaonCloudStatus.ENABLED_SECURED
     );
     //#endregion
+
   }
   //#endregion
 
   //#region fields & getters / is dev mode
   public get isDevMode(): boolean {
+
     //#region @backendFunc
     return (
       this.taonCloudStatus === TaonCloudStatus.ENABLED_NOT_SECURE ||
@@ -58,6 +62,7 @@ export class TraefikProvider {
       ])
     );
     //#endregion
+
   }
   //#endregion
 
@@ -67,6 +72,7 @@ export class TraefikProvider {
    * compose will be started
    */
   public get pathToTraefikComposeDestCwd(): string {
+
     //#region @backendFunc
     const pathToComposeDest = crossPlatformPath([
       taonBasePathToGlobalDockerTemplates,
@@ -74,6 +80,7 @@ export class TraefikProvider {
     ]);
     return pathToComposeDest;
     //#endregion
+
   }
   //#endregion
 
@@ -82,6 +89,7 @@ export class TraefikProvider {
    * Path to traefik docker compose template files
    */
   private get pathToTraefikComposeSourceTemplateFilesCwd(): string {
+
     //#region @backendFunc
     const pathToComposeSource = this.taonProjectsWorker.ins
       .by(LibTypeEnum.ISOMORPHIC_LIB)
@@ -89,6 +97,7 @@ export class TraefikProvider {
 
     return pathToComposeSource;
     //#endregion
+
   }
   //#endregion
 
@@ -112,6 +121,7 @@ export class TraefikProvider {
 
   //#region protected methods / check if docker enabled
   protected async checkIfDockerEnabled(): Promise<boolean> {
+
     //#region @backendFunc
     Helpers.taskStarted(`Checking if docker is enabled...`);
     const isEnableDocker = await UtilsOs.isDockerAvailable();
@@ -120,7 +130,6 @@ export class TraefikProvider {
         `
 
         Docker is not enabled, please enable docker to use cloud features
-
 
         `,
         true,
@@ -132,11 +141,13 @@ export class TraefikProvider {
     Helpers.taskDone(`Docker is enabled!`);
     return true;
     //#endregion
+
   }
   //#endregion
 
   //#region protected methods / delete traefik network
   protected async deleteTraefikNetwork(): Promise<void> {
+
     //#region @backendFunc
 
     try {
@@ -151,11 +162,13 @@ export class TraefikProvider {
       );
     }
     //#endregion
+
   }
   //#endregion
 
   //#region protected methods / make sure traefik network created
   protected async makeSureTraefikNetworkCreated(): Promise<void> {
+
     //#region @backendFunc
     try {
       child_process.execSync(
@@ -171,11 +184,13 @@ export class TraefikProvider {
       );
     }
     //#endregion
+
   }
   //#endregion
 
   //#region protected methods / select mode explain
   protected async selectModeExplain(): Promise<void> {
+
     //#region @backendFunc
     UtilsTerminal.clearConsole();
 
@@ -192,6 +207,7 @@ export class TraefikProvider {
     await UtilsTerminal.pressAnyKeyToContinueAsync();
 
     //#endregion
+
   }
   //#endregion
 
@@ -199,6 +215,7 @@ export class TraefikProvider {
   protected async selectMode(options?: {
     // skipDisabled?: boolean;
   }): Promise<TaonCloudStatus> {
+
     //#region @backendFunc
     options = options || {};
     // options.skipDisabled = options.skipDisabled || false;
@@ -254,6 +271,7 @@ export class TraefikProvider {
       }
     }
     //#endregion
+
   }
   //#endregion
 
@@ -262,6 +280,7 @@ export class TraefikProvider {
     waitUntilHealthy?: boolean;
     maxTries?: number;
   }): Promise<boolean> {
+
     //#region @backendFunc
     let tries = 0;
     options = options || {};
@@ -315,11 +334,13 @@ export class TraefikProvider {
       await UtilsTerminal.wait(1);
     }
     //#endregion
+
   }
   //#endregion
 
   //#region protected methods / select cloud ips
   protected async selectCloudIps(): Promise<boolean> {
+
     //#region @backendFunc
 
     //#region select ip type
@@ -352,6 +373,7 @@ export class TraefikProvider {
     //#endregion
 
     if (useIp === 'usePublic') {
+
       //#region use public ip
       while (true) {
         try {
@@ -410,7 +432,9 @@ export class TraefikProvider {
         }
       }
       //#endregion
+
     } else {
+
       //#region use local ip
       let i = 0;
       while (true) {
@@ -454,8 +478,10 @@ export class TraefikProvider {
         }
       }
       //#endregion
+
     }
     //#endregion
+
   }
   //#endregion
 
@@ -465,6 +491,7 @@ export class TraefikProvider {
 
   //#region protected methods / validate ips
   protected async areCloudIpsValid(): Promise<boolean> {
+
     //#region @backendFunc
     for (const localIp of this.cloudIps) {
       Helpers.info(`Validating IP address (ping): ${localIp}...`);
@@ -479,11 +506,13 @@ export class TraefikProvider {
     }
     return true;
     //#endregion
+
   }
   //#endregion
 
   //#region public methods / initial cloud status check
   public async initialCloudStatusCheck(): Promise<void> {
+
     //#region @backendFunc
     const isDockerRunning = await UtilsOs.isDockerAvailable();
     if (isDockerRunning) {
@@ -519,6 +548,7 @@ export class TraefikProvider {
       return;
     }
     //#endregion
+
   }
   //#endregion
 
@@ -526,6 +556,7 @@ export class TraefikProvider {
   public async restartTraefik(options?: {
     hardRestart?: boolean;
   }): Promise<void> {
+
     //#region @backendFunc
     options = options || {};
     if (options.hardRestart) {
@@ -555,11 +586,13 @@ export class TraefikProvider {
       Helpers.warn('Error restarting Traefik:');
     }
     //#endregion
+
   }
   //#endregion
 
   //#region public methods / start traefik
   public async startTraefik(): Promise<boolean> {
+
     //#region @backendFunc
 
     if (!(await this.checkIfDockerEnabled())) {
@@ -625,11 +658,13 @@ export class TraefikProvider {
 
     return isTraefikRunning;
     //#endregion
+
   }
   //#endregion
 
   //#region public methods / stop traefik
   public async stopTraefik(): Promise<void> {
+
     //#region @backendFunc
     this.taonCloudStatus = TaonCloudStatus.KILLING;
     console.log('Stopping Traefik...');
@@ -721,8 +756,10 @@ export class TraefikProvider {
     // docker compose down --remove-orphans
 
     //#endregion
+
   }
   //#endregion
 
   //#endregion
+
 }

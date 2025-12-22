@@ -106,6 +106,7 @@ export class $Link extends BaseCli {
     // if (process.platform !== 'win32') {
     //   await Helpers.isElevated();
     // }
+
     //#region linking to global/local bin
     let globalBinFolderPath = path.dirname(
       (
@@ -246,6 +247,7 @@ export class $Link extends BaseCli {
 
     this._exit();
     //#endregion
+
   }
   //#endregion
 
@@ -390,6 +392,7 @@ EXIT /b
     `;
   }
   //#endregion
+
 }
 
 export default {

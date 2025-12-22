@@ -131,6 +131,7 @@ export const OVERRIDE_FROM_TNP = [
 ];
 
 let globalSpinner: ora.Ora;
+
 //#region @backend
 globalSpinner = global.spinner;
 //#endregion
@@ -151,9 +152,11 @@ export const USE_IN_HOST_CONFIG_FULL_CONTEXT_PATH = false;
 export const MIGRATION_CONST_PREFIX = 'MIGRATIONS_CLASSES_FOR_';
 
 let taonUsingBundledCliMode = false;
+
 //#region @backend
 taonUsingBundledCliMode = !!global.taonUsingBundledCliMode;
 //#endregion
+
 export { taonUsingBundledCliMode };
 
 export const UNIT_TEST_TIMEOUT = 30000;
@@ -171,6 +174,7 @@ export const DEFAULT_FRAMEWORK_VERSION =
   `v${CURRENT_PACKAGE_VERSION.split('.')[0]}` as CoreModels.FrameworkVersion;
 
 let taonRepoPathUserInUserDir: string = '';
+
 //#region @backend
 taonRepoPathUserInUserDir = crossPlatformPath([
   UtilsOs.getRealHomeDir(),
@@ -249,9 +253,11 @@ export const coreRequiredEnvironments = [
  * @deprecated
  */
 export const getBrowserVerPath = (websql: boolean = false) => {
+
   //#region @backend
   return websql ? config.folder.websql : config.folder.browser;
   //#endregion
+
 };
 //#endregion
 

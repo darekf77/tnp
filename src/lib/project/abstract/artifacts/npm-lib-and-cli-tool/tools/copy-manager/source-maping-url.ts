@@ -12,6 +12,7 @@ export class SourceMappingUrl {
     buildOptions: EnvOptions,
     // content?: string
   ) {
+
     //#region @backendFunc
     absFilePath = crossPlatformPath(absFilePath);
     if (
@@ -26,6 +27,7 @@ export class SourceMappingUrl {
       // , content
     ).process(buildOptions);
     //#endregion
+
   }
 
   private readonly content: string;
@@ -33,6 +35,7 @@ export class SourceMappingUrl {
   private readonly mappingLineIndex: number;
 
   //#region constructor
+
   //#region @backend
   private constructor(
     private absFilePath: string,
@@ -52,9 +55,11 @@ export class SourceMappingUrl {
     }
   }
   //#endregion
+
   //#endregion
 
   process(buildOptions: EnvOptions): string {
+
     //#region @backendFunc
     if (this.mappingLineIndex !== -1) {
       if (buildOptions.release.releaseType) {
@@ -74,5 +79,6 @@ export class SourceMappingUrl {
     }
     return fixedContent;
     //#endregion
+
   }
 }

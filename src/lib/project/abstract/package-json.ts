@@ -78,6 +78,7 @@ export class PackageJSON extends BasePackageJson {
   }
 
   saveToDisk(purpose?: string): void {
+
     //#region @backendFunc
     if (
       this.project.framework.isStandaloneProject ||
@@ -143,11 +144,13 @@ export class PackageJSON extends BasePackageJson {
     }
     super.saveToDisk();
     //#endregion
+
   }
 
   resolvePossibleNewVersion(
     releaseVersionBumpType: CoreModels.ReleaseVersionType,
   ): string {
+
     //#region @backendFunc
     const pj = new BasePackageJson({
       jsonContent: {
@@ -200,5 +203,6 @@ export class PackageJSON extends BasePackageJson {
       pj.setVersion(pjtag.version);
     }
     //#endregion
+
   }
 }

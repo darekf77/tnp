@@ -14,6 +14,7 @@ import { BaseCli } from './base-cli';
 
 // @ts-ignore TODO weird inheritance problem
 export class $Refactor extends BaseCli {
+
   //#region refactor
   async _() {
     await this.project.init(
@@ -21,7 +22,7 @@ export class $Refactor extends BaseCli {
     );
     Helpers.taskStarted('Refactoring...');
     await this.project.refactor.ALL({
-      fixSpecificFile: this.firstArg
+      fixSpecificFile: this.firstArg,
     });
     Helpers.taskDone(`Done refactoring...`);
     this._exit();
@@ -35,7 +36,7 @@ export class $Refactor extends BaseCli {
       EnvOptions.from({ purpose: 'initing before prettier' }),
     );
     await this.project.refactor.prettier({
-      fixSpecificFile: this.firstArg
+      fixSpecificFile: this.firstArg,
     });
     this._exit();
   }
@@ -48,7 +49,7 @@ export class $Refactor extends BaseCli {
       EnvOptions.from({ purpose: 'initing before eslint fix' }),
     );
     await this.project.refactor.eslint({
-      fixSpecificFile: this.firstArg
+      fixSpecificFile: this.firstArg,
     });
     this._exit();
   }
@@ -61,7 +62,7 @@ export class $Refactor extends BaseCli {
       EnvOptions.from({ purpose: 'initing before removing browser region' }),
     );
     await this.project.refactor.removeBrowserRegion({
-      fixSpecificFile: this.firstArg
+      fixSpecificFile: this.firstArg,
     });
     this._exit();
   }
@@ -74,7 +75,7 @@ export class $Refactor extends BaseCli {
       EnvOptions.from({ purpose: 'initing before changing css to scss' }),
     );
     await this.project.refactor.changeCssToScss({
-      fixSpecificFile: this.firstArg
+      fixSpecificFile: this.firstArg,
     });
     this._exit();
   }
@@ -89,7 +90,7 @@ export class $Refactor extends BaseCli {
       }),
     );
     await this.project.refactor.properStandaloneNg19({
-      fixSpecificFile: this.firstArg
+      fixSpecificFile: this.firstArg,
     });
     this._exit();
   }
@@ -102,20 +103,32 @@ export class $Refactor extends BaseCli {
       EnvOptions.from({ purpose: 'initing before wrapping imports' }),
     );
     await this.project.refactor.importsWrap({
-      fixSpecificFile: this.firstArg
+      fixSpecificFile: this.firstArg,
     });
     this._exit();
   }
   //#endregion
 
+  async flattenImports() {
+    Helpers.info(`Initing before flattening imports..`);
+    await this.project.init(
+      EnvOptions.from({ purpose: 'initing before flattening imports' }),
+    );
+    await this.project.refactor.flattenImports({
+      fixSpecificFile: this.firstArg,
+    });
+    this._exit();
+  }
+
   //#region refactor taon names
   async taonNames() {
     await this.project.refactor.taonNames({
-      fixSpecificFile: this.firstArg
+      fixSpecificFile: this.firstArg,
     });
     this._exit();
   }
   //#endregion
+
 }
 export default {
   $Refactor: Helpers.CLIWRAP($Refactor, '$Refactor'),

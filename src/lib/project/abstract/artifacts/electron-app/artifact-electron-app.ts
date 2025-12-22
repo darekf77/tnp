@@ -65,6 +65,7 @@ export class ArtifactElectronApp extends BaseArtifact<
     electronDistOutAppPath: string;
     proxyProj: Project;
   }> {
+
     //#region @backendFunc
 
     const { appDistOutBrowserAngularAbsPath } =
@@ -98,6 +99,7 @@ export class ArtifactElectronApp extends BaseArtifact<
       proxyProj,
     };
     //#endregion
+
   }
   //#endregion
 
@@ -105,6 +107,7 @@ export class ArtifactElectronApp extends BaseArtifact<
   async releasePartial(
     releaseOptions: EnvOptions,
   ): Promise<ReleasePartialOutput> {
+
     //#region @backendFunc
     releaseOptions = this.updateResolvedVersion(releaseOptions);
 
@@ -256,6 +259,7 @@ export class ArtifactElectronApp extends BaseArtifact<
     let releaseProjPath: string;
 
     if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
+
       //#region local release
       const releaseData = await this.localReleaseDeploy(
         electronDistOutAppPath,
@@ -268,8 +272,10 @@ export class ArtifactElectronApp extends BaseArtifact<
       projectsReposToPushAndTag.push(...releaseData.projectsReposToPushAndTag);
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
+
     }
     if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
+
       //#region static pages release
       const releaseData = await this.staticPagesDeploy(
         electronDistOutAppPath,
@@ -282,6 +288,7 @@ export class ArtifactElectronApp extends BaseArtifact<
       projectsReposToPush.push(...releaseData.projectsReposToPush);
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
+
     }
 
     projectsReposToPushAndTag.push(electronDistOutAppPath);
@@ -293,6 +300,8 @@ export class ArtifactElectronApp extends BaseArtifact<
       releaseType: releaseOptions.release.releaseType,
     };
     //#endregion
+
   }
   //#endregion
+
 }

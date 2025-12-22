@@ -28,6 +28,7 @@ import type { Project } from './project';
  */
 // @ts-ignore TODO weird inheritance problem
 export class PackagesRecognition extends BaseFeatureForProject<Project> {
+
   //#region constructor
   private get coreContainer() {
     return this.project.framework.coreContainer;
@@ -43,12 +44,14 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
 
   //#region isomorphic packages json path
   get jsonPath(): string {
+
     //#region @backendFunc
     return crossPlatformPath([
       this.coreContainer.location,
       tmpIsomorphicPackagesJson,
     ]);
     //#endregion
+
   }
   //#endregion
 
@@ -64,6 +67,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
 
   //#region start
   async start(reasonToSearchPackages?: string): Promise<void> {
+
     //#region @backendFunc
     await this.coreContainer.nodeModules.makeSureInstalled();
     let recognizedPackages = [];
@@ -170,11 +174,13 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     });
 
     //#endregion
+
   }
   //#endregion
 
   //#region add isomorphic packages to file
   addIsomorphicPackagesToFile(recognizedPackagesNewPackages: string[]): void {
+
     //#region @backendFunc
     const alreadyExistsJson = Helpers.readJsonC(this.jsonPath) || {};
     const alreadyExistsJsonArr =
@@ -186,6 +192,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       ),
     });
     //#endregion
+
   }
 
   //#endregion
@@ -195,6 +202,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     isomorphicPackagesNames: string[],
     informAboutDiff = false,
   ): void {
+
     //#region @backendFunc
     // console.log(`add ed isomorphic isomorphic packages names to memory: ${isomorphicPackagesNames.join(', ')}`);
     if (!this.coreContainer) {
@@ -223,6 +231,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
         this.project.nameForNpmPackage,
       ]);
     //#endregion
+
   }
   //#endregion
 
@@ -231,6 +240,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
    * main source of isomorphic isomorphic packages
    */
   public get allIsomorphicPackagesFromMemory(): string[] {
+
     //#region @backendFunc
     if (
       this.coreContainer?.packagesRecognition.inMemoryIsomorphicLibs.length ===
@@ -281,11 +291,13 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     // console.log(`allIsomorphicPackagesFromMemory: ${result.join('\n ')}`);
     return result;
     //#endregion
+
   }
   //#endregion
 
   //#region check isomorphic
   protected checkIsomorphic(node_modules: string, packageName: string) {
+
     //#region @backendFunc
     let isIsomorphic = false;
     // !  TODO this in probably incorrect packages is never a link
@@ -307,6 +319,8 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     }
     return isIsomorphic;
     //#endregion
+
   }
   //#endregion
+
 }

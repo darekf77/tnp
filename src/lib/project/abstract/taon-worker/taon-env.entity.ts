@@ -1,10 +1,11 @@
-import { Taon } from 'taon/src';
+import { Taon, TaonEntity } from 'taon/src';
+import { TaonBaseAbstractEntity, StringColumn } from 'taon/src';
 import { CoreModels } from 'tnp-core/src';
 
-@Taon.Entity({
+@TaonEntity({
   className: 'TaonEnv',
 })
-export class TaonEnv extends Taon.Base.AbstractEntity {
+export class TaonEnv extends TaonBaseAbstractEntity {
   static from(obj: {
     name: string;
     type: CoreModels.EnvironmentNameTaon;
@@ -13,16 +14,21 @@ export class TaonEnv extends Taon.Base.AbstractEntity {
   }
 
   //#region fields / type
+
   //#region @websql
-  @Taon.Orm.Column.String()
+  @StringColumn()
   //#endregion
+
   type: CoreModels.EnvironmentNameTaon;
   //#endregion
 
   //#region fields / name
+
   //#region @websql
-  @Taon.Orm.Column.String()
+  @StringColumn()
   //#endregion
+
   name: string;
   //#endregion
+
 }

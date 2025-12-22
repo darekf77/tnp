@@ -1,5 +1,5 @@
 //#region imports
-import { Taon, ClassHelpers } from 'taon/src';
+import { Taon, ClassHelpers, TaonController } from 'taon/src';
 import { _, dateformat, Helpers } from 'tnp-core/src';
 import { TaonBaseCliWorkerController } from 'tnp-helpers/src';
 
@@ -7,7 +7,7 @@ import { Processes } from './processes';
 import { ProcessesRepository } from './processes.repository';
 //#endregion
 
-@Taon.Controller({
+@TaonController({
   className: 'ProcessesWorkerController',
 })
 export class ProcessesWorkerController extends TaonBaseCliWorkerController {}

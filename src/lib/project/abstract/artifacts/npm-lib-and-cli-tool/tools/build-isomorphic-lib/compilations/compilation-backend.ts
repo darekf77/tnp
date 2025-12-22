@@ -24,6 +24,7 @@ import type { Project } from '../../../../../project';
 //#endregion
 
 export class BackendCompilation {
+
   //#region static
   static counter = 1;
   //#endregion
@@ -36,6 +37,7 @@ export class BackendCompilation {
   //#endregion
 
   //#region constructor
+
   //#region @backend
   constructor(
     public buildOptions: EnvOptions,
@@ -47,12 +49,14 @@ export class BackendCompilation {
     public project: Project,
   ) {}
   //#endregion
+
   //#endregion
 
   /**
    * @deprecated remove
    */
   async start({ taskName }): Promise<void> {
+
     //#region @backendFunc
     await this.syncAction(
       Helpers.getFilesFrom([this.project.location, this.srcFolder], {
@@ -61,19 +65,23 @@ export class BackendCompilation {
       }),
     );
     //#endregion
+
   }
 
   /**
    * @deprecated remove
    */
   async startAndWatch(options?: any): Promise<void> {
+
     //#region @backendFunc
     await this.start(options);
     //#endregion
+
   }
 
   //#region methods / sync action
   async syncAction(filesPathes: string[]) {
+
     //#region @backendFunc
     const outDistPath = this.project.pathFor(distMainProject);
 
@@ -89,6 +97,7 @@ export class BackendCompilation {
       generateDeclarations: true,
     });
     //#endregion
+
   }
   //#endregion
 
@@ -102,6 +111,7 @@ export class BackendCompilation {
       diagnostics = false,
     }: CoreModels.TscCompileOptions,
   ) {
+
     //#region @backendFunc
     const watch = buildOptions.build.watch;
     if (!this.isEnableCompilation) {
@@ -171,6 +181,7 @@ export class BackendCompilation {
       project,
     });
     //#endregion
+
   }
 
   //#endregion
@@ -186,6 +197,7 @@ export class BackendCompilation {
       project: Project;
     },
   ): Promise<void> {
+
     //#region @backendFunc
 
     let { commandJs, commandMaps, cwd, project } = options;
@@ -302,19 +314,14 @@ Starting (${
       // console.log(Helpers.terminalLine());
       Helpers.info(`
 
-
-
-
     ${chalk.bold('YOU CAN ATTACH YOUR CODE DEBUGGER NOW')}
-
-
-
-
 
     `);
       // console.log(Helpers.terminalLine());
     }
     //#endregion
+
   }
   //#endregion
+
 }

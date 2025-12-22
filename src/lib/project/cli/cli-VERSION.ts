@@ -12,9 +12,11 @@ declare const ENV: any;
 
 // @ts-ignore TODO weird inheritance problem
 export class $Version extends BaseCli {
+
   //#region _
   public async _(): Promise<void> {
     // Helpers.log(`Framework name: '${config.frameworkName}'`);
+
     //#region @notForNpm
     if (ENV.notForNpm) {
       Helpers.success(`I am secret project!!!`);
@@ -66,7 +68,6 @@ export class $Version extends BaseCli {
     `);
     this._exit();
   }
-
 
 }
 

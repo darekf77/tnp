@@ -1,5 +1,6 @@
 //#region imports
 import { Taon, TaonBaseContext, ClassHelpers } from 'taon/src';
+import { TaonBaseMigration,TaonMigration } from 'taon/src';
 import { QueryRunner } from 'taon-typeorm/src';
 import { CoreModels } from 'tnp-core/src';
 import { getBaseCliWorkerDatabaseConfig } from 'tnp-helpers/src';
@@ -7,15 +8,17 @@ import { getBaseCliWorkerDatabaseConfig } from 'tnp-helpers/src';
 import { Instances } from './instances';
 import { InstancesController } from './instances.controller';
 import { InstancesRepository } from './instances.repository';
+
 //#endregion
 
 const appId = 'instances-worker-app.project.worker';
 const localhostInstanceName = 'Localhost';
-@Taon.Migration({
+@TaonMigration({
   className: 'MigrationLocalhost',
 })
-class MigrationLocalhost extends Taon.Base.Migration {
+class MigrationLocalhost extends TaonBaseMigration {
   instanceRepository = this.injectCustomRepository(InstancesRepository);
+
   async up(queryRunner: QueryRunner): Promise<any> {
     console.log(
       `[TaonBaseMigration] Running migration UP "${ClassHelpers.getName(this)}"`,
@@ -48,6 +51,7 @@ class MigrationLocalhost extends Taon.Base.Migration {
       await queryRunner.release();
     }
   }
+
   async down(queryRunner: QueryRunner): Promise<any> {
     console.log(
       `[TaonBaseMigration] Running migration DOWN "${ClassHelpers.getName(this)}"`,

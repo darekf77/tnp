@@ -1,5 +1,6 @@
 //#region imports
-import { Taon, ClassHelpers } from 'taon/src';
+import { Taon, ClassHelpers, TaonController } from 'taon/src';
+import { GET, Query, TaonBaseCrudController } from 'taon/src';
 import { _, dateformat, Helpers } from 'tnp-core/src';
 import { TaonBaseCliWorkerController } from 'tnp-helpers/src';
 
@@ -11,22 +12,25 @@ import {
   ProcessesStatesAllowedStart,
 } from './processes.models';
 import { ProcessesRepository } from './processes.repository';
+
 //#endregion
 
-@Taon.Controller({
+@TaonController({
   className: 'ProcessesController',
 })
-export class ProcessesController extends Taon.Base.CrudController<Processes> {
+export class ProcessesController extends TaonBaseCrudController<Processes> {
   entityClassResolveFn: () => typeof Processes = () => Processes;
+
   // @ts-ignore
   private processesRepository = this.injectCustomRepo(ProcessesRepository);
 
   //#region get by process id
-  @Taon.Http.GET()
+  @GET()
   getByProcessID(
-    @Taon.Http.Param.Query('processId')
+    @Query('processId')
     processId: number | string,
   ): Taon.Response<Processes> {
+
     //#region @websqlFunc
     return async (req, res) => {
       if (!processId) {
@@ -43,17 +47,19 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
       return proc;
     };
     //#endregion
+
   }
   //#endregion
 
   //#region get by unique params
-  @Taon.Http.GET()
+  @GET()
   getByUniqueParams(
-    @Taon.Http.Param.Query('cwd')
+    @Query('cwd')
     cwd: string,
-    @Taon.Http.Param.Query('command')
+    @Query('command')
     command: string,
   ): Taon.Response<Processes> {
+
     //#region @websqlFunc
     return async (req, res) => {
       if (!cwd) {
@@ -75,16 +81,18 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
       return proc;
     };
     //#endregion
+
   }
   //#endregion
 
   //#region trigger start process
-  @Taon.Http.GET()
+  @GET()
   triggerStart(
-    @Taon.Http.Param.Query('processId')
+    @Query('processId')
     processId: number | string,
-    @Taon.Http.Param.Query('processName') processName?: string,
+    @Query('processName') processName?: string,
   ): Taon.Response<void> {
+
     //#region @websqlFunc
     return async (req, res) => {
       if (!processId) {
@@ -95,17 +103,19 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
       });
     };
     //#endregion
+
   }
   //#endregion
 
   //#region trigger stop process
-  @Taon.Http.GET()
+  @GET()
   triggerStop(
-    @Taon.Http.Param.Query('processId')
+    @Query('processId')
     processId: number | string,
-    @Taon.Http.Param.Query('deleteAfterKill')
+    @Query('deleteAfterKill')
     deleteAfterKill?: boolean,
   ): Taon.Response<void> {
+
     //#region @websqlFunc
     return async (req, res) => {
       if (!processId) {
@@ -116,11 +126,13 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
       });
     };
     //#endregion
+
   }
   //#endregion
 
   //#region wait until deployment removed
   async waitUntilProcessDeleted(processId: string | number): Promise<void> {
+
     //#region @backendFunc
     await this._waitForProperStatusChange<Processes>({
       actionName: `Waiting until process ${processId} is removed`,
@@ -142,11 +154,13 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
       },
     });
     //#endregion
+
   }
   //#endregion
 
   //#region wait until deployment removed
   async waitUntilProcessStopped(processId: string | number): Promise<void> {
+
     //#region @backendFunc
     await this._waitForProperStatusChange<Processes>({
       actionName: `Waiting until process ${processId} stopped`,
@@ -165,6 +179,8 @@ export class ProcessesController extends Taon.Base.CrudController<Processes> {
       },
     });
     //#endregion
+
   }
   //#endregion
+
 }

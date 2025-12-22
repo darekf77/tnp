@@ -44,6 +44,7 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
   }, // @ts-ignore TODO weird inheritance problem
   Project
 > {
+
   //#region constructor
   private readonly baseSrcFolder: string;
 
@@ -75,6 +76,7 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
     changeOfFiles: ChangeOfFile[],
     asyncEvent: boolean,
   ): Promise<void> {
+
     //#region @backendFunc
 
     Helpers.taskStarted(`Rebuilding app.hosts.ts`);
@@ -112,6 +114,7 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
 
     Helpers.taskDone(`Rebuilding app.hosts.ts Done`);
     //#endregion
+
   }
 
   async action({
@@ -121,6 +124,7 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
     changeOfFiles: ChangeOfFile[];
     asyncEvent: boolean;
   }): Promise<void> {
+
     //#region @backendFunc
     changeOfFiles = changeOfFiles.filter(c => {
       const relativePath = c.fileAbsolutePath.replace(this.baseSrcFolder, '');
@@ -132,11 +136,13 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
     }
     await this.rebuild(changeOfFiles, asyncEvent);
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / write ports to file
   public writePortsToFile(): void {
+
     // #region @backend
     Helpers.taskStarted('Writing hosts and ports config to app.hosts ...');
     const appHostsFile = this.project.pathFor([
@@ -364,11 +370,11 @@ ${contextIsInsideLibInsteadApp ? depecationMessage : `\n/** Name of context (var
 
 ${THIS_IS_GENERATED_INFO_COMMENT}
 
-
       `,
     );
     Helpers.taskDone('Done writing ports and hosts to app.hosts.ts');
     //#endregion
+
   }
   //#endregion
 
@@ -378,6 +384,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     n: number | undefined,
     options?: { isURL?: boolean; sameAsFirstInDevMode?: boolean },
   ): string {
+
     //#region @backendFunc
     options = options || {};
     let { isURL, sameAsFirstInDevMode } = options;
@@ -393,11 +400,13 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       `${isURL ? 'transformURL' : ''}(argsENV['${varName}${n ? `_${n}` : ''}']) || `
     );
     //#endregion
+
   }
   //#endregion
 
   //#region public methods / update ports in hosts
   public async updatePortsInHosts(buildOptions: EnvOptions): Promise<void> {
+
     //#region @backendFunc
     let contexts: string[] = [];
     type ContextOptions = {
@@ -589,6 +598,7 @@ ${contexts.join('\n')}
 `,
     );
     //#endregion
+
   }
   //#endregion
 
@@ -599,6 +609,7 @@ ${contexts.join('\n')}
       num?: number;
     },
   ): Promise<number> {
+
     //#region @backendFunc
     options = options || ({} as any);
     const { num } = options;
@@ -615,6 +626,7 @@ ${contexts.join('\n')}
       startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
     });
     //#endregion
+
   }
   //#endregion
 
@@ -630,4 +642,5 @@ ${contexts.join('\n')}
     });
   }
   //#endregion
+
 }

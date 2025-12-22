@@ -41,6 +41,7 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
   public async displayReleaseProcessMenu(
     envOptions: EnvOptions,
   ): Promise<void> {
+
     //#region @backendFunc
     while (true) {
       UtilsTerminal.clearConsole();
@@ -75,6 +76,7 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
             name: 'READ INFO ABOUT RELEASE TYPES',
             action: async () => {
               UtilsTerminal.clearConsole();
+
               //#region info
               console.info(
                 `
@@ -91,10 +93,12 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
         `.trimStart(),
               );
               //#endregion
+
               await UtilsTerminal.pressAnyKeyToContinueAsync({});
             },
           },
           [manual]: {
+
             //#region manual
             name: `${this.getColoredTextItem(manual)} Taon release + create config for Cloud`,
             action: async () => {
@@ -105,6 +109,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             //#endregion
           },
           [cloud]: {
+
             //#region cloud
             name: `${this.getColoredTextItem(cloud)} release tirgger for Taon Cloud`,
             action: async () => {
@@ -115,6 +120,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             //#endregion
           },
           [local]: {
+
             //#region local
             name: `${this.getColoredTextItem(local)} release to current git repository`,
             action: async () => {
@@ -125,6 +131,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
             //#endregion
           },
           [staticPages]: {
+
             //#region local
             name: `${this.getColoredTextItem(staticPages)} release for ${priovider} pages`,
             action: async () => {
@@ -144,6 +151,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       );
     }
     //#endregion
+
   }
   //#endregion
 
@@ -152,6 +160,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     releaseType: ReleaseType,
     envOptions: EnvOptions,
   ): Promise<boolean> {
+
     //#region @backendFunc
 
     envOptions.release.releaseType = releaseType;
@@ -196,6 +205,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       envOptions,
     );
     //#endregion
+
   }
   //#endregion
 
@@ -204,6 +214,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     envName: CoreModels.EnvironmentNameTaon;
     envNumber?: number | undefined;
   }[] {
+
     //#region @backendFunc
     if (!artifact) {
       throw new Error('Artifact is required');
@@ -241,6 +252,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
         return 0;
       });
     //#endregion
+
   }
   //#endregion
 
@@ -248,6 +260,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
   async displayProjectsSelectionMenu(
     envOptions: EnvOptions,
   ): Promise<Project[]> {
+
     //#region @backendFunc
     const selectedProjects: Project[] = [this.project];
     if (this.project.framework.isStandaloneProject) {
@@ -284,6 +297,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       }
     }
     //#endregion
+
   }
   //#endregion
 
@@ -293,6 +307,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     selectedProjects: Project[],
     allowedArtifacts?: ReleaseArtifactTaon[] | undefined,
   ): Promise<ReleaseArtifactTaon[]> {
+
     //#region @backendFunc
 
     while (true) {
@@ -345,12 +360,14 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     }
 
     //#endregion
+
   }
   //#endregion
 
   //#region public methods / start release
   // @ts-ignore TODO weird inheritance problem
   async startRelease(envOptions?: EnvOptions): Promise<void> {
+
     //#region @backendFunc
     if (!envOptions.release.envName) {
       if (!envOptions.release.autoReleaseUsingConfig) {
@@ -399,6 +416,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
 
     await this.project.release(envOptions);
     //#endregion
+
   }
   //#endregion
 
@@ -413,6 +431,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     selectedProjects: Project[],
     envOptions: EnvOptions,
   ): Promise<boolean> {
+
     //#region @backendFunc
 
     for (const project of selectedProjects) {
@@ -432,6 +451,7 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     await this.pushReleaseCommits();
     return true;
     //#endregion
+
   }
   //#endregion
 
@@ -441,14 +461,17 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
    * or organization packages -> release commit is pushed
    */
   async pushReleaseCommits() {
+
     //#region @backend
     return void 0; // TODO implement
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / get release header
   private getReleaseHeader(releaseProcessType: ReleaseType) {
+
     //#region @backendFunc
     // if (this.project.framework.isContainer) {
     //   return (
@@ -466,11 +489,13 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     //         `
     // );
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / get colored text item
   private getColoredTextItem(releaseProcessType: ReleaseType): string {
+
     //#region @backendFunc
     if (releaseProcessType === 'manual') {
       return _.upperFirst(chalk.bold.green('Manual'));
@@ -485,6 +510,8 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       return _.upperFirst(chalk.bold.yellow('Static Pages'));
     }
     //#endregion
+
   }
   //#endregion
+
 }

@@ -6,9 +6,14 @@ import { BaseCompilerForProject } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
 import {
+  environmentsFolder,
+  envTs,
+  indexScssFromSrcLib,
+  indexTsFromLibFromSrc,
   libFromSrc,
   srcMainProject,
   TaonGeneratedFiles,
+  TaonGeneratedFolders,
   taonJsonMainProject,
 } from '../../../../../constants';
 import type { Project } from '../../../project';
@@ -28,12 +33,15 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
   //#endregion
 
   get generateIndexAutogenFile(): boolean {
+
     //#region @backendFunc
     return this.project.taonJson.shouldGenerateAutogenIndexFile;
     //#endregion
+
   }
 
   get indexAutogenFileRelativePath() {
+
     //#region @backendFunc
     return crossPlatformPath([
       srcMainProject,
@@ -41,22 +49,31 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
       TaonGeneratedFiles.index_generated_ts,
     ]);
     //#endregion
+
   }
 
   private exportsToSave: string[] = [];
 
   private processFile(absFilePath: string, writeAsync = false) {
+
     //#region @backendFunc
     if (!Helpers.isFolder(absFilePath)) {
       const exportsFounded = UtilsTypescript.exportsFromFile(absFilePath);
+      const relativePath = absFilePath.replace(
+        this.project.pathFor([srcMainProject, libFromSrc]) + '/',
+        '',
+      );
+
       const exportString =
         `export * from ` +
-        `'./${absFilePath
-          .replace(this.project.pathFor([srcMainProject, libFromSrc]), '')
-          .replace(path.extname(absFilePath), '')}';`;
+        `'./${relativePath.replace(path.extname(relativePath), '')}';`;
 
       if (exportsFounded.length > 0) {
-        if (!this.exportsToSave.includes(exportString)) {
+        if (
+          !this.exportsToSave.includes(exportString) &&
+          !relativePath.startsWith(`${TaonGeneratedFolders.ENV_FOLDER}/`) &&
+          !relativePath.startsWith(`${indexTsFromLibFromSrc}`)
+        ) {
           this.exportsToSave.push(exportString);
         }
       } else {
@@ -67,9 +84,11 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
       }
     }
     //#endregion
+
   }
 
   public writeIndexFile(isPlaceholderOnly = false) {
+
     //#region @backendFunc
     this.project.writeFile(
       this.indexAutogenFileRelativePath,
@@ -87,6 +106,7 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
       } \n` + this.exportsToSave.join('\n'),
     );
     //#endregion
+
   }
 
   private debounceWrite = _.debounce(() => {
@@ -97,6 +117,7 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
     absolteFilesPathes?: string[],
     initialParams?: {},
   ): Promise<void> {
+
     //#region @backendFunc
     Helpers.logInfo(
       `IndexAutogenProvider for project: ${this.project.genericName}`,
@@ -109,14 +130,17 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
       `IndexAutogenProvider for project: ${this.project.genericName}`,
     );
     //#endregion
+
   }
 
   async asyncAction(
     asyncEvents: ChangeOfFile,
     initialParams?: {},
   ): Promise<void> {
+
     //#region @backendFunc
     this.processFile(asyncEvents.fileAbsolutePath, true);
     //#endregion
+
   }
 }

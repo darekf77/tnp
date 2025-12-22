@@ -157,10 +157,10 @@ ${detectedContexts.map(db => `- ${db}`).join('\n')}
 
     const classes = detectedContexts.map(contextName => {
       return `//#${'reg' + 'ion'} Migration class for context "${contextName}"
-@Taon.Migration({
+@TaonMigration({
   className: '${contextName}_${timestamp}_${migrationName}',
 })
-export class ${contextName}_${timestamp}_${migrationName} extends Taon.Base.Migration {
+export class ${contextName}_${timestamp}_${migrationName} extends TaonBaseMigration {
     //#${'reg' + 'ion'} is migration for context ${contextName} ready to run
     /**
      * IMPORTANT !!!
@@ -206,7 +206,7 @@ export class ${contextName}_${timestamp}_${migrationName} extends Taon.Base.Migr
     ]);
     Helpers.writeFile(
       absPathToNewMigrationFile,
-      `import { Taon } from '${taonPackageName}/${srcFromTaonImport}';\n` +
+      `import { Taon, TaonBaseMigration } from '${taonPackageName}/${srcFromTaonImport}';\n` +
         `import { QueryRunner } from 'taon-typeorm/${srcFromTaonImport}';\n\n` +
         `${classes.join('\n\n')}`,
     );

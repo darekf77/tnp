@@ -9,6 +9,7 @@ const commands = vscodeExtMethods(FRAMEWORK_NAME);
 export async function activate(context: ExtensionContext) {
   const vscode = await import('vscode');
   menu.activateMenuTnp(context, vscode, FRAMEWORK_NAME);
+
   //#region @backendFunc
   for (let index = 0; index < commands.length; index++) {
     const {
@@ -31,6 +32,7 @@ export async function activate(context: ExtensionContext) {
     }
   }
   //#endregion
+
 }
 
 export function deactivate() {

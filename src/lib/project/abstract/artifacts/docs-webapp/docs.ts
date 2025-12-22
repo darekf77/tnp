@@ -52,6 +52,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   // @ts-ignore TODO weird inheritance problem
   Project
 > {
+
   //#region fields & getters
   private envOptions: EnvOptions;
 
@@ -61,22 +62,27 @@ export class Docs extends BaseDebounceCompilerForProject<
 
   //#region fields & getters / docs config current proj abs path
   public get docsConfigCurrentProjAbsPath(): string {
+
     //#region @backendFunc
     return this.project.pathFor(docsConfigJsonFileName);
     //#endregion
+
   }
   //#endregion
 
   //#region fields & getters / docs config
   get config(): Models.DocsConfig {
+
     //#region @backendFunc
     return this.project.readJson(docsConfigJsonFileName) as Models.DocsConfig;
     //#endregion
+
   }
   //#endregion
 
   //#region fields & getters / linkd docs to global container
   private linkDocsToGlobalContainer(): void {
+
     //#region @backendFunc
     if (!Helpers.exists(path.dirname(this.docsConfigGlobalContainerAbsPath))) {
       Helpers.mkdirp(path.dirname(this.docsConfigGlobalContainerAbsPath));
@@ -91,6 +97,7 @@ export class Docs extends BaseDebounceCompilerForProject<
 
     this.writeGlobalWatcherTimestamp();
     //#endregion
+
   }
   //#endregion
 
@@ -105,28 +112,33 @@ export class Docs extends BaseDebounceCompilerForProject<
    * .taon/temp-docs-folder/allmdfiles
    */
   get tmpDocsFolderRootDocsDirRelativePath(): string {
+
     //#region @backendFunc
     return crossPlatformPath([
       this.tmpDocsFolderRoot,
       combinedDocsAllMdFilesFolder,
     ]);
     //#endregion
+
   }
 
   //#endregion
 
   //#region fields & getters / out docs folder path
   get outDocsDistFolderAbs() {
+
     //#region @backendFunc
     return this.project.pathFor([
       this.initialParams.docsOutFolder || `.${config.frameworkName}/docs-dist`,
     ]);
     //#endregion
+
   }
   //#endregion
 
   //#region n fields & getters / docs config global container abs path
   get docsConfigGlobalContainerAbsPath() {
+
     //#region @backendFunc
     const globalContainer = this.project.ins.by(
       LibTypeEnum.CONTAINER,
@@ -136,26 +148,31 @@ export class Docs extends BaseDebounceCompilerForProject<
       `.${config.frameworkName}/docs-from-projects/${this.project.nameForNpmPackage}`,
     );
     //#endregion
+
   }
   //#endregion
 
   //#region fields & getters / docs global timestamp for watcher abs path
   get docsGlobalTimestampForWatcherAbsPath() {
+
     //#region @backendFunc
     return this.getTimestampWatcherForPackageName(
       this.project.nameForNpmPackage,
     );
     //#endregion
+
   }
   //#endregion
 
   //#region n fields & getters / docs config schema path
   get docsConfigSchemaPath(): string {
+
     //#region @backendFunc
     return this.project.ins
       .by(LibTypeEnum.ISOMORPHIC_LIB, this.project.framework.frameworkVersion)
       .pathFor(docsConfigSchema);
     //#endregion
+
   }
   //#endregion
 
@@ -163,6 +180,7 @@ export class Docs extends BaseDebounceCompilerForProject<
 
   //#region methods / init
   async init() {
+
     //#region @backendFunc
 
     this.project.removeFolderByRelativePath(
@@ -188,6 +206,7 @@ export class Docs extends BaseDebounceCompilerForProject<
     this.linkDocsToGlobalContainer();
 
     //#endregion
+
   }
   //#endregion
 
@@ -234,6 +253,7 @@ export class Docs extends BaseDebounceCompilerForProject<
     changeOfFiles: ChangeOfFile[];
     asyncEvent: boolean;
   }): Promise<void> {
+
     //#region @backendFunc
     // if (asyncEvent) {
     //   console.log(
@@ -283,14 +303,17 @@ export class Docs extends BaseDebounceCompilerForProject<
       this.writeGlobalWatcherTimestamp();
     }
     //#endregion
+
   }
   //#endregion
 
   //#region methods / docs config json $schema content
   protected docsConfigSchemaContent(): string {
+
     //#region @backendFunc
     return Helpers.readFile(this.docsConfigSchemaPath);
     //#endregion
+
   }
   //#endregion
 
@@ -298,6 +321,7 @@ export class Docs extends BaseDebounceCompilerForProject<
 
   //#region private methods / default docs config
   private defaultDocsConfig(): Models.DocsConfig {
+
     //#region @backendFunc
     return {
       site_name: this.project.name,
@@ -315,12 +339,14 @@ export class Docs extends BaseDebounceCompilerForProject<
       customJsPath: 'custom.js',
     } as Models.DocsConfig;
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / apply priority order
 
   private applyPriorityOrder(files: EntrypointFile[]): EntrypointFile[] {
+
     //#region @backendFunc
     const orderByPriority = (items: EntrypointFile[], priority: string[]) => {
       return items.sort((a, b) => {
@@ -358,6 +384,7 @@ export class Docs extends BaseDebounceCompilerForProject<
 
     return result as EntrypointFile[];
     //#endregion
+
   }
   //#endregion
 
@@ -365,6 +392,7 @@ export class Docs extends BaseDebounceCompilerForProject<
   private mkdocsYmlContent(
     entryPointFilesRelativePaths: EntrypointFile[],
   ): string {
+
     //#region @backendFunc
     // console.log({
     //   entryPointFilesRelativePaths,
@@ -460,10 +488,12 @@ markdown_extensions:
 
   `;
     //#endregion
+
   }
   //#endregion
 
   async validateEnvironemntForMkdocsBuild(): Promise<boolean> {
+
     //#region @backendFunc
     const pythonExists = await UtilsOs.commandExistsAsync('python3');
     if (!pythonExists) {
@@ -526,10 +556,12 @@ markdown_extensions:
     //#endregion
 
     //#endregion
+
   }
 
   //#region private methods / build mkdocs
   private async buildMkdocs({ watch }: { watch: boolean }) {
+
     //#region @backendFunc
 
     const isEnvValid = await this.validateEnvironemntForMkdocsBuild();
@@ -581,6 +613,7 @@ markdown_extensions:
       ).sync();
     }
     //#endregion
+
   }
   //#endregion
 
@@ -591,6 +624,7 @@ markdown_extensions:
     relativeFilePathesToCopy: string[],
     asyncEvent: boolean,
   ) {
+
     //#region @backendFunc
     let counterCopy = 0;
 
@@ -741,11 +775,13 @@ markdown_extensions:
         `files to temp docs folder. ${asyncInfo}`,
     );
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / get root files
   private async getRootFiles(): Promise<EntrypointFile[]> {
+
     //#region @backendFunc
 
     return [
@@ -760,11 +796,13 @@ markdown_extensions:
       // packageName: this.project.universalPackageName,
     }));
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / link project to docs folder
   private linkProjectToDocsFolder(packageName: string) {
+
     //#region @backendFunc
 
     if (this.project.nameForNpmPackage === packageName) {
@@ -802,11 +840,9 @@ markdown_extensions:
       Helpers.warn(
         `
 
-
         Please rebuild docs for this project ${chalk.bold(
           nearestProj?.genericName,
         )}.
-
 
         `,
       );
@@ -840,6 +876,7 @@ markdown_extensions:
 
     this.linkedAlreadProjects[orgLocation] = true;
     //#endregion
+
   }
   //#endregion
 
@@ -854,6 +891,7 @@ markdown_extensions:
      */
     destRelativePath: string;
   } {
+
     //#region @backendFunc
 
     const isRelativePath =
@@ -882,11 +920,13 @@ markdown_extensions:
 
     return { packageName, destRelativePath };
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / process md files
   private async getExternalMdFiles(): Promise<EntrypointFile[]> {
+
     //#region @backendFunc
     const externalMdFiles: EntrypointFile[] = [];
     const externalMdFies = this.config.externalDocs.mdfiles;
@@ -950,11 +990,13 @@ markdown_extensions:
     }
     return externalMdFiles;
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / get/process externalDocs.projects files
   private async getProjectsFiles(): Promise<EntrypointFile[]> {
+
     //#region @backendFunc
 
     return (this.config.externalDocs.projects || []).map(p => {
@@ -1033,11 +1075,13 @@ markdown_extensions:
       };
     });
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / recreate files in temp folder
   private async recreateFilesInTempFolder(asyncEvent: boolean) {
+
     //#region @backendFunc
     const files: string[] = this.exitedFilesAbsPathes.filter(f => {
       if (UtilsStringRegex.containsNonAscii(f)) {
@@ -1058,6 +1102,7 @@ markdown_extensions:
     // });
 
     const allFiles = [...rootFiles, ...externalMdFiles, ...projectsFiles].map(
+
       //#region allow own packages redirection
       // QUICKFIX
       f => {
@@ -1077,6 +1122,7 @@ markdown_extensions:
         return f;
       },
       //#endregion
+
     );
 
     //#region write join entrypoint files
@@ -1095,11 +1141,13 @@ markdown_extensions:
       this.mkdocsYmlContent(allFiles),
     );
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / write global watcher timestamp
   private writeGlobalWatcherTimestamp() {
+
     //#region @backendFunc
     try {
       Helpers.mkdirp(path.dirname(this.docsGlobalTimestampForWatcherAbsPath));
@@ -1109,12 +1157,14 @@ markdown_extensions:
       new Date().getTime().toString(),
     );
     //#endregion
+
   }
   //#endregion
 
   //#region private methods / get timestamp watcher for package name
 
   private getTimestampWatcherForPackageName(universalPackageName: string) {
+
     //#region @backendFunc
     const globalContainer = this.project.ins.by(
       LibTypeEnum.CONTAINER,
@@ -1124,8 +1174,10 @@ markdown_extensions:
       `.${config.frameworkName}/watcher-timestamps-for/${universalPackageName}`,
     );
     //#endregion
+
   }
   //#endregion
 
   //#endregion
+
 }

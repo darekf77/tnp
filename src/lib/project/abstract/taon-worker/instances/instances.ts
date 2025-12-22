@@ -1,30 +1,35 @@
 //#region imports
-import { Taon } from 'taon/src';
+import { Taon, TaonEntity } from 'taon/src';
 import { _ } from 'tnp-core/src';
 
 import { InstancesDefaultsValues } from './instances.defaults-values';
+import { TaonBaseAbstractEntity, Column, String200Column } from 'taon/src';
+
 //#endregion
 
-@Taon.Entity({
+@TaonEntity({
   className: 'Instances',
 })
-export class Instances extends Taon.Base.AbstractEntity<Instances> {
+export class Instances extends TaonBaseAbstractEntity<Instances> {
   /**
    * zip file with docker-compose and other files
    * needed to deploy this deployment
    */
+
   //#region @websql
-  @Taon.Orm.Column.Custom({
+  @Column({
     type: 'varchar',
     length: 45,
     nullable: false,
     unique: true,
   })
   //#endregion
+
   ipAddress: string;
 
   //#region @websql
-  @Taon.Orm.Column.String200()
+  @String200Column()
   //#endregion
+
   name: string;
 }

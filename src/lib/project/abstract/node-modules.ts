@@ -175,7 +175,15 @@ export class NodeModules extends BaseNodeModules {
       this.project.quickFixes.excludeNodeModulesDtsFromTypescriptCheck([
         this.project.nodeModules.pathFor('@types/glob/index.d.ts'),
         this.project.nodeModules.pathFor('chokidar/types/index.d.ts'),
-        this.project.nodeModules.pathFor('@angular/core/types/_discovery-chunk.d.ts'),
+        this.project.nodeModules.pathFor(
+          '@angular/core/types/_discovery-chunk.d.ts',
+        ),
+        this.project.nodeModules.pathFor('@types/node/process.d.ts'),
+        this.project.nodeModules.pathFor('electron/electron.d.ts'),
+        this.project.nodeModules.pathFor(
+          '@angular/platform-browser/types/platform-browser.d.ts',
+        ),
+        this.project.nodeModules.pathFor('undici/types/formdata.d.ts'),
       ]);
       this.project.quickFixes.fixSQLLiteModuleInNodeModules();
       //#endregion

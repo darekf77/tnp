@@ -41,4 +41,3 @@ export const ProcessesStatesAllowedStop: ProcessesState[] = [
   ProcessesState.STARTING,
   ProcessesState.ACTIVE,
 ];
-
