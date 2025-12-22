@@ -1,5 +1,6 @@
 //#region  @backend
 import GLOBAL from './cli-_GLOBAL_';
+import APP from './cli-APP';
 import BRANDING from './cli-BRANDING';
 import BUILD from './cli-BUILD';
 import CLOUD from './cli-CLOUD';
@@ -20,6 +21,7 @@ import VSCODE from './cli-VSCODE';
 
 export default [
   GLOBAL,
+  APP,
   BUILD,
   LINK,
   INIT,
