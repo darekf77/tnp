@@ -1,6 +1,6 @@
 {
   "name": "tnp",
-  "version": "21.0.7",
+  "version": "21.0.8",
   "scripts": {
     "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     "taon init": "taon init",
