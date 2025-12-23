@@ -24,7 +24,6 @@ import type { Project } from '../../../../../project';
 //#endregion
 
 export class BackendCompilation {
-
   //#region static
   static counter = 1;
   //#endregion
@@ -56,7 +55,6 @@ export class BackendCompilation {
    * @deprecated remove
    */
   async start({ taskName }): Promise<void> {
-
     //#region @backendFunc
     await this.syncAction(
       Helpers.getFilesFrom([this.project.location, this.srcFolder], {
@@ -65,23 +63,19 @@ export class BackendCompilation {
       }),
     );
     //#endregion
-
   }
 
   /**
    * @deprecated remove
    */
   async startAndWatch(options?: any): Promise<void> {
-
     //#region @backendFunc
     await this.start(options);
     //#endregion
-
   }
 
   //#region methods / sync action
   async syncAction(filesPathes: string[]) {
-
     //#region @backendFunc
     const outDistPath = this.project.pathFor(distMainProject);
 
@@ -97,7 +91,6 @@ export class BackendCompilation {
       generateDeclarations: true,
     });
     //#endregion
-
   }
   //#endregion
 
@@ -111,7 +104,6 @@ export class BackendCompilation {
       diagnostics = false,
     }: CoreModels.TscCompileOptions,
   ) {
-
     //#region @backendFunc
     const watch = buildOptions.build.watch;
     if (!this.isEnableCompilation) {
@@ -181,7 +173,6 @@ export class BackendCompilation {
       project,
     });
     //#endregion
-
   }
 
   //#endregion
@@ -197,7 +188,6 @@ export class BackendCompilation {
       project: Project;
     },
   ): Promise<void> {
-
     //#region @backendFunc
 
     let { commandJs, commandMaps, cwd, project } = options;
@@ -219,6 +209,8 @@ Starting (${
       // nothing to replace for now
       return line;
     };
+
+    await project.nodeModules.makeSureInstalled();
 
     await Helpers.execute(commandJs, cwd, {
       similarProcessKey: 'tsc',
@@ -292,6 +284,8 @@ Starting (${
 
     Helpers.logInfo(`* Typescript compilation first part done`);
 
+    await project.nodeModules.makeSureInstalled();
+
     await Helpers.execute(commandMaps, cwd, {
       similarProcessKey: 'tsc',
       hideOutput: {
@@ -320,8 +314,6 @@ Starting (${
       // console.log(Helpers.terminalLine());
     }
     //#endregion
-
   }
   //#endregion
-
 }
