@@ -91,7 +91,6 @@ import { MochaTestRunner } from './tools/test-runner/mocha-test-runner';
 
 export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   {
-
     //#region build output options
     /**
      * for non org: <path-to-release-folder>/tmpLocalCopytoProjDist/my-library/node_modules/my-library
@@ -111,7 +110,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   },
   ReleasePartialOutput
 > {
-
   //#region fields
 
   public readonly __tests: MochaTestRunner;
@@ -155,7 +153,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#region init partial
 
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
-
     //#region @backendFunc
 
     Helpers.taskStarted(
@@ -213,7 +210,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     ]);
     return initOptions;
     //#endregion
-
   }
   //#endregion
 
@@ -223,7 +219,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     isOrganizationPackage?: boolean;
     packageName?: string;
   }> {
-
     //#region @backendFunc
     if (!this.project.framework.isStandaloneProject) {
       Helpers.warn(
@@ -465,7 +460,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       packageName,
     };
     //#endregion
-
   }
   //#endregion
 
@@ -473,7 +467,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   async releasePartial(
     releaseOptions: EnvOptions,
   ): Promise<ReleasePartialOutput> {
-
     //#region @backendFunc
 
     //#region prepare variables
@@ -574,7 +567,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       }
     } else {
       if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
-
         //#region local release
         const releaseDest = this.project.pathFor([
           localReleaseMainProject,
@@ -608,7 +600,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
         Helpers.info(`Local release done: ${releaseDest}`);
         //#endregion
-
       }
     }
 
@@ -619,7 +610,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       projectsReposToPushAndTag: [this.project.location],
     };
     //#endregion
-
   }
   //#endregion
 
@@ -636,7 +626,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
    * @returns
    */
   async clearLib(options: EnvOptions) {
-
     //#region @backendFunc
     Helpers.taskStarted(`Cleaning project: ${this.project.genericName}`);
 
@@ -690,14 +679,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       }
     }
     //#endregion
-
   }
 
   //#endregion
 
   //#region unlink node_modules when tnp
   public unlinkNodeModulesWhenTnp(): void {
-
     //#region @backendFunc
     let shouldUnlinkNodeModules = false;
     if (config.frameworkName === 'tnp') {
@@ -745,7 +732,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#endregion
 
     //#endregion
-
   }
   //#endregion
 
@@ -756,7 +742,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     releaseProjPath: string,
     newVersion: string,
   ): void {
-
     //#region @backendFunc
     const folderToFix = [browserMainProject, websqlMainProject];
 
@@ -768,22 +753,21 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         this.project.nameForNpmPackage,
         folder,
       ]);
-      const childName = this.project.name;
+      const childName = _.kebabCase(this.project.nameForNpmPackage);
+      const browserOrWebsql = _.last(rootPackageNameForChildBrowser.split('/'));
 
       const pj = {
         name: rootPackageNameForChildBrowser,
         version: newVersion,
-        module: `fesm2022/${childName}.mjs`,
+        module: `types/${childName}-${browserOrWebsql}.d.ts`,
         typings: `index.d.ts`,
         exports: {
-          // `./package.json`: {
-          //   default: './package.json',
-          // },
+          [`./${packageJsonNpmLibAngular}`]: {
+            default: `./${packageJsonNpmLibAngular}`,
+          },
           '.': {
-            types: `./index.d.ts`,
-            // esm2022: `./esm2022/${childName}.mjs`,
-            // esm: `./esm2022/${childName}.mjs`,
-            default: `./fesm2022/${childName}.mjs`,
+            types: `./types/${childName}-${browserOrWebsql}.d.ts`,
+            default: `./fesm2022/${childName}-${browserOrWebsql}.mjs`,
           },
         },
         sideEffects: this.project.packageJson.sideEffects,
@@ -791,7 +775,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       Helpers.writeJson([folderAbsPath, packageJsonNpmLibAngular], pj);
     }
     //#endregion
-
   }
   //#endregion
 
@@ -800,7 +783,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     releaseAbsPath: string,
     releaseOptions: EnvOptions,
   ): Promise<void> {
-
     //#region cli
     if (releaseOptions.release.cli.includeNodeModules) {
       // await this.project.nodeModules.removeOwnPackage(async () => {
@@ -861,7 +843,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
   //#region private methods / prepare package json for release publish
   private preparePackageJsonForReleasePublish(relaseAbsPath: string): void {
-
     //#region @backendFunc
     const pathInRelease = crossPlatformPath([relaseAbsPath, packageJsonNpmLib]);
     Helpers.copyFile(this.project.packageJson.path, pathInRelease);
@@ -911,7 +892,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     }
 
     //#endregion
-
   }
   //#endregion
 
@@ -919,7 +899,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   private removeNotNpmRelatedFilesFromReleaseBundle(
     releaseAbsPath: string,
   ): void {
-
     //#region @backendFunc
     Helpers.remove(`${releaseAbsPath}/${appFromSrc}*`); // QUICK_FIX
     Helpers.remove(`${releaseAbsPath}/${testsFromSrc}*`); // QUICK_FIX
@@ -939,7 +918,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     );
 
     //#endregion
-
   }
 
   //#endregion
@@ -1010,7 +988,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
   //#region private methods / pack resources
   private packResource(releaseDistFolder: string): void {
-
     //#region @backendFunc
     if (!fse.existsSync(releaseDistFolder)) {
       fse.mkdirSync(releaseDistFolder);
@@ -1045,13 +1022,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     });
     Helpers.logInfo(`Resources copied to release folder: ${distMainProject}`);
     //#endregion
-
   }
   //#endregion
 
   //#region private methods / copy essential files
   private copyEssentialFilesTo(toDestinations: string[]): void {
-
     //#region @backendFunc
     this.copyWhenExist(binMainProject, toDestinations);
 
@@ -1059,13 +1034,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     this.copyWhenExist(dotNpmIgnoreMainProject, toDestinations);
     this.copyWhenExist(dotGitIgnoreMainProject, toDestinations);
     //#endregion
-
   }
   //#endregion
 
   //#region private methods / copy when exists
   private copyWhenExist(relativePath: string, destinations: string[]): void {
-
     //#region @backendFunc
     const absPath = crossPlatformPath([this.project.location, relativePath]);
 
@@ -1083,13 +1056,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       }
     }
     //#endregion
-
   }
   //#endregion
 
   //#region private methods / link when exists
   private linkWhenExist(relativePath: string, destinations: string[]): void {
-
     //#region @backendFunc
     let absPath = path.join(this.project.location, relativePath);
 
@@ -1105,7 +1076,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       }
     }
     //#endregion
-
   }
   //#endregion
 
@@ -1116,7 +1086,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     reservedNames: string[];
     compress: boolean;
   }): void {
-
     //#region @backendFunc
     const { strategy, releaseAbsPath, reservedNames, compress } = options;
     Helpers.taskStarted(`Minifying started , strategy: ${strategy}`);
@@ -1152,7 +1121,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     }
     Helpers.taskDone(`Minifying done , strategy: ${strategy}`);
     //#endregion
-
   }
   //#endregion
 
@@ -1162,7 +1130,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     releaseAbsPath: string;
     reservedNames: string[];
   }): void {
-
     //#region @backendFunc
     const { strategy, releaseAbsPath, reservedNames } = options;
     const cliJsPath = crossPlatformPath([releaseAbsPath, 'cli.js']);
@@ -1199,7 +1166,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     }
 
     //#endregion
-
   }
   //#endregion
 
@@ -1212,7 +1178,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   private async backendRemoveJsMapsFrom(
     absPathReleaseDistFolder: string,
   ): Promise<void> {
-
     //#region @backendFunc
     Helpers.getFilesFrom([absPathReleaseDistFolder, libFromCompiledDist], {
       recursive: true,
@@ -1222,7 +1187,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
     Helpers.removeFileIfExists([absPathReleaseDistFolder, cliJSMapNpmPackage]);
     //#endregion
-
   }
   //#endregion
 
@@ -1233,7 +1197,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   private async backendReleaseRemoveDts(
     releaseFolderAbsPath: string,
   ): Promise<void> {
-
     //#region @backendFunc
 
     Helpers.getFilesFrom([releaseFolderAbsPath, libFromCompiledDist], {
@@ -1249,13 +1212,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       `export declare const dummy${new Date().getTime()};`,
     );
     //#endregion
-
   }
   //#endregion
 
   //#region private methods / build info
   private async creteBuildInfoFile(initOptions: EnvOptions): Promise<void> {
-
     //#region @backendFunc
     initOptions = EnvOptions.from(initOptions);
     if (this.project.framework.isStandaloneProject) {
@@ -1298,13 +1259,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     }
 
     //#endregion
-
   }
   //#endregion
 
   //#region private methods / show message when build lib done for smart container
   private showMesageWhenBuildLibDone(buildOptions: EnvOptions): void {
-
     //#region @backendFunc
     if (buildOptions.release.releaseType) {
       Helpers.logInfo('Lib build part done...  ');
@@ -1333,7 +1292,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       `);
 
     //#endregion
-
   }
   //#endregion
 
@@ -1342,7 +1300,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     releaseAbsLocation: string,
     minify: boolean,
   ): Promise<void> {
-
     //#region @backendFunc
 
     const destCli = crossPlatformPath([releaseAbsLocation, indexJSNpmPackage]);
@@ -1400,10 +1357,8 @@ npm link
     `,
     );
     //#endregion
-
   }
   //#endregion
 
   //#endregion
-
 }
