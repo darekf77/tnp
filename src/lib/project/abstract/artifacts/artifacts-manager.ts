@@ -235,7 +235,7 @@ export class ArtifactManager {
 
     //#region check isomorphic dependencies for npm lib
     if (this.project.framework.isStandaloneProject) {
-      const missingDependencies: string[] = [];
+      let missingDependencies: string[] = [];
       const isomorphicDependenciesForNpmLib =
         this.project.taonJson.isomorphicDependenciesForNpmLib;
 
@@ -244,6 +244,10 @@ export class ArtifactManager {
           missingDependencies.push(packageName);
         }
       }
+
+      missingDependencies = missingDependencies.filter(
+        f => ![this.project.name, this.project.nameForNpmPackage].includes(f),
+      );
 
       if (missingDependencies.length > 0) {
         Helpers.error(
