@@ -1,6 +1,6 @@
 //#region imports
 import { BaseTaonClassesNames, TAON_FLATTEN_MAPPING } from 'taon/src';
-import { config, fileName, frontendFiles } from 'tnp-core/src';
+import { config, fileName, frontendFiles, Utils } from 'tnp-core/src';
 import { _, CoreModels, crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
@@ -129,12 +129,14 @@ export class Refactor extends BaseFeatureForProject<Project> {
     }
     this.project.taonJson.updateIsomorphicExternalDependencies();
     await this.changeCssToScss(options);
+
     await this.taonNames(options);
+    await this.flattenImports(options);
     await this.removeBrowserRegion(options);
     await this.properStandaloneNg19(options);
     await this.eslint(options);
     await this.importsWrap(options);
-    await this.flattenImports(options);
+
     await this.prettier(options);
     this.project.vsCodeHelpers.toogleFilesVisibilityInVscode({
       action: 'hide-files',
@@ -377,7 +379,10 @@ export class Refactor extends BaseFeatureForProject<Project> {
 
   async taonNames(options: { fixSpecificFile?: string }) {
     //#region @backendFunc
-    const names = [...BaseTaonClassesNames, 'tnp-config'];
+    const names = [
+      ...BaseTaonClassesNames,
+      Utils.escapeStringForRegEx('tnp-config'),
+    ];
     options = this.prepareOptions(options);
     Helpers.info(`Fixing taon class names...`);
     Helpers.getFilesFrom(this.project.pathFor(srcMainProject), {
@@ -393,11 +398,11 @@ export class Refactor extends BaseFeatureForProject<Project> {
         for (const taonClassName of names) {
           fixedComponent = fixedComponent
             .replace(
-              new RegExp(`[\\s\\n]*${taonClassName}`, 'g'),
+              new RegExp(`(?<!Taon)${taonClassName}`, 'g'),
               `Taon${taonClassName}`,
             )
             .replace(
-              new RegExp(`[\\s\\n]*TaonTaon${taonClassName}`, 'g'), // QUICK_FIX double Taon
+              new RegExp(`TaonTaon${taonClassName}`, 'g'),
               `Taon${taonClassName}`,
             );
         }

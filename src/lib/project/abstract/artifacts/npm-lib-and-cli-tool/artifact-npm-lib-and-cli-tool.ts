@@ -776,7 +776,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         module: `fesm2022/${childName}.mjs`,
         typings: `index.d.ts`,
         exports: {
-          // './package.json': {
+          // `./package.json`: {
           //   default: './package.json',
           // },
           '.': {

@@ -26,7 +26,6 @@ import { codeCuttFn } from '../code-cut/cut-fn';
 //#endregion
 
 export class BrowserCompilation extends BaseClientCompiler {
-
   //#region fields & getters
   protected compilerName = 'Browser standard compiler';
 
@@ -35,11 +34,9 @@ export class BrowserCompilation extends BaseClientCompiler {
   public codecutWEBSQL: CodeCut;
 
   get customCompilerName(): string {
-
     //#region @backendFunc
     return `Browser compilation`;
     //#endregion
-
   }
 
   //#endregion
@@ -85,7 +82,6 @@ export class BrowserCompilation extends BaseClientCompiler {
 
   //#region methods / sync action
   async syncAction(absFilesFromSrc: string[]) {
-
     //#region @backendFunc
     const buildOptForNormal = this.buildOptions.clone({
       build: {
@@ -139,7 +135,9 @@ export class BrowserCompilation extends BaseClientCompiler {
     Helpers.mkdirp(tmpSource);
     Helpers.removeFolderIfExists(tmpSource);
 
-    this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting();
+    this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting(
+      this.buildOptions,
+    );
 
     const filesBase = crossPlatformPath(
       path.join(this.project.location, this.srcFolder),
@@ -160,19 +158,16 @@ export class BrowserCompilation extends BaseClientCompiler {
     this.codecutWEBSQL.files(relativePathesToProcess);
     // process.exit(0)
     //#endregion
-
   }
   //#endregion
 
   private sassDestFor(relativePath: string): string {
-
     //#region @backendFunc
     const destScss = this.project.pathFor(
       `dist/${path.extname(path.basename(relativePath)).replace('.', '')}/${relativePath}`,
     );
     return destScss;
     //#endregion
-
   }
 
   //#region methods / async action
@@ -186,7 +181,6 @@ export class BrowserCompilation extends BaseClientCompiler {
   }
 
   async asyncActionFor(event: ChangeOfFile, websql: boolean) {
-
     //#region @backendFunc
     // console.log('ASYNC ACTION CODE CUT ', event.fileAbsolutePath);
 
@@ -203,7 +197,6 @@ export class BrowserCompilation extends BaseClientCompiler {
 
     //#region handle backend & scss files
     if (!websql) {
-
       //#region backend file
       (() => {
         const destinationFileBackendPath = crossPlatformPath([
@@ -229,7 +222,6 @@ export class BrowserCompilation extends BaseClientCompiler {
             }
           } else {
             if (fse.existsSync(absoluteFilePath)) {
-
               //#region mkdirp basedir
               if (!fse.existsSync(path.dirname(destinationFileBackendPath))) {
                 fse.mkdirpSync(path.dirname(destinationFileBackendPath));
@@ -244,7 +236,6 @@ export class BrowserCompilation extends BaseClientCompiler {
                 fse.removeSync(destinationFileBackendPath);
               }
               //#endregion
-
             }
           }
         }
@@ -284,7 +275,6 @@ export class BrowserCompilation extends BaseClientCompiler {
             }
           } else {
             if (fse.existsSync(absoluteFilePath)) {
-
               //#region mkdirp basedir
               if (!fse.existsSync(path.dirname(destinationFileScssPath))) {
                 fse.mkdirpSync(path.dirname(destinationFileScssPath));
@@ -306,7 +296,6 @@ export class BrowserCompilation extends BaseClientCompiler {
         }
       })();
       //#endregion
-
     }
     //#endregion
 
@@ -337,7 +326,6 @@ export class BrowserCompilation extends BaseClientCompiler {
           }
         } else {
           if (fse.existsSync(absoluteFilePath)) {
-
             //#region mkdirp basedir
             if (!fse.existsSync(path.dirname(destinationFilePath))) {
               fse.mkdirpSync(path.dirname(destinationFilePath));
@@ -365,10 +353,8 @@ export class BrowserCompilation extends BaseClientCompiler {
     //#endregion
 
     //#endregion
-
   }
   //#endregion
 
   //#endregion
-
 }

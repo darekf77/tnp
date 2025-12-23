@@ -17,6 +17,8 @@ export class $Refactor extends BaseCli {
 
   //#region refactor
   async _() {
+    Helpers.info(`Initing before refactor...`);
+    // this._exit();
     await this.project.init(
       EnvOptions.from({ purpose: 'initing before refactor' }),
     );

@@ -39,7 +39,6 @@ export class InsideStructAngularLib extends BaseInsideStruct {
   }
 
   insideStruct(): InsideStruct {
-
     //#region @backendFunc
     const project = this.project;
 
@@ -54,7 +53,6 @@ export class InsideStructAngularLib extends BaseInsideStruct {
 
     const result = InsideStruct.from(
       {
-
         //#region pathes from container codere isomrophic lib
         relateivePathesFromContainer: this.relativePaths(),
         //#endregion
@@ -75,7 +73,6 @@ export class InsideStructAngularLib extends BaseInsideStruct {
           `${templateFolderForArtifact(this.getCurrentArtifact())}/`,
         ],
         endAction: ({ replacement }) => {
-
           //#region fixing package json dependencies in target proj
           (() => {
             const jsonPath = path.join(
@@ -111,7 +108,6 @@ export class InsideStructAngularLib extends BaseInsideStruct {
           //#endregion
 
           (() => {
-
             //#region hande / src / migrations
             const browserTsCode = this.initOptions.build.websql
               ? tmpSrcDistWebsql
@@ -133,11 +129,9 @@ export class InsideStructAngularLib extends BaseInsideStruct {
               continueWhenExistedFolderDoesntExists: true,
             });
             //#endregion
-
           })();
 
           (() => {
-
             //#region hande / src / lib
             const browserTsCode = this.initOptions.build.websql
               ? tmpSrcDistWebsql
@@ -228,7 +222,9 @@ export * from './${libFromSrc}';
               let content = Helpers.readFile(f) || '';
               content = content.replace(
                 new RegExp('my\\-lib', 'g'),
-                this.project.name,
+                f === libPackageJson
+                  ? `${this.project.name}/${this.initOptions.build.websql ? websqlMainProject : browserMainProject}`
+                  : this.project.name,
               );
               if (path.basename(f) === tsconfigNgProject) {
                 // debugger;
@@ -265,7 +261,6 @@ export * from './${libFromSrc}';
     );
     return result;
     //#endregion
-
   }
 }
 

@@ -1,6 +1,11 @@
 import { UtilsTypescript } from 'tnp-helpers/src';
 
-import { DUMMY_LIB } from '../../../../../../../constants';
+import {
+  DUMMY_LIB,
+  libFromImport,
+  sourceLinkInNodeModules,
+  srcFromTaonImport,
+} from '../../../../../../../constants';
 export const CallBackProcess = (
   fun: (
     imp: UtilsTypescript.TsImportExport,
@@ -16,7 +21,6 @@ export const CallBackProcess = (
  * TODO In progress documentation for whole code split process
  */
 export namespace CODE_SPLIT_PROCESS {
-
   //#region BEFORE
   export namespace BEFORE {
     export namespace SPLIT {
@@ -94,11 +98,11 @@ export namespace CODE_SPLIT_PROCESS {
             isomorphicLibraries: string[],
           ) => {
             if (
-              imp.wrapInParenthesis(imp.packageName) + '/lib' ===
+              imp.wrapInParenthesis(imp.packageName) + `/${libFromImport}` ===
               imp.wrapInParenthesis(imp.cleanEmbeddedPathToFile)
             ) {
               imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-                imp.cleanEmbeddedPathToFile + '/src',
+                imp.cleanEmbeddedPathToFile + `/${srcFromTaonImport}`,
               );
               return true;
             }
@@ -113,11 +117,12 @@ export namespace CODE_SPLIT_PROCESS {
           ) => {
             // console.log('WITH_SOURCE_TO_SRC');
             if (
-              imp.wrapInParenthesis(imp.packageName) + '/source' ===
+              imp.wrapInParenthesis(imp.packageName) +
+                `/${sourceLinkInNodeModules}` ===
               imp.wrapInParenthesis(imp.cleanEmbeddedPathToFile)
             ) {
               imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-                imp.cleanEmbeddedPathToFile + '/src',
+                imp.cleanEmbeddedPathToFile + `/${srcFromTaonImport}`,
               );
               return true;
             }
@@ -139,11 +144,11 @@ export namespace CODE_SPLIT_PROCESS {
             ) {
               if (imp.packageName === DUMMY_LIB) {
                 imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-                  currentProjectNpmName + '/src',
+                  currentProjectNpmName + `/${srcFromTaonImport}`,
                 );
               } else {
                 imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-                  imp.cleanEmbeddedPathToFile + '/src',
+                  imp.cleanEmbeddedPathToFile + `/${srcFromTaonImport}`,
                 );
               }
 
@@ -162,17 +167,17 @@ export namespace CODE_SPLIT_PROCESS {
             // console.log('DEEP_TO_SHORT_SRC');
             if (
               imp.cleanEmbeddedPathToFile.replace(
-                imp.packageName + '/src',
+                imp.packageName + `/${srcFromTaonImport}`,
                 '',
               ) !== ''
             ) {
               if (imp.packageName === DUMMY_LIB) {
                 imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-                  currentProjectNpmName + '/src',
+                  currentProjectNpmName + `/${srcFromTaonImport}`,
                 );
               } else {
                 imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-                  imp.packageName + '/src',
+                  imp.packageName + `/${srcFromTaonImport}`,
                 );
               }
 
@@ -232,6 +237,5 @@ export namespace CODE_SPLIT_PROCESS {
     };
   }
   //#endregion
-
 }
 //#endregion

@@ -6,20 +6,14 @@ import { path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
 import type { Project } from '../.././../../project';
-import { browserMainProject, websqlMainProject } from '../../../../../../constants';
+import {
+  browserMainProject,
+  websqlMainProject,
+} from '../../../../../../constants';
 import { Models } from '../../../../../../models';
 //#endregion
 
 export namespace CopyMangerHelpers {
-  export const angularBrowserComiplationFolders = {
-    esm2022: 'esm2022',
-    fesm2022: 'fesm2022',
-  };
-
-  export const angularBrowserComiplationFoldersArr = Object.values(
-    angularBrowserComiplationFolders,
-  ) as (keyof typeof angularBrowserComiplationFolders)[];
-
   //#region helpers / browser websql folders
   export const browserwebsqlFolders = [
     browserMainProject,
@@ -29,12 +23,9 @@ export namespace CopyMangerHelpers {
 
   //#region helpers / pure child name
   export function childPureName(child: Project) {
-
     //#region @backendFunc
     return child.name.startsWith('@') ? child.name.split('/')[1] : child.name; // pure name
     //#endregion
-
   }
   //#endregion
-
 }

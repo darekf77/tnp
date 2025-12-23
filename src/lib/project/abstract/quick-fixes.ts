@@ -6,6 +6,7 @@ import { path, _, crossPlatformPath } from 'tnp-core/src';
 import { UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
 import { Helpers, BaseQuickFixes } from 'tnp-helpers/src';
 
+import { templateFolderForArtifact } from '../../app-utils';
 import {
   appFromSrc,
   appFromSrcInsideNgApp,
@@ -33,6 +34,7 @@ import {
   tsconfigNgProject,
   tsconfigSpecNgProject,
 } from '../../constants';
+import { EnvOptions, ReleaseArtifactTaon } from '../../options';
 import type { Project } from '../abstract/project';
 //#endregion
 
@@ -73,7 +75,7 @@ export class QuickFixes extends BaseQuickFixes<Project> {
   }
 
   //#region recreate temp source necessary files for tests
-  recreateTempSourceNecessaryFilesForTesting(): void {
+  recreateTempSourceNecessaryFilesForTesting(initOptions: EnvOptions): void {
     //#region @backendFunc
     if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
       return;
@@ -103,9 +105,16 @@ export class QuickFixes extends BaseQuickFixes<Project> {
         );
         Helpers.copyFile(tsconfigBrowserPath, dest);
 
+        const appTemplateFolder = templateFolderForArtifact(
+          initOptions.release.targetArtifact ===
+            ReleaseArtifactTaon.ELECTRON_APP
+            ? ReleaseArtifactTaon.ELECTRON_APP
+            : ReleaseArtifactTaon.ANGULAR_NODE_APP,
+        );
+
         this.project.framework.recreateFileFromCoreProject({
           fileRelativePath: [tempSrcDirName, tsconfigSpecNgProject],
-          relativePathInCoreProject: `${appFromSrcInsideNgApp}/${tsconfigForUnitTestsNgProject}`,
+          relativePathInCoreProject: `${appTemplateFolder}/${tsconfigForUnitTestsNgProject}`,
         });
 
         this.project.framework.recreateFileFromCoreProject({
@@ -113,12 +122,12 @@ export class QuickFixes extends BaseQuickFixes<Project> {
             tempSrcDirName,
             CoreNgTemplateFiles.JEST_CONFIG_JS,
           ],
-          relativePathInCoreProject: `${appFromSrcInsideNgApp}/${CoreNgTemplateFiles.JEST_CONFIG_JS}`,
+          relativePathInCoreProject: `${appTemplateFolder}/${CoreNgTemplateFiles.JEST_CONFIG_JS}`,
         });
 
         this.project.framework.recreateFileFromCoreProject({
           fileRelativePath: [tempSrcDirName, CoreNgTemplateFiles.SETUP_JEST_TS],
-          relativePathInCoreProject: `${appFromSrcInsideNgApp}/${srcNgProxyProject}/${CoreNgTemplateFiles.SETUP_JEST_TS}`,
+          relativePathInCoreProject: `${appTemplateFolder}/${srcNgProxyProject}/${CoreNgTemplateFiles.SETUP_JEST_TS}`,
         });
 
         this.project.framework.recreateFileFromCoreProject({
@@ -126,7 +135,7 @@ export class QuickFixes extends BaseQuickFixes<Project> {
             tempSrcDirName,
             CoreNgTemplateFiles.JEST_GLOBAL_MOCKS_TS,
           ],
-          relativePathInCoreProject: `${appFromSrcInsideNgApp}/${srcNgProxyProject}/${CoreNgTemplateFiles.JEST_GLOBAL_MOCKS_TS}`,
+          relativePathInCoreProject: `${appTemplateFolder}/${srcNgProxyProject}/${CoreNgTemplateFiles.JEST_GLOBAL_MOCKS_TS}`,
         });
       });
     })();
@@ -167,7 +176,9 @@ export class QuickFixes extends BaseQuickFixes<Project> {
               Helpers.writeFile(
                 indexTs,
                 `
-              export function helloWorldFrom${_.upperFirst(_.camelCase(this.project.name))}() { }
+              export function helloWorldFrom${_.upperFirst(
+                _.camelCase(this.project.name),
+              )}() { }
               `.trimLeft(),
               );
             }
@@ -501,13 +512,21 @@ ${THIS_IS_GENERATED_STRING}`,
 
       if (fse.existsSync(moduleInNodeModules)) {
         Helpers.info(
-          `Extraction ${chalk.bold(nameZipReplacementPackage)} already exists in ` +
-            ` ${chalk.bold(this.project.genericName)}/${nodeModulesMainProject}`,
+          `Extraction ${chalk.bold(
+            nameZipReplacementPackage,
+          )} already exists in ` +
+            ` ${chalk.bold(
+              this.project.genericName,
+            )}/${nodeModulesMainProject}`,
         );
       } else {
         Helpers.info(
-          `Extraction before installation ${chalk.bold(nameZipReplacementPackage)} in ` +
-            ` ${chalk.bold(this.project.genericName)}/${nodeModulesMainProject}`,
+          `Extraction before installation ${chalk.bold(
+            nameZipReplacementPackage,
+          )} in ` +
+            ` ${chalk.bold(
+              this.project.genericName,
+            )}/${nodeModulesMainProject}`,
         );
 
         UtilsZip.unzipArchive(p);
