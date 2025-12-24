@@ -755,24 +755,16 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       ]);
       const childName = _.kebabCase(this.project.nameForNpmPackage);
       const browserOrWebsql = _.last(rootPackageNameForChildBrowser.split('/'));
-
-      const pj = {
-        name: rootPackageNameForChildBrowser,
-        version: newVersion,
-        module: `types/${childName}-${browserOrWebsql}.d.ts`,
-        typings: `index.d.ts`,
-        exports: {
-          [`./${packageJsonNpmLibAngular}`]: {
-            default: `./${packageJsonNpmLibAngular}`,
-          },
-          '.': {
-            types: `./types/${childName}-${browserOrWebsql}.d.ts`,
-            default: `./fesm2022/${childName}-${browserOrWebsql}.mjs`,
-          },
-        },
-        sideEffects: this.project.packageJson.sideEffects,
-      };
-      Helpers.writeJson([folderAbsPath, packageJsonNpmLibAngular], pj);
+      Helpers.setValueToJSON(
+        [folderAbsPath, packageJsonNpmLib],
+        'sideEffects',
+        this.project.packageJson.sideEffects,
+      );
+      Helpers.setValueToJSON(
+        [folderAbsPath, packageJsonNpmLib],
+        'version',
+        newVersion,
+      );
     }
     //#endregion
   }

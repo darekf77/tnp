@@ -483,6 +483,10 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     options = options || {};
     const project = options.project || this;
 
+    if (!envOptions.release.autoReleaseUsingConfig) {
+      return true;
+    }
+
     if (
       envOptions.release.autoReleaseUsingConfig &&
       !envOptions.release.autoReleaseTaskName
