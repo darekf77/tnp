@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, fse } from 'tnp-core/src';
 import { crossPlatformPath, path, _, CoreModels } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
@@ -38,10 +38,9 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
     structs: BaseInsideStruct[],
     initOptions: EnvOptions,
   ): Promise<void> {
-
     //#region @backendFunc
-    for (let index = 0; index < structs.length; index++) {
-      const insideStruct = structs[index];
+    for (let indexOuter = 0; indexOuter < structs.length; indexOuter++) {
+      const insideStruct = structs[indexOuter];
 
       if (!insideStruct) {
         continue;
@@ -60,11 +59,30 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
 
       opt.replacement = replacement;
 
+      if (Array.isArray(struct?.linksFuncs)) {
+        for (let index = 0; index < struct.linksFuncs.length; index++) {
+          const [fun1, fun2] = struct.linksFuncs[index];
+          let from = fun1(opt);
+          from = crossPlatformPath([this.project.location, replacement(from)]);
+
+          let to = fun2(opt);
+          to = crossPlatformPath([this.project.location, replacement(to)]);
+          if (!to || !from || to === from) {
+            continue;
+          }
+          try {
+            fse.unlinkSync(to);
+          } catch (error) {}
+        }
+      }
+
       //#region copying files
       if (struct?.relateivePathesFromContainer) {
         [...struct.relateivePathesFromContainer].forEach(f => {
           const orgPath = crossPlatformPath(
-            Helpers.resolve(path.join(struct.project.framework.coreProject.location, f)),
+            Helpers.resolve(
+              path.join(struct.project.framework.coreProject.location, f),
+            ),
           );
           const destPath = clearUnexistedLinks(
             crossPlatformPath([this.project.location, replacement(f)]),
@@ -101,7 +119,7 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
       //#endregion
 
       //#region linking files and folders
-      if (struct?.linksFuncs) {
+      if (Array.isArray(struct?.linksFuncs)) {
         for (let index = 0; index < struct.linksFuncs.length; index++) {
           const [fun1, fun2] = struct.linksFuncs[index];
           let from = fun1(opt);
@@ -114,8 +132,8 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
           }
           // console.log({
           //   from,
-          //   to
-          // })
+          //   to,
+          // });
           Helpers.remove(to);
           Helpers.createSymLink(from, to, {
             continueWhenExistedFolderDoesntExists: true,
@@ -129,9 +147,7 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
         await struct.endAction(opt);
       }
       //#endregion
-
     }
     //#endregion
-
   }
 }
