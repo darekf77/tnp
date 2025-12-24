@@ -613,45 +613,45 @@ export class BrowserCodeCut {
       // console.log({ relativeAssetPathPart });
       return [
         {
-          from: `assets/assets-for/${relativeAssetPathPart}/`,
-          to: `assets/assets-for/${relativeAssetPathPart}/`,
+          from: `${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: `${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
           makeSureSlashAtBegin: true,
         },
         {
-          from: ` '/assets/assets-for/${relativeAssetPathPart}/`,
-          to: ` '${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
+          from: ` '/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: ` '${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         },
         {
-          from: ` "/assets/assets-for/${relativeAssetPathPart}/`,
-          to: ` "${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
+          from: ` "/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: ` "${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         },
         {
-          from: `src="/assets/assets-for/${relativeAssetPathPart}/`,
-          to: `src="${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
+          from: `src="/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: `src="${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         },
         {
-          from: `[src]="'/assets/assets-for/${relativeAssetPathPart}/`,
-          to: `[src]="'${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
+          from: `[src]="'/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: `[src]="'${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         },
         {
-          from: `href="/assets/assets-for/${relativeAssetPathPart}/`,
-          to: `href="${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
+          from: `href="/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: `href="${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         },
         {
-          from: `[href]="'/assets/assets-for/${relativeAssetPathPart}/`,
-          to: `[href]="'${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
+          from: `[href]="'/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: `[href]="'${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         },
         {
-          from: `url(/assets/assets-for/${relativeAssetPathPart}/`,
-          to: `url(${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
+          from: `url(/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: `url(${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         },
         {
-          from: `url('/assets/assets-for/${relativeAssetPathPart}/`,
-          to: `url('${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
+          from: `url('/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: `url('${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         },
         {
-          from: `url("/assets/assets-for/${relativeAssetPathPart}/`,
-          to: `url("${baseHref}assets/assets-for/${relativeAssetPathPart}/`,
+          from: `url("/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: `url("${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         },
         /**
          *
@@ -660,12 +660,12 @@ export class BrowserCodeCut {
   console.log({ json1 }) -> WORKS NOW
          */
         {
-          from: ` from '/assets/assets-for/${relativeAssetPathPart}/`,
-          to: ` from '${back}assets/assets-for/${relativeAssetPathPart}/`,
+          from: ` from '/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: ` from '${back}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         },
         {
-          from: ` from "/assets/assets-for/${relativeAssetPathPart}/`,
-          to: ` from "${back}assets/assets-for/${relativeAssetPathPart}/`,
+          from: ` from "/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: ` from "${back}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         },
         /**
          * what can be done more
