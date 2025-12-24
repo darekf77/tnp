@@ -665,6 +665,21 @@ export class ArtifactManager {
       });
     }
 
+    if (
+      !(await this.project.npmHelpers.shouldReleaseMessage({
+        releaseVersionBumpType: options.release.releaseVersionBumpType,
+        children: children as any,
+        whatToRelease: {
+          itself: false,
+          children: true,
+        },
+        skipQuestionToUser: options.isCiProcess,
+        actionType: 'build',
+      }))
+    ) {
+      return;
+    }
+
     for (const child of children) {
       await child.artifactsManager.build(options);
     }
