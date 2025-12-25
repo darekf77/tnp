@@ -42,7 +42,6 @@ export const angularProjProxyPath = (options: {
   websql: boolean;
   targetArtifact: EnvOptions['release']['targetArtifact'];
 }): string => {
-
   //#region @backendFunc
   const { websql, targetArtifact, project } = options;
 
@@ -64,7 +63,6 @@ export const angularProjProxyPath = (options: {
     project.name,
   ]);
   //#endregion
-
 };
 
 //#region get proxy ng projects
@@ -73,7 +71,6 @@ export const getProxyNgProj = (
   buildOptions: EnvOptions,
   targetArtifact: EnvOptions['release']['targetArtifact'],
 ): Project => {
-
   //#region @backendFunc
   const projPath = crossPlatformPath([
     project.location,
@@ -86,26 +83,33 @@ export const getProxyNgProj = (
   const proj = project.ins.From(projPath);
   return proj as Project;
   //#endregion
-
 };
 //#endregion
 
 export const templateFolderForArtifact = (
   artifact: ReleaseArtifactTaon,
 ): TemplateFolder => {
-
   //#region @backendFunc
 
-  if (artifact === ReleaseArtifactTaon.ANGULAR_NODE_APP) {
+  if (
+    [
+      ReleaseArtifactTaon.ANGULAR_NODE_APP,
+      ReleaseArtifactTaon.ELECTRON_APP,
+      ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
+    ].includes(artifact)
+  ) {
     return TemplateFolder.templateApp;
   }
-  if (artifact === ReleaseArtifactTaon.ELECTRON_APP) {
-    return TemplateFolder.templateElectron;
-  }
-  if (artifact === ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL) {
-    return TemplateFolder.templateLib;
-  }
+
+  // if (artifact === ReleaseArtifactTaon.ANGULAR_NODE_APP) {
+  //   return TemplateFolder.templateApp;
+  // }
+  // if (artifact === ReleaseArtifactTaon.ELECTRON_APP) {
+  //   return TemplateFolder.templateApp;
+  // }
+  // if (artifact === ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL) {
+  //   return TemplateFolder.templateLib;
+  // }
   Helpers.error(`Cannot Template folder for current artifact "${artifact}"`);
   //#endregion
-
 };

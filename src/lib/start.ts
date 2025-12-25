@@ -160,6 +160,8 @@ export async function start(
       cil: 'release:clear:install:locally',
       'install:locally': 'release:install:locally',
       cinit: 'init:clearInit',
+      an: 'app:normal',
+      aw: 'app:websql',
       ba: 'build:app',
       b: 'build',
       bl: 'build:lib',

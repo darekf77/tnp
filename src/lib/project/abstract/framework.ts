@@ -198,6 +198,9 @@ export class Framework extends BaseFeatureForProject<Project> {
   //#region private methods / add missing components/modules
   public replaceModuleAndComponentName(tsFileContent: string): string {
     //#region @backendFunc
+    if (this.project.framework.frameworkVersionAtLeast('v21')) {
+      return tsFileContent;
+    }
     // Parse the source file using TypeScript API
     const projectName = this.project.name;
     const sourceFile = createSourceFile(

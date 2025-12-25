@@ -339,28 +339,26 @@ export const tmpSrcAppDistWebsql = 'tmp-src-app-dist-websql';
  */
 export enum TemplateFolder {
   /**
-   * Core project for angular app
+   * Core project for angular app webapp, library and electron app
    */
   templateApp = 'template-app',
 
   /**
+   * @deprecated
    * Core project angular library
    */
-  templateLib = 'template-lib',
+  // templateLib = 'template-lib',
 
   /**
+   * @deprecated
    * Core project template for electron app
    */
-  templateElectron = 'template-electron',
+  // templateElectron = 'template-electron',
 }
 
 export enum AngularJsonTaskName {
   ANGULAR_APP = 'app',
   ELECTRON_APP = 'angular-electron',
-  /**
-   * TODO angular ssr build
-   */
-  SSR = 'ssr',
 }
 
 export enum CoreAssets {
@@ -376,6 +374,9 @@ export enum CoreNgTemplateFiles {
   NG_PACKAGE_JSON = 'ng-package.json',
   PACKAGE_JSON = 'package.json', // fileName.package_json,
   ANGULAR_JSON = 'angular.json', // fileName.angular_json,
+  INDEX_HTML_NG_APP = 'index.html',
+  FAVICON_ICO = 'favicon.ico',
+  WEBMANIFEST_JSON = 'manifest.webmanifest',
 }
 
 export enum TaonGeneratedFiles {
@@ -396,6 +397,7 @@ export enum TaonGeneratedFiles {
 
 export enum TaonGeneratedFolders {
   ENV_FOLDER = 'env',
+  COMPILED = 'compiled',
 }
 
 /**
@@ -750,6 +752,8 @@ export const indexDtsMainProject = fileName.index_d_ts;
 export const indexDtsNpmPackage = fileName.index_d_ts;
 
 export const indexJSNpmPackage = fileName.index_js;
+
+export const indexJSElectronDist = fileName.index_js;
 
 export const cliTsFromSrc = 'cli.ts';
 
