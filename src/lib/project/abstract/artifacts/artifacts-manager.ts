@@ -4,6 +4,7 @@ import {
   dotTaonFolder,
   dotTnpFolder,
   LibTypeEnum,
+  taonPackageName,
   UtilsFilesFoldersSync,
 } from 'tnp-core/src';
 import {
@@ -19,6 +20,7 @@ import { fileName } from 'tnp-core/src';
 import { tnpPackageName } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
+import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
 import {
   appElectronTsFromSrc,
   appTsFromSrc,
@@ -180,7 +182,7 @@ export class ArtifactManager {
 
     //#region prevent not requested framework version
     if (this.project.framework.frameworkVersionLessThan('v4')) {
-      Helpers.warn(`Skipping artifacts init for project: ${this.project.name}`)
+      Helpers.warn(`Skipping artifacts init for project: ${this.project.name}`);
       return;
     }
     if (this.project.framework.frameworkVersionLessThan('v18')) {
@@ -573,6 +575,24 @@ export class ArtifactManager {
       //#endregion
     } else {
       //#region partial build
+      if (
+        this.project.framework.frameworkVersionLessThan(
+          CURRENT_PACKAGE_VERSION.split('.')[0] as any,
+        )
+      ) {
+        Helpers.error(
+          `
+            Please upgrade taon framework version to at least v${CURRENT_PACKAGE_VERSION.split('.')[0]} (in taon.jsonc)
+            or install previous version of taon cli tool for ${this.project.framework.frameworkVersion}:
+
+            npm i -g ${taonPackageName}@${this.project.framework.frameworkVersion?.replace('v', '')}
+
+          `,
+          false,
+          true,
+        );
+      }
+
       if (
         !buildOptions.release.targetArtifact ||
         buildOptions.release.targetArtifact ===
