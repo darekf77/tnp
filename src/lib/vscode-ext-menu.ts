@@ -24,6 +24,18 @@ export function activateMenuTnp(
   vscode: typeof import('vscode'),
   FRAMEWORK_NAME: string,
 ) {
+  let terminal: vscode.Terminal | undefined;
+
+  function runInTerminal(command: string) {
+    if (!terminal) {
+      terminal = vscode.window.createTerminal({
+        name: 'My Extension',
+      });
+    }
+
+    terminal.show(true);
+    terminal.sendText(command, true);
+  }
 
   //#region focus first element function
   const focustFirstElement = () => {
@@ -173,16 +185,13 @@ export function activateMenuTnp(
       }
     }
     //#endregion
-
   }
   //#endregion
 
   //#region tree provider class
   class ProjectsTreeProvider implements vscode.TreeDataProvider<ProjectItem> {
-
     //#region get children
     async getChildren(element?: ProjectItem): Promise<ProjectItem[]> {
-
       //#region resolve variables
       // if (!element) {
       // root → workspace folders
@@ -328,6 +337,8 @@ export function activateMenuTnp(
         this.getInfoItem('Click item below to trigger action', true),
 
         //#region items with actions
+
+        //#region items with actions / refresh vscode colors
         new ProjectItem(
           `$ ${FRAMEWORK_NAME} refresh:vscode:colors`,
           vscode.TreeItemCollapsibleState.None,
@@ -342,6 +353,9 @@ export function activateMenuTnp(
             },
           },
         ),
+        //#endregion
+
+        //#region items with actions / taon push
         new ProjectItem(
           `$ ${FRAMEWORK_NAME} push`,
           vscode.TreeItemCollapsibleState.None,
@@ -359,6 +373,9 @@ export function activateMenuTnp(
             },
           },
         ),
+        //#endregion
+
+        //#region items with actions / hide temp files
         new ProjectItem(
           `$ ${FRAMEWORK_NAME} vscode:hide:temp`,
           vscode.TreeItemCollapsibleState.None,
@@ -375,6 +392,9 @@ export function activateMenuTnp(
             },
           },
         ),
+        //#endregion
+
+        //#region items with actions / show temp files
         new ProjectItem(
           `$ ${FRAMEWORK_NAME} vscode:show:temp`,
           vscode.TreeItemCollapsibleState.None,
@@ -391,6 +411,42 @@ export function activateMenuTnp(
             },
           },
         ),
+        //#endregion
+
+        //#region items with actions / hide temp files
+        new ProjectItem(
+          `$ ${FRAMEWORK_NAME} build:lib`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: project => {
+              runInTerminal(`${FRAMEWORK_NAME} build:lib`);
+              if (project?.location) {
+                focustFirstElement();
+              }
+            },
+          },
+        ),
+        //#endregion
+
+        //#region items with actions / hide temp files
+        new ProjectItem(
+          `$ ${FRAMEWORK_NAME} build:watch:lib`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: project => {
+              runInTerminal(`${FRAMEWORK_NAME} build:watch:lib`);
+              if (project?.location) {
+                focustFirstElement();
+              }
+            },
+          },
+        ),
+        //#endregion
+
         //         new ProjectItem(
         //           `$ ${FRAMEWORK_NAME} vscode:uninstall:itself`,
         //           vscode.TreeItemCollapsibleState.None,
@@ -478,7 +534,6 @@ export function activateMenuTnp(
       return this.dummy;
     }
     //#endregion
-
   }
   //#endregion
 
@@ -496,7 +551,6 @@ export function activateMenuTnp(
   );
   context.subscriptions.push(treeView);
   //#endregion
-
 }
 
 export function deactivateMenuTnp() {}
