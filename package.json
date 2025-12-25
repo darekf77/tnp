@@ -392,7 +392,7 @@
     "ua-parser-js": "~2.0.6",
     "uglify-js": "~3.19.3",
     "underscore": "~1.13.7",
-    "uuid": "~13.0.0",
+    "uuid": "~11.0.0",
     "validator": "~13.1.17",
     "video.js": "~8.3.0",
     "vitest": "4.0.15",

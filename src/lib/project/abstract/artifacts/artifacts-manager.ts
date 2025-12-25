@@ -179,6 +179,10 @@ export class ArtifactManager {
     //#region @backendFunc
 
     //#region prevent not requested framework version
+    if (this.project.framework.frameworkVersionLessThan('v4')) {
+      Helpers.warn(`Skipping artifacts init for project: ${this.project.name}`)
+      return;
+    }
     if (this.project.framework.frameworkVersionLessThan('v18')) {
       // TODO QUICK_FIX @REMOVE
       if (this.project.framework.isCoreProject) {
