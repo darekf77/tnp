@@ -575,22 +575,36 @@ export class ArtifactManager {
       //#endregion
     } else {
       //#region partial build
-      if (
+
+      while (
         this.project.framework.frameworkVersionLessThan(
           CURRENT_PACKAGE_VERSION.split('.')[0] as any,
         )
       ) {
+        if (
+          this.project.parent &&
+          this.project.parent?.framework.isContainer &&
+          this.project.parent?.taonJson.isOrganization &&
+          this.project.taonJson.frameworkVersion !==
+            this.project.parent.taonJson.frameworkVersion
+        ) {
+          this.project.taonJson.setFrameworkVersion(
+            this.project.parent.taonJson.frameworkVersion,
+          );
+          continue;
+        }
         Helpers.error(
           `
-            Please upgrade taon framework version to at least v${CURRENT_PACKAGE_VERSION.split('.')[0]} (in taon.jsonc)
-            or install previous version of taon cli tool for ${this.project.framework.frameworkVersion}:
+              Please upgrade taon framework version to at least v${CURRENT_PACKAGE_VERSION.split('.')[0]} (in taon.jsonc)
+              or install previous version of taon cli tool for ${this.project.framework.frameworkVersion}:
 
-            npm i -g ${taonPackageName}@${this.project.framework.frameworkVersion?.replace('v', '')}
+              npm i -g ${taonPackageName}@${this.project.framework.frameworkVersion?.replace('v', '')}
 
-          `,
+            `,
           false,
           true,
         );
+        break; // not needed but to be sure
       }
 
       if (
