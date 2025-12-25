@@ -196,6 +196,16 @@ export class Framework extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region private methods / add missing components/modules
+  public migrateFromNgModulesToStandaloneV21(tsFileContent: string): string {
+    if (this.project.framework.frameworkVersionLessThan('v21')) {
+      return tsFileContent;
+    }
+    return UtilsTypescript.migrateFromNgModulesToStandaloneV21(
+      tsFileContent,
+      _.upperFirst(_.camelCase(this.project.name)),
+    );
+  }
+
   public replaceModuleAndComponentName(tsFileContent: string): string {
     //#region @backendFunc
     if (this.project.framework.frameworkVersionAtLeast('v21')) {
@@ -383,8 +393,17 @@ export class Framework extends BaseFeatureForProject<Project> {
     const appFile = this.project.pathFor(relativeAppTs);
 
     let contentAppFile = Helpers.readFile(appFile);
-    let newContentAppFile =
-      this.project.framework.replaceModuleAndComponentName(contentAppFile);
+    let newContentAppFile = contentAppFile;
+
+    if (this.project.framework.frameworkVersionAtLeast('v21')) {
+      // newContentAppFile =
+      //   this.project.framework.migrateFromNgModulesToStandaloneV21(
+      //     contentAppFile,
+      //   );
+    } else {
+      newContentAppFile =
+        this.project.framework.replaceModuleAndComponentName(contentAppFile);
+    }
 
     Helpers.writeFile(appFile, newContentAppFile);
     try {

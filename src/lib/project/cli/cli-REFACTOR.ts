@@ -4,7 +4,12 @@ import { CoreModels, _, crossPlatformPath, os, path } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import { MESSAGES, TEMP_DOCS } from '../../constants';
+import {
+  appTsFromSrc,
+  MESSAGES,
+  srcMainProject,
+  TEMP_DOCS,
+} from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
@@ -14,7 +19,6 @@ import { BaseCli } from './base-cli';
 
 // @ts-ignore TODO weird inheritance problem
 export class $Refactor extends BaseCli {
-
   //#region refactor
   async _() {
     Helpers.info(`Initing before refactor...`);
@@ -111,6 +115,7 @@ export class $Refactor extends BaseCli {
   }
   //#endregion
 
+  //#region flatten imports
   async flattenImports() {
     Helpers.info(`Initing before flattening imports..`);
     await this.project.init(
@@ -121,6 +126,7 @@ export class $Refactor extends BaseCli {
     });
     this._exit();
   }
+  //#endregion
 
   //#region refactor taon names
   async taonNames() {
@@ -131,6 +137,64 @@ export class $Refactor extends BaseCli {
   }
   //#endregion
 
+  //#region ng21 update
+  async ng21() {
+    //#region @backendFunc
+    Helpers.info(`Initing before migrating to Angular v21 standalone...`);
+    const appFile = this.project.pathFor([srcMainProject, appTsFromSrc]);
+    let tsFileContent = await Helpers.readFile(appFile);
+
+    tsFileContent = UtilsTypescript.migrateFromNgModulesToStandaloneV21(
+      tsFileContent,
+      _.upperFirst(_.camelCase(this.project.name)),
+    );
+    // import { RenderMode, ServerRoute } from '@angular/ssr';
+    tsFileContent = UtilsTypescript.addOrUpdateImportIfNotExists(
+      tsFileContent,
+      ['RenderMode', 'ServerRoute', 'provideServerRendering', 'withRoutes'],
+      '@angular/ssr',
+    );
+
+    tsFileContent = UtilsTypescript.addOrUpdateImportIfNotExists(
+      tsFileContent,
+      [
+        'ApplicationConfig',
+        'mergeApplicationConfig',
+        'provideBrowserGlobalErrorListeners',
+        'APP_INITIALIZER',
+        'isDevMode',
+      ],
+      '@angular/core',
+    );
+
+    tsFileContent = UtilsTypescript.addOrUpdateImportIfNotExists(
+      tsFileContent,
+      ['provideClientHydration', 'withEventReplay'],
+      '@angular/platform-browser',
+    );
+
+    // import { provideServiceWorker } from '@angular/service-worker';
+    tsFileContent = UtilsTypescript.addOrUpdateImportIfNotExists(
+      tsFileContent,
+      ['provideServiceWorker'],
+      '@angular/service-worker',
+    );
+
+    // provideRouter
+    tsFileContent = UtilsTypescript.addOrUpdateImportIfNotExists(
+      tsFileContent,
+      ['provideRouter'],
+      '@angular/router',
+    );
+
+    await Helpers.writeFile(appFile, tsFileContent);
+
+    UtilsTypescript.formatFile(appFile);
+    Helpers.info(`Migrated to Angular v21 standalone in ${appFile}`);
+    this._exit();
+    //#endregion
+  }
+  //#endregion
 }
 export default {
   $Refactor: Helpers.CLIWRAP($Refactor, '$Refactor'),
