@@ -24,14 +24,12 @@ export function activateMenuTnp(
   vscode: typeof import('vscode'),
   FRAMEWORK_NAME: string,
 ) {
-  let terminal: vscode.Terminal | undefined;
-
   function runInTerminal(command: string) {
-    if (!terminal) {
-      terminal = vscode.window.createTerminal({
-        name: 'My Extension',
-      });
-    }
+    let terminal = vscode.window.activeTerminal;
+
+    // terminal = vscode.window.createTerminal({
+    //   name: `Starting "${command}" command`,
+    // });
 
     terminal.show(true);
     terminal.sendText(command, true);
@@ -439,6 +437,91 @@ export function activateMenuTnp(
             project: CURRENT_PROJECT,
             triggerActionOnClick: project => {
               runInTerminal(`${FRAMEWORK_NAME} build:watch:lib`);
+              if (project?.location) {
+                focustFirstElement();
+              }
+            },
+          },
+        ),
+        //#endregion
+
+        //#region items with actions /  app normal
+        new ProjectItem(
+          `$ ${FRAMEWORK_NAME} app:normal`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: project => {
+              runInTerminal(`${FRAMEWORK_NAME} app:normal`);
+              if (project?.location) {
+                focustFirstElement();
+              }
+            },
+          },
+        ),
+        //#endregion
+
+        //#region items with actions /  app normal
+        new ProjectItem(
+          `$ ${FRAMEWORK_NAME} app:websql`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: project => {
+              runInTerminal(`${FRAMEWORK_NAME} app:websql`);
+              if (project?.location) {
+                focustFirstElement();
+              }
+            },
+          },
+        ),
+        //#endregion
+
+        //#region items with actions /  app normal
+        new ProjectItem(
+          `$ ${FRAMEWORK_NAME} start`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: project => {
+              runInTerminal(`${FRAMEWORK_NAME} start`);
+              if (project?.location) {
+                focustFirstElement();
+              }
+            },
+          },
+        ),
+        //#endregion
+
+         //#region items with actions /  app normal
+         new ProjectItem(
+          `$ ${FRAMEWORK_NAME} start --websql`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: project => {
+              runInTerminal(`${FRAMEWORK_NAME} start --websql`);
+              if (project?.location) {
+                focustFirstElement();
+              }
+            },
+          },
+        ),
+        //#endregion
+
+         //#region items with actions /  app normal
+         new ProjectItem(
+          `$ ${FRAMEWORK_NAME} clear`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: project => {
+              runInTerminal(`${FRAMEWORK_NAME} clear`);
               if (project?.location) {
                 focustFirstElement();
               }
