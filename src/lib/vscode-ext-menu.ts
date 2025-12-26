@@ -5,6 +5,11 @@ import type { ExtensionContext } from 'vscode';
 import type * as vscode from 'vscode';
 
 import { Project } from '../lib/project/abstract/project';
+
+import {
+  tmp_FRONTEND_NORMAL_APP_PORT,
+  tmp_FRONTEND_WEBSQL_APP_PORT,
+} from './constants';
 //#endregion
 
 //#region models
@@ -496,8 +501,8 @@ export function activateMenuTnp(
         ),
         //#endregion
 
-         //#region items with actions /  app normal
-         new ProjectItem(
+        //#region items with actions /  app normal
+        new ProjectItem(
           `$ ${FRAMEWORK_NAME} start --websql`,
           vscode.TreeItemCollapsibleState.None,
           {
@@ -513,8 +518,8 @@ export function activateMenuTnp(
         ),
         //#endregion
 
-         //#region items with actions /  app normal
-         new ProjectItem(
+        //#region items with actions /  app normal
+        new ProjectItem(
           `$ ${FRAMEWORK_NAME} clear`,
           vscode.TreeItemCollapsibleState.None,
           {
@@ -522,6 +527,52 @@ export function activateMenuTnp(
             project: CURRENT_PROJECT,
             triggerActionOnClick: project => {
               runInTerminal(`${FRAMEWORK_NAME} clear`);
+              if (project?.location) {
+                focustFirstElement();
+              }
+            },
+          },
+        ),
+        //#endregion
+
+        //#region items with actions /  copy normal app url to clipboard
+        new ProjectItem(
+          `$ COPY normal app url to clipboard`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: project => {
+              if (project?.location) {
+                const normalAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_NORMAL_APP_PORT + '_1')}`;
+                vscode.env.clipboard.writeText(normalAppUrl);
+                vscode.window.showInformationMessage(
+                  'Copied normal app URL to clipboard!',
+                );
+              }
+              if (project?.location) {
+                focustFirstElement();
+              }
+            },
+          },
+        ),
+        //#endregion
+
+        //#region items with actions /  copy normal app url to clipboard
+        new ProjectItem(
+          `$ COPY websql app url to clipboard`,
+          vscode.TreeItemCollapsibleState.None,
+          {
+            iconPath: null,
+            project: CURRENT_PROJECT,
+            triggerActionOnClick: project => {
+              if (project?.location) {
+                const normalAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_WEBSQL_APP_PORT + '_1')}`;
+                vscode.env.clipboard.writeText(normalAppUrl);
+                vscode.window.showInformationMessage(
+                  'Copied websql app URL to clipboard!',
+                );
+              }
               if (project?.location) {
                 focustFirstElement();
               }

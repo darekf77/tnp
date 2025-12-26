@@ -217,6 +217,20 @@ export const taonConfigSchemaJsonContainer =
 
 export const TEMP_DOCS = 'tmp-documentation';
 
+const libsAppPortsFolder = 'libs-apps-ports';
+
+export const HOST_BACKEND_PORT = 'HOST_BACKEND_PORT';
+export const tmp_HOST_BACKEND_PORT = `${dotTaonFolder}/${libsAppPortsFolder}/${HOST_BACKEND_PORT}`;
+
+export const FRONTEND_WEBSQL_APP_PORT = 'FRONTEND_WEBSQL_APP_PORT';
+export const tmp_FRONTEND_WEBSQL_APP_PORT = `${dotTaonFolder}/${libsAppPortsFolder}/${FRONTEND_WEBSQL_APP_PORT}`;
+
+export const FRONTEND_NORMAL_APP_PORT = 'FRONTEND_NORMAL_APP_PORT';
+export const tmp_FRONTEND_NORMAL_APP_PORT = `${dotTaonFolder}/${libsAppPortsFolder}/${FRONTEND_NORMAL_APP_PORT}`;
+
+export const FRONTEND_NORMAL_ELECTRON_PORT = 'FRONTEND_NORMAL_ELECTRON_PORT';
+export const tmp_FRONTEND_NORMAL_ELECTRON_PORT = `${dotTaonFolder}/${libsAppPortsFolder}/${FRONTEND_NORMAL_ELECTRON_PORT}`;
+
 export const DEFAULT_PORT = {
   DIST_SERVER_DOCS: 4000,
   APP_BUILD_LOCALHOST: 4200,
@@ -253,11 +267,9 @@ export const coreRequiredEnvironments = [
  * @deprecated
  */
 export const getBrowserVerPath = (websql: boolean = false) => {
-
   //#region @backend
   return websql ? config.folder.websql : config.folder.browser;
   //#endregion
-
 };
 //#endregion
 
