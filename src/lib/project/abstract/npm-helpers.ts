@@ -46,7 +46,6 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
    * @deprecated
    */
   get lastNpmVersion(): string | undefined {
-
     //#region @backendFunc
 
     let lastVer = void 0 as string;
@@ -61,20 +60,24 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
     } catch (error) {}
     return lastVer;
     //#endregion
-
   }
   //#endregion
 
   //#region check if ready for npm
   public checkProjectReadyForNpmRelease(): void {
-
     //#region @backendFunc
 
-    if (
-      (this.project.framework.isStandaloneProject ||
-        this.project.framework.isContainer) &&
-      !this.project.framework.isCoreProject
-    ) {
+    const standaloneAndNotCore =
+      !this.project.framework.isCoreProject && this.project.framework;
+
+    const containerNotCore =
+      (this.project.framework.isContainer &&
+        !this.project.framework.isCoreProject) ||
+      (this.project.framework.isContainer &&
+        this.project.framework.isCoreProject &&
+        this.project.taonJson.createOnlyTagWhenRelease);
+
+    if (standaloneAndNotCore || containerNotCore) {
       return;
     }
 
@@ -84,7 +87,6 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
       true,
     );
     //#endregion
-
   }
   //#endregion
 
@@ -95,7 +97,6 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
    * @returns boolean - true if linked from core container
    */
   get useLinkAsNodeModules(): boolean {
-
     //#region @backendFunc
     if (
       this.project.framework.isContainerCoreProject &&
@@ -110,8 +111,6 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
 
     return this.project.framework.isStandaloneProject;
     //#endregion
-
   }
   //#endregion
-
 }
