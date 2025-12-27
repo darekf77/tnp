@@ -19,10 +19,14 @@ import { BasePackageJson, Helpers, UtilsQuickFixes } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
 import {
+  angularProjProxyPath,
   getProxyNgProj,
   templateFolderForArtifact,
 } from '../../../../app-utils';
 import {
+  AngularJsonAppOrElectronTaskName,
+  AngularJsonLibTaskName,
+  AngularJsonLibTaskNameResolveFor,
   appFromSrc,
   assetsFromNgProj,
   assetsFromSrc,
@@ -34,6 +38,7 @@ import {
   cliJSNpmPackage,
   COMPILATION_COMPLETE_LIB_NG_BUILD,
   CoreAssets,
+  CoreNgTemplateFiles,
   DEFAULT_PORT,
   distMainProject,
   dotFileTemplateExt,
@@ -52,6 +57,7 @@ import {
   packageJsonMainProject,
   packageJsonNpmLib,
   packageJsonNpmLibAngular,
+  projectsFromNgTemplate,
   sourceLinkInNodeModules,
   srcMainProject,
   srcNgProxyProject,
@@ -62,6 +68,7 @@ import {
   testsFromSrc,
   THIS_IS_GENERATED_INFO_COMMENT,
   tmpBaseHrefOverwrite,
+  tmpLibsForDistWebsql,
   tmpLocalCopytoProjDist,
   tmpSrcDist,
   tmpSrcDistWebsql,
@@ -394,6 +401,38 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         ...outputOptions,
       });
     };
+    //#endregion
+
+    //#region set angular.json default tasks
+
+    const tmpLibForDistNormalRelativePath = angularProjProxyPath({
+      project: this.project,
+      targetArtifact: buildOptions.release.targetArtifact,
+      websql: false,
+    });
+
+    const tmpLibForDistWebsqlRelativePath = angularProjProxyPath({
+      project: this.project,
+      targetArtifact: buildOptions.release.targetArtifact,
+      websql: true,
+    });
+
+    this.project.setValueToJSONC(
+      [tmpLibForDistNormalRelativePath, CoreNgTemplateFiles.ANGULAR_JSON],
+      `projects["${this.project.name}"].architect.build.defaultConfiguration`,
+      AngularJsonLibTaskNameResolveFor(buildOptions),
+    );
+
+    this.project.setValueToJSONC(
+      [tmpLibForDistWebsqlRelativePath, CoreNgTemplateFiles.ANGULAR_JSON],
+      `projects["${this.project.name}"].architect.build.defaultConfiguration`,
+      AngularJsonLibTaskNameResolveFor(buildOptions),
+    );
+
+    this.project.remove([tmpLibForDistNormalRelativePath, '.angular']);
+
+    this.project.remove([tmpLibForDistWebsqlRelativePath, '.angular']);
+
     //#endregion
 
     //#region  handle watch & normal mode

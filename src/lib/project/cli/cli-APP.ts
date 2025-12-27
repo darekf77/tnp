@@ -31,18 +31,26 @@ export class $App extends BaseCli {
           question: 'Select app development start mode:',
         });
 
-    await this._build(chosen === 'startAppWatchWebsql');
+    await this._build({ websql: chosen === 'startAppWatchWebsql' });
     //#endregion
   }
 
-  private async _build(websql: boolean) {
+  private async _build({
+    websql,
+    electron,
+  }: {
+    websql: boolean;
+    electron?: boolean;
+  }): Promise<void> {
     Helpers.info(
       `Starting ${websql ? 'WEBSQL' : 'NORMAL'} APP in watch mode...`,
     );
     await this.project.build(
       this.params.clone({
         release: {
-          targetArtifact: ReleaseArtifactTaon.ANGULAR_NODE_APP,
+          targetArtifact: electron
+            ? ReleaseArtifactTaon.ELECTRON_APP
+            : ReleaseArtifactTaon.ANGULAR_NODE_APP,
         },
         build: {
           watch: true,
@@ -52,12 +60,24 @@ export class $App extends BaseCli {
     );
   }
 
+  async electron() {
+    await this._build({ websql: false, electron: true });
+  }
+
+  async el() {
+    await this.electron();
+  }
+
+  async electronWebsql() {
+    await this._build({ websql: true, electron: true });
+  }
+
   async websql() {
-    await this._build(true);
+    await this._build({ websql: true });
   }
 
   async normal() {
-    await this._build(false);
+    await this._build({ websql: false });
   }
 }
 

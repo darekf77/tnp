@@ -14,6 +14,7 @@ import { _, UtilsOs } from 'tnp-core/src';
 import { crossPlatformPath, path, Utils } from 'tnp-core/src';
 
 import { CURRENT_PACKAGE_VERSION } from './build-info._auto-generated_';
+import type { EnvOptions } from './options';
 import { DeploymentReleaseData } from './project/abstract/taon-worker/deployments/deployments.models';
 
 // import type { Project } from './project/abstract/project';
@@ -380,6 +381,7 @@ export enum CoreAssets {
 
 export enum CoreNgTemplateFiles {
   sqlJSLoaderTs = 'sqljs-loader.ts',
+  SERVER_TS = 'server.ts',
   JEST_CONFIG_JS = 'jest.config.js',
   SETUP_JEST_TS = 'setupJest.ts',
   JEST_GLOBAL_MOCKS_TS = 'jestGlobalMocks.ts',
@@ -598,6 +600,46 @@ export enum BundledFiles {
   CLI_README_MD = 'CLI-README.md',
   INDEX_HTML = 'index.html',
 }
+
+export enum AngularJsonAppOrElectronTaskName {
+  development = 'development',
+  production = 'production',
+  developmentWebsql = 'development-websql',
+  productionWebsql = 'production-websql',
+}
+
+export const AngularJsonAppOrElectronTaskNameResolveFor = (
+  envOptions: EnvOptions,
+): AngularJsonAppOrElectronTaskName => {
+  if (envOptions.build.websql) {
+    if (!envOptions.build.watch && !!envOptions.release.releaseType) {
+      return AngularJsonAppOrElectronTaskName.productionWebsql;
+    } else {
+      return AngularJsonAppOrElectronTaskName.developmentWebsql;
+    }
+  } else {
+    if (!envOptions.build.watch && !!envOptions.release.releaseType) {
+      return AngularJsonAppOrElectronTaskName.production;
+    } else {
+      return AngularJsonAppOrElectronTaskName.development;
+    }
+  }
+};
+
+export enum AngularJsonLibTaskName {
+  development = 'development',
+  production = 'production',
+}
+
+export const AngularJsonLibTaskNameResolveFor = (
+  envOptions: EnvOptions,
+): AngularJsonLibTaskName => {
+  if (!envOptions.build.watch && !!envOptions.release.releaseType) {
+    return AngularJsonLibTaskName.production;
+  } else {
+    return AngularJsonLibTaskName.development;
+  }
+};
 
 export enum BundledDocsFolders {
   VERSION = 'version',

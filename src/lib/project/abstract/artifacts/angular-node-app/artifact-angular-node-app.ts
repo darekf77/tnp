@@ -26,11 +26,14 @@ import { UtilsDocker } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
 import {
+  angularProjProxyPath,
   getProxyNgProj,
   templateFolderForArtifact,
 } from '../../../../app-utils';
 import {
   ACTIVE_CONTEXT,
+  AngularJsonAppOrElectronTaskName,
+  AngularJsonAppOrElectronTaskNameResolveFor,
   AngularJsonTaskName,
   appFromSrc,
   appFromSrcInsideNgApp,
@@ -38,6 +41,7 @@ import {
   assetsFromSrc,
   COMPILATION_COMPLETE_APP_NG_SERVE,
   CoreAssets,
+  CoreNgTemplateFiles,
   databases,
   DEFAULT_PORT,
   distFromNgBuild,
@@ -62,9 +66,12 @@ import {
   TemplateFolder,
   THIS_IS_GENERATED_INFO_COMMENT,
   THIS_IS_GENERATED_STRING,
+  tmpAppsForDistElectronWebsql,
+  tmpAppsForDistWebsql,
   tmpBaseHrefOverwrite,
   tmpSrcDist,
   tmpSrcDistWebsql,
+  tsconfigJsonIsomorphicMainProject,
 } from '../../../../constants';
 import {
   Development,
@@ -94,7 +101,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   },
   ReleasePartialOutput
 > {
-
   //#region fields & getters
   public readonly migrationHelper: MigrationHelper;
 
@@ -128,7 +134,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
   //#region init partial
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
-
     //#region @backendFunc
     if (!initOptions.release.targetArtifact) {
       initOptions.release.targetArtifact = ReleaseArtifactTaon.ANGULAR_NODE_APP;
@@ -180,7 +185,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     return initOptions;
     //#endregion
-
   }
   //#endregion
 
@@ -191,7 +195,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     appDistOutBackendNodeAbsPath: string;
     angularNgServeAddress: URL;
   }> {
-
     //#region @backendFunc
 
     // TODO @REMOVE when microfrontends for container ready
@@ -277,6 +280,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       Helpers.remove(appDistOutBrowserAngularAbsPath);
     }
 
+    //#region serve command
     const serveCommand =
       `${this.NPM_RUN_NG_COMMAND} serve ${
         buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
@@ -287,11 +291,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         buildOptions.build.angularProd ? '--prod' : ''
       }` +
       ` --host 0.0.0.0`; // make it accessible in network for development
+    //#endregion
 
     if (buildOptions.build.watch) {
       Helpers.logInfo(`Using ng serve command: ${serveCommand}`);
     }
 
+    //#region build command
     const angularBuildCommand =
       `${this.NPM_RUN_NG_COMMAND} build ${
         buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
@@ -303,10 +309,53 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       ` ${buildOptions.build.angularProd ? '--configuration production' : ''} ` +
       ` ${buildOptions.build.watch ? '--watch' : ''}` +
       ` ${outPutPathCommand} ${baseHrefCommand}`;
+    //#endregion
+
+    const tmpAppForDistRelativePath = angularProjProxyPath({
+      project: this.project,
+      targetArtifact: buildOptions.release.targetArtifact,
+      websql: buildOptions.build.websql,
+    });
+
+    // set correct default config for build/serve in angular.json
+    this.project.setValueToJSONC(
+      [tmpAppForDistRelativePath, CoreNgTemplateFiles.ANGULAR_JSON],
+      `projects.${
+        buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
+          ? AngularJsonTaskName.ELECTRON_APP
+          : AngularJsonTaskName.ANGULAR_APP
+      }.architect.${buildOptions.build.watch ? 'serve' : 'build'}.defaultConfiguration`,
+      AngularJsonAppOrElectronTaskNameResolveFor(buildOptions),
+    );
+
+    // remove angular cache to prevent weird issues
+    this.project.remove([tmpAppForDistRelativePath, '.angular']);
+
+    // quick fix for tsconfig pathing in ng proxy project
+    Helpers.createSymLink(
+      this.project.pathFor(tsconfigJsonIsomorphicMainProject),
+      this.project.pathFor([
+        tmpAppForDistRelativePath,
+        srcNgProxyProject,
+        tsconfigJsonIsomorphicMainProject,
+      ]),
+    );
+
+    // remove server.ts for electron build
+    if (
+      buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
+    ) {
+      this.project.removeFile([
+        tmpAppForDistRelativePath,
+        srcNgProxyProject,
+        CoreNgTemplateFiles.SERVER_TS,
+      ]);
+    }
 
     const angularBuildAppCmd = buildOptions.build.watch
       ? serveCommand
       : angularBuildCommand;
+
     //#endregion
 
     const showInfoAngular = () => {
@@ -343,7 +392,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           }
         },
         outputLineReplace: (line: string) => {
-
           //#region replace outut line for better debugging
           // console.log('LINE:', line);
 
@@ -363,6 +411,16 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           }
 
           line = line.replace(
+            `${srcNgProxyProject}/${appFromSrcInsideNgApp}/`,
+            `./${srcMainProject}/`,
+          );
+
+          line = line.replace(
+            `${srcNgProxyProject}\\${appFromSrcInsideNgApp}\\`,
+            `.\\${srcMainProject}\\`,
+          );
+
+          line = line.replace(
             `${srcNgProxyProject}/${appFromSrcInsideNgApp}/${this.project.name}/`,
             `./${srcMainProject}/`,
           );
@@ -371,7 +429,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           //#endregion
         },
         //#endregion
-
       });
     }
 
@@ -403,14 +460,12 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       ),
     };
     //#endregion
-
   }
 
   private async buildBackend(
     buildOptions: EnvOptions,
     appDistOutBackendNodeAbsPath,
   ): Promise<void> {
-
     //#region @backendFunc
     Helpers.remove(appDistOutBackendNodeAbsPath);
     await Helpers.bundleCodeIntoSingleFile(
@@ -503,7 +558,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     });
 
     //#endregion
-
   }
 
   //#endregion
@@ -512,7 +566,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   async releasePartial(
     releaseOptions: EnvOptions,
   ): Promise<ReleasePartialOutput> {
-
     //#region @backendFunc
     let deploymentFunction: () => Promise<void> = void 0;
 
@@ -540,7 +593,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     //#endregion
 
     if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
-
       //#region static pages release
       const releaseData = await this.staticPagesDeploy(
         appDistOutBrowserAngularAbsPath,
@@ -549,12 +601,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       releaseProjPath = releaseData.releaseProjPath;
       projectsReposToPush.push(...releaseData.projectsReposToPush);
       //#endregion
-
     } else if (
       releaseOptions.release.releaseType === ReleaseType.LOCAL ||
       releaseOptions.release.releaseType === ReleaseType.MANUAL
     ) {
-
       //#region copy to local release folder
       const localReleaseOutputBasePath =
         releaseOptions.release.releaseType === ReleaseType.LOCAL
@@ -970,7 +1020,6 @@ ${dockerComposeYmlFileContent}
       deploymentFunction,
     };
     //#endregion
-
   }
   //#endregion
 
@@ -982,7 +1031,6 @@ ${dockerComposeYmlFileContent}
     releaseOptions: EnvOptions;
     localReleaseOutputBasePath?: string;
   }): Promise<void> {
-
     //#region @backendFunc
 
     //#region prepare zip newZipFileName file for upload
@@ -1149,7 +1197,6 @@ STARTING DEPLOYMENT PREVIEW (PRESS ANY KEY TO MOVE BACK TO RELEASE FINISH SCREEN
     //#endregion
 
     //#endregion
-
   }
   //#endregion
 
@@ -1188,5 +1235,4 @@ STARTING DEPLOYMENT PREVIEW (PRESS ANY KEY TO MOVE BACK TO RELEASE FINISH SCREEN
   //#endregion
 
   //#endregion
-
 }

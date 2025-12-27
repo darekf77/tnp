@@ -169,6 +169,13 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                 ).output;
               }
 
+              content = content.replace(
+                '<<<TO_REPLACE_CURRENT_PROJECT_GENERIC_NAME>>>',
+                btoa(path.dirname(this.project.location)) +
+                  '___' +
+                  this.project.nameForNpmPackage,
+              );
+
               // const rules = RenameRule.from(magicRenameRules);
               // for (const rule of rules) {
               //   content = rule.replaceInString(content);

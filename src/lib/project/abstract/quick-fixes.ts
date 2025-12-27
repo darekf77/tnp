@@ -30,6 +30,7 @@ import {
   THIS_IS_GENERATED_STRING,
   tsconfigForUnitTestsNgProject,
   tsconfigJsonBrowserMainProject,
+  tsconfigJsonIsomorphicMainProject,
   tsconfigJsonMainProject,
   tsconfigNgProject,
   tsconfigSpecNgProject,
@@ -98,12 +99,17 @@ export class QuickFixes extends BaseQuickFixes<Project> {
         //   REBUILDING: ${dirName}
 
         //   `)
-        const dest = path.join(
+        const destTsconfigBrowser = path.join(
           this.project.location,
           tempSrcDirName,
           tsconfigNgProject,
         );
-        Helpers.copyFile(tsconfigBrowserPath, dest);
+        Helpers.copyFile(tsconfigBrowserPath, destTsconfigBrowser);
+        Helpers.setValueToJSONC(
+          destTsconfigBrowser,
+          'extends',
+          `../${tsconfigJsonIsomorphicMainProject}`,
+        );
 
         const appTemplateFolder = templateFolderForArtifact(
           initOptions.release.targetArtifact ===
