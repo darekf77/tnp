@@ -395,6 +395,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           //#region replace outut line for better debugging
           // console.log('LINE:', line);
 
+          line = line.replace(tmpAppForDistRelativePath + '/', '');
+
           if (line.includes('Warning:')) {
             line = line.replace(projectBasePath + '/', './');
           }
