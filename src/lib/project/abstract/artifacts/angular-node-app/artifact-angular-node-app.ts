@@ -427,6 +427,15 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
             `./${srcMainProject}/`,
           );
 
+          line = line.replace(
+            `${this.project.location}/.angular/cache/`,
+            this.project.pathFor(
+              `${tmpAppForDistRelativePath}/.angular/cache/`,
+            ),
+          );
+
+          // /Users/dfilipiak/npm/taon-projects/application-quiz/.angular/cache/21.0.4/app/vite/deps_ssr/chunk-NX6GOWNM.js:27649:15
+
           return line;
           //#endregion
         },
