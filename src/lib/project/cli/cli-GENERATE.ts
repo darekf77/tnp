@@ -1,4 +1,4 @@
-//#region @backendFunc
+//#region imports
 import { MagicRenamer } from 'magic-renamer/src';
 import {
   backendNodejsOnlyFiles,

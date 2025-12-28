@@ -1,44 +1,83 @@
-// @ts-nocheck
 //#region imports
-import { CommonModule } from '@angular/common';
-import { NgModule, inject, Injectable } from '@angular/core';
-import { Component, OnInit } from '@angular/core';
-import { VERSION } from '@angular/core';
-import { Observable, map } from 'rxjs';
-import { Taon, TaonBaseContext } from 'taon/src';
-import {
-  TaonBaseCrudController,
-  TaonBaseAbstractEntity,
-  StringColumn,
-} from 'taon/src';
-import { Helpers, UtilsOs } from 'tnp-core/src';
+import * as os from 'os'; // @backend
 
+import { AsyncPipe, CommonModule, JsonPipe, NgFor } from '@angular/common'; // @browser
 import {
-  HOST_BACKEND_PORT,
-  CLIENT_DEV_WEBSQL_APP_PORT,
-  CLIENT_DEV_NORMAL_APP_PORT,
-} from './app.hosts';
+  NgModule,
+  inject,
+  Injectable,
+  APP_INITIALIZER,
+  ApplicationConfig,
+  provideBrowserGlobalErrorListeners,
+  isDevMode,
+  mergeApplicationConfig,
+} from '@angular/core'; // @browser
+import { Component, OnInit } from '@angular/core'; // @browser
+import { VERSION } from '@angular/core'; // @browser
+import {
+  provideClientHydration,
+  withEventReplay,
+} from '@angular/platform-browser';
+import { provideRouter, RouterOutlet, Routes } from '@angular/router';
+import { provideServiceWorker } from '@angular/service-worker';
+import { provideServerRendering, withRoutes } from '@angular/ssr';
+import { RenderMode, ServerRoute } from '@angular/ssr';
+import Aura from '@primeng/themes/aura'; // @browser
+import { MaterialCssVarsModule } from 'angular-material-css-vars'; // @browser
+// import { providePrimeNG } from 'primeng/config'; // @browser
+import { BehaviorSubject, Observable, map, switchMap } from 'rxjs';
+import {
+  Taon,
+  TaonBaseContext,
+  TAON_CONTEXT,
+  EndpointContext,
+  TaonBaseAngularService,
+  TaonEntity,
+  StringColumn,
+  TaonBaseAbstractEntity,
+  TaonBaseCrudController,
+  TaonController,
+  GET,
+  TaonMigration,
+  TaonBaseMigration,
+} from 'taon/src';
+import { Utils, UtilsOs } from 'tnp-core/src';
+
+import { HOST_CONFIG } from './app.hosts';
+
 //#endregion
 
 console.log('hello world');
-console.log('Your server will start on port ' + HOST_BACKEND_PORT);
-const host = 'http://localhost:' + HOST_BACKEND_PORT;
-const frontendHost =
-  'http://localhost:' +
-  (Helpers.isWebSQL ? CLIENT_DEV_WEBSQL_APP_PORT : CLIENT_DEV_NORMAL_APP_PORT);
+console.log('Your backend host ' + HOST_CONFIG['MainContext'].host);
+console.log('Your frontend host ' + HOST_CONFIG['MainContext'].frontendHost);
 
 //#region tnp component
 
 //#region @browser
 @Component({
-  selector: 'app-tnp',
+  selector: 'app-root',
+
+  imports: [
+    RouterOutlet,
+    AsyncPipe,
+    NgFor,
+    JsonPipe,
+    // MaterialCssVarsModule.forRoot({
+    //   // inited angular material - remove if not needed
+    //   primary: '#4758b8',
+    //   accent: '#fedfdd',
+    // }),
+  ],
   template: `hello from tnp<br />
     Angular version: {{ angularVersion }}<br />
     <br />
     users from backend
     <ul>
       <li *ngFor="let user of users$ | async">{{ user | json }}</li>
-    </ul> `,
+    </ul>
+    hello world from backend: <strong>{{ hello$ | async }}</strong>
+    <br />
+    <button (click)="addUser()">Add new example user with random name</button>`,
   styles: [
     `
       body {
@@ -46,16 +85,36 @@ const frontendHost =
       }
     `,
   ],
-  standalone: false,
 })
-export class TnpComponent {
+export class TnpApp {
   angularVersion =
     VERSION.full +
     ` mode: ${UtilsOs.isRunningInWebSQL() ? ' (websql)' : '(normal)'}`;
 
   userApiService = inject(UserApiService);
 
-  readonly users$: Observable<User[]> = this.userApiService.getAll();
+  private refresh = new BehaviorSubject<void>(undefined);
+
+  readonly users$: Observable<User[]> = this.refresh.pipe(
+    switchMap(() =>
+      this.userApiService.userController
+        .getAll()
+        .request()
+        .observable.pipe(map(r => r.body.json)),
+    ),
+  );
+
+  readonly hello$ = this.userApiService.userController
+    .helloWorld()
+    .request()
+    .observable.pipe(map(r => r.body.text));
+
+  async addUser(): Promise<void> {
+    const newUser = new User();
+    newUser.name = `user-${Math.floor(Math.random() * 1000)}`;
+    await this.userApiService.userController.save(newUser).request();
+    this.refresh.next();
+  }
 }
 //#endregion
 
@@ -67,10 +126,10 @@ export class TnpComponent {
 @Injectable({
   providedIn: 'root',
 })
-export class UserApiService {
-  userController = Taon.inject(() => MainContext.getClass(UserController));
+export class UserApiService extends TaonBaseAngularService {
+  userController = this.injectController(UserController);
 
-  getAll() {
+  getAll(): Observable<User[]> {
     return this.userController
       .getAll()
       .request()
@@ -81,79 +140,178 @@ export class UserApiService {
 
 //#endregion
 
-//#region  tnp module
-
+//#region  tnp routes
 //#region @browser
-@NgModule({
-  exports: [TnpComponent],
-  imports: [CommonModule],
-  declarations: [TnpComponent],
-})
-export class TnpModule {}
+export const TnpServerRoutes: ServerRoute[] = [
+  {
+    path: '**',
+    renderMode: RenderMode.Prerender,
+  },
+];
+export const TnpClientRoutes: Routes = [];
+//#endregion
 //#endregion
 
+//#region  tnp app configs
+//#region @browser
+export const TnpAppConfig: ApplicationConfig = {
+  providers: [
+    {
+      provide: TAON_CONTEXT,
+      useFactory: () => MainContext,
+    },
+    // providePrimeNG({
+    //   // inited ng prime - remove if not needed
+    //   theme: {
+    //     preset: Aura,
+    //   },
+    // }),
+    {
+      provide: APP_INITIALIZER,
+      multi: true,
+      useFactory: () => TnpStartFunction,
+    },
+    provideBrowserGlobalErrorListeners(),
+    provideRouter(TnpClientRoutes),
+    provideClientHydration(withEventReplay()),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
+  ],
+};
+
+export const TnpServerConfig: ApplicationConfig = {
+  providers: [provideServerRendering(withRoutes(TnpServerRoutes))],
+};
+
+export const TnpConfig = mergeApplicationConfig(TnpAppConfig, TnpServerConfig);
+//#endregion
 //#endregion
 
 //#region  tnp entity
-@Taon.Entity({ className: 'User' })
+@TaonEntity({ className: 'User' })
 class User extends TaonBaseAbstractEntity {
   //#region @websql
   @StringColumn()
   //#endregion
   name?: string;
+
+  getHello(): string {
+    return `hello ${this.name}`;
+  }
 }
 //#endregion
 
 //#region  tnp controller
-@Taon.Controller({ className: 'UserController' })
+@TaonController({ className: 'UserController' })
 class UserController extends TaonBaseCrudController<User> {
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   entityClassResolveFn = () => User;
 
-  //#region @websql
-  async initExampleDbData(): Promise<void> {
+  @GET()
+  helloWorld(): Taon.Response<string> {
+    //#region @websqlFunc
+    return async (req, res) => 'hello world';
+    //#endregion
+  }
+
+  @GET()
+  getOsPlatform(): Taon.Response<string> {
+    //#region @websqlFunc
+    return async (req, res) => {
+      //#region @backend
+      return os.platform(); // for normal nodejs backend return real value
+      //#endregion
+
+      return 'no-platform-inside-browser-and-websql-mode';
+    };
+    //#endregion
+  }
+}
+//#endregion
+
+//#region  tnp migration
+
+//#region @websql
+@TaonMigration({
+  className: 'UserMigration',
+})
+class UserMigration extends TaonBaseMigration {
+  userController = this.injectRepo(User);
+
+  async up(): Promise<any> {
     const superAdmin = new User();
     superAdmin.name = 'super-admin';
-    await this.db.save(superAdmin);
+    await this.userController.save(superAdmin);
   }
-  //#endregion
 }
+//#endregion
+
 //#endregion
 
 //#region  tnp context
 var MainContext = Taon.createContext(() => ({
-  host,
-  appId: 'dev.tnp.app',
-  frontendHost,
-  useIpcWhenElectron: true,
-  contextName: 'MainContext',
+  ...HOST_CONFIG['MainContext'],
   contexts: { TaonBaseContext },
+
+  //#region @websql
+  /**
+   * This is dummy migration - you DO NOT NEED need this migrations object
+   * if you are using HOST_CONFIG['MainContext'] that contains 'migrations' object.
+   * DELETE THIS 'migrations' object if you use taon CLI that generates
+   * migrations automatically inside /src/migrations folder.
+   */
+  migrations: {
+    UserMigration,
+  },
+  //#endregion
+
   controllers: {
     UserController,
-    // PUT TAON CONTROLLERS HERE
   },
   entities: {
     User,
-    // PUT TAON ENTITIES HERE
   },
   database: true,
   // disabledRealtime: true,
 }));
 //#endregion
 
-async function start() {
+//#region  tnp start function
+const TnpStartFunction = async (
+  startParams?: Taon.StartParams,
+): Promise<void> => {
   await MainContext.initialize();
 
-  if (Taon.isBrowser) {
-    const users = (
+  //#region @backend
+  if (
+    startParams?.onlyMigrationRun ||
+    startParams?.onlyMigrationRevertToTimestamp
+  ) {
+    process.exit(0);
+  }
+  //#endregion
+
+  //#region @backend
+  console.log(`Hello in NodeJs backend! os=${os.platform()}`);
+  //#endregion
+
+  if (UtilsOs.isBrowser) {
+    let users = (
       await MainContext.getClassInstance(UserController).getAll().request()
     ).body?.json;
-    console.log({
-      'users from backend': users,
-    });
-  }
-  if (Taon.isElectron) {
-    console.log('running in electron');
-  }
-}
 
-export default start;
+    if (UtilsOs.isElectron) {
+      // TODO QUICK_FIX (ng2-rest refactor for ipc needed)
+      users = users.map(u => new User().clone(u));
+    }
+
+    for (const user of users || []) {
+      console.log(`user: ${user.name} - ${user.getHello()}`);
+    }
+  }
+};
+//#endregion
+
+export default TnpStartFunction;

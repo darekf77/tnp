@@ -42,7 +42,7 @@ import { SourceMappingUrl } from './source-maping-url';
 
 const REPLACE_INDEX_D_TS_IN_DEST_WHEN_WATCH = false;
 
-const log = Log.create(_.startCase(path.basename(__filename)));
+const log = Log.create('Base copy manager');
 
 export interface BaseCopyMangerInitialParams {
   // TOOD this does not work
