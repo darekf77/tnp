@@ -22,7 +22,7 @@ import {
   TEMP_DOCS,
 } from '../../constants';
 import { Models } from '../../models';
-import { EnvOptions, ReleaseArtifactTaon } from '../../options';
+import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
 import { Project } from '../abstract/project';
 import { TaonJson } from '../abstract/taonJson';
 
@@ -53,7 +53,6 @@ export class $New extends BaseCli {
     preOrgs: string;
     initGit: boolean;
   }> {
-
     //#region resolve variables
 
     nameFromArgs = nameFromArgs.replace('./', '');
@@ -263,6 +262,19 @@ export class $New extends BaseCli {
     taonJson.setFrameworkVersion(DEFAULT_FRAMEWORK_VERSION);
     taonJson.overridePackageJsonManager.setIsPrivate(true);
 
+    taonJson.autoReleaseConfigAllowedItems = [
+      ...taonJson.autoReleaseConfigAllowedItems,
+      {
+        artifactName: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
+        taskName: 'npm',
+      },
+      {
+        artifactName: ReleaseArtifactTaon.ANGULAR_NODE_APP,
+        taskName: 'static-pages',
+        releaseType: ReleaseType.STATIC_PAGES,
+      },
+    ];
+
     Project.ins.unload(appLocation);
     appProj = Project.ins.From(appLocation) as Project;
     if (!hasAtLeastOneContainersFromArgs) {
@@ -447,7 +459,6 @@ Hello from Container Project
     Helpers.info(`DONE CREATING ${nameFromArgs}`);
   }
   //#endregion
-
 }
 
 export default {
