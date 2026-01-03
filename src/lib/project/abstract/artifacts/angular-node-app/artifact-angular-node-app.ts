@@ -1,7 +1,7 @@
 //#region imports
 import type { AxiosProgressEvent } from 'axios';
 import { TaonBaseContext, MulterFileUploadResponse, Taon } from 'taon/src';
-import { config, dotTaonFolder } from 'tnp-core/src';
+import { config, dotTaonFolder, UtilsFilesFoldersSync } from 'tnp-core/src';
 import {
   crossPlatformPath,
   path,
@@ -21,6 +21,7 @@ import {
   DockerComposeFile,
   UtilsZip,
   BaseCliWorkerConfigGetContextOptions,
+  UtilsFileSync,
 } from 'tnp-helpers/src';
 import { UtilsDocker } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
@@ -44,10 +45,14 @@ import {
   CoreNgTemplateFiles,
   databases,
   DEFAULT_PORT,
+  defaultConfiguration,
   distFromNgBuild,
   distFromSassLoader,
   distMainProject,
+  dockerTemplatesFolder,
+  DockerTemplatesFolders,
   dotEnvFile,
+  ENV_INJECT_COMMENT,
   globalSpinner,
   keysMap,
   libFromCompiledDist,
@@ -210,6 +215,18 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       EnvOptions.from(buildOptions),
     );
 
+    if (
+      buildOptions.release.targetArtifact ===
+      ReleaseArtifactTaon.ANGULAR_NODE_APP
+    ) {
+      if (
+        buildOptions.build.ssr === undefined ||
+        buildOptions.build.ssr === null
+      ) {
+        buildOptions.build.ssr = true;
+      }
+    }
+
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
     //#region prevent empty base href
@@ -287,9 +304,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           ? AngularJsonTaskName.ELECTRON_APP
           : AngularJsonTaskName.ANGULAR_APP
       } ` +
-      ` ${`--port=${portAssignedToAppBuild}`} ${
-        buildOptions.build.angularProd ? '--prod' : ''
-      }` +
+      ` ${`--port=${portAssignedToAppBuild}`} ` +
       ` --host 0.0.0.0`; // make it accessible in network for development
     //#endregion
 
@@ -306,7 +321,6 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         // : buildOptions.build.angularSsr
         //   ? 'ssr'
       }` +
-      ` ${buildOptions.build.angularProd ? '--configuration production' : ''} ` +
       ` ${buildOptions.build.watch ? '--watch' : ''}` +
       ` ${outPutPathCommand} ${baseHrefCommand}`;
     //#endregion
@@ -318,14 +332,37 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     });
 
     // set correct default config for build/serve in angular.json
+    const angularJsonSelectedTask =
+      AngularJsonAppOrElectronTaskNameResolveFor(buildOptions);
+
+    Helpers.logInfo(
+      `Setting angular.json default config for ${angularJsonSelectedTask}  `,
+    );
+
+    if (!buildOptions.build.watch) {
+      // not needed for watch - watch uses app.hosts.ts
+      const indexHtmlAbsPath = crossPlatformPath([
+        tmpAppForDistRelativePath,
+        srcNgProxyProject,
+        CoreNgTemplateFiles.INDEX_HTML_NG_APP,
+      ]);
+      let contentIndexHtml = Helpers.readFile(indexHtmlAbsPath);
+      const ENV_DATA_JSON = await this.getBrowserENVJSON(buildOptions);
+      contentIndexHtml = contentIndexHtml.replace(
+        ENV_INJECT_COMMENT,
+        `<script>window.ENV = ${JSON.stringify(ENV_DATA_JSON)};</script>`,
+      );
+      Helpers.writeFile(indexHtmlAbsPath, contentIndexHtml);
+    }
+
     this.project.setValueToJSONC(
       [tmpAppForDistRelativePath, CoreNgTemplateFiles.ANGULAR_JSON],
       `projects.${
         buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
           ? AngularJsonTaskName.ELECTRON_APP
           : AngularJsonTaskName.ANGULAR_APP
-      }.architect.${buildOptions.build.watch ? 'serve' : 'build'}.defaultConfiguration`,
-      AngularJsonAppOrElectronTaskNameResolveFor(buildOptions),
+      }.architect.${buildOptions.build.watch ? 'serve' : 'build'}.${defaultConfiguration}`,
+      angularJsonSelectedTask,
     );
 
     // remove angular cache to prevent weird issues
@@ -445,22 +482,26 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     if (!buildOptions.build.watch) {
       this.project.framework.recreateFileFromCoreProject({
-        relativePathInCoreProject:
-          'docker-templates/angular-app-node/Dockerfile',
+        relativePathInCoreProject: `${dockerTemplatesFolder}/${
+          buildOptions.build.ssr
+            ? DockerTemplatesFolders.ANGULAR_APP_SSR_NODE
+            : DockerTemplatesFolders.ANGULAR_APP_NODE
+        }/Dockerfile`,
         customDestinationLocation: [
           appDistOutBrowserAngularAbsPath,
           'Dockerfile',
         ],
       });
 
-      this.project.framework.recreateFileFromCoreProject({
-        relativePathInCoreProject:
-          'docker-templates/angular-app-node/nginx.conf',
-        customDestinationLocation: [
-          appDistOutBrowserAngularAbsPath,
-          'nginx.conf',
-        ],
-      });
+      if (!buildOptions.build.ssr) {
+        this.project.framework.recreateFileFromCoreProject({
+          relativePathInCoreProject: `${dockerTemplatesFolder}/${DockerTemplatesFolders.ANGULAR_APP_NODE}/nginx.conf`,
+          customDestinationLocation: [
+            appDistOutBrowserAngularAbsPath,
+            'nginx.conf',
+          ],
+        });
+      }
     }
 
     return {
@@ -572,6 +613,63 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   }
 
   //#endregion
+
+  async getBrowserENVJSON(releaseOptions: EnvOptions): Promise<any> {
+    //#region @backendFunc
+
+    // TODO @LAST handle when domain is ip address
+
+    const data = {};
+    const contextsNames = this.project.framework.getAllDetectedTaonContexts({
+      skipLibFolder: true,
+    });
+
+    // TODO maybe this compute property based
+    const useDomain = releaseOptions.website.useDomain;
+    const domain = releaseOptions.website.domain;
+
+    // create one env file for all docker containers
+    for (let i = 0; i < contextsNames.length; i++) {
+      const contextRealIndex = i + 1; // start from 1
+      const contextName = contextsNames[i].contextName;
+      const taskNameBackendReleasePort =
+        `docker release ${domain} ${releaseOptions.release.releaseType} ` +
+        `backend port for ${contextName} (n=${contextRealIndex})`;
+      const portBackendRelease = await this.project.registerAndAssignPort(
+        taskNameBackendReleasePort,
+      );
+
+      const taskNameFrontendreleasePort =
+        `docker release ${domain} ${releaseOptions.release.releaseType} ` +
+        `frontend port for ${contextName} (n=${contextRealIndex})`;
+      const portFrontendRelease = await this.project.registerAndAssignPort(
+        taskNameFrontendreleasePort,
+      );
+
+      const domainForContextFE = useDomain
+        ? domain
+        : `http://localhost:${portFrontendRelease}`;
+
+      const domainForContextBE = useDomain
+        ? domain
+        : `http://localhost:${portBackendRelease}`;
+
+      // data[`HOST_BACKEND_PORT_${contextRealIndex}`] = portBackendRelease;
+      data[`HOST_URL_${contextRealIndex}`] = domainForContextBE;
+      // data[`FRONTEND_NORMAL_APP_PORT_${contextRealIndex}`] =
+      //   portFrontendRelease;
+      data[`FRONTEND_HOST_URL_${contextRealIndex}`] = domainForContextFE;
+      if (i === 0) {
+        // data[`HOST_BACKEND_PORT`] = portBackendRelease;
+        data[`HOST_URL`] = domainForContextBE;
+        // data[`FRONTEND_NORMAL_APP_PORT`] = portFrontendRelease;
+        data[`FRONTEND_HOST_URL`] = domainForContextFE;
+      }
+    }
+
+    return data;
+    //#endregion
+  }
 
   //#region release partial
   async releasePartial(
@@ -897,6 +995,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       //#region prepare frontend container
       const frontendTemplapteObj =
         dockerComposeFile.services['angular-app-node'];
+
       delete dockerComposeFile.services['angular-app-node'];
 
       const ctxFrontend = _.cloneDeep(frontendTemplapteObj);
@@ -974,25 +1073,6 @@ ${dockerComposeYmlFileContent}
         'scripts.start',
         `taon preview ./docker-compose.yml`,
       );
-      //#endregion
-
-      //#region update index.html with env variables
-      (() => {
-        const indexHtmlFromAngularAppPath = crossPlatformPath([
-          localReleaseOutputBasePath,
-          path.basename(appDistOutBrowserAngularAbsPath),
-          'index.html',
-        ]);
-
-        const envScript = `<script>
-      window.ENV = ${JSON.stringify(allValuesDotEnv, null, 2)};
-    </script>`;
-
-        let html = Helpers.readFile(indexHtmlFromAngularAppPath);
-        // Inject before </head> if found
-        html = html.replace(/<\/head>/i, `${envScript}\n</head>`);
-        Helpers.writeFile(indexHtmlFromAngularAppPath, html);
-      })();
       //#endregion
 
       //#region display final build info
@@ -1159,7 +1239,10 @@ ${path.dirname(newZipFileName)}
         break;
       } catch (error) {
         globalSpinner.fail(`Error during upload zip file to taon server!`);
-        config.frameworkName === 'tnp' && console.error(error);
+        const errMsg = (
+          error instanceof Error ? error.message : error
+        ) as string;
+        config.frameworkName === 'tnp' && console.error(errMsg);
         if (releaseOptions.release.autoReleaseUsingConfig) {
           throw `Error during upload zip file to taon server...`;
         } else {
@@ -1190,7 +1273,7 @@ ${path.dirname(newZipFileName)}
     //#endregion
 
     //#region display realtime deployment log
-    if (!releaseOptions.isCiProcess) {
+    if (!releaseOptions.isCiProcess && !UtilsOs.isRunningNodeDebugger()) {
       Helpers.info(`
 
 STARTING DEPLOYMENT PREVIEW (PRESS ANY KEY TO MOVE BACK TO RELEASE FINISH SCREEN)

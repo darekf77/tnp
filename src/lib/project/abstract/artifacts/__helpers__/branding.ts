@@ -29,17 +29,14 @@ const subPath = [srcMainProject, assetsFromSrc, ...generatedPwa];
  * Automatically brand you project (based on logo.png, taon.json, etc)
  */ // @ts-ignore TODO weird inheritance problem
 export class Branding extends BaseFeatureForProject<Project> {
-
   //#region path
   private get path(): string {
-
     //#region @backendFunc
     let proj = this.project;
 
     const dest = crossPlatformPath([proj.location, ...subPath]);
     return dest;
     //#endregion
-
   }
   //#endregion
 
@@ -58,17 +55,14 @@ export class Branding extends BaseFeatureForProject<Project> {
 
   //#region html lines to add
   get htmlLinesToAdd(): string[] {
-
     //#region @backendFunc
     return Helpers.readFile([this.path, htmlBasename]).split('\n');
     //#endregion
-
   }
   //#endregion
 
   //#region icons to add
   get iconsToAdd(): CoreModels.ManifestIcon[] {
-
     //#region @backendFunc
     const manifest = Helpers.readJson([
       this.path,
@@ -76,13 +70,11 @@ export class Branding extends BaseFeatureForProject<Project> {
     ]) as CoreModels.PwaManifest;
     return manifest.icons;
     //#endregion
-
   }
   //#endregion
 
   //#region apply
   async apply(force = false): Promise<void> {
-
     //#region @backendFunc
     if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
       console.error(`Branding is only available for isomorphic-lib projects`);
@@ -195,13 +187,13 @@ export class Branding extends BaseFeatureForProject<Project> {
         response.html.join('\n'),
       );
     } catch (error) {
-      console.log(error.message); // Error description e.g. "An unknownn error has occurred"
+      const errMsg = error instanceof Error ? error.message : error;
+      console.error(errMsg); // Error description e.g. "An unknownn error has occurred"
     }
     //#endregion
 
     Helpers.log(`Project ${proj.genericName} branding ended`);
     //#endregion
-
   }
   //#endregion
 
@@ -210,7 +202,6 @@ export class Branding extends BaseFeatureForProject<Project> {
     absPathToLogoPng: string,
     absPathDestinationVscodeLogoPng: string,
   ): Promise<void> {
-
     //#region @backendFunc
     try {
       const sharePackageName = 'sharp';
@@ -240,13 +231,11 @@ export class Branding extends BaseFeatureForProject<Project> {
       throw error;
     }
     //#endregion
-
   }
   //#endregion
 
   //#region generate logo for vscode locations
   async generateLogoFroVscodeLocations(): Promise<void> {
-
     //#region @backendFunc
     Helpers.taskStarted('Creating vscode icons');
     const destinationDirnames = ReleaseTypeWithDevelopmentArr.map(
@@ -278,8 +267,6 @@ export class Branding extends BaseFeatureForProject<Project> {
     }
     Helpers.taskDone('Vscode icons created');
     //#endregion
-
   }
   //#endregion
-
 }

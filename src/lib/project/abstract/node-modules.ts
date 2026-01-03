@@ -172,6 +172,7 @@ export class NodeModules extends BaseNodeModules {
       }
 
       // TODO QUICK FIX in version 19 fix all d.ts
+
       this.project.quickFixes.excludeNodeModulesDtsFromTypescriptCheck([
         this.project.nodeModules.pathFor('@types/glob/index.d.ts'),
         this.project.nodeModules.pathFor('chokidar/types/index.d.ts'),
@@ -184,6 +185,9 @@ export class NodeModules extends BaseNodeModules {
           '@angular/platform-browser/types/platform-browser.d.ts',
         ),
         this.project.nodeModules.pathFor('undici/types/formdata.d.ts'),
+        this.project.nodeModules.pathFor(
+          '@sweetalert2/ngx-sweetalert2/index.d.ts',
+        ),
       ]);
       this.project.quickFixes.fixSQLLiteModuleInNodeModules();
       //#endregion

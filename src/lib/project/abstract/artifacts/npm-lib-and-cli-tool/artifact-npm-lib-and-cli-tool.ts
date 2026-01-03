@@ -40,6 +40,7 @@ import {
   CoreAssets,
   CoreNgTemplateFiles,
   DEFAULT_PORT,
+  defaultConfiguration,
   distMainProject,
   dotFileTemplateExt,
   dotGitIgnoreMainProject,
@@ -419,13 +420,13 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     this.project.setValueToJSONC(
       [tmpLibForDistNormalRelativePath, CoreNgTemplateFiles.ANGULAR_JSON],
-      `projects["${this.project.name}"].architect.build.defaultConfiguration`,
+      `projects["${this.project.name}"].architect.build.${defaultConfiguration}`,
       AngularJsonLibTaskNameResolveFor(buildOptions),
     );
 
     this.project.setValueToJSONC(
       [tmpLibForDistWebsqlRelativePath, CoreNgTemplateFiles.ANGULAR_JSON],
-      `projects["${this.project.name}"].architect.build.defaultConfiguration`,
+      `projects["${this.project.name}"].architect.build.${defaultConfiguration}`,
       AngularJsonLibTaskNameResolveFor(buildOptions),
     );
 

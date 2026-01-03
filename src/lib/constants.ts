@@ -347,6 +347,8 @@ export const tmpSrcAppDist = 'tmp-src-app-dist';
  */
 export const tmpSrcAppDistWebsql = 'tmp-src-app-dist-websql';
 
+export const defaultConfiguration = 'defaultConfiguration';
+
 /**
  * template folders from isomorphic lib
  */
@@ -377,6 +379,15 @@ export enum AngularJsonTaskName {
 export enum CoreAssets {
   sqlWasmFile = 'sql-wasm.wasm',
   mainFont = 'flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2',
+}
+
+export const dockerTemplatesFolder = 'docker-templates';
+
+export enum DockerTemplatesFolders {
+  ANGULAR_APP_NODE = 'angular-app-node',
+  ANGULAR_APP_SSR_NODE = 'angular-app-ssr-node',
+  BACKEND_APP_NODE = 'backend-app-node',
+  DATABASE_MYSQL = 'database-mysql',
 }
 
 export enum CoreNgTemplateFiles {
@@ -611,7 +622,10 @@ export enum AngularJsonAppOrElectronTaskName {
 export const AngularJsonAppOrElectronTaskNameResolveFor = (
   envOptions: EnvOptions,
 ): AngularJsonAppOrElectronTaskName => {
-  if (envOptions.build.websql) {
+  if (
+    envOptions.build.websql ||
+    (_.isBoolean(envOptions.build.ssr) && envOptions.build.ssr === false)
+  ) {
     if (!envOptions.build.watch && !!envOptions.release.releaseType) {
       return AngularJsonAppOrElectronTaskName.productionWebsql;
     } else {
@@ -739,6 +753,7 @@ export function tempSourceFolder(appForLib: boolean, websql: boolean): string {
   }
 }
 
+export const ENV_INJECT_COMMENT = '<!--ENV_INJECT-->';
 export const isomorphicPackagesJsonKey = 'isomorphicPackages';
 
 export const browserMainProject = config.folder.browser;

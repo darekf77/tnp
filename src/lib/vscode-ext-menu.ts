@@ -77,7 +77,10 @@ export function activateMenuTnp(
                 vscode.window.showInformationMessage(`Done ${item.label}`);
               }
             } catch (error) {
-              vscode.window.showErrorMessage(error?.message || error);
+              const errMsg =
+                (error instanceof Error && error.message) || String(error);
+
+              vscode.window.showErrorMessage(errMsg);
             }
 
             menuItemClickable = true;

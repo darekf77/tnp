@@ -113,6 +113,12 @@ class EnvOptionsBuildPwa {
 }
 //#endregion
 
+//#region env options / build / electron
+class EnvOptionsBuildElectron {
+  declare showDevTools: boolean;
+}
+//#endregion
+
 //#region env options / build / cli
 class EnvOptionsBuildCli {
   /**
@@ -196,7 +202,16 @@ class EnvOptionsBuild {
    */
   declare watch: boolean;
 
-  declare angularProd: boolean;
+  /**
+   * true by default
+   */
+  declare ssr: boolean;
+  // declare angularSsr: boolean;
+
+  /**
+   * show electron dev tools
+   */
+  declare electron: Partial<EnvOptionsBuildElectron>;
   // declare angularSsr: boolean;
 
   /**
@@ -214,7 +229,6 @@ export const dockerBackendAppNode = {
   name: 'backend-app-node',
   skipStartInDevMode: true,
   pathToProjectWithDockerfile: (project: Project) => {
-
     //#region @backendFunc
     return project.ins
       .by(LibTypeEnum.ISOMORPHIC_LIB)
@@ -227,7 +241,6 @@ export const dockerFrontendNginx = {
   name: 'frontend-app-node',
   skipStartInDevMode: true,
   pathToProjectWithDockerfile: (project: Project) => {
-
     //#region @backendFunc
     return project.ins
       .by(LibTypeEnum.ISOMORPHIC_LIB)
@@ -239,7 +252,6 @@ export const dockerFrontendNginx = {
 export const dockerDatabaseMysql = {
   name: 'database-mysql',
   pathToProjectWithDockerfile: (project: Project) => {
-
     //#region @backendFunc
     return project.ins
       .by(LibTypeEnum.ISOMORPHIC_LIB)
@@ -247,7 +259,6 @@ export const dockerDatabaseMysql = {
     //#endregion
   },
   healthCheck: async ({ axios, env }) => {
-
     //#region @backendFunc
     const res = await axios.get(`http://localhost:${env.HEALTH_PORT}/health`);
     return res.data === 'OK';
@@ -540,6 +551,13 @@ class EnvOptionsWebsite {
   declare title: string;
 
   declare domain: string;
+  /**
+   * Where taon should allow doamin use in this project.
+   *
+   * Not using domain ( useDomain = false ) means:
+   * -> github pages generated domain
+   * -> ip address as domain
+   */
 
   declare useDomain: boolean;
 }
@@ -576,7 +594,6 @@ class EnvOptionsContainer {
 //#endregion
 
 export class EnvOptions<PATHS = {}, CONFIGS = {}> {
-
   //#region static / from
 
   static async releaseSkipMenu(
@@ -712,24 +729,19 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     options: Partial<EnvOptions>,
     absFilePath: string,
   ): void {
-
     //#region @backendFunc
     Helpers.writeJson(absFilePath, options);
     //#endregion
-
   }
 
   public static loadFromFile(absFilePath: string): EnvOptions {
-
     //#region @backendFunc
     const options = Helpers.readJson(absFilePath);
     return EnvOptions.from(options);
     //#endregion
-
   }
 
   public static getParamsString(options: Partial<EnvOptions>): string {
-
     //#region @backendFunc
     const env = EnvOptions.from(options);
     let pathWithParams = '';
@@ -761,7 +773,6 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     );
     return pathWithParams ? ` ${pathWithParams.trim()} ` : ' ';
     //#endregion
-
   }
 
   //#endregion
@@ -868,6 +879,10 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 
     this.build = this.build || ({} as any);
     this.build.pwa = _.merge(new EnvOptionsBuildPwa(), this.build?.pwa);
+    this.build.electron = _.merge(
+      new EnvOptionsBuildElectron(),
+      this.build?.electron,
+    );
     this.build = _.merge(new EnvOptionsBuild(), this.build);
 
     if (
@@ -949,22 +964,18 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 
   //#region save to file
   public saveToFile(absFilePath: string): void {
-
     //#region @backendFunc
     EnvOptions.saveToFile(this as any, absFilePath);
     //#endregion
-
   }
   //#endregion
 
   //#region load from file
   public loadFromFile(absFilePath: string): void {
-
     //#region @backendFunc
     const data = EnvOptions.loadFromFile(absFilePath);
     this.applyFieldsFrom(data);
     //#endregion
-
   }
   //#endregion
 
@@ -975,7 +986,6 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
       skipPreservingFinishCallback?: boolean;
     },
   ): EnvOptions {
-
     //#region @backendFunc
     options = options || {};
     override = override || {};
@@ -992,22 +1002,18 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     }
     return result;
     //#endregion
-
   }
   //#endregion
 
   //#region getters
   get temporarySrcForReleaseCutCode(): string {
-
     //#region @backendFunc
     return this.build.websql
       ? tmpCutReleaseSrcDistWebsql
       : tmpCutReleaseSrcDist;
     //#endregion
-
   }
   //#endregion
-
 }
 //#endregion
 
@@ -1077,9 +1083,12 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
     skipUsingMysqlDb: '-' as any,
   },
   build: {
-    angularProd: '-' as any,
+    ssr: '-' as any,
     // angularSsr: '-' as any,
     websql: '-' as any,
+    electron: {
+      showDevTools: '-' as any,
+    },
     pwa: {
       disableServiceWorker: '-' as any,
       name: '-' as any,

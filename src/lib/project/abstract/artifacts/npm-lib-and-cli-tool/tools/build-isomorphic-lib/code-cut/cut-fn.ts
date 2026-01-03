@@ -11,8 +11,9 @@ export function codeCuttFn(cutIftrue: boolean) {
       })(reservedExpOne,reservedExpSec)`;
     try {
       return eval(exp);
-    } catch (err) {
-      Helpers.log(`Expression Failed`, err);
+    } catch (error) {
+      const errMsg = (error instanceof Error && error.message) || String(error);
+      Helpers.log(`Expression Failed ${errMsg}`);
       Helpers.error(`[codecutFn] Eval failed `, true, true);
       return null;
     }

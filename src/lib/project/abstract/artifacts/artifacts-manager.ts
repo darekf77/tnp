@@ -977,7 +977,7 @@ export class ArtifactManager {
         await action();
         return;
       } catch (error) {
-        if (error?.name === 'ExitPromptError') {
+        if (error instanceof Error && error?.name === 'ExitPromptError') {
           process.exit(0);
         }
         console.error(error);
