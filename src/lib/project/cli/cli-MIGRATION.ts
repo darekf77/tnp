@@ -206,7 +206,7 @@ export class ${contextName}_${timestamp}_${migrationName} extends TaonBaseMigrat
     ]);
     Helpers.writeFile(
       absPathToNewMigrationFile,
-      `import { Taon, TaonBaseMigration } from '${taonPackageName}/${srcFromTaonImport}';\n` +
+      `import { Taon, TaonBaseMigration, TaonMigration } from '${taonPackageName}/${srcFromTaonImport}';\n` +
         `import { QueryRunner } from 'taon-typeorm/${srcFromTaonImport}';\n\n` +
         `${classes.join('\n\n')}`,
     );
