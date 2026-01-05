@@ -564,49 +564,49 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       //#endregion
 
       //#region generate dummy angular module structure
-      {
-        group: groupGENERATE,
-        title: `angular module structure`,
-        exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-module %entity%`,
-        options: {
-          titleWhenProcessing: 'generating dummy angular module structure',
-          showSuccessMessage: false,
-          resolveVariables: [
-            { variable: 'entity', placeholder: `my-component`, encode: true },
-          ],
-        },
-      },
+      // {
+      //   group: groupGENERATE,
+      //   title: `angular module structure`,
+      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-module %entity%`,
+      //   options: {
+      //     titleWhenProcessing: 'generating dummy angular module structure',
+      //     showSuccessMessage: false,
+      //     resolveVariables: [
+      //       { variable: 'entity', placeholder: `my-component`, encode: true },
+      //     ],
+      //   },
+      // },
       //#endregion
 
       //#region generate dummy angular lazy module structure
-      {
-        group: groupGENERATE,
-        title: `angular lazy module structure`,
-        exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-lazy-module %entity%`,
-        options: {
-          titleWhenProcessing: 'generating dummy angular lazy module structure',
-          showSuccessMessage: false,
-          resolveVariables: [
-            { variable: 'entity', placeholder: `my-component`, encode: true },
-          ],
-        },
-      },
+      // {
+      //   group: groupGENERATE,
+      //   title: `angular lazy module structure`,
+      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-lazy-module %entity%`,
+      //   options: {
+      //     titleWhenProcessing: 'generating dummy angular lazy module structure',
+      //     showSuccessMessage: false,
+      //     resolveVariables: [
+      //       { variable: 'entity', placeholder: `my-component`, encode: true },
+      //     ],
+      //   },
+      // },
       //#endregion
 
       //#region generate dummy angular lazy module container structure
-      {
-        group: groupGENERATE,
-        title: `angular lazy module container structure`,
-        exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-lazy-module-container %entity%`,
-        options: {
-          titleWhenProcessing:
-            'generating dummy angular lazy module container structure',
-          showSuccessMessage: false,
-          resolveVariables: [
-            { variable: 'entity', placeholder: `my-component`, encode: true },
-          ],
-        },
-      },
+      // {
+      //   group: groupGENERATE,
+      //   title: `angular lazy module container structure`,
+      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-lazy-module-container %entity%`,
+      //   options: {
+      //     titleWhenProcessing:
+      //       'generating dummy angular lazy module container structure',
+      //     showSuccessMessage: false,
+      //     resolveVariables: [
+      //       { variable: 'entity', placeholder: `my-component`, encode: true },
+      //     ],
+      //   },
+      // },
       //#endregion
 
       //#region temp files show
