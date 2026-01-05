@@ -216,15 +216,22 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     );
 
     if (
-      buildOptions.release.targetArtifact ===
-      ReleaseArtifactTaon.ANGULAR_NODE_APP
+      buildOptions.release.targetArtifact !==
+        ReleaseArtifactTaon.ANGULAR_NODE_APP &&
+      buildOptions.build.ssr
     ) {
-      if (
-        buildOptions.build.ssr === undefined ||
-        buildOptions.build.ssr === null
-      ) {
-        buildOptions.build.ssr = true;
-      }
+      Helpers.warn(
+        `SSR option is not supported for artifact ${buildOptions.release.targetArtifact}, disabling SSR...`,
+      );
+      buildOptions.build.ssr = false;
+    }
+
+    if (buildOptions.build.ssr) {
+      Helpers.info(`
+
+      NOTE: You are building APP with SSR (Server Side Rendering) enabled.
+
+      `);
     }
 
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);

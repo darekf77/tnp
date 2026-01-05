@@ -613,29 +613,26 @@ export enum BundledFiles {
 }
 
 export enum AngularJsonAppOrElectronTaskName {
-  development = 'development',
-  production = 'production',
-  developmentWebsql = 'development-websql',
-  productionWebsql = 'production-websql',
+  developmentSsr = 'development',
+  productionSsr = 'production',
+  developmentStatic = 'development-static',
+  productionStatic = 'production-static',
 }
 
 export const AngularJsonAppOrElectronTaskNameResolveFor = (
   envOptions: EnvOptions,
 ): AngularJsonAppOrElectronTaskName => {
-  if (
-    envOptions.build.websql ||
-    (_.isBoolean(envOptions.build.ssr) && envOptions.build.ssr === false)
-  ) {
+  if (envOptions.build.websql || !envOptions.build.ssr) {
     if (!envOptions.build.watch && !!envOptions.release.releaseType) {
-      return AngularJsonAppOrElectronTaskName.productionWebsql;
+      return AngularJsonAppOrElectronTaskName.productionStatic;
     } else {
-      return AngularJsonAppOrElectronTaskName.developmentWebsql;
+      return AngularJsonAppOrElectronTaskName.developmentStatic;
     }
   } else {
     if (!envOptions.build.watch && !!envOptions.release.releaseType) {
-      return AngularJsonAppOrElectronTaskName.production;
+      return AngularJsonAppOrElectronTaskName.productionSsr;
     } else {
-      return AngularJsonAppOrElectronTaskName.development;
+      return AngularJsonAppOrElectronTaskName.developmentSsr;
     }
   }
 };

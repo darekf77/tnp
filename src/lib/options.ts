@@ -913,6 +913,13 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
       delete override['websql'];
     }
 
+    if (_.isBoolean(this['ssr'])) {
+      // QUICK FIX
+      this.build.ssr = this['ssr'];
+      delete this['ssr'];
+      delete override['ssr'];
+    }
+
     this.loading = this.loading || ({} as any);
 
     this.loading.preAngularBootstrap = _.merge(
