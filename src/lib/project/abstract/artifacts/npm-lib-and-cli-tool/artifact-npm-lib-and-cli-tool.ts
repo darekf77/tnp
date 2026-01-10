@@ -130,7 +130,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
   public readonly insideStructureLib: InsideStructuresLib;
 
-  protected readonly indexAutogenProvider: IndexAutogenProvider;
+  public readonly indexAutogenProvider: IndexAutogenProvider;
 
   public readonly filesTemplatesBuilder: FilesTemplatesBuilder;
 
@@ -198,7 +198,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       await this.creteBuildInfoFile(initOptions);
       if (this.indexAutogenProvider.generateIndexAutogenFile) {
         await this.indexAutogenProvider.runTask({
-          watch: initOptions.build.watch,
+          // watch: initOptions.build.watch, // TODO watching sucks here
         });
       } else {
         this.indexAutogenProvider.writeIndexFile(true);

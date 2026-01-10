@@ -459,6 +459,8 @@ export function activateMenuTnp(
   );
   context.subscriptions.push(treeView);
   //#endregion
+
+  return ProjectItem;
 }
 
 export function deactivateMenuTnp() {}

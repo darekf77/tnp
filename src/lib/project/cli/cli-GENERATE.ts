@@ -36,7 +36,6 @@ import { BaseCli } from './base-cli';
  * TODO refactor move to tnp-helpers
  */ // @ts-ignore TODO weird inheritance problem
 export class $Generate extends BaseCli {
-  //#region generate
   // @ts-ignore TODO weird inheritance problem
   async _() {
     //#region @backendFunc
@@ -134,7 +133,11 @@ export class $Generate extends BaseCli {
     this._exit(0);
     //#endregion
   }
-  //#endregion
+
+  async libIndex() {
+    await this.project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask();
+    this._exit();
+  }
 
   fieldsWebsqlRegions() {
     const fileAbsPath = crossPlatformPath(this.firstArg);

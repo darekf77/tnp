@@ -1,4 +1,5 @@
 import type { Project } from './project/abstract/project';
+import type { activateMenuTnp } from './vscode-ext-menu';
 
 export const vscodeMenuItems = ({
   vscode,
@@ -14,7 +15,7 @@ export const vscodeMenuItems = ({
   vscode: typeof import('vscode');
   FRAMEWORK_NAME: string;
   CURRENT_PROJECT: Project;
-  ProjectItem: any;
+  ProjectItem: ReturnType<typeof activateMenuTnp>;
   focustFirstElement: () => void;
   runInTerminal: (command: string) => void;
   tmp_FRONTEND_NORMAL_APP_PORT: string;
@@ -22,8 +23,6 @@ export const vscodeMenuItems = ({
   skipTaonItems?: boolean;
 }) => {
   return [
-    //#region items with actions
-
     //#region items with actions / refresh vscode colors
     new ProjectItem(
       `$ ${FRAMEWORK_NAME} refresh:vscode:colors`,
@@ -170,37 +169,37 @@ export const vscodeMenuItems = ({
           //#endregion
 
           //#region items with actions /  start
-          new ProjectItem(
-            `$ ${FRAMEWORK_NAME} start`,
-            vscode.TreeItemCollapsibleState.None,
-            {
-              iconPath: null,
-              project: CURRENT_PROJECT,
-              triggerActionOnClick: project => {
-                runInTerminal(`${FRAMEWORK_NAME} start`);
-                if (project?.location) {
-                  focustFirstElement();
-                }
-              },
-            },
-          ),
+          // new ProjectItem(
+          //   `$ ${FRAMEWORK_NAME} start`,
+          //   vscode.TreeItemCollapsibleState.None,
+          //   {
+          //     iconPath: null,
+          //     project: CURRENT_PROJECT,
+          //     triggerActionOnClick: project => {
+          //       runInTerminal(`${FRAMEWORK_NAME} start`);
+          //       if (project?.location) {
+          //         focustFirstElement();
+          //       }
+          //     },
+          //   },
+          // ),
           //#endregion
 
           //#region items with actions /  start websql
-          new ProjectItem(
-            `$ ${FRAMEWORK_NAME} start --websql`,
-            vscode.TreeItemCollapsibleState.None,
-            {
-              iconPath: null,
-              project: CURRENT_PROJECT,
-              triggerActionOnClick: project => {
-                runInTerminal(`${FRAMEWORK_NAME} start --websql`);
-                if (project?.location) {
-                  focustFirstElement();
-                }
-              },
-            },
-          ),
+          // new ProjectItem(
+          //   `$ ${FRAMEWORK_NAME} start --websql`,
+          //   vscode.TreeItemCollapsibleState.None,
+          //   {
+          //     iconPath: null,
+          //     project: CURRENT_PROJECT,
+          //     triggerActionOnClick: project => {
+          //       runInTerminal(`${FRAMEWORK_NAME} start --websql`);
+          //       if (project?.location) {
+          //         focustFirstElement();
+          //       }
+          //     },
+          //   },
+          // ),
           //#endregion
 
           //#region items with actions /  clear
@@ -330,9 +329,27 @@ export const vscodeMenuItems = ({
             },
           ),
           //#endregion
+
+          //#region items with actions / regenerate src/lib/index._auto-generated_.ts
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} generate:lib:index`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: async project => {
+                if (project) {
+                  await project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask();
+                  vscode.commands.executeCommand('workbench.view.explorer');
+                }
+              },
+            },
+          ),
+          //#endregion
         ]
       : []),
 
+    //#region items with actions / uninstall vscode extension itself
     //         new ProjectItem(
     //           `$ ${FRAMEWORK_NAME} vscode:uninstall:itself`,
     //           vscode.TreeItemCollapsibleState.None,

@@ -1,5 +1,10 @@
 import { ChangeOfFile } from 'incremental-compiler/src';
-import { config, extAllowedToReplace, fileName } from 'tnp-core/src';
+import {
+  config,
+  extAllowedToReplace,
+  fileName,
+  frontendFiles,
+} from 'tnp-core/src';
 import { crossPlatformPath, Helpers, _, path } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 import { BaseCompilerForProject } from 'tnp-helpers/src';
@@ -33,15 +38,12 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
   //#endregion
 
   get generateIndexAutogenFile(): boolean {
-
     //#region @backendFunc
     return this.project.taonJson.shouldGenerateAutogenIndexFile;
     //#endregion
-
   }
 
   get indexAutogenFileRelativePath() {
-
     //#region @backendFunc
     return crossPlatformPath([
       srcMainProject,
@@ -49,13 +51,11 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
       TaonGeneratedFiles.index_generated_ts,
     ]);
     //#endregion
-
   }
 
   private exportsToSave: string[] = [];
 
-  private processFile(absFilePath: string, writeAsync = false) {
-
+  private processFile(absFilePath: string) {
     //#region @backendFunc
     if (!Helpers.isFolder(absFilePath)) {
       const exportsFounded = UtilsTypescript.exportsFromFile(absFilePath);
@@ -64,9 +64,16 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
         '',
       );
 
+      // TODO @LAST this is not watching files!
+      // console.log(`Processing file for index autogen: ${relativePath}`);
+
+      const isBrowserSpecific = frontendFiles.some(ext =>
+        relativePath.endsWith(ext),
+      );
       const exportString =
         `export * from ` +
-        `'./${relativePath.replace(path.extname(relativePath), '')}';`;
+        `'./${relativePath.replace(path.extname(relativePath), '')}'; ` +
+        `${isBrowserSpecific ? `// @${'bro' + 'wser'}` : ''}`;
 
       if (exportsFounded.length > 0) {
         if (
@@ -79,22 +86,17 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
       } else {
         this.exportsToSave = this.exportsToSave.filter(e => e !== exportString);
       }
-      if (writeAsync) {
-        this.debounceWrite();
-      }
     }
     //#endregion
-
   }
 
   public writeIndexFile(isPlaceholderOnly = false) {
-
     //#region @backendFunc
     this.project.writeFile(
       this.indexAutogenFileRelativePath,
 
       `// @ts-no${'check'}
-// This file is auto-generated. Do not modify.
+// This file is auto-generated during init process. Do not modify.
 // ${
         isPlaceholderOnly
           ? `This is only placeholder.` +
@@ -106,22 +108,17 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
       } \n` + this.exportsToSave.join('\n'),
     );
     //#endregion
-
   }
-
-  private debounceWrite = _.debounce(() => {
-    this.writeIndexFile();
-  }, 1000);
 
   async syncAction(
     absolteFilesPathes?: string[],
     initialParams?: {},
   ): Promise<void> {
-
     //#region @backendFunc
     Helpers.logInfo(
       `IndexAutogenProvider for project: ${this.project.genericName}`,
     );
+    // console.log(`Generating index autogen file...`, { absolteFilesPathes });
     for (const absFilePath of absolteFilesPathes) {
       this.processFile(absFilePath);
     }
@@ -130,17 +127,5 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
       `IndexAutogenProvider for project: ${this.project.genericName}`,
     );
     //#endregion
-
-  }
-
-  async asyncAction(
-    asyncEvents: ChangeOfFile,
-    initialParams?: {},
-  ): Promise<void> {
-
-    //#region @backendFunc
-    this.processFile(asyncEvents.fileAbsolutePath, true);
-    //#endregion
-
   }
 }
