@@ -139,6 +139,11 @@ export class $Generate extends BaseCli {
     this._exit();
   }
 
+  async appRoutes() {
+    await this.project.artifactsManager.artifact.npmLibAndCliTool.appTsRoutesAutogenProvider.runTask();
+    this._exit();
+  }
+
   fieldsWebsqlRegions() {
     const fileAbsPath = crossPlatformPath(this.firstArg);
     const content = Helpers.readFile(fileAbsPath);

@@ -5,7 +5,6 @@ import type { ReleaseArtifactTaon, ReleaseType } from './options';
 import type { Project } from './project/abstract/project';
 
 export namespace Models {
-
   //#region taon test type
   export type TestTypeTaon = 'mocha' | 'jest' | 'cypress';
   export const TestTypeTaonArr = ['mocha', 'jest', 'cypress'] as TestTypeTaon[];
@@ -289,6 +288,12 @@ export namespace Models {
     shouldGenerateAutogenIndexFile: boolean;
 
     /**
+     * generate src/app.ts routes, imports and context initializations
+     * from ./src/app/*.routes.ts (recursive)
+     */
+    shouldGenerateAutogenAppRoutesFile: boolean;
+
+    /**
      * Auto release helps with releasing multiple projects from a local machine.
      * This is useful when we don't have Taon Cloud set up and want to release
      * all projects with a single command.
@@ -438,5 +443,4 @@ export namespace Models {
     customCssPath?: string;
   }
   //#endregion
-
 }

@@ -743,7 +743,7 @@ export class $Global extends BaseGlobalCommandLine<
         const project = this.ins.From(f) as Project;
         return (
           project &&
-          project.framework.frameworkVersionAtLeast('v18') &&
+          project.framework.frameworkVersionAtLeast('v21') &&
           !ommitedVersion.includes(project.framework.frameworkVersion)
         );
       });
