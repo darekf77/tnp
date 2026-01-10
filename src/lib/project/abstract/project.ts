@@ -1,5 +1,5 @@
 //#region imports
-import { config, LibTypeEnum } from 'tnp-core/src';
+import { config, dotTaonFolder, LibTypeEnum } from 'tnp-core/src';
 import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
@@ -696,10 +696,23 @@ ${gitChildren}
    */
   get children(): Project[] {
     //#region @backendFunc
-    if (this.pathExists(taonJsonMainProject)) {
-      const folders = Helpers.foldersFrom(this.location).filter(
+    let location = this.location;
+    const absExternalPathToChildren = this.pathFor([
+      dotTaonFolder,
+      CoreModels.pathToChildren,
+    ]);
+    let usingExternalLocation = false;
+    if (Helpers.exists(absExternalPathToChildren)) {
+      const externalLocation = Helpers.readFile(absExternalPathToChildren);
+      if (externalLocation && Helpers.exists(externalLocation)) {
+        location = externalLocation;
+        usingExternalLocation = true;
+      }
+    }
+    if (this.pathExists(taonJsonMainProject) || usingExternalLocation) {
+      const folders = Helpers.foldersFrom(location).filter(
         f =>
-          crossPlatformPath(f) !== crossPlatformPath(this.location) &&
+          crossPlatformPath(f) !== crossPlatformPath(location) &&
           !path.basename(f).startsWith('.') &&
           !path.basename(f).startsWith('__') &&
           !path.basename(f).startsWith(distMainProject) &&

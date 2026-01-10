@@ -9,6 +9,7 @@ export const vscodeMenuItems = ({
   runInTerminal,
   tmp_FRONTEND_NORMAL_APP_PORT,
   tmp_FRONTEND_WEBSQL_APP_PORT,
+  skipTaonItems,
 }: {
   vscode: typeof import('vscode');
   FRAMEWORK_NAME: string;
@@ -18,6 +19,7 @@ export const vscodeMenuItems = ({
   runInTerminal: (command: string) => void;
   tmp_FRONTEND_NORMAL_APP_PORT: string;
   tmp_FRONTEND_WEBSQL_APP_PORT: string;
+  skipTaonItems?: boolean;
 }) => {
   return [
     //#region items with actions
@@ -97,235 +99,239 @@ export const vscodeMenuItems = ({
     ),
     //#endregion
 
-    //#region items with actions / build lib
-    new ProjectItem(
-      `$ ${FRAMEWORK_NAME} build:lib`,
-      vscode.TreeItemCollapsibleState.None,
-      {
-        iconPath: null,
-        project: CURRENT_PROJECT,
-        triggerActionOnClick: project => {
-          runInTerminal(`${FRAMEWORK_NAME} build:lib`);
-          if (project?.location) {
-            focustFirstElement();
-          }
-        },
-      },
-    ),
-    //#endregion
-
-    //#region items with actions / build lib watch
-    new ProjectItem(
-      `$ ${FRAMEWORK_NAME} build:watch:lib`,
-      vscode.TreeItemCollapsibleState.None,
-      {
-        iconPath: null,
-        project: CURRENT_PROJECT,
-        triggerActionOnClick: project => {
-          runInTerminal(`${FRAMEWORK_NAME} build:watch:lib`);
-          if (project?.location) {
-            focustFirstElement();
-          }
-        },
-      },
-    ),
-    //#endregion
-
-    //#region items with actions /  app normal
-    new ProjectItem(
-      `$ ${FRAMEWORK_NAME} app:normal`,
-      vscode.TreeItemCollapsibleState.None,
-      {
-        iconPath: null,
-        project: CURRENT_PROJECT,
-        triggerActionOnClick: project => {
-          runInTerminal(`${FRAMEWORK_NAME} app:normal`);
-          if (project?.location) {
-            focustFirstElement();
-          }
-        },
-      },
-    ),
-    //#endregion
-
-    //#region items with actions /   app websql
-    new ProjectItem(
-      `$ ${FRAMEWORK_NAME} app:websql`,
-      vscode.TreeItemCollapsibleState.None,
-      {
-        iconPath: null,
-        project: CURRENT_PROJECT,
-        triggerActionOnClick: project => {
-          runInTerminal(`${FRAMEWORK_NAME} app:websql`);
-          if (project?.location) {
-            focustFirstElement();
-          }
-        },
-      },
-    ),
-    //#endregion
-
-    //#region items with actions /  start
-    new ProjectItem(
-      `$ ${FRAMEWORK_NAME} start`,
-      vscode.TreeItemCollapsibleState.None,
-      {
-        iconPath: null,
-        project: CURRENT_PROJECT,
-        triggerActionOnClick: project => {
-          runInTerminal(`${FRAMEWORK_NAME} start`);
-          if (project?.location) {
-            focustFirstElement();
-          }
-        },
-      },
-    ),
-    //#endregion
-
-    //#region items with actions /  start websql
-    new ProjectItem(
-      `$ ${FRAMEWORK_NAME} start --websql`,
-      vscode.TreeItemCollapsibleState.None,
-      {
-        iconPath: null,
-        project: CURRENT_PROJECT,
-        triggerActionOnClick: project => {
-          runInTerminal(`${FRAMEWORK_NAME} start --websql`);
-          if (project?.location) {
-            focustFirstElement();
-          }
-        },
-      },
-    ),
-    //#endregion
-
-    //#region items with actions /  clear
-    new ProjectItem(
-      `$ ${FRAMEWORK_NAME} clear`,
-      vscode.TreeItemCollapsibleState.None,
-      {
-        iconPath: null,
-        project: CURRENT_PROJECT,
-        triggerActionOnClick: project => {
-          runInTerminal(`${FRAMEWORK_NAME} clear`);
-          if (project?.location) {
-            focustFirstElement();
-          }
-        },
-      },
-    ),
-    //#endregion
-
-    //#region items with actions /  melt
-    new ProjectItem(
-      `$ ${FRAMEWORK_NAME} melt`,
-      vscode.TreeItemCollapsibleState.None,
-      {
-        iconPath: null,
-        project: CURRENT_PROJECT,
-        triggerActionOnClick: project => {
-          if (project?.location) {
-            vscode.window.withProgress(
-              {
-                location: vscode.ProgressLocation.Notification,
-                title: `Melting ${FRAMEWORK_NAME} action commits...`,
-                cancellable: false,
+    ...(!skipTaonItems
+      ? [
+          //#region items with actions / build lib
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} build:lib`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} build:lib`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
               },
-              progress => {
-                progress.report({
-                  increment: 0,
-                  message: 'Melting action commits...',
-                });
-                project.git.meltActionCommits();
-                progress.report({ message: 'Done', increment: 100 });
-                return Promise.resolve();
-              },
-            );
-          }
-          if (project?.location) {
-            focustFirstElement();
-          }
-        },
-      },
-    ),
-    //#endregion
+            },
+          ),
+          //#endregion
 
-    //#region items with actions /  copy normal app url to clipboard
-    new ProjectItem(
-      `$ COPY normal app url to clipboard`,
-      vscode.TreeItemCollapsibleState.None,
-      {
-        iconPath: null,
-        project: CURRENT_PROJECT,
-        triggerActionOnClick: project => {
-          if (project?.location) {
-            vscode.window.withProgress(
-              {
-                location: vscode.ProgressLocation.Notification,
-                title: 'Copying normal app URL to clipboard...',
-                cancellable: false,
+          //#region items with actions / build lib watch
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} build:watch:lib`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} build:watch:lib`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
               },
-              progress => {
-                progress.report({
-                  increment: 0,
-                  message: 'Copying normal app URL to clipboard...',
-                });
-                const normalAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_NORMAL_APP_PORT + '_1')}`;
-                vscode.env.clipboard.writeText(normalAppUrl);
-                progress.report({
-                  message: 'Done',
-                  increment: 100,
-                });
-                return Promise.resolve();
-              },
-            );
-          }
-          if (project?.location) {
-            focustFirstElement();
-          }
-        },
-      },
-    ),
-    //#endregion
+            },
+          ),
+          //#endregion
 
-    //#region items with actions /  copy normal app url to clipboard
-    new ProjectItem(
-      `$ COPY websql app url to clipboard`,
-      vscode.TreeItemCollapsibleState.None,
-      {
-        iconPath: null,
-        project: CURRENT_PROJECT,
-        triggerActionOnClick: project => {
-          if (project?.location) {
-            vscode.window.withProgress(
-              {
-                location: vscode.ProgressLocation.Notification,
-                title: `Copying websql app URL to clipboard...`,
-                cancellable: false,
+          //#region items with actions /  app normal
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} app:normal`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} app:normal`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
               },
-              progress => {
-                progress.report({
-                  increment: 0,
-                  message: `Copying websql app URL to clipboard...`,
-                });
-                const normalAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_WEBSQL_APP_PORT + '_1')}`;
-                vscode.env.clipboard.writeText(normalAppUrl);
+            },
+          ),
+          //#endregion
 
-                progress.report({
-                  message: `Done`,
-                  increment: 100,
-                });
-                return Promise.resolve();
+          //#region items with actions /  app websql
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} app:websql`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} app:websql`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
               },
-            );
-          }
-          if (project?.location) {
-            focustFirstElement();
-          }
-        },
-      },
-    ),
-    //#endregion
+            },
+          ),
+          //#endregion
+
+          //#region items with actions /  start
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} start`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} start`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
+          //#endregion
+
+          //#region items with actions /  start websql
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} start --websql`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} start --websql`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
+          //#endregion
+
+          //#region items with actions /  clear
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} clear`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} clear`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
+          //#endregion
+
+          //#region items with actions /  melt
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} melt`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                if (project?.location) {
+                  vscode.window.withProgress(
+                    {
+                      location: vscode.ProgressLocation.Notification,
+                      title: `Melting ${FRAMEWORK_NAME} action commits...`,
+                      cancellable: false,
+                    },
+                    progress => {
+                      progress.report({
+                        increment: 0,
+                        message: 'Melting action commits...',
+                      });
+                      project.git.meltActionCommits();
+                      progress.report({ message: 'Done', increment: 100 });
+                      return Promise.resolve();
+                    },
+                  );
+                }
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
+          //#endregion
+
+          //#region items with actions /  copy normal app url to clipboard
+          new ProjectItem(
+            `$ COPY normal app url to clipboard`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                if (project?.location) {
+                  vscode.window.withProgress(
+                    {
+                      location: vscode.ProgressLocation.Notification,
+                      title: 'Copying normal app URL to clipboard...',
+                      cancellable: false,
+                    },
+                    progress => {
+                      progress.report({
+                        increment: 0,
+                        message: 'Copying normal app URL to clipboard...',
+                      });
+                      const normalAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_NORMAL_APP_PORT + '_1')}`;
+                      vscode.env.clipboard.writeText(normalAppUrl);
+                      progress.report({
+                        message: 'Done',
+                        increment: 100,
+                      });
+                      return Promise.resolve();
+                    },
+                  );
+                }
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
+          //#endregion
+
+          //#region items with actions /  copy normal app url to clipboard
+          new ProjectItem(
+            `$ COPY websql app url to clipboard`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                if (project?.location) {
+                  vscode.window.withProgress(
+                    {
+                      location: vscode.ProgressLocation.Notification,
+                      title: `Copying websql app URL to clipboard...`,
+                      cancellable: false,
+                    },
+                    progress => {
+                      progress.report({
+                        increment: 0,
+                        message: `Copying websql app URL to clipboard...`,
+                      });
+                      const normalAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_WEBSQL_APP_PORT + '_1')}`;
+                      vscode.env.clipboard.writeText(normalAppUrl);
+
+                      progress.report({
+                        message: `Done`,
+                        increment: 100,
+                      });
+                      return Promise.resolve();
+                    },
+                  );
+                }
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
+          //#endregion
+        ]
+      : []),
 
     //         new ProjectItem(
     //           `$ ${FRAMEWORK_NAME} vscode:uninstall:itself`,

@@ -20,6 +20,7 @@ import { PackageJson } from 'type-fest';
 
 import {
   OVERRIDE_FROM_TNP,
+  packageJsonMainProject,
   scriptsCommands,
   taonJsonMainProject,
 } from '../../constants';
@@ -237,7 +238,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     if (_.isString(res)) {
       return res as CoreModels.LibType;
     }
-    if (_.isString(this.project.hasFile(taonJsonMainProject))) {
+    if (this.project.hasFile(packageJsonMainProject)) {
       return LibTypeEnum.UNKNOWN_NPM_PROJECT;
     }
     return LibTypeEnum.UNKNOWN;

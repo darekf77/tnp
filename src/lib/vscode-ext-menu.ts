@@ -306,10 +306,6 @@ export function activateMenuTnp(
       // );
       //#endregion
 
-      const isContainerOrganizationCurrentProj =
-        CURRENT_PROJECT.framework.isContainer &&
-        CURRENT_PROJECT.taonJson.isOrganization;
-
       const ORGANIZATION_PROJECTS_OR_CURRENT_PROJECT_CHILDREN =
         organizationMainItem
           ? [
@@ -333,6 +329,38 @@ export function activateMenuTnp(
         currentProjectProjects[0].project?.location === CURRENT_PROJECT.location
       ) {
         currentProjectProjects.length = 0;
+      }
+
+      if (CURRENT_PROJECT.typeIs('unknown-npm-project')) {
+        return [
+          this.dummy,
+          this.getInfoItem('Click item below to trigger action', true),
+          ...vscodeMenuItems({
+            vscode,
+            FRAMEWORK_NAME,
+            CURRENT_PROJECT,
+            runInTerminal,
+            focustFirstElement,
+            ProjectItem,
+            tmp_FRONTEND_NORMAL_APP_PORT,
+            tmp_FRONTEND_WEBSQL_APP_PORT,
+            skipTaonItems: true,
+          }),
+          // children
+          this.getInfoItem('Choose projects below to switch', true),
+          ...(CURRENT_PROJECT?.children
+            .map(c => MAP_PROJEC_FN(c))
+            .filter(f => !!f) || []),
+          // children
+          this.getInfoItem('Choose parent projects below to switch', true),
+          ...([CURRENT_PROJECT?.parent]
+            .filter(f => !!f)
+            .map(c => MAP_PROJEC_FN(c))
+            .filter(f => !!f) || []),
+          ...(CURRENT_PROJECT?.parent?.children
+            .map(c => MAP_PROJEC_FN(c))
+            .filter(f => !!f) || []),
+        ];
       }
 
       return [
