@@ -95,6 +95,7 @@ import { InsideStructuresLib } from './tools/inside-struct-lib';
 import { CypressTestRunner } from './tools/test-runner/cypress-test-runner';
 import { JestTestRunner } from './tools/test-runner/jest-test-runner';
 import { MochaTestRunner } from './tools/test-runner/mocha-test-runner';
+import { AppRoutesAutogenProvider } from './tools/app-routes-autogen-provider';
 //#endregion
 
 export class ArtifactNpmLibAndCliTool extends BaseArtifact<
@@ -131,6 +132,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   public readonly insideStructureLib: InsideStructuresLib;
 
   public readonly indexAutogenProvider: IndexAutogenProvider;
+  public readonly appTsRoutesAutogenProvider: AppRoutesAutogenProvider;
 
   public readonly filesTemplatesBuilder: FilesTemplatesBuilder;
 
@@ -150,6 +152,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     this.copyNpmDistLibManager = CopyManager.for(project);
     this.indexAutogenProvider = new IndexAutogenProvider(project);
+    this.appTsRoutesAutogenProvider = new AppRoutesAutogenProvider(project);
     this.filesTemplatesBuilder = new FilesTemplatesBuilder(project);
     this.insideStructureLib = new InsideStructuresLib(project);
     this.assetsManager = new AssetsManager(project);
@@ -196,12 +199,17 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         },
       );
       await this.creteBuildInfoFile(initOptions);
-      if (this.indexAutogenProvider.generateIndexAutogenFile) {
+      if (this.project.taonJson.shouldGenerateAutogenIndexFile) {
         await this.indexAutogenProvider.runTask({
           // watch: initOptions.build.watch, // TODO watching sucks here
         });
       } else {
         this.indexAutogenProvider.writeIndexFile(true);
+      }
+      if (this.project.taonJson.shouldGenerateAutogenAppRoutesFile) {
+        await this.appTsRoutesAutogenProvider.runTask({
+          // watch: initOptions.build.watch, // TODO watching sucks here
+        });
       }
     }
 

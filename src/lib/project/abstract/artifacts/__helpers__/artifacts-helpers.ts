@@ -1,13 +1,18 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, UtilsFilesFoldersSync } from 'tnp-core/src';
 import { crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { appTsFromSrc, appVscodeTsFromSrc, srcMainProject } from '../../../../constants';
+import {
+  appTsFromSrc,
+  appVscodeTsFromSrc,
+  srcMainProject,
+} from '../../../../constants';
 import { EnvOptions } from '../../../../options';
 import type { Project } from '../../project';
 
 import { Branding } from './branding';
+import { RenameRule } from 'magic-renamer/src';
 //#endregion
 
 /**
@@ -23,7 +28,6 @@ export class ArtifactsGlobalHelper {
 
   //#region add sources from core
   addSrcFolderFromCoreProject(): void {
-
     //#region @backend
     const corePath = this.project.framework.coreProject.pathFor(srcMainProject);
     const dest = this.project.pathFor(srcMainProject);
@@ -31,12 +35,28 @@ export class ArtifactsGlobalHelper {
     Helpers.copy(corePath, dest, {
       recursive: true,
       overwrite: true,
-      filter: src => {
-        return [appTsFromSrc, appVscodeTsFromSrc].includes(path.basename(src));
-      },
+      // filter: src => {
+      //   return [appTsFromSrc, appVscodeTsFromSrc].includes(path.basename(src));
+      // },
     });
-    //#endregion
 
+    UtilsFilesFoldersSync.getFilesFrom(dest, {
+      recursive: true,
+      followSymlinks: false,
+    }).forEach(f => {
+      let content = Helpers.readFile(f);
+      const rules = RenameRule.from(
+        `${this.project.framework.coreProject.name} => ${this.project.name}`,
+      );
+      for (const rule of rules) {
+        content = rule.replaceInString(content);
+      }
+      // content = content.replace(/from 'tnp-core\/src/g, `from '${config.npmScope}/core/source`);
+      // content = content.replace(/from "tnp-core\/src/g, `from "${config.npmScope}/core/source`);
+      Helpers.writeFile(f, content);
+    });
+
+    //#endregion
   }
   //#endregion
 
@@ -47,15 +67,12 @@ export class ArtifactsGlobalHelper {
    * TODO
    */
   __removeJsMapsFrom(absPathReleaseDistFolder: string) {
-
     //#region @backendFunc
     return; // TODO not a good idea
     Helpers.filesFrom(absPathReleaseDistFolder, true)
       .filter(f => f.endsWith('.js.map') || f.endsWith('.mjs.map'))
       .forEach(f => Helpers.removeFileIfExists(f));
     //#endregion
-
   }
   //#endregion
-
 }

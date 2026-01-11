@@ -606,6 +606,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 Project name: **${this.project.name}** <br>
 Project npm name: **${this.project.nameForNpmPackage}**
 
+Current build:
+- last git message: ${this.project.git.lastCommitMessage()}
+- last git hash: ${this.project.git.lastCommitHash()}
+- last git date: ${this.project.git.lastCommitDate()}
+
 ## All contexts (detected = ${allDetectedContexts.length})
 
 ${contexts.join('\n')}

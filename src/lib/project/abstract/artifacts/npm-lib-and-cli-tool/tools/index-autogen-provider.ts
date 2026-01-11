@@ -37,12 +37,6 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
   }
   //#endregion
 
-  get generateIndexAutogenFile(): boolean {
-    //#region @backendFunc
-    return this.project.taonJson.shouldGenerateAutogenIndexFile;
-    //#endregion
-  }
-
   get indexAutogenFileRelativePath() {
     //#region @backendFunc
     return crossPlatformPath([

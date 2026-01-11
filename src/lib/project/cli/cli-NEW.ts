@@ -261,6 +261,8 @@ export class $New extends BaseCli {
     taonJson.setType(LibTypeEnum.ISOMORPHIC_LIB);
     taonJson.setFrameworkVersion(DEFAULT_FRAMEWORK_VERSION);
     taonJson.overridePackageJsonManager.setIsPrivate(true);
+    // taonJson.shouldGenerateAutogenAppRoutesFile = true;
+    taonJson.setShouldGenerateAutogenIndexFile(true);
 
     taonJson.autoReleaseConfigAllowedItems = [
       ...taonJson.autoReleaseConfigAllowedItems,

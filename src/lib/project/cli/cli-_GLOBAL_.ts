@@ -81,6 +81,7 @@ import { Models } from '../../models';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
 import { Project } from '../abstract/project';
 import type { TaonProjectResolve } from '../abstract/project-resolve';
+import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
 //#endregion
 
 export class $Global extends BaseGlobalCommandLine<
@@ -743,7 +744,9 @@ export class $Global extends BaseGlobalCommandLine<
         const project = this.ins.From(f) as Project;
         return (
           project &&
-          project.framework.frameworkVersionAtLeast('v18') &&
+          project.framework.frameworkVersionAtLeast(
+            `v${_.first(CURRENT_PACKAGE_VERSION.split('.'))}` as any,
+          ) &&
           !ommitedVersion.includes(project.framework.frameworkVersion)
         );
       });
