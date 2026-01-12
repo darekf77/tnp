@@ -7,25 +7,31 @@ import { idsHeart } from './loader-ids-heart';
 import { idsRipple } from './loader-ids-ripple';
 const defaultLoader = 'lds-default';
 
-export function getLoader(
-  loaderName = defaultLoader, // as keyof typeof loaders
-  color?: string,
-  preload?: boolean,
-) {
+export const globaLoaders = {
+  'lds-default': (color, preload) => idsDefault(color, preload),
+  'lds-ellipsis': (color, preload) => idsEllipsis(color, preload),
+  'lds-facebook': (color, preload) => idsFacebook(color, preload),
+  'lds-grid': (color, preload) => idsGrid(color, preload),
+  'lds-heart': (color, preload) => idsHeart(color, preload),
+  'lds-ripple': (color, preload) => idsRipple(color, preload),
+};
 
+export function getLoader(
+  loaderName = defaultLoader as keyof typeof globaLoaders,
+  color?: string,
+  // preload?: boolean,
+) {
   //#region @backendFunc
   if (_.isString(color)) {
     color = color.replace('##', '');
   }
-  const loaders = {
-    'lds-default': idsDefault(color, preload),
-    'lds-ellipsis': idsEllipsis(color, preload),
-    'lds-facebook': idsFacebook(color, preload),
-    'lds-grid': idsGrid(color, preload),
-    'lds-heart': idsHeart(color, preload),
-    'lds-ripple': idsRipple(color, preload),
-  };
+  const loaders = {};
+
+  Object.keys(globaLoaders).forEach(loaderKey => {
+    // TODO hardcode preload to true
+    loaders[loaderKey] = globaLoaders[loaderKey](color, true);
+  });
+
   return loaders[loaderName ? loaderName : defaultLoader];
   //#endregion
-
 }

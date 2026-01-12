@@ -25,7 +25,11 @@ import {
   UtilsTypescript,
 } from 'tnp-helpers/src';
 
-import { DEFAULT_FRAMEWORK_VERSION } from '../../constants';
+import {
+  appFromSrc,
+  DEFAULT_FRAMEWORK_VERSION,
+  srcMainProject,
+} from '../../constants';
 import { EnvOptions, ReleaseArtifactTaon } from '../../options';
 import type { Project } from '../abstract/project';
 
@@ -128,6 +132,37 @@ export class $Generate extends BaseCli {
       } else {
         Helpers.move(generatedCodeAbsLoc, destination);
       }
+      //#region fixing active context imports
+      if (
+        moduleName === 'dummy-angular-standalone-container' ||
+        moduleName === 'taon-active-context'
+      ) {
+        const activeContextAbsFilePath = crossPlatformPath([
+          destination,
+          `${newEntityName}.active.context.ts`,
+        ]);
+
+        const relativePath = activeContextAbsFilePath
+          .replace(nearestProj.pathFor([srcMainProject, appFromSrc]) + '/', '')
+          .replace('.ts', '');
+        const back = _.times(relativePath.split('/').length, () => '..').join(
+          '/',
+        );
+        const replaceTag = '@generated-imports-here';
+        let orgContent = Helpers.readFile(activeContextAbsFilePath);
+        orgContent = UtilsTypescript.addBelowPlaceholder(
+          orgContent,
+          replaceTag,
+          `import { HOST_CONFIG } from '${back}/app.hosts';
+import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}ActiveContext } from '${back}/../migrations';`,
+        );
+
+        Helpers.writeFile(
+          activeContextAbsFilePath,
+          orgContent.replace(replaceTag, ''),
+        );
+      }
+      //#endregion
     }
     console.info('GENERATION DONE');
     this._exit(0);

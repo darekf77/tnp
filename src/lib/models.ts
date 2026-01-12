@@ -3,6 +3,7 @@ import { PackageJson } from 'tnp-helpers/src';
 
 import type { ReleaseArtifactTaon, ReleaseType } from './options';
 import type { Project } from './project/abstract/project';
+import type { globaLoaders } from './project/abstract/artifacts/__helpers__/inside-structures/structs/loaders/loaders';
 
 export namespace Models {
   //#region taon test type
@@ -16,13 +17,7 @@ export namespace Models {
     color?: string;
   }
 
-  export type TaonLoaders =
-    | 'lds-default'
-    | 'lds-ellipsis'
-    | 'lds-facebook'
-    | 'lds-grid'
-    | 'lds-heart'
-    | 'lds-ripple';
+  export type TaonLoaders = keyof typeof globaLoaders;
   //#endregion
 
   //#region site option

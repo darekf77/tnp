@@ -272,10 +272,10 @@ export class InsideStructAngularApp extends BaseInsideStruct {
 
           //#region TODO - LOADERS & BACKGROUNDS REPLACEMENT
           (() => {
-            // const frontendBaseHref =
-            //   this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
-            //     this.initOptions,
-            //   );
+            const frontendBaseHref =
+              this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
+                this.initOptions,
+              );
             //#region LOADERS & BACKGROUNDS REPLACEMENT / replace app.component.html loader
             // (() => {
             //   const appModuleHtmlPath = path.join(
@@ -332,46 +332,51 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             // })();
             //#endregion
             //#region LOADERS & BACKGROUNDS REPLACEMENT / replace index.html body background color & loader
-            // (() => {
-            //   const appModuleFilePath = path.join(
-            //     project.location,
-            //     replacement(tmpProjectsStandalone),
-            //     `/${srcNgProxyProject}/index.html`,
-            //   );
-            //   let indexHtmlFile = Helpers.readFile(appModuleFilePath);
-            //   const loaderData =
-            //     this.initOptions.loading.preAngularBootstrap.loader;
-            //   const loaderIsImage = _.isString(loaderData);
-            //   if (loaderIsImage) {
-            //     const pathToAsset =
-            //       frontendBaseHref +
-            //       resolvePathToAsset(this.project, loaderData);
-            //     indexHtmlFile = indexHtmlFile.replace(
-            //       '<!-- <<<TO_REPLACE_LOADER>>> -->',
-            //       imageLoader(pathToAsset, true),
-            //     );
-            //   } else {
-            //     const loaderToReplace = getLoader(
-            //       loaderData?.name as any,
-            //       loaderData?.color,
-            //       true,
-            //     );
-            //     indexHtmlFile = indexHtmlFile.replace(
-            //       '<!-- <<<TO_REPLACE_LOADER>>> -->',
-            //       loaderToReplace,
-            //     );
-            //   }
-            //   const bgColor =
-            //     this.initOptions.loading.preAngularBootstrap.background;
-            //   const bgColorStyle = bgColor
-            //     ? `style="background-color: ${bgColor};"`
-            //     : '';
-            //   indexHtmlFile = indexHtmlFile.replace(
-            //     'TAON_TO_REPLACE_COLOR',
-            //     bgColorStyle || '',
-            //   );
-            //   Helpers.writeFile(appModuleFilePath, indexHtmlFile);
-            // })();
+            (() => {
+              const appModuleFilePath = path.join(
+                project.location,
+                replacement(tmpProjectsStandalone),
+                `/${srcNgProxyProject}/${CoreNgTemplateFiles.INDEX_HTML_NG_APP}`,
+              );
+              let indexHtmlFile = Helpers.readFile(appModuleFilePath);
+
+              const loaderData =
+                this.initOptions.loading.preAngularBootstrap.loader;
+
+              const loaderIsImage = _.isString(loaderData);
+              if (loaderIsImage) {
+                const pathToAsset =
+                  frontendBaseHref +
+                  resolvePathToAsset(this.project, loaderData);
+                indexHtmlFile = indexHtmlFile.replace(
+                  '<!-- <<<TO_REPLACE_LOADER>>> -->',
+                  imageLoader(pathToAsset, true),
+                );
+              } else {
+                if (loaderData?.name) {
+                  const loaderToReplace = getLoader(
+                    loaderData?.name,
+                    loaderData?.color,
+                    // true,
+                  );
+                  indexHtmlFile = indexHtmlFile.replace(
+                    '<!-- <<<TO_REPLACE_LOADER>>> -->',
+                    loaderToReplace,
+                  );
+                }
+              }
+              const bgColor =
+                this.initOptions.loading.preAngularBootstrap.background;
+
+              const bgColorStyle = bgColor
+                ? `style="background-color: ${bgColor};"`
+                : '';
+              indexHtmlFile = indexHtmlFile.replace(
+                'TAON_TO_REPLACE_COLOR',
+                bgColorStyle || '',
+              );
+              Helpers.writeFile(appModuleFilePath, indexHtmlFile);
+            })();
             //#endregion
           })();
           //#endregion

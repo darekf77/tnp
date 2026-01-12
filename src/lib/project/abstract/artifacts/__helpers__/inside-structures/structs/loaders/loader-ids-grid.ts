@@ -7,10 +7,13 @@ export function idsGrid(color = 'black', preloader = false) {
   return `
 <style>
   .lds-grid {
-    display: inline-block;
-    position: relative;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 80px;
     height: 80px;
+    z-index: 999999;
   }
   .lds-grid div {
     position: absolute;

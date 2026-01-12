@@ -415,6 +415,14 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
           title: _.startCase(this.project.name),
           useDomain: true,
         },
+        loading: {
+          preAngularBootstrap: {
+            background: '#fdebed', // light pink
+            loader: {
+              name: 'lds-default',
+            },
+          },
+        },
       } as Partial<EnvOptions>);
 
       Helpers.writeFile(

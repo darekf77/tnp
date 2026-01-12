@@ -20,7 +20,6 @@ interface CopyPasteTaonProjectJson {
 }
 
 export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
-
   //#region @backendFunc
   const toolName = `${FRAMEWORK_NAME.toUpperCase()} CLI `;
   const group = `${toolName}`;
@@ -48,7 +47,6 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
     vscode: typeof import('vscode'),
     uri: Uri,
   ): Promise<void> => {
-
     //#region @backendFunc
 
     const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
@@ -84,13 +82,11 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
             `);
 
     //#endregion
-
   };
   //#endregion
 
   return (
     [
-
       //#region COPY/CUT PASTE PROJECT
       // {
       //   group: groupGroupOperations,
@@ -144,7 +140,6 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         },
         title: `paste project`,
         async exec({ vscode, uri, rootFolderPath }) {
-
           //#region @backendFunc
 
           let MAIN_CLICKED_PATH =
@@ -349,10 +344,10 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region GENERATE INDEX.TS
+      //#region GENERATE index.ts in selected folder
       {
         group: groupGENERATE,
-        title: `generate ./index.ts with all isomorphic imports`,
+        title: `generate ./index.ts with all isomorphic imports in selected folder`,
         exec: `${FRAMEWORK_NAME} generate %absolutePath% generated-index-exports_custom`,
         options: {
           titleWhenProcessing: 'generating index.ts',
@@ -361,19 +356,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region GENERATE INDEX.TS
-      // {
-      //   group: groupGENERATE,
-      //   title: `app.routes.ts`,
-      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% generated-index-exports_custom`,
-      //   options: {
-      //     titleWhenProcessing: 'generating index.ts',
-      //     showSuccessMessage: false,
-      //   },
-      // },
-      //#endregion
-
-      //#region GENERATE INDEX.TS
+      //#region GENERATE @websql regions for entity
       {
         group: groupRefactor,
         title: `class fields @websql regions`,
@@ -385,7 +368,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region taon example
+      //#region GENERATE taon simple example
       {
         group: groupGENERATE,
         title: `taon simple example (context, ctrl, entity, repo, api-service)`,
@@ -404,7 +387,26 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region taon example
+      //#region GENERATE taon entity ui components
+      {
+        group: groupGENERATE,
+        title: `taon entity ui components (list, page, form etc..)`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-entity-components %entity%`,
+        options: {
+          titleWhenProcessing: 'generating taon entity ui components',
+          showSuccessMessage: false,
+          resolveVariables: [
+            {
+              variable: 'entity',
+              placeholder: `my-entity`,
+              encode: true,
+            },
+          ],
+        },
+      },
+      //#endregion
+
+      //#region GENERATE taon worker example
       {
         group: groupGENERATE,
         title: `taon worker (worker, ui, context, ctrl, entity, repo, api-service)`,
@@ -435,7 +437,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region generate taon backend repository file
+      //#region GENERATE taon backend repository file
       {
         group: groupGENERATE,
         title: `taon .repository.ts file`,
@@ -450,7 +452,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region generate taon controller file
+      //#region GENERATE taon controller file
       {
         group: groupGENERATE,
         title: `taon .controller.ts file`,
@@ -465,11 +467,11 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region generate taon controller file
+      //#region GENERATE taon active context file
       {
         group: groupGENERATE,
-        title: `taon .context.ts file`,
-        exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-context_flat  %entity%`,
+        title: `taon .active.context.ts file`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-active-context_flat  %entity%`,
         options: {
           titleWhenProcessing: 'generating taon context file',
           showSuccessMessage: false,
@@ -480,7 +482,22 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region generate taon provider file
+      //#region GENERATE taon abstract context file
+      {
+        group: groupGENERATE,
+        title: `taon .abstract.context.ts file`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-abstract-context_flat  %entity%`,
+        options: {
+          titleWhenProcessing: 'generating taon context file',
+          showSuccessMessage: false,
+          resolveVariables: [
+            { variable: 'entity', placeholder: `my-entity`, encode: true },
+          ],
+        },
+      },
+      //#endregion
+
+      //#region GENERATE taon provider file
       {
         group: groupGENERATE,
         title: `taon .provider.ts file`,
@@ -495,7 +512,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region generate taon middleware file
+      //#region GENERATE taon middleware file
       {
         group: groupGENERATE,
         title: `taon .middleware.ts file`,
@@ -510,7 +527,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region generate taon api-service file
+      //#region GENERATE taon api-service file
       {
         group: groupGENERATE,
         title: `taon .api-service.ts file`,
@@ -525,36 +542,13 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region generate taon flat app structure
-      // {
-      //   option: 'app-extended_flat',
-      //   label: 'Generate extended app.* files for taon app',
-      // },
-      // {
-      //   group: groupGENERATE,
-      //   title: `taon flat app structure`,
-      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% app-extended_flat %entity%`,
-      //   options: {
-      //     titleWhenProcessing: 'generating taon flat app structure',
-      //     showSuccessMessage: false,
-      //     resolveVariables: [
-      //       { variable: 'entity', placeholder: `my-component`, encode: true },
-      //     ],
-      //   },
-      // },
-      //#endregion
-
-      //#region generate dummy angular component structure
-      // {
-      //   option: 'dummy-angular-standalone-component',
-      //   label: 'Generate dummy Angular component structure',
-      // },
+      //#region GENERATE dummy angular component structure
       {
         group: groupGENERATE,
         title: `angular component structure`,
         exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-standalone-component %entity%`,
         options: {
-          titleWhenProcessing: 'generating dummy angular component structure',
+          titleWhenProcessing: 'generating angular component structure',
           showSuccessMessage: false,
           resolveVariables: [
             { variable: 'entity', placeholder: `my-component`, encode: true },
@@ -563,50 +557,19 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-      //#region generate dummy angular module structure
-      // {
-      //   group: groupGENERATE,
-      //   title: `angular module structure`,
-      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-module %entity%`,
-      //   options: {
-      //     titleWhenProcessing: 'generating dummy angular module structure',
-      //     showSuccessMessage: false,
-      //     resolveVariables: [
-      //       { variable: 'entity', placeholder: `my-component`, encode: true },
-      //     ],
-      //   },
-      // },
-      //#endregion
-
-      //#region generate dummy angular lazy module structure
-      // {
-      //   group: groupGENERATE,
-      //   title: `angular lazy module structure`,
-      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-lazy-module %entity%`,
-      //   options: {
-      //     titleWhenProcessing: 'generating dummy angular lazy module structure',
-      //     showSuccessMessage: false,
-      //     resolveVariables: [
-      //       { variable: 'entity', placeholder: `my-component`, encode: true },
-      //     ],
-      //   },
-      // },
-      //#endregion
-
-      //#region generate dummy angular lazy module container structure
-      // {
-      //   group: groupGENERATE,
-      //   title: `angular lazy module container structure`,
-      //   exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-lazy-module-container %entity%`,
-      //   options: {
-      //     titleWhenProcessing:
-      //       'generating dummy angular lazy module container structure',
-      //     showSuccessMessage: false,
-      //     resolveVariables: [
-      //       { variable: 'entity', placeholder: `my-component`, encode: true },
-      //     ],
-      //   },
-      // },
+      //#region GENERATE dummy angular container structure
+      {
+        group: groupGENERATE,
+        title: `angular container structure with active context`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% dummy-angular-standalone-container %entity%`,
+        options: {
+          titleWhenProcessing: 'generating angular container structure',
+          showSuccessMessage: false,
+          resolveVariables: [
+            { variable: 'entity', placeholder: `my-container`, encode: true },
+          ],
+        },
+      },
       //#endregion
 
       //#region temp files show
@@ -636,7 +599,6 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         },
       },
       //#endregion
-
     ] as CommandType[]
   ).map(c => {
     if (!c.command) {
@@ -648,5 +610,4 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
     return c;
   }) as CommandType[];
   //#endregion
-
 };

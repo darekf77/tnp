@@ -368,6 +368,9 @@ class EnvOptionsLoadingPreAngularBootstrap {
    */
   declare loader?: string | Models.TaonLoaderConfig;
 
+  /**
+   * background body
+   */
   declare background?: string;
 }
 //#endregion
@@ -396,7 +399,7 @@ class EnvOptionsLoading {
    * taon app data is being loader
    * (right after *preAngularBootstrap*)
    */
-  declare afterAngularBootstrap?: Partial<EnvOptionsLoadingAfterAngularBootstrapConfig>;
+  // declare afterAngularBootstrap?: Partial<EnvOptionsLoadingAfterAngularBootstrapConfig>;
 }
 //#endregion
 
@@ -808,6 +811,9 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 
   declare build: Partial<EnvOptionsBuild>;
 
+  /**
+   * Use this only when you are not using SSR
+   */
   declare loading: Partial<EnvOptionsLoading>;
 
   declare copyToManager: Partial<EnvOptionsCopyToManager>;
@@ -926,10 +932,10 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
       new EnvOptionsLoadingPreAngularBootstrap(),
       this.loading?.preAngularBootstrap,
     );
-    this.loading.afterAngularBootstrap = _.merge(
-      new EnvOptionsLoadingAfterAngularBootstrapConfig(),
-      this.loading?.afterAngularBootstrap,
-    );
+    // this.loading.afterAngularBootstrap = _.merge(
+    //   new EnvOptionsLoadingAfterAngularBootstrapConfig(),
+    //   this.loading?.afterAngularBootstrap,
+    // );
     this.loading = _.merge(new EnvOptionsLoading(), this.loading);
 
     this.release = this.release || ({} as any);
@@ -1108,10 +1114,10 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
     genOnlyClientCode: '-' as any,
   },
   loading: {
-    afterAngularBootstrap: {
-      loader: '-' as any,
-      background: '-' as any,
-    },
+    // afterAngularBootstrap: {
+    //   loader: '-' as any,
+    //   background: '-' as any,
+    // },
     preAngularBootstrap: {
       loader: '-' as any,
       background: '-' as any,
