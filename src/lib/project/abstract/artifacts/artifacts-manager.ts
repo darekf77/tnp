@@ -24,6 +24,7 @@ import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
 import {
   appElectronTsFromSrc,
   appTsFromSrc,
+  containerPrefix,
   distMainProject,
   dotFileTemplateExt,
   dotVscodeMainProject,
@@ -214,14 +215,14 @@ export class ArtifactManager {
         let node_modules_path = this.project.nodeModules.path;
         let node_modules_real_path = this.project.nodeModules.realPath;
         if (node_modules_path !== node_modules_real_path) {
-          const containerName = path.basename(
-            path.dirname(node_modules_real_path),
-          );
+          // const containerName = path.basename(
+          //   path.dirname(node_modules_real_path),
+          // );
           const properRelativeNodeModulesPath = crossPlatformPath(
             path.resolve(
               config.dirnameForTnp,
               this.project.ins.taonProjectsRelative,
-              containerName,
+              `${containerPrefix}${this.project.taonJson.frameworkVersion}`,
               nodeModulesMainProject,
             ),
           );
