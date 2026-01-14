@@ -1,7 +1,13 @@
 //#region imports
 import { RegionRemover } from 'isomorphic-region-loader/src';
 import { ReplaceOptionsExtended } from 'isomorphic-region-loader/src';
-import { config, extAllowedToReplace, frontEndOnly, TAGS } from 'tnp-core/src';
+import {
+  chalk,
+  config,
+  extAllowedToReplace,
+  frontEndOnly,
+  TAGS,
+} from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 
@@ -13,7 +19,9 @@ import {
   assetsFromSrc,
   assetsFromTempSrc,
   browserMainProject,
+  indexTsFromLibFromSrc,
   libFromImport,
+  libFromSrc,
   srcFromTaonImport,
   srcMainProject,
   tmpSourceDist,
@@ -33,6 +41,8 @@ import { SplitFileProcess } from './file-split-process';
 //#region constants
 const debugFile = [
   // 'helpers-process.ts'
+  'base-compiler-for-project.ts',
+  'helpers-check.container.ts',
 ];
 //#endregion
 
@@ -49,7 +59,6 @@ const debugFile = [
  *
  */
 export class BrowserCodeCut {
-
   //#region fields
   /**
    * slighted modifed app release dist
@@ -161,7 +170,6 @@ export class BrowserCodeCut {
     isCuttableFile: boolean;
     regionReplaceOptions: ReplaceOptionsExtended;
   }) {
-
     //#region @backendFunc
     if (isCuttableFile) {
       this.initAndSaveCuttableFile(regionReplaceOptions);
@@ -169,20 +177,17 @@ export class BrowserCodeCut {
       this.initAndSaveAssetFile(fileRemovedEvent);
     }
     //#endregion
-
   }
   //#endregion
 
   //#region private / methods & getters / init and save cuttabl file
   private initAndSaveCuttableFile(options: ReplaceOptionsExtended): void {
-
     //#region @backendFunc
     return this.init()
       .REPLACERegionsForIsomorphicLib(_.cloneDeep(options) as any)
       .REPLACERegionsFromTsImportExport()
       .save();
     //#endregion
-
   }
   //#endregion
 
@@ -239,16 +244,16 @@ export class BrowserCodeCut {
       }
     }
     //#endregion
-
   }
   //#endregion
 
   //#region private / methods & getters / init
+  rawOrginalContent: string;
   private init(): BrowserCodeCut {
-
     //#region @backendFunc
     const orgContent =
       Helpers.readFile(this.absSourcePathFromSrc, void 0, true) || '';
+    this.rawOrginalContent = orgContent;
 
     const allIsomorphicPackagesFromMemory =
       this.project.packagesRecognition.allIsomorphicPackagesFromMemory;
@@ -291,47 +296,39 @@ export class BrowserCodeCut {
     this.rawContentBackend = this.rawContentForBrowser; // at the beginning those are normal files from src
     return this;
     //#endregion
-
   }
 
   //#endregion
 
   //#region private / methods & getters / project own smart packages
   get projectOwnSmartPackages(): string[] {
-
     //#region @backendFunc
     return [this.project.nameForNpmPackage];
     //#endregion
-
   }
   //#endregion
 
   //#region private / methods & getters / is empty browser file
   private get isEmptyBrowserFile(): boolean {
-
     //#region @backendFunc
     return this.rawContentForBrowser.replace(/\s/g, '').trim() === '';
     //#endregion
-
   }
   //#endregion
 
   //#region private / methods & getters / is empty module backend file
   private get isEmptyModuleBackendFile(): boolean {
-
     //#region @backendFunc
     return (
       (this.rawContentBackend || '').replace(/\/\*\ \*\//g, '').trim()
         .length === 0
     );
     //#endregion
-
   }
   //#endregion
 
   //#region private / methods & getters / save empty file
   private saveEmptyFile(isTsFile: boolean): void {
-
     //#region @backendFunc
     if (!fse.existsSync(path.dirname(this.absFileSourcePathBrowserOrWebsql))) {
       // write empty instead unlink
@@ -379,13 +376,11 @@ export class BrowserCodeCut {
       );
     }
     //#endregion
-
   }
   //#endregion
 
   //#region private / methods & getters / save normal file
   private saveNormalFile(isTsFile: boolean): void {
-
     //#region @backendFunc
     // console.log('SAVE NORMAL FILE')
     if (this.isAssetsFile) {
@@ -439,7 +434,7 @@ export class BrowserCodeCut {
         this.changeNpmNameToLocalLibNamePath(
           this.rawContentForAPPONLYBrowser,
           this.absFileSourcePathBrowserOrWebsqlAPPONLY,
-          { isBrowser: true },
+          { isBrowser: true, libForApp: true },
         ),
         'utf8',
       );
@@ -458,13 +453,11 @@ export class BrowserCodeCut {
       );
     }
     //#endregion
-
   }
   //#endregion
 
   //#region private / methods & getters / replace regions from ts import export
   private REPLACERegionsFromTsImportExport(): BrowserCodeCut {
-
     //#region @backendFunc
     if (this.isAssetsFile) {
       return this;
@@ -518,7 +511,6 @@ export class BrowserCodeCut {
 
     return this;
     //#endregion
-
   }
   //#endregion
 
@@ -526,7 +518,6 @@ export class BrowserCodeCut {
   private REPLACERegionsForIsomorphicLib(
     options: ReplaceOptionsExtended,
   ): BrowserCodeCut {
-
     //#region @backendFunc
     if (this.isAssetsFile) {
       return this;
@@ -582,13 +573,11 @@ export class BrowserCodeCut {
 
     return this;
     //#endregion
-
   }
   //#endregion
 
   //#region private / methods & getters / processing asset link for app
   private processAssetsLinksForApp(): void {
-
     //#region @backendFunc
     this.rawContentForAPPONLYBrowser = this.rawContentForBrowser.replace(
       new RegExp(Helpers.escapeStringForRegEx(TO_REMOVE_TAG), 'g'),
@@ -713,13 +702,11 @@ export class BrowserCodeCut {
     })();
 
     //#endregion
-
   }
   //#endregion
 
   //#region private / methods & getters / save
   private save(): void {
-
     //#region @backendFunc
     if (this.isAssetsFile) {
       this.saveNormalFile(false);
@@ -769,9 +756,13 @@ export class BrowserCodeCut {
       fse.writeFileSync(absoluteBackendDestFilePath, contentStandalone, 'utf8');
     }
     //#endregion
-
   }
   //#endregion
+
+  private static initialWarning = {};
+  get initialWarnings() {
+    return BrowserCodeCut.initialWarning;
+  }
 
   //#region private / methods & getters / change content before saving file
   private changeNpmNameToLocalLibNamePath(
@@ -779,23 +770,37 @@ export class BrowserCodeCut {
     absFilePath: string,
     options: {
       isBrowser: boolean;
+      libForApp?: boolean;
     },
   ): string {
-
     //#region @backendFunc
+    const isLibFile = this.relativePath.startsWith(`${libFromSrc}/`);
     if (!absFilePath.endsWith('.ts')) {
       // console.log(`NOT_FIXING: ${absFilePath}`)
       return content;
     }
 
+    // if (this.debug) {
+    //   console.log(`Fixing imports in: ${absFilePath}`);
+    //   console.log(`Fixing imports in: ${this.relativePath}`);
+    // }
+
     const projectOwnSmartPackages = this.projectOwnSmartPackages;
-    const { isBrowser } = options;
+    const { isBrowser, libForApp } = options;
 
     const howMuchBack = this.relativePath.split('/').length - 1;
+    const howMuchBackIndex = howMuchBack - 1;
     const back =
       howMuchBack === 0
         ? './'
         : _.times(howMuchBack)
+            .map(() => '../')
+            .join('');
+
+    const backIndex =
+      howMuchBackIndex === 0
+        ? './'
+        : _.times(howMuchBackIndex)
             .map(() => '../')
             .join('');
 
@@ -822,21 +827,50 @@ export class BrowserCodeCut {
     }
 
     for (const imp of toReplace) {
-      imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-        `${back}${libFromImport}`,
-      );
+      if (isLibFile) {
+        const cleanName = imp.cleanEmbeddedPathToFile
+          .replace(/\/browser$/, '')
+          .replace(/\/websql$/, '')
+          .replace(/\/lib$/, '');
+
+        const indexInIfile = (this.rawOrginalContent || '')
+          .split('\n')
+          .findIndex(line => {
+            return line.includes(`${cleanName}/${srcFromTaonImport}`);
+          });
+
+        const key = `${cleanName}:${indexInIfile}:${this.relativePath}`;
+
+        if (!this.initialWarnings[key]) {
+          // console.log(
+          //   `isBrowser: ${!!isBrowser}, libForApp: ${!!libForApp},ab ${absFilePath}, rel: ${this.relativePath}`,
+          // );
+          Helpers.warn(
+            `(illegal import ${chalk.bold(`${cleanName}/${srcFromTaonImport}`)})` +
+              ` Use relative path: ./${crossPlatformPath([srcMainProject, this.relativePath])}:${indexInIfile + 1}`,
+          );
+
+          this.initialWarnings[key] = true;
+        }
+
+        imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+          `${backIndex}${indexTsFromLibFromSrc.replace('.ts', '')}`,
+        );
+      } else {
+        imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+          `${back}${libFromImport}`,
+        );
+      }
     }
     content = this.splitFileProcess.replaceInFile(content, toReplace);
 
     return content;
     //#endregion
-
   }
   //#endregion
 
   //#region private / methods & getters / replace assets path
   private replaceAssetsPath(absDestinationPath: string): string {
-
     //#region @backendFunc
     const isAsset = this.relativePath.startsWith(`${assetsFromTempSrc}/`);
 
@@ -848,8 +882,6 @@ export class BrowserCodeCut {
         )
       : absDestinationPath;
     //#endregion
-
   }
   //#endregion
-
 }
