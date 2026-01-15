@@ -656,9 +656,9 @@ export class InsideStructAngularApp extends BaseInsideStruct {
 
           //#region recreate node_moduels libs for ng serve
           await (async () => {
-            // if (!this.initOptions.build.watchDevProjects) {
-            //   return;
-            // }
+            if (!this.initOptions.build.watch) {
+              return;
+            }
             // console.log('checking folders');
             // const isomorphicPackages =
             //   this.project.nodeModules.getIsomorphicPackagesNames();
