@@ -134,6 +134,40 @@ export const vscodeMenuItems = ({
           ),
           //#endregion
 
+          //#region items with actions / build docs
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} docs`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} docs`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
+          //#endregion
+
+          //#region items with actions / build lib watch
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} docs:watch`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} docs:watch`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
+          //#endregion
+
           //#region items with actions /  app normal
           new ProjectItem(
             `$ ${FRAMEWORK_NAME} app:normal`,
