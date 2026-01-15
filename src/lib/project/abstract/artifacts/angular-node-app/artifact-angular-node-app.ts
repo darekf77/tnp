@@ -417,6 +417,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     const projectBasePath = this.project.location;
 
+    const appBaseName = _.upperFirst(_.camelCase(this.project.name));
+    const noConfigError = `TS2724: '"./app/app"' has no exported member named '${appBaseName}AppConfig'. Did you mean '${appBaseName}Config'?`;
+    const noCompoenntError = `TS2614: Module '"./app/app"' has no exported member '${appBaseName}App'. Did you mean to use 'import ${appBaseName}App from "./app/app"' instead?`;
+
     if (!shouldSkipBuild) {
       await angularTempProj.execute(angularBuildAppCmd, {
         similarProcessKey: TaonCommands.NG,
@@ -479,6 +483,18 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
             ),
           );
 
+          if (line.includes(noConfigError)) {
+            line = line.replace(
+              noConfigError,
+              `Please export ${appBaseName}AppConfig in your ./src/app.ts file. Check core project example for reference.`,
+            );
+          }
+          if (line.includes(noCompoenntError)) {
+            line = line.replace(
+              noCompoenntError,
+              `Please export ${appBaseName}App in your ./src/app.ts file. Check core project example for reference.`,
+            );
+          }
           // /Users/dfilipiak/npm/taon-projects/application-quiz/.angular/cache/21.0.4/app/vite/deps_ssr/chunk-NX6GOWNM.js:27649:15
 
           return line;
