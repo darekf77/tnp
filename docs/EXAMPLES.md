@@ -142,13 +142,9 @@ class UserController extends TaonBaseCrudController<User> {
 
 **user-api.service.ts**
 ```ts
-@Injectable({
-  providedIn: 'root',
-})
-export class UserApiService {
-  userController = Taon.inject(
-    () => UserContext.getClass(UserController),
-  );
+@Injectable()
+export class UserApiService  extends TaonBaseAngularService {
+  userController = this.injectController(UserController);
 
   getAll() {
     return this.userController
@@ -294,12 +290,12 @@ export class UserEntity extends TaonBaseEntity {
 
 **app.ts** (*user subscriber*)
 ```ts
-@Taon.Subscriber({
+@TaonSubscriber({
   className: 'RealtimeClassSubscriber',
 })
 export class RealtimeClassSubscriber extends Taon.Base.SubscriberForEntity {
   listenTo() {
-    return UserContext.getClass(UserEntity);
+    return UserEntity;
   }
 
   afterInsert(entity: any) {

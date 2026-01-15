@@ -37,11 +37,14 @@ tnp bwl
 
 # REMEMBER: lib build command but be executed before each app/electron build
 
-tnp build:watch:app # "ng serve" for website apps
-tnp bwa
+tnp app:normal # "ng serve" for website apps
+tnp an
 
-tnp build:watch:electron # "ng serve" for electron apps
-tnp bwe
+tnp app:websql # "ng serve" for website apps in websql mode
+tnp aw
+
+tnp app:electronm # "ng serve" for electron apps
+tnp ae
 
 ```
 #### Scenario 1: developing website/npm library
@@ -51,7 +54,7 @@ taon build:watch:lib # or taon bwl
 ```
 second terminal (wait for this command until lib build finish)
 ```bash
-taon build:watch:app # or taon bwa
+taon app:normal # or taon bwa
 ```
 
 #### Scenario 2: developing electron app/npm library
@@ -61,7 +64,7 @@ taon build:watch:lib # or taon bwl
 ```
 second terminal (wait for this command until lib build finish)
 ```bash
-taon build:watch:electron # or taon bwe
+taon app:electron # or taon bwe
 ```
 
 #### Scenario 3: developing vscode extension/npm library
@@ -83,7 +86,11 @@ tnp r
 
 # release all stuff from taon.jsonc autoReleaseConfigAllowedItems
 tnp auto:release
-tnp ar
+tnp ar <task name>
+
+# by default there is npm task for autorelease
+tnp ar npm # work for standalone and container organization
+
 ```
 
 
@@ -93,6 +100,9 @@ Similar command to npm link for tnp projects
 # - link local lib/cli development build as global cli tool
 # - link local repo cli as global cli tools
 tnp link
+
+tnp link:local
+tnp link:global
 ```
 
 ## Migrations (for databases)

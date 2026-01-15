@@ -36,7 +36,7 @@ every time every crucial framework file/config! ✏️
 => no more security issues with old npm packages 🛡 ️<br>
 
 
-## 8. Cloud based projects releases (standalone and organization) to remote serves, npm's
+## 8. Cloud based npm projects releases (standalone and organization)
 
 ...start complex release processes with one simple command ⚡
 
