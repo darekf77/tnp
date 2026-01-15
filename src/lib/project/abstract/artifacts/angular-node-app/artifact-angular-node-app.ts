@@ -40,6 +40,7 @@ import {
   appFromSrcInsideNgApp,
   assetsFromNgProj,
   assetsFromSrc,
+  browserNgBuild,
   COMPILATION_COMPLETE_APP_NG_SERVE,
   CoreAssets,
   CoreNgTemplateFiles,
@@ -690,7 +691,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     const projectsReposToPushAndTag: string[] = [this.project.location];
     const projectsReposToPush: string[] = [];
 
-    const { appDistOutBrowserAngularAbsPath, appDistOutBackendNodeAbsPath } =
+    let { appDistOutBrowserAngularAbsPath, appDistOutBackendNodeAbsPath } =
       await this.buildPartial(
         EnvOptions.fromRelease({
           ...releaseOptions,
@@ -699,6 +700,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           // },
         }),
       );
+
     let releaseProjPath: string = appDistOutBrowserAngularAbsPath;
 
     releaseOptions.release.skipStaticPagesVersioning = _.isUndefined(
@@ -710,6 +712,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
       //#region static pages release
+      if (!releaseOptions.build.ssr) {
+        appDistOutBrowserAngularAbsPath = crossPlatformPath([
+          appDistOutBrowserAngularAbsPath,
+          browserNgBuild,
+        ]);
+      }
+
       const releaseData = await this.staticPagesDeploy(
         appDistOutBrowserAngularAbsPath,
         releaseOptions,

@@ -760,6 +760,7 @@ export const ENV_INJECT_COMMENT = '<!--ENV_INJECT-->';
 export const isomorphicPackagesJsonKey = 'isomorphicPackages';
 
 export const browserMainProject = config.folder.browser;
+export const browserNgBuild = config.folder.browser;
 export const websqlMainProject = config.folder.websql;
 
 export const clientCodeVersionFolder = [browserMainProject, websqlMainProject];
