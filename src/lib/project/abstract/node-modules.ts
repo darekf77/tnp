@@ -1,5 +1,11 @@
 //#region imports
-import { config, fileName, LibTypeEnum, taonPackageName } from 'tnp-core/src';
+import {
+  config,
+  fileName,
+  LibTypeEnum,
+  taonPackageName,
+  UtilsFilesFoldersSync,
+} from 'tnp-core/src';
 import {
   path,
   crossPlatformPath,
@@ -27,9 +33,11 @@ import {
   libFromCompiledDist,
   libFromSrc,
   nodeModulesMainProject,
+  notAllowedAsPacakge,
   packageJsonLockMainProject,
   packageJsonMainProject,
   SKIP_CORE_CHECK_PARAM,
+  sourceLinkInNodeModules,
   srcDtsFromNpmPackage,
   srcFromTaonImport,
   taonJsonMainProject,
@@ -492,4 +500,91 @@ export class NodeModules extends BaseNodeModules {
     //#endregion
   }
   //#endregion
+
+  getIsomorphicPackagesNames(): string[] {
+    //#region @backendFunc
+    return this.getAllPackagesNames().filter(packageName =>
+      this.checkIsomorphic(packageName),
+    );
+    //#endregion
+  }
+
+  getIsomorphicPackagesNamesInDevMode(): string[] {
+    //#region @backendFunc
+    return this.getAllPackagesNames().filter(
+      packageName =>
+        this.checkIsomorphic(packageName) && this.checkIfInDevMode(packageName),
+    );
+    //#endregion
+  }
+
+  //#region get folders with packages
+  getAllPackagesNames = (options?: { followSymlinks?: boolean }): string[] => {
+    //#region @backendFunc
+    options = options || {};
+    const followSymlinks = !!options.followSymlinks;
+    let fromNodeModulesFolderSearch = UtilsFilesFoldersSync.getFoldersFrom(
+      this.path,
+      {
+        recursive: false,
+        followSymlinks,
+      },
+    )
+      .reduce((a, b) => {
+        if (path.basename(b).startsWith('@')) {
+          const foldersFromB = Helpers.foldersFrom(b)
+            .filter(f => !notAllowedAsPacakge.includes(path.basename(f)))
+            // .filter(f => Helpers.exists([path.dirname(f), fileName.index_d_ts])) // QUICK_FIX @angular/animation
+            .map(f => {
+              return `${path.basename(b)}/${path.basename(f)}`;
+            });
+          return [...a, ...foldersFromB];
+        }
+        return [...a, b];
+      }, [])
+      .map(f => {
+        if (f.startsWith('@')) {
+          return f;
+        }
+        return path.basename(f);
+      });
+
+    return fromNodeModulesFolderSearch;
+    //#endregion
+  };
+  //#endregion
+
+  checkIfInDevMode(packageName: string) {
+    //#region @backendFunc
+    const packageInNodeModulesPath = crossPlatformPath([
+      this.realPath,
+      packageName,
+    ]);
+    return Helpers.isExistedSymlink([
+      packageInNodeModulesPath,
+      sourceLinkInNodeModules,
+    ]);
+    //#endregion
+  }
+
+  checkIsomorphic(packageName: string) {
+    //#region @backendFunc
+    let isIsomorphic = false;
+    // !  TODO this in probably incorrect packages is never a link
+    const packageInNodeModulesPath = crossPlatformPath([
+      this.realPath,
+      packageName,
+    ]);
+    const browser = crossPlatformPath([
+      packageInNodeModulesPath,
+      browserMainProject,
+    ]);
+    const websql = crossPlatformPath([
+      packageInNodeModulesPath,
+      websqlMainProject,
+    ]);
+    isIsomorphic = Helpers.exists(browser) && Helpers.exists(websql);
+    return isIsomorphic;
+    //#endregion
+  }
 }

@@ -1923,6 +1923,11 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     this._exit();
     //#endregion
   }
+
+  aaaaa() {
+    console.info(('GLOBAL COMMAND WORKS!'));
+    this._exit();
+  }
 }
 
 export default {

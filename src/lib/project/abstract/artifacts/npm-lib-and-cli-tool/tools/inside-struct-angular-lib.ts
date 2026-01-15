@@ -14,6 +14,7 @@ import {
   libFromSrc,
   migrationsFromSrc,
   migrationsFromTempSrc,
+  myLibFromNgProject,
   packageJsonNgProject,
   projectsFromNgTemplate,
   srcMainProject,
@@ -221,7 +222,7 @@ export * from './${libFromSrc}';
             f => {
               let content = Helpers.readFile(f) || '';
               content = content.replace(
-                new RegExp('my\\-lib', 'g'),
+                new RegExp(Utils.escapeStringForRegEx(myLibFromNgProject), 'g'),
                 f === libPackageJson
                   ? `${this.project.name}/${this.initOptions.build.websql ? websqlMainProject : browserMainProject}`
                   : this.project.name,

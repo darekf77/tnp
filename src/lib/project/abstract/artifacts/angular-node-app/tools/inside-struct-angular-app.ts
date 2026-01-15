@@ -1,6 +1,6 @@
 //#region imports
 import { RegionRemover } from 'isomorphic-region-loader/src';
-import { RenameRule } from 'magic-renamer/src';
+import { MagicRenamer, RenameRule } from 'magic-renamer/src';
 import { config, TAGS, Utils, UtilsFilesFoldersSync } from 'tnp-core/src';
 import { crossPlatformPath, path, _, CoreModels, fse } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
@@ -17,10 +17,17 @@ import {
   CoreNgTemplateFiles,
   distMainProject,
   electronNgProj,
+  externalLibsFromNgProject,
   indexJSElectronDist,
+  libFromNgProject,
+  libFromSrc,
+  migrationsFromSrc,
+  myLibFromNgProject,
   ngProjectStylesScss,
   packageJsonNgProject,
   packageJsonNpmLib,
+  projectsFromNgTemplate,
+  sourceLinkInNodeModules,
   srcMainProject,
   srcNgProxyProject,
   TaonGeneratedFolders,
@@ -29,6 +36,8 @@ import {
   tmpAppsForDistElectron,
   tmpAppsForDistElectronWebsql,
   tmpAppsForDistWebsql,
+  tmpLibsForDist,
+  tmpLibsForDistWebsql,
   tmpSrcAppDist,
   tmpSrcAppDistWebsql,
   tmpSrcDist,
@@ -73,7 +82,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
 
   insideStruct(): InsideStruct {
     //#region @backendFunc
-    const project = this.project;
+
     const tmpProjectsStandalone = this.resolveTmpProjectStandalonePath();
     const templateFolderInCoreProject = templateFolderForArtifact(
       this.isElectron
@@ -84,8 +93,8 @@ export class InsideStructAngularApp extends BaseInsideStruct {
     const result = InsideStruct.from(
       {
         relateivePathesFromContainer: this.relativePaths(),
-        projectType: project.type,
-        frameworkVersion: project.framework.frameworkVersion,
+        projectType: this.project.type,
+        frameworkVersion: this.project.framework.frameworkVersion,
         pathReplacements: [
           [
             new RegExp(
@@ -127,7 +136,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
 
           //#region DONE - replacing ProjectName everywher
           (() => {
-            const magicRenameRules = `ProjectName->${_.upperFirst(_.camelCase(project.name))}`;
+            const magicRenameRules = `ProjectName->${_.upperFirst(_.camelCase(this.project.name))}`;
 
             // const filesToProcess = UtilsFilesFoldersSync.getFilesFrom([
             //   project.location,
@@ -137,7 +146,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             //   return f.endsWith('.ts');
             // });
             const base = crossPlatformPath([
-              project.location,
+              this.project.location,
               replacement(tmpProjectsStandalone),
               srcNgProxyProject,
             ]);
@@ -245,7 +254,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           //#region DONE - replace sqljs-loader.ts - replace TO_REPLACE_BASENAME
           (() => {
             const sqlJsLoadFileAbsPath = crossPlatformPath([
-              project.location,
+              this.project.location,
               replacement(tmpProjectsStandalone),
               srcNgProxyProject,
               CoreNgTemplateFiles.sqlJSLoaderTs,
@@ -334,7 +343,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             //#region LOADERS & BACKGROUNDS REPLACEMENT / replace index.html body background color & loader
             (() => {
               const appModuleFilePath = path.join(
-                project.location,
+                this.project.location,
                 replacement(tmpProjectsStandalone),
                 `/${srcNgProxyProject}/${CoreNgTemplateFiles.INDEX_HTML_NG_APP}`,
               );
@@ -384,7 +393,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           //#region DONE -  replace app.component.html
           (() => {
             const indexHtmlFilePath = crossPlatformPath([
-              project.location,
+              this.project.location,
               replacement(tmpProjectsStandalone),
               srcNgProxyProject,
               CoreNgTemplateFiles.INDEX_HTML_NG_APP,
@@ -411,7 +420,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           //#region DONE - replace style.scss
           (() => {
             const stylesFilePath = crossPlatformPath([
-              project.location,
+              this.project.location,
               replacement(tmpProjectsStandalone),
               srcNgProxyProject,
               ngProjectStylesScss,
@@ -426,14 +435,14 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           //#region TODO (what I am doing here) .. replace favicon.ico
           (() => {
             const faviconPathDest = crossPlatformPath([
-              project.location,
+              this.project.location,
               replacement(tmpProjectsStandalone),
               srcNgProxyProject,
               CoreNgTemplateFiles.FAVICON_ICO,
             ]);
 
             const source = crossPlatformPath([
-              project.location,
+              this.project.location,
               srcNgProxyProject,
               assetsFromNgProj,
               CoreNgTemplateFiles.FAVICON_ICO,
@@ -451,7 +460,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
               ? tmpSrcDistWebsql
               : tmpSrcDist;
 
-            const assetsSource = project.pathFor([
+            const assetsSource = this.project.pathFor([
               replacement(browserTsCode),
               assetsFromSrc,
             ]);
@@ -461,7 +470,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             }
 
             const assetsDest = crossPlatformPath([
-              project.location,
+              this.project.location,
               replacement(tmpProjectsStandalone),
               srcNgProxyProject,
               assetsFromNgProj,
@@ -474,14 +483,14 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           if (this.isElectron) {
             //#region electron DONE
             (() => {
-              const electronBackend = project.pathFor(
+              const electronBackend = this.project.pathFor(
                 replacement(distMainProject),
               );
               if (!Helpers.exists(electronBackend)) {
                 Helpers.mkdirp(electronBackend);
               }
               const compileTs = crossPlatformPath([
-                project.location,
+                this.project.location,
                 replacement(tmpProjectsStandalone),
                 electronNgProj,
                 TaonGeneratedFolders.COMPILED,
@@ -496,7 +505,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
               const packageJson = new BasePackageJson({
                 cwd: crossPlatformPath(
                   path.join(
-                    project.location,
+                    this.project.location,
                     replacement(tmpProjectsStandalone),
                     `/${packageJsonNgProject}`,
                   ),
@@ -513,7 +522,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
 
             (() => {
               const appModuleFilePath = crossPlatformPath([
-                project.location,
+                this.project.location,
                 replacement(tmpProjectsStandalone),
                 srcNgProxyProject,
                 CoreNgTemplateFiles.INDEX_HTML_NG_APP,
@@ -532,14 +541,14 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           //#region DONE rebuild manifest + index.html
           await (async () => {
             const manifestJsonPath = crossPlatformPath([
-              project.location,
+              this.project.location,
               replacement(tmpProjectsStandalone),
               srcNgProxyProject,
               CoreNgTemplateFiles.WEBMANIFEST_JSON,
             ]);
 
             const indexHtmlPath = crossPlatformPath([
-              project.location,
+              this.project.location,
               replacement(tmpProjectsStandalone),
               srcNgProxyProject,
               CoreNgTemplateFiles.INDEX_HTML_NG_APP,
@@ -553,12 +562,15 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             let indexHtml = Helpers.readFile(indexHtmlPath);
 
             manifestJson.name =
-              this.initOptions.build.pwa.name || _.startCase(project.name);
+              this.initOptions.build.pwa.name || _.startCase(this.project.name);
 
             manifestJson.short_name =
-              this.initOptions.build.pwa.short_name || project.name;
+              this.initOptions.build.pwa.short_name || this.project.name;
 
-            const assetsPath = project.pathFor([srcMainProject, assetsFromSrc]);
+            const assetsPath = this.project.pathFor([
+              srcMainProject,
+              assetsFromSrc,
+            ]);
 
             if (this.project.artifactsManager.globalHelper.branding.exist) {
               // apply pwa generated icons
@@ -627,7 +639,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           //#region DONE replace base href
           (() => {
             const angularJsonPath = crossPlatformPath([
-              project.location,
+              this.project.location,
               replacement(tmpProjectsStandalone),
               CoreNgTemplateFiles.ANGULAR_JSON,
             ]);
@@ -642,10 +654,164 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           })();
           //#endregion
 
+          //#region recreate node_moduels libs for ng serve
+          await (async () => {
+            // if (!this.initOptions.build.watchDevProjects) {
+            //   return;
+            // }
+            // console.log('checking folders');
+            // const isomorphicPackages =
+            //   this.project.nodeModules.getIsomorphicPackagesNames();
+            // console.log(isomorphicPackages);
+
+            // 1. recreate projects/in-dev-packages-lib
+
+            const isomorphicPackagesDevMode =
+              this.project.nodeModules.getIsomorphicPackagesNamesInDevMode();
+            // console.log(isomorphicPackagesDevMode);
+
+            const tsconfigPath = crossPlatformPath([
+              this.project.location,
+              replacement(tmpProjectsStandalone),
+              tsconfigNgProject,
+            ]);
+
+            const existedMyLib = crossPlatformPath([
+              this.project.location,
+              replacement(tmpProjectsStandalone),
+              projectsFromNgTemplate,
+              myLibFromNgProject,
+            ]);
+
+            const ins = MagicRenamer.Instance(existedMyLib, true);
+            const rule = `${myLibFromNgProject} => ${externalLibsFromNgProject}`;
+
+            ins.start(rule, []);
+
+            // 2. link src to in-dev-packages-lib
+
+            for (
+              let index = 0;
+              index < isomorphicPackagesDevMode.length;
+              index++
+            ) {
+              const packageName = isomorphicPackagesDevMode[index];
+              const packageSource = this.project.nodeModules.pathFor([
+                packageName,
+                sourceLinkInNodeModules,
+              ]);
+              const packageSourceRealPath = crossPlatformPath(
+                fse.realpathSync(packageSource),
+              );
+
+              const projFromSrouce = this.project.ins.From(
+                path.dirname(path.dirname(packageSourceRealPath)),
+              );
+
+              if (projFromSrouce) {
+                //#region link lib
+                (() => {
+                  const sourceLibInProjects = projFromSrouce.pathFor([
+                    this.initOptions.build.websql
+                      ? tmpSrcAppDistWebsql
+                      : tmpSrcAppDist,
+                    libFromNgProject,
+                  ]);
+
+                  const destinationLibInPorjects = crossPlatformPath([
+                    this.project.location,
+                    replacement(tmpProjectsStandalone),
+                    projectsFromNgTemplate,
+                    externalLibsFromNgProject,
+                    srcNgProxyProject,
+                    libFromNgProject,
+                    projFromSrouce.nameForNpmPackage,
+                    libFromSrc,
+                  ]);
+
+                  Helpers.createSymLink(
+                    sourceLibInProjects,
+                    destinationLibInPorjects,
+                    {
+                      continueWhenExistedFolderDoesntExists: true,
+                    },
+                  );
+                })();
+                //#endregion
+
+                //#region link migration
+                (() => {
+                  const sourceMigrationInProjects = projFromSrouce.pathFor([
+                    this.initOptions.build.websql
+                      ? tmpSrcAppDistWebsql
+                      : tmpSrcAppDist,
+                    migrationsFromSrc,
+                  ]);
+
+                  const destinationMigrationInPorjects = crossPlatformPath([
+                    this.project.location,
+                    replacement(tmpProjectsStandalone),
+                    projectsFromNgTemplate,
+                    externalLibsFromNgProject,
+                    srcNgProxyProject,
+                    libFromNgProject,
+                    projFromSrouce.nameForNpmPackage,
+                    migrationsFromSrc,
+                  ]);
+
+                  Helpers.createSymLink(
+                    sourceMigrationInProjects,
+                    destinationMigrationInPorjects,
+                    {
+                      continueWhenExistedFolderDoesntExists: true,
+                    },
+                  );
+                })();
+                //#endregion
+
+                Helpers.setValueToJSONC(
+                  tsconfigPath,
+                  `compilerOptions.paths['${projFromSrouce.nameForNpmPackage}/${
+                    this.initOptions.build.websql
+                      ? websqlMainProject
+                      : browserMainProject
+                  }']`,
+                  [
+                    crossPlatformPath([
+                      projectsFromNgTemplate,
+                      externalLibsFromNgProject,
+                      srcNgProxyProject,
+                      libFromNgProject,
+                      projFromSrouce.nameForNpmPackage,
+                      libFromSrc,
+                    ]),
+                  ],
+                );
+              }
+
+              UtilsFilesFoldersSync.writeFile(
+                [
+                  this.project.location,
+                  replacement(tmpProjectsStandalone),
+                  projectsFromNgTemplate,
+                  externalLibsFromNgProject,
+                  srcNgProxyProject,
+                  libFromNgProject,
+                  `${externalLibsFromNgProject}.ts`,
+                ],
+                `// @ts-nocheck
+${isomorphicPackagesDevMode.map(packageName => `export * from './${packageName}/${libFromSrc}';`).join('\n')}
+
+              `,
+              );
+            }
+          })();
+          //#endregion
+
           //#endregion
         },
       },
-      project,
+      this.project,
     );
     return result;
     //#endregion

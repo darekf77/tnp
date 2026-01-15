@@ -499,6 +499,12 @@ export const srcFromTaonImport = folderName.src;
  */
 export const srcDtsFromNpmPackage = 'src.d.ts';
 
+export const myLibFromNgProject = 'my-lib';
+
+export const libFromNgProject = 'lib';
+
+export const externalLibsFromNgProject = 'external-libs';
+
 /**
  * projects/my-lib form angular lib template
  */

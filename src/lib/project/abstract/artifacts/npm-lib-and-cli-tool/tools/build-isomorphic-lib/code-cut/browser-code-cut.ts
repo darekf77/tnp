@@ -559,8 +559,8 @@ export class BrowserCodeCut {
     }
 
     (() => {
-      const from = `src/assets/`;
-      const to = `${TO_REMOVE_TAG}assets/assets-for/${this.project.nameForNpmPackage}/assets/`;
+      const from = `${srcMainProject}/${assetsFromSrc}/`;
+      const to = `${TO_REMOVE_TAG}${assetsFromNgProj}/${assetsFor}/${this.project.nameForNpmPackage}/${assetsFromNpmPackage}/`;
       this.rawContentForBrowser = this.rawContentForBrowser.replace(
         new RegExp(Helpers.escapeStringForRegEx(`/${from}`), 'g'),
         to,

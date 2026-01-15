@@ -1,5 +1,11 @@
 //#region imports
-import { config, PREFIXES, taonPackageName, tnpPackageName, Utils } from 'tnp-core/src';
+import {
+  config,
+  PREFIXES,
+  taonPackageName,
+  tnpPackageName,
+  Utils,
+} from 'tnp-core/src';
 import {
   _,
   path,
@@ -28,7 +34,6 @@ import type { Project } from './project';
  */
 // @ts-ignore TODO weird inheritance problem
 export class PackagesRecognition extends BaseFeatureForProject<Project> {
-
   //#region constructor
   private get coreContainer() {
     return this.project.framework.coreContainer;
@@ -44,14 +49,12 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
 
   //#region isomorphic packages json path
   get jsonPath(): string {
-
     //#region @backendFunc
     return crossPlatformPath([
       this.coreContainer.location,
       tmpIsomorphicPackagesJson,
     ]);
     //#endregion
-
   }
   //#endregion
 
@@ -67,7 +70,6 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
 
   //#region start
   async start(reasonToSearchPackages?: string): Promise<void> {
-
     //#region @backendFunc
     await this.coreContainer.nodeModules.makeSureInstalled();
     let recognizedPackages = [];
@@ -101,41 +103,9 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     //#endregion
 
     //#region search for isomorphic packages in folders
-    let fromNodeModulesFolderSearch = Helpers.foldersFrom(
-      this.coreContainer.nodeModules.path,
-    )
-      .reduce((a, b) => {
-        if (path.basename(b).startsWith('@')) {
-          const foldersFromB = Helpers.foldersFrom(b)
-            .filter(f => !notAllowedAsPacakge.includes(path.basename(f)))
-            .filter(f => Helpers.exists([path.dirname(f), fileName.index_d_ts])) // QUICK_FIX @angular/animation
-            .map(f => {
-              return `${path.basename(b)}/${path.basename(f)}`;
-            });
-          return [...a, ...foldersFromB];
-        }
-        return [...a, b];
-      }, [])
-      .map(f => {
-        if (f.startsWith('@')) {
-          return f;
-        }
-        return path.basename(f);
-      })
-      .filter(packageName => {
-        Helpers.log(
-          `[${config.frameworkName}] Checking package node_modules/${packageName}`,
-          2,
-        );
-        // try {
-        return this.checkIsomorphic(
-          this.coreContainer.nodeModules.path,
-          packageName,
-        );
-        // } catch (error) {
-        //   return false;
-        // }
-      });
+    let fromNodeModulesFolderSearch =
+      this.coreContainer.nodeModules.getIsomorphicPackagesNames();
+
     //#endregion
 
     recognizedPackages = Utils.uniqArray(
@@ -145,7 +115,8 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
         this.project.nameForNpmPackage,
         ...(fromNodeModulesFolderSearch || []),
         taonPackageName,
-        tnpPackageName,,
+        tnpPackageName,
+        ,
       ].filter(f => !f.startsWith(PREFIXES.RESTORE_NPM)),
     );
 
@@ -174,13 +145,11 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     });
 
     //#endregion
-
   }
   //#endregion
 
   //#region add isomorphic packages to file
   addIsomorphicPackagesToFile(recognizedPackagesNewPackages: string[]): void {
-
     //#region @backendFunc
     const alreadyExistsJson = Helpers.readJsonC(this.jsonPath) || {};
     const alreadyExistsJsonArr =
@@ -192,7 +161,6 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       ),
     });
     //#endregion
-
   }
 
   //#endregion
@@ -202,7 +170,6 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     isomorphicPackagesNames: string[],
     informAboutDiff = false,
   ): void {
-
     //#region @backendFunc
     // console.log(`add ed isomorphic isomorphic packages names to memory: ${isomorphicPackagesNames.join(', ')}`);
     if (!this.coreContainer) {
@@ -231,7 +198,6 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
         this.project.nameForNpmPackage,
       ]);
     //#endregion
-
   }
   //#endregion
 
@@ -240,7 +206,6 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
    * main source of isomorphic isomorphic packages
    */
   public get allIsomorphicPackagesFromMemory(): string[] {
-
     //#region @backendFunc
     if (
       this.coreContainer?.packagesRecognition.inMemoryIsomorphicLibs.length ===
@@ -291,36 +256,10 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     // console.log(`allIsomorphicPackagesFromMemory: ${result.join('\n ')}`);
     return result;
     //#endregion
-
   }
   //#endregion
 
   //#region check isomorphic
-  protected checkIsomorphic(node_modules: string, packageName: string) {
 
-    //#region @backendFunc
-    let isIsomorphic = false;
-    // !  TODO this in probably incorrect packages is never a link
-    const packageInNodeModulesPath = crossPlatformPath(
-      fse.realpathSync(path.join(node_modules, packageName)),
-    );
-    const browser = crossPlatformPath([
-      packageInNodeModulesPath,
-      browserMainProject,
-    ]);
-    const websql = crossPlatformPath([
-      packageInNodeModulesPath,
-      websqlMainProject,
-    ]);
-    isIsomorphic = Helpers.exists(browser) || Helpers.exists(websql);
-    if (isIsomorphic && !Helpers.exists(websql)) {
-      Helpers.removeIfExists(websql);
-      Helpers.createSymLink(browser, websql);
-    }
-    return isIsomorphic;
-    //#endregion
-
-  }
   //#endregion
-
 }
