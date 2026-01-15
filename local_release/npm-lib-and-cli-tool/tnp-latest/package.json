@@ -1,6 +1,6 @@
 {
   "name": "tnp",
-  "version": "19.0.124",
+  "version": "21.0.41",
   "scripts": {},
   "license": "MIT",
   "author": "Dariusz Filipiak",
@@ -28,8 +28,8 @@
     "ora": "3.4.0",
     "progress": "2.0.3",
     "open": "7.2.1",
-    "ts-node": "~10.9.1",
-    "typescript": "5.7.2",
+    "ts-node": "~10.9.2",
+    "typescript": "5.9.3",
     "esbuild": "~0.25.1",
     "sharp": "~0.34.2",
     "favicons": "~7.2.0",
