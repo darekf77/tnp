@@ -337,10 +337,11 @@ export const vscodeMenuItems = ({
             {
               iconPath: null,
               project: CURRENT_PROJECT,
+              // skipReturnToMenu: true,
               triggerActionOnClick: async project => {
                 if (project) {
                   await project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask();
-                  vscode.commands.executeCommand('workbench.view.explorer');
+                  // vscode.commands.executeCommand('workbench.view.explorer');
                 }
               },
             },
@@ -354,10 +355,11 @@ export const vscodeMenuItems = ({
             {
               iconPath: null,
               project: CURRENT_PROJECT,
+              // skipReturnToMenu: true,
               triggerActionOnClick: async project => {
                 if (project) {
                   await project.artifactsManager.artifact.npmLibAndCliTool.appTsRoutesAutogenProvider.runTask();
-                  vscode.commands.executeCommand('workbench.view.explorer');
+                  // vscode.commands.executeCommand('workbench.view.explorer');
                 }
               },
             },
