@@ -458,7 +458,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
   //#region api / lint
   async lint(lintOptions?: any) {
-    // TODO
+    await this.linter.start()
   }
   //#endregion
 

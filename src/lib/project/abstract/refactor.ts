@@ -176,7 +176,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
       Helpers.info(`Eslint fix done for file ${options.fixSpecificFile}`);
       return;
     }
-    await UtilsTypescript.eslintFixAllFilesInsideFolder([
+    await UtilsTypescript.eslintFixAllFilesInsideFolderAsync([
       this.project.pathFor(srcMainProject),
     ]);
     Helpers.info(`Eslint fix done`);
@@ -426,7 +426,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
   }
 
   /**
-   * Fux
+   * Replaces self imports (imports using the package name) with proper relative paths.
    */
   async selfImports(options: { fixSpecificFile?: string }) {
     //#region @backendFunc
@@ -450,9 +450,13 @@ export class Refactor extends BaseFeatureForProject<Project> {
     //#region gather all symbols with paths
     for (const absFilePath of allFiles) {
       const content = Helpers.readFile(absFilePath);
-      const exportsFromFile = UtilsTypescript.exportsFromContent(content).map(
-        e => e.name,
-      );
+      const exportsFromFile = [
+        ...UtilsTypescript.exportsFromContent(content).map(e => e.name),
+        ...UtilsTypescript.exportsRedefinedFromContent(content).map(
+          e => e.exportedName,
+        ),
+      ];
+
       exportsFromFile.forEach(exportElemName => {
         allSymbolsWithPathsAsValue[exportElemName] = absFilePath;
       });
