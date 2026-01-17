@@ -1,5 +1,5 @@
 //#region imports
-import { config, fileName } from 'tnp-core/src';
+import { config, fileName, UtilsOs } from 'tnp-core/src';
 import { chalk, fse, json5, path, _, os, win32Path } from 'tnp-core/src';
 import { Utils } from 'tnp-core/src';
 import { crossPlatformPath } from 'tnp-core/src';
@@ -497,7 +497,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   public openInVscode(): void {
 
     //#region @backendFunc
-    this.project.run(`code ${this.project.location}`).sync();
+    this.project.run(`${UtilsOs.detectEditor()} ${this.project.location}`).sync();
     //#endregion
 
   }

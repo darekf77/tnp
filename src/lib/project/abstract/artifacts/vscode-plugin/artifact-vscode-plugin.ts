@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, UtilsOs } from 'tnp-core/src';
 import {
   CoreModels,
   crossPlatformPath,
@@ -393,7 +393,7 @@ local VSCode instance.
       `Installing extension: ${path.basename(pathToVsixFile)} ` +
         `with creation date: ${fse.lstatSync(pathToVsixFile).birthtime}...`,
     );
-    Helpers.run(`code --install-extension ${path.basename(pathToVsixFile)}`, {
+    Helpers.run(`${UtilsOs.detectEditor()} --install-extension ${path.basename(pathToVsixFile)}`, {
       cwd: crossPlatformPath(path.dirname(pathToVsixFile)),
     }).sync();
     //#endregion

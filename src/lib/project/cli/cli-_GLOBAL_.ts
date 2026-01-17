@@ -242,7 +242,7 @@ export class $Global extends BaseGlobalCommandLine<
 
     `,
     );
-    Helpers.run(`code ${newProj.location}`).sync();
+    Helpers.run(`${UtilsOs.detectEditor()} ${newProj.location}`).sync();
     Helpers.info(`Done`);
     this._exit();
     //#endregion
@@ -272,7 +272,7 @@ export class $Global extends BaseGlobalCommandLine<
   //#region code instal ext
   code() {
     //#region @backendFunc
-    this.project.run(`code --install-extension ${this.args.join(' ')}`).sync();
+    this.project.run(`${UtilsOs.detectEditor()} --install-extension ${this.args.join(' ')}`).sync();
     this._exit();
     //#endregion
   }

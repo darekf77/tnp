@@ -1,5 +1,5 @@
 //#region imports
-import { config, LibTypeEnum } from 'tnp-core/src';
+import { config, LibTypeEnum, UtilsOs } from 'tnp-core/src';
 import {
   CoreModels,
   _,
@@ -41,7 +41,7 @@ export class $Open extends BaseCli {
       proj.framework.frameworkVersion,
     );
     if (container) {
-      container.run(`code .`).sync();
+      container.run(`${UtilsOs.detectEditor()} .`).sync();
     } else {
       Helpers.error(`Core container not found...`, false, true);
     }
@@ -55,13 +55,13 @@ export class $Open extends BaseCli {
     ) {
       this.project
         .run(
-          `code ${this.project.ins.by(this.project.type, this.project.framework.frameworkVersionMinusOne).location} &`,
+          `${UtilsOs.detectEditor()} ${this.project.ins.by(this.project.type, this.project.framework.frameworkVersionMinusOne).location} &`,
         )
         .sync();
     } else {
       this.project
         .run(
-          `code ${this.project.ins.by(this.project.type, this.project.framework.frameworkVersion).location} &`,
+          `${UtilsOs.detectEditor()} ${this.project.ins.by(this.project.type, this.project.framework.frameworkVersion).location} &`,
         )
         .sync();
     }
@@ -69,7 +69,7 @@ export class $Open extends BaseCli {
   }
 
   TNP_PROJECT() {
-    this.project.ins.Tnp.run(`code ${this.project.ins.Tnp.location} &`).sync();
+    this.project.ins.Tnp.run(`${UtilsOs.detectEditor()} ${this.project.ins.Tnp.location} &`).sync();
     this._exit();
   }
 
