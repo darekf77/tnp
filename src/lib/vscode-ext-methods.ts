@@ -283,6 +283,52 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+      //#region OPEN WORKBENCH PATH
+      {
+        group: null,
+        title: `${toolName} OPEN NEW WORKBENCH HERE`,
+        async exec({ vscode, uri }) {
+          // Fallback: invoked from editor / command palette
+          if (!uri && vscode.window.activeTextEditor) {
+            uri = vscode.window.activeTextEditor.document.uri;
+          }
+
+          if (!uri) {
+            vscode.window.showErrorMessage('No file or folder context found');
+            return;
+          }
+
+          let fsPath = uri.fsPath;
+
+          // If file → use its directory
+          let stat = fse.lstatSync(fsPath);
+
+          if (stat.isSymbolicLink()) {
+            fsPath = fse.realpathSync(fsPath);
+          }
+          stat = fse.lstatSync(fsPath);
+
+          if (!stat.isDirectory()) {
+            fsPath = path.dirname(fsPath);
+          }
+
+          // Resolve symlinks (real path)
+
+          const finalUri = vscode.Uri.file(fsPath);
+
+          await vscode.commands.executeCommand(
+            'vscode.openFolder',
+            finalUri,
+            true, // forceNewWindow
+          );
+        },
+        options: {
+          showOutputDataOnSuccess: false,
+          showSuccessMessage: false,
+        },
+      },
+      //#endregion
+
       //#region CREATE MIGRATION
       {
         group: groupGENERATE,
