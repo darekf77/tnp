@@ -1,11 +1,17 @@
 //#region imports
 import { BaseTaonClassesNames, TAON_FLATTEN_MAPPING } from 'taon/src';
-import { config, fileName, frontendFiles, Utils } from 'tnp-core/src';
+import {
+  config,
+  fileName,
+  frontendFiles,
+  Utils,
+  UtilsFilesFoldersSync,
+} from 'tnp-core/src';
 import { _, CoreModels, crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
-import { srcMainProject } from '../../constants';
+import { libFromSrc, srcMainProject } from '../../constants';
 import type { Project } from '../abstract/project';
 //#endregion
 
@@ -108,6 +114,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region ALL
   async ALL(options?: {
     initingFromParent?: boolean;
     fixSpecificFile?: string | undefined;
@@ -142,6 +149,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
       action: 'hide-files',
     });
   }
+  //#endregion
 
   async prettier(options: { fixSpecificFile?: string }) {
     //#region @backendFunc
@@ -414,6 +422,122 @@ export class Refactor extends BaseFeatureForProject<Project> {
       }
     });
     Helpers.taskDone(`Done fixing taon class names...`);
+    //#endregion
+  }
+
+  /**
+   * Fux
+   */
+  async selfImports(options: { fixSpecificFile?: string }) {
+    //#region @backendFunc
+    options = this.prepareOptions(options);
+    Helpers.info(`Using proper relative paths instead package full name...`);
+
+    const baseLibPath = this.project.pathFor([srcMainProject, libFromSrc]);
+    const projectNameForNpmPackage = this.project.nameForNpmPackage;
+    const allSymbolsWithPathsAsValue: Record<string, string> = {};
+
+    //#region gather all files
+    const allFiles = UtilsFilesFoldersSync.getFilesFrom(
+      this.project.pathFor(srcMainProject),
+      {
+        followSymlinks: false,
+        recursive: true,
+      },
+    );
+    //#endregion
+
+    //#region gather all symbols with paths
+    for (const absFilePath of allFiles) {
+      const content = Helpers.readFile(absFilePath);
+      const exportsFromFile = UtilsTypescript.exportsFromContent(content).map(
+        e => e.name,
+      );
+      exportsFromFile.forEach(exportElemName => {
+        allSymbolsWithPathsAsValue[exportElemName] = absFilePath;
+      });
+    }
+    //#endregion
+
+    //#region fix imports
+    allFiles
+      .filter(f => f.startsWith(baseLibPath + '/'))
+      .map(f => {
+        const content = Helpers.readFile(f);
+        const imports = UtilsTypescript.recognizeImportsFromContent(content);
+        return {
+          imports,
+          filePath: f,
+        };
+      })
+      .filter(
+        f =>
+          f.imports?.length > 0 &&
+          f.imports.some(
+            i =>
+              i.type === 'import' &&
+              i.cleanEmbeddedPathToFile?.startsWith(
+                projectNameForNpmPackage + '/',
+              ),
+          ),
+      )
+      .forEach(f => {
+        let content = Helpers.readFile(f.filePath);
+        let currentFileRelativePath = f.filePath.replace(baseLibPath + '/', '');
+        const importsToFix = f.imports.filter(
+          i =>
+            i.type === 'import' &&
+            i.cleanEmbeddedPathToFile?.startsWith(
+              projectNameForNpmPackage + '/',
+            ),
+        );
+        const fixedImportsPaths = [] as string[];
+        const toReplaceToNothing = [] as string[];
+        for (const importInfo of importsToFix) {
+          const importToDelete = importInfo.getStringPartFrom(content);
+
+          toReplaceToNothing.push(importToDelete);
+
+          for (const importElem of importInfo.importElements) {
+            const absPathForExport = allSymbolsWithPathsAsValue[importElem];
+            if (!absPathForExport) {
+              continue;
+            }
+            let exportFileRelativePath = absPathForExport.replace(
+              baseLibPath + '/',
+              '',
+            );
+            // mypath/to/file/here.ts
+            // mypath/to/other/file/there.ts
+
+            const relativeForExport =
+              UtilsTypescript.calculateRelativeImportPath(
+                currentFileRelativePath,
+                exportFileRelativePath,
+              );
+            fixedImportsPaths.push(
+              `import { ${importElem} } from '${relativeForExport}';`,
+            );
+          }
+        }
+        for (const reaplceLine of toReplaceToNothing) {
+          content = content.replace(reaplceLine, ' ');
+        }
+        content = UtilsTypescript.injectImportsIntoImportsRegion(
+          content,
+          fixedImportsPaths,
+        );
+        const contentOnDisk = Helpers.readFile(f.filePath);
+        if (contentOnDisk && contentOnDisk?.trim() !== content?.trim()) {
+          console.log(`FIXING CIRCULAR DEPS: ${f.filePath}`);
+          Helpers.writeFile(f.filePath, content);
+        }
+      });
+    //#endregion
+
+    Helpers.taskDone(`Done wrapping first imports with region...`);
+
+    await this.eslint(options);
     //#endregion
   }
 }

@@ -387,6 +387,25 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+      //#region GENERATE taon full example
+      {
+        group: groupGENERATE,
+        title: `taon full example (all taon framework building blocks)`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-full %entity%`,
+        options: {
+          titleWhenProcessing: 'generating taon full example code',
+          showSuccessMessage: false,
+          resolveVariables: [
+            {
+              variable: 'entity',
+              placeholder: `my-entity`,
+              encode: true,
+            },
+          ],
+        },
+      },
+      //#endregion
+
       //#region GENERATE taon entity ui components
       {
         group: groupGENERATE,
@@ -519,6 +538,21 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-middleware_flat  %entity%`,
         options: {
           titleWhenProcessing: 'generating taon middleware file',
+          showSuccessMessage: false,
+          resolveVariables: [
+            { variable: 'entity', placeholder: `my-entity`, encode: true },
+          ],
+        },
+      },
+      //#endregion
+
+      //#region GENERATE taon middleware file
+      {
+        group: groupGENERATE,
+        title: `taon .subscriber.ts file`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-subscriber_flat  %entity%`,
+        options: {
+          titleWhenProcessing: 'generating taon subscriber file',
           showSuccessMessage: false,
           resolveVariables: [
             { variable: 'entity', placeholder: `my-entity`, encode: true },

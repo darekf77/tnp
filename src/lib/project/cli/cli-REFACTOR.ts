@@ -195,6 +195,13 @@ export class $Refactor extends BaseCli {
     //#endregion
   }
   //#endregion
+
+  async selfImports(): Promise<void> {
+    await this.project.refactor.selfImports({
+      fixSpecificFile: this.firstArg,
+    });
+    this._exit();
+  }
 }
 export default {
   $Refactor: Helpers.CLIWRAP($Refactor, '$Refactor'),
