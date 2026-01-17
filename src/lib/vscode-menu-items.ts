@@ -401,21 +401,22 @@ export const vscodeMenuItems = ({
           //#endregion
 
           //#region items with actions / regenerate src/lib/index._auto-generated_.ts
-          new ProjectItem(
-            `$ ${FRAMEWORK_NAME} refactor:self:imports`,
-            vscode.TreeItemCollapsibleState.None,
-            {
-              iconPath: null,
-              project: CURRENT_PROJECT,
-              // skipReturnToMenu: true,
-              triggerActionOnClick: async project => {
-                if (project) {
-                  await project.refactor.selfImports({});
-                  // vscode.commands.executeCommand('workbench.view.explorer');
-                }
-              },
-            },
-          ),
+          // TODO fix synchonius exec termial and replace with span
+          // new ProjectItem(
+          //   `$ ${FRAMEWORK_NAME} refactor:self:imports`,
+          //   vscode.TreeItemCollapsibleState.None,
+          //   {
+          //     iconPath: null,
+          //     project: CURRENT_PROJECT,
+          //     // skipReturnToMenu: true,
+          //     triggerActionOnClick: async project => {
+          //       if (project) {
+          //         await project.refactor.selfImports({});
+          //         // vscode.commands.executeCommand('workbench.view.explorer');
+          //       }
+          //     },
+          //   },
+          // ),
           //#endregion
         ]
       : []),

@@ -116,6 +116,8 @@ export const scriptsCommands = [
 export const THIS_IS_GENERATED_STRING = `THIS FILE IS GENERATED - DO NOT MODIFY`;
 export const THIS_IS_GENERATED_INFO_COMMENT = `// ${THIS_IS_GENERATED_STRING}`;
 
+export const defaultLicenseVscodePlugin = 'MIT';
+
 export const OVERRIDE_FROM_TNP = [
   'activationEvents',
   'author',
