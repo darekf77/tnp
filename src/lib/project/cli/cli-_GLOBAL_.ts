@@ -181,20 +181,6 @@ export class $Global extends BaseGlobalCommandLine<
   }
   //#endregion
 
-  //#region kill vscode processes
-  killAllCode() {
-    //#region @backendFunc
-    if (process.platform === 'win32') {
-      Helpers.run(`taskkill /f /im code.exe`).sync();
-      this._exit();
-    } else {
-      Helpers.run(`fkill -f code`).sync();
-    }
-    this._exit();
-    //#endregion
-  }
-  //#endregion
-
   //#region kill all node
   async killAllJava() {
     //#region @backendFunc
@@ -272,7 +258,11 @@ export class $Global extends BaseGlobalCommandLine<
   //#region code instal ext
   code() {
     //#region @backendFunc
-    this.project.run(`${UtilsOs.detectEditor()} --install-extension ${this.args.join(' ')}`).sync();
+    this.project
+      .run(
+        `${UtilsOs.detectEditor()} --install-extension ${this.args.join(' ')}`,
+      )
+      .sync();
     this._exit();
     //#endregion
   }
@@ -1925,7 +1915,7 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
   }
 
   aaaaa() {
-    console.info(('GLOBAL COMMAND WORKS!'));
+    console.info('GLOBAL COMMAND WORKS!');
     this._exit();
   }
 }

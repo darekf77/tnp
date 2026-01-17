@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, UtilsOs } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath, os, path } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { chalk } from 'tnp-core/src';
@@ -20,7 +20,6 @@ export class $Vscode extends BaseCli {
 
   //#region display menu
   async _displayMenu(): Promise<void> {
-
     //#region @backendFunc
     try {
       while (true) {
@@ -35,7 +34,9 @@ export class $Vscode extends BaseCli {
             global: {
               name: 'Apply global settings',
               action: async () => {
-                await BaseVscodeHelpers.applyProperGlobalSettings();
+                await BaseVscodeHelpers.applyProperGlobalSettings({
+                  editor: UtilsOs.detectEditor() || 'code',
+                });
                 await UtilsTerminal.pressAnyKeyToContinueAsync();
               },
             },
@@ -54,7 +55,9 @@ export class $Vscode extends BaseCli {
               name: 'Install all recommended extensions',
               action: async () => {
                 // UtilsTerminal.clearConsole();
-                await this.project.vsCodeHelpers.installExtensions();
+                await this.project.vsCodeHelpers.installExtensions({
+                  editor: UtilsOs.detectEditor() || 'code',
+                });
               },
             },
             initLocalSettings: {
@@ -75,7 +78,6 @@ export class $Vscode extends BaseCli {
       this._exit();
     }
     //#endregion
-
   }
   //#endregion
 
