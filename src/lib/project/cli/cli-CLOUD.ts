@@ -1,5 +1,6 @@
 //#region imports
-import { CoreModels, frameworkName, path } from 'tnp-core/src';
+import { dotVscodeMainProject, packageJsonMainProject } from 'tnp/src';
+import { CoreModels, dotTaonFolder, frameworkName, path } from 'tnp-core/src';
 import {
   _,
   crossPlatformPath,
@@ -7,7 +8,7 @@ import {
   UtilsNetwork,
   UtilsTerminal,
 } from 'tnp-core/src';
-import { UtilsCliClassMethod } from 'tnp-core/src';
+import { UtilsCliClassMethod, UtilsOs } from 'tnp-core/src';
 import { BaseCLiWorkerStartMode, Helpers, UtilsZip } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartParams } from 'tnp-helpers/src';
 
@@ -21,7 +22,44 @@ import { BaseCli } from './base-cli';
 
 export class $Cloud extends BaseCli {
   declare params: EnvOptions & Partial<BaseCLiWorkerStartParams>;
+
   static [UtilsCliClassMethod.staticClassNameProperty] = '$Cloud';
+
+  async __initialize__(): Promise<void> {
+    //#region @backendFunc
+    const vscodeConfgiDotTaon = {
+      'workbench.colorCustomizations': {
+        'activityBar.background': '#be464e',
+        'statusBar.background': '#be464e',
+        'statusBar.debuggingBackground': '#15d8ff',
+      },
+    };
+    Helpers.writeJsonC(
+      [
+        UtilsOs.getRealHomeDir(),
+        dotTaonFolder,
+        dotVscodeMainProject,
+        'settings.json',
+      ],
+      vscodeConfgiDotTaon,
+    );
+
+    Helpers.writeJsonC(
+      [
+        UtilsOs.getRealHomeDir(),
+        dotTaonFolder,
+        dotVscodeMainProject,
+        packageJsonMainProject,
+      ],
+      {
+        name: 'dot-taon',
+        description: 'Taon CLI workspace',
+      },
+    );
+
+    await super.__initialize__();
+    //#endregion
+  }
 
   //#region _
   async _(): Promise<void> {
@@ -252,7 +290,6 @@ export class $Cloud extends BaseCli {
     this._exit();
   }
   //#endregion
-
 }
 
 export default {
