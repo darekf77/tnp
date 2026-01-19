@@ -15,7 +15,7 @@ export const vscodeMenuItems = ({
 }: {
   vscode: typeof import('vscode');
   FRAMEWORK_NAME: string;
-  CURRENT_PROJECT: Project;
+  CURRENT_PROJECT: Project | undefined;
   ProjectItem: ReturnType<typeof activateMenuTnp>;
   focustFirstElement: () => void;
   runInTerminal: (command: string) => void;
@@ -370,8 +370,8 @@ export const vscodeMenuItems = ({
             `$ ${FRAMEWORK_NAME} generate:lib:index`,
             vscode.TreeItemCollapsibleState.None,
             {
-              iconPath: null,
-              project: CURRENT_PROJECT,
+              iconPath: null as any,
+              project: CURRENT_PROJECT as any,
               // skipReturnToMenu: true,
               triggerActionOnClick: async project => {
                 if (project) {

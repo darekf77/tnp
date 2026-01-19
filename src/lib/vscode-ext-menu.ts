@@ -4,12 +4,11 @@ import { _ } from 'tnp-core/src';
 import type { ExtensionContext } from 'vscode';
 import type * as vscode from 'vscode';
 
-import { Project } from '../lib/project/abstract/project';
-
 import {
   tmp_FRONTEND_NORMAL_APP_PORT,
   tmp_FRONTEND_WEBSQL_APP_PORT,
 } from './constants';
+import { Project } from './project/abstract/project';
 import { vscodeMenuItems } from './vscode-menu-items';
 //#endregion
 
@@ -37,8 +36,8 @@ export function activateMenuTnp(
     //   name: `Starting "${command}" command`,
     // });
 
-    terminal.show(true);
-    terminal.sendText(command, true);
+    terminal?.show(true);
+    terminal?.sendText(command, true);
   }
 
   //#region focus first element function
@@ -70,7 +69,9 @@ export function activateMenuTnp(
           async (progres, token) => {
             progres.report({ increment: 0, message: 'Processing...' });
             try {
-              await item.triggerActionOnClick(item.project, progres, token);
+              if (item.triggerActionOnClick) {
+                await item.triggerActionOnClick(item.project, progres, token);
+              }
               progres.report({ message: 'Done' });
               if (
                 item.progressLocation === vscode.ProgressLocation.Notification
@@ -92,13 +93,17 @@ export function activateMenuTnp(
       if (item.project) {
         // example: open folder in same window
         const clickLink = item.refreshLinkOnClick
-          ? item.clickLinkFn(item.project)
+          ? item.clickLinkFn && item.clickLinkFn(item.project)
           : item.clickLink;
 
         vscode.commands
-          .executeCommand('vscode.openFolder', vscode.Uri.file(clickLink), {
-            forceNewWindow: true,
-          })
+          .executeCommand(
+            'vscode.openFolder',
+            vscode.Uri.file(clickLink || ''),
+            {
+              forceNewWindow: true,
+            },
+          )
           .then(() => {
             focustFirstElement();
           });
@@ -109,11 +114,11 @@ export function activateMenuTnp(
 
   //#region project item class
   class ProjectItem extends vscode.TreeItem {
-    public readonly clickLink: string;
+    public readonly clickLink: string | undefined;
 
     public readonly project?: Project;
 
-    public readonly clickLinkFn?: (project: Project) => string;
+    public readonly clickLinkFn?: (project: Project | undefined) => string;
 
     public readonly refreshLinkOnClick?: boolean;
 
@@ -136,6 +141,7 @@ export function activateMenuTnp(
         progressLocation?: vscode.ProgressLocation;
         boldLabel?: boolean;
         iconPath?:
+          | null
           | string
           | vscode.ThemeIcon
           | vscode.Uri
@@ -170,9 +176,9 @@ export function activateMenuTnp(
 
       const project = options?.project;
       this.processTitle = options?.processTitle;
-      this.clickLinkFn = options?.clickLinkFn
-        ? options.clickLinkFn
-        : p => p?.location;
+      this.clickLinkFn = (
+        options?.clickLinkFn ? options.clickLinkFn : p => p?.location
+      ) as any;
 
       this.triggerActionOnClick = options.triggerActionOnClick;
       this.refreshLinkOnClick = options?.refreshLinkOnClick;
@@ -180,7 +186,8 @@ export function activateMenuTnp(
       this.project = project;
       this.clickLink = this.refreshLinkOnClick
         ? undefined
-        : this.clickLinkFn(project);
+        : this.clickLinkFn && this.clickLinkFn(project);
+
       this.tooltip = project ? project.nameForNpmPackage : label;
 
       if (collapsibleState === vscode.TreeItemCollapsibleState.None) {
@@ -213,7 +220,9 @@ export function activateMenuTnp(
       /**
        * may be container (normal or organization) or standalone project or unknow project
        */
-      const CURRENT_PROJECT = Project.ins.From(WORKSPACE_MAIN_FOLDER_PATH);
+      const CURRENT_PROJECT = WORKSPACE_MAIN_FOLDER_PATH
+        ? Project.ins.From(WORKSPACE_MAIN_FOLDER_PATH)
+        : undefined;
       if (!CURRENT_PROJECT) {
         return [this.taonProjWarning];
       }
