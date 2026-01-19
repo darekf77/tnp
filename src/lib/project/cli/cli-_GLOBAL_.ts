@@ -61,7 +61,11 @@ import {
   UtilsFileSync,
 } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartMode } from 'tnp-helpers/src';
-import { createGenerator, SchemaGenerator } from 'ts-json-schema-generator';
+import {
+  Config,
+  createGenerator,
+  SchemaGenerator,
+} from 'ts-json-schema-generator';
 
 import {
   containerPrefix,
@@ -76,6 +80,8 @@ import {
   taonConfigSchemaJsonStandalone,
   taonJsonMainProject,
   tmpIsomorphicPackagesJson,
+  tsconfigForSchemaJson,
+  tsconfigIsomorphicFlatDistMainProject,
 } from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
@@ -1314,21 +1320,41 @@ ${this.project.children
     // Create the config for ts-json-schema-generator
     const config = {
       path: relativePathToTsFile, // Path to the TypeScript file
-      tsconfig: project.pathFor('tsconfig.json'), // Path to the tsconfig.json file
+      tsconfig: project.pathFor(tsconfigForSchemaJson), // Path to the tsconfig.json file
       type: nameOfTypeOrInterface, // Type or interface name
-      skipTypeCheck: false, // Optional: Skip type checking
-    };
+      skipTypeCheck: true, // Optional: Skip type checking
+    } as Config;
 
-    // Create the schema generator using the config
-    const generator: SchemaGenerator = createGenerator(config);
+    try {
+      // Create the schema generator using the config
+      const generator: SchemaGenerator = createGenerator(config);
 
-    // Generate the schema
-    const schema = generator.createSchema(config.type);
+      // Generate the schema
+      const schema = generator.createSchema(config.type);
 
-    // Convert the schema object to JSON string
-    const schemaJson = JSON.stringify(schema, null, 2);
+      // Convert the schema object to JSON string
+      const schemaJson = JSON.stringify(schema, null, 2);
 
-    return schemaJson;
+      return schemaJson;
+    } catch (error) {
+      const diagnostics = UtilsTypescript.parseTsDiagnostic(
+        error.diagnostic ?? error,
+      );
+
+      for (const d of diagnostics) {
+        if (d.file) {
+          console.error(
+            `[TS ${d.category}] (${d.code})`,
+            `${d.file}:${d.line}:${d.character}`,
+            '\n' + d.message,
+          );
+        } else {
+          console.error(`[TS ${d.category}] (${d.code})`, d.message);
+        }
+      }
+    }
+
+    return {};
     //#endregion
   }
 

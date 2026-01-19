@@ -805,6 +805,8 @@ export const tsconfigJsonBrowserMainProject = 'tsconfig.browser.json';
 
 export const tsconfigBackendDistJson = 'tsconfig.backend.dist.json';
 
+export const tsconfigForSchemaJson = 'tsconfig-for-schema.json';
+
 export const tsconfigJsonIsomorphicMainProject = 'tsconfig.isomorphic.json';
 
 export const tsconfigIsomorphicFlatDistMainProject =
