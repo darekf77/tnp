@@ -4,7 +4,7 @@ import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
-import { Helpers, BaseProject } from 'tnp-helpers/src';
+import { Helpers, BaseProject, PushProcessOptions } from 'tnp-helpers/src';
 
 import {
   binMainProject,
@@ -457,8 +457,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#endregion
 
   //#region api / lint
-  async lint(lintOptions?: any) {
-    await this.linter.start()
+  async lint(lintOptions?: PushProcessOptions) {
+    // await this.linter.start()
   }
   //#endregion
 
