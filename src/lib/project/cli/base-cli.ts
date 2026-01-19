@@ -13,13 +13,16 @@ export class BaseCli extends BaseCommandLineFeature<EnvOptions, Project> {
     // this._tryResolveChildIfInsideArg();
 
     if (this.params['skipMenu']) {
-      this.params = await EnvOptions.releaseSkipMenu(this.params);
+      this.params = await EnvOptions.releaseSkipMenu(this.params, {
+        args: this.allParamsAfterFrameworName.split(' '),
+      });
       delete this.params['skipMenu'];
     }
 
     if (this.params['skipMenuAuto']) {
       this.params = await EnvOptions.releaseSkipMenu(this.params, {
         selectDefaultValues: true,
+        args: this.allParamsAfterFrameworName.split(' '),
       });
       delete this.params['skipMenuAuto'];
     }

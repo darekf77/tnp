@@ -2,8 +2,8 @@ import { CoreModels, _ } from 'tnp-core/src';
 import { PackageJson } from 'tnp-helpers/src';
 
 import type { ReleaseArtifactTaon, ReleaseType } from './options';
-import type { Project } from './project/abstract/project';
 import type { globaLoaders } from './project/abstract/artifacts/__helpers__/inside-structures/structs/loaders/loaders';
+import type { Project } from './project/abstract/project';
 
 export namespace Models {
   //#region taon test type
@@ -73,22 +73,7 @@ export namespace Models {
     /**
      * if not proviede default  env.<artifact-name>.__.ts will be in use
      */
-    envName?:
-      | 'localhost'
-      | 'dev'
-      | 'stage'
-      | 'prod'
-      | 'test'
-      | 'qa'
-      | 'sandbox'
-      | 'uat'
-      | 'preprod'
-      | 'demo'
-      | 'docs'
-      | 'static-pages'
-      | 'ci'
-      | 'training';
-    // CoreModels.EnvironmentNameTaon; // TODO this alone should be enough but parser creates invalid schema
+    envName?: CoreModels.EnvironmentName;
     /**
      * example for dev environtment
      * > undefined - env.<artifact-name>.dev.ts
@@ -97,10 +82,6 @@ export namespace Models {
      * ...
      */
     envNumber?: number | undefined;
-    /**
-     * skip release of this artifact
-     */
-    skip?: boolean;
     /**
      * select release type for automatic release
      */
@@ -113,18 +94,13 @@ export namespace Models {
      * friendly name of item in auto release list configuration
      */
     taskName: string;
+    /**
+     * Short description of auto release item
+     */
+    description?: string;
   }
 
-  export type TaonArtifactInclude =
-    | (
-        | 'npm-lib-and-cli-tool'
-        | 'angular-node-app'
-        | 'electron-app'
-        | 'mobile-app'
-        | 'vscode-plugin'
-        | 'docs-webapp'
-      )[]
-    | '*'; // for each artifact
+  export type TaonArtifactInclude = ReleaseArtifactTaon[] | '*'; // for each artifact
 
   export interface TaonJsonStandalone extends TaonJsonCommon {
     /**

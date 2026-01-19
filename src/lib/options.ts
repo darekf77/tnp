@@ -1,6 +1,6 @@
 import type axiosType from 'axios';
 import { walk } from 'lodash-walk-object/src';
-import { config, LibTypeEnum, UtilsTerminal } from 'tnp-core/src';
+import { chalk, config, LibTypeEnum, UtilsTerminal } from 'tnp-core/src';
 import { Helpers } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
 
@@ -603,8 +603,10 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     options: EnvOptions,
     opt?: {
       selectDefaultValues?: boolean;
+      args?: string[];
     },
   ): Promise<EnvOptions> {
+    const args = opt?.args || [];
     opt = opt || {};
     const defaultSelected = [
       'skipBuildingArtifactsNpmLibAndCliTool',
@@ -662,6 +664,7 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
 
     options.release.skipBuildingArtifacts =
       options.release.skipBuildingArtifacts || [];
+
     if (optionsToSet.includes('skipBuildingArtifactsNpmLibAndCliTool')) {
       (options.release.skipBuildingArtifacts as string[]).push(
         ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
@@ -672,6 +675,15 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
         ReleaseArtifactTaon.ANGULAR_NODE_APP,
       );
     }
+
+    Helpers.info(`
+
+      Your command:
+
+${chalk.bold(options.toStringCommand(args.join(' ')))}
+
+      `);
+    await UtilsTerminal.pressAnyKeyToContinueAsync();
 
     return options;
   }
@@ -686,6 +698,60 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
       res.finishCallback = () => {};
     }
     return res;
+  }
+
+  toStringCommand(taonCommand?: string): string {
+    let paramsCommand = '';
+    const alreadySetParams: string[] = [`--skipMenu true`,'--skipMenu'];
+    for (const element of alreadySetParams) {
+      taonCommand = taonCommand?.replace(element, '');
+    }
+
+    walk.Object(
+      this,
+      (value, lodashPath) => {
+        if (_.isNil(value) || _.isFunction(value)) {
+          // skipping
+        } else {
+          // _.set(destination, lodashPath, value);
+          if (_.isBoolean(value)) {
+            value = value ? 'true' : 'false';
+          }
+          if (_.isArray(value) || lodashPath.includes('[')) {
+            if (_.isArray(value)) {
+              for (const val of value) {
+                const newParam = `--${lodashPath.split('[')[0]} ${val}`;
+                if (!alreadySetParams.includes(newParam)) {
+                  paramsCommand = `${paramsCommand} ${newParam} `;
+                  alreadySetParams.push(newParam);
+                }
+              }
+            } else {
+              const newParam = `--${lodashPath.split('[')[0]} ${value}`;
+              if (!alreadySetParams.includes(newParam)) {
+                paramsCommand = `${paramsCommand} ${newParam} `;
+                alreadySetParams.push(newParam);
+              }
+            }
+          } else {
+            if (_.isObject(value)) {
+              // skip object
+            } else {
+              const newParam = `--${lodashPath} ${value}`;
+              if (!alreadySetParams.includes(newParam)) {
+                paramsCommand = `${paramsCommand} ${newParam} `;
+                alreadySetParams.push(newParam);
+              }
+            }
+          }
+        }
+      },
+      {
+        walkGetters: false,
+      },
+    );
+
+    return `${config.frameworkName} ${taonCommand || ''} ${paramsCommand}`.trim();
   }
 
   public static fromModule(moduleOptions: Partial<EnvOptions>): EnvOptions {
