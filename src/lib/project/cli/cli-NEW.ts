@@ -264,18 +264,8 @@ export class $New extends BaseCli {
     // taonJson.shouldGenerateAutogenAppRoutesFile = true;
     taonJson.setShouldGenerateAutogenIndexFile(true);
 
-    taonJson.autoReleaseConfigAllowedItems = [
-      ...taonJson.autoReleaseConfigAllowedItems,
-      {
-        artifactName: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
-        taskName: 'npm',
-      },
-      {
-        artifactName: ReleaseArtifactTaon.ANGULAR_NODE_APP,
-        taskName: 'static-pages',
-        releaseType: ReleaseType.STATIC_PAGES,
-      },
-    ];
+    taonJson.autoReleaseConfigAllowedItems =
+      Project.ins.by('isomorphic-lib').taonJson.autoReleaseConfigAllowedItems;
 
     Project.ins.unload(appLocation);
     appProj = Project.ins.From(appLocation) as Project;
