@@ -20,11 +20,11 @@ import {
   suffixLatest,
   TaonCommands,
   taonJsonMainProject,
-  TemplateFolder,
-  tsconfigIsomorphicFlatDistMainProject,
   tsconfigJsonBrowserMainProject,
   tsconfigJsonIsomorphicMainProject,
   tsconfigJsonMainProject,
+  tmpCutReleaseSrcDistWebsql,
+  tmpCutReleaseSrcDist,
 } from '../../../constants';
 
 import {
@@ -166,7 +166,6 @@ export abstract class BaseArtifact<
   protected async getStaticPagesClonedProjectLocation(
     releaseOptions: EnvOptions,
   ): Promise<string> {
-
     //#region @backendFunc
     const staticPagesRepoBranch = `${releaseOptions.release.releaseType}-${this.currentArtifactName}`;
     const repoRoot = this.project.pathFor([
@@ -196,20 +195,17 @@ export abstract class BaseArtifact<
     });
     return repoPath;
     //#endregion
-
   }
   //#endregion
 
   //#region getters & methods / all resources
   protected get __allResources(): string[] {
-
     //#region @backendFunc
     const res = [
       packageJsonMainProject,
       tsconfigJsonMainProject,
       tsconfigJsonBrowserMainProject,
       tsconfigJsonIsomorphicMainProject,
-      tsconfigIsomorphicFlatDistMainProject,
       dotNpmrcMainProject,
       dotNpmIgnoreMainProject,
       dotGitIgnoreMainProject,
@@ -221,34 +217,35 @@ export abstract class BaseArtifact<
     ];
     return res;
     //#endregion
-
   }
   //#endregion
 
   //#region getters & methods / cut release code
   protected __restoreCuttedReleaseCodeFromSrc(buildOptions: EnvOptions) {
-
     //#region @backend
     const releaseSrcLocation = this.project.pathFor(srcMainProject);
 
     const releaseSrcLocationOrg = this.project.pathFor(
-      buildOptions.temporarySrcForReleaseCutCode,
+      // buildOptions.temporarySrcForReleaseCutCode,
+      buildOptions.build.websql
+        ? tmpCutReleaseSrcDistWebsql
+        : tmpCutReleaseSrcDist,
     );
 
     Helpers.removeFolderIfExists(releaseSrcLocation);
     Helpers.copy(releaseSrcLocationOrg, releaseSrcLocation);
 
     //#endregion
-
   }
 
   protected __cutReleaseCodeFromSrc(buildOptions: EnvOptions) {
-
     //#region @backend
     const releaseSrcLocation = this.project.pathFor(srcMainProject);
 
     const releaseSrcLocationOrg = this.project.pathFor(
-      buildOptions.temporarySrcForReleaseCutCode,
+      buildOptions.build.websql
+        ? tmpCutReleaseSrcDistWebsql
+        : tmpCutReleaseSrcDist,
     );
 
     Helpers.removeFolderIfExists(releaseSrcLocationOrg);
@@ -279,7 +276,6 @@ export abstract class BaseArtifact<
         Helpers.writeFile(absolutePath, rawContent);
       });
     //#endregion
-
   }
   //#endregion
 
@@ -288,7 +284,6 @@ export abstract class BaseArtifact<
     options?: boolean | PlatformArchType,
     includeDashEnTheEnd = false,
   ): string {
-
     //#region @backendFunc
     options = options || {};
     if (typeof options === 'boolean' && options) {
@@ -304,7 +299,6 @@ export abstract class BaseArtifact<
     }
     return '';
     //#endregion
-
   }
   //#endregion
 
@@ -323,7 +317,6 @@ export abstract class BaseArtifact<
   ): Promise<
     Pick<ReleasePartialOutput, 'releaseProjPath' | 'projectsReposToPushAndTag'>
   > {
-
     //#region @backendFunc
     let releaseProjPath: string;
     const projectsReposToPushAndTag: string[] = [this.project.location];
@@ -382,7 +375,6 @@ export abstract class BaseArtifact<
       projectsReposToPushAndTag,
     };
     //#endregion
-
   }
   //#endregion
 
@@ -401,7 +393,6 @@ export abstract class BaseArtifact<
   ): Promise<
     Pick<ReleasePartialOutput, 'releaseProjPath' | 'projectsReposToPush'>
   > {
-
     //#region @backendFunc
     options = options || {};
     const architecturePrefix = this.getDistinctArchitecturePrefix(
@@ -541,8 +532,6 @@ export abstract class BaseArtifact<
       releaseProjPath,
     };
     //#endregion
-
   }
   //#endregion
-
 }

@@ -1,9 +1,8 @@
 //#region imports
-import { config, Utils } from 'tnp-core/src';
+import { Utils } from 'tnp-core/src';
 import { crossPlatformPath, path, _ } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
-import { PackageJson } from 'type-fest';
 
 import { templateFolderForArtifact } from '../../../../../app-utils';
 import {
@@ -12,13 +11,12 @@ import {
   distFromNgBuild,
   distMainProject,
   libFromSrc,
-  migrationsFromSrc,
   migrationsFromTempSrc,
   myLibFromNgProject,
   packageJsonNgProject,
+  prodSuffix,
   projectsFromNgTemplate,
   srcMainProject,
-  TemplateFolder,
   tmpLibsForDist,
   tmpLibsForDistWebsql,
   tmpSrcDist,
@@ -27,9 +25,7 @@ import {
   tsconfigSpecNgProject,
   websqlMainProject,
 } from '../../../../../constants';
-import { Models } from '../../../../../models';
-import { EnvOptions, ReleaseArtifactTaon } from '../../../../../options';
-import type { Project } from '../../../project';
+import { ReleaseArtifactTaon } from '../../../../../options';
 import { InsideStruct } from '../../__helpers__/inside-structures/inside-struct';
 import { BaseInsideStruct } from '../../__helpers__/inside-structures/structs/base-inside-struct';
 //#endregion
@@ -43,9 +39,13 @@ export class InsideStructAngularLib extends BaseInsideStruct {
     //#region @backendFunc
     const project = this.project;
 
-    const browserLibsTsCode = this.initOptions.build.websql
+    let browserLibsTsCode = this.initOptions.build.websql
       ? tmpLibsForDistWebsql
       : tmpLibsForDist;
+
+    if (this.initOptions.build.prod) {
+      browserLibsTsCode = `${browserLibsTsCode}${prodSuffix}`;
+    }
 
     const tmpProjectsStandalone = crossPlatformPath([
       browserLibsTsCode,
@@ -95,7 +95,7 @@ export class InsideStructAngularLib extends BaseInsideStruct {
             const source = path.join(
               this.project.location,
               replacement(tmpProjectsStandalone),
-              `${projectsFromNgTemplate}/my-lib`,
+              `${projectsFromNgTemplate}/${myLibFromNgProject}`,
             );
 
             const dest = path.join(
@@ -110,9 +110,13 @@ export class InsideStructAngularLib extends BaseInsideStruct {
 
           (() => {
             //#region hande / src / migrations
-            const browserTsCode = this.initOptions.build.websql
+            let browserTsCode = this.initOptions.build.websql
               ? tmpSrcDistWebsql
               : tmpSrcDist;
+
+            if (this.initOptions.build.prod) {
+              browserTsCode = `${browserTsCode}${prodSuffix}`;
+            }
 
             const source = path.join(
               this.project.location,
@@ -134,9 +138,13 @@ export class InsideStructAngularLib extends BaseInsideStruct {
 
           (() => {
             //#region hande / src / lib
-            const browserTsCode = this.initOptions.build.websql
+            let browserTsCode = this.initOptions.build.websql
               ? tmpSrcDistWebsql
               : tmpSrcDist;
+
+            if (this.initOptions.build.prod) {
+              browserTsCode = `${browserTsCode}${prodSuffix}`;
+            }
 
             const source = path.join(
               this.project.location,
@@ -159,7 +167,9 @@ export class InsideStructAngularLib extends BaseInsideStruct {
             const sourcePublicApi = path.join(
               this.project.location,
               replacement(tmpProjectsStandalone),
-              `${projectsFromNgTemplate}/${this.project.name}/${srcMainProject}/${fileName.public_api_ts}`,
+              `${projectsFromNgTemplate}/${
+                this.project.name
+              }/${srcMainProject}/${fileName.public_api_ts}`,
             );
 
             let publicApiFile = Helpers.readFile(sourcePublicApi);
@@ -227,20 +237,24 @@ export * from './${libFromSrc}';
                   ? `${this.project.name}/${this.initOptions.build.websql ? websqlMainProject : browserMainProject}`
                   : this.project.name,
               );
-              if (path.basename(f) === tsconfigNgProject) {
-                // debugger;
-                content = content.replace(
-                  new RegExp(
-                    Helpers.escapeStringForRegEx(
-                      `"${distFromNgBuild}/${this.project.name}`,
-                    ),
-                    'g',
-                  ),
-                  `"../../${distMainProject}/` +
-                    `${this.initOptions.build.websql ? websqlMainProject : browserMainProject}` +
-                    `/${this.project.name}`,
-                );
-              }
+              // TODO not needed?
+              // if (path.basename(f) === tsconfigNgProject) {
+              //   console.log(`CHANING ${f}`);
+              //   // debugger;
+              //   content = content.replace(
+              //     new RegExp(
+              //       Helpers.escapeStringForRegEx(
+              //         `"${distFromNgBuild}/${this.project.name}`,
+              //       ),
+              //       'g',
+              //     ),
+              //     `"../../${distMainProject}/` +
+              //       `${this.initOptions.build.websql ? websqlMainProject : browserMainProject}` +
+              //       // proper compilation browser-prod / websql-prod
+              //       `${this.initOptions.build.prod ? `${prodSuffix}` : ''}` +
+              //       `/${this.project.name}`,
+              //   );
+              // }
 
               Helpers.writeFile(f, content);
             },
@@ -250,7 +264,10 @@ export * from './${libFromSrc}';
             const json = Helpers.readJson(ngPackageJson); // dist is on purpose
             json.dest = json.dest.replace(
               `/${distFromNgBuild}/${this.project.name}`,
-              `/../../${distMainProject}/` +
+              `/../../${
+                distMainProject +
+                (this.initOptions.build.prod ? `${prodSuffix}` : '')
+              }/` +
                 `${this.initOptions.build.websql ? websqlMainProject : browserMainProject}`,
             );
 

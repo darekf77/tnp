@@ -1,5 +1,5 @@
 //#region imports
-import { dotVscodeMainProject, packageJsonMainProject } from 'tnp/src';
+import { dotVscodeMainProject, packageJsonMainProject } from '../../constants';
 import { CoreModels, dotTaonFolder, frameworkName, path } from 'tnp-core/src';
 import {
   _,

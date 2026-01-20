@@ -92,6 +92,10 @@ export class QuickFixes extends BaseQuickFixes<Project> {
         tempSourceFolder(false, false),
         tempSourceFolder(true, false),
         tempSourceFolder(false, true),
+        tempSourceFolder(true, true, true),
+        tempSourceFolder(false, false, true),
+        tempSourceFolder(true, false, true),
+        tempSourceFolder(false, true, true),
       ];
       tempDirs.forEach(tempSrcDirName => {
         // console.log(`

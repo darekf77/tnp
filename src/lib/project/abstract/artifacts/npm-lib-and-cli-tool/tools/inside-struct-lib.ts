@@ -6,25 +6,26 @@ import { InsideStructAngularLib } from './inside-struct-angular-lib';
 
 export class InsideStructuresLib extends InsideStructuresProcess {
   private insideStructAngular13LibNormal: InsideStructAngularLib;
+
   private insideStructAngular13LibWebsql: InsideStructAngularLib;
 
   //#region api / recreate
   public async init(initOptions: EnvOptions): Promise<void> {
-
     //#region @backendFunc
     initOptions = EnvOptions.from(initOptions);
 
-    const optionsNormal = initOptions.clone({ build: { websql: false } });
-    const optionsWebsql = initOptions.clone({ build: { websql: true } });
-
     this.insideStructAngular13LibNormal = new InsideStructAngularLib(
       this.project,
-      optionsNormal,
+      initOptions.clone({
+        build: { websql: false },
+      }),
     );
 
     this.insideStructAngular13LibWebsql = new InsideStructAngularLib(
       this.project,
-      optionsWebsql,
+      initOptions.clone({
+        build: { websql: true },
+      }),
     );
 
     const structs: BaseInsideStruct[] = [
@@ -33,8 +34,6 @@ export class InsideStructuresLib extends InsideStructuresProcess {
     ];
     await this.process(structs, initOptions);
     //#endregion
-
   }
   //#endregion
-
 }

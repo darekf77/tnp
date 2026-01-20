@@ -21,6 +21,7 @@ import {
   nodeModulesMainProject,
   outVscodeProj,
   packageJsonVscodePlugin,
+  prodSuffix,
   srcMainProject,
   tmpVscodeProj,
   updateVscodePackageJsonJsMainProject,
@@ -118,7 +119,10 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     }
 
     Helpers.createSymLink(
-      this.project.pathFor(distMainProject),
+      this.project.pathFor(
+        // use dist-prod if prod mode
+        distMainProject + (initOptions.build.prod ? prodSuffix : ''),
+      ),
       crossPlatformPath([
         tmpVscodeProjPath,
         initOptions.release.releaseType ? distVscodeProj : outVscodeProj,
@@ -186,7 +190,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     //#region @backendFunc
 
     buildOptions = await this.project.artifactsManager.init(
-      EnvOptions.fromBuild(buildOptions),
+      buildOptions.clone(),
     );
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
@@ -281,7 +285,11 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     let projectsReposToPush: string[] = [];
 
     const { vscodeVsixOutPath } = await this.buildPartial(
-      EnvOptions.fromRelease(releaseOptions),
+      releaseOptions.clone({
+        build: {
+          watch: false,
+        },
+      }),
     );
 
     if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {

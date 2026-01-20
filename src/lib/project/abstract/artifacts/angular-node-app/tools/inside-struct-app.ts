@@ -11,20 +11,20 @@ export class InsideStructuresApp extends InsideStructuresProcess {
 
   //#region api / recreate
   public async init(initOptions: EnvOptions): Promise<void> {
-
     //#region @backendFunc
     initOptions = EnvOptions.from(initOptions);
 
-    const optionsNormal = initOptions.clone({ build: { websql: false } });
-    const optionsWebsql = initOptions.clone({ build: { websql: true } });
-
     this.insideStructAngular13AppNormal = new InsideStructAngularApp(
       this.project,
-      optionsNormal,
+      initOptions.clone({
+        build: { websql: false },
+      }),
     );
     this.insideStructAngular13AppWebsql = new InsideStructAngularApp(
       this.project,
-      optionsWebsql,
+      initOptions.clone({
+        build: { websql: true },
+      }),
     );
 
     const structs: BaseInsideStruct[] = [
@@ -34,8 +34,6 @@ export class InsideStructuresApp extends InsideStructuresProcess {
 
     await this.process(structs, initOptions);
     //#endregion
-
   }
   //#endregion
-
 }

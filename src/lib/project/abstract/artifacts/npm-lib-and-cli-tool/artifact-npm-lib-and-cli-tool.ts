@@ -10,13 +10,10 @@ import {
   glob,
   path,
   rimraf,
-  UtilsString,
-  UtilsTerminal,
 } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
-import { BasePackageJson, Helpers, UtilsQuickFixes } from 'tnp-helpers/src';
-import { PackageJson } from 'type-fest';
+import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 
 import {
   angularProjProxyPath,
@@ -24,8 +21,6 @@ import {
   templateFolderForArtifact,
 } from '../../../../app-utils';
 import {
-  AngularJsonAppOrElectronTaskName,
-  AngularJsonLibTaskName,
   AngularJsonLibTaskNameResolveFor,
   appFromSrc,
   assetsFromNgProj,
@@ -39,7 +34,6 @@ import {
   COMPILATION_COMPLETE_LIB_NG_BUILD,
   CoreAssets,
   CoreNgTemplateFiles,
-  DEFAULT_PORT,
   defaultConfiguration,
   distMainProject,
   dotFileTemplateExt,
@@ -55,10 +49,8 @@ import {
   MESSAGES,
   migrationsFromSrc,
   nodeModulesMainProject,
-  packageJsonMainProject,
   packageJsonNpmLib,
-  packageJsonNpmLibAngular,
-  projectsFromNgTemplate,
+  prodSuffix,
   sourceLinkInNodeModules,
   srcMainProject,
   srcNgProxyProject,
@@ -69,7 +61,6 @@ import {
   testsFromSrc,
   THIS_IS_GENERATED_INFO_COMMENT,
   tmpBaseHrefOverwrite,
-  tmpLibsForDistWebsql,
   tmpLocalCopytoProjDist,
   tmpSrcDist,
   tmpSrcDistWebsql,
@@ -86,10 +77,7 @@ import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
 import { IncrementalBuildProcess } from './tools/build-isomorphic-lib/compilations/incremental-build-process';
 import { CopyManager } from './tools/copy-manager/copy-manager';
-import {
-  FilesRecreator,
-  FilesTemplatesBuilder,
-} from './tools/files-recreation';
+import { FilesTemplatesBuilder } from './tools/files-recreation';
 import { IndexAutogenProvider } from './tools/index-autogen-provider';
 import { InsideStructuresLib } from './tools/inside-struct-lib';
 import { CypressTestRunner } from './tools/test-runner/cypress-test-runner';
@@ -236,6 +224,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     packageName?: string;
   }> {
     //#region @backendFunc
+
     if (!this.project.framework.isStandaloneProject) {
       Helpers.warn(
         `Project is not standalone. Skipping npm-lib-and-cli-tool build.`,
@@ -244,9 +233,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     }
     const orgParams = buildOptions.clone();
 
-    buildOptions = await this.project.artifactsManager.init(
-      EnvOptions.fromBuild(buildOptions),
-    );
+    buildOptions = await this.project.artifactsManager.init(buildOptions);
 
     if (buildOptions.build.watch) {
       this.project.environmentConfig.watchAndRecreate(async () => {
@@ -356,11 +343,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     Helpers.logInfo(`
 
-      Building lib for base href: ${
-        !_.isUndefined(buildOptions.build.baseHref)
-          ? `'` + buildOptions.build.baseHref + `'`
-          : '/ (default)'
-      }
+    ${buildOptions.build.prod ? '[PROD]' : '[DEV]'} Building lib for base href: ${
+      !_.isUndefined(buildOptions.build.baseHref)
+        ? `'` + buildOptions.build.baseHref + `'`
+        : '/ (default)'
+    }
 
       `);
     //#endregion
@@ -417,13 +404,17 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     const tmpLibForDistNormalRelativePath = angularProjProxyPath({
       project: this.project,
       targetArtifact: buildOptions.release.targetArtifact,
-      websql: false,
+      envOptions: buildOptions.clone({
+        build: { websql: false },
+      }),
     });
 
     const tmpLibForDistWebsqlRelativePath = angularProjProxyPath({
       project: this.project,
       targetArtifact: buildOptions.release.targetArtifact,
-      websql: true,
+      envOptions: buildOptions.clone({
+        build: { websql: true },
+      }),
     });
 
     this.project.setValueToJSONC(
@@ -476,6 +467,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#region start copy manager
     if (!shouldSkipBuild) {
       if (!buildOptions.copyToManager.skip) {
+        if (_.isFunction(buildOptions.copyToManager.beforeCopyHook)) {
+          await buildOptions.copyToManager.beforeCopyHook();
+        }
         this.copyNpmDistLibManager.init(buildOptions);
         await this.copyNpmDistLibManager.runTask({
           taskName: 'copyto manger',
@@ -522,16 +516,64 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     releaseOptions = this.updateResolvedVersion(releaseOptions);
 
-    const {
-      isOrganizationPackage,
-      packageName,
-      tmpProjNpmLibraryInNodeModulesAbsPath,
-    } = await this.buildPartial(
-      EnvOptions.fromRelease({
-        ...releaseOptions,
-        // copyToManager: {
-        //   skip: true,
-        // },
+    // DEV BUILD
+    const { tmpProjNpmLibraryInNodeModulesAbsPath } = await this.buildPartial(
+      releaseOptions.clone({
+        build: { prod: false, watch: false },
+        copyToManager: {
+          skip: true,
+        },
+      }),
+    );
+
+    // PROD BUILD
+
+    await this.buildPartial(
+      releaseOptions.clone({
+        build: { prod: true, watch: false },
+        copyToManager: {
+          beforeCopyHook: () => {
+            //#region copy prod build files to dist folder
+            Helpers.logInfo(`Copying production build files to dist folder...`);
+
+            Helpers.copy(
+              this.project.pathFor([
+                distMainProject + prodSuffix,
+                browserMainProject,
+              ]),
+              this.project.pathFor([
+                distMainProject,
+                browserMainProject + prodSuffix,
+              ]),
+              { recursive: true, overwrite: true },
+            );
+
+            Helpers.copy(
+              this.project.pathFor([
+                distMainProject + prodSuffix,
+                websqlMainProject,
+              ]),
+              this.project.pathFor([
+                distMainProject,
+                websqlMainProject + prodSuffix,
+              ]),
+              { recursive: true, overwrite: true },
+            );
+
+            Helpers.copy(
+              this.project.pathFor([
+                distMainProject + prodSuffix,
+                libFromCompiledDist,
+              ]),
+              this.project.pathFor([
+                distMainProject,
+                libFromCompiledDist + prodSuffix,
+              ]),
+              { recursive: true, overwrite: true },
+            );
+            //#endregion
+          },
+        },
       }),
     );
 
@@ -1003,12 +1045,27 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         }
 
         // ../../../../tmpSrcDistWebsql/lib/layout-proj-ng-related/layout-proj-ng-related.component.scss
+        if (line.includes(`../../../../${tmpSrcDistWebsql + prodSuffix}/`)) {
+          line = line.replace(
+            `../../../../${tmpSrcDistWebsql + prodSuffix}/`,
+            `./${srcMainProject}/`,
+          );
+        }
+
         if (line.includes(`../../../../${tmpSrcDistWebsql}/`)) {
           line = line.replace(
             `../../../../${tmpSrcDistWebsql}/`,
             `./${srcMainProject}/`,
           );
         }
+
+        if (line.includes(`../../../../${tmpSrcDist + prodSuffix}/`)) {
+          line = line.replace(
+            `../../../../${tmpSrcDist + prodSuffix}/`,
+            `./${srcMainProject}/`,
+          );
+        }
+
         if (line.includes(`../../../../${tmpSrcDist}/`)) {
           line = line.replace(
             `../../../../${tmpSrcDist}/`,
@@ -1318,7 +1375,9 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   private showMesageWhenBuildLibDone(buildOptions: EnvOptions): void {
     //#region @backendFunc
     if (buildOptions.release.releaseType) {
-      Helpers.logInfo('Lib build part done...  ');
+      Helpers.logInfo(
+        `${buildOptions.build.prod ? '[PROD]' : '[DEV]'} Lib build part done...  `,
+      );
       return;
     }
     const buildLibDone = `LIB BUILD DONE.. `;

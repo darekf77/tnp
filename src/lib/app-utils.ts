@@ -1,6 +1,7 @@
 import { crossPlatformPath, Helpers } from 'tnp-core/src';
 
 import {
+  prodSuffix,
   TemplateFolder,
   tmpAppsForDist,
   tmpAppsForDistElectron,
@@ -39,27 +40,32 @@ export const ALLOWED_TO_RELEASE: {
  */
 export const angularProjProxyPath = (options: {
   project: Project;
-  websql: boolean;
+  envOptions: EnvOptions;
   targetArtifact: EnvOptions['release']['targetArtifact'];
 }): string => {
   //#region @backendFunc
-  const { websql, targetArtifact, project } = options;
+  const { targetArtifact, project } = options;
+  const websql = options.envOptions.build.websql;
+  const suffix = options.envOptions.build.prod ? prodSuffix : '';
 
   if (websql && targetArtifact === ReleaseArtifactTaon.ELECTRON_APP) {
     Helpers.warn(`Electron app with websql is not supported`, true);
-    return crossPlatformPath([tmpAppsForDistElectronWebsql, project.name]);
+    return crossPlatformPath([
+      tmpAppsForDistElectronWebsql + suffix,
+      project.name,
+    ]);
   }
   if (!websql && targetArtifact === ReleaseArtifactTaon.ELECTRON_APP) {
-    return crossPlatformPath([tmpAppsForDistElectron, project.name]);
+    return crossPlatformPath([tmpAppsForDistElectron + suffix, project.name]);
   }
   if (!websql && targetArtifact === ReleaseArtifactTaon.ANGULAR_NODE_APP) {
-    return crossPlatformPath([tmpAppsForDist, project.name]);
+    return crossPlatformPath([tmpAppsForDist + suffix, project.name]);
   }
   if (websql && targetArtifact === ReleaseArtifactTaon.ANGULAR_NODE_APP) {
-    return crossPlatformPath([tmpAppsForDistWebsql, project.name]);
+    return crossPlatformPath([tmpAppsForDistWebsql + suffix, project.name]);
   }
   return crossPlatformPath([
-    websql ? tmpLibsForDistWebsql : tmpLibsForDist,
+    (websql ? tmpLibsForDistWebsql : tmpLibsForDist) + suffix,
     project.name,
   ]);
   //#endregion
@@ -76,7 +82,7 @@ export const getProxyNgProj = (
     project.location,
     angularProjProxyPath({
       project: project,
-      websql: buildOptions.build.websql,
+      envOptions: buildOptions,
       targetArtifact: targetArtifact,
     }),
   ]);

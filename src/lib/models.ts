@@ -102,6 +102,15 @@ export namespace Models {
 
   export type TaonArtifactInclude = ReleaseArtifactTaon[] | '*'; // for each artifact
 
+  export interface TscCompileOptions {
+    watch?: boolean;
+    generateDeclarations?: boolean;
+    tsExe?: string;
+    diagnostics?: boolean;
+    hideErrors?: boolean;
+    debug?: boolean;
+  }
+
   export interface TaonJsonStandalone extends TaonJsonCommon {
     /**
      * override npm name for build/relese

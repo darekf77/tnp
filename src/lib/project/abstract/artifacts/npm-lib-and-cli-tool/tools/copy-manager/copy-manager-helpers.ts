@@ -14,13 +14,6 @@ import { Models } from '../../../../../../models';
 //#endregion
 
 export namespace CopyMangerHelpers {
-  //#region helpers / browser websql folders
-  export const browserwebsqlFolders = [
-    browserMainProject,
-    websqlMainProject,
-  ] as ('browser' | 'websql' | string)[];
-  //#endregion
-
   //#region helpers / pure child name
   export function childPureName(child: Project) {
     //#region @backendFunc

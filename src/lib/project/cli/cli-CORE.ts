@@ -1,6 +1,6 @@
 //#region imports
 import { MagicRenamer } from 'magic-renamer/src';
-import { containerPrefix, tmpIsomorphicPackagesJson } from 'tnp/src';
+import { containerPrefix, tmpIsomorphicPackagesJson } from '../../constants';
 import { config, CoreModels, path, tnpPackageName } from 'tnp-core/src';
 import { _, crossPlatformPath, UtilsTerminal } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';

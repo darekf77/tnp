@@ -134,7 +134,8 @@ export class Refactor extends BaseFeatureForProject<Project> {
     if (!options.initingFromParent) {
       await this.project.init();
     }
-    this.project.taonJson.updateIsomorphicExternalDependencies();
+    this.project.taonJson.detectAndUpdateNpmExternalDependencies();
+    this.project.taonJson.detectAndUpdateIsomorphicExternalDependencies();
     await this.changeCssToScss(options);
 
     await this.taonNames(options);

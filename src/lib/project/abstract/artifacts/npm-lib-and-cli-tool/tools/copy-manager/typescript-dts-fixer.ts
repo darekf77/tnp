@@ -22,7 +22,6 @@ export const TS_NOCHECK = '// @ts-nocheck';
  * - nodejs
  */
 export class TypescriptDtsFixer {
-
   //#region singleton
   public static for(isomorphicPackages: string[]) {
     return new TypescriptDtsFixer(isomorphicPackages);
@@ -34,7 +33,6 @@ export class TypescriptDtsFixer {
   //#region helpers / fix dts import
 
   forBackendContent(content: string) {
-
     //#region @backendFunc
     content = content ? content : '';
     const isomorphicPackages = this.isomorphicPackages;
@@ -58,11 +56,9 @@ export class TypescriptDtsFixer {
     }
     return content;
     //#endregion
-
   }
 
   forContent(content: string, browserFolder: 'browser' | 'websql' | string) {
-
     //#region @backendFunc
     content = content ? content : '';
 
@@ -87,7 +83,6 @@ export class TypescriptDtsFixer {
 
     return content;
     //#endregion
-
   }
   //#endregion
 
@@ -99,37 +94,29 @@ export class TypescriptDtsFixer {
    */
   processFolderWithBrowserWebsqlFolders(
     absPathFolderLocationWithBrowserAdnWebsql: string,
+    browserwebsqlFolders: string[],
   ) {
-
     //#region @backendFunc
     // console.log({ absPathFolderLocation: absPathFolderLocationWithBrowserAdnWebsql })
 
-    for (
-      let index = 0;
-      index < CopyMangerHelpers.browserwebsqlFolders.length;
-      index++
-    ) {
-      const currentBrowserFolder =
-        CopyMangerHelpers.browserwebsqlFolders[index];
+    for (let index = 0; index < browserwebsqlFolders.length; index++) {
+      const currentBrowserFolder = browserwebsqlFolders[index];
+
       Helpers.log('Fixing .d.ts. files start...');
-      const sourceBrowser = crossPlatformPath(
-        path.join(
-          absPathFolderLocationWithBrowserAdnWebsql,
-          currentBrowserFolder,
-        ),
-      );
+      const sourceBrowser = crossPlatformPath([
+        absPathFolderLocationWithBrowserAdnWebsql,
+        currentBrowserFolder,
+      ]);
       this.processFolder(sourceBrowser, currentBrowserFolder);
       Helpers.log('Fixing .d.ts. files done.');
     }
     //#endregion
-
   }
 
   processFolder(
     absPathLocation: string,
     currentBrowserFolder: 'browser' | 'websql' | string,
   ) {
-
     //#region @backendFunc
     const browserDtsFiles = Helpers.filesFrom(absPathLocation, true).filter(f =>
       f.endsWith('.d.ts'),
@@ -140,7 +127,6 @@ export class TypescriptDtsFixer {
       this.forFile(dtsFileAbsolutePath, currentBrowserFolder);
     }
     //#endregion
-
   }
 
   //#endregion
@@ -150,7 +136,6 @@ export class TypescriptDtsFixer {
     dtsFileAbsolutePath: string,
     currentBrowserFolder: 'browser' | 'websql' | string,
   ) {
-
     //#region @backendFunc
     if (!dtsFileAbsolutePath.endsWith('.d.ts')) {
       return;
@@ -167,9 +152,7 @@ export class TypescriptDtsFixer {
       Helpers.writeFile(dtsFileAbsolutePath, dtsFixedContent);
     }
     //#endregion
-
   }
 
   //#endregion
-
 }

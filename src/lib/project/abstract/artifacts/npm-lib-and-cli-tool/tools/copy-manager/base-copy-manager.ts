@@ -3,40 +3,32 @@ import { ChangeOfFile } from 'incremental-compiler/src';
 import { Log } from 'ng2-logger/src';
 import {
   config,
-  folderName,
   LibTypeEnum,
   taonPackageName,
   tnpPackageName,
 } from 'tnp-core/src';
 import { crossPlatformPath, _ } from 'tnp-core/src';
 import { fse } from 'tnp-core/src';
-import { path } from 'tnp-core/src';
 import { BaseCompilerForProject } from 'tnp-helpers/src';
 import { Helpers } from 'tnp-helpers/src';
-import { PackageJson } from 'type-fest';
 
 import {
+  browserMainProject,
   dirnameFromSourceToProject,
   distFromNgBuild,
   nodeModulesMainProject,
   packageJsonMainProject,
   packageJsonNpmLib,
+  prodSuffix,
   sourceLinkInNodeModules,
-  srcMainProject,
   tmpAlreadyStartedCopyManager,
-  tmpSrcDist,
   TO_REMOVE_TAG,
+  websqlMainProject,
   whatToLinkFromCore,
 } from '../../../../../../constants';
-import { Models } from '../../../../../../models';
-import {
-  EnvOptions,
-  ReleaseArtifactTaon,
-  ReleaseType,
-} from '../../../../../../options';
+import { EnvOptions, ReleaseType } from '../../../../../../options';
 import type { Project } from '../../../../project';
 
-import { CopyMangerHelpers } from './copy-manager-helpers';
 import { SourceMappingUrl } from './source-maping-url';
 //#endregion
 
@@ -93,17 +85,22 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     // fileName.index_d_ts,
   ];
 
-  protected readonly sourceFolders = [
-    //#region @backend
-    srcMainProject,
-    sourceLinkInNodeModules,
-    nodeModulesMainProject,
-    tmpSrcDist,
-    ...CopyMangerHelpers.browserwebsqlFolders.map(currentBrowserFolder => {
-      return crossPlatformPath([currentBrowserFolder, srcMainProject]);
-    }),
-    //#endregion
-  ];
+  //#region helpers / browser websql folders
+  protected browserwebsqlFolders: string[];
+
+  getBrowserwebsqlFolders(): string[] {
+    const isProd = this.buildOptions.build.prod;
+    return [
+      browserMainProject,
+      websqlMainProject,
+      ...(isProd
+        ? [browserMainProject + prodSuffix, websqlMainProject + prodSuffix]
+        : []),
+    ];
+  }
+  //#endregion
+
+  protected sourceFoldersToRemoveFromNpmPackage: string[];
 
   //#endregion
 
@@ -287,7 +284,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
       this._copyBuildedDistributionTo(projectToCopy, {
         absoluteAssetFilePath,
         specificFileRelativePath: event && specificFileRelativePath,
-        outDir: distFromNgBuild as 'dist',
+        outDir: distFromNgBuild,
         event,
       });
     }
@@ -354,7 +351,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       const projectToCopy = projectToCopyTo[index];
       log.data(`copying to ${projectToCopy?.name}`);
       this._copyBuildedDistributionTo(projectToCopy, {
-        outDir: distFromNgBuild as 'dist',
+        outDir: distFromNgBuild,
       });
       // if (this.buildOptions.buildForRelease && !global.tnpNonInteractive) {
       //   Helpers.info('Things copied to :' + projectToCopy?.name);
@@ -390,7 +387,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
     options?: {
       absoluteAssetFilePath?: string;
       specificFileRelativePath?: string;
-      outDir?: 'dist';
+      outDir?: string;
       event?: any;
     },
   ) {

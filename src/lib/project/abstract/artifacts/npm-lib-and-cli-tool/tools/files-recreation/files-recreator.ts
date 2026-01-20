@@ -15,7 +15,6 @@ import {
   tsconfigJsonMainProject,
   tsconfigBackendDistJson,
   tsconfigJsonIsomorphicMainProject,
-  tsconfigIsomorphicFlatDistMainProject,
   tsconfigJsonBrowserMainProject,
   runJsMainProject,
   updateVscodePackageJsonJsMainProject,
@@ -25,6 +24,7 @@ import {
   indexDtsMainProject,
   indexJsMapMainProject,
   tsconfigForSchemaJson,
+  tsconfigBackendDistJson_PROD,
 } from '../../../../../../constants';
 import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
@@ -173,12 +173,12 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
     templates = [
       `${tsconfigJsonMainProject}${dotFileTemplateExt}`,
       `${tsconfigBackendDistJson}${dotFileTemplateExt}`,
+      `${tsconfigBackendDistJson_PROD}${dotFileTemplateExt}`,
     ];
 
     if (this.project.framework.frameworkVersionAtLeast('v2')) {
       templates = [
         `${tsconfigJsonIsomorphicMainProject}${dotFileTemplateExt}`,
-        `${tsconfigIsomorphicFlatDistMainProject}${dotFileTemplateExt}`,
         `${tsconfigJsonBrowserMainProject}${dotFileTemplateExt}`,
         ...this.project.vsCodeHelpers.__vscodeFileTemplates,
         ...templates,

@@ -38,7 +38,6 @@ import type { Project } from './project';
 export class Vscode // @ts-ignore TODO weird inheritance problem
   extends BaseVscodeHelpers<Project>
 {
-
   //#region init
   async init(options?: { skipHiddingTempFiles?: boolean }): Promise<void> {
     options = options || {};
@@ -57,7 +56,6 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
   //#region save current settings
   saveCurrentSettings(): void {
-
     //#region @backendFunc
     // TODO QUCIK_FIX for asar that can be deleted because of vscode watcher
     this.currentSettingsValue['files.watcherExclude'] = {
@@ -66,13 +64,11 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     super.saveCurrentSettings();
     //#endregion
-
   }
   //#endregion
 
   //#region save colors for window
   private saveColorsForWindow(checkingParent: boolean = false): void {
-
     //#region @backendFunc
 
     const parentIsOrg = this.project.parent?.taonJson.isOrganization;
@@ -104,13 +100,11 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     ] = `#15d8ff`; // nice blue for debugging
 
     //#endregion
-
   }
   //#endregion
 
   //#region recreate jsonc schema for docs
   public recreateJsonSchemaForDocs(): void {
-
     //#region @backendFunc
     const properSchema = {
       fileMatch: [`/${docsConfigJsonFileName}`],
@@ -139,13 +133,11 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     _.set(this.currentSettingsValue, '["json.schemas"]', currentSchemas);
     //#endregion
-
   }
   //#endregion
 
   //#region recreate jsonc schema for taon
   public recreateJsonSchemaForTaon(): void {
-
     //#region @backendFunc
     let currentSchemas: {
       fileMatch: string[];
@@ -193,13 +185,11 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     _.set(this.currentSettingsValue, '["json.schemas"]', currentSchemas);
     //#endregion
-
   }
   //#endregion
 
   //#region vscode plugin dev pre launch task
   private get vscodePluginDevPreLaunchTask() {
-
     //#region vscode update package.json
     return {
       label: 'Update package.json vscode metadata',
@@ -244,7 +234,6 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
   //#region save tasks.json
   public saveTasksJson(): void {
-
     //#region @backendFunc
 
     //#endregion
@@ -254,13 +243,11 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       tasks: [this.vscodePluginDevPreLaunchTask],
     });
     //#endregion
-
   }
   //#endregion
 
   //#region save launch.json
   public async saveLaunchJson(): Promise<void> {
-
     //#region @backendFunc
     if (!this.project.framework.isStandaloneProject) {
       return;
@@ -274,6 +261,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     //#region template vscode config
     const vscodeProjDevPath =
       `${tmpVscodeProj}` + `/${Development}/${this.project.name}`;
+
     const templatesVscodeExConfig = [
       {
         name: 'Debug/Start Vscode Plugin',
@@ -471,13 +459,11 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     //#endregion
 
     //#endregion
-
   }
   //#endregion
 
   //#region vscode launch.json runtime args
   get __vscodeLaunchRuntimeArgs() {
-
     //#region @backendFunc
     return [
       // '--nolazy',
@@ -489,17 +475,16 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       // '--experimental-worker',
     ];
     //#endregion
-
   }
   //#endregion
 
   //#region open in vscode
   public openInVscode(): void {
-
     //#region @backendFunc
-    this.project.run(`${UtilsOs.detectEditor()} ${this.project.location}`).sync();
+    this.project
+      .run(`${UtilsOs.detectEditor()} ${this.project.location}`)
+      .sync();
     //#endregion
-
   }
   //#endregion
 
@@ -509,7 +494,6 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
    * get out files for debugging
    */
   get outFiles() {
-
     //#region @backendFunc
     return [
       `\${workspaceFolder}/${distMainProject}/**/*.js`,
@@ -535,13 +519,11 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       ),
     ];
     //#endregion
-
   }
   //#endregion
 
   //#region get source map path overrides
   get sourceMapPathOverrides() {
-
     //#region @backendFunc
     const sourceMapPathOverrides = {};
     Helpers.uniqArray(
@@ -576,20 +558,17 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     return sourceMapPathOverrides;
     //#endregion
-
   }
   //#endregion
 
   //#region vscode all file template files
   get __vscodeFileTemplates(): string[] {
-
     //#region @backendFunc
     if (this.project.framework.frameworkVersionAtLeast('v2')) {
       return [];
     }
     return [];
     //#endregion
-
   }
   //#endregion
 
@@ -621,7 +600,6 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
   //#region get basic settings
   async getBasicSettins(): Promise<object> {
-
     //#region @backendFunc
     const settings = await super.getBasicSettins();
     frameworkBuildFolders.forEach(f => {
@@ -629,8 +607,6 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     });
     return settings;
     //#endregion
-
   }
   //#endregion
-
 }

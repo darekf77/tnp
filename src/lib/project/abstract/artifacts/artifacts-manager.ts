@@ -774,14 +774,30 @@ export class ArtifactManager {
 
     //#region npm build helper
     const npmLibBUild = async (options: EnvOptions): Promise<void> => {
+      const libConfig = options.clone({
+        build: {
+          watch: false,
+        },
+        release: {
+          skipCodeCutting: true,
+          targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
+        },
+      });
+
+      // normal lib build
       await this.artifact.npmLibAndCliTool.buildPartial(
-        options.clone({
+        libConfig.clone({
           build: {
-            watch: false,
+            prod: false,
           },
-          release: {
-            skipCodeCutting: true,
-            targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
+        }),
+      );
+
+      // prod lib build
+      await this.artifact.npmLibAndCliTool.buildPartial(
+        libConfig.clone({
+          build: {
+            prod: true,
           },
         }),
       );

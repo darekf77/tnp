@@ -97,6 +97,7 @@ export async function start(
         a =>
           a.startsWith('startCliService') ||
           a.startsWith('kill') ||
+          a.startsWith('clear') ||
           a.startsWith('reinstall') ||
           a.startsWith('push') ||
           a.startsWith('pul') ||

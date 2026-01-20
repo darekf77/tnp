@@ -15,12 +15,15 @@ import {
   distNoCutSrcMainProject,
   libFromSrc,
   libs,
+  prodSuffix,
   srcMainProject,
   tmpSourceDist,
   tsconfigBackendDistJson,
+  tsconfigBackendDistJson_PROD,
 } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
+import { Models } from '../../../../../../../models';
 //#endregion
 
 export class BackendCompilation {
@@ -56,12 +59,7 @@ export class BackendCompilation {
    */
   async start({ taskName }): Promise<void> {
     //#region @backendFunc
-    await this.syncAction(
-      Helpers.getFilesFrom([this.project.location, this.srcFolder], {
-        recursive: true,
-        followSymlinks: false,
-      }),
-    );
+    await this.syncAction([] /* not needed anything */);
     //#endregion
   }
 
@@ -87,7 +85,6 @@ export class BackendCompilation {
       fse.mkdirpSync(outDistPath);
     }
     await this.libCompilation(this.buildOptions, {
-      cwd: this.project.location,
       generateDeclarations: true,
     });
     //#endregion
@@ -98,80 +95,67 @@ export class BackendCompilation {
   async libCompilation(
     buildOptions: EnvOptions,
     {
-      cwd,
       generateDeclarations = false,
       tsExe = 'npm-run tsc',
       diagnostics = false,
-    }: CoreModels.TscCompileOptions,
+    }: Models.TscCompileOptions,
   ) {
     //#region @backendFunc
     const watch = buildOptions.build.watch;
+
     if (!this.isEnableCompilation) {
       Helpers.log(
         `Compilation disabled for ${_.startCase(BackendCompilation.name)}`,
       );
       return;
     }
-    // let id = BackendCompilation.counter++;
-
-    const project = this.project.ins.nearestTo(cwd) as Project;
-
-    //#region prepare params
-    const paramsNoWatch = [
-      ` --outDir ${distMainProject} `,
-      !watch ? ' --noEmitOnError true ' : '',
-      diagnostics ? ' --extendedDiagnostics ' : '',
-      ` --preserveWatchOutput `,
-    ];
-
-    const params = [
-      watch ? ' -w ' : '',
-      ...paramsNoWatch,
-      // hideErrors ? '' : ` --preserveWatchOutput `,
-      // hideErrors ? ' --skipLibCheck true --noEmit true ' : '',
-    ];
-    //#endregion
+    const paramasCommon = {
+      watch: watch ? ' -w ' : '',
+      outDir: ` --outDir ${distMainProject + (buildOptions.build.prod ? prodSuffix : '')} `,
+      noEmitOnError: !watch ? ' --noEmitOnError true ' : '',
+      extendedDiagnostics: diagnostics ? ' --extendedDiagnostics ' : '',
+      preserveWatchOutput: ` --preserveWatchOutput `,
+    };
 
     //#region cmd
-    let prepareCmd = (specificTsconfig?: string) => {
-      let commandJs, commandMaps, commandDts;
-      const nocutsrcFolder = `${project.location}/${distNoCutSrcMainProject}`;
-      // commandJs = `${tsExe} -d false  --mapRoot ${nocutsrc} ${params.join(' ')} `
-      //   + (specificTsconfig ? `--project ${specificTsconfig}` : '');
+    let prepareCmd = (specificTsconfig: string) => {
+      let commandJs, commandMaps;
+      let nocutsrcFolder = this.project.pathFor(
+        distNoCutSrcMainProject + (buildOptions.build.prod ? prodSuffix : ''),
+      );
 
-      commandJs =
-        `${tsExe} --mapRoot ${nocutsrcFolder} ${params.join(' ')} ` +
-        (specificTsconfig ? `--project ${specificTsconfig}` : '');
+      const paramsJS = {
+        mapRoot: ` --mapRoot ${nocutsrcFolder} `,
+        project: `--project ${specificTsconfig}`,
+        ...paramasCommon,
+      };
+      const paramsMaps = { ...paramasCommon };
+      paramsMaps.outDir = ` --outDir ${nocutsrcFolder}`;
+      paramsMaps.noEmitOnError = !watch ? ' --noEmitOnError false ' : '';
 
-      // commandDts = `${tsExe} --emitDeclarationOnly  ${params.join(' ')}`;
-      params[1] = ` --outDir ${nocutsrcFolder}`;
-      commandMaps = `${tsExe} ${params
-        .join(' ')
-        .replace('--noEmitOnError true', '--noEmitOnError false')} `;
+      commandJs = `${tsExe} ${Object.values(paramsJS).join(' ')}  `;
+      commandMaps = `${tsExe} ${Object.values(paramsMaps).join(' ')} `;
       return {
-        commandJs,
-        commandMaps,
+        commandJs, // use tsconfig.backend.dist<.prod>.json
+        commandMaps, // uses main tsconfig.json to from /src directly everything
         // commandDts
       };
     };
     //#endregion
 
-    let tscCommands = {} as {
-      commandJs: string;
-      commandMaps: string;
-    };
-
     const tsconfigBackendPath = crossPlatformPath(
-      project.pathFor(tsconfigBackendDistJson),
+      this.project.pathFor(
+        buildOptions.build.prod
+          ? tsconfigBackendDistJson_PROD
+          : tsconfigBackendDistJson,
+      ),
     );
-    tscCommands = prepareCmd(tsconfigBackendPath);
 
     await this.buildStandardLibVer(buildOptions, {
-      ...tscCommands,
+      ...prepareCmd(tsconfigBackendPath),
       generateDeclarations,
-      cwd,
-      project,
     });
+
     //#endregion
   }
 
@@ -184,19 +168,16 @@ export class BackendCompilation {
       commandJs: string;
       commandMaps: string;
       generateDeclarations: boolean;
-      cwd: string;
-      project: Project;
     },
   ): Promise<void> {
     //#region @backendFunc
 
-    let { commandJs, commandMaps, cwd, project } = options;
+    let { commandJs, commandMaps } = options;
 
-    // console.log({ commandMaps, commandJs, cwd, outDir, watch });
-    // console.log({ childrenNames });
-
-    const isStandalone = project.framework.isStandaloneProject;
-    const parent = project.parent;
+    // console.log({
+    //   commandJs,
+    //   commandMaps,
+    // });
 
     Helpers.info(`
 
@@ -210,11 +191,12 @@ Starting (${
       return line;
     };
 
-    await project.nodeModules.makeSureInstalled();
-
+    await this.project.nodeModules.makeSureInstalled();
+    const cwd = this.project.location;
     await Helpers.execute(commandJs, cwd, {
       similarProcessKey: 'tsc',
       exitOnErrorCallback: async code => {
+        //#region handle error
         if (buildOptions.release.releaseType) {
           throw 'Typescript compilation (backend)';
         } else {
@@ -224,58 +206,34 @@ Starting (${
             true,
           );
         }
+        //#endregion
       },
       outputLineReplace: (line: string) => {
-        if (isStandalone) {
-          if (line.startsWith(`${tmpSourceDist}/`)) {
-            return additionalReplace(
-              line.replace(`${tmpSourceDist}/`, `./${srcMainProject}/`),
-            );
-          }
-
+        //#region outputs replacement
+        if (line.startsWith(`${tmpSourceDist + prodSuffix}/`)) {
           return additionalReplace(
-            line.replace(`../${tmpSourceDist}/`, `./${srcMainProject}/`),
+            line.replace(
+              `${tmpSourceDist + prodSuffix}/`,
+              `./${srcMainProject}/`,
+            ),
           );
-        } else {
-          line = line.trimLeft();
-          // console.log({ line })
-          if (line.startsWith(`./${srcMainProject}/${libs}/`)) {
-            const [__, ___, moduleName] = line.split('/');
-            return additionalReplace(
-              line.replace(
-                `./${srcMainProject}/${libs}/${moduleName}/`,
-                `./${moduleName}/${srcMainProject}/${libFromSrc}/`,
-              ),
-            );
-          } else if (line.startsWith(`../${tmpSourceDist}/${libs}/`)) {
-            const [__, ___, ____, moduleName] = line.split('/');
-            return additionalReplace(
-              line.replace(
-                `../${tmpSourceDist}/${libs}/${moduleName}/`,
-                `./${moduleName}/${srcMainProject}/${libFromSrc}/`,
-              ),
-            );
-          } else if (line.startsWith(`../${tmpSourceDist}/`)) {
-            return additionalReplace(
-              line.replace(`../${tmpSourceDist}/`, `./${project.name}/src/`),
-            );
-          } else if (line.startsWith(`${tmpSourceDist}/${libs}/`)) {
-            const [__, ___, moduleName] = line.split('/');
-            return additionalReplace(
-              line.replace(
-                `${tmpSourceDist}/${libs}/${moduleName}/`,
-                `./${moduleName}/${srcMainProject}/${libFromSrc}/`,
-              ),
-            );
-          } else {
-            return additionalReplace(
-              line.replace(
-                `./${srcMainProject}/`,
-                `./${project.name}/${srcMainProject}/${libFromSrc}/`,
-              ),
-            );
-          }
         }
+
+        if (line.startsWith(`${tmpSourceDist}/`)) {
+          return additionalReplace(
+            line.replace(`${tmpSourceDist}/`, `./${srcMainProject}/`),
+          );
+        }
+
+        return additionalReplace(
+          line
+            .replace(
+              `../${tmpSourceDist + prodSuffix}/`,
+              `./${srcMainProject}/`,
+            )
+            .replace(`../${tmpSourceDist}/`, `./${srcMainProject}/`),
+        );
+        //#endregion
       },
       resolvePromiseMsg: {
         stdout: ['Found 0 errors. Watching for file changes'],
@@ -284,7 +242,7 @@ Starting (${
 
     Helpers.logInfo(`* Typescript compilation first part done`);
 
-    await project.nodeModules.makeSureInstalled();
+    await this.project.nodeModules.makeSureInstalled();
 
     await Helpers.execute(commandMaps, cwd, {
       similarProcessKey: 'tsc',

@@ -167,10 +167,6 @@ export class TaonProjectsWorker extends BaseCliWorker<
       },
     });
 
-    // TODO @LAST
-    // shutdown of all if shutdown in main window
-    // handle cli args for group --restart
-
     await super.startNormallyInCurrentProcess({
       actionBeforeTerminalUI: async () => {
         Helpers.info(``);

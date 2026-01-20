@@ -7,6 +7,7 @@ import {
   extAllowedToReplace,
   frontEndOnly,
   TAGS,
+  Utils,
 } from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
@@ -18,10 +19,12 @@ import {
   assetsFromNpmPackage,
   assetsFromSrc,
   assetsFromTempSrc,
+  browserFromImport,
   browserMainProject,
   indexTsFromLibFromSrc,
   libFromImport,
   libFromSrc,
+  prodSuffix,
   srcFromTaonImport,
   srcMainProject,
   tmpSourceDist,
@@ -30,6 +33,7 @@ import {
   tmpSrcDist,
   tmpSrcDistWebsql,
   TO_REMOVE_TAG,
+  websqlFromImport,
   websqlMainProject,
 } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
@@ -118,12 +122,17 @@ export class BrowserCodeCut {
     this.absFileSourcePathBrowserOrWebsql = crossPlatformPath(
       absFileSourcePathBrowserOrWebsql,
     );
-    const replaceFrom = buildOptions.build.websql
-      ? tmpSrcDistWebsql
-      : tmpSrcDist;
-    const replaceTo = buildOptions.build.websql
+
+    let replaceFrom = buildOptions.build.websql ? tmpSrcDistWebsql : tmpSrcDist;
+
+    let replaceTo = buildOptions.build.websql
       ? tmpSrcAppDistWebsql
       : tmpSrcAppDist;
+
+    if (buildOptions.build.prod) {
+      replaceFrom = `${replaceFrom}${prodSuffix}`;
+      replaceTo = `${replaceTo}${prodSuffix}`;
+    }
 
     this.absFileSourcePathBrowserOrWebsqlAPPONLY =
       this.absFileSourcePathBrowserOrWebsql.replace(replaceFrom, replaceTo);
@@ -148,13 +157,15 @@ export class BrowserCodeCut {
 
     this.absoluteBackendDestFilePath = crossPlatformPath([
       this.project.location,
-      tmpSourceDist,
+      tmpSourceDist + (buildOptions.build.prod ? prodSuffix : ''),
       this.relativePath,
     ]);
 
     // console.log('RELATIVE ', this.relativePath)
 
-    this.isWebsqlMode = this.relativePath.startsWith(tmpSrcDistWebsql);
+    this.isWebsqlMode = this.relativePath.startsWith(
+      tmpSrcDistWebsql + (buildOptions.build.prod ? prodSuffix : ''),
+    );
   }
   //#endregion
 
@@ -249,6 +260,7 @@ export class BrowserCodeCut {
 
   //#region private / methods & getters / init
   rawOrginalContent: string;
+
   private init(): BrowserCodeCut {
     //#region @backendFunc
     const orgContent =
@@ -465,15 +477,16 @@ export class BrowserCodeCut {
     if (!this.relativePath.endsWith('.ts')) {
       return this;
     }
+    const prodPart = this.buildOptions.build.prod ? prodSuffix : '';
     if (_.isString(this.rawContentForBrowser)) {
       const toReplace = this.importExportsFromOrgContent.filter(imp => {
         imp.embeddedPathToFileResult = imp.wrapInParenthesis(
           imp.cleanEmbeddedPathToFile.replace(
             `/${srcMainProject}`,
             `/${
-              this.buildOptions.build.websql
-                ? websqlMainProject
-                : browserMainProject
+              (this.buildOptions.build.websql
+                ? websqlFromImport
+                : browserFromImport) + prodPart
             }`,
           ),
         );
@@ -494,7 +507,7 @@ export class BrowserCodeCut {
         imp.embeddedPathToFileResult = imp.wrapInParenthesis(
           imp.cleanEmbeddedPathToFile.replace(
             `/${srcFromTaonImport}`,
-            `/${libFromImport}`,
+            `/${libFromImport + prodPart}`,
           ),
         );
         return imp.isIsomorphic;
@@ -586,7 +599,7 @@ export class BrowserCodeCut {
     // console.log(`[incremental-build-process processAssetsLinksForApp '${this.buildOptions.baseHref}'`)
     const baseHref =
       this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
-        EnvOptions.fromBuild(this.buildOptions),
+        this.buildOptions.clone(),
       );
     // console.log(`Fixing with basehref: '${baseHref}'`)
 
@@ -760,6 +773,7 @@ export class BrowserCodeCut {
   //#endregion
 
   private static initialWarning = {};
+
   get initialWarnings() {
     return BrowserCodeCut.initialWarning;
   }
@@ -805,6 +819,7 @@ export class BrowserCodeCut {
             .join('');
 
     let toReplace: UtilsTypescript.TsImportExport[] = [];
+    const prodPart = this.buildOptions.build.prod ? prodSuffix : '';
 
     if (isBrowser) {
       toReplace = UtilsTypescript.recognizeImportsFromContent(
@@ -812,8 +827,20 @@ export class BrowserCodeCut {
       ).filter(f => {
         return projectOwnSmartPackages.includes(
           f.cleanEmbeddedPathToFile
-            .replace(/\/browser$/, '')
-            .replace(/\/websql$/, ''),
+            .replace(
+              new RegExp(
+                Utils.escapeStringForRegEx(`/${browserFromImport + prodPart}`) +
+                  '$',
+              ),
+              '',
+            )
+            .replace(
+              new RegExp(
+                Utils.escapeStringForRegEx(`/${websqlFromImport + prodPart}`) +
+                  '$',
+              ),
+              '',
+            ),
         );
       });
     } else {
@@ -821,7 +848,14 @@ export class BrowserCodeCut {
         this.rawContentBackend,
       ).filter(f => {
         return projectOwnSmartPackages.includes(
-          f.cleanEmbeddedPathToFile.replace(/\/lib$/, ''),
+          f.cleanEmbeddedPathToFile.replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(
+                `\\/${libFromImport + prodPart}` + '$',
+              ),
+            ),
+            '',
+          ),
         );
       });
     }
@@ -829,9 +863,54 @@ export class BrowserCodeCut {
     for (const imp of toReplace) {
       if (isLibFile) {
         const cleanName = imp.cleanEmbeddedPathToFile
-          .replace(/\/browser$/, '')
-          .replace(/\/websql$/, '')
-          .replace(/\/lib$/, '');
+          .replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(
+                `\\/${browserFromImport + prodPart}` + '$',
+              ),
+            ),
+            '',
+          )
+          .replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(
+                `\\/${websqlFromImport + prodPart}` + '$',
+              ),
+            ),
+            '',
+          )
+          .replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(
+                `\\/${libFromImport + prodPart}` + '$',
+              ),
+            ),
+            '',
+          )
+          .replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(
+                `\\/${browserFromImport}` + '$',
+              ),
+            ),
+            '',
+          )
+          .replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(
+                `\\/${websqlFromImport}` + '$',
+              ),
+            ),
+            '',
+          )
+          .replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(
+                `\\/${libFromImport}` + '$',
+              ),
+            ),
+            '',
+          );
 
         const indexInIfile = (this.rawOrginalContent || '')
           .split('\n')
@@ -878,7 +957,9 @@ export class BrowserCodeCut {
     return isAsset
       ? absDestinationPath.replace(
           `/${assetsFromTempSrc}/`,
-          `/${assetsFromNgProj}/${assetsFor}/${this.project.nameForNpmPackage}/${assetsFromNpmPackage}/`,
+          `/${assetsFromNgProj}/${assetsFor}/${
+            this.project.nameForNpmPackage
+          }/${assetsFromNpmPackage}/`,
         )
       : absDestinationPath;
     //#endregion

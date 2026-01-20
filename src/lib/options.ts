@@ -4,11 +4,7 @@ import { chalk, config, LibTypeEnum, UtilsTerminal } from 'tnp-core/src';
 import { Helpers } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
 
-import {
-  DOCKER_TEMPLATES,
-  tmpCutReleaseSrcDist,
-  tmpCutReleaseSrcDistWebsql,
-} from './constants';
+import { DOCKER_TEMPLATES } from './constants';
 import { Models } from './models';
 import type { Project } from './project/abstract/project';
 
@@ -196,6 +192,13 @@ class EnvOptionsBuild {
   declare baseHref: string;
 
   declare websql: boolean;
+
+  /**
+   * Taon production release mode:
+   * - splitting namespaces
+   * - all possible optimization
+   */
+  declare prod?: boolean;
 
   /**
    * watch build
@@ -543,6 +546,8 @@ class EnvOptionsInit {
 class EnvOptionsCopyToManager {
   declare skip: boolean;
 
+  declare beforeCopyHook: () => void | Promise<void>;
+
   declare copyToLocations: string[];
 
   declare copyToProjects: string[];
@@ -689,20 +694,12 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
   }
 
   public static from(options: Partial<EnvOptions>): EnvOptions {
-    const orgFinishCallback = options?.finishCallback;
-    let res = new EnvOptions(options);
-    // res = res.clone(options);
-    if (orgFinishCallback) {
-      res.finishCallback = orgFinishCallback;
-    } else {
-      res.finishCallback = () => {};
-    }
-    return res;
+    return new EnvOptions().clone(options);
   }
 
   toStringCommand(taonCommand?: string): string {
     let paramsCommand = '';
-    const alreadySetParams: string[] = [`--skipMenu true`,'--skipMenu'];
+    const alreadySetParams: string[] = [`--skipMenu true`, '--skipMenu'];
     for (const element of alreadySetParams) {
       taonCommand = taonCommand?.replace(element, '');
     }
@@ -752,25 +749,6 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
     );
 
     return `${config.frameworkName} ${taonCommand || ''} ${paramsCommand}`.trim();
-  }
-
-  public static fromModule(moduleOptions: Partial<EnvOptions>): EnvOptions {
-    const cloned = _.cloneDeep(moduleOptions);
-    // delete cloned['default'];
-    const result = EnvOptions.from(cloned as any);
-    return result;
-  }
-
-  public static fromRelease(releaseOptions: Partial<EnvOptions>): EnvOptions {
-    const buildOptions = EnvOptions.from(releaseOptions as any);
-    buildOptions.build.watch = false;
-    return buildOptions;
-  }
-
-  public static fromBuild(releaseOptions: Partial<EnvOptions>): EnvOptions {
-    const buildOptions = EnvOptions.from(releaseOptions as any);
-    // buildOptions.build.watch = false;
-    return buildOptions;
   }
 
   /**
@@ -1069,6 +1047,8 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
     options = options || {};
     override = override || {};
     const orgFinishCallback = override?.finishCallback;
+    const beforeCopyHookOverride = override?.copyToManager?.beforeCopyHook;
+    const beforeCopyHookThis = this?.copyToManager?.beforeCopyHook;
     const toClone = _.cloneDeep(this);
     EnvOptions.merge(toClone, override);
     const result = new EnvOptions(toClone);
@@ -1079,17 +1059,14 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
         result.finishCallback = () => {};
       }
     }
+    if (beforeCopyHookOverride || beforeCopyHookThis) {
+      if (beforeCopyHookOverride) {
+        result.copyToManager.beforeCopyHook = beforeCopyHookOverride;
+      } else if (beforeCopyHookThis) {
+        result.copyToManager.beforeCopyHook = beforeCopyHookThis;
+      }
+    }
     return result;
-    //#endregion
-  }
-  //#endregion
-
-  //#region getters
-  get temporarySrcForReleaseCutCode(): string {
-    //#region @backendFunc
-    return this.build.websql
-      ? tmpCutReleaseSrcDistWebsql
-      : tmpCutReleaseSrcDist;
     //#endregion
   }
   //#endregion
@@ -1165,6 +1142,7 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
     ssr: '-' as any,
     // angularSsr: '-' as any,
     websql: '-' as any,
+    prod: '-' as any,
     electron: {
       showDevTools: '-' as any,
     },
@@ -1190,6 +1168,7 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
     },
   },
   copyToManager: {
+    beforeCopyHook: '-' as any,
     copyToLocations: '-' as any,
     copyToProjects: '-' as any,
     skip: '-' as any,

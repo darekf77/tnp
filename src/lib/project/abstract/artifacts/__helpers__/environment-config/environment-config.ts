@@ -176,12 +176,16 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
           fromWatcher,
         ),
       ).clone({
-        // must be reapplied after cloning
+        // TODO @LAST APPLY ALL FIELDS FROM
+        // must be reapplied after cloning envOptions also
         release: {
           targetArtifact: envOptions.release.targetArtifact,
           envName: envOptions.release.envName,
           envNumber: envOptions.release.envNumber,
         },
+        copyToManager:{
+          beforeCopyHook: envOptions.copyToManager.beforeCopyHook
+        }
       });
       return envConfigForArtifactAndEnvironment;
     } else {

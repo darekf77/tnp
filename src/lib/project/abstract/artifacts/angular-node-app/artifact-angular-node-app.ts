@@ -1,7 +1,7 @@
 //#region imports
 import type { AxiosProgressEvent } from 'axios';
-import { TaonBaseContext, MulterFileUploadResponse, Taon } from 'taon/src';
-import { config, dotTaonFolder, UtilsFilesFoldersSync } from 'tnp-core/src';
+import { MulterFileUploadResponse } from 'taon/src';
+import { config, dotTaonFolder } from 'tnp-core/src';
 import {
   crossPlatformPath,
   path,
@@ -17,11 +17,9 @@ import { FilePathMetaData } from 'tnp-core/src';
 import { LibTypeEnum } from 'tnp-core/src';
 import {
   Helpers,
-  UtilsTypescript,
   DockerComposeFile,
   UtilsZip,
   BaseCliWorkerConfigGetContextOptions,
-  UtilsFileSync,
 } from 'tnp-helpers/src';
 import { UtilsDocker } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
@@ -33,19 +31,15 @@ import {
 } from '../../../../app-utils';
 import {
   ACTIVE_CONTEXT,
-  AngularJsonAppOrElectronTaskName,
   AngularJsonAppOrElectronTaskNameResolveFor,
   AngularJsonTaskName,
-  appFromSrc,
   appFromSrcInsideNgApp,
   assetsFromNgProj,
-  assetsFromSrc,
   browserNgBuild,
   COMPILATION_COMPLETE_APP_NG_SERVE,
   CoreAssets,
   CoreNgTemplateFiles,
   databases,
-  DEFAULT_PORT,
   defaultConfiguration,
   distFromNgBuild,
   distFromSassLoader,
@@ -61,6 +55,7 @@ import {
   ngProjectStylesScss,
   packageJsonMainProject,
   packageJsonNpmLib,
+  prodSuffix,
   readmeMdMainProject,
   routes,
   runJsMainProject,
@@ -69,11 +64,7 @@ import {
   suffixLatest,
   TaonCommands,
   TaonGeneratedFiles,
-  TemplateFolder,
-  THIS_IS_GENERATED_INFO_COMMENT,
   THIS_IS_GENERATED_STRING,
-  tmpAppsForDistElectronWebsql,
-  tmpAppsForDistWebsql,
   tmpBaseHrefOverwrite,
   tmpSrcDist,
   tmpSrcDistWebsql,
@@ -176,9 +167,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           ),
       ]);
 
-      const browserTsCode = initOptions.build.websql
+      let browserTsCode = initOptions.build.websql
         ? tmpSrcDistWebsql
         : tmpSrcDist;
+
+      if (initOptions.build.prod) {
+        browserTsCode = `${browserTsCode}${prodSuffix}`;
+      }
 
       const tmpDest = this.project.pathFor(
         `${browserTsCode}/${assetsFromNgProj}/${fileName}`,
@@ -336,7 +331,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     const tmpAppForDistRelativePath = angularProjProxyPath({
       project: this.project,
       targetArtifact: buildOptions.release.targetArtifact,
-      websql: buildOptions.build.websql,
+      envOptions: buildOptions,
     });
 
     // set correct default config for build/serve in angular.json
@@ -709,11 +704,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     let { appDistOutBrowserAngularAbsPath, appDistOutBackendNodeAbsPath } =
       await this.buildPartial(
-        EnvOptions.fromRelease({
-          ...releaseOptions,
-          // copyToManager: {
-          //   skip: true,
-          // },
+        releaseOptions.clone({
+          build: {
+            watch: false,
+          },
         }),
       );
 

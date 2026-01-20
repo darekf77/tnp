@@ -265,17 +265,6 @@ export const coreRequiredEnvironments = [
   'prod',
 ] as CoreModels.EnvironmentNameTaon[];
 
-//#region methods & getters / get browser ver path
-/**
- * @deprecated
- */
-export const getBrowserVerPath = (websql: boolean = false) => {
-  //#region @backend
-  return websql ? config.folder.websql : config.folder.browser;
-  //#endregion
-};
-//#endregion
-
 /**
  * @deprecated not needed probably
  */
@@ -288,25 +277,25 @@ export const tmpIsomorphicPackagesJson = 'tmp-isomorphic-packages.json';
 /**
  * If exist - copy manager will clean copy bundled package to destinations
  */
-export const tmpAlreadyStartedCopyManager = 'tmp-already-started-copy-manager';
+export const tmpAlreadyStartedCopyManager = 'tmp-already-started-copy-manager'; // not for prod
 
-export const tmpAllAssetsLinked = 'tmp-all-assets-linked';
+export const tmpAllAssetsLinked = 'tmp-all-assets-linked'; // not for prod
 
 /**
  * Destination place for all taon processes (tsc, ng build, etc)
  * From this folder code is copied to final destinations node_modules
  */
-export const tmpLocalCopytoProjDist = 'tmp-local-copyto-proj-dist';
+export const tmpLocalCopytoProjDist = 'tmp-local-copyto-proj-dist'; // not for prod
 
 /**
  * Folder where tmpSrdDist code is cutted file by file before publishing
  */
-export const tmpCutReleaseSrcDist = 'tmp-cut-release-src-dist';
+export const tmpCutReleaseSrcDist = 'tmp-cut-release-src-dist'; // not for prod
 
 /**
  * Folder where tmpSrdDist code is cutted file by file before publishing (websql version)
  */
-export const tmpCutReleaseSrcDistWebsql = 'tmp-cut-release-src-dist-websql';
+export const tmpCutReleaseSrcDistWebsql = 'tmp-cut-release-src-dist-websql'; // not for prod
 
 /**
  * Temporary folder for base href overwrite during build
@@ -322,32 +311,32 @@ export const tmpVscodeProj = `tmp-vscode-proj`;
 /**
  * Taon code transformed for backend
  */
-export const tmpSourceDist = 'tmp-source-dist';
+export const tmpSourceDist = 'tmp-source-dist'; // ok for prod
 /**
  * Taon code transformed for backend in websql mode
  * (this code is probably never used)
  */
-export const tmpSourceDistWebsql = 'tmp-source-dist-websql';
+export const tmpSourceDistWebsql = 'tmp-source-dist-websql'; // ok for prod
 
 /**
  * Taon code transformed for browser
  */
-export const tmpSrcDist = 'tmp-src-dist';
+export const tmpSrcDist = 'tmp-src-dist'; // ok for prod
 /**
  * Taon code transformed for browser in websql mode
  */
-export const tmpSrcDistWebsql = 'tmp-src-dist-websql';
+export const tmpSrcDistWebsql = 'tmp-src-dist-websql'; // ok for prod
 
 /**
  * Taon code transformed for browser (angular app uses this)
  */
 
-export const tmpSrcAppDist = 'tmp-src-app-dist';
+export const tmpSrcAppDist = 'tmp-src-app-dist'; // ok for prod
 
 /**
  * Taon code transformed for browser (angular app in websql uses this)
  */
-export const tmpSrcAppDistWebsql = 'tmp-src-app-dist-websql';
+export const tmpSrcAppDistWebsql = 'tmp-src-app-dist-websql'; // ok for prod
 
 export const defaultConfiguration = 'defaultConfiguration';
 
@@ -422,6 +411,8 @@ export enum TaonGeneratedFiles {
   APP_FOLDER_INFO_MD = 'app-folder-info.md',
 }
 
+export const DS_Store = '.DS_Store';
+
 export enum TaonGeneratedFolders {
   ENV_FOLDER = 'env',
   COMPILED = 'compiled',
@@ -433,14 +424,14 @@ export enum TaonGeneratedFolders {
 export const nodeModulesMainProject = folderName.node_modules;
 
 /**
- * Main project /dist folder
- */
-export const distMainProject = folderName.dist;
-
-/**
  * Main project /dist-nocutsrc folder (d.ts files without code cutting)
  */
 export const distNoCutSrcMainProject = `dist-nocutsrc`;
+
+/**
+ * Main project /dist folder
+ */
+export const distMainProject = folderName.dist;
 
 /**
  * Vscode project dist folder
@@ -452,10 +443,6 @@ export const distVscodeProj = folderName.dist;
  */
 export const distElectronProj = folderName.dist;
 
-export const electronNgProj = 'electron';
-
-export const combinedDocsAllMdFilesFolder = `allmdfiles`;
-
 /**
  * Normal angular app build
  */
@@ -465,6 +452,10 @@ export const distFromNgBuild = folderName.dist;
  * Dist from sass loader
  */
 export const distFromSassLoader = folderName.dist;
+
+export const electronNgProj = 'electron';
+
+export const combinedDocsAllMdFilesFolder = `allmdfiles`;
 
 /**
  * Vscode project dist folder
@@ -502,8 +493,6 @@ export const srcFromTaonImport = folderName.src;
 export const srcDtsFromNpmPackage = 'src.d.ts';
 
 export const myLibFromNgProject = 'my-lib';
-
-export const libFromNgProject = 'lib';
 
 export const externalLibsFromNgProject = 'external-libs';
 
@@ -556,6 +545,11 @@ export const libFromCompiledDist = folderName.lib;
  * Lib from npm packages
  */
 export const libFromNpmPackages = folderName.lib;
+
+/**
+ * lib from ng projects
+ */
+export const libFromNgProject = folderName.lib;
 
 /**
  * Main project tests folder from /src/tests folder
@@ -743,27 +737,33 @@ export const indexScssFromSrcLib = 'index.scss';
  * @param websql if true websql version
  * @returns relative path to temp browser source folder
  */
-export function tempSourceFolder(appForLib: boolean, websql: boolean): string {
+export function tempSourceFolder(
+  appForLib: boolean,
+  websql: boolean,
+  prod = false,
+): string {
   if (appForLib && websql) {
-    return tmpSrcAppDistWebsql;
+    return tmpSrcAppDistWebsql + (prod ? prodSuffix : '');
   }
   if (appForLib && !websql) {
-    return tmpSrcAppDist;
+    return tmpSrcAppDist + (prod ? prodSuffix : '');
   }
   if (!appForLib && websql) {
-    return tmpSrcDistWebsql;
+    return tmpSrcDistWebsql + (prod ? prodSuffix : '');
   }
   if (!appForLib && !websql) {
-    return tmpSrcDist;
+    return tmpSrcDist + (prod ? prodSuffix : '');
   }
-}
+} // ok for prod
 
 export const ENV_INJECT_COMMENT = '<!--ENV_INJECT-->';
 export const isomorphicPackagesJsonKey = 'isomorphicPackages';
 
 export const browserMainProject = config.folder.browser;
 export const browserNgBuild = config.folder.browser;
+export const browserFromImport = config.folder.browser;
 export const websqlMainProject = config.folder.websql;
+export const websqlFromImport = config.folder.websql;
 
 export const clientCodeVersionFolder = [browserMainProject, websqlMainProject];
 
@@ -801,16 +801,18 @@ export const tsconfigSpecNgProject = 'tsconfig.spec.json';
 
 export const tsconfigForUnitTestsNgProject = 'tsconfig.spec-for-unit.json';
 
+/**
+ * TODO not used?
+ */
 export const tsconfigJsonBrowserMainProject = 'tsconfig.browser.json';
 
 export const tsconfigBackendDistJson = 'tsconfig.backend.dist.json';
 
+export const tsconfigBackendDistJson_PROD = 'tsconfig.backend.dist.prod.json';
+
 export const tsconfigForSchemaJson = 'tsconfig-for-schema.json';
 
 export const tsconfigJsonIsomorphicMainProject = 'tsconfig.isomorphic.json';
-
-export const tsconfigIsomorphicFlatDistMainProject =
-  'tsconfig.isomorphic-flat-dist.json';
 
 export const dotNpmrcMainProject = fileName._npmrc;
 
@@ -860,6 +862,7 @@ export const dotFileTemplateExt = '.filetemplate';
 export const dotEnvFile = '.env';
 
 export const suffixLatest = '-latest';
+export const prodSuffix = '-prod';
 
 export const releaseSuffix = '-release';
 

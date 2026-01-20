@@ -16,7 +16,6 @@ import {
 } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import {
-  BaseFeatureForProject,
   BaseNodeModules,
   Helpers,
 } from 'tnp-helpers/src';
@@ -25,23 +24,18 @@ import {
   assetsFromNgProj,
   binMainProject,
   browserMainProject,
-  distMainProject,
   dotGitIgnoreMainProject,
   dotInstallDate,
   dotNpmIgnoreMainProject,
   dotNpmrcMainProject,
   libFromCompiledDist,
-  libFromSrc,
-  nodeModulesMainProject,
   notAllowedAsPacakge,
   packageJsonLockMainProject,
   packageJsonMainProject,
   SKIP_CORE_CHECK_PARAM,
   sourceLinkInNodeModules,
   srcDtsFromNpmPackage,
-  srcFromTaonImport,
   taonJsonMainProject,
-  tmpLocalCopytoProjDist,
   websqlMainProject,
   yarnLockMainProject,
 } from '../../constants';

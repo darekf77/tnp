@@ -1,19 +1,17 @@
 //#region imports
 import { RegionRemover } from 'isomorphic-region-loader/src';
-import { MagicRenamer, RenameRule } from 'magic-renamer/src';
-import { config, TAGS, Utils, UtilsFilesFoldersSync } from 'tnp-core/src';
+import { MagicRenamer } from 'magic-renamer/src';
+import { TAGS, Utils, UtilsFilesFoldersSync } from 'tnp-core/src';
 import { crossPlatformPath, path, _, CoreModels, fse } from 'tnp-core/src';
 import { BasePackageJson, Helpers } from 'tnp-helpers/src';
 
 import { templateFolderForArtifact } from '../../../../../app-utils';
 import {
   AngularJsonTaskName,
-  appFromSrc,
   appFromSrcInsideNgApp,
   assetsFromNgProj,
   assetsFromSrc,
   browserMainProject,
-  CoreAssets,
   CoreNgTemplateFiles,
   distMainProject,
   electronNgProj,
@@ -25,19 +23,16 @@ import {
   myLibFromNgProject,
   ngProjectStylesScss,
   packageJsonNgProject,
-  packageJsonNpmLib,
+  prodSuffix,
   projectsFromNgTemplate,
   sourceLinkInNodeModules,
   srcMainProject,
   srcNgProxyProject,
   TaonGeneratedFolders,
-  TemplateFolder,
   tmpAppsForDist,
   tmpAppsForDistElectron,
   tmpAppsForDistElectronWebsql,
   tmpAppsForDistWebsql,
-  tmpLibsForDist,
-  tmpLibsForDistWebsql,
   tmpSrcAppDist,
   tmpSrcAppDistWebsql,
   tmpSrcDist,
@@ -45,9 +40,7 @@ import {
   tsconfigNgProject,
   websqlMainProject,
 } from '../../../../../constants';
-import { libs } from '../../../../../constants';
 import { ReleaseArtifactTaon } from '../../../../../options';
-import type { Project } from '../../../project';
 import { InsideStruct } from '../../__helpers__/inside-structures/inside-struct';
 import { BaseInsideStruct } from '../../__helpers__/inside-structures/structs/base-inside-struct';
 import { resolvePathToAsset } from '../../__helpers__/inside-structures/structs/inside-struct-helpers';
@@ -113,9 +106,13 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           [
             // from this
             () => {
-              const browserTsAppCode = this.initOptions.build.websql
+              let browserTsAppCode = this.initOptions.build.websql
                 ? tmpSrcAppDistWebsql
                 : tmpSrcAppDist;
+
+              if (this.initOptions.build.prod) {
+                browserTsAppCode = `${browserTsAppCode}${prodSuffix}`;
+              }
 
               return browserTsAppCode;
             },
@@ -456,9 +453,13 @@ export class InsideStructAngularApp extends BaseInsideStruct {
 
           //#region link assets DONE
           (() => {
-            const browserTsCode = this.initOptions.build.websql
+            let browserTsCode = this.initOptions.build.websql
               ? tmpSrcDistWebsql
               : tmpSrcDist;
+
+            if (this.initOptions.build.prod) {
+              browserTsCode = `${browserTsCode}${prodSuffix}`;
+            }
 
             const assetsSource = this.project.pathFor([
               replacement(browserTsCode),
@@ -712,9 +713,10 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                 //#region link lib
                 (() => {
                   const sourceLibInProjects = projFromSrouce.pathFor([
-                    this.initOptions.build.websql
+                    (this.initOptions.build.websql
                       ? tmpSrcAppDistWebsql
-                      : tmpSrcAppDist,
+                      : tmpSrcAppDist) +
+                      (this.initOptions.build.prod ? prodSuffix : ''),
                     libFromNgProject,
                   ]);
 
@@ -742,9 +744,10 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                 //#region link migration
                 (() => {
                   const sourceMigrationInProjects = projFromSrouce.pathFor([
-                    this.initOptions.build.websql
+                    (this.initOptions.build.websql
                       ? tmpSrcAppDistWebsql
-                      : tmpSrcAppDist,
+                      : tmpSrcAppDist) +
+                      (this.initOptions.build.prod ? prodSuffix : ''),
                     migrationsFromSrc,
                   ]);
 

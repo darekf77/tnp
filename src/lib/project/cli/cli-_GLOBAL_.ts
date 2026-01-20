@@ -81,7 +81,6 @@ import {
   taonJsonMainProject,
   tmpIsomorphicPackagesJson,
   tsconfigForSchemaJson,
-  tsconfigIsomorphicFlatDistMainProject,
 } from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
@@ -1030,12 +1029,13 @@ ${this.project.children
     //#region @backendFunc
     if (!this.project || !this.project.framework.isCoreProject) {
       if (this.project && this.project.typeIs(LibTypeEnum.ISOMORPHIC_LIB)) {
-        await this.project.init(
-          EnvOptions.from({
-            purpose: 'updating isomorphic-lib external deps',
-          }),
-        );
-        this.project.taonJson.updateIsomorphicExternalDependencies();
+        // await this.project.init(
+        //   EnvOptions.from({
+        //     purpose: 'updating isomorphic-lib external deps',
+        //   }),
+        // );
+        this.project.taonJson.detectAndUpdateNpmExternalDependencies();
+        this.project.taonJson.detectAndUpdateIsomorphicExternalDependencies();
         UtilsTypescript.formatFile(this.project.taonJson.path);
       } else {
         Helpers.error(
@@ -1517,7 +1517,7 @@ ${this.project.children
     //#region @backendFunc
     Helpers.taskStarted(`Recognizing all imports from project...`);
     const displayList =
-      this.project.framework.allDetectedExternalIsomorphicDependenciesForNpmLib;
+      this.project.framework.allDetectedExternalIsomorphicDependenciesForNpmLibCode;
 
     console.log(displayList.map(i => `"${i}"`).join('\n'));
     Helpers.info(`Total unique imports found: ${displayList.length}`);

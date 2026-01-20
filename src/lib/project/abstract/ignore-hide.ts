@@ -11,6 +11,7 @@ import {
 import {
   assetsFromSrc,
   browserMainProject,
+  distMainProject,
   distNoCutSrcMainProject,
   docsConfigSchema,
   dotFileTemplateExt,
@@ -24,6 +25,7 @@ import {
   localReleaseMainProject,
   migrationsFromSrc,
   packageJsonLockMainProject,
+  prodSuffix,
   runJsMainProject,
   sharedFromAssets,
   srcMainProject,
@@ -91,7 +93,9 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       ...super.alwaysIgnoredAndHiddenFilesAndFolders(),
       browserMainProject,
       websqlMainProject,
+      distMainProject + prodSuffix,
       distNoCutSrcMainProject,
+      distNoCutSrcMainProject + prodSuffix,
       packageJsonLockMainProject,
     ];
   }

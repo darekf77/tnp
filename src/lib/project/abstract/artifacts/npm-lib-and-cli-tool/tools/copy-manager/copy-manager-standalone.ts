@@ -12,6 +12,7 @@ import {
   indexDtsNpmPackage,
   nodeModulesMainProject,
   packageJsonNpmLib,
+  prodSuffix,
   projectsFromNgTemplate,
   sharedFromAssets,
   sourceLinkInNodeModules,
@@ -20,6 +21,8 @@ import {
   tmpLibsForDist,
   tmpLocalCopytoProjDist,
   tmpSourceDist,
+  tmpSrcDist,
+  tmpSrcDistWebsql,
 } from '../../../../../../constants';
 import {
   EnvOptions,
@@ -38,10 +41,24 @@ export class CopyManagerStandalone extends CopyManager {
 
   //#region init
   public init(buildOptions: EnvOptions, renameDestinationFolder?: string) {
-
     //#region @backendFunc
     this.buildOptions = buildOptions;
     this.renameDestinationFolder = renameDestinationFolder;
+    this.browserwebsqlFolders = this.getBrowserwebsqlFolders();
+
+    this.sourceFoldersToRemoveFromNpmPackage = [
+      srcMainProject,
+      sourceLinkInNodeModules,
+      nodeModulesMainProject,
+      tmpSrcDist,
+      tmpSrcDist + prodSuffix,
+      tmpSrcDistWebsql,
+      tmpSrcDistWebsql + prodSuffix,
+      ...this.browserwebsqlFolders.map(currentBrowserFolder => {
+        // TODO not needed?
+        return crossPlatformPath([currentBrowserFolder, srcMainProject]);
+      }),
+    ];
 
     this.selectAllProjectCopyto();
 
@@ -77,13 +94,11 @@ export class CopyManagerStandalone extends CopyManager {
 
     this.initWatching();
     //#endregion
-
   }
   //#endregion
 
   //#region links ofr packages are ok
   linksForPackageAreOk(destination: Project): boolean {
-
     //#region @backendFunc
     const destPackageLinkSourceLocation = destination.pathFor([
       nodeModulesMainProject,
@@ -94,13 +109,11 @@ export class CopyManagerStandalone extends CopyManager {
 
     return Helpers.exists(destPackageLinkSourceLocation);
     //#endregion
-
   }
   //#endregion
 
   //#region recreate temp proj
   recreateTempProj() {
-
     //#region @backendFunc
     try {
       // QUICK_FIX remove old temp proj
@@ -119,13 +132,11 @@ export class CopyManagerStandalone extends CopyManager {
     });
     Helpers.mkdirp([this.localTempProjPath, nodeModulesMainProject]);
     //#endregion
-
   }
   //#endregion
 
   //#region init watching
   initWatching() {
-
     //#region @backendFunc
     const monitoredOutDir = this.monitoredOutDir;
     const monitoredOutDirSharedAssets = this.monitoredOutDirSharedAssets;
@@ -136,17 +147,14 @@ export class CopyManagerStandalone extends CopyManager {
       taskName: 'CopyManager',
     });
     //#endregion
-
   }
   //#endregion
 
   //#region local temp proj path
   get localTempProjPath() {
-
     //#region @backendFunc
     return this.project.pathFor(tmpLocalCopytoProjDist);
     //#endregion
-
   }
   //#endregion
 
@@ -157,7 +165,6 @@ export class CopyManagerStandalone extends CopyManager {
    * project/node_modules/<rootPackageName> # like 'ng2-rest' or '@angular'
    */
   get rootPackageName() {
-
     //#region @backendFunc
     const rootPackageName =
       _.isString(this.renameDestinationFolder) &&
@@ -167,21 +174,17 @@ export class CopyManagerStandalone extends CopyManager {
 
     return rootPackageName;
     //#endregion
-
   }
   //#endregion
 
   //#region monitored out dir
   get monitoredOutDir(): string {
-
     //#region @backendFunc
     return this.project.pathFor(distMainProject);
     //#endregion
-
   }
 
   get monitoredOutDirSharedAssets(): string[] {
-
     //#region @backendFunc
     const monitorDir = this.project.pathFor([
       srcMainProject,
@@ -190,13 +193,11 @@ export class CopyManagerStandalone extends CopyManager {
     ]);
     return [monitorDir];
     //#endregion
-
   }
   //#endregion
 
   //#region initial fix for destination pacakge
   initalFixForDestination(destination: Project): void {
-
     //#region @backendFunc
 
     const destPackageInNodeModules = destination.pathFor([
@@ -211,13 +212,8 @@ export class CopyManagerStandalone extends CopyManager {
       Helpers.remove(destPackageInNodeModules);
     }
 
-    for (
-      let index = 0;
-      index < CopyMangerHelpers.browserwebsqlFolders.length;
-      index++
-    ) {
-      const currentBrowserFolder =
-        CopyMangerHelpers.browserwebsqlFolders[index];
+    for (let index = 0; index < this.browserwebsqlFolders.length; index++) {
+      const currentBrowserFolder = this.browserwebsqlFolders[index];
       const destPackageInNodeModulesBrowser = crossPlatformPath(
         path.join(destPackageInNodeModules, currentBrowserFolder),
       );
@@ -238,7 +234,6 @@ export class CopyManagerStandalone extends CopyManager {
       }
     }
     //#endregion
-
   }
   //#endregion
 
@@ -250,7 +245,6 @@ export class CopyManagerStandalone extends CopyManager {
     absFilePath: string,
     releaseType: ReleaseType,
   ): string {
-
     //#region @backendFunc
     if (
       !content ||
@@ -260,6 +254,7 @@ export class CopyManagerStandalone extends CopyManager {
       return content;
     }
 
+    // prod not need for debugging
     let toReplaceString2 = isBrowser
       ? `../${tmpLibsForDist}/${this.project.name}` +
         `/${projectsFromNgTemplate}/${this.project.name}/${srcMainProject}`
@@ -301,7 +296,6 @@ export class CopyManagerStandalone extends CopyManager {
 
     return content;
     //#endregion
-
   }
   //#endregion
 
@@ -312,7 +306,6 @@ export class CopyManagerStandalone extends CopyManager {
     absFilePath: string,
     releaseType: ReleaseType,
   ) {
-
     //#region @backendFunc
     /**
      * QUICK_FIX backend debugging on window
@@ -358,31 +351,29 @@ export class CopyManagerStandalone extends CopyManager {
     }
     return content;
     //#endregion
-
   }
   //#endregion
 
   //#region remove source folder links
-  removeSourceLinksFolders(location: string) {
-
+  removeSourceLinksFolders(pkgLocInDestNodeModules: string) {
     //#region @backendFunc
-    this.sourceFolders.forEach(sourceFolder => {
-      const toRemoveLink = crossPlatformPath(path.join(location, sourceFolder));
+    this.sourceFoldersToRemoveFromNpmPackage.forEach(sourceFolder => {
+      const toRemoveLink = crossPlatformPath(
+        path.join(pkgLocInDestNodeModules, sourceFolder),
+      );
       if (Helpers.isSymlinkFileExitedOrUnexisted(toRemoveLink)) {
         Helpers.remove(
-          crossPlatformPath(path.join(location, sourceFolder)),
+          crossPlatformPath(path.join(pkgLocInDestNodeModules, sourceFolder)),
           true,
         );
       }
     });
     //#endregion
-
   }
   //#endregion
 
   //#region copy shared assets
   copySharedAssets(destination: Project, isTempLocalProj: boolean) {
-
     //#region @backendFunc
     const monitoredOutDirSharedAssets = this.monitoredOutDirSharedAssets;
     for (let index = 0; index < monitoredOutDirSharedAssets.length; index++) {
@@ -404,7 +395,6 @@ export class CopyManagerStandalone extends CopyManager {
       });
     }
     //#endregion
-
   }
   //#endregion
 
@@ -413,7 +403,6 @@ export class CopyManagerStandalone extends CopyManager {
     destination: Project,
     isTempLocalProj: boolean,
   ) {
-
     //#region @backendFunc
     const monitorDir = isTempLocalProj //
       ? this.monitoredOutDir // other package are getting data from temp-local-projecg
@@ -421,14 +410,20 @@ export class CopyManagerStandalone extends CopyManager {
 
     if (isTempLocalProj) {
       // when destination === tmpLocalCopytoProjDist => fix d.ts imports in (dist)
-      this.dtsFixer.processFolderWithBrowserWebsqlFolders(monitorDir);
+      this.dtsFixer.processFolderWithBrowserWebsqlFolders(
+        monitorDir,
+        this.browserwebsqlFolders,
+      );
     }
 
     //#region final copy from dist to node_moules/rootpackagename
     const pkgLocInDestNodeModules = destination.nodeModules.pathFor(
       this.rootPackageName,
     );
-    const filter = Helpers.filterDontCopy(this.sourceFolders, monitorDir);
+    const filter = Helpers.filterDontCopy(
+      this.sourceFoldersToRemoveFromNpmPackage,
+      monitorDir,
+    );
 
     this.removeSourceLinksFolders(pkgLocInDestNodeModules);
 
@@ -441,13 +436,11 @@ export class CopyManagerStandalone extends CopyManager {
     //#endregion
 
     //#endregion
-
   }
   //#endregion
 
   //#region replace d.ts files in destination after copy
   replaceIndexDtsForEntryProjectIndex(destination: Project) {
-
     //#region @backendFunc
     const location = destination.nodeModules.pathFor([
       this.rootPackageName,
@@ -455,13 +448,11 @@ export class CopyManagerStandalone extends CopyManager {
     ]);
     Helpers.writeFile(location, `export * from './${srcMainProject}';\n`);
     //#endregion
-
   }
   //#endregion
 
   //#region add source symlinks
   addSourceSymlinks(destination: Project) {
-
     //#region @backendFunc
     const source = crossPlatformPath([
       destination.nodeModules.pathFor(this.rootPackageName),
@@ -487,13 +478,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
             `.trimStart(),
     );
     //#endregion
-
   }
   //#endregion
 
   //#region remove source symlinks
   removeSourceSymlinks(destination: Project) {
-
     //#region @backendFunc
     const srcDts = crossPlatformPath([
       destination.nodeModules.pathFor(this.rootPackageName),
@@ -520,7 +509,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
     Helpers.removeIfExists(source);
     //#endregion
-
   }
   //#endregion
 
@@ -531,7 +519,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
    * @param isTempLocalProj
    */
   copySourceMaps(destination: Project, isTempLocalProj: boolean) {
-
     //#region @backendFunc
     if (isTempLocalProj) {
       // destination === tmpLocalCopytoProjDist
@@ -540,7 +527,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       this.copyBackendAndBrowserJsMapFilesFromLocalProjTo(destination);
     }
     //#endregion
-
   }
   //#endregion
 
@@ -549,7 +535,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     destinationPackageLocation: string,
     currentBrowserFolder?: 'browser' | 'websql' | string,
   ) {
-
     //#region @backendFunc
     const forBrowser = !!currentBrowserFolder;
     const filesPattern =
@@ -577,7 +562,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       this.writeFixedMapFile(forBrowser, relative, destinationPackageLocation);
     }
     //#endregion
-
   }
   //#endregion
 
@@ -593,25 +577,18 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
    * @param destinationPackageLocation desitnation/node_modues/< rootPackageName >
    */
   fixBackendAndBrowserJsMapFilesInLocalProj() {
-
     //#region @backendFunc
     const destinationPackageLocation = this.localTempProj.nodeModules.pathFor(
       this.rootPackageName,
     );
 
-    for (
-      let index = 0;
-      index < CopyMangerHelpers.browserwebsqlFolders.length;
-      index++
-    ) {
-      const currentBrowserFolder =
-        CopyMangerHelpers.browserwebsqlFolders[index];
+    for (let index = 0; index < this.browserwebsqlFolders.length; index++) {
+      const currentBrowserFolder = this.browserwebsqlFolders[index];
       this.fixJsMapFiles(destinationPackageLocation, currentBrowserFolder);
     }
 
     this.fixJsMapFiles(destinationPackageLocation);
     //#endregion
-
   }
   //#endregion
 
@@ -620,9 +597,8 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     destination: Project,
     tmpLocalProjPackageLocation: string,
   ) {
-
     //#region @backendFunc
-    const allMjsBrowserFiles = CopyMangerHelpers.browserwebsqlFolders
+    const allMjsBrowserFiles = this.browserwebsqlFolders
       .map(currentBrowserFolder => {
         const mjsBrowserFilesPattern =
           `${tmpLocalProjPackageLocation}/` +
@@ -656,7 +632,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       Helpers.copyFile(fileAbsPath, destAbs, { dontCopySameContent: false });
     }
     //#endregion
-
   }
   //#endregion
 
@@ -667,7 +642,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
    * @param destination any project other than tmpLocalCopytoProjDist
    */
   copyBackendAndBrowserJsMapFilesFromLocalProjTo(destination: Project) {
-
     //#region @backendFunc
     const destinationPackageLocation = this.localTempProj.nodeModules.pathFor(
       this.rootPackageName,
@@ -677,7 +651,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       destinationPackageLocation,
     );
     //#endregion
-
   }
   //#endregion
 
@@ -686,18 +659,12 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     absOrgFilePathInDist: string,
     destinationFilePath: string,
   ) {
-
     //#region @backendFunc
     if (absOrgFilePathInDist.endsWith('.d.ts')) {
       const contentToWriteInDestination =
         Helpers.readFile(absOrgFilePathInDist) || '';
-      for (
-        let index = 0;
-        index < CopyMangerHelpers.browserwebsqlFolders.length;
-        index++
-      ) {
-        const currentBrowserFolder =
-          CopyMangerHelpers.browserwebsqlFolders[index];
+      for (let index = 0; index < this.browserwebsqlFolders.length; index++) {
+        const currentBrowserFolder = this.browserwebsqlFolders[index];
         const newContent = this.dtsFixer.forContent(
           contentToWriteInDestination,
           // sourceFile,
@@ -709,13 +676,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       }
     }
     //#endregion
-
   }
   //#endregion
 
   //#region handle copy of asset file
   handleCopyOfAssetFile(absoluteAssetFilePath: string, destination: Project) {
-
     //#region @backendFunc
     const monitoredOutDirSharedAssets = this.monitoredOutDirSharedAssets;
     for (let index = 0; index < monitoredOutDirSharedAssets.length; index++) {
@@ -735,7 +700,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       }
     }
     //#endregion
-
   }
   //#endregion
 
@@ -746,7 +710,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     specificFileRelativePath: string,
     wasRecrusive = false,
   ): void {
-
     //#region @backendFunc
     specificFileRelativePath = specificFileRelativePath.replace(/^\//, '');
 
@@ -847,7 +810,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       // Helpers.copyFile(sourceFile, path.join(path.dirname(destinationFile), folderName.browser, path.basename(destinationFile)));
     }
     //#endregion
-
   }
   //#endregion
 
@@ -863,7 +825,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     destination: Project,
     isTempLocalProj: boolean,
   ) {
-
     //#region @backendFunc
     (() => {
       const specificFileRelativePathBackendMap =
@@ -903,12 +864,8 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       }
     })();
 
-    for (
-      let index = 0;
-      index < CopyMangerHelpers.browserwebsqlFolders.length;
-      index++
-    ) {
-      const browserFolder = CopyMangerHelpers.browserwebsqlFolders[index];
+    for (let index = 0; index < this.browserwebsqlFolders.length; index++) {
+      const browserFolder = this.browserwebsqlFolders[index];
       const specificFileRelativePathBrowserMap =
         specificFileRelativePath.replace('.mjs', '.mjs.map');
       const possibleBrowserMapFile = crossPlatformPath(
@@ -930,7 +887,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       }
     }
     //#endregion
-
   }
   //#endregion
 
@@ -943,7 +899,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     specificFileRelativePath: string,
     destinationPackageLocation: string,
   ) {
-
     //#region @backendFunc
 
     //#region map fix for node_moules/pacakge
@@ -981,7 +936,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     //#endregion
 
     //#endregion
-
   }
 
   writeFixedMapFileForCli(
@@ -989,7 +943,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     specificFileRelativePath: string,
     destinationPackageLocation: string,
   ) {
-
     //#region @backendFunc
 
     //#region mpa fix for CLI
@@ -1007,8 +960,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       !Helpers.isSymlinkFileExitedOrUnexisted(
         monitoredOutDirFileToReplaceBack,
       ) &&
-      path.basename(monitoredOutDirFileToReplaceBack) !==
-        packageJsonNpmLib // TODO QUICK_FIX
+      path.basename(monitoredOutDirFileToReplaceBack) !== packageJsonNpmLib // TODO QUICK_FIX
     ) {
       const fixedContentCLIDebug = this.changedJsMapFilesInternalPathesForDebug(
         Helpers.readFile(monitoredOutDirFileToReplaceBack),
@@ -1024,7 +976,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     //#endregion
 
     //#endregion
-
   }
   //#endregion
 
@@ -1040,7 +991,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     specificFileRelativePath: string,
     destinationPackageLocation: string,
   ) {
-
     //#region @backendFunc
     this.writeFixedMapFileForNonCli(
       isForBrowser,
@@ -1053,13 +1003,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       destinationPackageLocation,
     );
     //#endregion
-
   }
   //#endregion
 
   //#region update backend full dts files
   updateBackendFullDtsFiles(destinationOrDist: Project | string) {
-
     //#region @backendFunc
     const base = this.project.pathFor(distNoCutSrcMainProject);
 
@@ -1086,8 +1034,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       // }
     }
     //#endregion
-
   }
   //#endregion
-
 }

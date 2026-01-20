@@ -15,6 +15,9 @@ import { Helpers } from 'tnp-helpers/src';
 
 import {
   assetsFromTempSrc,
+  distMainProject,
+  DS_Store,
+  prodSuffix,
   tmpSourceDist,
   tmpSrcDist,
   tmpSrcDistWebsql,
@@ -68,10 +71,16 @@ export class BrowserCompilation extends BaseClientCompiler {
     this.compilerName = this.customCompilerName;
 
     this.absPathTmpSrcDistFolderWEBSQL = crossPlatformPath(
-      path.join(this.project.location || '', tmpSrcDistWebsql),
+      path.join(
+        this.project.location || '',
+        tmpSrcDistWebsql + (buildOptions.build.prod ? prodSuffix : ''),
+      ),
     );
     this.absPathTmpSrcDistFolderNORMAL = crossPlatformPath(
-      path.join(this.project.location || '', tmpSrcDist),
+      path.join(
+        this.project.location || '',
+        tmpSrcDist + (buildOptions.build.prod ? prodSuffix : ''),
+      ),
     );
   }
   //#endregion
@@ -83,65 +92,90 @@ export class BrowserCompilation extends BaseClientCompiler {
   //#region methods / sync action
   async syncAction(absFilesFromSrc: string[]) {
     //#region @backendFunc
+    const isProd = this.buildOptions.build.prod;
+
+    //#region tags to cut
+    const tagsNormal = [
+      [TAGS.BACKEND_FUNC, `return (void 0);`],
+      TAGS.BACKEND as any,
+      TAGS.WEBSQL_ONLY as any,
+      [TAGS.WEBSQL_FUNC, `return (void 0);`],
+      TAGS.WEBSQL as any,
+      [TAGS.CUT_CODE_IF_TRUE, codeCuttFn(true)],
+      [TAGS.CUT_CODE_IF_FALSE, codeCuttFn(false)],
+    ].filter(f => !!f);
+
+    const tagsWebsql = [
+      [TAGS.BACKEND_FUNC, `return (void 0);`],
+      TAGS.BACKEND as any,
+      [TAGS.CUT_CODE_IF_TRUE, codeCuttFn(true)],
+      [TAGS.CUT_CODE_IF_FALSE, codeCuttFn(false)],
+    ].filter(f => !!f);
+    //#endregion
+
+    //#region build options for codecut
     const buildOptForNormal = this.buildOptions.clone({
       build: {
         websql: false,
       },
     });
 
+    const buildOptForWebsql = this.buildOptions.clone({
+      build: {
+        websql: true,
+      },
+    });
+
+    //#endregion
+
+    //#region codecuts init
     this.codecutNORMAL = new CodeCut(
       this.absPathTmpSrcDistFolderNORMAL,
       {
-        replacements: [
-          [TAGS.BACKEND_FUNC, `return (void 0);`],
-          TAGS.BACKEND as any,
-          TAGS.WEBSQL_ONLY as any,
-          [TAGS.WEBSQL_FUNC, `return (void 0);`],
-          TAGS.WEBSQL as any,
-          [TAGS.CUT_CODE_IF_TRUE, codeCuttFn(true)],
-          [TAGS.CUT_CODE_IF_FALSE, codeCuttFn(false)],
-        ].filter(f => !!f),
+        replacements: tagsNormal,
         env: buildOptForNormal,
       },
       this.project,
       buildOptForNormal,
     );
 
-    const buildOptForWebsql = this.buildOptions.clone({
-      build: {
-        websql: true,
-      },
-    });
     this.codecutWEBSQL = new CodeCut(
       this.absPathTmpSrcDistFolderWEBSQL,
       {
-        replacements: [
-          [TAGS.BACKEND_FUNC, `return (void 0);`],
-          TAGS.BACKEND as any,
-          [TAGS.CUT_CODE_IF_TRUE, codeCuttFn(true)],
-          [TAGS.CUT_CODE_IF_FALSE, codeCuttFn(false)],
-        ].filter(f => !!f),
+        replacements: tagsWebsql,
         env: buildOptForWebsql,
       },
       this.project,
       buildOptForWebsql,
     );
 
-    const tmpSource = this.project.pathFor(tmpSourceDist);
+    //#endregion
+
+    //#region prepare tmp folders
+    const tmpSource = this.project.pathFor(
+      tmpSourceDist + isProd ? prodSuffix : '',
+    );
+
     Helpers.removeFolderIfExists(this.absPathTmpSrcDistFolderWEBSQL);
     Helpers.removeFolderIfExists(this.absPathTmpSrcDistFolderNORMAL);
+
     Helpers.mkdirp(this.absPathTmpSrcDistFolderNORMAL);
     Helpers.mkdirp(this.absPathTmpSrcDistFolderWEBSQL);
+
     Helpers.mkdirp(tmpSource);
+
     Helpers.removeFolderIfExists(tmpSource);
+
+    //#endregion
+
+    // TODO @LAST fix everywhere _PROD
 
     this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting(
       this.buildOptions,
     );
 
-    const filesBase = crossPlatformPath(
-      path.join(this.project.location, this.srcFolder),
-    );
+    const filesBase = this.project.pathFor(this.srcFolder);
+
     const relativePathesToProcess = absFilesFromSrc.map(absFilePath => {
       const relativePath = absFilePath.replace(`${filesBase}/`, '');
       const isScssOrSass = extForSassLikeFiles.includes(
@@ -156,6 +190,7 @@ export class BrowserCompilation extends BaseClientCompiler {
 
     this.codecutNORMAL.files(relativePathesToProcess);
     this.codecutWEBSQL.files(relativePathesToProcess);
+
     // process.exit(0)
     //#endregion
   }
@@ -164,7 +199,9 @@ export class BrowserCompilation extends BaseClientCompiler {
   private sassDestFor(relativePath: string): string {
     //#region @backendFunc
     const destScss = this.project.pathFor(
-      `dist/${path.extname(path.basename(relativePath)).replace('.', '')}/${relativePath}`,
+      `${distMainProject}/${path
+        .extname(path.basename(relativePath))
+        .replace('.', '')}/${relativePath}`,
     );
     return destScss;
     //#endregion
@@ -178,6 +215,7 @@ export class BrowserCompilation extends BaseClientCompiler {
     }
     this.asyncActionFor(event, false);
     this.asyncActionFor(event, true);
+    // PROD NOT ALLOWED IN WATCH MODE
   }
 
   async asyncActionFor(event: ChangeOfFile, websql: boolean) {
@@ -191,7 +229,7 @@ export class BrowserCompilation extends BaseClientCompiler {
         '',
       ),
     );
-    if (path.basename(relativeFilePath) === '.DS_Store') {
+    if (path.basename(relativeFilePath) === DS_Store) {
       return;
     }
 
@@ -201,7 +239,7 @@ export class BrowserCompilation extends BaseClientCompiler {
       (() => {
         const destinationFileBackendPath = crossPlatformPath([
           this.project.location,
-          tmpSourceDist,
+          tmpSourceDist, // prod not need for async
           relativeFilePath,
         ]);
 
@@ -304,7 +342,7 @@ export class BrowserCompilation extends BaseClientCompiler {
       const destinationFilePath = crossPlatformPath(
         path.join(
           this.project.location,
-          websql ? tmpSrcDistWebsql : tmpSrcDist,
+          websql ? tmpSrcDistWebsql : tmpSrcDist, // prod not need for async
           relativeFilePath,
         ),
       );
@@ -340,7 +378,6 @@ export class BrowserCompilation extends BaseClientCompiler {
               fse.removeSync(destinationFilePath);
             }
             //#endregion
-
             if (websql) {
               this.codecutWEBSQL.files([relativeFilePath]);
             } else {
