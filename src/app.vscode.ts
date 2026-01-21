@@ -22,7 +22,7 @@ export async function activate(context: ExtensionContext) {
     const sub = executeCommand(
       title,
       command,
-      exec,
+      exec as any,
       options,
       isDefaultBuildCommand,
       context,

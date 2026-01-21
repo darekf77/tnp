@@ -8,6 +8,7 @@ import {
   frontEndOnly,
   TAGS,
   Utils,
+  UtilsJson,
 } from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
@@ -21,10 +22,13 @@ import {
   assetsFromTempSrc,
   browserFromImport,
   browserMainProject,
+  browserNpmPackage,
   indexTsFromLibFromSrc,
   libFromImport,
+  libFromNpmPackage,
   libFromSrc,
   prodSuffix,
+  splitNamespacesJson,
   srcFromTaonImport,
   srcMainProject,
   tmpSourceDist,
@@ -35,19 +39,12 @@ import {
   TO_REMOVE_TAG,
   websqlFromImport,
   websqlMainProject,
+  websqlNpmPackage,
 } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
 import { SplitFileProcess } from './file-split-process';
-//#endregion
-
-//#region constants
-const debugFile = [
-  // 'helpers-process.ts'
-  'base-compiler-for-project.ts',
-  'helpers-check.container.ts',
-];
 //#endregion
 
 /**
@@ -63,6 +60,14 @@ const debugFile = [
  *
  */
 export class BrowserCodeCut {
+  //#region constants
+  public static debugFile = [
+    // 'utils.ts',
+    // 'helpers-process.ts'
+    // 'base-compiler-for-project.ts',
+    // 'helpers-check.container.ts',
+  ];
+  //#endregion
   //#region fields
   /**
    * slighted modifed app release dist
@@ -99,6 +104,35 @@ export class BrowserCodeCut {
 
   //#region constructor
 
+  public static namespacesForPackagesLib: Map<
+    string,
+    UtilsTypescript.SplitNamespaceResult
+  >;
+
+  public static namespacesForPackagesBrowser: Map<
+    string,
+    UtilsTypescript.SplitNamespaceResult
+  >;
+
+  public static namespacesForPackagesWebsql: Map<
+    string,
+    UtilsTypescript.SplitNamespaceResult
+  >;
+
+  get namespacesForPackagesLib() {
+    return BrowserCodeCut.namespacesForPackagesLib;
+  }
+
+  get namespacesForPackagesBrowser() {
+    return BrowserCodeCut.namespacesForPackagesBrowser;
+  }
+
+  get namespacesForPackagesWebsql() {
+    return BrowserCodeCut.namespacesForPackagesWebsql;
+  }
+
+  private readonly nameForNpmPackage: string;
+
   //#region @backend
   constructor(
     /**
@@ -116,6 +150,61 @@ export class BrowserCodeCut {
     private project: Project,
     private buildOptions: EnvOptions,
   ) {
+    //#region recognize namespaces for isomorphic packages
+    this.nameForNpmPackage = project.nameForNpmPackage;
+    if (!this.namespacesForPackagesLib) {
+      BrowserCodeCut.namespacesForPackagesLib = new Map();
+      BrowserCodeCut.namespacesForPackagesBrowser = new Map();
+      BrowserCodeCut.namespacesForPackagesWebsql = new Map();
+
+      //#region gather all isomorphic production namespaces metadata
+      project.nodeModules.getIsomorphicPackagesNames().forEach(pkgName => {
+        const namespacesLib = UtilsJson.readJson(
+          project.nodeModules.pathFor([
+            pkgName,
+            libFromNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
+          ]),
+          {},
+        );
+        this.namespacesForPackagesLib.set(pkgName, namespacesLib);
+
+        const namespacesBrowser = UtilsJson.readJson(
+          project.nodeModules.pathFor([
+            pkgName,
+            browserNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
+          ]),
+          {},
+        );
+        this.namespacesForPackagesBrowser.set(pkgName, namespacesBrowser);
+
+        const namespacesWebsql = UtilsJson.readJson(
+          project.nodeModules.pathFor([
+            pkgName,
+            websqlNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
+          ]),
+          {},
+        );
+        this.namespacesForPackagesWebsql.set(pkgName, namespacesWebsql);
+      });
+      //#endregion
+
+      //#region clear project own package to be filled later
+      this.namespacesForPackagesLib.set(this.nameForNpmPackage, {
+        namespacesMapObj: {},
+        namespacesReplace: {},
+      });
+      this.namespacesForPackagesBrowser.set(this.nameForNpmPackage, {
+        namespacesMapObj: {},
+        namespacesReplace: {},
+      });
+      this.namespacesForPackagesWebsql.set(this.nameForNpmPackage, {
+        namespacesMapObj: {},
+        namespacesReplace: {},
+      });
+      //#endregion
+    }
+    //#endregion
+
     // console.log(`[incremental-build-process INSIDE BROWSER!!! '${this.buildOptions.baseHref}'`)
 
     this.absPathTmpSrcDistFolder = crossPlatformPath(absPathTmpSrcDistFolder);
@@ -153,7 +242,9 @@ export class BrowserCodeCut {
       this.absFileSourcePathBrowserOrWebsql,
     ).replace(`${this.absPathTmpSrcDistFolder}/`, '');
 
-    this.debug = debugFile.some(d => this.relativePath.endsWith(d));
+    this.debug = BrowserCodeCut.debugFile.some(d =>
+      this.relativePath.endsWith(d),
+    );
 
     this.absoluteBackendDestFilePath = crossPlatformPath([
       this.project.location,
@@ -275,7 +366,7 @@ export class BrowserCodeCut {
       this.absSourcePathFromSrc,
       allIsomorphicPackagesFromMemory,
       this.project.name,
-      this.project.nameForNpmPackage,
+      this.nameForNpmPackage,
     );
     const { modifiedContent: firstPass, rewriteFile: firstTimeRewriteFile } =
       this.splitFileProcess.content;
@@ -286,7 +377,7 @@ export class BrowserCodeCut {
         this.absSourcePathFromSrc,
         allIsomorphicPackagesFromMemory,
         this.project.name,
-        this.project.nameForNpmPackage,
+        this.nameForNpmPackage,
       ).content;
 
     if ((orgContent || '').trim() !== (firstPass || '')?.trim()) {
@@ -315,7 +406,7 @@ export class BrowserCodeCut {
   //#region private / methods & getters / project own smart packages
   get projectOwnSmartPackages(): string[] {
     //#region @backendFunc
-    return [this.project.nameForNpmPackage];
+    return [this.nameForNpmPackage];
     //#endregion
   }
   //#endregion
@@ -475,7 +566,11 @@ export class BrowserCodeCut {
       return this;
     }
     if (!this.relativePath.endsWith('.ts')) {
-      return this;
+      if (this.relativePath.endsWith('.tsx')) {
+        // ok
+      } else {
+        return this;
+      }
     }
     const prodPart = this.buildOptions.build.prod ? prodSuffix : '';
     if (_.isString(this.rawContentForBrowser)) {
@@ -573,7 +668,9 @@ export class BrowserCodeCut {
 
     (() => {
       const from = `${srcMainProject}/${assetsFromSrc}/`;
-      const to = `${TO_REMOVE_TAG}${assetsFromNgProj}/${assetsFor}/${this.project.nameForNpmPackage}/${assetsFromNpmPackage}/`;
+      const to =
+        `${TO_REMOVE_TAG}${assetsFromNgProj}/` +
+        `${assetsFor}/${this.nameForNpmPackage}/${assetsFromNpmPackage}/`;
       this.rawContentForBrowser = this.rawContentForBrowser.replace(
         new RegExp(Helpers.escapeStringForRegEx(`/${from}`), 'g'),
         to,
@@ -688,8 +785,7 @@ export class BrowserCodeCut {
     };
 
     (() => {
-      const nameForNpmPackage = this.project.nameForNpmPackage;
-      const cases = toReplaceFn(nameForNpmPackage);
+      const cases = toReplaceFn(this.nameForNpmPackage);
       for (let index = 0; index < cases.length; index++) {
         const { to, from, makeSureSlashAtBegin } = cases[index];
         if (makeSureSlashAtBegin) {
@@ -727,7 +823,7 @@ export class BrowserCodeCut {
     }
     // Helpers.log(`saving ismoprhic file: ${this.absoluteFilePath}`, 1)
 
-    const isTsFile = ['.ts'].includes(
+    const isTsFile = ['.ts', '.tsx'].includes(
       path.extname(this.absFileSourcePathBrowserOrWebsql),
     );
     const backendFileSaveMode = !this.isWebsqlMode; // websql does not do anything on be
@@ -778,6 +874,56 @@ export class BrowserCodeCut {
     return BrowserCodeCut.initialWarning;
   }
 
+  private productionSplitNamespaces(
+    content: string,
+    absFilePath: string,
+    fileType: 'lib' | 'browser' | 'websql',
+  ): string {
+    //#region @backendFunc
+    // if(this.debug) {
+    //   debugger
+    // }
+    const data = UtilsTypescript.splitNamespaceForContent(content);
+    if (fileType === 'lib') {
+      const current = this.namespacesForPackagesLib.get(this.nameForNpmPackage);
+      _.merge(current.namespacesMapObj, data.namespacesMapObj);
+      _.merge(current.namespacesReplace, data.namespacesReplace);
+    } else if (fileType === 'browser') {
+      const current = this.namespacesForPackagesBrowser.get(
+        this.nameForNpmPackage,
+      );
+      _.merge(current.namespacesMapObj, data.namespacesMapObj);
+      _.merge(current.namespacesReplace, data.namespacesReplace);
+    } else if (fileType === 'websql') {
+      const current = this.namespacesForPackagesWebsql.get(
+        this.nameForNpmPackage,
+      );
+      _.merge(current.namespacesMapObj, data.namespacesMapObj);
+      _.merge(current.namespacesReplace, data.namespacesReplace);
+    }
+
+    // this.debug &&
+    //   console.log(`(${fileType}) SAVING NAMESPACES FOR`, absFilePath);
+
+    fse.writeFileSync(
+      absFilePath
+        .replace('.tsx', `.${splitNamespacesJson}`)
+        .replace('.ts', `.${splitNamespacesJson}`),
+      JSON.stringify(
+        {
+          namespacesMapObj: data.namespacesMapObj,
+          namespacesReplace: data.namespacesReplace,
+        },
+        null,
+        2,
+      ),
+      'utf-8',
+    );
+
+    return data.content;
+    //#endregion
+  }
+
   //#region private / methods & getters / change content before saving file
   private changeNpmNameToLocalLibNamePath(
     content: string,
@@ -788,10 +934,15 @@ export class BrowserCodeCut {
     },
   ): string {
     //#region @backendFunc
+
     const isLibFile = this.relativePath.startsWith(`${libFromSrc}/`);
     if (!absFilePath.endsWith('.ts')) {
-      // console.log(`NOT_FIXING: ${absFilePath}`)
-      return content;
+      if (absFilePath.endsWith('.tsx')) {
+        // ok
+      } else {
+        // console.log(`NOT_FIXING: ${absFilePath}`)
+        return content;
+      }
     }
 
     // if (this.debug) {
@@ -889,26 +1040,18 @@ export class BrowserCodeCut {
           )
           .replace(
             new RegExp(
-              Utils.escapeStringForRegEx(
-                `\\/${browserFromImport}` + '$',
-              ),
+              Utils.escapeStringForRegEx(`\\/${browserFromImport}` + '$'),
             ),
             '',
           )
           .replace(
             new RegExp(
-              Utils.escapeStringForRegEx(
-                `\\/${websqlFromImport}` + '$',
-              ),
+              Utils.escapeStringForRegEx(`\\/${websqlFromImport}` + '$'),
             ),
             '',
           )
           .replace(
-            new RegExp(
-              Utils.escapeStringForRegEx(
-                `\\/${libFromImport}` + '$',
-              ),
-            ),
+            new RegExp(Utils.escapeStringForRegEx(`\\/${libFromImport}` + '$')),
             '',
           );
 
@@ -933,7 +1076,7 @@ export class BrowserCodeCut {
         }
 
         imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-          `${backIndex}${indexTsFromLibFromSrc.replace('.ts', '')}`,
+          `${backIndex}${indexTsFromLibFromSrc.replace('.tsx', '').replace('.ts', '')}`,
         );
       } else {
         imp.embeddedPathToFileResult = imp.wrapInParenthesis(
@@ -942,6 +1085,18 @@ export class BrowserCodeCut {
       }
     }
     content = this.splitFileProcess.replaceInFile(content, toReplace);
+
+    if (this.buildOptions.build.prod) {
+      content = this.productionSplitNamespaces(
+        content,
+        absFilePath,
+        options.isBrowser
+          ? this.buildOptions.build.websql
+            ? 'websql'
+            : 'browser'
+          : 'lib',
+      );
+    }
 
     return content;
     //#endregion
@@ -958,7 +1113,7 @@ export class BrowserCodeCut {
       ? absDestinationPath.replace(
           `/${assetsFromTempSrc}/`,
           `/${assetsFromNgProj}/${assetsFor}/${
-            this.project.nameForNpmPackage
+            this.nameForNpmPackage
           }/${assetsFromNpmPackage}/`,
         )
       : absDestinationPath;

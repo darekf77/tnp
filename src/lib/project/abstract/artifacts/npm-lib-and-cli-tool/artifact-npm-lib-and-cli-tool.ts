@@ -26,6 +26,7 @@ import {
   assetsFromNgProj,
   assetsFromSrc,
   binMainProject,
+  browserFromCompiledDist,
   browserMainProject,
   BundledFiles,
   cliDtsNpmPackage,
@@ -52,6 +53,7 @@ import {
   packageJsonNpmLib,
   prodSuffix,
   sourceLinkInNodeModules,
+  splitNamespacesJson,
   srcMainProject,
   srcNgProxyProject,
   suffixLatest,
@@ -64,6 +66,7 @@ import {
   tmpLocalCopytoProjDist,
   tmpSrcDist,
   tmpSrcDistWebsql,
+  websqlFromCompiledDist,
   websqlMainProject,
 } from '../../../../constants';
 import {
@@ -535,6 +538,46 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           beforeCopyHook: () => {
             //#region copy prod build files to dist folder
             Helpers.logInfo(`Copying production build files to dist folder...`);
+
+            //browser namespaces json
+            Helpers.copyFile(
+              this.project.pathFor([
+                distMainProject + prodSuffix,
+                browserFromCompiledDist +
+                  prodSuffix +
+                  `.${splitNamespacesJson}`,
+              ]),
+              this.project.pathFor([
+                distMainProject,
+                browserFromCompiledDist +
+                  prodSuffix +
+                  `.${splitNamespacesJson}`,
+              ]),
+            );
+
+            //websql namespaces json
+            Helpers.copyFile(
+              this.project.pathFor([
+                distMainProject + prodSuffix,
+                websqlFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
+              ]),
+              this.project.pathFor([
+                distMainProject,
+                websqlFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
+              ]),
+            );
+
+            //lib namespaces json
+            Helpers.copyFile(
+              this.project.pathFor([
+                distMainProject + prodSuffix,
+                libFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
+              ]),
+              this.project.pathFor([
+                distMainProject,
+                libFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
+              ]),
+            );
 
             Helpers.copy(
               this.project.pathFor([

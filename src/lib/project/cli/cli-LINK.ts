@@ -8,7 +8,7 @@ import {
   cliTsFromSrc,
   distMainProject,
   libFromImport,
-  libFromNpmPackages,
+  libFromNpmPackage,
   localReleaseMainProject,
   nodeModulesMainProject,
   srcMainProject,
@@ -139,7 +139,7 @@ export class $Link extends BaseCli {
         globalBinFolderPath,
         process.platform === 'win32'
           ? folderName.node_modules
-          : `../${libFromNpmPackages}/${folderName.node_modules}`,
+          : `../${libFromNpmPackage}/${folderName.node_modules}`,
       ),
     );
 
