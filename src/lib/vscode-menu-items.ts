@@ -205,20 +205,20 @@ export const vscodeMenuItems = ({
           //#endregion
 
           //#region items with actions /  start
-          // new ProjectItem(
-          //   `$ ${FRAMEWORK_NAME} start`,
-          //   vscode.TreeItemCollapsibleState.None,
-          //   {
-          //     iconPath: null,
-          //     project: CURRENT_PROJECT,
-          //     triggerActionOnClick: project => {
-          //       runInTerminal(`${FRAMEWORK_NAME} start`);
-          //       if (project?.location) {
-          //         focustFirstElement();
-          //       }
-          //     },
-          //   },
-          // ),
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} release:auto npm`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} release:auto npm`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
           //#endregion
 
           //#region items with actions /  start websql
