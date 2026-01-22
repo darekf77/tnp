@@ -1,5 +1,6 @@
 //#region imports
 import * as FormData from 'form-data'; // @backend
+import { Models as Ng2RestModels } from 'ng2-rest/src';
 import {
   Taon,
   ClassHelpers,
@@ -184,10 +185,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
 
   async uploadLocalFileToServer(
     absFilePath: string,
-    options?: Pick<
-      Models.Http.Rest.Ng2RestAxiosRequestConfig,
-      'onUploadProgress'
-    >,
+    options?: Pick<Ng2RestModels.Ng2RestAxiosRequestConfig, 'onUploadProgress'>,
     queryParams?: DeploymentReleaseData,
   ): Promise<MulterFileUploadResponse[]> {
     //#region @backendFunc

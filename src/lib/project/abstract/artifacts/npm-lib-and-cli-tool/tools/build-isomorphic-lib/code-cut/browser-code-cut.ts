@@ -66,6 +66,7 @@ import { SplitFileProcess } from './file-split-process';
 export class BrowserCodeCut {
   //#region constants
   public static debugFile = [
+    // '/endpoint-context.ts',
     // 'rest.class.ts'
     // 'hello-world-simple.context.ts',
     // 'utils.ts',
@@ -1039,7 +1040,8 @@ export class BrowserCodeCut {
         const fpkgBackend = f.cleanEmbeddedPathToFile
           .replace(
             new RegExp(
-              Utils.escapeStringForRegEx(`/${libFromImport + prodSuffix}`) + '$',
+              Utils.escapeStringForRegEx(`/${libFromImport + prodSuffix}`) +
+                '$',
             ),
             '',
           )

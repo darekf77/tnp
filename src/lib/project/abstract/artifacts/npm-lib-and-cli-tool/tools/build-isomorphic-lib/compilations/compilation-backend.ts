@@ -187,14 +187,44 @@ export class BackendCompilation {
           // Helpers.logInfo(`Processing browser prod file: ${f}`);
 
           let content = Helpers.readFile(f);
-          const namespacesForPackagesBrowser =
-            BrowserCodeCut.namespacesForPackagesBrowser;
+          const namespacesForPackagesBrowser = new Map(
+            [...BrowserCodeCut.namespacesForPackagesBrowser].map(([k, v]) => [
+              _.cloneDeep(k),
+              _.cloneDeep(v),
+            ]),
+          );
 
           const importsExportInFile = UtilsTypescript.recognizeImportsFromFile(
             f,
           )
             .filter(c => !c.cleanEmbeddedPathToFile.startsWith('.'))
-            .map(c => getCleanImport(c.cleanEmbeddedPathToFile));
+            .map(c => getCleanImport(c.cleanEmbeddedPathToFile))
+            .filter(f => !!f);
+
+          const renamedImportsOrExports =
+            UtilsTypescript.extractRenamedImportsOrExport(content).map(c => {
+              c.packageName = getCleanImport(c.packageName);
+              return c;
+            });
+
+          if (renamedImportsOrExports.length > 0) {
+            namespacesForPackagesBrowser.forEach((namespaceData, libName) => {
+              for (const renamed of renamedImportsOrExports) {
+                if (
+                  renamed.packageName === libName ||
+                  (libName === nameForNpmPackage && !renamed.packageName)
+                ) {
+                  namespacesForPackagesBrowser.set(
+                    libName,
+                    UtilsTypescript.updateSplitNamespaceResultMapReplaceObj(
+                      namespaceData,
+                      renamedImportsOrExports,
+                    ),
+                  );
+                }
+              }
+            });
+          }
 
           // const debug = BrowserCodeCut.debugFile.some(d => f.endsWith(d));
           // if (debug) {
@@ -208,6 +238,7 @@ export class BackendCompilation {
             ) {
               return;
             }
+
             content = UtilsTypescript.replaceNamespaceWithLongNames(
               content,
               namespaceData.namespacesMapObj,
@@ -225,6 +256,8 @@ export class BackendCompilation {
               UtilsTypescript.replaceImportNamespaceWithWithExplodedNamespace(
                 content,
                 namespaceData.namespacesReplace,
+                renamedImportsOrExports,
+                libName,
                 libName === nameForNpmPackage,
               );
           });
@@ -244,15 +277,45 @@ export class BackendCompilation {
             f,
           )
             .filter(c => !c.cleanEmbeddedPathToFile.startsWith('.'))
-            .map(c => getCleanImport(c.cleanEmbeddedPathToFile));
+            .map(c => getCleanImport(c.cleanEmbeddedPathToFile))
+            .filter(f => !!f);
+
+          const namespacesForPackagesWebsql = new Map(
+            [...BrowserCodeCut.namespacesForPackagesWebsql].map(([k, v]) => [
+              _.cloneDeep(k),
+              _.cloneDeep(v),
+            ]),
+          );
+
+          const renamedImportsOrExports =
+            UtilsTypescript.extractRenamedImportsOrExport(content).map(c => {
+              c.packageName = getCleanImport(c.packageName);
+              return c;
+            });
+
+          if (renamedImportsOrExports.length > 0) {
+            namespacesForPackagesWebsql.forEach((namespaceData, libName) => {
+              for (const renamed of renamedImportsOrExports) {
+                if (
+                  renamed.packageName === libName ||
+                  (libName === nameForNpmPackage && !renamed.packageName)
+                ) {
+                  namespacesForPackagesWebsql.set(
+                    libName,
+                    UtilsTypescript.updateSplitNamespaceResultMapReplaceObj(
+                      namespaceData,
+                      renamedImportsOrExports,
+                    ),
+                  );
+                }
+              }
+            });
+          }
 
           // const debug = BrowserCodeCut.debugFile.some(d => f.endsWith(d));
           // if (debug) {
           //   debugger;
           // }
-
-          const namespacesForPackagesWebsql =
-            BrowserCodeCut.namespacesForPackagesWebsql;
 
           namespacesForPackagesWebsql.forEach((namespaceData, libName) => {
             if (
@@ -278,6 +341,8 @@ export class BackendCompilation {
               UtilsTypescript.replaceImportNamespaceWithWithExplodedNamespace(
                 content,
                 namespaceData.namespacesReplace,
+                renamedImportsOrExports,
+                libName,
                 libName === nameForNpmPackage,
               );
           });
@@ -292,14 +357,44 @@ export class BackendCompilation {
           let content = Helpers.readFile(f);
           // Helpers.logInfo(`Processing lib prod file: ${f}`);
 
-          const namespacesForPackagesLib =
-            BrowserCodeCut.namespacesForPackagesLib;
-
           const importsExportInFile = UtilsTypescript.recognizeImportsFromFile(
             f,
           )
             .filter(c => !c.cleanEmbeddedPathToFile.startsWith('.'))
-            .map(c => getCleanImport(c.cleanEmbeddedPathToFile));
+            .map(c => getCleanImport(c.cleanEmbeddedPathToFile))
+            .filter(f => !!f);
+
+          const namespacesForPackagesLib = new Map(
+            [...BrowserCodeCut.namespacesForPackagesLib].map(([k, v]) => [
+              _.cloneDeep(k),
+              _.cloneDeep(v),
+            ]),
+          );
+
+          const renamedImportsOrExports =
+            UtilsTypescript.extractRenamedImportsOrExport(content).map(c => {
+              c.packageName = getCleanImport(c.packageName);
+              return c;
+            });
+
+          if (renamedImportsOrExports.length > 0) {
+            namespacesForPackagesLib.forEach((namespaceData, libName) => {
+              for (const renamed of renamedImportsOrExports) {
+                if (
+                  renamed.packageName === libName ||
+                  (libName === nameForNpmPackage && !renamed.packageName)
+                ) {
+                  namespacesForPackagesLib.set(
+                    libName,
+                    UtilsTypescript.updateSplitNamespaceResultMapReplaceObj(
+                      namespaceData,
+                      renamedImportsOrExports,
+                    ),
+                  );
+                }
+              }
+            });
+          }
 
           // const debug = BrowserCodeCut.debugFile.some(d => f.endsWith(d));
           // if (debug) {
@@ -330,6 +425,8 @@ export class BackendCompilation {
               UtilsTypescript.replaceImportNamespaceWithWithExplodedNamespace(
                 content,
                 namespaceData.namespacesReplace,
+                renamedImportsOrExports,
+                libName,
                 libName === nameForNpmPackage,
               );
           });

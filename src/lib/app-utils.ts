@@ -123,7 +123,10 @@ export const templateFolderForArtifact = (
   //#endregion
 };
 
-export const getCleanImport = (importName: string) => {
+export const getCleanImport = (importName: string): string | undefined => {
+  if (!importName) {
+    return importName;
+  }
   return importName
     .replace(
       new RegExp(
