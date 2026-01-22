@@ -579,6 +579,7 @@ export class ArtifactManager {
     } else {
       //#region partial build
 
+      //#region framework version check
       while (
         this.project.framework.frameworkVersionLessThan(
           CURRENT_PACKAGE_VERSION.split('.')[0] as any,
@@ -609,6 +610,7 @@ export class ArtifactManager {
         );
         break; // not needed but to be sure
       }
+      //#endregion
 
       if (
         !buildOptions.release.targetArtifact ||
@@ -740,7 +742,10 @@ export class ArtifactManager {
     if (!autoReleaseProcess && releaseOptions.release.autoReleaseUsingConfig) {
       let artifactsToRelease =
         this.project.taonJson.autoReleaseConfigAllowedItems.filter(item => {
-          if (!releaseOptions.release.autoReleaseTaskName) {
+          if (
+            !releaseOptions.release.autoReleaseTaskName ||
+            this.project.taonJson.createOnlyTagWhenRelease
+          ) {
             return true;
           }
           const allowed =
