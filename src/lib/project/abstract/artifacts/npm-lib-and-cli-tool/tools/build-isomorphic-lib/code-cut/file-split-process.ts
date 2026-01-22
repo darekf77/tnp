@@ -5,7 +5,7 @@ import { UtilsTypescript } from 'tnp-helpers/src';
 
 import { DUMMY_LIB, taonIgnore } from '../../../../../../../constants';
 
-import { CODE_SPLIT_PROCESS } from './code-split-process.enum';
+import { CodeSplitProcess } from './code-split-process.enum';
 import type { CallBackProcess } from './code-split-process.enum';
 
 export class SplitFileProcess {
@@ -42,7 +42,7 @@ export class SplitFileProcess {
     }
 
     const BEFORE_PROCESSES = Object.values(
-      CODE_SPLIT_PROCESS.BEFORE.SPLIT.IMPORT_EXPORT,
+      CodeSplitProcess.Before.Split.ImportExport,
     );
     for (const imp of this._importExports) {
       if (!imp.isIsomorphic) {

@@ -20,11 +20,11 @@ export const CallBackProcess = (
 /**
  * TODO In progress documentation for whole code split process
  */
-export namespace CODE_SPLIT_PROCESS {
+export namespace CodeSplitProcess {
   //#region BEFORE
-  export namespace BEFORE {
-    export namespace SPLIT {
-      export const IMPORT_EXPORT = {
+  export namespace Before {
+    export namespace Split {
+      export const ImportExport = {
         // AT_LIB_TO_NPM_NAME: CallBackProcess(
         //   (
         //     imp: UtilsTypescript.TsImportExport,
