@@ -1,6 +1,8 @@
-import { crossPlatformPath, Helpers } from 'tnp-core/src';
+import { crossPlatformPath, Helpers, Utils } from 'tnp-core/src';
 
 import {
+  browserFromImport,
+  libFromImport,
   prodSuffix,
   TemplateFolder,
   tmpAppsForDist,
@@ -9,6 +11,7 @@ import {
   tmpAppsForDistWebsql,
   tmpLibsForDist,
   tmpLibsForDistWebsql,
+  websqlFromImport,
 } from './constants';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from './options';
 import type { Project } from './project/abstract/project';
@@ -118,4 +121,38 @@ export const templateFolderForArtifact = (
   // }
   Helpers.error(`Cannot Template folder for current artifact "${artifact}"`);
   //#endregion
+};
+
+export const getCleanImport = (importName: string) => {
+  return importName
+    .replace(
+      new RegExp(
+        Utils.escapeStringForRegEx(`/${browserFromImport + prodSuffix}`) + '$',
+      ),
+      '',
+    )
+    .replace(
+      new RegExp(
+        Utils.escapeStringForRegEx(`/${websqlFromImport + prodSuffix}`) + '$',
+      ),
+      '',
+    )
+    .replace(
+      new RegExp(
+        Utils.escapeStringForRegEx(`/${libFromImport + prodSuffix}`) + '$',
+      ),
+      '',
+    )
+    .replace(
+      new RegExp(Utils.escapeStringForRegEx(`/${browserFromImport}`) + '$'),
+      '',
+    )
+    .replace(
+      new RegExp(Utils.escapeStringForRegEx(`/${websqlFromImport}`) + '$'),
+      '',
+    )
+    .replace(
+      new RegExp(Utils.escapeStringForRegEx(`/${libFromImport}`) + '$'),
+      '',
+    );
 };

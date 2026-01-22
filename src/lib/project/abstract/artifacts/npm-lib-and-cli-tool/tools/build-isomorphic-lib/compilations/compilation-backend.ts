@@ -15,6 +15,7 @@ import {
 } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 
+import { getCleanImport } from '../../../../../../../app-utils';
 import {
   browserFromCompiledDist,
   browserMainProject,
@@ -179,7 +180,7 @@ export class BackendCompilation {
       //#region process production code
       const nameForNpmPackage = this.project.nameForNpmPackage;
 
-      // browser
+      //#region process production code / browser
       filesBrowser
         .filter(f => f.endsWith('.ts') || f.endsWith('.tsx'))
         .forEach(f => {
@@ -189,12 +190,24 @@ export class BackendCompilation {
           const namespacesForPackagesBrowser =
             BrowserCodeCut.namespacesForPackagesBrowser;
 
+          const importsExportInFile = UtilsTypescript.recognizeImportsFromFile(
+            f,
+          )
+            .filter(c => !c.cleanEmbeddedPathToFile.startsWith('.'))
+            .map(c => getCleanImport(c.cleanEmbeddedPathToFile));
+
           // const debug = BrowserCodeCut.debugFile.some(d => f.endsWith(d));
           // if (debug) {
           //   debugger;
           // }
 
-          namespacesForPackagesBrowser.forEach(namespaceData => {
+          namespacesForPackagesBrowser.forEach((namespaceData, libName) => {
+            if (
+              libName !== nameForNpmPackage &&
+              !importsExportInFile.includes(libName)
+            ) {
+              return;
+            }
             content = UtilsTypescript.replaceNamespaceWithLongNames(
               content,
               namespaceData.namespacesMapObj,
@@ -202,6 +215,12 @@ export class BackendCompilation {
           });
 
           namespacesForPackagesBrowser.forEach((namespaceData, libName) => {
+            if (
+              libName !== nameForNpmPackage &&
+              !importsExportInFile.includes(libName)
+            ) {
+              return;
+            }
             content =
               UtilsTypescript.replaceImportNamespaceWithWithExplodedNamespace(
                 content,
@@ -212,12 +231,20 @@ export class BackendCompilation {
           Helpers.writeFile(f, content);
         });
 
-      // websql
+      //#endregion
+
+      //#region process production code / websql
       filesWebsql
         .filter(f => f.endsWith('.ts') || f.endsWith('.tsx'))
         .forEach(f => {
           // Helpers.logInfo(`Processing websql prod file: ${f}`);
           let content = Helpers.readFile(f);
+
+          const importsExportInFile = UtilsTypescript.recognizeImportsFromFile(
+            f,
+          )
+            .filter(c => !c.cleanEmbeddedPathToFile.startsWith('.'))
+            .map(c => getCleanImport(c.cleanEmbeddedPathToFile));
 
           // const debug = BrowserCodeCut.debugFile.some(d => f.endsWith(d));
           // if (debug) {
@@ -227,7 +254,13 @@ export class BackendCompilation {
           const namespacesForPackagesWebsql =
             BrowserCodeCut.namespacesForPackagesWebsql;
 
-          namespacesForPackagesWebsql.forEach(namespaceData => {
+          namespacesForPackagesWebsql.forEach((namespaceData, libName) => {
+            if (
+              libName !== nameForNpmPackage &&
+              !importsExportInFile.includes(libName)
+            ) {
+              return;
+            }
             content = UtilsTypescript.replaceNamespaceWithLongNames(
               content,
               namespaceData.namespacesMapObj,
@@ -235,6 +268,12 @@ export class BackendCompilation {
           });
 
           namespacesForPackagesWebsql.forEach((namespaceData, libName) => {
+            if (
+              libName !== nameForNpmPackage &&
+              !importsExportInFile.includes(libName)
+            ) {
+              return;
+            }
             content =
               UtilsTypescript.replaceImportNamespaceWithWithExplodedNamespace(
                 content,
@@ -244,8 +283,9 @@ export class BackendCompilation {
           });
           Helpers.writeFile(f, content);
         });
+      //#endregion
 
-      // lib
+      //#region process production code / lib
       filesLib
         .filter(f => f.endsWith('.ts') || f.endsWith('.tsx'))
         .forEach(f => {
@@ -255,12 +295,24 @@ export class BackendCompilation {
           const namespacesForPackagesLib =
             BrowserCodeCut.namespacesForPackagesLib;
 
+          const importsExportInFile = UtilsTypescript.recognizeImportsFromFile(
+            f,
+          )
+            .filter(c => !c.cleanEmbeddedPathToFile.startsWith('.'))
+            .map(c => getCleanImport(c.cleanEmbeddedPathToFile));
+
           // const debug = BrowserCodeCut.debugFile.some(d => f.endsWith(d));
           // if (debug) {
           //   debugger;
           // }
 
-          namespacesForPackagesLib.forEach(namespaceData => {
+          namespacesForPackagesLib.forEach((namespaceData, libName) => {
+            if (
+              libName !== nameForNpmPackage &&
+              !importsExportInFile.includes(libName)
+            ) {
+              return;
+            }
             content = UtilsTypescript.replaceNamespaceWithLongNames(
               content,
               namespaceData.namespacesMapObj,
@@ -268,6 +320,12 @@ export class BackendCompilation {
           });
 
           namespacesForPackagesLib.forEach((namespaceData, libName) => {
+            if (
+              libName !== nameForNpmPackage &&
+              !importsExportInFile.includes(libName)
+            ) {
+              return;
+            }
             content =
               UtilsTypescript.replaceImportNamespaceWithWithExplodedNamespace(
                 content,
@@ -277,6 +335,7 @@ export class BackendCompilation {
           });
           Helpers.writeFile(f, content);
         });
+      //#endregion
 
       //#endregion
     }

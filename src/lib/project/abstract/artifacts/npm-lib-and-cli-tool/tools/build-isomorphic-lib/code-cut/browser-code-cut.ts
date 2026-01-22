@@ -13,6 +13,7 @@ import {
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 
+import { getCleanImport } from '../../../../../../../app-utils';
 import {
   appFromSrc,
   assetsFor,
@@ -65,6 +66,7 @@ import { SplitFileProcess } from './file-split-process';
 export class BrowserCodeCut {
   //#region constants
   public static debugFile = [
+    // 'rest.class.ts'
     // 'hello-world-simple.context.ts',
     // 'utils.ts',
     // 'helpers-process.ts'
@@ -873,6 +875,7 @@ export class BrowserCodeCut {
   }
   //#endregion
 
+  //#region private / methods & getters / production namespaces split
   private static initialWarning = {};
 
   get initialWarnings() {
@@ -931,6 +934,7 @@ export class BrowserCodeCut {
     return data.content;
     //#endregion
   }
+  //#endregion
 
   //#region private / methods & getters / change content before saving file
   private changeNpmNameToLocalLibNamePath(
@@ -993,7 +997,6 @@ export class BrowserCodeCut {
             .join('');
 
     let toReplace: UtilsTypescript.TsImportExport[] = [];
-    const prodPart = this.buildOptions.build.prod ? prodSuffix : '';
 
     if (isBrowser) {
       toReplace = UtilsTypescript.recognizeImportsFromContent(
@@ -1002,14 +1005,14 @@ export class BrowserCodeCut {
         const fPkgBrowser = f.cleanEmbeddedPathToFile
           .replace(
             new RegExp(
-              Utils.escapeStringForRegEx(`/${browserFromImport + prodPart}`) +
+              Utils.escapeStringForRegEx(`/${browserFromImport + prodSuffix}`) +
                 '$',
             ),
             '',
           )
           .replace(
             new RegExp(
-              Utils.escapeStringForRegEx(`/${websqlFromImport + prodPart}`) +
+              Utils.escapeStringForRegEx(`/${websqlFromImport + prodSuffix}`) +
                 '$',
             ),
             '',
@@ -1036,7 +1039,7 @@ export class BrowserCodeCut {
         const fpkgBackend = f.cleanEmbeddedPathToFile
           .replace(
             new RegExp(
-              Utils.escapeStringForRegEx(`/${libFromImport + prodPart}`) + '$',
+              Utils.escapeStringForRegEx(`/${libFromImport + prodSuffix}`) + '$',
             ),
             '',
           )
@@ -1051,38 +1054,7 @@ export class BrowserCodeCut {
 
     for (const imp of toReplace) {
       //#region handle stuff from /src/lib
-      const cleanName = imp.cleanEmbeddedPathToFile
-        .replace(
-          new RegExp(
-            Utils.escapeStringForRegEx(`/${browserFromImport + prodPart}`) +
-              '$',
-          ),
-          '',
-        )
-        .replace(
-          new RegExp(
-            Utils.escapeStringForRegEx(`/${websqlFromImport + prodPart}`) + '$',
-          ),
-          '',
-        )
-        .replace(
-          new RegExp(
-            Utils.escapeStringForRegEx(`/${libFromImport + prodPart}`) + '$',
-          ),
-          '',
-        )
-        .replace(
-          new RegExp(Utils.escapeStringForRegEx(`/${browserFromImport}`) + '$'),
-          '',
-        )
-        .replace(
-          new RegExp(Utils.escapeStringForRegEx(`/${websqlFromImport}`) + '$'),
-          '',
-        )
-        .replace(
-          new RegExp(Utils.escapeStringForRegEx(`/${libFromImport}`) + '$'),
-          '',
-        );
+      const cleanName = getCleanImport(imp.cleanEmbeddedPathToFile);
 
       // this.debug && console.log({ cleanName });
 
