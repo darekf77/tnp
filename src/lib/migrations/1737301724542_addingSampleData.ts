@@ -2,7 +2,7 @@ import { Taon, TaonBaseMigration, TaonMigration } from 'taon/src';
 import { QueryRunner } from 'taon-typeorm/src';
 import { CoreModels } from 'tnp-core/src';
 
-import { TaonEnv } from '../lib/project/abstract/taon-worker/taon-env.entity';
+import { TaonEnv } from '../project/abstract/taon-worker/taon-env.entity';
 
 @TaonMigration({
   className: 'TaonProjectsContext_1737301724542_addingSampleData',

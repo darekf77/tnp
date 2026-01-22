@@ -18,7 +18,7 @@ import {
   indexScssFromSrcLib,
   indexTsFromLibFromSrc,
   libFromSrc,
-  migrationsFromSrc,
+  migrationsFromLib,
   nodeModulesMainProject,
   sharedFromAssets,
   srcMainProject,
@@ -254,7 +254,8 @@ ${THIS_IS_GENERATED_STRING}
       (() => {
         const shared_folder_info = this.project.pathFor([
           srcMainProject,
-          migrationsFromSrc,
+          libFromSrc,
+          migrationsFromLib,
           TaonGeneratedFiles.MIGRATIONS_INFO_MD,
         ]);
 

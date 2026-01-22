@@ -89,13 +89,12 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
   protected browserwebsqlFolders: string[];
 
   getBrowserwebsqlFolders(): string[] {
-    const isProd = this.buildOptions.build.prod;
+    // const isProd = this.buildOptions.build.prod;
     return [
       browserMainProject,
       websqlMainProject,
-      ...(isProd
-        ? [browserMainProject + prodSuffix, websqlMainProject + prodSuffix]
-        : []),
+      browserMainProject + prodSuffix,
+      websqlMainProject + prodSuffix,
     ];
   }
   //#endregion

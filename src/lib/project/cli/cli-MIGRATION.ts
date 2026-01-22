@@ -11,7 +11,8 @@ import {
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
-  migrationsFromSrc,
+  libFromSrc,
+  migrationsFromLib,
   srcFromTaonImport,
   srcMainProject,
 } from '../../constants';
@@ -59,7 +60,7 @@ class $Migration extends BaseCli {
       await this.run();
     } else if (resp === 'revert') {
       const allMigrationsOptions = Helpers.getFilesFrom(
-        this.project.pathFor([srcMainProject, migrationsFromSrc]),
+        this.project.pathFor([srcMainProject, migrationsFromLib]),
         {
           recursive: true,
         },
@@ -201,9 +202,11 @@ export class ${contextName}_${timestamp}_${migrationName} extends TaonBaseMigrat
 
     const absPathToNewMigrationFile = this.project.pathFor([
       srcMainProject,
-      migrationsFromSrc,
+      libFromSrc,
+      migrationsFromLib,
       migrationFileName,
     ]);
+    // console.log({ apbsPathToNewMigrationFile });
     Helpers.writeFile(
       absPathToNewMigrationFile,
       `import { Taon, TaonBaseMigration, TaonMigration } from '${taonPackageName}/${srcFromTaonImport}';\n` +

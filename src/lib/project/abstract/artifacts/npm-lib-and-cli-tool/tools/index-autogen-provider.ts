@@ -16,6 +16,7 @@ import {
   indexScssFromSrcLib,
   indexTsFromLibFromSrc,
   libFromSrc,
+  migrationsFromLib,
   srcMainProject,
   TaonGeneratedFiles,
   TaonGeneratedFolders,
@@ -57,7 +58,9 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
         this.project.pathFor([srcMainProject, libFromSrc]) + '/',
         '',
       );
-
+      if (relativePath.startsWith(migrationsFromLib)) {
+        return;
+      }
       // TODO @LAST this is not watching files!
       // console.log(`Processing file for index autogen: ${relativePath}`);
 

@@ -23,10 +23,12 @@ import {
   browserFromImport,
   browserMainProject,
   browserNpmPackage,
+  browserTypeString,
   indexTsFromLibFromSrc,
   libFromImport,
   libFromNpmPackage,
   libFromSrc,
+  libTypeString,
   prodSuffix,
   splitNamespacesJson,
   srcFromTaonImport,
@@ -40,6 +42,7 @@ import {
   websqlFromImport,
   websqlMainProject,
   websqlNpmPackage,
+  websqlTypeString,
 } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
@@ -62,11 +65,13 @@ import { SplitFileProcess } from './file-split-process';
 export class BrowserCodeCut {
   //#region constants
   public static debugFile = [
+    // 'hello-world-simple.context.ts',
     // 'utils.ts',
     // 'helpers-process.ts'
     // 'base-compiler-for-project.ts',
     // 'helpers-check.container.ts',
   ];
+
   //#endregion
   //#region fields
   /**
@@ -877,24 +882,27 @@ export class BrowserCodeCut {
   private productionSplitNamespaces(
     content: string,
     absFilePath: string,
-    fileType: 'lib' | 'browser' | 'websql',
+    fileType:
+      | typeof libTypeString
+      | typeof browserTypeString
+      | typeof websqlTypeString,
   ): string {
     //#region @backendFunc
     // if(this.debug) {
     //   debugger
     // }
     const data = UtilsTypescript.splitNamespaceForContent(content);
-    if (fileType === 'lib') {
+    if (fileType === libTypeString) {
       const current = this.namespacesForPackagesLib.get(this.nameForNpmPackage);
       _.merge(current.namespacesMapObj, data.namespacesMapObj);
       _.merge(current.namespacesReplace, data.namespacesReplace);
-    } else if (fileType === 'browser') {
+    } else if (fileType === browserTypeString) {
       const current = this.namespacesForPackagesBrowser.get(
         this.nameForNpmPackage,
       );
       _.merge(current.namespacesMapObj, data.namespacesMapObj);
       _.merge(current.namespacesReplace, data.namespacesReplace);
-    } else if (fileType === 'websql') {
+    } else if (fileType === websqlTypeString) {
       const current = this.namespacesForPackagesWebsql.get(
         this.nameForNpmPackage,
       );
@@ -945,6 +953,21 @@ export class BrowserCodeCut {
       }
     }
 
+    const typeOfOp = options.isBrowser
+      ? this.buildOptions.build.websql
+        ? websqlTypeString
+        : browserTypeString
+      : libTypeString;
+
+    // this.debug &&
+    //   console.log(`
+
+    //   relativePath: ${this.relativePath}
+    //   isLibFile: ${isLibFile}
+    //   type of operation: ${typeOfOp}
+
+    //   `);
+
     // if (this.debug) {
     //   console.log(`Fixing imports in: ${absFilePath}`);
     //   console.log(`Fixing imports in: ${this.relativePath}`);
@@ -955,14 +978,14 @@ export class BrowserCodeCut {
 
     const howMuchBack = this.relativePath.split('/').length - 1;
     const howMuchBackIndex = howMuchBack - 1;
-    const back =
+    const backAppLibIndex =
       howMuchBack === 0
         ? './'
         : _.times(howMuchBack)
             .map(() => '../')
             .join('');
 
-    const backIndex =
+    const backLibIndex =
       howMuchBackIndex === 0
         ? './'
         : _.times(howMuchBackIndex)
@@ -976,93 +999,100 @@ export class BrowserCodeCut {
       toReplace = UtilsTypescript.recognizeImportsFromContent(
         this.rawContentForBrowser,
       ).filter(f => {
-        return projectOwnSmartPackages.includes(
-          f.cleanEmbeddedPathToFile
-            .replace(
-              new RegExp(
-                Utils.escapeStringForRegEx(`/${browserFromImport + prodPart}`) +
-                  '$',
-              ),
-              '',
-            )
-            .replace(
-              new RegExp(
-                Utils.escapeStringForRegEx(`/${websqlFromImport + prodPart}`) +
-                  '$',
-              ),
-              '',
+        const fPkgBrowser = f.cleanEmbeddedPathToFile
+          .replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(`/${browserFromImport + prodPart}`) +
+                '$',
             ),
-        );
+            '',
+          )
+          .replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(`/${websqlFromImport + prodPart}`) +
+                '$',
+            ),
+            '',
+          )
+          .replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(`/${browserFromImport}`) + '$',
+            ),
+            '',
+          )
+          .replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(`/${websqlFromImport}`) + '$',
+            ),
+            '',
+          );
+        // this.debug && console.log({ fPkgBrowser });
+        return projectOwnSmartPackages.includes(fPkgBrowser);
       });
     } else {
       toReplace = UtilsTypescript.recognizeImportsFromContent(
         this.rawContentBackend,
       ).filter(f => {
-        return projectOwnSmartPackages.includes(
-          f.cleanEmbeddedPathToFile.replace(
+        const fpkgBackend = f.cleanEmbeddedPathToFile
+          .replace(
             new RegExp(
-              Utils.escapeStringForRegEx(
-                `\\/${libFromImport + prodPart}` + '$',
-              ),
+              Utils.escapeStringForRegEx(`/${libFromImport + prodPart}`) + '$',
             ),
             '',
-          ),
-        );
+          )
+          .replace(
+            new RegExp(Utils.escapeStringForRegEx(`/${libFromImport}`) + '$'),
+            '',
+          );
+        // this.debug && console.log({ fpkgBackend });
+        return projectOwnSmartPackages.includes(fpkgBackend);
       });
     }
 
     for (const imp of toReplace) {
-      if (isLibFile) {
-        const cleanName = imp.cleanEmbeddedPathToFile
-          .replace(
-            new RegExp(
-              Utils.escapeStringForRegEx(
-                `\\/${browserFromImport + prodPart}` + '$',
-              ),
-            ),
-            '',
-          )
-          .replace(
-            new RegExp(
-              Utils.escapeStringForRegEx(
-                `\\/${websqlFromImport + prodPart}` + '$',
-              ),
-            ),
-            '',
-          )
-          .replace(
-            new RegExp(
-              Utils.escapeStringForRegEx(
-                `\\/${libFromImport + prodPart}` + '$',
-              ),
-            ),
-            '',
-          )
-          .replace(
-            new RegExp(
-              Utils.escapeStringForRegEx(`\\/${browserFromImport}` + '$'),
-            ),
-            '',
-          )
-          .replace(
-            new RegExp(
-              Utils.escapeStringForRegEx(`\\/${websqlFromImport}` + '$'),
-            ),
-            '',
-          )
-          .replace(
-            new RegExp(Utils.escapeStringForRegEx(`\\/${libFromImport}` + '$')),
-            '',
-          );
+      //#region handle stuff from /src/lib
+      const cleanName = imp.cleanEmbeddedPathToFile
+        .replace(
+          new RegExp(
+            Utils.escapeStringForRegEx(`/${browserFromImport + prodPart}`) +
+              '$',
+          ),
+          '',
+        )
+        .replace(
+          new RegExp(
+            Utils.escapeStringForRegEx(`/${websqlFromImport + prodPart}`) + '$',
+          ),
+          '',
+        )
+        .replace(
+          new RegExp(
+            Utils.escapeStringForRegEx(`/${libFromImport + prodPart}`) + '$',
+          ),
+          '',
+        )
+        .replace(
+          new RegExp(Utils.escapeStringForRegEx(`/${browserFromImport}`) + '$'),
+          '',
+        )
+        .replace(
+          new RegExp(Utils.escapeStringForRegEx(`/${websqlFromImport}`) + '$'),
+          '',
+        )
+        .replace(
+          new RegExp(Utils.escapeStringForRegEx(`/${libFromImport}`) + '$'),
+          '',
+        );
 
+      // this.debug && console.log({ cleanName });
+
+      if (isLibFile) {
         const indexInIfile = (this.rawOrginalContent || '')
           .split('\n')
           .findIndex(line => {
             return line.includes(`${cleanName}/${srcFromTaonImport}`);
           });
-
         const key = `${cleanName}:${indexInIfile}:${this.relativePath}`;
-
         if (!this.initialWarnings[key]) {
           // console.log(
           //   `isBrowser: ${!!isBrowser}, libForApp: ${!!libForApp},ab ${absFilePath}, rel: ${this.relativePath}`,
@@ -1074,28 +1104,17 @@ export class BrowserCodeCut {
 
           this.initialWarnings[key] = true;
         }
-
-        imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-          `${backIndex}${indexTsFromLibFromSrc.replace('.tsx', '').replace('.ts', '')}`,
-        );
-      } else {
-        imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-          `${back}${libFromImport}`,
-        );
       }
+
+      imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+        `${isLibFile ? backLibIndex : backAppLibIndex}${indexTsFromLibFromSrc.replace('.tsx', '').replace('.ts', '')}`,
+      );
+      //#endregion
     }
     content = this.splitFileProcess.replaceInFile(content, toReplace);
 
     if (this.buildOptions.build.prod) {
-      content = this.productionSplitNamespaces(
-        content,
-        absFilePath,
-        options.isBrowser
-          ? this.buildOptions.build.websql
-            ? 'websql'
-            : 'browser'
-          : 'lib',
-      );
+      content = this.productionSplitNamespaces(content, absFilePath, typeOfOp);
     }
 
     return content;

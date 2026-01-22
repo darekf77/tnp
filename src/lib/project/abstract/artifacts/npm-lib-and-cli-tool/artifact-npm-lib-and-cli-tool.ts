@@ -44,11 +44,12 @@ import {
   indexDtsNpmPackage,
   indexJSNpmPackage,
   libFromCompiledDist,
+  libFromNpmPackage,
   libFromSrc,
   libs,
   localReleaseMainProject,
   MESSAGES,
-  migrationsFromSrc,
+  migrationsFromLib,
   nodeModulesMainProject,
   packageJsonNpmLib,
   prodSuffix,
@@ -186,7 +187,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     if (this.project.framework.isStandaloneProject) {
       await this.project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
         {
-          watch: initOptions.build.watch,
+          watch: false,
         },
       );
       await this.creteBuildInfoFile(initOptions);
@@ -666,9 +667,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       Helpers.remove([folderAbsPath, sourceLinkInNodeModules]);
       Helpers.remove([folderAbsPath, assetsFromSrc]);
       Helpers.remove([folderAbsPath, browserMainProject]);
+      Helpers.remove([folderAbsPath, browserMainProject + prodSuffix]);
       Helpers.remove([folderAbsPath, folderName.client]); // TODO REMOVE
       Helpers.remove([folderAbsPath, websqlMainProject]);
-      Helpers.remove([folderAbsPath, migrationsFromSrc]);
+      Helpers.remove([folderAbsPath, websqlMainProject + prodSuffix]);
+      Helpers.remove([folderAbsPath, migrationsFromLib]);
       Helpers.remove([folderAbsPath, srcMainProject]);
       Helpers.remove([folderAbsPath, 'src.*']);
       Helpers.remove([folderAbsPath, 'index.*']);
@@ -684,12 +687,35 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       clearLibFiles(releaseProjPath);
     }
 
+    //#region remove lagacy file from final bundle
+    Helpers.remove([
+      tmpProjNpmLibraryInNodeModulesAbsPath,
+      fileName.package_json__devDependencies_json,
+    ]);
+
+    Helpers.remove([
+      tmpProjNpmLibraryInNodeModulesAbsPath,
+      fileName.package_json__tnp_json5,
+    ]);
+
+    Helpers.remove([
+      tmpProjNpmLibraryInNodeModulesAbsPath,
+      fileName.package_json__tnp_json,
+    ]);
+
+    Helpers.remove([
+      tmpProjNpmLibraryInNodeModulesAbsPath,
+      fileName.tnpEnvironment_json,
+    ]);
+
     Helpers.remove([
       tmpProjNpmLibraryInNodeModulesAbsPath,
       taonJsonMainProject,
     ]);
+    Helpers.remove([tmpProjNpmLibraryInNodeModulesAbsPath, migrationsFromLib]);
     Helpers.remove([tmpProjNpmLibraryInNodeModulesAbsPath, 'firedev.jsonc']);
     Helpers.remove([tmpProjNpmLibraryInNodeModulesAbsPath, 'client']);
+    //#endregion
 
     if (allowedToNpmReleases.includes(releaseOptions.release.releaseType)) {
       if (!releaseOptions.release.skipNpmPublish) {
@@ -792,6 +818,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         }
         this.project.removeFile(browserMainProject);
         this.project.removeFile(websqlMainProject);
+        this.project.removeFile(browserMainProject + prodSuffix);
+        this.project.removeFile(websqlMainProject + prodSuffix);
         this.project.removeFile(fileName.tnpEnvironment_json);
         if (this.project.framework.isCoreProject) {
           return;
@@ -884,18 +912,23 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     newVersion: string,
   ): void {
     //#region @backendFunc
-    const folderToFix = [browserMainProject, websqlMainProject];
+    const folderToFix = [
+      browserMainProject,
+      websqlMainProject,
+      browserMainProject + prodSuffix,
+      websqlMainProject + prodSuffix,
+    ];
 
     for (const folder of folderToFix) {
       const folderAbsPath = crossPlatformPath([releaseProjPath, folder]);
       Helpers.remove([folderAbsPath, dotNpmIgnoreMainProject]);
 
-      const rootPackageNameForChildBrowser = crossPlatformPath([
-        this.project.nameForNpmPackage,
-        folder,
-      ]);
-      const childName = _.kebabCase(this.project.nameForNpmPackage);
-      const browserOrWebsql = _.last(rootPackageNameForChildBrowser.split('/'));
+      // const rootPackageNameForChildBrowser = crossPlatformPath([
+      //   this.project.nameForNpmPackage,
+      //   folder,
+      // ]);
+      // const childName = _.kebabCase(this.project.nameForNpmPackage);
+      // const browserOrWebsql = _.last(rootPackageNameForChildBrowser.split('/'));
       Helpers.setValueToJSON(
         [folderAbsPath, packageJsonNpmLib],
         'sideEffects',
@@ -907,6 +940,55 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         newVersion,
       );
     }
+
+    const prodbrowsefoldersToFix = [
+      browserMainProject + prodSuffix,
+      websqlMainProject + prodSuffix,
+    ];
+
+    for (const folder of prodbrowsefoldersToFix) {
+      const folderAbsPath = crossPlatformPath([releaseProjPath, folder]);
+      Helpers.setValueToJSON(
+        [folderAbsPath, packageJsonNpmLib],
+        'name',
+        crossPlatformPath([this.project.nameForNpmPackage, folder]),
+      );
+    }
+
+    const folderToFixBackend = [
+      libFromNpmPackage,
+      libFromNpmPackage + prodSuffix,
+    ];
+
+    for (const folder of folderToFixBackend) {
+      const folderAbsPath = crossPlatformPath([releaseProjPath, folder]);
+      Helpers.remove([folderAbsPath, dotNpmIgnoreMainProject]);
+
+      const packageName = crossPlatformPath([
+        this.project.nameForNpmPackage,
+        folder,
+      ]);
+
+      const pjBackendLib = {
+        name: packageName,
+        version: newVersion,
+        // ! TODO @LAST ADD ESM SUPPORT
+        // sideEffects: this.project.packageJson.sideEffects,
+        // module: 'fesm2022/json10-writer-browser.mjs',
+        // typings: 'types/json10-writer-browser.d.ts',
+        // exports: {
+        //   './package.json': {
+        //     default: './package.json',
+        //   },
+        //   '.': {
+        //     types: './types/json10-writer-browser.d.ts',
+        //     default: './fesm2022/json10-writer-browser.mjs',
+        //   },
+        // },
+      };
+      Helpers.writeJson([folderAbsPath, packageJsonNpmLib], pjBackendLib);
+    }
+
     //#endregion
   }
   //#endregion

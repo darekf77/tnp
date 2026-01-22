@@ -5,7 +5,7 @@ import { os, UtilsOs } from 'tnp-core/src';
 import { crossPlatformPath, Helpers, path } from 'tnp-core/src';
 import { getBaseCliWorkerDatabaseConfig } from 'tnp-helpers/src';
 
-import { MIGRATIONS_CLASSES_FOR_TaonProjectsContext } from '../../../../migrations';
+import { MIGRATIONS_CLASSES_FOR_TaonProjectsContext } from '../../../migrations';
 
 import { TaonBuild } from './taon-build.entity';
 import { TaonEnv } from './taon-env.entity';

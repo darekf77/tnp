@@ -2,6 +2,8 @@ import { config } from 'tnp-core/src';
 import { crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
+import { srcFromTaonImport } from '../../../../../../constants';
+
 import { CopyMangerHelpers } from './copy-manager-helpers';
 
 export const TS_NOCHECK = '// @ts-nocheck';
@@ -40,7 +42,9 @@ export class TypescriptDtsFixer {
       const isomorphicPackageName = isomorphicPackages[index];
       content = (content || '').replace(
         new RegExp(
-          Helpers.escapeStringForRegEx(`${isomorphicPackageName}/src'`),
+          Helpers.escapeStringForRegEx(
+            `${isomorphicPackageName}/${srcFromTaonImport}'`,
+          ),
           'g',
         ),
         `${isomorphicPackageName}'`,
@@ -48,7 +52,9 @@ export class TypescriptDtsFixer {
 
       content = (content || '').replace(
         new RegExp(
-          Helpers.escapeStringForRegEx(`${isomorphicPackageName}/src"`),
+          Helpers.escapeStringForRegEx(
+            `${isomorphicPackageName}/${srcFromTaonImport}"`,
+          ),
           'g',
         ),
         `${isomorphicPackageName}"`,
@@ -58,7 +64,10 @@ export class TypescriptDtsFixer {
     //#endregion
   }
 
-  forContent(content: string, browserFolder: 'browser' | 'websql' | string) {
+  /**
+   * browserFolder = browser websql browser-prod websql-prod
+   */
+  forContent(content: string, browserFolder: string) {
     //#region @backendFunc
     content = content ? content : '';
 
@@ -113,10 +122,7 @@ export class TypescriptDtsFixer {
     //#endregion
   }
 
-  processFolder(
-    absPathLocation: string,
-    currentBrowserFolder: 'browser' | 'websql' | string,
-  ) {
+  processFolder(absPathLocation: string, currentBrowserFolder: string) {
     //#region @backendFunc
     const browserDtsFiles = Helpers.filesFrom(absPathLocation, true).filter(f =>
       f.endsWith('.d.ts'),
@@ -132,10 +138,7 @@ export class TypescriptDtsFixer {
   //#endregion
 
   //#region write fixed version of dts file
-  forFile(
-    dtsFileAbsolutePath: string,
-    currentBrowserFolder: 'browser' | 'websql' | string,
-  ) {
+  forFile(dtsFileAbsolutePath: string, currentBrowserFolder: string) {
     //#region @backendFunc
     if (!dtsFileAbsolutePath.endsWith('.d.ts')) {
       return;

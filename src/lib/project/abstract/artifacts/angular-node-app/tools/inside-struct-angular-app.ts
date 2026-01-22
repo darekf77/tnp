@@ -19,7 +19,6 @@ import {
   indexJSElectronDist,
   libFromNgProject,
   libFromSrc,
-  migrationsFromSrc,
   myLibFromNgProject,
   ngProjectStylesScss,
   packageJsonNgProject,
@@ -734,37 +733,6 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                   Helpers.createSymLink(
                     sourceLibInProjects,
                     destinationLibInPorjects,
-                    {
-                      continueWhenExistedFolderDoesntExists: true,
-                    },
-                  );
-                })();
-                //#endregion
-
-                //#region link migration
-                (() => {
-                  const sourceMigrationInProjects = projFromSrouce.pathFor([
-                    (this.initOptions.build.websql
-                      ? tmpSrcAppDistWebsql
-                      : tmpSrcAppDist) +
-                      (this.initOptions.build.prod ? prodSuffix : ''),
-                    migrationsFromSrc,
-                  ]);
-
-                  const destinationMigrationInPorjects = crossPlatformPath([
-                    this.project.location,
-                    replacement(tmpProjectsStandalone),
-                    projectsFromNgTemplate,
-                    externalLibsFromNgProject,
-                    srcNgProxyProject,
-                    libFromNgProject,
-                    projFromSrouce.nameForNpmPackage,
-                    migrationsFromSrc,
-                  ]);
-
-                  Helpers.createSymLink(
-                    sourceMigrationInProjects,
-                    destinationMigrationInPorjects,
                     {
                       continueWhenExistedFolderDoesntExists: true,
                     },

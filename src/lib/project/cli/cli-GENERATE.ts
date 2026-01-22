@@ -28,6 +28,7 @@ import {
 import {
   appFromSrc,
   DEFAULT_FRAMEWORK_VERSION,
+  srcFromTaonImport,
   srcMainProject,
 } from '../../constants';
 import { EnvOptions, ReleaseArtifactTaon } from '../../options';
@@ -154,7 +155,8 @@ export class $Generate extends BaseCli {
           orgContent,
           replaceTag,
           `import { HOST_CONFIG } from '${back}/app.hosts';
-import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}ActiveContext } from '${back}/../migrations';`,
+import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}ActiveContext }` +
+            ` from '${this.project.nameForNpmPackage}/${srcFromTaonImport}';`,
         );
 
         Helpers.writeFile(
@@ -170,7 +172,16 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
   }
 
   async libIndex() {
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask();
+    await this.project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
+      {
+        watch: false,
+      },
+    );
+    await this.project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
+      {
+        watch: false,
+      },
+    );
     this._exit();
   }
 

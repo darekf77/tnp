@@ -533,7 +533,10 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   //#region fix js map files in destination folder
   fixJsMapFiles(
     destinationPackageLocation: string,
-    currentBrowserFolder?: 'browser' | 'websql' | string,
+    /**
+     * browser websql browser-prod websql-prod
+     */
+    currentBrowserFolder?:  string,
   ) {
     //#region @backendFunc
     const forBrowser = !!currentBrowserFolder;

@@ -11,7 +11,6 @@ import {
   distFromNgBuild,
   distMainProject,
   libFromSrc,
-  migrationsFromTempSrc,
   myLibFromNgProject,
   packageJsonNgProject,
   prodSuffix,
@@ -107,34 +106,6 @@ export class InsideStructAngularLib extends BaseInsideStruct {
             Helpers.move(source, dest);
           })();
           //#endregion
-
-          (() => {
-            //#region hande / src / migrations
-            let browserTsCode = this.initOptions.build.websql
-              ? tmpSrcDistWebsql
-              : tmpSrcDist;
-
-            if (this.initOptions.build.prod) {
-              browserTsCode = `${browserTsCode}${prodSuffix}`;
-            }
-
-            const source = path.join(
-              this.project.location,
-              browserTsCode,
-              migrationsFromTempSrc,
-            );
-
-            const dest = path.join(
-              this.project.location,
-              replacement(tmpProjectsStandalone),
-              `${projectsFromNgTemplate}/${this.project.name}/${srcMainProject}/${migrationsFromTempSrc}`,
-            );
-            Helpers.remove(dest);
-            Helpers.createSymLink(source, dest, {
-              continueWhenExistedFolderDoesntExists: true,
-            });
-            //#endregion
-          })();
 
           (() => {
             //#region hande / src / lib

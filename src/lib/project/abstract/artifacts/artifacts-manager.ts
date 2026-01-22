@@ -32,6 +32,7 @@ import {
   indexTsFromLibFromSrc,
   indexTsFromSrc,
   libFromSrc,
+  migrationsFromLib,
   nodeModulesMainProject,
   srcMainProject,
   TaonGeneratedFiles,
@@ -331,6 +332,19 @@ export class ArtifactManager {
         );
       }
       this.project.remove(`${srcMainProject}/docker`, true);
+      if (
+        this.project.hasFolder([srcMainProject, migrationsFromLib]) &&
+        !this.project.hasFolder([srcMainProject, libFromSrc, migrationsFromLib])
+      ) {
+        Helpers.copy(
+          this.project.pathFor([srcMainProject, migrationsFromLib]),
+          this.project.pathFor([srcMainProject, libFromSrc, migrationsFromLib]),
+          { recursive: true, overwrite: true },
+        );
+        Helpers.remove(
+          this.project.pathFor([srcMainProject, migrationsFromLib]),
+        );
+      }
       try {
         this.project
           .run(
