@@ -160,7 +160,7 @@ export class BrowserCodeCut {
   ) {
     //#region recognize namespaces for isomorphic packages
     this.nameForNpmPackage = project.nameForNpmPackage;
-    if (!this.namespacesForPackagesLib) {
+    if (!this.namespacesForPackagesLib && buildOptions.build.prod) {
       BrowserCodeCut.namespacesForPackagesLib = new Map();
       BrowserCodeCut.namespacesForPackagesBrowser = new Map();
       BrowserCodeCut.namespacesForPackagesWebsql = new Map();
