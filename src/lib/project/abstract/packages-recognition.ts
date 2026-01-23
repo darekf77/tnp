@@ -39,7 +39,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     return this.project.framework.coreContainer;
   }
 
-  public inMemoryIsomorphicLibs = [];
+  protected inMemoryIsomorphicLibs = [];
 
   //#region constructor
   constructor(project: Project) {

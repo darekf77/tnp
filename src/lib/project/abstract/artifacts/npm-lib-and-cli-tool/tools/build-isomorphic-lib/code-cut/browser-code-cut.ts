@@ -112,33 +112,6 @@ export class BrowserCodeCut {
 
   //#region constructor
 
-  public static namespacesForPackagesLib: Map<
-    string,
-    UtilsTypescript.SplitNamespaceResult
-  >;
-
-  public static namespacesForPackagesBrowser: Map<
-    string,
-    UtilsTypescript.SplitNamespaceResult
-  >;
-
-  public static namespacesForPackagesWebsql: Map<
-    string,
-    UtilsTypescript.SplitNamespaceResult
-  >;
-
-  get namespacesForPackagesLib() {
-    return BrowserCodeCut.namespacesForPackagesLib;
-  }
-
-  get namespacesForPackagesBrowser() {
-    return BrowserCodeCut.namespacesForPackagesBrowser;
-  }
-
-  get namespacesForPackagesWebsql() {
-    return BrowserCodeCut.namespacesForPackagesWebsql;
-  }
-
   private readonly nameForNpmPackage: string;
 
   //#region @backend
@@ -160,57 +133,7 @@ export class BrowserCodeCut {
   ) {
     //#region recognize namespaces for isomorphic packages
     this.nameForNpmPackage = project.nameForNpmPackage;
-    if (!this.namespacesForPackagesLib && buildOptions.build.prod) {
-      BrowserCodeCut.namespacesForPackagesLib = new Map();
-      BrowserCodeCut.namespacesForPackagesBrowser = new Map();
-      BrowserCodeCut.namespacesForPackagesWebsql = new Map();
 
-      //#region gather all isomorphic production namespaces metadata
-      project.nodeModules.getIsomorphicPackagesNames().forEach(pkgName => {
-        const namespacesLib = UtilsJson.readJson(
-          project.nodeModules.pathFor([
-            pkgName,
-            libFromNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
-          ]),
-          {},
-        );
-        this.namespacesForPackagesLib.set(pkgName, namespacesLib);
-
-        const namespacesBrowser = UtilsJson.readJson(
-          project.nodeModules.pathFor([
-            pkgName,
-            browserNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
-          ]),
-          {},
-        );
-        this.namespacesForPackagesBrowser.set(pkgName, namespacesBrowser);
-
-        const namespacesWebsql = UtilsJson.readJson(
-          project.nodeModules.pathFor([
-            pkgName,
-            websqlNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
-          ]),
-          {},
-        );
-        this.namespacesForPackagesWebsql.set(pkgName, namespacesWebsql);
-      });
-      //#endregion
-
-      //#region clear project own package to be filled later
-      this.namespacesForPackagesLib.set(this.nameForNpmPackage, {
-        namespacesMapObj: {},
-        namespacesReplace: {},
-      });
-      this.namespacesForPackagesBrowser.set(this.nameForNpmPackage, {
-        namespacesMapObj: {},
-        namespacesReplace: {},
-      });
-      this.namespacesForPackagesWebsql.set(this.nameForNpmPackage, {
-        namespacesMapObj: {},
-        namespacesReplace: {},
-      });
-      //#endregion
-    }
     //#endregion
 
     // console.log(`[incremental-build-process INSIDE BROWSER!!! '${this.buildOptions.baseHref}'`)
@@ -896,23 +819,6 @@ export class BrowserCodeCut {
     //   debugger
     // }
     const data = UtilsTypescript.splitNamespaceForContent(content);
-    if (fileType === libTypeString) {
-      const current = this.namespacesForPackagesLib.get(this.nameForNpmPackage);
-      _.merge(current.namespacesMapObj, data.namespacesMapObj);
-      _.merge(current.namespacesReplace, data.namespacesReplace);
-    } else if (fileType === browserTypeString) {
-      const current = this.namespacesForPackagesBrowser.get(
-        this.nameForNpmPackage,
-      );
-      _.merge(current.namespacesMapObj, data.namespacesMapObj);
-      _.merge(current.namespacesReplace, data.namespacesReplace);
-    } else if (fileType === websqlTypeString) {
-      const current = this.namespacesForPackagesWebsql.get(
-        this.nameForNpmPackage,
-      );
-      _.merge(current.namespacesMapObj, data.namespacesMapObj);
-      _.merge(current.namespacesReplace, data.namespacesReplace);
-    }
 
     // this.debug &&
     //   console.log(`(${fileType}) SAVING NAMESPACES FOR`, absFilePath);

@@ -19,9 +19,11 @@ import { getCleanImport } from '../../../../../../../app-utils';
 import {
   browserFromCompiledDist,
   browserMainProject,
+  browserNpmPackage,
   distMainProject,
   distNoCutSrcMainProject,
   libFromCompiledDist,
+  libFromNpmPackage,
   libFromSrc,
   libs,
   prodSuffix,
@@ -34,11 +36,11 @@ import {
   tsconfigBackendDistJson_PROD,
   websqlFromCompiledDist,
   websqlMainProject,
+  websqlNpmPackage,
 } from '../../../../../../../constants';
 import { Models } from '../../../../../../../models';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
-import { BrowserCodeCut } from '../code-cut/browser-code-cut';
 //#endregion
 
 export class BackendCompilation {
@@ -50,6 +52,23 @@ export class BackendCompilation {
   public isEnableCompilation = true;
 
   protected compilerName = 'Backend Compiler';
+
+  public namespacesForPackagesLib: Map<
+    string,
+    UtilsTypescript.SplitNamespaceResult
+  >;
+
+  public namespacesForPackagesBrowser: Map<
+    string,
+    UtilsTypescript.SplitNamespaceResult
+  >;
+
+  public namespacesForPackagesWebsql: Map<
+    string,
+    UtilsTypescript.SplitNamespaceResult
+  >;
+
+  private readonly nameForNpmPackage: string;
 
   //#endregion
 
@@ -64,7 +83,9 @@ export class BackendCompilation {
      */
     public srcFolder: string,
     public project: Project,
-  ) {}
+  ) {
+    this.nameForNpmPackage = project.nameForNpmPackage;
+  }
   //#endregion
 
   //#endregion
@@ -102,6 +123,41 @@ export class BackendCompilation {
     }
 
     if (this.buildOptions.build.prod) {
+      this.namespacesForPackagesLib = new Map();
+      this.namespacesForPackagesBrowser = new Map();
+      this.namespacesForPackagesWebsql = new Map();
+
+      //#region gather namespaces data from isomorphic packages
+      this.project.packagesRecognition.allIsomorphicPackagesFromMemory.forEach(pkgName => {
+        const namespacesLib = UtilsJson.readJson(
+          this.project.nodeModules.pathFor([
+            pkgName,
+            libFromNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
+          ]),
+          {},
+        );
+        this.namespacesForPackagesLib.set(pkgName, namespacesLib);
+
+        const namespacesBrowser = UtilsJson.readJson(
+          this.project.nodeModules.pathFor([
+            pkgName,
+            browserNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
+          ]),
+          {},
+        );
+        this.namespacesForPackagesBrowser.set(pkgName, namespacesBrowser);
+
+        const namespacesWebsql = UtilsJson.readJson(
+          this.project.nodeModules.pathFor([
+            pkgName,
+            websqlNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
+          ]),
+          {},
+        );
+        this.namespacesForPackagesWebsql.set(pkgName, namespacesWebsql);
+      });
+      //#endregion
+
       //#region detect files
       const filesBrowser = UtilsFilesFoldersSync.getFilesFrom(
         this.project.pathFor(tmpSrcDist + prodSuffix),
@@ -129,311 +185,33 @@ export class BackendCompilation {
       //#endregion
 
       //#region merge all namespaces metadata
-      // lib
-      Helpers.writeJson(
-        this.project.pathFor([
-          distMainProject + prodSuffix,
-          libFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
-        ]),
-        filesLib
-          .filter(f => f.endsWith(`.${splitNamespacesJson}`))
-          .reduce((a, b) => {
-            const jsonMap: UtilsTypescript.SplitNamespaceResult =
-              UtilsJson.readJson(b) || {};
-            return _.merge(a, jsonMap);
-          }, {} as UtilsTypescript.SplitNamespaceResult),
+      this.combineNamespacesForCurrentPackage(
+        filesLib,
+        this.namespacesForPackagesLib,
+        libFromCompiledDist,
       );
-
-      // browser
-      Helpers.writeJson(
-        this.project.pathFor([
-          distMainProject + prodSuffix,
-          browserFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
-        ]),
-        filesBrowser
-          .filter(f => f.endsWith(`.${splitNamespacesJson}`))
-          .reduce((a, b) => {
-            const jsonMap: UtilsTypescript.SplitNamespaceResult =
-              UtilsJson.readJson(b) || {};
-
-            return _.merge(a, jsonMap);
-          }, {} as UtilsTypescript.SplitNamespaceResult),
+      this.combineNamespacesForCurrentPackage(
+        filesBrowser,
+        this.namespacesForPackagesBrowser,
+        browserFromCompiledDist,
       );
-
-      // websql
-      Helpers.writeJson(
-        this.project.pathFor([
-          distMainProject + prodSuffix,
-          websqlFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
-        ]),
-        filesWebsql
-          .filter(f => f.endsWith(`.${splitNamespacesJson}`))
-          .reduce((a, b) => {
-            const jsonMap: UtilsTypescript.SplitNamespaceResult =
-              UtilsJson.readJson(b) || {};
-
-            return _.merge(a, jsonMap);
-          }, {} as UtilsTypescript.SplitNamespaceResult),
+      this.combineNamespacesForCurrentPackage(
+        filesWebsql,
+        this.namespacesForPackagesWebsql,
+        websqlFromCompiledDist,
       );
       //#endregion
 
       //#region process production code
-      const nameForNpmPackage = this.project.nameForNpmPackage;
-
-      //#region process production code / browser
-      filesBrowser
-        .filter(f => f.endsWith('.ts') || f.endsWith('.tsx'))
-        .forEach(f => {
-          // Helpers.logInfo(`Processing browser prod file: ${f}`);
-
-          let content = Helpers.readFile(f);
-          const namespacesForPackagesBrowser = new Map(
-            [...BrowserCodeCut.namespacesForPackagesBrowser].map(([k, v]) => [
-              _.cloneDeep(k),
-              _.cloneDeep(v),
-            ]),
-          );
-
-          const importsExportInFile = UtilsTypescript.recognizeImportsFromFile(
-            f,
-          )
-            .filter(c => !c.cleanEmbeddedPathToFile.startsWith('.'))
-            .map(c => getCleanImport(c.cleanEmbeddedPathToFile))
-            .filter(f => !!f);
-
-          const renamedImportsOrExports =
-            UtilsTypescript.extractRenamedImportsOrExport(content).map(c => {
-              c.packageName = getCleanImport(c.packageName);
-              return c;
-            });
-
-          if (renamedImportsOrExports.length > 0) {
-            namespacesForPackagesBrowser.forEach((namespaceData, libName) => {
-              for (const renamed of renamedImportsOrExports) {
-                if (
-                  renamed.packageName === libName ||
-                  (libName === nameForNpmPackage && !renamed.packageName)
-                ) {
-                  namespacesForPackagesBrowser.set(
-                    libName,
-                    UtilsTypescript.updateSplitNamespaceResultMapReplaceObj(
-                      namespaceData,
-                      renamedImportsOrExports,
-                    ),
-                  );
-                }
-              }
-            });
-          }
-
-          // const debug = BrowserCodeCut.debugFile.some(d => f.endsWith(d));
-          // if (debug) {
-          //   debugger;
-          // }
-
-          namespacesForPackagesBrowser.forEach((namespaceData, libName) => {
-            if (
-              libName !== nameForNpmPackage &&
-              !importsExportInFile.includes(libName)
-            ) {
-              return;
-            }
-
-            content = UtilsTypescript.replaceNamespaceWithLongNames(
-              content,
-              namespaceData.namespacesMapObj,
-            );
-          });
-
-          namespacesForPackagesBrowser.forEach((namespaceData, libName) => {
-            if (
-              libName !== nameForNpmPackage &&
-              !importsExportInFile.includes(libName)
-            ) {
-              return;
-            }
-            content =
-              UtilsTypescript.replaceImportNamespaceWithWithExplodedNamespace(
-                content,
-                namespaceData.namespacesReplace,
-                renamedImportsOrExports,
-                libName,
-                libName === nameForNpmPackage,
-              );
-          });
-          Helpers.writeFile(f, content);
-        });
-
-      //#endregion
-
-      //#region process production code / websql
-      filesWebsql
-        .filter(f => f.endsWith('.ts') || f.endsWith('.tsx'))
-        .forEach(f => {
-          // Helpers.logInfo(`Processing websql prod file: ${f}`);
-          let content = Helpers.readFile(f);
-
-          const importsExportInFile = UtilsTypescript.recognizeImportsFromFile(
-            f,
-          )
-            .filter(c => !c.cleanEmbeddedPathToFile.startsWith('.'))
-            .map(c => getCleanImport(c.cleanEmbeddedPathToFile))
-            .filter(f => !!f);
-
-          const namespacesForPackagesWebsql = new Map(
-            [...BrowserCodeCut.namespacesForPackagesWebsql].map(([k, v]) => [
-              _.cloneDeep(k),
-              _.cloneDeep(v),
-            ]),
-          );
-
-          const renamedImportsOrExports =
-            UtilsTypescript.extractRenamedImportsOrExport(content).map(c => {
-              c.packageName = getCleanImport(c.packageName);
-              return c;
-            });
-
-          if (renamedImportsOrExports.length > 0) {
-            namespacesForPackagesWebsql.forEach((namespaceData, libName) => {
-              for (const renamed of renamedImportsOrExports) {
-                if (
-                  renamed.packageName === libName ||
-                  (libName === nameForNpmPackage && !renamed.packageName)
-                ) {
-                  namespacesForPackagesWebsql.set(
-                    libName,
-                    UtilsTypescript.updateSplitNamespaceResultMapReplaceObj(
-                      namespaceData,
-                      renamedImportsOrExports,
-                    ),
-                  );
-                }
-              }
-            });
-          }
-
-          // const debug = BrowserCodeCut.debugFile.some(d => f.endsWith(d));
-          // if (debug) {
-          //   debugger;
-          // }
-
-          namespacesForPackagesWebsql.forEach((namespaceData, libName) => {
-            if (
-              libName !== nameForNpmPackage &&
-              !importsExportInFile.includes(libName)
-            ) {
-              return;
-            }
-            content = UtilsTypescript.replaceNamespaceWithLongNames(
-              content,
-              namespaceData.namespacesMapObj,
-            );
-          });
-
-          namespacesForPackagesWebsql.forEach((namespaceData, libName) => {
-            if (
-              libName !== nameForNpmPackage &&
-              !importsExportInFile.includes(libName)
-            ) {
-              return;
-            }
-            content =
-              UtilsTypescript.replaceImportNamespaceWithWithExplodedNamespace(
-                content,
-                namespaceData.namespacesReplace,
-                renamedImportsOrExports,
-                libName,
-                libName === nameForNpmPackage,
-              );
-          });
-          Helpers.writeFile(f, content);
-        });
-      //#endregion
-
-      //#region process production code / lib
-      filesLib
-        .filter(f => f.endsWith('.ts') || f.endsWith('.tsx'))
-        .forEach(f => {
-          let content = Helpers.readFile(f);
-          // Helpers.logInfo(`Processing lib prod file: ${f}`);
-
-          const importsExportInFile = UtilsTypescript.recognizeImportsFromFile(
-            f,
-          )
-            .filter(c => !c.cleanEmbeddedPathToFile.startsWith('.'))
-            .map(c => getCleanImport(c.cleanEmbeddedPathToFile))
-            .filter(f => !!f);
-
-          const namespacesForPackagesLib = new Map(
-            [...BrowserCodeCut.namespacesForPackagesLib].map(([k, v]) => [
-              _.cloneDeep(k),
-              _.cloneDeep(v),
-            ]),
-          );
-
-          const renamedImportsOrExports =
-            UtilsTypescript.extractRenamedImportsOrExport(content).map(c => {
-              c.packageName = getCleanImport(c.packageName);
-              return c;
-            });
-
-          if (renamedImportsOrExports.length > 0) {
-            namespacesForPackagesLib.forEach((namespaceData, libName) => {
-              for (const renamed of renamedImportsOrExports) {
-                if (
-                  renamed.packageName === libName ||
-                  (libName === nameForNpmPackage && !renamed.packageName)
-                ) {
-                  namespacesForPackagesLib.set(
-                    libName,
-                    UtilsTypescript.updateSplitNamespaceResultMapReplaceObj(
-                      namespaceData,
-                      renamedImportsOrExports,
-                    ),
-                  );
-                }
-              }
-            });
-          }
-
-          // const debug = BrowserCodeCut.debugFile.some(d => f.endsWith(d));
-          // if (debug) {
-          //   debugger;
-          // }
-
-          namespacesForPackagesLib.forEach((namespaceData, libName) => {
-            if (
-              libName !== nameForNpmPackage &&
-              !importsExportInFile.includes(libName)
-            ) {
-              return;
-            }
-            content = UtilsTypescript.replaceNamespaceWithLongNames(
-              content,
-              namespaceData.namespacesMapObj,
-            );
-          });
-
-          namespacesForPackagesLib.forEach((namespaceData, libName) => {
-            if (
-              libName !== nameForNpmPackage &&
-              !importsExportInFile.includes(libName)
-            ) {
-              return;
-            }
-            content =
-              UtilsTypescript.replaceImportNamespaceWithWithExplodedNamespace(
-                content,
-                namespaceData.namespacesReplace,
-                renamedImportsOrExports,
-                libName,
-                libName === nameForNpmPackage,
-              );
-          });
-          Helpers.writeFile(f, content);
-        });
-      //#endregion
-
+      this.productionCodeReplacement(filesLib, this.namespacesForPackagesLib);
+      this.productionCodeReplacement(
+        filesBrowser,
+        this.namespacesForPackagesBrowser,
+      );
+      this.productionCodeReplacement(
+        filesWebsql,
+        this.namespacesForPackagesWebsql,
+      );
       //#endregion
     }
     // debugger;
@@ -441,6 +219,126 @@ export class BackendCompilation {
     await this.libCompilation(this.buildOptions, {
       generateDeclarations: true,
     });
+    //#endregion
+  }
+  //#endregion
+
+  //#region methods / combine namespaces for current package
+  private combineNamespacesForCurrentPackage(
+    files: string[],
+    namespacesForPackages: Map<string, UtilsTypescript.SplitNamespaceResult>,
+    folderInDist:
+      | typeof libFromCompiledDist
+      | typeof browserFromCompiledDist
+      | typeof websqlFromCompiledDist,
+  ): void {
+    //#region @backendFunc
+    const data = files
+      .filter(f => f.endsWith(`.${splitNamespacesJson}`))
+      .reduce((a, b) => {
+        const jsonMap: UtilsTypescript.SplitNamespaceResult =
+          UtilsJson.readJson(b) || {};
+        return _.merge(a, jsonMap);
+      }, {} as UtilsTypescript.SplitNamespaceResult);
+
+    Helpers.writeJson(
+      this.project.pathFor([
+        distMainProject + prodSuffix,
+        folderInDist + prodSuffix + `.${splitNamespacesJson}`,
+      ]),
+      data,
+    );
+    namespacesForPackages.set(this.nameForNpmPackage, data);
+    //#endregion
+  }
+  //#endregion
+
+  //#region methods / production code replacement
+  private productionCodeReplacement(
+    files: string[],
+    namespacesForPackages: Map<string, UtilsTypescript.SplitNamespaceResult>,
+  ): void {
+    //#region @backendFunc
+    files
+      .filter(f => f.endsWith('.ts') || f.endsWith('.tsx'))
+      .forEach(f => {
+        // Helpers.logInfo(`Processing browser prod file: ${f}`);
+
+        let content = Helpers.readFile(f);
+        namespacesForPackages = new Map(
+          [...namespacesForPackages].map(([k, v]) => [
+            _.cloneDeep(k),
+            _.cloneDeep(v),
+          ]),
+        );
+
+        const importsExportInFile = UtilsTypescript.recognizeImportsFromFile(f)
+          .filter(c => !c.cleanEmbeddedPathToFile.startsWith('.'))
+          .map(c => getCleanImport(c.cleanEmbeddedPathToFile))
+          .filter(f => !!f);
+
+        const renamedImportsOrExports =
+          UtilsTypescript.extractRenamedImportsOrExport(content).map(c => {
+            c.packageName = getCleanImport(c.packageName);
+            return c;
+          });
+
+        if (renamedImportsOrExports.length > 0) {
+          namespacesForPackages.forEach((namespaceData, libName) => {
+            for (const renamed of renamedImportsOrExports) {
+              if (
+                renamed.packageName === libName ||
+                (libName === this.nameForNpmPackage && !renamed.packageName)
+              ) {
+                namespacesForPackages.set(
+                  libName,
+                  UtilsTypescript.updateSplitNamespaceResultMapReplaceObj(
+                    namespaceData,
+                    renamedImportsOrExports,
+                  ),
+                );
+              }
+            }
+          });
+        }
+
+        // const debug = BrowserCodeCut.debugFile.some(d => f.endsWith(d));
+        // if (debug) {
+        //   debugger;
+        // }
+
+        namespacesForPackages.forEach((namespaceData, libName) => {
+          if (
+            libName !== this.nameForNpmPackage &&
+            !importsExportInFile.includes(libName)
+          ) {
+            return;
+          }
+
+          content = UtilsTypescript.replaceNamespaceWithLongNames(
+            content,
+            namespaceData.namespacesMapObj,
+          );
+        });
+
+        namespacesForPackages.forEach((namespaceData, libName) => {
+          if (
+            libName !== this.nameForNpmPackage &&
+            !importsExportInFile.includes(libName)
+          ) {
+            return;
+          }
+          content =
+            UtilsTypescript.replaceImportNamespaceWithWithExplodedNamespace(
+              content,
+              namespaceData.namespacesReplace,
+              renamedImportsOrExports,
+              libName,
+              libName === this.nameForNpmPackage,
+            );
+        });
+        Helpers.writeFile(f, content);
+      });
     //#endregion
   }
   //#endregion
