@@ -319,6 +319,15 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region override packages order
+  get overridePackagesOrder(): string[] {
+    //#region @backendFunc
+    let res = (this.data as Models.TaonJsonContainer)?.overridePackagesOrder;
+    return res || [];
+    //#endregion
+  }
+  //#endregion
+
   private setDependenciesNamesForNpmLib(dependencies: string[]): void {
     //#region @backendFunc
     const data = this.data as Models.TaonJsonStandalone;
@@ -645,7 +654,8 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     Helpers.taskStarted(`Updating isomorphic external dependencies`);
     let allDetectedIsomorphicDeps =
-      this.project.framework.allDetectedExternalIsomorphicDependenciesForNpmLibCode;
+      this.project.framework
+        .allDetectedExternalIsomorphicDependenciesForNpmLibCode;
 
     allDetectedIsomorphicDeps = allDetectedIsomorphicDeps.filter(
       f => ![this.project.name, this.project.nameForNpmPackage].includes(f),

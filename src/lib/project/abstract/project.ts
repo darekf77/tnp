@@ -278,12 +278,17 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
             ...proj.taonJson.peerDependenciesNamesForNpmLib,
           ],
           proj => proj.nameForNpmPackage,
+          this.taonJson.overridePackagesOrder,
         )
         .filter(
           d =>
             d.framework.isStandaloneProject ||
             (d.framework.isContainer && d.taonJson.createOnlyTagWhenRelease),
         );
+
+      // console.log({
+      //   overridePackagesOrder: this.taonJson.overridePackagesOrder,
+      // });
 
       if (releaseOptions.container.only.length > 0) {
         children = children.filter(c => {

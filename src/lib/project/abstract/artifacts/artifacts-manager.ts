@@ -684,6 +684,7 @@ export class ArtifactManager {
           ...proj.taonJson.peerDependenciesNamesForNpmLib,
         ],
         proj => proj.nameForNpmPackage,
+        this.project.taonJson.overridePackagesOrder,
       );
 
     if (options.container.only.length > 0) {

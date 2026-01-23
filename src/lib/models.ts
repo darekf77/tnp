@@ -291,6 +291,12 @@ export namespace Models {
     resources?: string[];
 
     /**
+     * override order of packages during release or buildq
+     * so dependencies are released first
+     */
+    overridePackagesOrder: string[];
+
+    /**
      * Don't release inside children -> only tag the version
      */
     createOnlyTagWhenRelease?: boolean;

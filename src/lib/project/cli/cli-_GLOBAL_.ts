@@ -1517,7 +1517,8 @@ ${this.project.children
     //#region @backendFunc
     Helpers.taskStarted(`Recognizing all imports from project...`);
     const displayList =
-      this.project.framework.allDetectedExternalIsomorphicDependenciesForNpmLibCode;
+      this.project.framework
+        .allDetectedExternalIsomorphicDependenciesForNpmLibCode;
 
     console.log(displayList.map(i => `"${i}"`).join('\n'));
     Helpers.info(`Total unique imports found: ${displayList.length}`);
@@ -1721,6 +1722,7 @@ ${this.project.children
           ...proj.taonJson.peerDependenciesNamesForNpmLib,
         ],
         proj => proj.nameForNpmPackage,
+        this.project.taonJson.overridePackagesOrder,
       )
       .filter(d => d.framework.isStandaloneProject);
 
