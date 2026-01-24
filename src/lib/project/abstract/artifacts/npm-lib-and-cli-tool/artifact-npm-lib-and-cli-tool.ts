@@ -1079,8 +1079,16 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     }
 
     if (this.project.taonJson.peerDependenciesNamesForNpmLib) {
-      pj.setOptionalDependencies(
+      pj.setPeerDependencies(
         this.project.taonJson.peerDependenciesNamesForNpmLib.reduce((a, b) => {
+          return { ...a, [b]: dependencies[b] };
+        }, {}),
+      );
+    }
+
+    if (this.project.taonJson.devDependenciesNamesForNpmLib) {
+      pj.setDevDependencies(
+        this.project.taonJson.devDependenciesNamesForNpmLib.reduce((a, b) => {
           return { ...a, [b]: dependencies[b] };
         }, {}),
       );
@@ -1089,7 +1097,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     const optionalDeps = pj.optionalDependencies;
 
     if (this.project.taonJson.optionalDependenciesNamesForNpmLib) {
-      pj.setPeerDependencies(
+      pj.setOptionalDependencies(
         this.project.taonJson.optionalDependenciesNamesForNpmLib.reduce(
           (a, b) => {
             return { ...a, [b]: optionalDeps[b] };

@@ -203,6 +203,14 @@ export namespace Models {
     /**
      * At beginning after node_modules installation taon is checking is
      * packages are installed - if not it will throw error.
+     * Also.. this peerDependencies are going to be included in released npm lib
+     * as peerDependencies.
+     */
+    devDependenciesNamesForNpmLib: string[];
+
+    /**
+     * At beginning after node_modules installation taon is checking is
+     * packages are installed - if not it will throw error.
      * Also.. this optionalDependencies are going to be included in released npm lib
      * as optionalDependencies.
      */

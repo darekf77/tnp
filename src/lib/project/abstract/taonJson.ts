@@ -436,6 +436,20 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  /**
+   * Peer deps to inlculde in npm lib
+   * (relative paths to files or folders)
+   */
+  get devDependenciesNamesForNpmLib(): string[] {
+    //#region @backendFunc
+    let res = (this.data as Models.TaonJsonStandalone)
+      ?.devDependenciesNamesForNpmLib;
+
+    return res || [];
+    //#endregion
+  }
+  //#endregion
+
   private setPeerDependenciesNamesForNpmLib(dependencies: string[]): void {
     //#region @backendFunc
     const data = this.data as Models.TaonJsonStandalone;
