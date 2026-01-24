@@ -19,7 +19,7 @@ export const vscodeMenuItems = ({
   CURRENT_PROJECT: Project | undefined;
   ProjectItem: ReturnType<typeof activateMenuTnp>;
   focustFirstElement: () => void;
-  runInTerminal: (command: string) => void;
+  runInTerminal: (command: string, inNewTerminal?: boolean) => void;
   tmp_FRONTEND_NORMAL_APP_PORT: string;
   tmp_FRONTEND_WEBSQL_APP_PORT: string;
   skipTaonItems?: boolean;
@@ -53,7 +53,8 @@ export const vscodeMenuItems = ({
         triggerActionOnClick: async (project, progress, token) => {
           focustFirstElement();
           if (project?.location) {
-            progress?.report({ message: 'Pushing changes...' });
+            // runInTerminal(`${FRAMEWORK_NAME} push`, true);
+             progress?.report({ message: 'Pushing changes...' });
             await project.git.pushProcess();
             progress?.report({ message: 'Done', increment: 100 });
           }
@@ -374,10 +375,17 @@ export const vscodeMenuItems = ({
               iconPath: null as any,
               project: CURRENT_PROJECT as any,
               // skipReturnToMenu: true,
-              triggerActionOnClick: async project => {
+              triggerActionOnClick: async (project, progress) => {
                 if (project) {
+                  progress?.report({
+                    message: 'Generating export for all lib files',
+                  });
                   await project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask();
                   // vscode.commands.executeCommand('workbench.view.explorer');
+                  progress?.report({
+                    message: 'Done  generating export for all lib files',
+                    increment: 100,
+                  });
                 }
               },
             },
@@ -392,9 +400,16 @@ export const vscodeMenuItems = ({
               iconPath: null,
               project: CURRENT_PROJECT,
               // skipReturnToMenu: true,
-              triggerActionOnClick: async project => {
+              triggerActionOnClick: async (project, progress) => {
                 if (project) {
+                  progress?.report({
+                    message: 'Generating app routes in app.ts...',
+                  });
                   await project.artifactsManager.artifact.npmLibAndCliTool.appTsRoutesAutogenProvider.runTask();
+                  progress?.report({
+                    message: 'Done generating app routes code ',
+                    increment: 100,
+                  });
                   // vscode.commands.executeCommand('workbench.view.explorer');
                 }
               },
@@ -410,9 +425,14 @@ export const vscodeMenuItems = ({
               iconPath: null,
               project: CURRENT_PROJECT,
               // skipReturnToMenu: true,
-              triggerActionOnClick: async project => {
+              triggerActionOnClick: async (project, progress) => {
                 if (project) {
+                  progress?.report({ message: 'Refactoring imports...' });
                   await project.refactor.selfImports({});
+                  progress?.report({
+                    message: 'Done refactoring import ',
+                    increment: 100,
+                  });
                   // vscode.commands.executeCommand('workbench.view.explorer');
                 }
               },

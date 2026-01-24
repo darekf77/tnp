@@ -29,9 +29,14 @@ export function activateMenuTnp(
   vscode: typeof import('vscode'),
   FRAMEWORK_NAME: string,
 ) {
-  function runInTerminal(command: string) {
+  function runInTerminal(command: string, inNewTerminal  = false) {
     let terminal = vscode.window.activeTerminal;
 
+    if (inNewTerminal || !terminal) {
+      terminal = vscode.window.createTerminal({
+        name: `Running "${command}" command`,
+      });
+    }
     // terminal = vscode.window.createTerminal({
     //   name: `Starting "${command}" command`,
     // });
