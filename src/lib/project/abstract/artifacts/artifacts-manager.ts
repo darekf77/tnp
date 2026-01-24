@@ -321,6 +321,7 @@ export class ArtifactManager {
       this.project.removeFile('tsconfig.isomorphic-flat-bundle.json');
       this.project.removeFile('webpack.backend-bundle-build.js');
       this.project.removeFile('.eslintrc.json');
+      this.project.removeFile('eslint.config.js');
       this.project.removeFile('tslint.json');
       this.project.removeFile(
         `${dotVscodeMainProject}/${TaonGeneratedFiles.LAUNCH_BACKUP_JSON}`,

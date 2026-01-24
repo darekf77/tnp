@@ -25,6 +25,7 @@ import {
   indexJsMapMainProject,
   tsconfigForSchemaJson,
   tsconfigBackendDistJson_PROD,
+  esLintRuleNoNamespaceReExport,
 } from '../../../../../../constants';
 import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
@@ -58,6 +59,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
       runJsMainProject,
       updateVscodePackageJsonJsMainProject,
       esLintConfigJsonMainProject,
+      esLintRuleNoNamespaceReExport,
       ...this.filesTemplates(),
     ]);
 
@@ -69,7 +71,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
   }
 
   projectSpecificFilesForContainer(): string[] {
-    return [taonConfigSchemaJsonContainer, esLintConfigJsonMainProject];
+    return [taonConfigSchemaJsonContainer, esLintConfigJsonMainProject,esLintRuleNoNamespaceReExport];
   }
 
   //#region getters & methods / project specify files
