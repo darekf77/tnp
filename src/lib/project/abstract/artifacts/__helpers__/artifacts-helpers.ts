@@ -1,7 +1,7 @@
 //#region imports
 import { config, UtilsFilesFoldersSync } from 'tnp-core/src';
-import { crossPlatformPath, path } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, crossPlatformPath, path } from 'tnp-core/src';
+import { HelpersTaon } from 'tnp-helpers/src';
 
 import {
   appTsFromSrc,
@@ -32,7 +32,7 @@ export class ArtifactsGlobalHelper {
     const corePath = this.project.framework.coreProject.pathFor(srcMainProject);
     const dest = this.project.pathFor(srcMainProject);
 
-    Helpers.copy(corePath, dest, {
+    HelpersTaon.copy(corePath, dest, {
       recursive: true,
       overwrite: true,
       // filter: src => {

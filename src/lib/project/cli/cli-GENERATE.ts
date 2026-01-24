@@ -22,6 +22,7 @@ import { UtilsTerminal } from 'tnp-core/src';
 import {
   BaseCommandLineFeature,
   Helpers,
+  HelpersTaon,
   UtilsTypescript,
 } from 'tnp-helpers/src';
 
@@ -117,6 +118,16 @@ export class $Generate extends BaseCli {
           );
         }
       }
+
+      if (moduleName === 'refactor-class-into-namespace') {
+        if (!Helpers.isFolder(absFilePath)) {
+          const content = Helpers.readFile(absFilePath);
+          Helpers.writeFile(
+            absFilePath,
+            UtilsTypescript.refactorClassToNamespace(content),
+          );
+        }
+      }
       //#endregion
     } else {
       const ins = MagicRenamer.Instance(exampleLocation);
@@ -127,11 +138,11 @@ export class $Generate extends BaseCli {
           const fileAbsPath = crossPlatformPath(files[index]);
           const relative = fileAbsPath.replace(generatedCodeAbsLoc + '/', '');
           const destFileAbsPath = crossPlatformPath([destination, relative]);
-          Helpers.copyFile(fileAbsPath, destFileAbsPath);
+          HelpersTaon.copyFile(fileAbsPath, destFileAbsPath);
         }
         Helpers.remove(generatedCodeAbsLoc, true);
       } else {
-        Helpers.move(generatedCodeAbsLoc, destination);
+        HelpersTaon.move(generatedCodeAbsLoc, destination);
       }
       //#region fixing active context imports
       if (
@@ -207,5 +218,5 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
 }
 
 export default {
-  $Generate: Helpers.CLIWRAP($Generate, '$Generate'),
+  $Generate: HelpersTaon.CLIWRAP($Generate, '$Generate'),
 };

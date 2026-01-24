@@ -59,6 +59,7 @@ import {
   UtilsTypescript,
   BaseProject,
   UtilsFileSync,
+  HelpersTaon,
 } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartMode } from 'tnp-helpers/src';
 import {
@@ -180,7 +181,7 @@ export class $Global extends BaseGlobalCommandLine<
   //#region kill all node processes
   killAllNode() {
     //#region @backendFunc
-    Helpers.killAllNode();
+    HelpersTaon.killAllNode();
     this._exit();
     //#endregion
   }
@@ -213,12 +214,12 @@ export class $Global extends BaseGlobalCommandLine<
     let newProj = this.ins.From(
       path.join(this.project.location, projectName),
     ) as Project;
-    Helpers.setValueToJSON(
+    HelpersTaon.setValueToJSON(
       path.join(newProj.location, packageJsonMainProject),
       'name',
       projectName,
     );
-    Helpers.setValueToJSON(
+    HelpersTaon.setValueToJSON(
       path.join(newProj.location, packageJsonMainProject),
       'version',
       '0.0.0',
@@ -457,7 +458,7 @@ export class $Global extends BaseGlobalCommandLine<
     //#region @backendFunc
     Helpers.filesFrom(crossPlatformPath([this.cwd, args]), true).forEach(f => {
       if (path.extname(f) === '.js') {
-        Helpers.move(
+        HelpersTaon.move(
           f,
           crossPlatformPath([
             path.dirname(f),
@@ -510,7 +511,7 @@ export class $Global extends BaseGlobalCommandLine<
     //#region @backendFunc
     while (true) {
       const arr = ['Pluszla', 'Łapczuch', 'Misia', 'Chrupka'];
-      console.log(arr[Helpers.numbers.randomInteger(0, arr.length - 1)]);
+      console.log(arr[HelpersTaon.randomInteger(0, arr.length - 1)]);
       await Utils.wait(1);
     }
     //#endregion
@@ -529,7 +530,7 @@ export class $Global extends BaseGlobalCommandLine<
         'dwarf winter white',
         'chinese hamster',
       ];
-      console.log(arr[Helpers.numbers.randomInteger(0, arr.length - 1)]);
+      console.log(arr[HelpersTaon.randomInteger(0, arr.length - 1)]);
       await Utils.wait(1);
     }
     //#endregion
@@ -683,7 +684,7 @@ export class $Global extends BaseGlobalCommandLine<
           Helpers.foldersFrom(f).forEach(f2 => {
             try {
               result[`${orgPackageRootName}/${path.basename(f2)}`] =
-                Helpers.readValueFromJson(
+                HelpersTaon.readValueFromJson(
                   path.join(f2, packageJsonMainProject),
                   'version',
                   '',
@@ -692,7 +693,7 @@ export class $Global extends BaseGlobalCommandLine<
           });
         } else {
           try {
-            result[packageName] = Helpers.readValueFromJson(
+            result[packageName] = HelpersTaon.readValueFromJson(
               path.join(f, packageJsonMainProject),
               'version',
               '',
@@ -772,7 +773,7 @@ export class $Global extends BaseGlobalCommandLine<
   //#region file info
   FILEINFO = args => {
     //#region @backendFunc
-    console.log(Helpers.getMostRecentFilesNames(crossPlatformPath(this.cwd)));
+    console.log(HelpersTaon.getMostRecentFilesNames(crossPlatformPath(this.cwd)));
 
     this._exit();
     //#endregion
@@ -806,7 +807,7 @@ export class $Global extends BaseGlobalCommandLine<
   //#region env
   ENV_CHECK(args) {
     //#region @backendFunc
-    Helpers.checkEnvironment();
+    HelpersTaon.checkEnvironment();
     this._exit();
     //#endregion
   }
@@ -902,12 +903,12 @@ export class $Global extends BaseGlobalCommandLine<
     Helpers.taskStarted(`Syncing node_modules from taon container to tnp...`);
 
     //#region copy from .taon to tnp
-    await Helpers.copyFolderOsNative(
+    await HelpersTaon.copyFolderOsNative(
       pathToTaonContainerNodeModules,
       this.project.nodeModules.path,
       { removeDestination: true },
     );
-    Helpers.copyFile(
+    HelpersTaon.copyFile(
       crossPlatformPath([
         pathToTaonContainerNodeModules,
         `../${tmpIsomorphicPackagesJson}`,
@@ -922,7 +923,7 @@ export class $Global extends BaseGlobalCommandLine<
     );
 
     //#region copy from tnp to ../taon
-    await Helpers.copyFolderOsNative(
+    await HelpersTaon.copyFolderOsNative(
       this.project.nodeModules.path,
       crossPlatformPath(
         `${this.absPathToLocalTaonContainers}/${containerPrefix}${currentFrameworkVersion}/${nodeModulesMainProject}`,
@@ -930,7 +931,7 @@ export class $Global extends BaseGlobalCommandLine<
       { removeDestination: true },
     );
 
-    Helpers.copyFile(
+    HelpersTaon.copyFile(
       this.project.pathFor(tmpIsomorphicPackagesJson),
       crossPlatformPath(
         `${this.absPathToLocalTaonContainers}/${containerPrefix}${currentFrameworkVersion}/${tmpIsomorphicPackagesJson}`,
@@ -1009,7 +1010,7 @@ ${this.project.children
   .filter(f =>
     f.git
       .lastCommitMessage()
-      .startsWith(Helpers.git.ACTION_MSG_RESET_GIT_HARD_COMMIT),
+      .startsWith(HelpersTaon.git.getACTION_MSG_RESET_GIT_HARD_COMMIT()),
   )
   .map((c, index) => `${index + 1}. ${c.genericName}`)}
 
@@ -1950,5 +1951,5 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
 
 export default {
   // registerd as empty
-  $Global: Helpers.CLIWRAP($Global, ''),
+  $Global: HelpersTaon.CLIWRAP($Global, ''),
 };

@@ -3,7 +3,7 @@ import { RegionRemover } from 'isomorphic-region-loader/src';
 import { config, extAllowedToReplace, TAGS } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath, glob, path } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
-import { Helpers, UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon, UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
 
 import {
   binMainProject,
@@ -180,15 +180,15 @@ export abstract class BaseArtifact<
 
     if (!Helpers.exists(repoPath)) {
       Helpers.mkdirp(repoRoot);
-      await Helpers.git.clone({
+      await HelpersTaon.git.clone({
         cwd: repoRoot,
         url: repoUrl,
         override: true,
         destinationFolderName: repoName,
       });
     }
-    Helpers.git.resetHard(repoPath);
-    Helpers.git.checkout(repoPath, staticPagesRepoBranch, {
+    HelpersTaon.git.resetHard(repoPath);
+    HelpersTaon.git.checkout(repoPath, staticPagesRepoBranch, {
       createBranchIfNotExists: true,
       fetchBeforeCheckout: true,
       switchBranchWhenExists: true,
@@ -233,7 +233,7 @@ export abstract class BaseArtifact<
     );
 
     Helpers.removeFolderIfExists(releaseSrcLocation);
-    Helpers.copy(releaseSrcLocationOrg, releaseSrcLocation);
+    HelpersTaon.copy(releaseSrcLocationOrg, releaseSrcLocation);
 
     //#endregion
   }
@@ -249,13 +249,13 @@ export abstract class BaseArtifact<
     );
 
     Helpers.removeFolderIfExists(releaseSrcLocationOrg);
-    Helpers.copy(releaseSrcLocation, releaseSrcLocationOrg, {
+    HelpersTaon.copy(releaseSrcLocation, releaseSrcLocationOrg, {
       copySymlinksAsFiles: true,
       copySymlinksAsFilesDeleteUnexistedLinksFromSourceFirst: true,
       recursive: true,
     });
     Helpers.removeFolderIfExists(releaseSrcLocation);
-    Helpers.copy(releaseSrcLocationOrg, releaseSrcLocation);
+    HelpersTaon.copy(releaseSrcLocationOrg, releaseSrcLocation);
 
     const filesForModyficaiton = glob.sync(`${releaseSrcLocation}/**/*`);
     filesForModyficaiton
@@ -348,13 +348,13 @@ export abstract class BaseArtifact<
           localReleaseOutputBasePath,
           fileName,
         ]);
-        Helpers.copyFile(zipFile, destZipFile);
+        HelpersTaon.copyFile(zipFile, destZipFile);
         if (await UtilsZip.splitFile7Zip(destZipFile)) {
           Helpers.removeIfExists(destZipFile);
         }
       }
     } else {
-      Helpers.copy(outputFromBuildAbsPath, localReleaseOutputBasePath, {
+      HelpersTaon.copy(outputFromBuildAbsPath, localReleaseOutputBasePath, {
         recursive: true,
         overwrite: true,
         copySymlinksAsFiles: true,
@@ -404,13 +404,13 @@ export abstract class BaseArtifact<
       await this.getStaticPagesClonedProjectLocation(releaseOptions);
 
     try {
-      await Helpers.git.pullCurrentBranch(staticPagesProjLocation, {
+      await HelpersTaon.git.pullCurrentBranch(staticPagesProjLocation, {
         // @ts-ignore TODO @REMOVE
         exitOnError: false,
       });
     } catch (error) {}
     if (Helpers.exists([staticPagesProjLocation, taonJsonMainProject])) {
-      Helpers.git.cleanRepoFromAnyFilesExceptDotGitFolder(
+      HelpersTaon.git.cleanRepoFromAnyFilesExceptDotGitFolder(
         staticPagesProjLocation,
       );
     }
@@ -460,13 +460,13 @@ export abstract class BaseArtifact<
           destinationStaticPagesLocationRepoAbsPath,
           fileName,
         ]);
-        Helpers.copyFile(zipFile, destZipFile);
+        HelpersTaon.copyFile(zipFile, destZipFile);
         if (await UtilsZip.splitFile7Zip(destZipFile)) {
           Helpers.removeIfExists(destZipFile);
         }
       }
     } else {
-      Helpers.copy(
+      HelpersTaon.copy(
         outputFromBuildAbsPath,
         destinationStaticPagesLocationRepoAbsPath,
       );
@@ -512,7 +512,7 @@ export abstract class BaseArtifact<
       ]);
     }
 
-    Helpers.git.revertFileChanges(staticPagesProjLocation, BundledFiles.CNAME);
+    HelpersTaon.git.revertFileChanges(staticPagesProjLocation, BundledFiles.CNAME);
 
     if (options.createReadme) {
       Helpers.writeFile(

@@ -11,7 +11,7 @@ import {
   UtilsJson,
 } from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
-import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import { getCleanImport } from '../../../../../../../app-utils';
 import {
@@ -257,16 +257,16 @@ export class BrowserCodeCut {
       }
 
       try {
-        Helpers.copyFile(
+        HelpersTaon.copyFile(
           this.absSourcePathFromSrc,
           this.replaceAssetsPath(this.absFileSourcePathBrowserOrWebsql),
         );
-        Helpers.copyFile(
+        HelpersTaon.copyFile(
           this.absSourcePathFromSrc,
           this.replaceAssetsPath(this.absFileSourcePathBrowserOrWebsqlAPPONLY),
         );
         // final straight copy to tmpSourceFolder
-        Helpers.copyFile(
+        HelpersTaon.copyFile(
           this.absSourcePathFromSrc,
           this.replaceAssetsPath(this.absoluteBackendDestFilePath),
         );
@@ -603,11 +603,11 @@ export class BrowserCodeCut {
         `${TO_REMOVE_TAG}${assetsFromNgProj}/` +
         `${assetsFor}/${this.nameForNpmPackage}/${assetsFromNpmPackage}/`;
       this.rawContentForBrowser = this.rawContentForBrowser.replace(
-        new RegExp(Helpers.escapeStringForRegEx(`/${from}`), 'g'),
+        new RegExp(Utils.escapeStringForRegEx(`/${from}`), 'g'),
         to,
       );
       this.rawContentForBrowser = this.rawContentForBrowser.replace(
-        new RegExp(Helpers.escapeStringForRegEx(from), 'g'),
+        new RegExp(Utils.escapeStringForRegEx(from), 'g'),
         to,
       );
     })();
@@ -621,7 +621,7 @@ export class BrowserCodeCut {
   private processAssetsLinksForApp(): void {
     //#region @backendFunc
     this.rawContentForAPPONLYBrowser = this.rawContentForBrowser.replace(
-      new RegExp(Helpers.escapeStringForRegEx(TO_REMOVE_TAG), 'g'),
+      new RegExp(Utils.escapeStringForRegEx(TO_REMOVE_TAG), 'g'),
       '',
     );
     // console.log(`[incremental-build-process processAssetsLinksForApp '${this.buildOptions.baseHref}'`)
@@ -722,19 +722,19 @@ export class BrowserCodeCut {
         if (makeSureSlashAtBegin) {
           this.rawContentForAPPONLYBrowser =
             this.rawContentForAPPONLYBrowser.replace(
-              new RegExp(Helpers.escapeStringForRegEx(`/${from}`), 'g'),
+              new RegExp(Utils.escapeStringForRegEx(`/${from}`), 'g'),
               `/${to}`,
             );
 
           this.rawContentForAPPONLYBrowser =
             this.rawContentForAPPONLYBrowser.replace(
-              new RegExp(Helpers.escapeStringForRegEx(from), 'g'),
+              new RegExp(Utils.escapeStringForRegEx(from), 'g'),
               `/${to}`,
             );
         } else {
           this.rawContentForAPPONLYBrowser =
             this.rawContentForAPPONLYBrowser.replace(
-              new RegExp(Helpers.escapeStringForRegEx(from), 'g'),
+              new RegExp(Utils.escapeStringForRegEx(from), 'g'),
               to,
             );
         }

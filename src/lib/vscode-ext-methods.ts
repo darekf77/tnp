@@ -502,6 +502,18 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+      //#region WRAP FILE WITH @BROWSER TAG
+      {
+        group: groupRefactor,
+        title: `class into namespace`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% refactor-class-into-namespace_custom`,
+        options: {
+          title: 'refactoring class into namespace',
+          showSuccessMessage: false,
+        },
+      },
+      //#endregion
+
       //#region GENERATE taon backend repository file
       {
         group: groupGENERATE,

@@ -3,7 +3,7 @@ import { config, UtilsOs } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath, os, path } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { chalk } from 'tnp-core/src';
-import { BaseVscodeHelpers, Helpers } from 'tnp-helpers/src';
+import { BaseVscodeHelpers, Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { MESSAGES, TEMP_DOCS } from '../../constants';
@@ -119,5 +119,5 @@ export class $Vscode extends BaseCli {
 }
 
 export default {
-  $Vscode: Helpers.CLIWRAP($Vscode, '$Vscode'),
+  $Vscode: HelpersTaon.CLIWRAP($Vscode, '$Vscode'),
 };

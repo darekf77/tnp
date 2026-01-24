@@ -18,7 +18,7 @@ import {
 } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
 import { tnpPackageName } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
 import {
@@ -336,7 +336,7 @@ export class ArtifactManager {
         this.project.hasFolder([srcMainProject, migrationsFromLib]) &&
         !this.project.hasFolder([srcMainProject, libFromSrc, migrationsFromLib])
       ) {
-        Helpers.copy(
+        HelpersTaon.copy(
           this.project.pathFor([srcMainProject, migrationsFromLib]),
           this.project.pathFor([srcMainProject, libFromSrc, migrationsFromLib]),
           { recursive: true, overwrite: true },
@@ -481,7 +481,7 @@ export class ArtifactManager {
     });
     // } catch (error) {
     //   Helpers.error(error, true, true);
-    //   Helpers.throw(
+    //   Helpers.throwError(
     //     `Error while creating params for ${artifact} build command`,
     //   );
     // }
@@ -939,7 +939,7 @@ export class ArtifactManager {
             `[${releaseOptions.release.releaseType}] Check ${chalk.bold('project repo')} before pushing`,
           );
         }
-        await Helpers.git.tagAndPushToGitRepo(repoAbsPath, {
+        await HelpersTaon.git.tagAndPushToGitRepo(repoAbsPath, {
           newVersion: releaseOutput.resolvedNewVersion,
           autoReleaseUsingConfig: releaseOptions.release.autoReleaseUsingConfig,
           isCiProcess: releaseOptions.isCiProcess,
@@ -957,7 +957,7 @@ export class ArtifactManager {
             `[${releaseOptions.release.releaseType}] Check ${chalk.bold('project repo')} before tagging/pushing`,
           );
         }
-        await Helpers.git.tagAndPushToGitRepo(repoAbsPath, {
+        await HelpersTaon.git.tagAndPushToGitRepo(repoAbsPath, {
           newVersion: releaseOutput.resolvedNewVersion,
           autoReleaseUsingConfig: releaseOptions.release.autoReleaseUsingConfig,
           isCiProcess: releaseOptions.isCiProcess,

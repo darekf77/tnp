@@ -2,7 +2,7 @@
 import { MagicRenamer } from 'magic-renamer/src';
 import { config, CoreModels, path, tnpPackageName } from 'tnp-core/src';
 import { _, crossPlatformPath, UtilsTerminal } from 'tnp-core/src';
-import { BasePackageJson, Helpers } from 'tnp-helpers/src';
+import { BasePackageJson, Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import { ReleaseArtifactTaon, ReleaseType } from '../../options';
 
@@ -81,5 +81,5 @@ export class $App extends BaseCli {
 }
 
 export default {
-  $App: Helpers.CLIWRAP($App, '$App'),
+  $App: HelpersTaon.CLIWRAP($App, '$App'),
 };

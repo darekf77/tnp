@@ -11,7 +11,7 @@ import {
   crossPlatformPath,
   CoreModels,
 } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import {
   assetsFromTempSrc,
@@ -183,7 +183,7 @@ export class BrowserCompilation extends BaseClientCompiler {
       );
       if (isScssOrSass) {
         const destScss = this.sassDestFor(relativePath);
-        Helpers.copyFile(absFilePath, destScss);
+        HelpersTaon.copyFile(absFilePath, destScss);
       }
       return relativePath;
     });
@@ -328,7 +328,7 @@ export class BrowserCompilation extends BaseClientCompiler {
               }
               //#endregion
 
-              Helpers.copyFile(absoluteFilePath, destinationFileScssPath);
+              HelpersTaon.copyFile(absoluteFilePath, destinationFileScssPath);
             }
           }
         }

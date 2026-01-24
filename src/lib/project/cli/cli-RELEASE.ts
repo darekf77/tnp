@@ -1,7 +1,7 @@
 //#region imports
 import { config } from 'tnp-core/src';
 import { CoreModels, _, UtilsTerminal, path, chalk } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { friendlyNameForReleaseAutoConfigIsRequired } from '../../constants';
@@ -297,5 +297,5 @@ class $Release extends BaseCli {
 }
 
 export default {
-  $Release: Helpers.CLIWRAP($Release, '$Release'),
+  $Release: HelpersTaon.CLIWRAP($Release, '$Release'),
 };

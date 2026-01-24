@@ -1,7 +1,7 @@
 //#region imports
 import { config, fse } from 'tnp-core/src';
 import { crossPlatformPath, path, _, CoreModels } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../../../options';
@@ -80,7 +80,7 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
       if (struct?.relateivePathesFromContainer) {
         [...struct.relateivePathesFromContainer].forEach(f => {
           const orgPath = crossPlatformPath(
-            Helpers.resolve(
+            HelpersTaon.resolve(
               path.join(struct.project.framework.coreProject.location, f),
             ),
           );
@@ -90,9 +90,9 @@ export class InsideStructuresProcess extends BaseFeatureForProject<Project> {
 
           if (orgPath !== destPath) {
             if (Helpers.isFolder(orgPath)) {
-              Helpers.copy(orgPath, destPath);
+              HelpersTaon.copy(orgPath, destPath);
             } else {
-              Helpers.copyFile(orgPath, destPath);
+              HelpersTaon.copyFile(orgPath, destPath);
             }
           } else {
             Helpers.warn(`${config.frameworkName} [initAngularAppStructure] trying to copy same thing:

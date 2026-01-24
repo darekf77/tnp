@@ -545,4 +545,42 @@ export class Refactor extends BaseFeatureForProject<Project> {
     await this.eslint(options);
     //#endregion
   }
+
+  async classIntoNs(options: { fixSpecificFile?: string }) {
+    //#region @backendFunc
+    options = this.prepareOptions(options);
+    Helpers.info(`Changing classes into namespaces..`);
+    const baseLibPath = this.project.pathFor([srcMainProject, libFromSrc]);
+    const projectNameForNpmPackage = this.project.nameForNpmPackage;
+    const allSymbolsWithPathsAsValue: Record<string, string> = {};
+
+    //#region gather all files
+    const allFiles = UtilsFilesFoldersSync.getFilesFrom(
+      this.project.pathFor(srcMainProject),
+      {
+        followSymlinks: false,
+        recursive: true,
+      },
+    );
+    //#endregion
+
+    allFiles.forEach(f => {
+      if(!f.endsWith('.ts')) {
+        return;
+      }
+      if (options.fixSpecificFile && f !== options.fixSpecificFile) {
+        return;
+      }
+      let content = Helpers.readFile(f);
+
+      const fixedComponent = UtilsTypescript.refactorClassToNamespace(content);
+      if (fixedComponent.trim() !== content.trim()) {
+        Helpers.info(`Fixing classes into namespaces in ${f}`);
+        Helpers.writeFile(f, fixedComponent);
+      }
+    });
+
+    Helpers.taskDone(`Done wrapping first imports with region...`);
+    //#endregion
+  }
 }

@@ -1,6 +1,6 @@
 //#region imports
 import * as JSON5 from 'json5';
-import { config } from 'tnp-core/src';
+import { config, Utils } from 'tnp-core/src';
 import { crossPlatformPath, path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
@@ -124,7 +124,7 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
               try {
                 var toReplace = eval(exp);
                 line = line.replace(
-                  new RegExp(Helpers.escapeStringForRegEx(pattern), 'g'),
+                  new RegExp(Utils.escapeStringForRegEx(pattern), 'g'),
                   toReplace,
                 );
               } catch (err) {

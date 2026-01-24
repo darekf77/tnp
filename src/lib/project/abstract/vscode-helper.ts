@@ -499,7 +499,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       `\${workspaceFolder}/${distMainProject}/**/*.js`,
       // '!**/node_modules/**',
       // TODO this allow debugging thir party modules.. but it is not reliable
-      ...Helpers.uniqArray(
+      ...Utils.uniqArray(
         this.project.packagesRecognition.allIsomorphicPackagesFromMemory
           .filter(f => this.project.name !== f) // TODO or other names of this project
           .map(packageName => {
@@ -526,7 +526,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   get sourceMapPathOverrides() {
     //#region @backendFunc
     const sourceMapPathOverrides = {};
-    Helpers.uniqArray(
+    Utils.uniqArray(
       this.project.packagesRecognition.allIsomorphicPackagesFromMemory,
     )
       .filter(f => this.project.name !== f) // TODO or other names of this project

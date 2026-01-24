@@ -3,7 +3,7 @@ import { TaonTempDatabasesFolder, TaonTempRoutesFolder } from 'taon/src';
 import { config, LibTypeEnum, UtilsFilesFoldersSync } from 'tnp-core/src';
 import { glob, fse, chalk } from 'tnp-core/src';
 import { path, _, crossPlatformPath } from 'tnp-core/src';
-import { UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
+import { HelpersTaon, UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
 import { Helpers, BaseQuickFixes } from 'tnp-helpers/src';
 
 import { templateFolderForArtifact } from '../../app-utils';
@@ -108,8 +108,8 @@ export class QuickFixes extends BaseQuickFixes<Project> {
           tempSrcDirName,
           tsconfigNgProject,
         );
-        Helpers.copyFile(tsconfigBrowserPath, destTsconfigBrowser);
-        Helpers.setValueToJSONC(
+        HelpersTaon.copyFile(tsconfigBrowserPath, destTsconfigBrowser);
+        HelpersTaon.setValueToJSONC(
           destTsconfigBrowser,
           'extends',
           `../${tsconfigJsonIsomorphicMainProject}`,

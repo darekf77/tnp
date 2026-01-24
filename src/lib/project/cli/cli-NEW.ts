@@ -9,7 +9,7 @@ import {
   os,
   path,
 } from 'tnp-core/src';
-import { BasePackageJson, Helpers } from 'tnp-helpers/src';
+import { BasePackageJson, Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
@@ -280,7 +280,7 @@ export class $New extends BaseCli {
       );
     }
 
-    if (Helpers.git.isInsideGitRepo(appLocation)) {
+    if (HelpersTaon.git.isInsideGitRepo(appLocation)) {
       initGit = false;
       Helpers.info(
         `Not initing git since ${path.basename(appLocation)} is inside git repo`,
@@ -297,7 +297,7 @@ export class $New extends BaseCli {
       }
     }
     if (initGit) {
-      // if(Helpers.git.)
+      // if(HelpersTaon.git.)
       try {
         appProj.run('git add --all . && git commit -m "first"').sync();
       } catch (error) {
@@ -454,5 +454,5 @@ Hello from Container Project
 }
 
 export default {
-  $New: Helpers.CLIWRAP($New, '$New'),
+  $New: HelpersTaon.CLIWRAP($New, '$New'),
 };

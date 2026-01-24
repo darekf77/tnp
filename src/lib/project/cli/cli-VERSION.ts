@@ -1,6 +1,6 @@
 import { config, taonPackageName } from 'tnp-core/src';
 import { CoreModels, fse, path } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 // TODO QUICK FIX for version
@@ -72,5 +72,5 @@ export class $Version extends BaseCli {
 }
 
 export default {
-  $Version: Helpers.CLIWRAP($Version, '$Version'),
+  $Version: HelpersTaon.CLIWRAP($Version, '$Version'),
 };

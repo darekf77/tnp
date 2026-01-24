@@ -1,4 +1,4 @@
-import { config } from 'tnp-core/src';
+import { config, Utils } from 'tnp-core/src';
 import { crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
@@ -42,7 +42,7 @@ export class TypescriptDtsFixer {
       const isomorphicPackageName = isomorphicPackages[index];
       content = (content || '').replace(
         new RegExp(
-          Helpers.escapeStringForRegEx(
+          Utils.escapeStringForRegEx(
             `${isomorphicPackageName}/${srcFromTaonImport}'`,
           ),
           'g',
@@ -52,7 +52,7 @@ export class TypescriptDtsFixer {
 
       content = (content || '').replace(
         new RegExp(
-          Helpers.escapeStringForRegEx(
+          Utils.escapeStringForRegEx(
             `${isomorphicPackageName}/${srcFromTaonImport}"`,
           ),
           'g',
@@ -79,7 +79,7 @@ export class TypescriptDtsFixer {
       const isomorphicPackageName = isomorphicPackages[index];
       content = (content || '').replace(
         new RegExp(
-          Helpers.escapeStringForRegEx(`import("${isomorphicPackageName}"`),
+          Utils.escapeStringForRegEx(`import("${isomorphicPackageName}"`),
           'g',
         ),
         `import("${isomorphicPackageName}/${browserFolder}"`,

@@ -6,7 +6,7 @@ import {
   crossPlatformPath,
   path,
 } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import {
@@ -156,5 +156,5 @@ export class $Init extends BaseCli {
 }
 
 export default {
-  $Init: Helpers.CLIWRAP($Init, '$Init'),
+  $Init: HelpersTaon.CLIWRAP($Init, '$Init'),
 };

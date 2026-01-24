@@ -9,7 +9,7 @@ import {
   os,
   path,
 } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { MESSAGES, packageJsonMainProject, taonJsonMainProject, TEMP_DOCS } from '../../constants';
@@ -90,5 +90,5 @@ export class $Open extends BaseCli {
 }
 
 export default {
-  $Open: Helpers.CLIWRAP($Open, '$Open'),
+  $Open: HelpersTaon.CLIWRAP($Open, '$Open'),
 };

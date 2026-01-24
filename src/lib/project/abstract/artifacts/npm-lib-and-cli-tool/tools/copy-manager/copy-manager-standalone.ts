@@ -1,7 +1,7 @@
-import { config, folderName, PREFIXES } from 'tnp-core/src';
+import { config, folderName, PREFIXES, Utils } from 'tnp-core/src';
 import { crossPlatformPath, glob, path, _, fse } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import {
   assetsFromNpmPackage,
@@ -269,17 +269,17 @@ export class CopyManagerStandalone extends CopyManager {
     } else {
       if (isForLaunchJsonDebugging) {
         const regex2 = new RegExp(
-          Helpers.escapeStringForRegEx(toReplaceString2),
+          Utils.escapeStringForRegEx(toReplaceString2),
           'g',
         );
         content = content.replace(regex2, `../${srcMainProject}`);
       } else {
         const regex1 = new RegExp(
-          Helpers.escapeStringForRegEx(toReplaceString1),
+          Utils.escapeStringForRegEx(toReplaceString1),
           'g',
         );
         const regex2 = new RegExp(
-          Helpers.escapeStringForRegEx(toReplaceString2),
+          Utils.escapeStringForRegEx(toReplaceString2),
           'g',
         );
         content = content.replace(regex1, `"./${srcMainProject}`);
@@ -388,7 +388,7 @@ export class CopyManagerStandalone extends CopyManager {
         }/${assetsFromSrc}/${sharedFromAssets}`,
       );
 
-      Helpers.copy(sharedAssetsPath, dest, {
+      HelpersTaon.copy(sharedAssetsPath, dest, {
         copySymlinksAsFiles: true,
         overwrite: true,
         recursive: true,
@@ -420,7 +420,7 @@ export class CopyManagerStandalone extends CopyManager {
     const pkgLocInDestNodeModules = destination.nodeModules.pathFor(
       this.rootPackageName,
     );
-    const filter = Helpers.filterDontCopy(
+    const filter = HelpersTaon.filterDontCopy(
       this.sourceFoldersToRemoveFromNpmPackage,
       monitorDir,
     );
@@ -428,7 +428,7 @@ export class CopyManagerStandalone extends CopyManager {
     this.removeSourceLinksFolders(pkgLocInDestNodeModules);
 
     // TODO this thing is failing when copying unexisted file on macos
-    Helpers.copy(monitorDir, pkgLocInDestNodeModules, {
+    HelpersTaon.copy(monitorDir, pkgLocInDestNodeModules, {
       copySymlinksAsFiles: false,
       filter,
     });
@@ -632,7 +632,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
           fileRelativePath,
         ),
       );
-      Helpers.copyFile(fileAbsPath, destAbs, { dontCopySameContent: false });
+      HelpersTaon.copyFile(fileAbsPath, destAbs, { dontCopySameContent: false });
     }
     //#endregion
   }
@@ -698,7 +698,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         );
         Helpers.remove(dest, true);
         if (Helpers.exists(absoluteAssetFilePath)) {
-          Helpers.copyFile(absoluteAssetFilePath, dest);
+          HelpersTaon.copyFile(absoluteAssetFilePath, dest);
         }
       }
     }
@@ -750,7 +750,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       );
       // Helpers.log(`Eqal content with temp proj: ${}`)
       if (Helpers.exists(readyToCopyFileInLocalTempProj)) {
-        Helpers.copyFile(readyToCopyFileInLocalTempProj, destinationFilePath);
+        HelpersTaon.copyFile(readyToCopyFileInLocalTempProj, destinationFilePath);
       }
       return;
     }
@@ -810,7 +810,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     // TODO check this
     if (specificFileRelativePath === fileName.package_json) {
       // TODO this is VSCODE/typescirpt new fucking issue
-      // Helpers.copyFile(sourceFile, path.join(path.dirname(destinationFile), folderName.browser, path.basename(destinationFile)));
+      // HelpersTaon.copyFile(sourceFile, path.join(path.dirname(destinationFile), folderName.browser, path.basename(destinationFile)));
     }
     //#endregion
   }

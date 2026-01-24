@@ -4,7 +4,7 @@ import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
-import { Helpers, BaseProject, PushProcessOptions } from 'tnp-helpers/src';
+import { Helpers, BaseProject, PushProcessOptions, HelpersTaon } from 'tnp-helpers/src';
 
 import {
   binMainProject,
@@ -259,7 +259,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
             `No releases will be done inside children projects.`,
         );
         this.packageJson.setVersion(newVersion);
-        await Helpers.git.tagAndPushToGitRepo(this.location, {
+        await HelpersTaon.git.tagAndPushToGitRepo(this.location, {
           newVersion,
           autoReleaseUsingConfig: releaseOptions.release.autoReleaseUsingConfig,
           isCiProcess: releaseOptions.isCiProcess,

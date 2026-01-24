@@ -1,7 +1,7 @@
 //#region imports
 import { config, frontendFiles } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath, os, path } from 'tnp-core/src';
-import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import {
@@ -202,7 +202,14 @@ export class $Refactor extends BaseCli {
     });
     this._exit();
   }
+
+  async classIntoNs(): Promise<void> {
+    await this.project.refactor.classIntoNs({
+      fixSpecificFile: this.firstArg,
+    });
+    this._exit();
+  }
 }
 export default {
-  $Refactor: Helpers.CLIWRAP($Refactor, '$Refactor'),
+  $Refactor: HelpersTaon.CLIWRAP($Refactor, '$Refactor'),
 };

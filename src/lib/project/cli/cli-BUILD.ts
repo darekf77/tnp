@@ -1,6 +1,6 @@
 //#region imports
 import { _, UtilsTerminal } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
 
@@ -444,5 +444,5 @@ class $Build extends BaseCli {
 }
 
 export default {
-  $Build: Helpers.CLIWRAP($Build, '$Build'),
+  $Build: HelpersTaon.CLIWRAP($Build, '$Build'),
 };

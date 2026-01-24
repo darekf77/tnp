@@ -3,7 +3,7 @@ import { config, fileName, LibTypeEnum } from 'tnp-core/src';
 import { CoreModels, crossPlatformPath, path } from 'tnp-core/src';
 import { fse } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
 import {
@@ -91,7 +91,7 @@ export class Branding extends BaseFeatureForProject<Project> {
       );
       const coreLogoPath = coreLogoProj.pathFor(fileName.logo_png);
 
-      Helpers.copyFile(coreLogoPath, sourceLogoPng);
+      HelpersTaon.copyFile(coreLogoPath, sourceLogoPng);
     }
 
     Helpers.log(`Project ${proj.genericName} branding started`);
@@ -255,7 +255,7 @@ export class Branding extends BaseFeatureForProject<Project> {
         iconVscode128Basename,
       ]);
       if (firstPath) {
-        Helpers.copyFile(firstPath, destinationIconAbsPath);
+        HelpersTaon.copyFile(firstPath, destinationIconAbsPath);
       } else {
         await this.createPngIconsFromPngLogo(
           this.project.pathFor('logo.png'),

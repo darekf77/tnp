@@ -13,7 +13,7 @@ import { UtilsOs } from 'tnp-core/src';
 import { UtilsStringRegex } from 'tnp-core/src';
 import { UtilsFilesFoldersSync } from 'tnp-core/src';
 import { dotTaonFolder, dotTnpFolder } from 'tnp-core/src';
-import { UtilsMd } from 'tnp-helpers/src';
+import { HelpersTaon, UtilsMd } from 'tnp-helpers/src';
 import { BaseDebounceCompilerForProject } from 'tnp-helpers/src';
 import { Helpers, UtilsHttp } from 'tnp-helpers/src';
 
@@ -611,7 +611,7 @@ markdown_extensions:
       this.config.customCssPath &&
       this.project.hasFile(this.config.customCssPath)
     ) {
-      Helpers.copyFile(
+      HelpersTaon.copyFile(
         this.project.pathFor(this.config.customCssPath),
         this.project.pathFor([
           this.tmpDocsFolderRootDocsDirRelativePath,
@@ -629,7 +629,7 @@ markdown_extensions:
       this.config.customJsPath &&
       this.project.hasFile(this.config.customJsPath)
     ) {
-      Helpers.copyFile(
+      HelpersTaon.copyFile(
         this.project.pathFor(this.config.customJsPath),
         this.project.pathFor([
           this.tmpDocsFolderRootDocsDirRelativePath,
@@ -675,7 +675,7 @@ markdown_extensions:
           },
         );
       } else {
-        Helpers.copyFile(
+        HelpersTaon.copyFile(
           asbFileSourcePath,
           this.project.pathFor([
             this.tmpDocsFolderRootDocsDirRelativePath,
@@ -733,7 +733,7 @@ markdown_extensions:
           `,
         );
 
-        Helpers.copyFile(assetSourcetAbsPath, assetDestLocationAbsPath);
+        HelpersTaon.copyFile(assetSourcetAbsPath, assetDestLocationAbsPath);
 
         counterCopy++;
       }
@@ -933,7 +933,7 @@ markdown_extensions:
         destMagicRelativePath,
       ]);
 
-      Helpers.copyFile(sourceAbsPath, destinationAbsPath);
+      HelpersTaon.copyFile(sourceAbsPath, destinationAbsPath);
 
       if (file.magicRenameRules) {
         let content = Helpers.readFile(destinationAbsPath);

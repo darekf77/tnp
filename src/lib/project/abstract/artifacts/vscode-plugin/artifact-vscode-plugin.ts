@@ -8,7 +8,7 @@ import {
   _,
   chalk,
 } from 'tnp-core/src';
-import { Helpers, UtilsQuickFixes } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon, UtilsQuickFixes } from 'tnp-helpers/src';
 
 import {
   appVscodeJSFromBuild,
@@ -112,7 +112,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     );
 
     for (const resourceRelative of this.project.taonJson.resources) {
-      Helpers.copyFile(
+      HelpersTaon.copyFile(
         this.project.pathFor(resourceRelative),
         crossPlatformPath([tmpVscodeProjPath, resourceRelative]),
       );
@@ -218,7 +218,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
       if (buildOptions.release.releaseType) {
         await this.project.artifactsManager.globalHelper.branding.generateLogoFroVscodeLocations();
         if (!shouldSkipBuild) {
-          await Helpers.bundleCodeIntoSingleFile(
+          await HelpersTaon.bundleCodeIntoSingleFile(
             crossPlatformPath([
               tmpVscodeProjPath,
               distMainProject,

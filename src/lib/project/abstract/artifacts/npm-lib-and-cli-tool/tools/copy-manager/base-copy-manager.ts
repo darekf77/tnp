@@ -6,10 +6,11 @@ import {
   LibTypeEnum,
   taonPackageName,
   tnpPackageName,
+  Utils,
 } from 'tnp-core/src';
 import { crossPlatformPath, _ } from 'tnp-core/src';
 import { fse } from 'tnp-core/src';
-import { BaseCompilerForProject } from 'tnp-helpers/src';
+import { BaseCompilerForProject, HelpersTaon } from 'tnp-helpers/src';
 import { Helpers } from 'tnp-helpers/src';
 
 import {
@@ -194,7 +195,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
       result = [this.localTempProj, ...projectForNodeModulesPkgUpdate];
     }
 
-    return Helpers.uniqArray<Project>(result, 'location' as keyof Project);
+    return Utils.uniqArray<Project>(result, 'location' as keyof Project);
     //#endregion
   }
   //#endregion
@@ -235,7 +236,7 @@ export abstract class BaseCopyManger extends BaseCompilerForProject<
     }
     let contentOrg = Helpers.readFile(fileAbsolutePath) || '';
     const newContent = contentOrg.replace(
-      new RegExp(Helpers.escapeStringForRegEx(TO_REMOVE_TAG), 'g'),
+      new RegExp(Utils.escapeStringForRegEx(TO_REMOVE_TAG), 'g'),
       '',
     );
     if (newContent && contentOrg && newContent !== contentOrg) {
@@ -497,7 +498,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
           packageJsonInDest,
         );
       } else {
-        Helpers.copyFile(
+        HelpersTaon.copyFile(
           this.project.pathFor(packageJsonMainProject),
           packageJsonInDest,
         );
@@ -534,7 +535,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       //   folderName.browser,
       //   fileName.package_json
       // );
-      // Helpers.copyFile(projectOudBorwserSrc, projectOudBorwserDest);}
+      // HelpersTaon.copyFile(projectOudBorwserSrc, projectOudBorwserDest);}
       //#endregion
     }
     //#endregion

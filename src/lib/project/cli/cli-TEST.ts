@@ -1,7 +1,7 @@
 //#region imports
 import { config, LibTypeEnum } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath, os, path } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { appFromSrc, MESSAGES, srcMainProject, TEMP_DOCS, testsFromSrc } from '../../constants';
@@ -182,5 +182,5 @@ export class $Test extends BaseCli {
 }
 
 export default {
-  $Test: Helpers.CLIWRAP($Test, '$Test'),
+  $Test: HelpersTaon.CLIWRAP($Test, '$Test'),
 };

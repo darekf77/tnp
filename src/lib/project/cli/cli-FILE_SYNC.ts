@@ -4,7 +4,7 @@ import { watch } from 'fs';
 import { UtilsOs } from 'tnp-core/src';
 import { _, crossPlatformPath } from 'tnp-core/src';
 import { dotTaonFolder } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 import { UtilsFileSync } from 'tnp-helpers/src';
 
@@ -34,5 +34,5 @@ class $FileSync extends BaseCli {
 }
 
 export default {
-  $FileSync: Helpers.CLIWRAP($FileSync, '$FileSync'),
+  $FileSync: HelpersTaon.CLIWRAP($FileSync, '$FileSync'),
 };

@@ -13,7 +13,7 @@ import {
   UtilsTerminal,
 } from 'tnp-core/src';
 import { CoreModels, UtilsNetwork } from 'tnp-core/src';
-import { BaseCliWorker, Helpers, UtilsDocker } from 'tnp-helpers/src';
+import { BaseCliWorker, Helpers, HelpersTaon, UtilsDocker } from 'tnp-helpers/src';
 
 import {
   globalSpinner,
@@ -615,7 +615,7 @@ export class TraefikProvider {
     const execAsync = promisify(child_process.exec);
 
     Helpers.removeFolderIfExists(this.pathToTraefikComposeDestCwd);
-    Helpers.copy(
+    HelpersTaon.copy(
       this.pathToTraefikComposeSourceTemplateFilesCwd,
       this.pathToTraefikComposeDestCwd,
       {
@@ -686,7 +686,7 @@ export class TraefikProvider {
 
     let composeDownBothFiles = devFileExists && prodFileExists;
     if (!Helpers.exists(this.pathToTraefikComposeDestCwd)) {
-      Helpers.copy(
+      HelpersTaon.copy(
         this.pathToTraefikComposeSourceTemplateFilesCwd,
         this.pathToTraefikComposeDestCwd,
         {

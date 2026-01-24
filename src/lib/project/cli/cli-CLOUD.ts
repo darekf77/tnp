@@ -9,7 +9,7 @@ import {
   UtilsTerminal,
 } from 'tnp-core/src';
 import { UtilsCliClassMethod, UtilsOs } from 'tnp-core/src';
-import { BaseCLiWorkerStartMode, Helpers, UtilsZip } from 'tnp-helpers/src';
+import { BaseCLiWorkerStartMode, Helpers, HelpersTaon, UtilsZip } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartParams } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../options';
@@ -293,5 +293,5 @@ export class $Cloud extends BaseCli {
 }
 
 export default {
-  $Cloud: Helpers.CLIWRAP($Cloud, '$Cloud'),
+  $Cloud: HelpersTaon.CLIWRAP($Cloud, '$Cloud'),
 };

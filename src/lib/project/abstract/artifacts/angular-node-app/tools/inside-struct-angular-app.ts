@@ -3,7 +3,7 @@ import { RegionRemover } from 'isomorphic-region-loader/src';
 import { MagicRenamer } from 'magic-renamer/src';
 import { TAGS, Utils, UtilsFilesFoldersSync } from 'tnp-core/src';
 import { crossPlatformPath, path, _, CoreModels, fse } from 'tnp-core/src';
-import { BasePackageJson, Helpers } from 'tnp-helpers/src';
+import { BasePackageJson, Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import { templateFolderForArtifact } from '../../../../../app-utils';
 import {
@@ -235,7 +235,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           //               // TODO it will colide with ng serve ?
           //               appModuleFile = appModuleFile.replace(
           //                 new RegExp(
-          //                   Helpers.escapeStringForRegEx('//distReleaseOnly'),
+          //                   Utils.escapeStringForRegEx('//distReleaseOnly'),
           //                   'g',
           //                 ),
           //                 '',
@@ -445,7 +445,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             ]);
 
             if (Helpers.exists(source)) {
-              Helpers.copyFile(source, faviconPathDest);
+              HelpersTaon.copyFile(source, faviconPathDest);
             }
           })();
           //#endregion
@@ -644,7 +644,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
               CoreNgTemplateFiles.ANGULAR_JSON,
             ]);
 
-            Helpers.setValueToJSON(
+            HelpersTaon.setValueToJSON(
               angularJsonPath, // TODO @LAST is here angular electron task needed ?
               `projects.${AngularJsonTaskName.ANGULAR_APP}.architect.build.options.baseHref`,
               this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
@@ -740,7 +740,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                 })();
                 //#endregion
 
-                Helpers.setValueToJSONC(
+                HelpersTaon.setValueToJSONC(
                   tsconfigPath,
                   `compilerOptions.paths['${projFromSrouce.nameForNpmPackage}/${
                     this.initOptions.build.websql

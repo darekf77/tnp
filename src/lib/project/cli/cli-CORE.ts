@@ -3,7 +3,7 @@ import { MagicRenamer } from 'magic-renamer/src';
 import { containerPrefix, tmpIsomorphicPackagesJson } from '../../constants';
 import { config, CoreModels, path, tnpPackageName } from 'tnp-core/src';
 import { _, crossPlatformPath, UtilsTerminal } from 'tnp-core/src';
-import { BasePackageJson, Helpers } from 'tnp-helpers/src';
+import { BasePackageJson, Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import { ReleaseType } from '../../options';
 
@@ -121,7 +121,7 @@ export class $Core extends BaseCli {
     this.project.framework.coreContainer.nodeModules.copyToProject(
       newContainer as any,
     );
-    Helpers.copyFile(
+    HelpersTaon.copyFile(
       this.project.framework.coreContainer.pathFor(tmpIsomorphicPackagesJson),
       newContainer.pathFor(tmpIsomorphicPackagesJson),
     );
@@ -230,5 +230,5 @@ export class $Core extends BaseCli {
 }
 
 export default {
-  $Core: Helpers.CLIWRAP($Core, '$Core'),
+  $Core: HelpersTaon.CLIWRAP($Core, '$Core'),
 };

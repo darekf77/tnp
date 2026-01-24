@@ -1,7 +1,7 @@
 import { config, fileName, folderName } from 'tnp-core/src';
 import { chalk, _, crossPlatformPath, glob, path, UtilsOs } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
-import { BaseCommandLineFeature, Helpers } from 'tnp-helpers/src';
+import { BaseCommandLineFeature, Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import {
   binMainProject,
@@ -164,13 +164,13 @@ export class $Link extends BaseCli {
       });
 
     if (countLinkInPackageJsonBin.length === 0) {
-      const pathNormalLink = Helpers.path.create(
+      const pathNormalLink = HelpersTaon.paths.create(
         project.pathFor([binMainProject, project.name]),
       );
       Helpers.writeFile(pathNormalLink, this._templateBin());
       countLinkInPackageJsonBin.push(pathNormalLink);
 
-      const pathDebugLink = Helpers.path.create(
+      const pathDebugLink = HelpersTaon.paths.create(
         project.pathFor([
           binMainProject,
           `${project.name}${debugSuffix.replace('--', '-')}`,
@@ -179,7 +179,7 @@ export class $Link extends BaseCli {
       Helpers.writeFile(pathDebugLink, this._templateBin(true));
       countLinkInPackageJsonBin.push(pathDebugLink);
 
-      const cliTsFile = Helpers.path.create(
+      const cliTsFile = HelpersTaon.paths.create(
         project.pathFor([srcMainProject, fileName.cli_ts]),
       );
       if (!Helpers.exists(cliTsFile)) {
@@ -396,5 +396,5 @@ EXIT /b
 }
 
 export default {
-  $Link: Helpers.CLIWRAP($Link, '$Link'),
+  $Link: HelpersTaon.CLIWRAP($Link, '$Link'),
 };

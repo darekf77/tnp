@@ -20,7 +20,7 @@ import {
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { CLI, UtilsOs } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
-import { Helpers, BaseProjectResolver } from 'tnp-helpers/src';
+import { Helpers, BaseProjectResolver, HelpersTaon } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
 import {
@@ -54,7 +54,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     super(classFn, cliToolName);
 
     // if (!this.cliToolName) {
-    //   Helpers.throw(`cliToolName is not provided`);
+    //   Helpers.throwError(`cliToolName is not provided`);
     // }
     if (UtilsOs.isRunningInVscodeExtension()) {
       //#region @backend
@@ -416,7 +416,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     //#region pull master with tags
     try {
-      Helpers.git.meltActionCommits(cwd);
+      HelpersTaon.git.meltActionCommits(cwd);
     } catch (error) {}
     try {
       Helpers.run(
@@ -434,7 +434,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       );
     }
     try {
-      Helpers.git.meltActionCommits(cwd);
+      HelpersTaon.git.meltActionCommits(cwd);
     } catch (error) {}
     try {
       Helpers.run(`git reset --hard`, { cwd, output: false }).sync();
@@ -446,7 +446,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     // no need for checking out specific tag
 
     const tagToCheckout = this.taonTagToCheckoutForCurrentCliVersion(cwd);
-    const currentBranch = Helpers.git.currentBranchName(cwd);
+    const currentBranch = HelpersTaon.git.currentBranchName(cwd);
 
     Helpers.taskStarted(
       `Checking out latest tag ${tagToCheckout} for taon framework...`,

@@ -4,7 +4,7 @@ import { config } from 'tnp-core/src';
 import { fse, crossPlatformPath, CoreModels, chalk } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
 import {
@@ -161,7 +161,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
       });
 
       files.forEach(file => {
-        Helpers.copyFile(file.from, file.where);
+        HelpersTaon.copyFile(file.from, file.where);
       });
     }
     //#endregion

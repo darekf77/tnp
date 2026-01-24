@@ -18,6 +18,7 @@ import { _ } from 'tnp-core/src';
 import {
   BaseNodeModules,
   Helpers,
+  HelpersTaon,
 } from 'tnp-helpers/src';
 
 import {
@@ -177,6 +178,7 @@ export class NodeModules extends BaseNodeModules {
 
       this.project.quickFixes.excludeNodeModulesDtsFromTypescriptCheck([
         this.project.nodeModules.pathFor('@types/glob/index.d.ts'),
+        this.project.nodeModules.pathFor('@types/lodash-es/debounce.d.ts'),
         this.project.nodeModules.pathFor('chokidar/types/index.d.ts'),
         this.project.nodeModules.pathFor(
           '@angular/core/types/_discovery-chunk.d.ts',
@@ -483,11 +485,11 @@ export class NodeModules extends BaseNodeModules {
         `temp-location-${this.project.name}`,
       ]);
 
-      Helpers.move(folderToMove, folderTemp, {
+      HelpersTaon.move(folderToMove, folderTemp, {
         purpose: `Moving own "${this.project.nameForNpmPackage}" package to temp location`,
       });
       await actionwhenNotInNodeModules();
-      Helpers.move(folderTemp, folderToMove, {
+      HelpersTaon.move(folderTemp, folderToMove, {
         purpose: `Restoring own "${this.project.nameForNpmPackage}" package after action`,
       });
     }

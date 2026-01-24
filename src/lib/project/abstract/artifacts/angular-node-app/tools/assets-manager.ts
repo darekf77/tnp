@@ -2,7 +2,7 @@ import { ChangeOfFile } from 'incremental-compiler/src';
 import { config } from 'tnp-core/src';
 import { crossPlatformPath, fse, path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 import { BaseDebounceCompilerForProject } from 'tnp-helpers/src';
 
@@ -109,7 +109,7 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
               }
             } else {
               try {
-                Helpers.copyFile(changeOfFile.fileAbsolutePath, dest);
+                HelpersTaon.copyFile(changeOfFile.fileAbsolutePath, dest);
               } catch (error) {
                 Helpers.warn(
                   `[${config.frameworkName}] Could not copy asset ` +
@@ -144,7 +144,7 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
             // console.log('relative', relative);
             // console.log('packageName', packageName);
             for (const tmpFolder of this.tmpFolders) {
-              Helpers.copyFile(
+              HelpersTaon.copyFile(
                 fileAbsPath,
                 crossPlatformPath([
                   this.project.location,

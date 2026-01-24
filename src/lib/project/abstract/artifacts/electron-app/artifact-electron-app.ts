@@ -2,7 +2,7 @@
 import { Configuration as ElectronBuilderConfig } from 'electron-builder';
 import { config, LibTypeEnum } from 'tnp-core/src';
 import { crossPlatformPath, path, Utils } from 'tnp-core/src';
-import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
 import { templateFolderForArtifact } from '../../../../app-utils';
@@ -128,7 +128,7 @@ export class ArtifactElectronApp extends BaseArtifact<
         Helpers.logInfo(
           `Setting native dependency ${nativeDepName} to version ${version}`,
         );
-        Helpers.setValueToJSON(
+        HelpersTaon.setValueToJSON(
           proxyProj.pathFor(`${electronNgProj}/package.json`),
           'dependencies',
           {
@@ -145,7 +145,7 @@ export class ArtifactElectronApp extends BaseArtifact<
     //#endregion
 
     //#region bundling backend node_modules
-    await Helpers.bundleCodeIntoSingleFile(
+    await HelpersTaon.bundleCodeIntoSingleFile(
       proxyProj.pathFor(`${electronNgProj}/main.js`),
       proxyProj.pathFor(`${electronNgProj}/index.js`),
       {
@@ -212,7 +212,7 @@ export class ArtifactElectronApp extends BaseArtifact<
       electronNgProj,
       CoreAssets.sqlWasmFile,
     ]);
-    Helpers.copyFile(wasmfileSource, wasmfileDest);
+    HelpersTaon.copyFile(wasmfileSource, wasmfileDest);
     //#endregion
 
     //#region modify index.html

@@ -1,5 +1,5 @@
 import { CoreModels, _, crossPlatformPath, path } from 'tnp-core/src';
-import { Helpers } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { iconVscode128Basename } from '../../constants';
@@ -44,5 +44,5 @@ export class $Branding extends BaseCli {
 }
 
 export default {
-  $Branding: Helpers.CLIWRAP($Branding, '$Branding'),
+  $Branding: HelpersTaon.CLIWRAP($Branding, '$Branding'),
 };

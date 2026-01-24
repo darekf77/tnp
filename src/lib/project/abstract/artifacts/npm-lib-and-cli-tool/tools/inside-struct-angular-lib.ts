@@ -2,7 +2,7 @@
 import { Utils } from 'tnp-core/src';
 import { crossPlatformPath, path, _ } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
-import { BasePackageJson, Helpers } from 'tnp-helpers/src';
+import { BasePackageJson, Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import { templateFolderForArtifact } from '../../../../../app-utils';
 import {
@@ -103,7 +103,7 @@ export class InsideStructAngularLib extends BaseInsideStruct {
               `${projectsFromNgTemplate}/${this.project.name}`,
             );
             Helpers.remove(dest);
-            Helpers.move(source, dest);
+            HelpersTaon.move(source, dest);
           })();
           //#endregion
 
@@ -214,7 +214,7 @@ export * from './${libFromSrc}';
               //   // debugger;
               //   content = content.replace(
               //     new RegExp(
-              //       Helpers.escapeStringForRegEx(
+              //       Utils.escapeStringForRegEx(
               //         `"${distFromNgBuild}/${this.project.name}`,
               //       ),
               //       'g',

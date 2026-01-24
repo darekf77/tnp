@@ -90,7 +90,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       try {
         const pj = Helpers.readJson(this.jsonPath);
         if (_.isArray(pj[isomorphicPackagesJsonKey])) {
-          return Helpers.uniqArray(pj[isomorphicPackagesJsonKey]);
+          return Utils.uniqArray(pj[isomorphicPackagesJsonKey]);
         }
       } catch (error) {
         Helpers.log(`[${config.frameworkName}] ERROR not recognized in`);
@@ -156,7 +156,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       alreadyExistsJson[isomorphicPackagesJsonKey] || [];
 
     Helpers.writeJson(this.jsonPath, {
-      [isomorphicPackagesJsonKey]: Helpers.uniqArray(
+      [isomorphicPackagesJsonKey]: Utils.uniqArray(
         alreadyExistsJsonArr.concat(recognizedPackagesNewPackages),
       ),
     });
@@ -191,7 +191,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     }
 
     this.coreContainer.packagesRecognition.inMemoryIsomorphicLibs =
-      Helpers.uniqArray([
+      Utils.uniqArray([
         ...this.coreContainer.packagesRecognition.inMemoryIsomorphicLibs,
         ...isomorphicPackagesNames,
         this.project.name,
@@ -248,7 +248,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
         }
       }
     }
-    const result = Helpers.uniqArray([
+    const result = Utils.uniqArray([
       ...this.coreContainer.packagesRecognition.inMemoryIsomorphicLibs,
       this.project.nameForNpmPackage,
       this.project.name,

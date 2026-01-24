@@ -8,7 +8,7 @@ import {
   chalk,
   path,
 } from 'tnp-core/src';
-import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
   libFromSrc,
@@ -271,5 +271,5 @@ export class ${contextName}_${timestamp}_${migrationName} extends TaonBaseMigrat
 }
 
 export default {
-  $Migration: Helpers.CLIWRAP($Migration, '$Migration'),
+  $Migration: HelpersTaon.CLIWRAP($Migration, '$Migration'),
 };

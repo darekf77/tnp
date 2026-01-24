@@ -1,6 +1,6 @@
 //#region imports
 import { _, chalk, UtilsTerminal } from 'tnp-core/src';
-import { Helpers, UtilsHttp } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon, UtilsHttp } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { EnvOptions, ReleaseArtifactTaon } from '../../options';
@@ -95,5 +95,5 @@ class $Docs extends BaseCli {
 }
 
 export default {
-  $Docs: Helpers.CLIWRAP($Docs, '$Docs'),
+  $Docs: HelpersTaon.CLIWRAP($Docs, '$Docs'),
 };

@@ -6,7 +6,7 @@ import { config, LibTypeEnum, tnpPackageName } from 'tnp-core/src';
 import { chalk, CoreModels, crossPlatformPath, fse, Utils } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
-import { BaseFeatureForProject, UtilsTypescript } from 'tnp-helpers/src';
+import { BaseFeatureForProject, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 import { Helpers } from 'tnp-helpers/src';
 import { register } from 'ts-node';
 
@@ -218,7 +218,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
 
       // TODO QUICK_FIX
       if (!fse.existsSync(pathToEnvTs)) {
-        Helpers.copyFile(
+        HelpersTaon.copyFile(
           crossPlatformPath([
             path.dirname(pathToEnvTs),
             `env.${artifactName}.${CoreModels.EnvironmentName.__}.ts`,
@@ -280,7 +280,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     // );
 
     if (!configStandaloneEnv) {
-      Helpers.throw(`Please provide default export in ${this.absPathToEnvTs}`);
+      Helpers.throwError(`Please provide default export in ${this.absPathToEnvTs}`);
     }
 
     return configStandaloneEnv;
@@ -407,7 +407,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
         .by(LibTypeEnum.ISOMORPHIC_LIB)
         .pathFor(environmentsFolder);
 
-      Helpers.copy(coreEnv, this.project.pathFor(environmentsFolder), {
+      HelpersTaon.copy(coreEnv, this.project.pathFor(environmentsFolder), {
         recursive: true,
       });
     }
@@ -452,7 +452,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
             this.project.framework.coreProject.pathFor(
               relativePathToArtifacEnv,
             );
-          Helpers.copyFile(coreProjectArtifactPath, absPathToArtifactEnv);
+          HelpersTaon.copyFile(coreProjectArtifactPath, absPathToArtifactEnv);
         }
       }
     }

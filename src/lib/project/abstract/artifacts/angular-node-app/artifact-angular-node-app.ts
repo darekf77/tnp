@@ -20,6 +20,7 @@ import {
   DockerComposeFile,
   UtilsZip,
   BaseCliWorkerConfigGetContextOptions,
+  HelpersTaon,
 } from 'tnp-helpers/src';
 import { UtilsDocker } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
@@ -178,7 +179,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       const tmpDest = this.project.pathFor(
         `${browserTsCode}/${assetsFromNgProj}/${fileName}`,
       );
-      Helpers.copyFile(coreSource, tmpDest);
+      HelpersTaon.copyFile(coreSource, tmpDest);
     };
 
     copyFromCoreAssets(CoreAssets.sqlWasmFile);
@@ -539,7 +540,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   ): Promise<void> {
     //#region @backendFunc
     Helpers.remove(appDistOutBackendNodeAbsPath);
-    await Helpers.bundleCodeIntoSingleFile(
+    await HelpersTaon.bundleCodeIntoSingleFile(
       this.project.pathFor('dist/app.js'),
       crossPlatformPath([appDistOutBackendNodeAbsPath, 'dist/app.js']),
       {
@@ -565,7 +566,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     ];
 
     for (const relativePathBundleBackend of copyToBackendBundle) {
-      Helpers.copyFile(
+      HelpersTaon.copyFile(
         this.project.pathFor(relativePathBundleBackend),
         crossPlatformPath([
           appDistOutBackendNodeAbsPath,
@@ -754,11 +755,11 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
               this.currentArtifactName,
             ]);
 
-      Helpers.copy(appDistOutBrowserAngularAbsPath, [
+      HelpersTaon.copy(appDistOutBrowserAngularAbsPath, [
         localReleaseOutputBasePath,
         path.basename(appDistOutBrowserAngularAbsPath),
       ]);
-      Helpers.copy(appDistOutBackendNodeAbsPath, [
+      HelpersTaon.copy(appDistOutBackendNodeAbsPath, [
         localReleaseOutputBasePath,
         path.basename(appDistOutBackendNodeAbsPath),
       ]);
@@ -766,7 +767,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       //#endregion
 
       //#region update package.json in backend app
-      Helpers.setValueToJSON(
+      HelpersTaon.setValueToJSON(
         [
           localReleaseOutputBasePath,
           path.basename(appDistOutBackendNodeAbsPath),
@@ -776,7 +777,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         path.basename(appDistOutBackendNodeAbsPath),
       );
 
-      Helpers.setValueToJSON(
+      HelpersTaon.setValueToJSON(
         [
           localReleaseOutputBasePath,
           path.basename(appDistOutBackendNodeAbsPath),
@@ -1084,17 +1085,17 @@ ${dockerComposeYmlFileContent}
       //#endregion
 
       //#region create package.json with start script for whole build
-      Helpers.copyFile(this.project.pathFor(packageJsonMainProject), [
+      HelpersTaon.copyFile(this.project.pathFor(packageJsonMainProject), [
         localReleaseOutputBasePath,
         packageJsonNpmLib,
       ]);
-      Helpers.setValueToJSON(
+      HelpersTaon.setValueToJSON(
         [localReleaseOutputBasePath, packageJsonNpmLib],
         'scripts',
         {},
       );
 
-      Helpers.setValueToJSON(
+      HelpersTaon.setValueToJSON(
         [localReleaseOutputBasePath, packageJsonNpmLib],
         'scripts.start',
         `taon preview ./docker-compose.yml`,
@@ -1182,7 +1183,7 @@ ${dockerComposeYmlFileContent}
       newBasenameZipFile,
     ]);
 
-    Helpers.copyFile(tmpZipLocalReleaseFileAbsPath, newZipFileName);
+    HelpersTaon.copyFile(tmpZipLocalReleaseFileAbsPath, newZipFileName);
 
     Helpers.taskDone(`
       Release zip file prepared for taon cloud deployment!
