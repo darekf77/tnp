@@ -299,6 +299,11 @@ export namespace Models {
     resources?: string[];
 
     /**
+     * Force linking node_modules from core container
+     */
+    linkNodeModulesFromCoreContainer?: boolean;
+
+    /**
      * override order of packages during release or buildq
      * so dependencies are released first
      */

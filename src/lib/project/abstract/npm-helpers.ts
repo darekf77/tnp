@@ -98,6 +98,9 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
    */
   get useLinkAsNodeModules(): boolean {
     //#region @backendFunc
+    if (this.project.taonJson.linkNodeModulesFromCoreContainer) {
+      return true;
+    }
     if (
       this.project.framework.isContainerCoreProject &&
       this.project.framework.frameworkVersionAtLeast('v2')

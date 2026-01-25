@@ -10,6 +10,7 @@ import {
 import { CoreModels, os, path } from 'tnp-core/src';
 import { Helpers, _ } from 'tnp-core/src';
 import { Utils } from 'tnp-core/src';
+import { UtilsTerminal } from 'tnp-core/src';
 import {
   BaseFeatureForProject,
   BasePackageJson,
@@ -28,7 +29,6 @@ import { Models } from '../../models';
 import { ReleaseArtifactTaon, EnvOptions } from '../../options';
 
 import type { Project } from './project';
-import { UtilsTerminal } from 'tnp-core/src';
 
 // @ts-ignore TODO weird inheritance problem
 export class TaonJson extends BaseFeatureForProject<Project> {
@@ -504,6 +504,17 @@ export class TaonJson extends BaseFeatureForProject<Project> {
 
     //#region @backendFunc
     let res = data?.isUsingOwnNodeModulesInsteadCoreContainer;
+    return !!res;
+    //#endregion
+  }
+  //#endregion
+
+  //#region uses its own node_modules
+  get linkNodeModulesFromCoreContainer(): Models.TaonJsonContainer['linkNodeModulesFromCoreContainer'] {
+    const data = this.data as Models.TaonJsonContainer;
+
+    //#region @backendFunc
+    let res = data?.linkNodeModulesFromCoreContainer;
     return !!res;
     //#endregion
   }
