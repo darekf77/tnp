@@ -994,6 +994,9 @@ export class ArtifactManager {
       );
       await this.tryCatchWrapper(
         async () => {
+          if(!child.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
+            await child.clear()
+          }
           await child.artifactsManager.release(options);
         },
         'release',
