@@ -116,7 +116,10 @@ export async function start(
           a === 'localSync' ||
           a === 'localsync' ||
           a === 'cloud' ||
-          a === 'link',
+          a === 'link' ||
+          a === 'up' ||
+          a === 'apiup' ||
+          a === 'apiupforce',
       ),
     ) // for workers
   ) {
@@ -152,7 +155,6 @@ export async function start(
       }
     },
     shortArgsReplaceConfig: {
-
       //#region short args replacement
       // TODO use UtilsCliClassMethod !!!
       il: 'release:install:locally',
