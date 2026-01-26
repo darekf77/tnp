@@ -411,6 +411,8 @@ export enum TaonGeneratedFolders {
 
 export const splitNamespacesJson = 'split-namespaces.json';
 
+export const reExportJson = 're-export.json';
+
 /**
  * Main project /dist folder
  */

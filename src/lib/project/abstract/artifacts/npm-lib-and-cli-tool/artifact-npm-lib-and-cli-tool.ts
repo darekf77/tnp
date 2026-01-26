@@ -53,6 +53,7 @@ import {
   nodeModulesMainProject,
   packageJsonNpmLib,
   prodSuffix,
+  reExportJson,
   sourceLinkInNodeModules,
   splitNamespacesJson,
   srcMainProject,
@@ -556,6 +557,17 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
               ]),
             );
 
+            HelpersTaon.copyFile(
+              this.project.pathFor([
+                distMainProject + prodSuffix,
+                browserFromCompiledDist + prodSuffix + `.${reExportJson}`,
+              ]),
+              this.project.pathFor([
+                distMainProject,
+                browserFromCompiledDist + prodSuffix + `.${reExportJson}`,
+              ]),
+            );
+
             //websql namespaces json
             HelpersTaon.copyFile(
               this.project.pathFor([
@@ -568,6 +580,17 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
               ]),
             );
 
+            HelpersTaon.copyFile(
+              this.project.pathFor([
+                distMainProject + prodSuffix,
+                websqlFromCompiledDist + prodSuffix + `.${reExportJson}`,
+              ]),
+              this.project.pathFor([
+                distMainProject,
+                websqlFromCompiledDist + prodSuffix + `.${reExportJson}`,
+              ]),
+            );
+
             //lib namespaces json
             HelpersTaon.copyFile(
               this.project.pathFor([
@@ -577,6 +600,17 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
               this.project.pathFor([
                 distMainProject,
                 libFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
+              ]),
+            );
+
+            HelpersTaon.copyFile(
+              this.project.pathFor([
+                distMainProject + prodSuffix,
+                libFromCompiledDist + prodSuffix + `.${reExportJson}`,
+              ]),
+              this.project.pathFor([
+                distMainProject,
+                libFromCompiledDist + prodSuffix + `.${reExportJson}`,
               ]),
             );
 
@@ -677,7 +711,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       Helpers.remove([folderAbsPath, 'index.*']);
       Helpers.remove([folderAbsPath, cliDtsNpmPackage]);
       Helpers.remove([folderAbsPath, cliJSMapNpmPackage]);
-      HelpersTaon.setValueToJSON([folderAbsPath, packageJsonNpmLib], 'scripts', {});
+      HelpersTaon.setValueToJSON(
+        [folderAbsPath, packageJsonNpmLib],
+        'scripts',
+        {},
+      );
     };
 
     if (
@@ -781,7 +819,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         rimraf.sync(this.project.pathFor(folderName.tmp) + '*');
         return;
       } catch (error) {
-        HelpersTaon.pressKeyAndContinue(MESSAGES.SHUT_DOWN_FOLDERS_AND_DEBUGGERS);
+        HelpersTaon.pressKeyAndContinue(
+          MESSAGES.SHUT_DOWN_FOLDERS_AND_DEBUGGERS,
+        );
         continue;
       }
     }
@@ -835,7 +875,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         this.project.removeFile(fileName.tnpEnvironment_json);
         break;
       } catch (error) {
-        HelpersTaon.pressKeyAndContinue(MESSAGES.SHUT_DOWN_FOLDERS_AND_DEBUGGERS);
+        HelpersTaon.pressKeyAndContinue(
+          MESSAGES.SHUT_DOWN_FOLDERS_AND_DEBUGGERS,
+        );
       }
     }
 

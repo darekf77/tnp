@@ -46,7 +46,7 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
 
       // Helpers.log(`Started for ${f}`);
 
-      this.processFile(filePath, fileContent, initOptions, _, soft);
+      this.processFile(filePath, fileContent, initOptions, soft);
       // Helpers.log(`Processed DONE for ${f}`);
     }
     this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting(
@@ -84,7 +84,6 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
     orgFilePath: string,
     content: string,
     reservedExpSec: EnvOptions,
-    reservedExpOne: any,
     soft: boolean,
   ): void {
     //#region @backendFunc
@@ -107,12 +106,11 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
             matches.forEach(pattern => {
               const expression = pattern.replace(/(\{|\})/g, '');
               // const reservedExpSec = ENV;
-              // const reservedExpOne = _;
               // console.log('varssss: ', pattern)
               const exp = `(function(ENV,_){
                 // console.log(typeof ENV)
                 return ${expression.trim()}
-              })(reservedExpSec,reservedExpOne)`;
+              })(reservedExpSec)`;
               // console.log(exp)
 
               //     console.log(`Eval expre

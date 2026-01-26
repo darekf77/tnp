@@ -1,4 +1,5 @@
 import { crossPlatformPath, Helpers, Utils } from 'tnp-core/src';
+import { UtilsTypescript } from 'tnp-helpers/src';
 
 import {
   browserFromImport,
@@ -124,38 +125,5 @@ export const templateFolderForArtifact = (
 };
 
 export const getCleanImport = (importName: string): string | undefined => {
-  if (!importName) {
-    return importName;
-  }
-  return importName
-    .replace(
-      new RegExp(
-        Utils.escapeStringForRegEx(`/${browserFromImport + prodSuffix}`) + '$',
-      ),
-      '',
-    )
-    .replace(
-      new RegExp(
-        Utils.escapeStringForRegEx(`/${websqlFromImport + prodSuffix}`) + '$',
-      ),
-      '',
-    )
-    .replace(
-      new RegExp(
-        Utils.escapeStringForRegEx(`/${libFromImport + prodSuffix}`) + '$',
-      ),
-      '',
-    )
-    .replace(
-      new RegExp(Utils.escapeStringForRegEx(`/${browserFromImport}`) + '$'),
-      '',
-    )
-    .replace(
-      new RegExp(Utils.escapeStringForRegEx(`/${websqlFromImport}`) + '$'),
-      '',
-    )
-    .replace(
-      new RegExp(Utils.escapeStringForRegEx(`/${libFromImport}`) + '$'),
-      '',
-    );
+  return UtilsTypescript.getCleanImport(importName);
 };
