@@ -782,6 +782,9 @@ export class ArtifactManager {
             taonInstanceIp: item.taonInstanceIp,
           },
         });
+        if(!this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
+          await this.project.clear()
+        }
         await this.release(clonedOptions, true);
       }
       return;
@@ -994,9 +997,6 @@ export class ArtifactManager {
       );
       await this.tryCatchWrapper(
         async () => {
-          if(!child.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
-            await child.clear()
-          }
           await child.artifactsManager.release(options);
         },
         'release',
