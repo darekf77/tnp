@@ -133,7 +133,7 @@ export function start(argv, filename): void {
       childprocsecretarg,
     ].filter(Boolean);
 
-    console.log(argsToChild);
+    // console.log(argsToChild);
 
     const proc = child_process.fork(filename, argsToChild, {
       env,
@@ -143,8 +143,8 @@ export function start(argv, filename): void {
 
     proc.on('exit', code => {
       spinner.stop();
-      console.log('PROCESS EXIT');
-      // setTimeout(() => process.exit(code));
+      // console.log('PROCESS EXIT');
+      setTimeout(() => process.exit(code));
     });
 
     proc.on('message', msg => handleSpinnerMessage(msg, spinner));
