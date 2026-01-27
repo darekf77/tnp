@@ -3,10 +3,15 @@ import baseEnv from './env.npm-lib-and-cli-tool.__';
 
 const env: Partial<EnvOptions> = {
   ...baseEnv,
-  build:{
+  build: {
     prod: true,
   },
   release: {
+    skipResolvingGitChanges: true,
+    skipNpmPublish: true,
+    skipTagGitPush: true,
+    skipDeploy: true,
+    skipReleaseQuestion: true,
     lib: {
       doNotIncludeLibFiles: true,
     },
