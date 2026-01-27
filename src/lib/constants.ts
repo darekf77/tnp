@@ -136,13 +136,13 @@ export const OVERRIDE_FROM_TNP = [
   'scripts',
 ];
 
-let globalSpinner: ora.Ora;
-
-//#region @backend
-globalSpinner = global.spinner;
-//#endregion
-
-export { globalSpinner };
+export const globalSpinner = {
+  get instace(): ora.Ora {
+    //#region @backendFunc
+    return global.spinner;
+    //#endregion
+  },
+};
 
 export const USE_IN_HOST_CONFIG_FULL_CONTEXT_PATH = false;
 
@@ -826,7 +826,8 @@ export const webpackConfigJsMainProject = 'webpack.config.js';
 
 export const esLintCustomRulesMainProject = 'eslint-rules';
 export const esLintConfigJsonMainProject = 'eslint.config.ts';
-export const esLintRuleNoNamespaceReExport = 'eslint-rules/no-namespace-reexport.ts';
+export const esLintRuleNoNamespaceReExport =
+  'eslint-rules/no-namespace-reexport.ts';
 
 export const runJsMainProject = 'run.js';
 
@@ -838,7 +839,7 @@ export const indexJSNpmPackage = fileName.index_js;
 
 export const indexJSElectronDist = fileName.index_js;
 
-export const indexTsProd = 'index-prod.ts'
+export const indexTsProd = 'index-prod.ts';
 
 export const cliTsFromSrc = 'cli.ts';
 

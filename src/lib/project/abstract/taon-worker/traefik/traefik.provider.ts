@@ -289,12 +289,12 @@ export class TraefikProvider {
     }
     const execAsync = promisify(child_process.exec);
 
-    globalSpinner.start(`Traefik health: checking...`);
+    globalSpinner.instace.start(`Traefik health: checking...`);
 
     while (true) {
       tries++;
       if (options.maxTries && tries > options.maxTries) {
-        globalSpinner.fail(
+        globalSpinner.instace.fail(
           `Traefik is not running or not healthy after ${tries} tries`,
         );
         return false;
@@ -307,26 +307,26 @@ export class TraefikProvider {
         );
 
         const status = stdout.trim().replace(/"/g, '');
-        globalSpinner.text = `Traefik health: ${status}`;
+        globalSpinner.instace.text = `Traefik health: ${status}`;
 
         if (status === 'healthy') {
-          globalSpinner.succeed(`Traefik is ready`);
+          globalSpinner.instace.succeed(`Traefik is ready`);
           await UtilsTerminal.wait(1);
           return true;
         }
         if (status === 'unhealthy') {
           if (options.waitUntilHealthy) {
-            globalSpinner.text = 'Traefik state is not healthy yet, waiting...';
+            globalSpinner.instace.text = 'Traefik state is not healthy yet, waiting...';
           } else {
-            globalSpinner.fail(`Traefik state is not running or not healthy`);
+            globalSpinner.instace.fail(`Traefik state is not running or not healthy`);
             return false;
           }
         }
       } catch (error) {
         if (options.waitUntilHealthy) {
-          globalSpinner.text = 'Traefik is not healthy yet, waiting...';
+          globalSpinner.instace.text = 'Traefik is not healthy yet, waiting...';
         } else {
-          globalSpinner.fail('Traefik is not running or not healthy');
+          globalSpinner.instace.fail('Traefik is not running or not healthy');
           return false;
         }
       }
