@@ -1,0 +1,62 @@
+{
+  "namespacesMapObj": {
+    "Models.TestTypeTaon": "Models__NS__TestTypeTaon",
+    "Models.TestTypeTaonArr": "Models__NS__TestTypeTaonArr",
+    "Models.TaonLoaderConfig": "Models__NS__TaonLoaderConfig",
+    "Models.TaonLoaders": "Models__NS__TaonLoaders",
+    "Models.NewSiteOptions": "Models__NS__NewSiteOptions",
+    "Models.RootArgsType": "Models__NS__RootArgsType",
+    "Models.PsListInfo": "Models__NS__PsListInfo",
+    "Models.CreateJsonSchemaOptions": "Models__NS__CreateJsonSchemaOptions",
+    "Models.TaonContext": "Models__NS__TaonContext",
+    "Models.TaonAutoReleaseItem": "Models__NS__TaonAutoReleaseItem",
+    "Models.TaonArtifactInclude": "Models__NS__TaonArtifactInclude",
+    "Models.TscCompileOptions": "Models__NS__TscCompileOptions",
+    "Models.TaonJsonStandalone": "Models__NS__TaonJsonStandalone",
+    "Models.TaonJsonContainer": "Models__NS__TaonJsonContainer",
+    "Models.TaonJson": "Models__NS__TaonJson",
+    "Models.DocsConfig": "Models__NS__DocsConfig",
+    "CodeSplitProcess.Before.Split.ImportExport": "CodeSplitProcess__NS__Before__NS__Split__NS__ImportExport",
+    "CodeSplitProcess.DURING.BACKEND.SPLIT": "CodeSplitProcess__NS__DURING__NS__BACKEND__NS__SPLIT",
+    "CodeSplitProcess.DURING.CLIENT.SPLIT": "CodeSplitProcess__NS__DURING__NS__CLIENT__NS__SPLIT",
+    "CodeSplitProcess.AFTER.SPLIT": "CodeSplitProcess__NS__AFTER__NS__SPLIT",
+    "CopyMangerHelpers.childPureName": "CopyMangerHelpers__NS__childPureName",
+    "DeploymentsUtils.displayRealtimeProgressMonitor": "DeploymentsUtils__NS__displayRealtimeProgressMonitor",
+    "ProcessesUtils.displayRealtimeProgressMonitor": "ProcessesUtils__NS__displayRealtimeProgressMonitor"
+  },
+  "namespacesReplace": {
+    "Models": [
+      "Models__NS__CreateJsonSchemaOptions",
+      "Models__NS__DocsConfig",
+      "Models__NS__NewSiteOptions",
+      "Models__NS__PsListInfo",
+      "Models__NS__RootArgsType",
+      "Models__NS__TaonArtifactInclude",
+      "Models__NS__TaonAutoReleaseItem",
+      "Models__NS__TaonContext",
+      "Models__NS__TaonJson",
+      "Models__NS__TaonJsonContainer",
+      "Models__NS__TaonJsonStandalone",
+      "Models__NS__TaonLoaderConfig",
+      "Models__NS__TaonLoaders",
+      "Models__NS__TestTypeTaon",
+      "Models__NS__TestTypeTaonArr",
+      "Models__NS__TscCompileOptions"
+    ],
+    "CodeSplitProcess": [
+      "CodeSplitProcess__NS__AFTER__NS__SPLIT",
+      "CodeSplitProcess__NS__Before__NS__Split__NS__ImportExport",
+      "CodeSplitProcess__NS__DURING__NS__BACKEND__NS__SPLIT",
+      "CodeSplitProcess__NS__DURING__NS__CLIENT__NS__SPLIT"
+    ],
+    "CopyMangerHelpers": [
+      "CopyMangerHelpers__NS__childPureName"
+    ],
+    "DeploymentsUtils": [
+      "DeploymentsUtils__NS__displayRealtimeProgressMonitor"
+    ],
+    "ProcessesUtils": [
+      "ProcessesUtils__NS__displayRealtimeProgressMonitor"
+    ]
+  }
+}
