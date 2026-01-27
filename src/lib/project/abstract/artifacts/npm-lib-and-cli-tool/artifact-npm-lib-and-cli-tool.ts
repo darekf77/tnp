@@ -1644,7 +1644,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       destStartJS,
       `console.log('<<< USING BUNDLED CLI >>>');\n` +
         `global.taonUsingBundledCliMode = true;\n` +
-        `global.frameworkName = ${this.project.nameForCli};` +
+        `global.frameworkName = "${this.project.nameForCli}";` +
         `\n${Helpers.readFile(destStartJS)}`,
     );
 
