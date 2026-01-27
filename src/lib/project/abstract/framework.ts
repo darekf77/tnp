@@ -419,6 +419,7 @@ export class Framework extends BaseFeatureForProject<Project> {
 
   recreateFileFromCoreProject = (options: {
     fileRelativePath?: string | string[];
+    forceRecrete?: boolean;
     /**
      * if will override **fileRelativePath** with different path
      * to get file from core project
@@ -434,6 +435,7 @@ export class Framework extends BaseFeatureForProject<Project> {
       fileRelativePath,
       customDestinationLocation,
       relativePathInCoreProject,
+      forceRecrete,
     } = options || {};
     customDestinationLocation = crossPlatformPath(customDestinationLocation);
     if (
@@ -449,7 +451,8 @@ export class Framework extends BaseFeatureForProject<Project> {
     const project = this.project;
     fileRelativePath = crossPlatformPath(fileRelativePath);
     if (
-      (_.isString(fileRelativePath) && !project.hasFile(fileRelativePath)) ||
+      (_.isString(fileRelativePath) &&
+        (!project.hasFile(fileRelativePath) || forceRecrete)) ||
       customDestinationLocation
     ) {
       const filePathSource = project.framework.coreProject.pathFor(
@@ -904,13 +907,13 @@ export class Framework extends BaseFeatureForProject<Project> {
   //#endregion
 
   NODE_BUILTIN_MODULES = [
-    "node:child_process",
-    "node:crypto",
-    "node:fs",
-    "node:fs/promises",
-    "node:path",
-    "node:url",
-    "node:util",
+    'node:child_process',
+    'node:crypto',
+    'node:fs',
+    'node:fs/promises',
+    'node:path',
+    'node:url',
+    'node:util',
     // --- File system & paths ---
     'fs',
     'fs/promises',

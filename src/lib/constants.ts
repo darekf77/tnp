@@ -89,6 +89,9 @@ export const friendlyNameForReleaseAutoConfigIsRequired = false;
 
 export const iconVscode128Basename = 'icon-vscode.png';
 
+export const startJsFromBin = 'start.js';
+export const startTsFromLib = 'start.ts';
+
 export const taonIgnore = '@taon' + '-' + 'ignore';
 
 export const DEBUG_WORD = 'Debug/Start';
@@ -791,6 +794,8 @@ export const packageJsonNpmLibAngular = fileName.package_json;
 
 export const packageJsonNgProject = fileName.package_json;
 
+export const packageJsonLibDist = fileName.package_json;
+
 export const tsconfigJsonMainProject = 'tsconfig.json';
 export const tsconfigNgProject = 'tsconfig.json';
 
@@ -832,6 +837,8 @@ export const indexDtsNpmPackage = fileName.index_d_ts;
 export const indexJSNpmPackage = fileName.index_js;
 
 export const indexJSElectronDist = fileName.index_js;
+
+export const indexTsProd = 'index-prod.ts'
 
 export const cliTsFromSrc = 'cli.ts';
 

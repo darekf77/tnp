@@ -1,7 +1,12 @@
 //#region imports
 import 'reflect-metadata';
 import axios from 'axios';
-import { config, taonPackageName } from 'tnp-core/src';
+import {
+  config,
+  crossPlatformPath,
+  taonPackageName,
+  child_process,
+} from 'tnp-core/src';
 import { chalk, Helpers, UtilsNetwork, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { UtilsOs } from 'tnp-core/src';
@@ -12,10 +17,184 @@ import cliClassArr from './project/cli/index';
 
 //#endregion
 
-export async function start(
+global.frameworkName = global.frameworkName ?? 'tnp';
+
+//#region startWrapper
+export function start(argv, filename): void {
+  //#region @backendFunc
+  const ora = require('ora');
+
+  //#region quick fixes
+
+  global.globalSystemToolMode = true;
+
+  const spinner = ora();
+  global.spinner = spinner;
+  //#endregion
+
+  //#region resolve constants
+  const childprocsecretarg = '-childproc';
+  // const isWinGitBash = process.platform === 'win32';
+
+  const procType =
+    argv[1]?.endsWith('tnp') || argv[1]?.endsWith('taon')
+      ? 'root'
+      : argv.find(a => a.startsWith(childprocsecretarg))
+        ? 'child-of-root'
+        : 'child-of-child';
+
+  // console.log({ procType });
+
+  const debugMode =
+    argv[1]?.endsWith('-debug') || argv[1]?.endsWith('-debug-brk');
+
+  global.spinnerInParentProcess = procType === 'child-of-root';
+
+  const orgArgv = [...argv];
+
+  global.tnpNonInteractive = argv.some(a =>
+    a.startsWith('--tnpNonInteractive'),
+  );
+
+  const spinnerIsDefault = !global.tnpNonInteractive;
+
+  const verbose = argv.includes('-verbose');
+  global.hideLog = !verbose;
+
+  global.skipCoreCheck = argv.some(a => a.startsWith('--skipCoreCheck'));
+
+  const verboseLevelArg = argv.find(a => a.startsWith('-verbose='));
+  global.verboseLevel = verboseLevelArg
+    ? Number(verboseLevelArg.replace('-verbose=', '')) || 0
+    : 0;
+
+  if (!verbose && verboseLevelArg) {
+    global.hideLog = false;
+  }
+  // console.log({ verbose, verboseLevelArg });
+
+  const spinnerOnInArgs = argv.includes('-spinner');
+  const spinnerOffInArgs =
+    argv.includes('-spinner=false') || argv.includes('-spinner=off');
+  //#endregion
+
+  //#region clean argv
+  process.argv = argv
+    .filter(a => !a.startsWith('-spinner'))
+    .filter(a => a !== '-childproc')
+    .filter(a => a !== '--skipCoreCheck')
+    .filter(a => !a.startsWith('-verbose'))
+    .map(a => (a === '-websql' ? '--websql' : a));
+  //#endregion
+
+  //#region spinner decision
+  let startSpinner = spinnerIsDefault || spinnerOnInArgs;
+
+  if (
+    spinnerOffInArgs ||
+    procType === 'child-of-root' ||
+    debugMode ||
+    verbose ||
+    global.frameworkName === 'tnp' ||
+    global.skipCoreCheck
+  ) {
+    startSpinner = false;
+  }
+  //#endregion
+
+  //#region child process wrapper
+  if (procType === 'child-of-root') {
+    global.spinner = {
+      start() {
+        process.send?.('start-spinner');
+      },
+      stop() {
+        process.send?.('stop-spinner');
+      },
+    };
+  }
+
+  // console.log({ startSpinner, filename });
+
+  if (startSpinner) {
+    spinner.start();
+
+    const env = {
+      ...process.env,
+      FORCE_COLOR: '1',
+    };
+
+    const cwd = process.cwd();
+    const argsToChild = [
+      ...orgArgv.slice(2),
+      verbose ? '-verbose' : '',
+      global.skipCoreCheck ? '--skipCoreCheck' : '',
+      spinnerOnInArgs ? '-spinner' : '',
+      childprocsecretarg,
+    ].filter(Boolean);
+
+    console.log(argsToChild);
+
+    const proc = child_process.fork(filename, argsToChild, {
+      env,
+      cwd,
+      stdio: [0, 1, 2, 'ipc'],
+    });
+
+    proc.on('exit', code => {
+      spinner.stop();
+      console.log('PROCESS EXIT');
+      // setTimeout(() => process.exit(code));
+    });
+
+    proc.on('message', msg => handleSpinnerMessage(msg, spinner));
+  } else {
+    argv = argv.filter(f => !!f);
+    run(argv, global.frameworkName);
+  }
+  //#endregion
+
+  //#endregion
+}
+//#endregion
+
+//#region helpers
+
+const handleSpinnerMessage = (message, spinner) => {
+  //#region @backendFunc
+  message = (message || '').trimLeft();
+
+  if (message === 'start-spinner') spinner.start();
+  else if (message === 'stop-spinner') spinner.stop();
+  else setText(message, message.startsWith('log::'));
+  //#endregion
+};
+
+const setText = (text, toSpinner = false) => {
+  //#region @backendFunc
+  const spinner = global.spinner;
+  if (text) text = text.split('::').slice(1).join('::');
+
+  if (spinner) {
+    if (toSpinner) {
+      spinner.text = text.replace(/\s+/g, ' ');
+    } else {
+      const was = spinner.isSpinning;
+      if (was) spinner.stop();
+      console.log(text);
+      if (was) spinner.start();
+    }
+  } else {
+    console.log(text);
+  }
+  //#endregion
+};
+//#endregion
+
+//#region run
+export async function run(
   argsv: string[],
-  frameworkName: 'tnp' | 'taon' = 'tnp',
-  mode: 'dist' | 'npm' = 'dist',
+  frameworkName: 'tnp' | 'taon',
 ): Promise<void> {
   config.frameworkName = frameworkName;
 
@@ -260,5 +439,5 @@ export async function start(
     },
   });
 }
-
+//#endregion
 export default start;

@@ -1,4 +1,4 @@
-import { config, fileName, folderName } from 'tnp-core/src';
+import { config, fileName, folderName, taonPackageName } from 'tnp-core/src';
 import { chalk, _, crossPlatformPath, glob, path, UtilsOs } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { BaseCommandLineFeature, Helpers, HelpersTaon } from 'tnp-helpers/src';
@@ -17,6 +17,10 @@ import {
   suffixLatest,
   inspectSuffix,
   inspectBrkSuffix,
+  startJsFromBin,
+  libFromSrc,
+  startTsFromLib,
+  indexTsFromSrc,
 } from '../../constants';
 import { EnvOptions, ReleaseArtifactTaon } from '../../options';
 import type { Project } from '../abstract/project';
@@ -85,6 +89,8 @@ export class $Link extends BaseCli {
         ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL
       }/${this.project.nameForCli}${suffixLatest}`;
 
+    this.recreateCliBasicStructure();
+
     Helpers.info(`Linking
 
       ${localReleaseFolder}
@@ -98,6 +104,151 @@ export class $Link extends BaseCli {
         `local/repo version of ${chalk.bold(this.project.nameForCli)}`,
     );
     this._exit();
+  }
+
+  recreateCliBasicStructure(globalBinFolderPath?: string) {
+    //#region @backendFunc
+
+    const pattern = `${this.project.pathFor(binMainProject)}/*`;
+    const countLinkInPackageJsonBin = glob
+      .sync(pattern)
+      .map(f => crossPlatformPath(f))
+      .filter(f => {
+        return (Helpers.readFile(f) || '').startsWith('#!/usr/bin/env');
+      });
+
+    // if (countLinkInPackageJsonBin.length === 0) {
+    const pathNormalLink = this.project.pathFor([
+      binMainProject,
+      this.project.name,
+    ]);
+
+    Helpers.writeFile(
+      pathNormalLink,
+      `#!/usr/bin/env -S node --no-deprecation
+//#${'reg' + 'ion'} @${'back' + 'end'}
+// --stack-trace-limit=10000
+${'req' + 'uire'}('./start');
+//#${'endreg' + 'ion'}
+`,
+    );
+    countLinkInPackageJsonBin.push(pathNormalLink);
+
+    const pathDebugLink = this.project.pathFor([
+      binMainProject,
+      `${this.project.name}${debugSuffix.replace('--', '-')}`,
+    ]);
+
+    Helpers.writeFile(
+      pathDebugLink,
+      `#!/usr/bin/env -S node --inspect --stack-trace-limit=10000 --no-deprecation
+//#${'reg' + 'ion'} @${'back' + 'end'}
+// --stack-trace-limit=10000
+${'req' + 'uire'}('./start');
+//#${'endreg' + 'ion'}
+`,
+    );
+    countLinkInPackageJsonBin.push(pathDebugLink);
+
+    const pathBrkDebugLink = this.project.pathFor([
+      binMainProject,
+      `${this.project.name}${debugBrkSuffix.replace('--', '-')}`,
+    ]);
+
+    Helpers.writeFile(
+      pathBrkDebugLink,
+      `#!/usr/bin/env -S node --inspect-brk --stack-trace-limit=10000 --no-deprecation
+//#${'reg' + 'ion'} @${'back' + 'end'}
+${'req' + 'uire'}('./start');
+//#${'endreg' + 'ion'}
+`,
+    );
+    countLinkInPackageJsonBin.push(pathBrkDebugLink);
+
+    if (this.project.name !== taonPackageName) { // QUICK_FIX For custom taon cli
+      this.project.framework.recreateFileFromCoreProject({
+        forceRecrete: true,
+        fileRelativePath: crossPlatformPath([srcMainProject, cliTsFromSrc]),
+      });
+    }
+
+    this.project.framework.recreateFileFromCoreProject({
+      forceRecrete: true,
+      fileRelativePath: crossPlatformPath([srcMainProject, indexTsFromSrc]),
+    });
+
+    this.project.framework.recreateFileFromCoreProject({
+      forceRecrete: true,
+      fileRelativePath: crossPlatformPath([binMainProject, startJsFromBin]),
+    });
+
+    if (!this.project.hasFile([srcMainProject, libFromSrc, startTsFromLib])) {
+      this.project.framework.recreateFileFromCoreProject({
+        fileRelativePath: crossPlatformPath([
+          srcMainProject,
+          libFromSrc,
+          startTsFromLib,
+        ]),
+      });
+    }
+
+    // }
+
+    const bin = {};
+    countLinkInPackageJsonBin.forEach(p => {
+      bin[path.basename(p)] = `${binMainProject}/${path.basename(p)}`;
+    });
+    this.project.packageJson.bin = bin;
+
+    if (globalBinFolderPath && _.isObject(this.project.packageJson.bin)) {
+      Object.keys(this.project.packageJson.bin).forEach(globalName => {
+        const localPath = path.join(
+          this.project.location,
+          this.project.packageJson.bin[globalName],
+        );
+        const destinationGlobalLink = path.join(
+          globalBinFolderPath,
+          globalName,
+        );
+        Helpers.removeIfExists(destinationGlobalLink);
+
+        const inspect =
+          globalName.endsWith(debugSuffix.replace('--', '')) ||
+          globalName.endsWith(inspectSuffix.replace('--', ''));
+
+        const selectedInspect: boolean =
+          globalName.endsWith(debugBrkSuffix.replace('--', '')) ||
+          globalName.endsWith(inspectBrkSuffix.replace('--', ''));
+
+        const attachDebugParam: '--inspect' | '--inspect-brk' | '' = inspect
+          ? inspectSuffix
+          : selectedInspect
+            ? inspectBrkSuffix
+            : '';
+
+        if (process.platform === 'win32') {
+          this._writeWin32LinkFiles({
+            attachDebugParam,
+            destinationGlobalLink,
+            globalBinFolderPath,
+            globalName,
+          });
+        } else {
+          Helpers.createSymLink(localPath, destinationGlobalLink);
+          const command = `chmod +x ${destinationGlobalLink}`;
+          Helpers.log(`Trying to make file executable global command "${chalk.bold(
+            globalName,
+          )}".
+
+            command: ${command}
+            `);
+          Helpers.run(command).sync();
+        }
+
+        Helpers.info(`Global link created for: ${chalk.bold(globalName)}`);
+      });
+    }
+    //#endregion
   }
 
   //#region global link
@@ -155,99 +306,10 @@ export class $Link extends BaseCli {
       Helpers.mkdirp(project.pathFor(binMainProject));
     }
 
-    const pattern = `${project.pathFor(binMainProject)}/*`;
-    const countLinkInPackageJsonBin = glob
-      .sync(pattern)
-      .map(f => crossPlatformPath(f))
-      .filter(f => {
-        return (Helpers.readFile(f) || '').startsWith('#!/usr/bin/env');
-      });
-
-    if (countLinkInPackageJsonBin.length === 0) {
-      const pathNormalLink = HelpersTaon.paths.create(
-        project.pathFor([binMainProject, project.name]),
-      );
-      Helpers.writeFile(pathNormalLink, this._templateBin());
-      countLinkInPackageJsonBin.push(pathNormalLink);
-
-      const pathDebugLink = HelpersTaon.paths.create(
-        project.pathFor([
-          binMainProject,
-          `${project.name}${debugSuffix.replace('--', '-')}`,
-        ]),
-      );
-      Helpers.writeFile(pathDebugLink, this._templateBin(true));
-      countLinkInPackageJsonBin.push(pathDebugLink);
-
-      const cliTsFile = HelpersTaon.paths.create(
-        project.pathFor([srcMainProject, fileName.cli_ts]),
-      );
-      if (!Helpers.exists(cliTsFile)) {
-        this.project.framework.recreateFileFromCoreProject({
-          fileRelativePath: crossPlatformPath([srcMainProject, cliTsFromSrc]),
-        });
-      }
-    }
-
-    const bin = {};
-    countLinkInPackageJsonBin.forEach(p => {
-      bin[path.basename(p)] = `${binMainProject}/${path.basename(p)}`;
-    });
-    project.packageJson.bin = bin;
-
-    if (_.isObject(project.packageJson.bin)) {
-      Object.keys(project.packageJson.bin).forEach(globalName => {
-        const localPath = path.join(
-          project.location,
-          project.packageJson.bin[globalName],
-        );
-        const destinationGlobalLink = path.join(
-          globalBinFolderPath,
-          globalName,
-        );
-        Helpers.removeIfExists(destinationGlobalLink);
-
-        const inspect =
-          globalName.endsWith(debugSuffix.replace('--', '')) ||
-          globalName.endsWith(inspectSuffix.replace('--', ''));
-
-        const selectedInspect: boolean =
-          globalName.endsWith(debugBrkSuffix.replace('--', '')) ||
-          globalName.endsWith(inspectBrkSuffix.replace('--', ''));
-
-        const attachDebugParam: '--inspect' | '--inspect-brk' | '' = inspect
-          ? inspectSuffix
-          : selectedInspect
-            ? inspectBrkSuffix
-            : '';
-
-        if (process.platform === 'win32') {
-          this._writeWin32LinkFiles({
-            attachDebugParam,
-            destinationGlobalLink,
-            globalBinFolderPath,
-            globalName,
-            project,
-          });
-        } else {
-          Helpers.createSymLink(localPath, destinationGlobalLink);
-          const command = `chmod +x ${destinationGlobalLink}`;
-          Helpers.log(`Trying to make file executable global command "${chalk.bold(
-            globalName,
-          )}".
-
-            command: ${command}
-            `);
-          Helpers.run(command).sync();
-        }
-
-        Helpers.info(`Global link created for: ${chalk.bold(globalName)}`);
-      });
-    }
+    this.recreateCliBasicStructure(globalBinFolderPath);
 
     this._exit();
     //#endregion
-
   }
   //#endregion
 
@@ -255,7 +317,6 @@ export class $Link extends BaseCli {
   _writeWin32LinkFiles(options: {
     destinationGlobalLink: string;
     attachDebugParam: '--inspect' | '--inspect-brk' | '';
-    project: Project;
     globalName: string;
     globalBinFolderPath: string;
   }) {
@@ -263,7 +324,6 @@ export class $Link extends BaseCli {
       attachDebugParam,
       destinationGlobalLink,
       globalName,
-      project,
       globalBinFolderPath,
     } = options;
     try {
@@ -279,12 +339,12 @@ esac
 
 if [ -x "$basedir/node" ]; then
 "$basedir/node" ${attachDebugParam} "$basedir/node_modules/${
-          project.nameForNpmPackage
+          this.project.nameForNpmPackage
         }/bin/${globalName}" "$@"
 ret=$?
 else
 node ${attachDebugParam} "$basedir/node_modules/${
-          project.nameForNpmPackage
+          this.project.nameForNpmPackage
         }/bin/${globalName}" "$@"
 ret=$?
 fi
@@ -307,7 +367,7 @@ $exe = if ($PSVersionTable.PSVersion -lt "6.0" -or $IsWindows) { ".exe" } else {
 
 $nodePath = if (Test-Path "$basedir/node$exe") { "$basedir/node$exe" } else { "node$exe" }
 $scriptToRun = "$basedir/node_modules/${
-              project.nameForNpmPackage
+              this.project.nameForNpmPackage
             }/${binMainProject}/${globalName}"
 
 $ret = & $nodePath ${`"${attachDebugParam}"`} $scriptToRun @args
@@ -326,12 +386,12 @@ $exe=".exe"
 $ret=0
 if (Test-Path "$basedir/node$exe") {
 & "$basedir/node$exe"  "$basedir/node_modules/${
-              project.nameForNpmPackage
+              this.project.nameForNpmPackage
             }/${binMainProject}/${globalName}" $args
 $ret=$LASTEXITCODE
 } else {
 & "node$exe"  "$basedir/node_modules/${
-              project.nameForNpmPackage
+              this.project.nameForNpmPackage
             }/${binMainProject}/${globalName}" $args
 $ret=$LASTEXITCODE
 }
@@ -357,7 +417,7 @@ SET PATHEXT=%PATHEXT:;.JS;=;%
 )
 
 "%_prog%"  "%dp0%\\node_modules\\${
-          project.nameForNpmPackage
+          this.project.nameForNpmPackage
         }\\bin\\${globalName}" %*
 ENDLOCAL
 EXIT /b %errorlevel%
@@ -376,23 +436,6 @@ EXIT /b
     }
   }
   //#endregion
-
-  //#region template bin
-  _templateBin(debug = false) {
-    return `#!/usr/bin/env node ${debug ? '--inspect' : ''}
-  var { fse, crossPlatformPath, path } = require('tnp-core/src');
-  var path = {
-    dist: path.join(crossPlatformPath(__dirname), '../${distMainProject}/index.js'),
-    npm: path.join(crossPlatformPath(__dirname), '../index.js')
-  }
-  var p = fse.existsSync(path.dist) ? path.dist : path.npm;
-  global.globalSystemToolMode = true;
-  var run = require(p).run;
-  run(process.argv.slice(2));
-    `;
-  }
-  //#endregion
-
 }
 
 export default {

@@ -13,10 +13,11 @@ import {
   CoreModels,
   chalk,
 } from 'tnp-core/src';
-import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import { getCleanImport } from '../../../../../../../app-utils';
 import {
+  appFromSrc,
   browserFromCompiledDist,
   browserMainProject,
   browserNpmPackage,
@@ -27,6 +28,7 @@ import {
   libFromNpmPackage,
   libFromSrc,
   libs,
+  packageJsonLibDist,
   prodSuffix,
   reExportJson,
   splitNamespacesJson,
@@ -139,10 +141,7 @@ export class BackendCompilation {
       fse.mkdirpSync(outDistPath);
     }
 
-    const isReleaseBuild =
-      !this.buildOptions.build.watch && this.buildOptions.release.releaseType;
-
-    if (isReleaseBuild) {
+    if (!this.buildOptions.build.watch) {
       this.namespacesForPackagesLib = new Map();
       this.namespacesForPackagesBrowser = new Map();
       this.namespacesForPackagesWebsql = new Map();
@@ -260,7 +259,7 @@ export class BackendCompilation {
       }
     }
 
-    if (isReleaseBuild && this.buildOptions.build.prod) {
+    if (!this.buildOptions.build.watch && this.buildOptions.build.prod) {
       //#region detect files
       const filesBrowser = UtilsFilesFoldersSync.getFilesFrom(
         this.project.pathFor(tmpSrcDist + prodSuffix),
@@ -328,6 +327,34 @@ export class BackendCompilation {
     await this.libCompilation(this.buildOptions, {
       generateDeclarations: true,
     });
+
+    if (!this.buildOptions.build.watch && this.buildOptions.build.prod) {
+      HelpersTaon.copy(
+        this.project.pathFor([tmpSourceDist + prodSuffix]),
+        this.project.pathFor([distMainProject + prodSuffix]),
+        {
+          recursive: true,
+          overwrite: true,
+          filter: (src: string, dest: string): boolean => {
+            // console.log('src', src)
+            src = crossPlatformPath(src);
+            // console.log('isAllowed', isAllowed)
+            return !src.endsWith(splitNamespacesJson);
+          },
+        },
+      );
+      UtilsFilesFoldersSync.getFilesFrom(
+        this.project.pathFor([distMainProject + prodSuffix]),
+        {
+          recursive: true,
+          followSymlinks: false,
+        },
+      ).filter(f => f.endsWith('.ts') || f.endsWith('.tsx'));
+      // .forEach(f => {
+      //   UtilsTypescript.removeUnusedImportsSingleFile(f);
+      // });
+    }
+
     //#endregion
   }
   //#endregion
@@ -667,6 +694,27 @@ Starting (${
         stdout: ['Watching for file changes.'],
       },
     });
+
+    // Helpers.writeJson(
+    //   [
+    //     cwd,
+    //     this.buildOptions.build.prod
+    //       ? `${distMainProject}${prodSuffix}`
+    //       : distMainProject,
+    //     libFromCompiledDist,
+    //     packageJsonLibDist,
+    //   ],
+    //   {
+    //     name: `${this.project.nameForNpmPackage}/${
+    //       libFromCompiledDist + this.buildOptions.build.prod ? prodSuffix : ''
+    //     }`,
+    //     type: 'module',
+    //     exports: {
+    //       '.': './index.js',
+    //     },
+    //   },
+    // );
+
     Helpers.logInfo(`* Typescript compilation second part done`);
     Helpers.info(`
 

@@ -22,7 +22,11 @@ export class ArtifactsGlobalHelper {
   public readonly branding: Branding;
 
   constructor(private project: Project) {
-    this.branding = new Branding(project);
+    //#region @backend
+    this.branding = new (require('./branding').Branding as typeof Branding)(
+      project,
+    );
+    //#endregion
     // this.docker = new DockerHelper(project); /// TODO @UNCOMMENT when docker is ready
   }
 

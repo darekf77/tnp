@@ -4,7 +4,12 @@ import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
-import { Helpers, BaseProject, PushProcessOptions, HelpersTaon } from 'tnp-helpers/src';
+import {
+  Helpers,
+  BaseProject,
+  PushProcessOptions,
+  HelpersTaon,
+} from 'tnp-helpers/src';
 
 import {
   binMainProject,
@@ -17,10 +22,10 @@ import {
 } from '../../constants';
 import { EnvOptions, ReleaseType } from '../../options';
 
-import { EnvironmentConfig } from './artifacts/__helpers__/environment-config/environment-config';
+import type { EnvironmentConfig } from './artifacts/__helpers__/environment-config/environment-config';
 import { ArtifactManager } from './artifacts/artifacts-manager';
 import { FileFoldersOperations } from './file-folders-operations';
-import { Framework } from './framework';
+import type { Framework } from './framework';
 import { Git } from './git';
 import { IgnoreHide } from './ignore-hide';
 import { LibraryBuild } from './library-build';
@@ -111,7 +116,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     this.setType(this.taonJson.type || LibTypeEnum.UNKNOWN);
 
-    this.framework = new Framework(this);
+    this.framework = new (require('./framework').Framework as typeof Framework)(
+      this as any,
+    );
 
     this.git = new (require('./git').Git as typeof Git)(this as any);
 
@@ -141,11 +148,14 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     this.linter = new (require('./linter').Linter as typeof Linter)(this);
 
-    this.packagesRecognition = new PackagesRecognition(this);
+    this.packagesRecognition = new (require('./packages-recognition')
+      .PackagesRecognition as typeof PackagesRecognition)(this);
 
     this.artifactsManager = ArtifactManager.for(this);
 
-    this.environmentConfig = new EnvironmentConfig(this);
+    this.environmentConfig =
+      new (require('./artifacts/__helpers__/environment-config/environment-config')
+        .EnvironmentConfig as typeof EnvironmentConfig)(this);
 
     this.refactor = new Refactor(this);
     Project.ins.add(this);

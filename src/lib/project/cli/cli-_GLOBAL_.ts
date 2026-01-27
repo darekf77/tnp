@@ -773,7 +773,9 @@ export class $Global extends BaseGlobalCommandLine<
   //#region file info
   FILEINFO = args => {
     //#region @backendFunc
-    console.log(HelpersTaon.getMostRecentFilesNames(crossPlatformPath(this.cwd)));
+    console.log(
+      HelpersTaon.getMostRecentFilesNames(crossPlatformPath(this.cwd)),
+    );
 
     this._exit();
     //#endregion
