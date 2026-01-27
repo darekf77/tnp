@@ -1591,16 +1591,16 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   ): Promise<void> {
     //#region @backendFunc
 
-    const destCliTSProd = crossPlatformPath([
-      releaseAbsLocation,
-      indexTsProd,
-    ]);
+    const destCliTSProd = crossPlatformPath([releaseAbsLocation, indexTsProd]);
 
     let destCli = crossPlatformPath([releaseAbsLocation, indexJSNpmPackage]);
     const destCliMin = crossPlatformPath([releaseAbsLocation, cliJSNpmPackage]);
 
     if (prod) {
-      Helpers.writeFile(destCliTSProd, `export * from './${libFromCompiledDist}${prodSuffix}';\n`);
+      Helpers.writeFile(
+        destCliTSProd,
+        `export * from './${libFromCompiledDist}${prodSuffix}';\n`,
+      );
       destCli = destCliTSProd;
     }
 
@@ -1642,7 +1642,9 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     ]);
     Helpers.writeFile(
       destStartJS,
-      `console.log('<<< USING BUNDLED CLI >>>');global.taonUsingBundledCliMode = true;` +
+      `console.log('<<< USING BUNDLED CLI >>>');\n` +
+        `global.taonUsingBundledCliMode = true;\n` +
+        `global.frameworkName = ${this.project.nameForCli};` +
         `\n${Helpers.readFile(destStartJS)}`,
     );
 
