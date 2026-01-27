@@ -7,10 +7,6 @@ const env: Partial<EnvOptions> = {
     prod: true,
   },
   release: {
-    skipNpmPublish: true,
-    skipReleaseQuestion: true,
-    skipResolvingGitChanges: true,
-    skipTagGitPush: true,
     lib: {
       doNotIncludeLibFiles: true,
     },
