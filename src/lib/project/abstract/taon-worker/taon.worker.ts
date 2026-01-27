@@ -25,7 +25,6 @@ export class TaonProjectsWorker extends BaseCliWorker<
   TaonProjectsController,
   TaonTerminalUI
 > {
-
   //#region properties
 
   // @ts-ignore
@@ -53,10 +52,10 @@ export class TaonProjectsWorker extends BaseCliWorker<
     /**
      * external command that will start service
      */
-    startCommand: string,
+    startCommandFn: () => string,
     public readonly ins: TaonProjectResolve,
   ) {
-    super(serviceID, startCommand, CURRENT_PACKAGE_VERSION);
+    super(serviceID, startCommandFn, CURRENT_PACKAGE_VERSION);
     // console.log({
     //   depoyments: UtilsCliClassMethod.getFrom($Cloud.prototype.deployments),
     //   instances: UtilsCliClassMethod.getFrom($Cloud.prototype.instances),
@@ -67,15 +66,15 @@ export class TaonProjectsWorker extends BaseCliWorker<
     //#region @backend
     this.deploymentsWorker = new DeploymentsWorker(
       'taon-project-deployments-worker',
-      `${global.frameworkName} cloud:deployments`,
+      () => `${config.frameworkName} cloud:deployments`,
     );
     this.instancesWorker = new InstancesWorker(
       'taon-project-instances-worker',
-      `${global.frameworkName} cloud:instances`,
+      () => `${config.frameworkName} cloud:instances`,
     );
     this.processesWorker = new ProcessesWorker(
       'taon-project-processes-worker',
-      `${global.frameworkName} cloud:processes`,
+      () => `${config.frameworkName} cloud:processes`,
     );
 
     // this.deploymentsWorker = new DeploymentsWorker(
@@ -113,7 +112,6 @@ export class TaonProjectsWorker extends BaseCliWorker<
     );
 
     //#endregion
-
   }
 
   //#endregion
@@ -124,7 +122,6 @@ export class TaonProjectsWorker extends BaseCliWorker<
    * this will crash if process already started
    */
   async startNormallyInCurrentProcess(): Promise<void> {
-
     //#region @backendFunc
 
     Helpers.taskStarted(`Waiting for ports manager to be started...`);
@@ -174,13 +171,11 @@ export class TaonProjectsWorker extends BaseCliWorker<
       },
     });
     //#endregion
-
   }
   //#endregion
 
   //#region methods / enable cloud
   async enableCloud(): Promise<void> {
-
     //#region @backendFunc
     UtilsTerminal.clearConsole();
     const isTraefikStarted = await this.traefikProvider.startTraefik();
@@ -201,13 +196,11 @@ export class TaonProjectsWorker extends BaseCliWorker<
     Helpers.taskDone(`Taon cloud started! Enjoy deploying new projects!`);
     await UtilsTerminal.pressAnyKeyToContinueAsync();
     //#endregion
-
   }
   //#endregion
 
   //#region methods / disable cloud
   async disableCloud(): Promise<void> {
-
     //#region @backendFunc
     while (true) {
       UtilsTerminal.clearConsole();
@@ -221,8 +214,6 @@ export class TaonProjectsWorker extends BaseCliWorker<
       break;
     }
     //#endregion
-
   }
   //#endregion
-
 }

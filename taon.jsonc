@@ -28,7 +28,19 @@
   "autoReleaseConfigAllowedItems": [
     {
       "artifactName": "npm-lib-and-cli-tool",
-      "taskName": "npm"
+      "taskName": "npm",
+    },
+    {
+      "artifactName": "npm-lib-and-cli-tool",
+      "envName": "prod",
+      "envNumber": 1,
+      "releaseType": "local",
+      "taskName": "cli-local-prod"
+    },
+    {
+      "artifactName": "npm-lib-and-cli-tool",
+      "envName": "localhost",
+      "taskName": "local",
     },
   ],
 
@@ -144,5 +156,5 @@
       "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     },
     "sideEffects": false,
-  }
+  },
 }

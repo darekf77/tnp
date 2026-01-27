@@ -102,7 +102,11 @@ export class ArtifactManager {
     private project: Project,
     public globalHelper: ArtifactsGlobalHelper,
   ) {
-    this.filesRecreator = new FilesRecreator(this.project);
+    //#region @backend
+    this.filesRecreator =
+      new (require('./npm-lib-and-cli-tool/tools/files-recreation')
+        .FilesRecreator as typeof FilesRecreator)(project);
+    //#endregion
   }
   //#endregion
 
@@ -782,8 +786,8 @@ export class ArtifactManager {
             taonInstanceIp: item.taonInstanceIp,
           },
         });
-        if(!this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
-          await this.project.clear()
+        if (!this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
+          await this.project.clear();
         }
         await this.release(clonedOptions, true);
       }

@@ -1,10 +1,10 @@
-import { config, taonPackageName } from 'tnp-core/src';
+import { config, taonPackageName, Utils } from 'tnp-core/src';
 import { CoreModels, fse, path } from 'tnp-core/src';
 import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-// TODO QUICK FIX for version
-import { Project } from '../abstract/project';
+import { globalSpinner } from '../../constants';
+import { Project } from '../abstract/project'; // TODO QUICK FIX for version
 
 import { BaseCli } from './base-cli';
 
@@ -12,7 +12,6 @@ declare const ENV: any;
 
 // @ts-ignore TODO weird inheritance problem
 export class $Version extends BaseCli {
-
   //#region _
   public async _(): Promise<void> {
     // Helpers.log(`Framework name: '${config.frameworkName}'`);
@@ -22,8 +21,17 @@ export class $Version extends BaseCli {
       Helpers.success(`I am secret project!!!`);
     }
     //#endregion
+    // globalSpinner.instance.stop();
+    // globalSpinner.instance.stop();
+    // Helpers.info('spinner stopped, waiting 2 second');
+    // await Utils.wait(5);
+    // Helpers.info('spinner started again, waiting 2 second');
+    // globalSpinner.instance.start();
+    // await Utils.wait(5);
 
-    // global.spinner?.start();
+    // globalSpinner.instance.succeed('niger!');
+    // globalSpinner.instance.stop();
+
     // a(1);
     // Helpers.info(`${config.frameworkName} location: ${ this.Tnp.location}`)
     // await Utils.wait(1);
@@ -38,8 +46,7 @@ export class $Version extends BaseCli {
 
     // global.spinner?.start();
     // Helpers.info('waiting next time!!. ..');
-    // await Utils.wait(5);
-    // global.spinner?.stop();
+
     // log.data('Hellleoeoeo')
 
     // TODO QUICK FIX
@@ -55,6 +62,7 @@ export class $Version extends BaseCli {
   Tnp: ${tnpProj?.packageJson.version ? `v${tnpProj.packageJson.version}` : '-'}
 
     `);
+    // await Utils.wait(5);
     this._exit();
   }
   //#endregion
@@ -68,7 +76,6 @@ export class $Version extends BaseCli {
     `);
     this._exit();
   }
-
 }
 
 export default {

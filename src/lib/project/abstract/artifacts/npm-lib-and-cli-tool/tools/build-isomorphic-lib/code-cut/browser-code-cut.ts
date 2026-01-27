@@ -25,6 +25,7 @@ import {
   browserMainProject,
   browserNpmPackage,
   browserTypeString,
+  distMainProject,
   indexTsFromLibFromSrc,
   libFromImport,
   libFromNpmPackage,
@@ -414,7 +415,7 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / save normal file
-  private saveNormalFile(isTsFile: boolean): void {
+  private saveNormalBrowserFile(isTsFile: boolean): void {
     //#region @backendFunc
     // console.log('SAVE NORMAL FILE')
     if (this.isAssetsFile) {
@@ -453,6 +454,7 @@ export class BrowserCodeCut {
         !this.relativePath.startsWith(`${appFromSrc}/`) &&
         !this.relativePath.startsWith(`${appFromSrc}.`)
       ) {
+        // NORMAL TS BROWSER FILE FOR LIB
         fse.writeFileSync(
           this.absFileSourcePathBrowserOrWebsql,
           this.changeNpmNameToLocalLibNamePath(
@@ -463,6 +465,7 @@ export class BrowserCodeCut {
           'utf8',
         );
       }
+      // NORMAL TS BROWSER FILE FOR APP
       fse.writeFileSync(
         this.absFileSourcePathBrowserOrWebsqlAPPONLY,
         this.changeNpmNameToLocalLibNamePath(
@@ -474,12 +477,14 @@ export class BrowserCodeCut {
       );
     } else {
       if (!this.relativePath.startsWith(`${appFromSrc}/`)) {
+        // NORMAL JSON, TXT (OR ANYTHING TEXT BASED) FOR BROWSER FILE FOR LIB
         fse.writeFileSync(
           this.absFileSourcePathBrowserOrWebsql,
           this.rawContentForBrowser,
           'utf8',
         );
       }
+      // NORMAL JSON, TXT (OR ANYTHING TEXT BASED) FOR BROWSER FILE FOR APP
       fse.writeFileSync(
         this.absFileSourcePathBrowserOrWebsqlAPPONLY,
         this.rawContentForAPPONLYBrowser,
@@ -749,7 +754,7 @@ export class BrowserCodeCut {
   private save(): void {
     //#region @backendFunc
     if (this.isAssetsFile) {
-      this.saveNormalFile(false);
+      this.saveNormalBrowserFile(false);
       return;
     }
     // Helpers.log(`saving ismoprhic file: ${this.absoluteFilePath}`, 1)
@@ -762,7 +767,7 @@ export class BrowserCodeCut {
     if (this.isEmptyBrowserFile) {
       this.saveEmptyFile(isTsFile);
     } else {
-      this.saveNormalFile(isTsFile);
+      this.saveNormalBrowserFile(isTsFile);
     }
 
     if (backendFileSaveMode) {
@@ -793,6 +798,7 @@ export class BrowserCodeCut {
               },
             );
 
+      // SAVE BACKEND FILE
       fse.writeFileSync(absoluteBackendDestFilePath, contentStandalone, 'utf8');
     }
     //#endregion

@@ -1247,7 +1247,7 @@ ${path.dirname(newZipFileName)}
     while (true) {
       try {
         Helpers.info(`Uploading zip file to taon server...`);
-        globalSpinner.start();
+        globalSpinner.instance.start();
         uploadResponse = await deploymentController.uploadLocalFileToServer(
           newZipFileName,
           {
@@ -1255,17 +1255,17 @@ ${path.dirname(newZipFileName)}
               const percentCompleted = Math.round(
                 (progressEvent.loaded * 100) / progressEvent.total,
               );
-              globalSpinner.text = `Upload progress: ${percentCompleted}%`;
+              globalSpinner.instance.text = `Upload progress: ${percentCompleted}%`;
               // console.log(`Upload progress: ${percentCompleted}%`);
             },
           },
           tmpProjDataForUpload,
         );
 
-        globalSpinner.succeed(`Deployment upload done!`);
+        globalSpinner.instance.succeed(`Deployment upload done!`);
         break;
       } catch (error) {
-        globalSpinner.fail(`Error during upload zip file to taon server!`);
+        globalSpinner.instance.fail(`Error during upload zip file to taon server!`);
         const errMsg = (
           error instanceof Error ? error.message : error
         ) as string;

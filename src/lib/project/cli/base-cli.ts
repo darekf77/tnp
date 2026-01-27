@@ -1,6 +1,7 @@
 import { _ } from 'tnp-core/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
+import { globalSpinner } from '../../constants';
 import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 
@@ -26,6 +27,7 @@ export class BaseCli extends BaseCommandLineFeature<EnvOptions, Project> {
       });
       delete this.params['skipMenuAuto'];
     }
+
   }
 
   protected async __recreateEnvForArtifactAndEnvironment(): Promise<void> {

@@ -71,6 +71,7 @@ import {
 import {
   containerPrefix,
   DEFAULT_FRAMEWORK_VERSION,
+  globalSpinner,
   keysMap,
   nodeModulesMainProject,
   packageJsonMainProject,
@@ -773,7 +774,9 @@ export class $Global extends BaseGlobalCommandLine<
   //#region file info
   FILEINFO = args => {
     //#region @backendFunc
-    console.log(HelpersTaon.getMostRecentFilesNames(crossPlatformPath(this.cwd)));
+    console.log(
+      HelpersTaon.getMostRecentFilesNames(crossPlatformPath(this.cwd)),
+    );
 
     this._exit();
     //#endregion
@@ -1946,6 +1949,19 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
   aaaaa() {
     console.info('GLOBAL COMMAND WORKS!');
     this._exit();
+  }
+
+  async spinner() {
+    //#region @backend
+    console.info('starting spinner');
+    globalSpinner.instance.start();
+    await Utils.wait(2);
+    globalSpinner.instance.text = 'Hello world !';
+    await Utils.wait(2);
+    console.info('stoppiong spinner and waiting 2 seconds');
+    globalSpinner.instance.stop();
+    this._exit();
+    //#endregion
   }
 }
 

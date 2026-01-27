@@ -43,6 +43,7 @@ import {
   dotNpmrcMainProject,
   indexDtsNpmPackage,
   indexJSNpmPackage,
+  indexTsProd,
   libFromCompiledDist,
   libFromNpmPackage,
   libFromSrc,
@@ -1046,6 +1047,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       await this.backendIncludeNodeModulesInCompilation(
         releaseAbsPath,
         releaseOptions.release.cli.minify,
+        releaseOptions.build.prod,
       );
       // });
     }
@@ -1585,11 +1587,22 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   async backendIncludeNodeModulesInCompilation(
     releaseAbsLocation: string,
     minify: boolean,
+    prod: boolean,
   ): Promise<void> {
     //#region @backendFunc
 
-    const destCli = crossPlatformPath([releaseAbsLocation, indexJSNpmPackage]);
+    const destCliTSProd = crossPlatformPath([
+      releaseAbsLocation,
+      indexTsProd,
+    ]);
+
+    let destCli = crossPlatformPath([releaseAbsLocation, indexJSNpmPackage]);
     const destCliMin = crossPlatformPath([releaseAbsLocation, cliJSNpmPackage]);
+
+    if (prod) {
+      Helpers.writeFile(destCliTSProd, `export * from './${libFromCompiledDist}${prodSuffix}';\n`);
+      destCli = destCliTSProd;
+    }
 
     await HelpersTaon.bundleCodeIntoSingleFile(destCli, destCliMin, {
       minify,

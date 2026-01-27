@@ -89,6 +89,9 @@ export const friendlyNameForReleaseAutoConfigIsRequired = false;
 
 export const iconVscode128Basename = 'icon-vscode.png';
 
+export const startJsFromBin = 'start.js';
+export const startTsFromLib = 'start.ts';
+
 export const taonIgnore = '@taon' + '-' + 'ignore';
 
 export const DEBUG_WORD = 'Debug/Start';
@@ -133,13 +136,21 @@ export const OVERRIDE_FROM_TNP = [
   'scripts',
 ];
 
-let globalSpinner: ora.Ora;
+export const globalSpinner = {
+  get instance(): Pick<
+    ora.Ora,
+    'start' | 'text' | 'succeed' | 'stop' | 'fail'
+  > {
+    //#region @backendFunc
+    return global.spinner;
+    //#endregion
+  },
+};
 
-//#region @backend
-globalSpinner = global.spinner;
-//#endregion
-
-export { globalSpinner };
+export const startSpinner = 'start-spinner';
+export const stopSpinner = 'stop-spinner';
+export const failSpinner = 'fail-spinner';
+export const succeedSpinner = 'succeed-spinner';
 
 export const USE_IN_HOST_CONFIG_FULL_CONTEXT_PATH = false;
 
@@ -202,6 +213,10 @@ export const argsToClear = [
   'struct',
   'verbose',
 ];
+
+export const verbosePrefix = '-verbose';
+export const spinnerPrefix = '-spinner';
+export const websqlPrefix = '-websql';
 
 export const folder_shared_folder_info = 'shared_folder_info.txt';
 export const taonConfigSchemaJsonStandalone =
@@ -791,6 +806,8 @@ export const packageJsonNpmLibAngular = fileName.package_json;
 
 export const packageJsonNgProject = fileName.package_json;
 
+export const packageJsonLibDist = fileName.package_json;
+
 export const tsconfigJsonMainProject = 'tsconfig.json';
 export const tsconfigNgProject = 'tsconfig.json';
 
@@ -821,7 +838,8 @@ export const webpackConfigJsMainProject = 'webpack.config.js';
 
 export const esLintCustomRulesMainProject = 'eslint-rules';
 export const esLintConfigJsonMainProject = 'eslint.config.ts';
-export const esLintRuleNoNamespaceReExport = 'eslint-rules/no-namespace-reexport.ts';
+export const esLintRuleNoNamespaceReExport =
+  'eslint-rules/no-namespace-reexport.ts';
 
 export const runJsMainProject = 'run.js';
 
@@ -832,6 +850,8 @@ export const indexDtsNpmPackage = fileName.index_d_ts;
 export const indexJSNpmPackage = fileName.index_js;
 
 export const indexJSElectronDist = fileName.index_js;
+
+export const indexTsProd = 'index-prod.ts';
 
 export const cliTsFromSrc = 'cli.ts';
 

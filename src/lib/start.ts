@@ -1,25 +1,242 @@
 //#region imports
 import 'reflect-metadata';
 import axios from 'axios';
-import { config, taonPackageName } from 'tnp-core/src';
+import type * as ora from 'ora';
+import {
+  config,
+  crossPlatformPath,
+  taonPackageName,
+  child_process,
+  Utils,
+  tnpPackageName,
+} from 'tnp-core/src';
 import { chalk, Helpers, UtilsNetwork, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { UtilsOs } from 'tnp-core/src';
 import { BaseCLiWorkerStartMode, BaseStartConfig } from 'tnp-helpers/src';
 
 // import { globalSpinner } from './constants';
+import {
+  debugBrkSuffix,
+  debugSuffix,
+  failSpinner,
+  globalSpinner,
+  SKIP_CORE_CHECK_PARAM,
+  spinnerPrefix,
+  startSpinner,
+  stopSpinner,
+  succeedSpinner,
+  verbosePrefix,
+  websqlPrefix,
+} from './constants';
 import cliClassArr from './project/cli/index';
 
 //#endregion
 
-export async function start(
+global.frameworkName = global.frameworkName ?? tnpPackageName;
+
+//#region startWrapper
+export function start(argv, filename): void {
+  //#region @backendFunc
+  const oraSpinner = require('ora');
+
+  //#region quick fixes
+
+  global.globalSystemToolMode = true;
+
+  global.spinner = oraSpinner();
+  //#endregion
+
+  //#region resolve constants
+  const childprocsecretarg = '-childproc';
+  // const isWinGitBash = process.platform === 'win32';
+  const debugMode =
+    argv[1]?.endsWith(debugSuffix.replace('--', '-')) ||
+    argv[1]?.endsWith(debugBrkSuffix.replace('--', '-'));
+
+  const procType =
+    argv[1]?.endsWith(tnpPackageName) ||
+    argv[1]?.endsWith(taonPackageName) ||
+    debugMode
+      ? 'root'
+      : argv.find(a => a.startsWith(childprocsecretarg))
+        ? 'child-of-root'
+        : 'child-of-child';
+
+  // console.log({ procType, argv });
+
+  global.spinnerInParentProcess = procType === 'child-of-root';
+
+  const orgArgv = [...argv];
+
+  global.tnpNonInteractive = argv.some(a =>
+    a.startsWith('--tnpNonInteractive'),
+  );
+
+  const spinnerIsDefault = !global.tnpNonInteractive;
+
+  const verboseInArgs = argv.includes(verbosePrefix);
+  global.hideLog = !verboseInArgs;
+
+  global.skipCoreCheck = argv.some(a => a.startsWith(SKIP_CORE_CHECK_PARAM));
+
+  const verboseLevelArg = argv.find(a => a.startsWith(`${verbosePrefix}=`));
+  global.verboseLevel = verboseLevelArg
+    ? Number(verboseLevelArg.replace(`${verbosePrefix}=`, '')) || 0
+    : 0;
+
+  if (!verboseInArgs && verboseLevelArg) {
+    global.hideLog = false;
+  }
+  // console.log({ verbose, verboseLevelArg });
+
+  const spinnerOnInArgs = argv.includes(spinnerPrefix);
+  const spinnerOffInArgs =
+    argv.includes(`${spinnerPrefix}=false`) ||
+    argv.includes(`${spinnerPrefix}=off`);
+  //#endregion
+
+  //#region clean argv
+  argv = argv
+    .filter(a => !a.startsWith(spinnerPrefix))
+    .filter(a => a !== childprocsecretarg)
+    .filter(a => a !== SKIP_CORE_CHECK_PARAM)
+    .filter(a => !a.startsWith(verbosePrefix))
+    .map(a => (a === websqlPrefix ? `-${websqlPrefix}` : a));
+
+  argv = argv.filter(f => !!f);
+
+  process.argv = argv;
+  //#endregion
+
+  //#region spinner decision
+  let startSpinner = spinnerIsDefault || spinnerOnInArgs;
+
+  if (
+    spinnerOffInArgs ||
+    procType === 'child-of-root' ||
+    debugMode ||
+    verboseInArgs ||
+    global.frameworkName === tnpPackageName ||
+    global.skipCoreCheck
+  ) {
+    startSpinner = false;
+  }
+  //#endregion
+
+  //#region child process wrapper
+  if (procType === 'root') {
+    global.spinner = {
+      start() {
+        process.send?.(startSpinner);
+      },
+      stop() {
+        process.send?.(startSpinner);
+      },
+      fail(errMSg) {
+        process.send?.(`${failSpinner}::${errMSg}`);
+      },
+      succeed(doneMsg) {
+        process.send?.(`${succeedSpinner}::${doneMsg}`);
+      },
+    } as typeof globalSpinner.instance;
+  }
+
+  // console.log({ startSpinner, filename });
+
+  if (startSpinner) {
+    globalSpinner.instance.start();
+
+    const env = {
+      ...process.env,
+      FORCE_COLOR: '1',
+    };
+
+    const cwd = process.cwd();
+    const argsToChild = [
+      ...orgArgv.slice(2),
+      verboseInArgs ? verbosePrefix : '',
+      global.skipCoreCheck ? SKIP_CORE_CHECK_PARAM : '',
+      spinnerOnInArgs ? spinnerPrefix : '',
+      childprocsecretarg,
+    ].filter(Boolean);
+
+    // console.log(argsToChild);
+
+    const proc = child_process.fork(filename, argsToChild, {
+      env,
+      cwd,
+      stdio: [0, 1, 2, 'ipc'],
+    });
+
+    proc.on('exit', code => {
+      globalSpinner.instance.stop();
+      // console.log('PROCESS EXIT');
+      setTimeout(() => process.exit(code));
+    });
+
+    proc.on('message', msg =>
+      handleSpinnerMessage(msg?.toString() || '', globalSpinner.instance),
+    );
+  } else {
+    run(argv, global.frameworkName);
+  }
+  //#endregion
+
+  //#endregion
+}
+//#endregion
+
+//#region helpers
+
+const handleSpinnerMessage = (
+  message: string | undefined,
+  spinner: typeof globalSpinner.instance,
+) => {
+  //#region @backendFunc
+  message = (message || '').trimLeft();
+
+  if (message === startSpinner) {
+    spinner.start();
+  } else if (message === stopSpinner) {
+    console.log('SHOULD STOP SPINNER');
+    spinner.stop();
+  } else if (message?.startsWith(`${failSpinner}::`)) {
+    spinner.fail(_.first(message.split('::')));
+  } else if (message?.startsWith(`${succeedSpinner}::`)) {
+    spinner.succeed(_.first(message.split('::')));
+  } else {
+    setText(message, message?.startsWith('log::'));
+  }
+  //#endregion
+};
+
+const setText = (text, toSpinner = false) => {
+  //#region @backendFunc
+  const spinner = globalSpinner.instance;
+  if (text) text = text.split('::').slice(1).join('::');
+
+  if (spinner) {
+    if (toSpinner) {
+      spinner.text = text.replace(/\s+/g, ' ');
+    } else {
+      console.log(text);
+    }
+  } else {
+    console.log(text);
+  }
+  //#endregion
+};
+//#endregion
+
+//#region run
+export async function run(
   argsv: string[],
-  frameworkName: 'tnp' | 'taon' = 'tnp',
-  mode: 'dist' | 'npm' = 'dist',
+  frameworkName: 'tnp' | 'taon',
 ): Promise<void> {
   config.frameworkName = frameworkName;
 
-  if (frameworkName === 'tnp') {
+  if (frameworkName === tnpPackageName) {
     process.on('unhandledRejection', (err, promise) => {
       const reason = err as Error;
       console.error('Unhandled Promise Rejection at:', promise);
@@ -54,6 +271,7 @@ export async function start(
   Helpers.logInfo(`Checking your /etc/hosts file...`);
   try {
     if (!UtilsNetwork.etcHostHasProperLocalhostIp4Entry()) {
+      globalSpinner.instance.stop();
       Helpers.error(
         `Your ${UtilsNetwork.getEtcHostsPath()} file does not have proper entry for "localhost" hostname.
 
@@ -134,6 +352,8 @@ export async function start(
       },
     });
   }
+
+  globalSpinner.instance.stop();
 
   new BaseStartConfig({
     ProjectClass: ProjectClass as any,
@@ -260,5 +480,5 @@ export async function start(
     },
   });
 }
-
+//#endregion
 export default start;

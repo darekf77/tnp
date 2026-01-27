@@ -1,19 +1,21 @@
 import type { EnvOptions } from 'tnp/src';
 import baseEnv from './env.npm-lib-and-cli-tool.__';
 
-/**
- * this is for local_release/npm-lib-and-cli-tool/tnp-latest
- * tnp development release
- */
 const env: Partial<EnvOptions> = {
   ...baseEnv,
+  build:{
+    prod: true,
+  },
   release: {
-    cli: {
-      includeNodeModules: true,
-      minify: false,
-    },
+    skipNpmPublish: true,
+    skipReleaseQuestion: true,
+    skipResolvingGitChanges: true,
+    skipTagGitPush: true,
     lib: {
       doNotIncludeLibFiles: true,
+    },
+    cli: {
+      includeNodeModules: true,
     },
   },
 };
