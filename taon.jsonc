@@ -32,6 +32,13 @@
     },
     {
       "artifactName": "npm-lib-and-cli-tool",
+      "envName": "prod",
+      "envNumber": 1,
+      "releaseType": "local",
+      "taskName": "cli-local-prod"
+    },
+    {
+      "artifactName": "npm-lib-and-cli-tool",
       "envName": "localhost",
       "taskName": "local",
     },

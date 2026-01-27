@@ -1,6 +1,7 @@
 //#region imports
 import 'reflect-metadata';
 import axios from 'axios';
+import type * as ora from 'ora';
 import {
   config,
   crossPlatformPath,
@@ -13,6 +14,13 @@ import { UtilsOs } from 'tnp-core/src';
 import { BaseCLiWorkerStartMode, BaseStartConfig } from 'tnp-helpers/src';
 
 // import { globalSpinner } from './constants';
+import {
+  failSpinner,
+  globalSpinner,
+  startSpinner,
+  stopSpinner,
+  succeedSpinner,
+} from './constants';
 import cliClassArr from './project/cli/index';
 
 //#endregion
@@ -22,13 +30,13 @@ global.frameworkName = global.frameworkName ?? 'tnp';
 //#region startWrapper
 export function start(argv, filename): void {
   //#region @backendFunc
-  const ora = require('ora');
+  const oraSpinner = require('ora');
 
   //#region quick fixes
 
   global.globalSystemToolMode = true;
 
-  const spinner = ora();
+  const spinner = oraSpinner();
   global.spinner = spinner;
   //#endregion
 
@@ -79,12 +87,14 @@ export function start(argv, filename): void {
   //#endregion
 
   //#region clean argv
-  process.argv = argv
+  argv = argv
     .filter(a => !a.startsWith('-spinner'))
     .filter(a => a !== '-childproc')
     .filter(a => a !== '--skipCoreCheck')
     .filter(a => !a.startsWith('-verbose'))
     .map(a => (a === '-websql' ? '--websql' : a));
+
+  process.argv = argv;
   //#endregion
 
   //#region spinner decision
@@ -106,12 +116,21 @@ export function start(argv, filename): void {
   if (procType === 'child-of-root') {
     global.spinner = {
       start() {
-        process.send?.('start-spinner');
+        process.send?.(startSpinner);
       },
       stop() {
-        process.send?.('stop-spinner');
+        process.send?.(startSpinner);
       },
-    };
+      fail(errMSg) {
+        process.send?.(`${failSpinner}::${errMSg}`);
+      },
+      succeed(doneMsg) {
+        process.send?.(`${succeedSpinner}::${doneMsg}`);
+      },
+      get text(): string {
+        return;
+      },
+    } as typeof globalSpinner.instance;
   }
 
   // console.log({ startSpinner, filename });
@@ -147,7 +166,9 @@ export function start(argv, filename): void {
       setTimeout(() => process.exit(code));
     });
 
-    proc.on('message', msg => handleSpinnerMessage(msg, spinner));
+    proc.on('message', msg =>
+      handleSpinnerMessage(msg?.toString() || '', spinner),
+    );
   } else {
     argv = argv.filter(f => !!f);
     run(argv, global.frameworkName);
@@ -160,12 +181,19 @@ export function start(argv, filename): void {
 
 //#region helpers
 
-const handleSpinnerMessage = (message, spinner) => {
+const handleSpinnerMessage = (
+  message: string | undefined,
+  spinner: typeof globalSpinner.instance,
+) => {
   //#region @backendFunc
   message = (message || '').trimLeft();
 
-  if (message === 'start-spinner') spinner.start();
-  else if (message === 'stop-spinner') spinner.stop();
+  if (message === startSpinner) spinner.start();
+  else if (message === stopSpinner) spinner.stop();
+  else if (message?.startsWith(`${failSpinner}::`))
+    spinner.fail(_.first(message.split('::')));
+  else if (message?.startsWith(`${succeedSpinner}::`))
+    spinner.succeed(_.first(message.split('::')));
   else setText(message, message.startsWith('log::'));
   //#endregion
 };

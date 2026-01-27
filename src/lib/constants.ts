@@ -137,12 +137,20 @@ export const OVERRIDE_FROM_TNP = [
 ];
 
 export const globalSpinner = {
-  get instace(): ora.Ora {
+  get instance(): Pick<
+    ora.Ora,
+    'start' | 'text' | 'succeed' | 'stop' | 'fail'
+  > {
     //#region @backendFunc
     return global.spinner;
     //#endregion
   },
 };
+
+export const startSpinner = 'start-spinner';
+export const stopSpinner = 'stop-spinner';
+export const failSpinner = 'fail-spinner';
+export const succeedSpinner = 'succeed-spinner';
 
 export const USE_IN_HOST_CONFIG_FULL_CONTEXT_PATH = false;
 
