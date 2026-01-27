@@ -49,9 +49,9 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   //#region constructor
   constructor(
     protected classFn: typeof Project,
-    public cliToolName: string,
+    public cliToolNameFn: () => string,
   ) {
-    super(classFn, cliToolName);
+    super(classFn, cliToolNameFn);
 
     // if (!this.cliToolName) {
     //   Helpers.throwError(`cliToolName is not provided`);
@@ -104,10 +104,11 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     this.taonProjectsWorker = new TaonProjectsWorker(
       taonProjects,
-      `${cliToolName} ${
-        `startCliServiceTaonProjectsWorker ${SKIP_CORE_CHECK_PARAM}`
-        // as keyof $Global
-      }`,
+      () =>
+        `${cliToolNameFn()} ${
+          `startCliServiceTaonProjectsWorker ${SKIP_CORE_CHECK_PARAM}`
+          // as keyof $Global
+        }`,
       this,
     );
   }
