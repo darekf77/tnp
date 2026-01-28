@@ -699,6 +699,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     const clearLibFiles = (folderAbsPath: string) => {
       Helpers.remove([folderAbsPath, libFromSrc]);
+      Helpers.remove([folderAbsPath, libFromSrc + prodSuffix]);
       Helpers.remove([folderAbsPath, sourceLinkInNodeModules]);
       Helpers.remove([folderAbsPath, assetsFromSrc]);
       Helpers.remove([folderAbsPath, browserMainProject]);
