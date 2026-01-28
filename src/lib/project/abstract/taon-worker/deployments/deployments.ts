@@ -1,6 +1,16 @@
 //#region imports
 import { MulterFileUploadResponse, Taon, TaonEntity } from 'taon/src';
-import { TaonBaseEntity, PrimaryGeneratedColumn, CreateDateColumn, Column, String100Column, String45Column, String200Column, NumberColumn, VersionColumn } from 'taon/src';
+import {
+  TaonBaseEntity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  Column,
+  String100Column,
+  String45Column,
+  String200Column,
+  NumberColumn,
+  VersionColumn,
+} from 'taon/src';
 import { _, chalk, CoreModels, dateformat, path } from 'tnp-core/src';
 import { FilePathMetaData } from 'tnp-core/src';
 
@@ -19,11 +29,9 @@ export class Deployments
   extends TaonBaseEntity<Deployments>
   implements DeploymentReleaseData
 {
-
   //#region @websql
   @PrimaryGeneratedColumn()
   //#endregion
-
   id: string;
 
   //#region base file name with hash datetime
@@ -35,7 +43,6 @@ export class Deployments
     unique: true,
   })
   //#endregion
-
   baseFileNameWithHashDatetime?: string;
   //#endregion
 
@@ -44,7 +51,6 @@ export class Deployments
   //#region @websql
   @NumberColumn()
   //#endregion
-
   size: MulterFileUploadResponse['size'];
   //#endregion
 
@@ -57,7 +63,6 @@ export class Deployments
     default: DeploymentsStatus.NOT_STARTED,
   })
   //#endregion
-
   status: DeploymentsStatus;
   //#endregion
 
@@ -66,7 +71,6 @@ export class Deployments
   //#region @websql
   @String100Column()
   //#endregion
-
   projectName: string;
   //#endregion
 
@@ -75,7 +79,6 @@ export class Deployments
   //#region @websql
   @String100Column()
   //#endregion
-
   envName: CoreModels.EnvironmentNameTaon;
   //#endregion
 
@@ -84,7 +87,6 @@ export class Deployments
   //#region @websql
   @String45Column()
   //#endregion
-
   envNumber: string;
   //#endregion
 
@@ -93,7 +95,6 @@ export class Deployments
   //#region @websql
   @String45Column()
   //#endregion
-
   targetArtifact: ReleaseArtifactTaon;
   //#endregion
 
@@ -102,7 +103,6 @@ export class Deployments
   //#region @websql
   @String45Column()
   //#endregion
-
   releaseType: ReleaseType;
   //#endregion
 
@@ -111,7 +111,6 @@ export class Deployments
   //#region @websql
   @VersionColumn()
   //#endregion
-
   version: string;
   //#endregion
 
@@ -120,7 +119,6 @@ export class Deployments
   //#region @websql
   @String200Column()
   //#endregion
-
   destinationDomain: string;
   //#endregion
 
@@ -129,7 +127,6 @@ export class Deployments
   //#region @websql
   @String45Column()
   //#endregion
-
   processIdComposeUp?: string | null;
   //#endregion
 
@@ -138,7 +135,6 @@ export class Deployments
   //#region @websql
   @String45Column()
   //#endregion
-
   processIdComposeDown?: string | null;
   //#endregion
 
@@ -147,7 +143,6 @@ export class Deployments
   //#region @websql
   @CreateDateColumn()
   //#endregion
-
   arrivalDate?: Date;
   //#endregion
 
@@ -174,7 +169,6 @@ export class Deployments
   //#endregion
 
   fullPreviewString(options?: { boldValues?: boolean }): string {
-
     //#region @websqlFunc
     options = options || {};
     const boldValues = !!options.boldValues;
@@ -205,6 +199,5 @@ export class Deployments
       )})`,
     ].join('\n');
     //#endregion
-
   }
 }

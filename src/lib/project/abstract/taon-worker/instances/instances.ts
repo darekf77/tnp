@@ -1,9 +1,9 @@
 //#region imports
 import { Taon, TaonEntity } from 'taon/src';
+import { TaonBaseAbstractEntity, Column, String200Column } from 'taon/src';
 import { _ } from 'tnp-core/src';
 
 import { InstancesDefaultsValues } from './instances.defaults-values';
-import { TaonBaseAbstractEntity, Column, String200Column } from 'taon/src';
 
 //#endregion
 
@@ -24,12 +24,10 @@ export class Instances extends TaonBaseAbstractEntity<Instances> {
     unique: true,
   })
   //#endregion
-
   ipAddress: string;
 
   //#region @websql
   @String200Column()
   //#endregion
-
   name: string;
 }

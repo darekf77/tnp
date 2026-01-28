@@ -642,6 +642,8 @@ export class DeploymentsRepository extends TaonBaseRepository<Deployments> {
         ) as Partial<Deployments>;
 
         const deployment = new Deployments().clone(dataJson);
+        deployment.status = DeploymentsStatus.NOT_STARTED;
+        deployment.arrivalDate = new Date();
 
         await this.save(deployment);
       }
