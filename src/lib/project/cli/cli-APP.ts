@@ -16,10 +16,13 @@ export class $App extends BaseCli {
     //#region @backendFunc
     const choices = {
       startAppWatch: {
-        name: 'Start app in watch NORMAL node',
+        name: 'Start ng serve app for watch NORMAL node',
       },
       startAppWatchWebsql: {
-        name: 'Start app in watch WEBSQL mode',
+        name: 'Start ng serve app for watch WEBSQL mode',
+      },
+      startElectronWatch: {
+        name: 'Start ng serve app for watch ELECTRON mode',
       },
     };
 
@@ -30,7 +33,10 @@ export class $App extends BaseCli {
           question: 'Select app development start mode:',
         });
 
-    await this._build({ websql: chosen === 'startAppWatchWebsql' });
+    await this._build({
+      websql: chosen === 'startAppWatchWebsql',
+      electron: chosen === 'startElectronWatch',
+    });
     //#endregion
   }
 

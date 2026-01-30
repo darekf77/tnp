@@ -33,7 +33,7 @@ import {
   notAllowedAsPacakge,
   packageJsonLockMainProject,
   packageJsonMainProject,
-  SKIP_CORE_CHECK_PARAM,
+  skipCoreCheck,
   sourceLinkInNodeModules,
   srcDtsFromNpmPackage,
   taonJsonMainProject,
@@ -68,7 +68,7 @@ export class NodeModules extends BaseNodeModules {
     // the problem is that I don't wanna check each time I am acessing core container
     if (this.project.nodeModules.empty) {
       this.project
-        .run(`${config.frameworkName} reinstall ${SKIP_CORE_CHECK_PARAM}`)
+        .run(`${config.frameworkName} reinstall ${skipCoreCheck}`)
         .sync();
     }
     //#endregion

@@ -30,7 +30,7 @@ import {
   dotVscodeMainProject,
   nodeModulesMainProject,
   packageJsonMainProject,
-  SKIP_CORE_CHECK_PARAM,
+  skipCoreCheck,
   taonJsonMainProject,
   taonRepoPathUserInUserDir,
 } from '../../constants';
@@ -106,7 +106,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       taonProjects,
       () =>
         `${cliToolNameFn()} ${
-          `startCliServiceTaonProjectsWorker ${SKIP_CORE_CHECK_PARAM}`
+          `startCliServiceTaonProjectsWorker ${skipCoreCheck}`
           // as keyof $Global
         }`,
       this,
@@ -496,7 +496,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       // Helpers.run(command).sync();
       Helpers.run(
         // $Global.prototype.reinstallCoreContainers.name
-        `${config.frameworkName} ${'reinstallCoreContainers'} ${SKIP_CORE_CHECK_PARAM}`,
+        `${config.frameworkName} ${'reinstallCoreContainers'} ${skipCoreCheck}`,
       ).sync();
     }
 
@@ -534,7 +534,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       try {
         child_process.execSync(
           //$Global.prototype.ENV_INSTALL.name
-          `${config.frameworkName}  ${'ENV_INSTALL'} ${SKIP_CORE_CHECK_PARAM}`,
+          `${config.frameworkName}  ${'ENV_INSTALL'} ${skipCoreCheck}`,
           { stdio: [0, 1, 2] },
         );
       } catch (error) {

@@ -10,6 +10,7 @@ import {
 } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
+import { skipCoreCheck } from '../../../constants';
 import type { TaonProjectResolve } from '../project-resolve';
 
 import { DeploymentsWorker } from './deployments/deployments.worker';
@@ -66,15 +67,15 @@ export class TaonProjectsWorker extends BaseCliWorker<
     //#region @backend
     this.deploymentsWorker = new DeploymentsWorker(
       'taon-project-deployments-worker',
-      () => `${config.frameworkName} cloud:deployments`,
+      () => `${config.frameworkName} cloud:deployments ${skipCoreCheck}`,
     );
     this.instancesWorker = new InstancesWorker(
       'taon-project-instances-worker',
-      () => `${config.frameworkName} cloud:instances`,
+      () => `${config.frameworkName} cloud:instances ${skipCoreCheck}`,
     );
     this.processesWorker = new ProcessesWorker(
       'taon-project-processes-worker',
-      () => `${config.frameworkName} cloud:processes`,
+      () => `${config.frameworkName} cloud:processes ${skipCoreCheck}`,
     );
 
     // this.deploymentsWorker = new DeploymentsWorker(

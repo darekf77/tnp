@@ -200,7 +200,7 @@ export { taonRepoPathUserInUserDir, taonBasePathToGlobalDockerTemplates };
  * Prevents taon from checking core container when
  * calling itself from child process
  */
-export const SKIP_CORE_CHECK_PARAM = '--skipCoreCheck';
+export const skipCoreCheck = '--skipCoreCheck';
 
 export const argsToClear = [
   'websql',

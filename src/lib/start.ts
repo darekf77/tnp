@@ -21,7 +21,7 @@ import {
   debugSuffix,
   failSpinner,
   globalSpinner,
-  SKIP_CORE_CHECK_PARAM,
+  skipCoreCheck,
   spinnerPrefix,
   startSpinner,
   stopSpinner,
@@ -78,7 +78,7 @@ export function start(argv, filename): void {
   const verboseInArgs = argv.includes(verbosePrefix);
   global.hideLog = !verboseInArgs;
 
-  global.skipCoreCheck = argv.some(a => a.startsWith(SKIP_CORE_CHECK_PARAM));
+  global.skipCoreCheck = argv.some(a => a.startsWith(skipCoreCheck));
 
   const verboseLevelArg = argv.find(a => a.startsWith(`${verbosePrefix}=`));
   global.verboseLevel = verboseLevelArg
@@ -100,7 +100,7 @@ export function start(argv, filename): void {
   argv = argv
     .filter(a => !a.startsWith(spinnerPrefix))
     .filter(a => a !== childprocsecretarg)
-    .filter(a => a !== SKIP_CORE_CHECK_PARAM)
+    .filter(a => a !== skipCoreCheck)
     .filter(a => !a.startsWith(verbosePrefix))
     .map(a => (a === websqlPrefix ? `-${websqlPrefix}` : a));
 
@@ -156,7 +156,7 @@ export function start(argv, filename): void {
     const argsToChild = [
       ...orgArgv.slice(2),
       verboseInArgs ? verbosePrefix : '',
-      global.skipCoreCheck ? SKIP_CORE_CHECK_PARAM : '',
+      global.skipCoreCheck ? skipCoreCheck : '',
       spinnerOnInArgs ? spinnerPrefix : '',
       childprocsecretarg,
     ].filter(Boolean);
