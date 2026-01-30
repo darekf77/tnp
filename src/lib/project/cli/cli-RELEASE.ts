@@ -186,11 +186,32 @@ class $Release extends BaseCli {
     this._exit();
   }
 
+  async installLocallyVscodePluginProd(): Promise<void> {
+    await this._installLocally(
+      true,
+      {
+        targetArtifact: ReleaseArtifactTaon.VSCODE_PLUGIN,
+      },
+      true,
+    );
+    this._exit();
+  }
+
   async installLocallyCliTool(): Promise<void> {
     await this._installLocally(true, {
       targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
-      envName: 'dev',
     });
+    this._exit();
+  }
+
+  async installLocallyCliToolProd(): Promise<void> {
+    await this._installLocally(
+      true,
+      {
+        targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
+      },
+      true,
+    );
     this._exit();
   }
 
@@ -203,11 +224,13 @@ class $Release extends BaseCli {
       | 'envName'
       | 'envNumber'
     >,
+    prod?: boolean,
   ): Promise<void> {
     await this.project.release(
       this.params.clone({
         build: {
           watch: false,
+          prod,
         },
         release: {
           envName: releaseOpt.envName,
@@ -230,7 +253,6 @@ class $Release extends BaseCli {
   }
 
   async installLocally() {
-
     //#region @backendFunc
     const allowedArtifacts: ReleaseArtifactTaon[] = [
       ReleaseArtifactTaon.VSCODE_PLUGIN,
@@ -290,10 +312,8 @@ class $Release extends BaseCli {
 
     this._exit();
     //#endregion
-
   }
   //#endregion
-
 }
 
 export default {

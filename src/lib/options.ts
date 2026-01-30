@@ -28,7 +28,7 @@ export enum ReleaseArtifactTaon {
    */
   ELECTRON_APP = 'electron-app',
   /**
-   * Angular + Ionic
+   * Angular + Capacitor
    */
   MOBILE_APP = 'mobile-app',
   /**

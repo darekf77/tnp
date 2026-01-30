@@ -219,6 +219,12 @@ export class ${contextName}_${timestamp}_${migrationName} extends TaonBaseMigrat
   }
   //#endregion
 
+  async regenerate() {
+    await this.project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask()
+    Helpers.info(`Migrations regenerated`);
+    this._exit();
+  }
+
   //#region run
   async run() {
     console.info(`

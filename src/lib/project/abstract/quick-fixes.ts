@@ -78,7 +78,7 @@ export class QuickFixes extends BaseQuickFixes<Project> {
   //#region recreate temp source necessary files for tests
   recreateTempSourceNecessaryFilesForTesting(initOptions: EnvOptions): void {
     //#region @backendFunc
-    if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
+    if (!this.project.framework.isStandaloneProject) {
       return;
     }
 

@@ -1607,6 +1607,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
     await HelpersTaon.bundleCodeIntoSingleFile(destCli, destCliMin, {
       minify,
+      prod,
       additionalExternals: [
         ...this.project.taonJson.additionalExternalsFor(
           ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,

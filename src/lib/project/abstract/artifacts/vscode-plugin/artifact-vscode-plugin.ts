@@ -67,9 +67,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
       return initOptions;
     }
 
-    const tmpVscodeProjPath = this.getTmpVscodeProjPath(
-      initOptions.release.releaseType,
-    );
+    const tmpVscodeProjPath = this.getTmpVscodeProjPath(initOptions);
 
     const packageJsonForVscode = {
       name: this.project.name,
@@ -194,16 +192,12 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     );
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
-    const tmpVscodeProjPath = this.getTmpVscodeProjPath(
-      buildOptions.release.releaseType,
-    );
+    const tmpVscodeProjPath = this.getTmpVscodeProjPath(buildOptions);
     const extProj = this.project.ins.From(tmpVscodeProjPath);
     const vscodeVsixOutPath: string = extProj.pathFor(
       this.extensionVsixNameFrom(buildOptions),
     );
-    const destExtensionJs = this.getDestExtensionJs(
-      buildOptions.release.releaseType,
-    );
+    const destExtensionJs = this.getDestExtensionJs(buildOptions);
 
     if (buildOptions.build.watch) {
       // NOTHING TO DO HERE
@@ -226,6 +220,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
             ]),
             destExtensionJs,
             {
+              prod: buildOptions.build.prod,
               strategy: 'vscode-ext',
               additionalExternals: [
                 ...this.project.taonJson.additionalExternalsFor(
@@ -356,19 +351,21 @@ local VSCode instance.
   //#region private methods
 
   //#region private methods / get tmp vscode proj path (for any build)
-  public getTmpVscodeProjPath(releaseType?: ReleaseType): string {
+  public getTmpVscodeProjPath(envOptions?: EnvOptions): string {
     const tmpVscodeProjPath = this.project.pathFor(
       `${tmpVscodeProj}/${
-        releaseType ? releaseType : Development
-      }/${this.project.name}`,
+        envOptions?.release?.releaseType
+          ? envOptions.release.releaseType
+          : Development
+      }${envOptions?.build?.prod ? prodSuffix : ''}/${this.project.name}`,
     );
     return tmpVscodeProjPath;
   }
   //#endregion
 
   //#region private methods / get dest extension js
-  private getDestExtensionJs(releaseType: ReleaseType): string {
-    const tmpVscodeProjPath = this.getTmpVscodeProjPath(releaseType);
+  private getDestExtensionJs(envOptions: EnvOptions): string {
+    const tmpVscodeProjPath = this.getTmpVscodeProjPath(envOptions);
     const res = crossPlatformPath([tmpVscodeProjPath, 'out/extension.js']);
     return res;
   }

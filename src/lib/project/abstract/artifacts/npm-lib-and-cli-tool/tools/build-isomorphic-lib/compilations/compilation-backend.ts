@@ -324,32 +324,44 @@ export class BackendCompilation {
     }
     // debugger;
 
-    await this.libCompilation(this.buildOptions, {
-      generateDeclarations: true,
-    });
+    if (this.buildOptions.build.prod) {
+      // nothing
+    } else {
+      await this.libCompilation(this.buildOptions, {
+        generateDeclarations: true,
+      });
+    }
 
     if (!this.buildOptions.build.watch && this.buildOptions.build.prod) {
-      HelpersTaon.copy(
-        this.project.pathFor([tmpSourceDist + prodSuffix]),
-        this.project.pathFor([distMainProject + prodSuffix]),
-        {
-          recursive: true,
-          overwrite: true,
-          filter: (src: string, dest: string): boolean => {
-            // console.log('src', src)
-            src = crossPlatformPath(src);
-            // console.log('isAllowed', isAllowed)
-            return !src.endsWith(splitNamespacesJson);
-          },
-        },
+      await HelpersTaon.stripTsTypesIntoJs(
+        this.project.pathFor([tmpSourceDist + prodSuffix, libFromCompiledDist]),
+        this.project.pathFor([
+          distMainProject,
+          libFromCompiledDist + prodSuffix,
+        ]),
       );
-      UtilsFilesFoldersSync.getFilesFrom(
-        this.project.pathFor([distMainProject + prodSuffix]),
-        {
-          recursive: true,
-          followSymlinks: false,
-        },
-      ).filter(f => f.endsWith('.ts') || f.endsWith('.tsx'));
+
+      // HelpersTaon.copy(
+      //   this.project.pathFor([tmpSourceDist + prodSuffix]),
+      //   this.project.pathFor([distMainProject + prodSuffix]),
+      //   {
+      //     recursive: true,
+      //     overwrite: true,
+      //     filter: (src: string, dest: string): boolean => {
+      //       // console.log('src', src)
+      //       src = crossPlatformPath(src);
+      //       // console.log('isAllowed', isAllowed)
+      //       return !src.endsWith(splitNamespacesJson);
+      //     },
+      //   },
+      // );
+      // UtilsFilesFoldersSync.getFilesFrom(
+      //   this.project.pathFor([distMainProject + prodSuffix]),
+      //   {
+      //     recursive: true,
+      //     followSymlinks: false,
+      //   },
+      // ).filter(f => f.endsWith('.ts') || f.endsWith('.tsx'));
       // .forEach(f => {
       //   UtilsTypescript.removeUnusedImportsSingleFile(f);
       // });
@@ -613,10 +625,11 @@ export class BackendCompilation {
 
     let { commandJs, commandMaps } = options;
 
-    // console.log({
-    //   commandJs,
-    //   commandMaps,
-    // });
+    Helpers.getIsVerboseMode() &&
+      console.log({
+        commandJs,
+        commandMaps,
+      });
 
     Helpers.info(`
 

@@ -35,6 +35,7 @@ import {
   AngularJsonAppOrElectronTaskNameResolveFor,
   AngularJsonTaskName,
   appFromSrcInsideNgApp,
+  appJsBackend,
   assetsFromNgProj,
   browserNgBuild,
   COMPILATION_COMPLETE_APP_NG_SERVE,
@@ -45,6 +46,7 @@ import {
   distFromNgBuild,
   distFromSassLoader,
   distMainProject,
+  distVscodeProj,
   dockerTemplatesFolder,
   DockerTemplatesFolders,
   dotEnvFile,
@@ -541,9 +543,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     //#region @backendFunc
     Helpers.remove(appDistOutBackendNodeAbsPath);
     await HelpersTaon.bundleCodeIntoSingleFile(
-      this.project.pathFor('dist/app.js'),
-      crossPlatformPath([appDistOutBackendNodeAbsPath, 'dist/app.js']),
+      this.project.pathFor(`${distVscodeProj}/${appJsBackend}`),
+      crossPlatformPath([
+        appDistOutBackendNodeAbsPath,
+        `${distVscodeProj}/${appJsBackend}`,
+      ]),
       {
+        prod: buildOptions.build.prod,
         minify: buildOptions.release.nodeBackendApp.minify,
         strategy: 'node-app',
         additionalExternals: [
@@ -1265,7 +1271,9 @@ ${path.dirname(newZipFileName)}
         globalSpinner.instance.succeed(`Deployment upload done!`);
         break;
       } catch (error) {
-        globalSpinner.instance.fail(`Error during upload zip file to taon server!`);
+        globalSpinner.instance.fail(
+          `Error during upload zip file to taon server!`,
+        );
         const errMsg = (
           error instanceof Error ? error.message : error
         ) as string;

@@ -183,6 +183,7 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
   }
 
   async libIndex() {
+    //#region @backendFunc
     await this.project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
       {
         watch: false,
@@ -194,14 +195,18 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
       },
     );
     this._exit();
+    //#endregion
   }
 
   async appRoutes() {
+    //#region @backendFunc
     await this.project.artifactsManager.artifact.npmLibAndCliTool.appTsRoutesAutogenProvider.runTask();
     this._exit();
+    //#endregion
   }
 
   fieldsWebsqlRegions() {
+    //#region @backendFunc
     const fileAbsPath = crossPlatformPath(this.firstArg);
     const content = Helpers.readFile(fileAbsPath);
     const fixedRegions =
@@ -214,6 +219,7 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
       UtilsTypescript.formatFile(fileAbsPath);
     }
     this._exit(0);
+    //#endregion
   }
 }
 

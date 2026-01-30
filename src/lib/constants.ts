@@ -671,6 +671,8 @@ export enum TaonCommands {
 
 export const appTsFromSrc = 'app.ts';
 
+export const appJsBackend = 'app.js';
+
 export const appScssFromSrc = 'app.scss';
 
 export const globalScssFromSrc = 'global.scss';

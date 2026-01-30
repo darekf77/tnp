@@ -149,6 +149,7 @@ export class ArtifactElectronApp extends BaseArtifact<
       proxyProj.pathFor(`${electronNgProj}/main.js`),
       proxyProj.pathFor(`${electronNgProj}/index.js`),
       {
+        prod: releaseOptions.build.prod,
         additionalExternals: [
           ...electronNativeDeps,
           ...this.project.taonJson.additionalExternalsFor(
