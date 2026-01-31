@@ -188,7 +188,7 @@ class $Release extends BaseCli {
 
   async installLocallyVscodePluginProd(): Promise<void> {
     await this._installLocally(
-      true,
+      false,
       {
         targetArtifact: ReleaseArtifactTaon.VSCODE_PLUGIN,
       },
@@ -206,7 +206,7 @@ class $Release extends BaseCli {
 
   async installLocallyCliToolProd(): Promise<void> {
     await this._installLocally(
-      true,
+      false,
       {
         targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
       },

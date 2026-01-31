@@ -379,7 +379,9 @@ export async function run(
       // TODO use UtilsCliClassMethod !!!
       il: 'release:install:locally',
       ilvscodeplugin: 'release:install:locally:vscode:plugin',
+      ilvscodepluginprod: 'release:install:locally:vscode:plugin:prod',
       ilclitool: 'release:install:locally:cli:tool',
+      ilclitoolprod: 'release:install:locally:cli:tool:prod',
       cil: 'release:clear:install:locally',
       'install:locally': 'release:install:locally',
       cinit: 'init:clearInit',

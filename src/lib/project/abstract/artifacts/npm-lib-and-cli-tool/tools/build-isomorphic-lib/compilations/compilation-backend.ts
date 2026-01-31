@@ -334,11 +334,23 @@ export class BackendCompilation {
 
     if (!this.buildOptions.build.watch && this.buildOptions.build.prod) {
       await HelpersTaon.stripTsTypesIntoJs(
-        this.project.pathFor([tmpSourceDist + prodSuffix, libFromCompiledDist]),
+        this.project.pathFor([tmpSourceDist + prodSuffix]),
+        this.project.pathFor([distMainProject + prodSuffix]),
+      );
+
+      HelpersTaon.copy(
+        this.project.pathFor([
+          distMainProject + prodSuffix,
+          libFromCompiledDist,
+        ]),
         this.project.pathFor([
           distMainProject,
           libFromCompiledDist + prodSuffix,
         ]),
+        {
+          recursive: true,
+          overwrite: true,
+        },
       );
 
       // HelpersTaon.copy(
