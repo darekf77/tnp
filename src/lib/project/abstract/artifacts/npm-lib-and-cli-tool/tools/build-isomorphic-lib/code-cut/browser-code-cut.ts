@@ -835,8 +835,14 @@ export class BrowserCodeCut {
         .replace('.ts', `.${splitNamespacesJson}`),
       JSON.stringify(
         {
-          namespacesMapObj: data.namespacesMapObj,
-          namespacesReplace: data.namespacesReplace,
+          namespacesMapObj:
+            fileType === libTypeString
+              ? data.namespacesMapObjJS
+              : data.namespacesMapObj,
+          namespacesReplace:
+            fileType === libTypeString
+              ? data.namespacesReplaceJS
+              : data.namespacesReplace,
         },
         null,
         2,

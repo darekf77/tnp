@@ -212,6 +212,33 @@ export class BackendCompilation {
       //#endregion
 
       if (this.buildOptions.build.prod) {
+
+        //#region remove ts types from ts lib backend fiels
+        const tempLibJSPath = this.project.pathFor([
+          tmpSourceDist + prodSuffix + '-js',
+        ]);
+
+        await HelpersTaon.stripTsTypesIntoJs(
+          this.project.pathFor([tmpSourceDist + prodSuffix]),
+          tempLibJSPath,
+        );
+
+        UtilsFilesFoldersSync.getFilesFrom(tempLibJSPath, {
+          recursive: true,
+          followSymlinks: false,
+        }).forEach(f => {
+          const relativePath = f.replace(tempLibJSPath + '/', '');
+          const ext = path.extname(relativePath);
+          const extReplace = ext.replace('js', 'ts');
+          const tsFileWithoutTsTypes = this.project.pathFor([
+            tmpSourceDist + prodSuffix,
+            relativePath.replace(ext, extReplace),
+          ]);
+          HelpersTaon.copyFile(f, tsFileWithoutTsTypes);
+        });
+        //#endregion
+
+
         //#region set/update re-exports fro current pacakge
         this.setGeneratedReExportsToMapForCurrentPackage(
           this.reExportsForPackagesLib,
