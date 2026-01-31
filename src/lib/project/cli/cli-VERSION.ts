@@ -1,4 +1,4 @@
-import { config, taonPackageName, Utils } from 'tnp-core/src';
+import { config, taonPackageName, Utils, _ } from 'tnp-core/src';
 import { CoreModels, fse, path } from 'tnp-core/src';
 import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
@@ -20,6 +20,8 @@ export class $Version extends BaseCli {
     if (ENV.notForNpm) {
       Helpers.success(`I am secret project!!!`);
     }
+    // const arr = [,2,3]
+    // console.log(_.first(arr))
     //#endregion
     // globalSpinner.instance.stop();
     // globalSpinner.instance.stop();
