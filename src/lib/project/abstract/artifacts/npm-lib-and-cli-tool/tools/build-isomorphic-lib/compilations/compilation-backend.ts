@@ -430,7 +430,7 @@ export class BackendCompilation {
       const data = UtilsTypescript.splitNamespaceForContent(content);
       content = data.content;
 
-      const isLib = folder === tmpSourceDist;
+      // const isLib = folder === tmpSourceDist;
       // if (isLib) {
       //   content = UtilsTypescript.stripTsTypesIntoJsFromContent(
       //     content,
@@ -443,13 +443,15 @@ export class BackendCompilation {
           .replace('.tsx', `.${splitNamespacesJson}`)
           .replace('.ts', `.${splitNamespacesJson}`),
         {
-          namespacesMapObj: isLib
-            ? data.namespacesMapObjJS
-            : data.namespacesMapObj,
-          namespacesReplace: isLib
-            ? data.namespacesReplaceJS
-            : data.namespacesReplace,
-        },
+          namespacesMapObj: data.namespacesMapObj || {},
+          namespacesReplace: data.namespacesReplace || {},
+          // namespacesMapObj: isLib
+          //   ? data.namespacesMapObjJS
+          //   : data.namespacesMapObj,
+          // namespacesReplace: isLib
+          //   ? data.namespacesReplaceJS
+          //   : data.namespacesReplace,
+        } as typeof data,
       );
       UtilsFilesFoldersSync.writeFile(fileAbsPath, content);
     }

@@ -163,6 +163,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
       });
 
       files.forEach(file => {
+        Helpers.logInfo(`Updating file ${file.where}`)
         HelpersTaon.copyFile(file.from, file.where);
       });
     }

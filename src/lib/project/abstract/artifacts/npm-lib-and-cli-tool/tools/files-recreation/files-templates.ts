@@ -23,7 +23,7 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region rebuild
-  rebuild(initOptions: EnvOptions, soft = false) {
+  rebuild(initOptions: EnvOptions, soft = false): void {
     //#region @backendFunc
     const files = this.files;
     // Helpers.info(`Files templates for project:
@@ -47,7 +47,7 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
       // Helpers.log(`Started for ${f}`);
 
       this.processFile(filePath, fileContent, initOptions, soft);
-      // Helpers.log(`Processed DONE for ${f}`);
+      Helpers.logInfo(`Processed DONE for ${f}`);
     }
     this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting(
       initOptions,
