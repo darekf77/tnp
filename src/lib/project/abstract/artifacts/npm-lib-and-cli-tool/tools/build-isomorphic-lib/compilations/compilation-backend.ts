@@ -45,6 +45,7 @@ import {
 import { Models } from '../../../../../../../models';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
+import { BrowserCodeCut } from '../code-cut/browser-code-cut';
 //#endregion
 
 export class BackendCompilation {
@@ -141,7 +142,8 @@ export class BackendCompilation {
       fse.mkdirpSync(outDistPath);
     }
 
-    if (!this.buildOptions.build.watch) {
+    if (!this.buildOptions.build.watch && this.buildOptions.build.prod) {
+      //#region preparation process (namespaces, re-exports)
       this.namespacesForPackagesLib = new Map();
       this.namespacesForPackagesBrowser = new Map();
       this.namespacesForPackagesWebsql = new Map();
@@ -211,82 +213,51 @@ export class BackendCompilation {
       );
       //#endregion
 
-      if (this.buildOptions.build.prod) {
+      //#region set/update re-exports fro current pacakge
+      this.setGeneratedReExportsToMapForCurrentPackage(
+        this.reExportsForPackagesLib,
+        libFromCompiledDist,
+      );
+      this.setGeneratedReExportsToMapForCurrentPackage(
+        this.reExportsForPackagesBrowser,
+        browserFromCompiledDist,
+      );
+      this.setGeneratedReExportsToMapForCurrentPackage(
+        this.reExportsForPackagesWebsql,
+        websqlFromCompiledDist,
+      );
+      //#endregion
 
-        //#region remove ts types from ts lib backend fiels
-        const tempLibJSPath = this.project.pathFor([
-          tmpSourceDist + prodSuffix + '-js',
-        ]);
+      //#region generate re-exports files in normal build
+      Helpers.taskStarted(`Generating re-exports files...`);
+      this.saveGenerateReExportsIndProdDistForCurrentPackage(
+        this.project.pathFor([
+          tmpSourceDist,
+          libFromSrc,
+          indexTsFromLibFromSrc,
+        ]),
+        this.namespacesForPackagesLib,
+        libFromCompiledDist,
+      );
 
-        await HelpersTaon.stripTsTypesIntoJs(
-          this.project.pathFor([tmpSourceDist + prodSuffix]),
-          tempLibJSPath,
-        );
+      this.saveGenerateReExportsIndProdDistForCurrentPackage(
+        this.project.pathFor([tmpSrcDist, libFromSrc, indexTsFromLibFromSrc]),
+        this.namespacesForPackagesBrowser,
+        browserFromCompiledDist,
+      );
 
-        UtilsFilesFoldersSync.getFilesFrom(tempLibJSPath, {
-          recursive: true,
-          followSymlinks: false,
-        }).forEach(f => {
-          const relativePath = f.replace(tempLibJSPath + '/', '');
-          const ext = path.extname(relativePath);
-          const extReplace = ext.replace('js', 'ts');
-          const tsFileWithoutTsTypes = this.project.pathFor([
-            tmpSourceDist + prodSuffix,
-            relativePath.replace(ext, extReplace),
-          ]);
-          HelpersTaon.copyFile(f, tsFileWithoutTsTypes);
-        });
-        //#endregion
+      this.saveGenerateReExportsIndProdDistForCurrentPackage(
+        this.project.pathFor([
+          tmpSrcDistWebsql,
+          libFromSrc,
+          indexTsFromLibFromSrc,
+        ]),
+        this.namespacesForPackagesWebsql,
+        websqlFromCompiledDist,
+      );
+      Helpers.taskDone(`Done generating re-exports files.`);
+      //#endregion
 
-
-        //#region set/update re-exports fro current pacakge
-        this.setGeneratedReExportsToMapForCurrentPackage(
-          this.reExportsForPackagesLib,
-          libFromCompiledDist,
-        );
-        this.setGeneratedReExportsToMapForCurrentPackage(
-          this.reExportsForPackagesBrowser,
-          browserFromCompiledDist,
-        );
-        this.setGeneratedReExportsToMapForCurrentPackage(
-          this.reExportsForPackagesWebsql,
-          websqlFromCompiledDist,
-        );
-        //#endregion
-      } else {
-        //#region generate re-exports files in normal build
-        Helpers.taskStarted(`Generating re-exports files...`);
-        this.saveGenerateReExportsIndProdDistForCurrentPackage(
-          this.project.pathFor([
-            tmpSourceDist,
-            libFromSrc,
-            indexTsFromLibFromSrc,
-          ]),
-          this.namespacesForPackagesLib,
-          libFromCompiledDist,
-        );
-
-        this.saveGenerateReExportsIndProdDistForCurrentPackage(
-          this.project.pathFor([tmpSrcDist, libFromSrc, indexTsFromLibFromSrc]),
-          this.namespacesForPackagesBrowser,
-          browserFromCompiledDist,
-        );
-
-        this.saveGenerateReExportsIndProdDistForCurrentPackage(
-          this.project.pathFor([
-            tmpSrcDistWebsql,
-            libFromSrc,
-            indexTsFromLibFromSrc,
-          ]),
-          this.namespacesForPackagesWebsql,
-          websqlFromCompiledDist,
-        );
-        Helpers.taskDone(`Done generating re-exports files.`);
-        //#endregion
-      }
-    }
-
-    if (!this.buildOptions.build.watch && this.buildOptions.build.prod) {
       //#region detect files
       const filesBrowser = UtilsFilesFoldersSync.getFilesFrom(
         this.project.pathFor(tmpSrcDist + prodSuffix),
@@ -314,6 +285,18 @@ export class BackendCompilation {
       //#endregion
 
       //#region merge all namespaces metadata
+      this.setGeneratedNamespacesDataForCurrentPackage(tmpSourceDist, filesLib);
+
+      this.setGeneratedNamespacesDataForCurrentPackage(
+        tmpSrcDist,
+        filesBrowser,
+      );
+
+      this.setGeneratedNamespacesDataForCurrentPackage(
+        tmpSrcDistWebsql,
+        filesWebsql,
+      );
+
       this.combineNamespacesForCurrentPackage(
         filesLib,
         this.namespacesForPackagesLib,
@@ -329,6 +312,8 @@ export class BackendCompilation {
         this.namespacesForPackagesWebsql,
         websqlFromCompiledDist,
       );
+      //#endregion
+
       //#endregion
 
       //#region process production code
@@ -351,15 +336,10 @@ export class BackendCompilation {
     }
     // debugger;
 
+    //#region copy or compile
     if (this.buildOptions.build.prod) {
-      // nothing
-    } else {
-      await this.libCompilation(this.buildOptions, {
-        generateDeclarations: true,
-      });
-    }
-
-    if (!this.buildOptions.build.watch && this.buildOptions.build.prod) {
+      // just strip js instead tsc compilation
+      // TODO this may be changed to normal compilation
       await HelpersTaon.stripTsTypesIntoJs(
         this.project.pathFor([tmpSourceDist + prodSuffix]),
         this.project.pathFor([distMainProject + prodSuffix]),
@@ -379,36 +359,18 @@ export class BackendCompilation {
           overwrite: true,
         },
       );
-
-      // HelpersTaon.copy(
-      //   this.project.pathFor([tmpSourceDist + prodSuffix]),
-      //   this.project.pathFor([distMainProject + prodSuffix]),
-      //   {
-      //     recursive: true,
-      //     overwrite: true,
-      //     filter: (src: string, dest: string): boolean => {
-      //       // console.log('src', src)
-      //       src = crossPlatformPath(src);
-      //       // console.log('isAllowed', isAllowed)
-      //       return !src.endsWith(splitNamespacesJson);
-      //     },
-      //   },
-      // );
-      // UtilsFilesFoldersSync.getFilesFrom(
-      //   this.project.pathFor([distMainProject + prodSuffix]),
-      //   {
-      //     recursive: true,
-      //     followSymlinks: false,
-      //   },
-      // ).filter(f => f.endsWith('.ts') || f.endsWith('.tsx'));
-      // .forEach(f => {
-      //   UtilsTypescript.removeUnusedImportsSingleFile(f);
-      // });
+    } else {
+      await this.libCompilation(this.buildOptions, {
+        generateDeclarations: true,
+      });
     }
+    //#endregion
 
     //#endregion
   }
   //#endregion
+
+  //#region regenerated namespaces for current package
 
   //#region set generated re export to map
   private setGeneratedReExportsToMapForCurrentPackage(
@@ -426,6 +388,7 @@ export class BackendCompilation {
     reExportForPackages.set(this.nameForNpmPackage, data);
     //#endregion
   }
+  //#endregion
 
   //#region generate re export files
   private saveGenerateReExportsIndProdDistForCurrentPackage(
@@ -455,6 +418,54 @@ export class BackendCompilation {
   }
   //#endregion
 
+  //#region set genearted namespaces data for current pacakges
+  private setGeneratedNamespacesDataForCurrentPackage(
+    folder: typeof tmpSrcDist | typeof tmpSrcDistWebsql | typeof tmpSourceDist,
+    files: string[],
+  ): void {
+    //#region @backendFunc
+    files = files.filter(f => f.endsWith('.ts') || f.endsWith('.tsx'));
+
+    for (const fileAbsPath of files) {
+      let content = UtilsFilesFoldersSync.readFile(fileAbsPath);
+
+      // const debug = BrowserCodeCut.debugFile.some(d => fileAbsPath.endsWith(d));
+      // if (debug) {
+      //   debugger;
+      // }
+
+      // Helpers.writeFile(fileAbsPath.replace('.ts', `.org`), content);
+
+      const data = UtilsTypescript.splitNamespaceForContent(content);
+      content = data.content;
+
+      const isLib = folder === tmpSourceDist;
+      if (isLib) {
+        content = UtilsTypescript.stripTsTypesIntoJsFromContent(
+          content,
+          fileAbsPath,
+        );
+      }
+
+      Helpers.writeJson(
+        fileAbsPath
+          .replace('.tsx', `.${splitNamespacesJson}`)
+          .replace('.ts', `.${splitNamespacesJson}`),
+        {
+          namespacesMapObj: isLib
+            ? data.namespacesMapObjJS
+            : data.namespacesMapObj,
+          namespacesReplace: isLib
+            ? data.namespacesReplaceJS
+            : data.namespacesReplace,
+        },
+      );
+      UtilsFilesFoldersSync.writeFile(fileAbsPath, content);
+    }
+    //#endregion
+  }
+  //#endregion
+
   //#region methods / combine namespaces for current package
   private combineNamespacesForCurrentPackage(
     files: string[],
@@ -466,10 +477,14 @@ export class BackendCompilation {
   ): void {
     //#region @backendFunc
     const data = files
-      .filter(f => f.endsWith(`.${splitNamespacesJson}`))
+      .filter(f => f.endsWith('.ts') || f.endsWith('.tsx'))
       .reduce((a, b) => {
         const jsonMap: UtilsTypescript.SplitNamespaceResult =
-          UtilsJson.readJson(b) || {};
+          UtilsJson.readJson(
+            b
+              .replace('.tsx', `.${splitNamespacesJson}`)
+              .replace('.ts', `.${splitNamespacesJson}`),
+          ) || {};
         return _.merge(a, jsonMap);
       }, {} as UtilsTypescript.SplitNamespaceResult);
 
@@ -496,6 +511,11 @@ export class BackendCompilation {
       .filter(f => f.endsWith('.ts') || f.endsWith('.tsx'))
       .forEach(f => {
         // Helpers.logInfo(`Processing browser prod file: ${f}`);
+
+        // const debug = BrowserCodeCut.debugFile.some(d => f.endsWith(d));
+        // if (debug) {
+        //   debugger;
+        // }
 
         let content = Helpers.readFile(f);
         namespacesForPackages = new Map(
@@ -539,11 +559,6 @@ export class BackendCompilation {
             }
           });
         }
-
-        // const debug = BrowserCodeCut.debugFile.some(d => f.endsWith(d));
-        // if (debug) {
-        //   debugger;
-        // }
 
         namespacesForPackages.forEach((namespaceData, libName) => {
           if (

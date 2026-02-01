@@ -67,6 +67,8 @@ import { SplitFileProcess } from './file-split-process';
 export class BrowserCodeCut {
   //#region constants
   public static debugFile = [
+    // 'rest-request.ts',
+    // 'models.ts',
     // '/endpoint-context.ts',
     // 'rest.class.ts'
     // 'hello-world-simple.context.ts',
@@ -812,47 +814,6 @@ export class BrowserCodeCut {
     return BrowserCodeCut.initialWarning;
   }
 
-  private productionSplitNamespaces(
-    content: string,
-    absFilePath: string,
-    fileType:
-      | typeof libTypeString
-      | typeof browserTypeString
-      | typeof websqlTypeString,
-  ): string {
-    //#region @backendFunc
-    // if(this.debug) {
-    //   debugger
-    // }
-    const data = UtilsTypescript.splitNamespaceForContent(content);
-
-    // this.debug &&
-    //   console.log(`(${fileType}) SAVING NAMESPACES FOR`, absFilePath);
-
-    fse.writeFileSync(
-      absFilePath
-        .replace('.tsx', `.${splitNamespacesJson}`)
-        .replace('.ts', `.${splitNamespacesJson}`),
-      JSON.stringify(
-        {
-          namespacesMapObj:
-            fileType === libTypeString
-              ? data.namespacesMapObjJS
-              : data.namespacesMapObj,
-          namespacesReplace:
-            fileType === libTypeString
-              ? data.namespacesReplaceJS
-              : data.namespacesReplace,
-        },
-        null,
-        2,
-      ),
-      'utf-8',
-    );
-
-    return data.content;
-    //#endregion
-  }
   //#endregion
 
   //#region private / methods & getters / change content before saving file
@@ -1004,10 +965,6 @@ export class BrowserCodeCut {
       //#endregion
     }
     content = this.splitFileProcess.replaceInFile(content, toReplace);
-
-    if (this.buildOptions.build.prod) {
-      content = this.productionSplitNamespaces(content, absFilePath, typeOfOp);
-    }
 
     return content;
     //#endregion
