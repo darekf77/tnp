@@ -853,7 +853,7 @@ export const indexJSNpmPackage = fileName.index_js;
 
 export const indexJSElectronDist = fileName.index_js;
 
-export const indexTsProd = 'index-prod.js';
+export const indexProdJs = 'index-prod.js';
 
 export const cliTsFromSrc = 'cli.ts';
 

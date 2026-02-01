@@ -43,7 +43,7 @@ import {
   dotNpmrcMainProject,
   indexDtsNpmPackage,
   indexJSNpmPackage,
-  indexTsProd,
+  indexProdJs,
   libFromCompiledDist,
   libFromNpmPackage,
   libFromSrc,
@@ -1592,7 +1592,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   ): Promise<void> {
     //#region @backendFunc
 
-    const destCliTSProd = crossPlatformPath([releaseAbsLocation, indexTsProd]);
+    const destCliTSProd = crossPlatformPath([releaseAbsLocation, indexProdJs]);
 
     let destCli = crossPlatformPath([releaseAbsLocation, indexJSNpmPackage]);
     const destCliMin = crossPlatformPath([releaseAbsLocation, cliJSNpmPackage]);
