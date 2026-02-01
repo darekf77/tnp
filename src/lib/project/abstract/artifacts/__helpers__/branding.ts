@@ -13,6 +13,7 @@ import {
   assetsFromSrc,
   generatedFromAssets,
   iconVscode128Basename,
+  prodSuffix,
   pwaGeneratedFolder,
   srcMainProject,
   tmpVscodeProj,
@@ -238,15 +239,22 @@ export class Branding extends BaseFeatureForProject<Project> {
   async generateLogoFroVscodeLocations(): Promise<void> {
     //#region @backendFunc
     Helpers.taskStarted('Creating vscode icons');
-    const destinationDirnames = ReleaseTypeWithDevelopmentArr.map(
-      releaseType => {
+    const destinationDirnames = [
+      ...ReleaseTypeWithDevelopmentArr.map(releaseType => {
         return this.project.pathFor([
           tmpVscodeProj,
           releaseType,
           this.project.name,
         ]);
-      },
-    );
+      }),
+      ...ReleaseTypeWithDevelopmentArr.map(releaseType => {
+        return this.project.pathFor([
+          tmpVscodeProj,
+          releaseType + prodSuffix,
+          this.project.name,
+        ]);
+      }),
+    ];
 
     let firstPath: string;
     for (const destinationDirnameAbsPath of destinationDirnames) {
