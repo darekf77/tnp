@@ -334,17 +334,12 @@ export class BackendCompilation {
       );
       //#endregion
     }
-    // debugger;
+    await this.libCompilation(this.buildOptions, {
+      generateDeclarations: true,
+    });
 
-    //#region copy or compile
-    if (this.buildOptions.build.prod) {
-      // just strip js instead tsc compilation
-      // TODO this may be changed to normal compilation
-      await HelpersTaon.stripTsTypesIntoJs(
-        this.project.pathFor([tmpSourceDist + prodSuffix]),
-        this.project.pathFor([distMainProject + prodSuffix]),
-      );
-
+    //#region copy produciton lib into lib-prod
+    if (!this.buildOptions.build.watch && this.buildOptions.build.prod) {
       HelpersTaon.copy(
         this.project.pathFor([
           distMainProject + prodSuffix,
@@ -359,10 +354,6 @@ export class BackendCompilation {
           overwrite: true,
         },
       );
-    } else {
-      await this.libCompilation(this.buildOptions, {
-        generateDeclarations: true,
-      });
     }
     //#endregion
 
@@ -370,9 +361,9 @@ export class BackendCompilation {
   }
   //#endregion
 
-  //#region regenerated namespaces for current package
+  //#region methods / regenerated namespaces for current package
 
-  //#region set generated re export to map
+  //#region methods /set generated re export to map
   private setGeneratedReExportsToMapForCurrentPackage(
     reExportForPackages: Map<string, UtilsTypescript.GatheredExportsMap>,
     folderInDist:
@@ -390,7 +381,7 @@ export class BackendCompilation {
   }
   //#endregion
 
-  //#region generate re export files
+  //#region methods / generate re export files
   private saveGenerateReExportsIndProdDistForCurrentPackage(
     indexFileInLibAbsPath: string,
     namespacesForPackages: Map<string, UtilsTypescript.SplitNamespaceResult>,
@@ -418,7 +409,7 @@ export class BackendCompilation {
   }
   //#endregion
 
-  //#region set genearted namespaces data for current pacakges
+  //#region methods / set genearted namespaces data for current pacakges
   private setGeneratedNamespacesDataForCurrentPackage(
     folder: typeof tmpSrcDist | typeof tmpSrcDistWebsql | typeof tmpSourceDist,
     files: string[],
@@ -440,12 +431,12 @@ export class BackendCompilation {
       content = data.content;
 
       const isLib = folder === tmpSourceDist;
-      if (isLib) {
-        content = UtilsTypescript.stripTsTypesIntoJsFromContent(
-          content,
-          fileAbsPath,
-        );
-      }
+      // if (isLib) {
+      //   content = UtilsTypescript.stripTsTypesIntoJsFromContent(
+      //     content,
+      //     fileAbsPath,
+      //   );
+      // }
 
       Helpers.writeJson(
         fileAbsPath
