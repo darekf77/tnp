@@ -385,6 +385,7 @@ export async function run(
       cil: 'release:clear:install:locally',
       'install:locally': 'release:install:locally',
       cinit: 'init:clearInit',
+      a: 'app',
       an: 'app:normal',
       aw: 'app:websql',
       ba: 'build:app',
