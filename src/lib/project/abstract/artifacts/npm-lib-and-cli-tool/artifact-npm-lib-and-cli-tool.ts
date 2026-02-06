@@ -224,7 +224,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#endregion
 
   //#region build partial
-  async buildPartial(buildOptions: EnvOptions): Promise<{
+  async buildPartial(
+    buildOptions: EnvOptions,
+    opt?: {
+      normalBuildBeforeProd: boolean;
+    },
+  ): Promise<{
     tmpProjNpmLibraryInNodeModulesAbsPath: string;
     isOrganizationPackage?: boolean;
     packageName?: string;
@@ -237,9 +242,24 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       );
       return;
     }
+    const packageName = this.project.nameForNpmPackage;
+    const isOrganizationPackage =
+      this.project.nameForNpmPackage.startsWith('@');
+
     const orgParams = buildOptions.clone();
 
     buildOptions = await this.project.artifactsManager.init(buildOptions);
+
+    if (buildOptions.build.prod) {
+      await this.buildPartial(
+        buildOptions.clone({
+          build: {
+            prod: false,
+          },
+        }),
+        { normalBuildBeforeProd: true },
+      );
+    }
 
     if (buildOptions.build.watch) {
       this.project.environmentConfig.watchAndRecreate(async () => {
@@ -257,14 +277,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     const shouldSkipBuild = this.shouldSkipBuild(buildOptions);
 
-    const packageName = this.project.nameForNpmPackage;
     const tmpProjNpmLibraryInNodeModulesAbsPath = this.project.pathFor([
       tmpLocalCopytoProjDist,
       nodeModulesMainProject,
       packageName,
     ]);
-    const isOrganizationPackage =
-      this.project.nameForNpmPackage.startsWith('@');
 
     if (shouldSkipBuild) {
       Helpers.warn(`
@@ -349,7 +366,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     Helpers.logInfo(`
 
-    ${buildOptions.build.prod ? '[PROD]' : '[DEV]'} Building lib for base href: ${
+    ${
+      buildOptions.build.prod
+        ? '[PROD]'
+        : `[DEV${opt.normalBuildBeforeProd ? '-BEFORE-PROD' : ''}]`
+    } Building lib for base href: ${
       !_.isUndefined(buildOptions.build.baseHref)
         ? `'` + buildOptions.build.baseHref + `'`
         : '/ (default)'
@@ -472,9 +493,125 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     //#region start copy manager
     if (!shouldSkipBuild) {
-      if (!buildOptions.copyToManager.skip) {
+      if (!buildOptions.copyToManager.skip && !opt?.normalBuildBeforeProd) {
         if (_.isFunction(buildOptions.copyToManager.beforeCopyHook)) {
           await buildOptions.copyToManager.beforeCopyHook();
+        }
+        if (buildOptions.build.prod) {
+          //#region copy browser, websql prod to normal dist
+
+          //#region copy browser, websql prod to normal dist / lib
+          HelpersTaon.copy(
+            this.project.pathFor([
+              distMainProject + prodSuffix,
+              libFromCompiledDist,
+            ]),
+            this.project.pathFor([
+              distMainProject,
+              libFromCompiledDist + prodSuffix,
+            ]),
+            {
+              recursive: true,
+              overwrite: true,
+            },
+          );
+
+          HelpersTaon.copyFile(
+            this.project.pathFor([
+              distMainProject + prodSuffix,
+              libFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
+            ]),
+            this.project.pathFor([
+              distMainProject,
+              libFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
+            ]),
+          );
+
+          HelpersTaon.copyFile(
+            this.project.pathFor([
+              distMainProject + prodSuffix,
+              libFromCompiledDist + prodSuffix + `.${reExportJson}`,
+            ]),
+            this.project.pathFor([
+              distMainProject,
+              libFromCompiledDist + prodSuffix + `.${reExportJson}`,
+            ]),
+          );
+          //#endregion
+
+          //#region copy browser, websql prod to normal dist / browser
+          HelpersTaon.copyFile(
+            this.project.pathFor([
+              distMainProject + prodSuffix,
+              browserFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
+            ]),
+            this.project.pathFor([
+              distMainProject,
+              browserFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
+            ]),
+          );
+
+          HelpersTaon.copyFile(
+            this.project.pathFor([
+              distMainProject + prodSuffix,
+              browserFromCompiledDist + prodSuffix + `.${reExportJson}`,
+            ]),
+            this.project.pathFor([
+              distMainProject,
+              browserFromCompiledDist + prodSuffix + `.${reExportJson}`,
+            ]),
+          );
+
+          HelpersTaon.copy(
+            this.project.pathFor([
+              distMainProject + prodSuffix,
+              browserMainProject,
+            ]),
+            this.project.pathFor([
+              distMainProject,
+              browserMainProject + prodSuffix,
+            ]),
+            { recursive: true, overwrite: true },
+          );
+          //#endregion
+
+          //#region copy browser, websql prod to normal dist / websql
+          HelpersTaon.copyFile(
+            this.project.pathFor([
+              distMainProject + prodSuffix,
+              websqlFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
+            ]),
+            this.project.pathFor([
+              distMainProject,
+              websqlFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
+            ]),
+          );
+
+          HelpersTaon.copyFile(
+            this.project.pathFor([
+              distMainProject + prodSuffix,
+              websqlFromCompiledDist + prodSuffix + `.${reExportJson}`,
+            ]),
+            this.project.pathFor([
+              distMainProject,
+              websqlFromCompiledDist + prodSuffix + `.${reExportJson}`,
+            ]),
+          );
+
+          HelpersTaon.copy(
+            this.project.pathFor([
+              distMainProject + prodSuffix,
+              websqlMainProject,
+            ]),
+            this.project.pathFor([
+              distMainProject,
+              websqlMainProject + prodSuffix,
+            ]),
+            { recursive: true, overwrite: true },
+          );
+          //#endregion
+
+          //#endregion
         }
         this.copyNpmDistLibManager.init(buildOptions);
         await this.copyNpmDistLibManager.runTask({
@@ -486,7 +623,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#endregion
 
     //#region show ending info
-    this.showMesageWhenBuildLibDone(buildOptions);
+    if (!opt?.normalBuildBeforeProd) {
+      this.showMesageWhenBuildLibDone(buildOptions);
+    }
 
     Helpers.info(
       buildOptions.build.watch
@@ -525,133 +664,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     // DEV BUILD
     const { tmpProjNpmLibraryInNodeModulesAbsPath } = await this.buildPartial(
       releaseOptions.clone({
-        build: { prod: false, watch: false },
+        build: {
+          prod: true, // release build alywas with prod
+          watch: false,
+        },
         copyToManager: {
           skip: true,
-        },
-      }),
-    );
-
-    // PROD BUILD
-
-    await this.buildPartial(
-      releaseOptions.clone({
-        build: { prod: true, watch: false },
-        copyToManager: {
-          beforeCopyHook: () => {
-            //#region copy prod build files to dist folder
-            Helpers.logInfo(`Copying production build files to dist folder...`);
-
-            //browser namespaces json
-            HelpersTaon.copyFile(
-              this.project.pathFor([
-                distMainProject + prodSuffix,
-                browserFromCompiledDist +
-                  prodSuffix +
-                  `.${splitNamespacesJson}`,
-              ]),
-              this.project.pathFor([
-                distMainProject,
-                browserFromCompiledDist +
-                  prodSuffix +
-                  `.${splitNamespacesJson}`,
-              ]),
-            );
-
-            HelpersTaon.copyFile(
-              this.project.pathFor([
-                distMainProject + prodSuffix,
-                browserFromCompiledDist + prodSuffix + `.${reExportJson}`,
-              ]),
-              this.project.pathFor([
-                distMainProject,
-                browserFromCompiledDist + prodSuffix + `.${reExportJson}`,
-              ]),
-            );
-
-            //websql namespaces json
-            HelpersTaon.copyFile(
-              this.project.pathFor([
-                distMainProject + prodSuffix,
-                websqlFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
-              ]),
-              this.project.pathFor([
-                distMainProject,
-                websqlFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
-              ]),
-            );
-
-            HelpersTaon.copyFile(
-              this.project.pathFor([
-                distMainProject + prodSuffix,
-                websqlFromCompiledDist + prodSuffix + `.${reExportJson}`,
-              ]),
-              this.project.pathFor([
-                distMainProject,
-                websqlFromCompiledDist + prodSuffix + `.${reExportJson}`,
-              ]),
-            );
-
-            //lib namespaces json
-            HelpersTaon.copyFile(
-              this.project.pathFor([
-                distMainProject + prodSuffix,
-                libFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
-              ]),
-              this.project.pathFor([
-                distMainProject,
-                libFromCompiledDist + prodSuffix + `.${splitNamespacesJson}`,
-              ]),
-            );
-
-            HelpersTaon.copyFile(
-              this.project.pathFor([
-                distMainProject + prodSuffix,
-                libFromCompiledDist + prodSuffix + `.${reExportJson}`,
-              ]),
-              this.project.pathFor([
-                distMainProject,
-                libFromCompiledDist + prodSuffix + `.${reExportJson}`,
-              ]),
-            );
-
-            HelpersTaon.copy(
-              this.project.pathFor([
-                distMainProject + prodSuffix,
-                browserMainProject,
-              ]),
-              this.project.pathFor([
-                distMainProject,
-                browserMainProject + prodSuffix,
-              ]),
-              { recursive: true, overwrite: true },
-            );
-
-            HelpersTaon.copy(
-              this.project.pathFor([
-                distMainProject + prodSuffix,
-                websqlMainProject,
-              ]),
-              this.project.pathFor([
-                distMainProject,
-                websqlMainProject + prodSuffix,
-              ]),
-              { recursive: true, overwrite: true },
-            );
-
-            HelpersTaon.copy(
-              this.project.pathFor([
-                distMainProject + prodSuffix,
-                libFromCompiledDist,
-              ]),
-              this.project.pathFor([
-                distMainProject,
-                libFromCompiledDist + prodSuffix,
-              ]),
-              { recursive: true, overwrite: true },
-            );
-            //#endregion
-          },
         },
       }),
     );

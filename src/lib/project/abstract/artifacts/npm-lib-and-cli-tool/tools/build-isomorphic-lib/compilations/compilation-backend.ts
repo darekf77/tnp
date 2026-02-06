@@ -338,32 +338,11 @@ export class BackendCompilation {
       generateDeclarations: true,
     });
 
-    //#region copy produciton lib into lib-prod
-    if (!this.buildOptions.build.watch && this.buildOptions.build.prod) {
-      HelpersTaon.copy(
-        this.project.pathFor([
-          distMainProject + prodSuffix,
-          libFromCompiledDist,
-        ]),
-        this.project.pathFor([
-          distMainProject,
-          libFromCompiledDist + prodSuffix,
-        ]),
-        {
-          recursive: true,
-          overwrite: true,
-        },
-      );
-    }
-    //#endregion
-
     //#endregion
   }
   //#endregion
 
-  //#region methods / regenerated namespaces for current package
-
-  //#region methods /set generated re export to map
+  //#region methods / set generated re export to map
   private setGeneratedReExportsToMapForCurrentPackage(
     reExportForPackages: Map<string, UtilsTypescript.GatheredExportsMap>,
     folderInDist:
