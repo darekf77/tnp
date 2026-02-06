@@ -57,17 +57,20 @@ export class InsideStructAngularApp extends BaseInsideStruct {
   }
 
   private resolveTmpProjectStandalonePath(): string {
+    const prodSuffixStr = this.initOptions.build.prod ? prodSuffix : '';
     if (this.initOptions.build.websql) {
       if (this.isElectron) {
-        return tmpAppsForDistElectronWebsql + `/${this.project.name}`;
+        return (
+          tmpAppsForDistElectronWebsql + prodSuffixStr + `/${this.project.name}`
+        );
       } else {
-        return tmpAppsForDistWebsql + `/${this.project.name}`;
+        return tmpAppsForDistWebsql + prodSuffixStr + `/${this.project.name}`;
       }
     } else {
       if (this.isElectron) {
-        return tmpAppsForDistElectron + `/${this.project.name}`;
+        return tmpAppsForDistElectron + prodSuffixStr + `/${this.project.name}`;
       } else {
-        return tmpAppsForDist + `/${this.project.name}`;
+        return tmpAppsForDist + prodSuffixStr + `/${this.project.name}`;
       }
     }
   }
