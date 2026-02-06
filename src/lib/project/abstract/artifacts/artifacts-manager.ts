@@ -631,6 +631,10 @@ export class ArtifactManager {
       }
       //#endregion
 
+      if (buildOptions.build.watch && buildOptions.build.prod) {
+        buildOptions.build.prod = false; // QUICK_FIX no prod for development
+      }
+
       if (
         !buildOptions.build.watch &&
         buildOptions.build.prod &&
@@ -822,22 +826,7 @@ export class ArtifactManager {
       });
 
       // normal lib build
-      await this.artifact.npmLibAndCliTool.buildPartial(
-        libConfig.clone({
-          build: {
-            prod: false,
-          },
-        }),
-      );
-
-      // prod lib build
-      await this.artifact.npmLibAndCliTool.buildPartial(
-        libConfig.clone({
-          build: {
-            prod: true,
-          },
-        }),
-      );
+      await this.artifact.npmLibAndCliTool.buildPartial(libConfig);
     };
     //#endregion
 
