@@ -369,7 +369,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     ${
       buildOptions.build.prod
         ? '[PROD]'
-        : `[DEV${opt.normalBuildBeforeProd ? '-BEFORE-PROD' : ''}]`
+        : `[DEV${opt?.normalBuildBeforeProd ? '-BEFORE-PROD' : ''}]`
     } Building lib for base href: ${
       !_.isUndefined(buildOptions.build.baseHref)
         ? `'` + buildOptions.build.baseHref + `'`

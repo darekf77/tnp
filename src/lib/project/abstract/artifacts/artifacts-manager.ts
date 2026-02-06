@@ -142,7 +142,7 @@ export class ArtifactManager {
           .filesTemplatesForStandalone()
           .map(f => f.replace(dotFileTemplateExt, '')),
       ].forEach(f => {
-        console.log('removing', f);
+        // console.log('removing', f);
         this.project.remove(f, true);
       });
     }
@@ -630,6 +630,15 @@ export class ArtifactManager {
         break; // not needed but to be sure
       }
       //#endregion
+
+      if (
+        !buildOptions.build.watch &&
+        buildOptions.build.prod &&
+        this.project.framework.isStandaloneProject &&
+        !this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer
+      ) {
+        await this.project.clear();
+      }
 
       if (
         !buildOptions.release.targetArtifact ||
