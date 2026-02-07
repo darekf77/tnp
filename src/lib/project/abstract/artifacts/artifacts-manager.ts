@@ -797,6 +797,7 @@ export class ArtifactManager {
             envNumber: item.envNumber,
             releaseType: item.releaseType || releaseOptions.release.releaseType,
             taonInstanceIp: item.taonInstanceIp,
+            askUserBeforeFinalAction: item.askUserBeforeFinalAction,
           },
         });
         if (!this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
@@ -920,7 +921,15 @@ export class ArtifactManager {
     }
     //#endregion
 
-    //#region tag and push
+    //#region final actopm tag/push/release/deploy
+
+    if (releaseOptions.release.askUserBeforeFinalAction) {
+      await this.project.releaseProcess.checkBundleQuestion(
+        this.project.location,
+        `[${releaseOptions.release.releaseType}] Check ${chalk.bold('code')} before final action`,
+      );
+    }
+
     if (!releaseOptions.release.skipTagGitPush) {
       if (!releaseOptions.release.autoReleaseUsingConfig) {
         Helpers.info(

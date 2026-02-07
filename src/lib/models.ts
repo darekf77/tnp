@@ -98,6 +98,10 @@ export namespace Models {
      * Short description of auto release item
      */
     description?: string;
+    /**
+     * Ask for confirmation before deployement to taon cloud
+     */
+    askUserBeforeFinalAction?: boolean;
   }
 
   export type TaonArtifactInclude = ReleaseArtifactTaon[] | '*'; // for each artifact

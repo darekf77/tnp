@@ -480,6 +480,12 @@ class EnvOptionsRelease {
   declare autoReleaseUsingConfig: boolean;
 
   /**
+   * ask before deployment to taon cloud
+   */
+  declare askUserBeforeFinalAction: boolean;
+
+
+  /**
    * Task of auto release from config
    */
   declare autoReleaseTaskName: string;
@@ -634,6 +640,9 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
       skipResolvingGitChanges: {
         name: 'Skip resolving git changes',
       },
+      askUserBeforeFinalAction: {
+        name: 'Ask before deployment',
+      },
       skipBuildingArtifactsNpmLibAndCliTool: {
         name: 'Skip building artifact: npm-lib-and-cli-tool',
       },
@@ -665,6 +674,10 @@ export class EnvOptions<PATHS = {}, CONFIGS = {}> {
     }
     if (optionsToSet.includes('skipResolvingGitChanges')) {
       options.release.skipResolvingGitChanges = true;
+    }
+
+    if (optionsToSet.includes('askUserBeforeFinalAction')) {
+      options.release.askUserBeforeFinalAction = true;
     }
 
     options.release.skipBuildingArtifacts =
