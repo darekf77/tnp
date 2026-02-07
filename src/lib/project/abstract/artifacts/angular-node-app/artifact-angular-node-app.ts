@@ -667,6 +667,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       const taskNameBackendReleasePort =
         `docker release ${domain} ${releaseOptions.release.releaseType} ` +
         `backend port for ${contextName} (n=${contextRealIndex})`;
+
       const portBackendRelease = await this.project.registerAndAssignPort(
         taskNameBackendReleasePort,
       );
@@ -959,13 +960,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       const containerLabel = `${UtilsDocker.DOCKER_LABEL_KEY}="\${COMPOSE_PROJECT_NAME}"`;
 
       for (let i = 0; i < contextsNames.length; i++) {
-        const index = i + 1; // start from 1
+        const contextRealIndex = i + 1; // start from 1
         const contextName = contextsNames[i].contextName;
         const ctxBackend = _.cloneDeep(backendTemplapteObj);
 
         const containerIdentifierBackendNOde =
           `backend-app-node--${_.kebabCase(releaseOptions.website.domain)}--` +
-          `v${_.kebabCase(this.project.packageJson.version)}--${contextName}--ctxIndex${index}`.toLowerCase();
+          `v${_.kebabCase(this.project.packageJson.version)}--${contextName}--ctxIndex${contextRealIndex}`.toLowerCase();
 
         //#region updating cloned backend template
         const traefikKeyBackend =
@@ -991,6 +992,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         });
         ctxBackend.labels = { ...ctxBackend.labels, ...traefikLabelsBEObject };
         ctxBackend.container_name = containerIdentifierBackendNOde;
+        ctxBackend.ports[0] = `$\{HOST_BACKEND_PORT_${contextRealIndex}\}:$\{HOST_BACKEND_PORT_${contextRealIndex}\}`
         const all = _.cloneDeep(allValuesDotEnv) as Record<string, string>;
         for (const key of Object.keys(all)) {
           all[key] = `\${${key}}`;
@@ -1002,7 +1004,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           const loadBalancerValue =
             ctxBackend.labels[keyLoadBalancerServerPort];
           ctxBackend.labels[keyLoadBalancerServerPort] =
-            loadBalancerValue?.replace('1', index.toString());
+            loadBalancerValue?.replace('1', contextRealIndex.toString());
         })();
 
         (() => {
