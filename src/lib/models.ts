@@ -1,4 +1,4 @@
-import { CoreModels, _ } from 'tnp-core/src';
+import { CoreModels, LibTypeEnum, _ } from 'tnp-core/src';
 import { PackageJson } from 'tnp-helpers/src';
 
 import type { ReleaseArtifactTaon, ReleaseType } from './options';
@@ -113,18 +113,18 @@ export namespace Models {
 
   export interface TaonJsonStandalone extends TaonJsonCommon {
     /**
-     * override npm name for build/relese
+     * (STANDALONE) override npm name for build/relese
      */
     overrideNpmName?: string;
 
     /**
-     * Application ID for standalone project.
+     * (STANDALONE) Application ID for standalone project.
      * This is used to identify the application inside application stores,
      */
     appId?: string;
 
     /**
-     * Number of contexts for this project. (default 2)
+     * (STANDALONE) Number of contexts for this project. (default 2)
      * Number can't be less than 2.
      * This property tells taon how many ports/variables needs to be assigned
      * inside app.hosts.ts
@@ -132,7 +132,7 @@ export namespace Models {
     numberOfContexts?: number;
 
     /**
-     * it override name of project when is inside container that
+     * (STANDALONE) it override name of project when is inside container that
      * is organization.
      *
      * Property "overrideNpmName" can override this name.
@@ -140,44 +140,44 @@ export namespace Models {
     overrideNameWhenInsideOrganization?: string;
 
     /**
-     * override name of cli tool created from project
+     * (STANDALONE) override name of cli tool created from project
      */
     overrideNameForCli?: string;
 
-    type: 'isomorphic-lib';
     /**
-     * Static resurces for standalone project, that are
+     * (STANDALONE) Static resurces for standalone project, that are
      * going to be included in release dist
      */
     resources?: string[];
 
     /**
-     * Base url for content (docs, md files etc.)
+     * (STANDALONE) Base url for content (docs, md files etc.)
      * Required if README.md has relative pathes to links
      */
     baseContentUrl?: string;
 
     /**
-     * Base url for content (docs, md files etc.)
+     * (STANDALONE) Base url for content (docs, md files etc.)
      * Required if README.md has relative pathes to images
      */
     baseImagesUrl?: string;
 
     /**
-     * @default false
+     * (STANDALONE)
      * By default generated assets from logo.png are not stored
      * in repository
+     *  @default false
      */
     storeGeneratedAssetsInRepository?: boolean;
 
     /**
-     * @default true
-     * By default local release files are stored in repository
+     * (STANDALONE) By default local release files are stored in repository
+     *  @default true
      */
     storeLocalReleaseFilesInRepository?: boolean;
 
     /**
-     * Non-isomorphic dependencies for npm lib.
+     * (STANDALONE) Non-isomorphic dependencies for npm lib.
      *
      * At beginning after node_modules installation taon is checking is
      * packages are installed - if not it will throw error.
@@ -187,13 +187,13 @@ export namespace Models {
     dependenciesNamesForNpmLib: string[];
 
     /**
-     * Same as dependenciesNamesForNpmLib but these dependencies
+     * (STANDALONE) Same as dependenciesNamesForNpmLib but these dependencies
      * are isomorphic (can be used in browser and node)
      */
     isomorphicDependenciesForNpmLib: string[];
 
     /**
-     * At beginning after node_modules installation taon is checking is
+     * (STANDALONE) At beginning after node_modules installation taon is checking is
      * packages are installed - if not it will throw error.
      * Also.. this peerDependencies are going to be included in released npm lib
      * as peerDependencies.
@@ -201,7 +201,7 @@ export namespace Models {
     peerDependenciesNamesForNpmLib: string[];
 
     /**
-     * At beginning after node_modules installation taon is checking is
+     * (STANDALONE) At beginning after node_modules installation taon is checking is
      * packages are installed - if not it will throw error.
      * Also.. this peerDependencies are going to be included in released npm lib
      * as peerDependencies.
@@ -209,7 +209,7 @@ export namespace Models {
     devDependenciesNamesForNpmLib: string[];
 
     /**
-     * At beginning after node_modules installation taon is checking is
+     * (STANDALONE) At beginning after node_modules installation taon is checking is
      * packages are installed - if not it will throw error.
      * Also.. this optionalDependencies are going to be included in released npm lib
      * as optionalDependencies.
@@ -217,7 +217,7 @@ export namespace Models {
     optionalDependenciesNamesForNpmLib: string[];
 
     /**
-     * Provide information about external packages for single file
+     * (STANDALONE) Provide information about external packages for single file
      * bundling process
      */
     singleFileBundlingPackages: {
@@ -258,31 +258,31 @@ export namespace Models {
     }[];
 
     /**
-     * so I can release same npm lib
+     * (STANDALONE) so I can release same npm lib
      * with different name
      * @deprecated does not make sense
      */
     additionalNpmNames?: string[];
 
     /**
-     * Project is using own node_modules instead of core container
+     * (STANDALONE)  Project is using own node_modules instead of core container
      */
     isUsingOwnNodeModulesInsteadCoreContainer?: boolean;
 
     /**
-     * generate src/lib/index._auto-generated_.ts with
+     * (STANDALONE) generate src/lib/index._auto-generated_.ts with
      * all exports from lib ts files
      */
     shouldGenerateAutogenIndexFile: boolean;
 
     /**
-     * generate src/app.ts routes, imports and context initializations
+     * (STANDALONE) generate src/app.ts routes, imports and context initializations
      * from ./src/app/*.routes.ts (recursive)
      */
     shouldGenerateAutogenAppRoutesFile: boolean;
 
     /**
-     * Auto release helps with releasing multiple projects from a local machine.
+     * (STANDALONE) Auto release helps with releasing multiple projects from a local machine.
      * This is useful when we don't have Taon Cloud set up and want to release
      * all projects with a single command.
      */
@@ -290,43 +290,41 @@ export namespace Models {
   }
 
   export interface TaonJsonContainer extends TaonJsonCommon {
-    type: 'container';
-
     /**
-     * Static resurces for site project, that are
+     * (CONTAINER) Static resurces for site project, that are
      * going to be included in release dist
      */
     resources?: string[];
 
     /**
-     * Force linking node_modules from core container
+     * (CONTAINER) Force linking node_modules from core container
      */
     linkNodeModulesFromCoreContainer?: boolean;
 
     /**
-     * override order of packages during release or buildq
+     * (CONTAINER) override order of packages during release or buildq
      * so dependencies are released first
      */
     overridePackagesOrder: string[];
 
     /**
-     * Don't release inside children -> only tag the version
+     * (CONTAINER) Don't release inside children -> only tag the version
      */
     createOnlyTagWhenRelease?: boolean;
 
     /**
-     * Project is monorepo
+     * (CONTAINER) Project is monorepo
      */
     monorepo?: boolean;
 
     /**
-     * Project is organization/scope (like @angular)
+     * (CONTAINER) Project is organization/scope (like @angular)
      */
     organization?: boolean;
 
+    // ! TODO implement this
     /**
-     * ! TODO implement this
-     * Container projects can be used as micro frontends
+     * (CONTAINER) Container projects can be used as micro frontends
      * with router:
      *  <site-path>/  (microFrontendMainProjectName)
      *  <site-path>/_/other-project-name
@@ -335,6 +333,7 @@ export namespace Models {
   }
 
   interface TaonJsonCommon {
+    type: LibTypeEnum;
     /**
      * version of taon framework for project
      */
@@ -364,6 +363,8 @@ export namespace Models {
       includeOnly?: string[];
     };
   }
+
+  export type TaonJsonCombined = TaonJsonStandalone & TaonJsonContainer;
 
   export type TaonJson = TaonJsonCommon &
     (TaonJsonStandalone | TaonJsonContainer);

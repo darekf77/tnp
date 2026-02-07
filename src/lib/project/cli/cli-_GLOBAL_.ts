@@ -1251,41 +1251,39 @@ ${this.project.children
 
     const recreate = async () => {
       await (async () => {
-        const projectsOfInterest = [
+        const projectsOfInterestStandalone = [
           this.project.framework.coreProject,
           this.project,
         ];
 
         const schemaStandalone = await this._createJsonSchemaFrom({
-          nameOfTypeOrInterface: 'Models.TaonJsonStandalone',
+          nameOfTypeOrInterface: 'Models.TaonJsonCombined',
           project: this.project,
           relativePathToTsFile: fileToWatch,
         });
-        for (const proj of projectsOfInterest) {
+        for (const proj of projectsOfInterestStandalone) {
           proj.vsCodeHelpers.recreateJsonSchemaForTaon();
           Helpers.writeFile(
             proj.pathFor(taonConfigSchemaJsonStandalone),
             schemaStandalone,
           );
         }
-      })();
 
-      await (async () => {
-        const projectsOfInterest = [
+        const projectsOfInterestContainer = [
           this.project.framework.coreContainer,
           this.project.parent,
         ];
 
-        const schemaContainer = await this._createJsonSchemaFrom({
-          nameOfTypeOrInterface: 'Models.TaonJsonContainer',
-          project: this.project,
-          relativePathToTsFile: fileToWatch,
-        });
-        for (const proj of projectsOfInterest) {
+        // const schemaContainer = await this._createJsonSchemaFrom({
+        //   nameOfTypeOrInterface: 'Models.TaonJsonContainer',
+        //   project: this.project,
+        //   relativePathToTsFile: fileToWatch,
+        // });
+        for (const proj of projectsOfInterestContainer) {
           proj.vsCodeHelpers.recreateJsonSchemaForTaon();
           Helpers.writeFile(
             proj.pathFor(taonConfigSchemaJsonContainer),
-            schemaContainer,
+            schemaStandalone,
           );
         }
       })();
