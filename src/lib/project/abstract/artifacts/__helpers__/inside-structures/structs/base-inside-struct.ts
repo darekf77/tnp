@@ -37,14 +37,13 @@ export abstract class BaseInsideStruct {
   constructor(
     public readonly project: Project,
     public readonly initOptions: EnvOptions,
-  ) { }
+  ) {}
 
   //#region replace imports for browser or websql
   replaceImportsForBrowserOrWebsql(
     fileContent: string,
     { websql }: { websql: boolean },
   ): string {
-
     //#region @backendFunc
     const importExports =
       UtilsTypescript.recognizeImportsFromContent(fileContent);
@@ -59,15 +58,20 @@ export abstract class BaseInsideStruct {
         );
       }
     }
+    if (websql) {
+      fileContent = fileContent.replace(
+        'const websqlMode = false;',
+        'const websqlMode = true;',
+      );
+    }
+
     return fileContent;
     //#endregion
-
   }
   //#endregion
 
   //#region replace imports for backend
   replaceImportsForBackend(fileContent: string): string {
-
     //#region @backendFunc
     const importExports =
       UtilsTypescript.recognizeImportsFromContent(fileContent);
@@ -84,8 +88,6 @@ export abstract class BaseInsideStruct {
     }
     return fileContent;
     //#endregion
-
   }
   //#endregion
-
 }

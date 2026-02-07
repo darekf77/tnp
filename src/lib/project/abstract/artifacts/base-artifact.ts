@@ -411,11 +411,10 @@ export abstract class BaseArtifact<
         exitOnError: false,
       });
     } catch (error) {}
-    if (Helpers.exists([staticPagesProjLocation, taonJsonMainProject])) {
-      HelpersTaon.git.cleanRepoFromAnyFilesExceptDotGitFolder(
-        staticPagesProjLocation,
-      );
-    }
+
+    HelpersTaon.git.cleanRepoFromAnyFilesExceptDotGitFolder(
+      staticPagesProjLocation,
+    );
 
     Helpers.writeFile([outputFromBuildAbsPath, '.nojekyll'], '');
 

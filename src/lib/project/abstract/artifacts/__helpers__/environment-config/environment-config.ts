@@ -6,7 +6,11 @@ import { config, LibTypeEnum, tnpPackageName } from 'tnp-core/src';
 import { chalk, CoreModels, crossPlatformPath, fse, Utils } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
-import { BaseFeatureForProject, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
+import {
+  BaseFeatureForProject,
+  HelpersTaon,
+  UtilsTypescript,
+} from 'tnp-helpers/src';
 import { Helpers } from 'tnp-helpers/src';
 import { register } from 'ts-node';
 
@@ -183,9 +187,9 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
           envName: envOptions.release.envName,
           envNumber: envOptions.release.envNumber,
         },
-        copyToManager:{
-          beforeCopyHook: envOptions.copyToManager.beforeCopyHook
-        }
+        copyToManager: {
+          beforeCopyHook: envOptions.copyToManager.beforeCopyHook,
+        },
       });
       return envConfigForArtifactAndEnvironment;
     } else {
@@ -210,12 +214,12 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     //     `${artifactName}/${environmentName}/${envNum || ''}`,
     // );
 
-    try {
-      const pathToEnvTs = this.project.pathFor(
-        `${environmentsFolder}/${artifactName}/` +
-          `env.${artifactName}.${environmentName}${envNum === undefined ? '' : envNum}.ts`,
-      );
+    var pathToEnvTs = this.project.pathFor(
+      `${environmentsFolder}/${artifactName}/` +
+        `env.${artifactName}.${environmentName}${envNum === undefined ? '' : envNum}.ts`,
+    );
 
+    try {
       // TODO QUICK_FIX
       if (!fse.existsSync(pathToEnvTs)) {
         HelpersTaon.copyFile(
@@ -280,7 +284,9 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     // );
 
     if (!configStandaloneEnv) {
-      Helpers.throwError(`Please provide default export in ${this.absPathToEnvTs}`);
+      Helpers.throwError(
+        `Please provide default export in ${this.absPathToEnvTs}`,
+      );
     }
 
     return configStandaloneEnv;

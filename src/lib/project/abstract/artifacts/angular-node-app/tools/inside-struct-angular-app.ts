@@ -7,6 +7,7 @@ import { BasePackageJson, Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import { templateFolderForArtifact } from '../../../../../app-utils';
 import {
+  AngularJsonAppOrElectronTaskName,
   AngularJsonTaskName,
   appFromSrcInsideNgApp,
   assetsFromNgProj,
@@ -523,6 +524,15 @@ export class InsideStructAngularApp extends BaseInsideStruct {
               packageJson.setVersion(this.project.packageJson.version);
             })();
 
+            //#endregion
+          }
+
+          const disablePwa =
+            this.isElectron ||
+            !this.initOptions.build.pwa ||
+            this.initOptions.build.pwa.disableServiceWorker;
+
+          if (disablePwa) {
             (() => {
               const appModuleFilePath = crossPlatformPath([
                 this.project.location,
@@ -538,6 +548,36 @@ export class InsideStructAngularApp extends BaseInsideStruct {
               );
               Helpers.writeFile(appModuleFilePath, indexHtmlFile);
             })();
+
+            //#region disable pwa in angular json
+            (() => {
+              const angularJsonPath = crossPlatformPath([
+                this.project.location,
+                replacement(tmpProjectsStandalone),
+                CoreNgTemplateFiles.ANGULAR_JSON,
+              ]);
+              // projects.app.architect.build.configurations["production-static"].serviceWorker
+              // projects.app.architect.build.configurations.production.serviceWorker
+
+              HelpersTaon.setValueToJSON(
+                angularJsonPath,
+                `projects.${
+                  this.isElectron
+                    ? AngularJsonTaskName.ELECTRON_APP
+                    : AngularJsonTaskName.ANGULAR_APP
+                }.architect.build.configurations[${AngularJsonAppOrElectronTaskName.productionSsr}].serviceWorker`,
+                void 0,
+              );
+              HelpersTaon.setValueToJSON(
+                angularJsonPath,
+                `projects.${
+                  this.isElectron
+                    ? AngularJsonTaskName.ELECTRON_APP
+                    : AngularJsonTaskName.ANGULAR_APP
+                }.architect.build.configurations[${AngularJsonAppOrElectronTaskName.productionStatic}].serviceWorker`,
+                 void 0,
+              );
+            })();
             //#endregion
           }
 
@@ -549,6 +589,11 @@ export class InsideStructAngularApp extends BaseInsideStruct {
               srcNgProxyProject,
               CoreNgTemplateFiles.WEBMANIFEST_JSON,
             ]);
+
+            if (disablePwa) {
+              Helpers.removeFileIfExists(manifestJsonPath);
+              return;
+            }
 
             const indexHtmlPath = crossPlatformPath([
               this.project.location,
@@ -649,7 +694,12 @@ export class InsideStructAngularApp extends BaseInsideStruct {
 
             HelpersTaon.setValueToJSON(
               angularJsonPath, // TODO @LAST is here angular electron task needed ?
-              `projects.${AngularJsonTaskName.ANGULAR_APP}.architect.build.options.baseHref`,
+              `projects.${
+                // this.isElectron
+                // ? AngularJsonTaskName.ELECTRON_APP // TODO probably not need for now
+                // :
+                AngularJsonTaskName.ANGULAR_APP
+              }.architect.build.options.baseHref`,
               this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
                 this.initOptions,
               ),

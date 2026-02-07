@@ -668,7 +668,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     const { tmpProjNpmLibraryInNodeModulesAbsPath } = await this.buildPartial(
       releaseOptions.clone({
         build: {
-          prod: true, // release build alywas with prod
+          prod:
+            releaseOptions.release.targetArtifact ===
+            ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
           watch: false,
         },
         copyToManager: {
