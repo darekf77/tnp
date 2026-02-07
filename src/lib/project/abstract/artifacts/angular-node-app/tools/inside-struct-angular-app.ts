@@ -29,6 +29,8 @@ import {
   srcMainProject,
   srcNgProxyProject,
   TaonGeneratedFolders,
+  tmp_FRONTEND_NORMAL_APP_PORT,
+  tmp_FRONTEND_WEBSQL_APP_PORT,
   tmpAppsForDist,
   tmpAppsForDistElectron,
   tmpAppsForDistElectronWebsql,
@@ -575,7 +577,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                     ? AngularJsonTaskName.ELECTRON_APP
                     : AngularJsonTaskName.ANGULAR_APP
                 }.architect.build.configurations[${AngularJsonAppOrElectronTaskName.productionStatic}].serviceWorker`,
-                 void 0,
+                void 0,
               );
             })();
             //#endregion
@@ -671,12 +673,23 @@ export class InsideStructAngularApp extends BaseInsideStruct {
               return c;
             });
 
-            if (this.initOptions.build.pwa.start_url) {
-              manifestJson.start_url = this.initOptions.build.pwa.start_url;
-            } else if (this.initOptions.website.useDomain) {
-              manifestJson.start_url = `https://${this.initOptions.website.domain}/`;
+            if (this.initOptions.build.watch) {
+              const project = this.project;
+              if (this.initOptions.build.websql) {
+                const websqlAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_WEBSQL_APP_PORT + '_1')}`;
+                manifestJson.start_url = websqlAppUrl;
+              } else {
+                const normalAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_NORMAL_APP_PORT + '_1')}`;
+                manifestJson.start_url = normalAppUrl;
+              }
             } else {
-              manifestJson.start_url = `/${this.project.name}/`; // perfect for github.io OR when subdomain myproject.com/docs/
+              if (this.initOptions.build.pwa.start_url) {
+                manifestJson.start_url = this.initOptions.build.pwa.start_url;
+              } else if (this.initOptions.website.useDomain) {
+                manifestJson.start_url = `https://${this.initOptions.website.domain}/`;
+              } else {
+                manifestJson.start_url = `/${this.project.name}/`; // perfect for github.io OR when subdomain myproject.com/docs/
+              }
             }
 
             Helpers.writeJson(manifestJsonPath, manifestJson);

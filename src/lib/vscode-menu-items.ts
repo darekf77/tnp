@@ -348,8 +348,8 @@ export const vscodeMenuItems = ({
                         increment: 0,
                         message: `Copying websql app URL to clipboard...`,
                       });
-                      const normalAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_WEBSQL_APP_PORT + '_1')}`;
-                      vscode.env.clipboard.writeText(normalAppUrl);
+                      const websqlAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_WEBSQL_APP_PORT + '_1')}`;
+                      vscode.env.clipboard.writeText(websqlAppUrl);
 
                       progress.report({
                         message: `Done`,
