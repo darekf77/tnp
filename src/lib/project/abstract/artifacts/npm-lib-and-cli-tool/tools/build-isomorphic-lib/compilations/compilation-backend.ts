@@ -53,8 +53,6 @@ export class BackendCompilation {
       fse.mkdirpSync(outDistPath);
     }
 
-    new ProductionBuild(this.buildOptions, this.project);
-
     await this.libCompilation(this.buildOptions, {
       generateDeclarations: true,
     });

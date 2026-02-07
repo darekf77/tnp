@@ -7,6 +7,7 @@ import { Helpers } from 'tnp-helpers/src';
 
 import { srcMainProject } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
+import { ProductionBuild } from '../../../../../../../project/abstract/artifacts/__helpers__/production-build';
 import type { Project } from '../../../../../project';
 
 import { BackendCompilation } from './compilation-backend';
@@ -21,12 +22,14 @@ export class IncrementalBuildProcess {
 
   protected browserCompilationStandalone: BrowserCompilation;
 
+  protected productionBuild: ProductionBuild;
+
   //#region constructor
 
   //#region @backend
   constructor(
     private project: Project,
-    buildOptions: EnvOptions,
+    private buildOptions: EnvOptions,
   ) {
     Helpers.log(
       `[incremental-build-process] for project: ${project.genericName}`,
@@ -67,6 +70,8 @@ export class IncrementalBuildProcess {
         srcMainProject,
         buildOptions,
       );
+
+      this.productionBuild = new ProductionBuild(project);
     }
   }
   //#endregion
@@ -90,6 +95,8 @@ export class IncrementalBuildProcess {
       return;
     }
 
+    // this creates: tmp-src-dist, tmp-src-app-dist , tmp-source-dist
+    // tmp-src-dist-websql, tmp-src-app-dist-websql , tmp-source-dist
     await this.browserCompilationStandalone.runTask({
       taskName: this.browserTaksName(
         taskName,
@@ -98,9 +105,19 @@ export class IncrementalBuildProcess {
       watch,
     });
 
+    // produciton build prepares:
+    // tmp-src-dist-prod, tmp-src-dist-websql-prod, tmp-source-dist-prod
+    if (!watch) {
+      this.productionBuild.runTask(this.buildOptions);
+    }
+
+    // compilation of  tmp-source-dist or tmp-source-dist-prod
     if (this.backendCompilation) {
       await this.backendCompilation.runTask();
     }
+
+    // copy manager moves produciton stuff from dist-prod to dist
+
     //#endregion
   }
 

@@ -15,6 +15,8 @@ import {
   reExportJson,
   splitNamespacesJson,
   tmpSourceDist,
+  tmpSrcAppDist,
+  tmpSrcAppDistWebsql,
   tmpSrcDist,
   tmpSrcDistWebsql,
   websqlFromCompiledDist,
@@ -26,32 +28,32 @@ import type { Project } from '../../project';
 
 export class ProductionBuild {
   //#region fields
-  public namespacesForPackagesLib: Map<
+  protected namespacesForPackagesLib: Map<
     string,
     UtilsTypescript.SplitNamespaceResult
   >;
 
-  public namespacesForPackagesBrowser: Map<
+  protected namespacesForPackagesBrowser: Map<
     string,
     UtilsTypescript.SplitNamespaceResult
   >;
 
-  public namespacesForPackagesWebsql: Map<
+  protected namespacesForPackagesWebsql: Map<
     string,
     UtilsTypescript.SplitNamespaceResult
   >;
 
-  public reExportsForPackagesLib: Map<
+  protected reExportsForPackagesLib: Map<
     string,
     UtilsTypescript.GatheredExportsMap
   >;
 
-  public reExportsForPackagesBrowser: Map<
+  protected reExportsForPackagesBrowser: Map<
     string,
     UtilsTypescript.GatheredExportsMap
   >;
 
-  public reExportsForPackagesWebsql: Map<
+  protected reExportsForPackagesWebsql: Map<
     string,
     UtilsTypescript.GatheredExportsMap
   >;
@@ -59,87 +61,94 @@ export class ProductionBuild {
   private readonly nameForNpmPackage: string;
   //#endregion
 
-  constructor(
-    private buildOptions: EnvOptions,
-    private project: Project,
-  ) {
-    //#region @backend
+  constructor(private project: Project) {
     this.project = project;
-    this.buildOptions = buildOptions;
     this.nameForNpmPackage = project.nameForNpmPackage;
+  }
 
-    if (!this.buildOptions.build.watch && this.buildOptions.build.prod) {
-      //#region preparation process (namespaces, re-exports)
-      this.namespacesForPackagesLib = new Map();
-      this.namespacesForPackagesBrowser = new Map();
-      this.namespacesForPackagesWebsql = new Map();
+  //#region methods / run task
+  /**
+   *
+   * @param generatingAppCode mode for building app code (that contains lib code as well)
+   */
+  runTask(buildOptions: EnvOptions, generatingAppCode: boolean = false): void {
+    //#region @backendFunc
+    if (!buildOptions.build.prod) {
+      return;
+    }
 
-      this.reExportsForPackagesLib = new Map();
-      this.reExportsForPackagesBrowser = new Map();
-      this.reExportsForPackagesWebsql = new Map();
+    //#region preparation process (namespaces, re-exports)
+    this.namespacesForPackagesLib = new Map();
+    this.namespacesForPackagesBrowser = new Map();
+    this.namespacesForPackagesWebsql = new Map();
 
-      //#region gather namespaces and re-exports data from isomorphic packages
-      // I am doing this twice for each build
-      this.project.packagesRecognition.allIsomorphicPackagesFromMemory.forEach(
-        pkgName => {
-          const namespacesLib = UtilsJson.readJson(
-            this.project.nodeModules.pathFor([
-              pkgName,
-              libFromNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
-            ]),
-            {},
-          );
-          this.namespacesForPackagesLib.set(pkgName, namespacesLib);
+    this.reExportsForPackagesLib = new Map();
+    this.reExportsForPackagesBrowser = new Map();
+    this.reExportsForPackagesWebsql = new Map();
 
-          const reExportsLib = UtilsJson.readJson(
-            this.project.nodeModules.pathFor([
-              pkgName,
-              libFromNpmPackage + prodSuffix + `.${reExportJson}`,
-            ]),
-            {},
-          );
-          this.reExportsForPackagesLib.set(pkgName, reExportsLib);
+    //#region gather namespaces and re-exports data from isomorphic packages
+    // I am doing this twice for each build
+    this.project.packagesRecognition.allIsomorphicPackagesFromMemory.forEach(
+      pkgName => {
+        const namespacesLib = UtilsJson.readJson(
+          this.project.nodeModules.pathFor([
+            pkgName,
+            libFromNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
+          ]),
+          {},
+        );
+        this.namespacesForPackagesLib.set(pkgName, namespacesLib);
 
-          const namespacesBrowser = UtilsJson.readJson(
-            this.project.nodeModules.pathFor([
-              pkgName,
-              browserNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
-            ]),
-            {},
-          );
-          this.namespacesForPackagesBrowser.set(pkgName, namespacesBrowser);
+        const reExportsLib = UtilsJson.readJson(
+          this.project.nodeModules.pathFor([
+            pkgName,
+            libFromNpmPackage + prodSuffix + `.${reExportJson}`,
+          ]),
+          {},
+        );
+        this.reExportsForPackagesLib.set(pkgName, reExportsLib);
 
-          const reExportsBrowser = UtilsJson.readJson(
-            this.project.nodeModules.pathFor([
-              pkgName,
-              browserNpmPackage + prodSuffix + `.${reExportJson}`,
-            ]),
-            {},
-          );
-          this.reExportsForPackagesBrowser.set(pkgName, reExportsBrowser);
+        const namespacesBrowser = UtilsJson.readJson(
+          this.project.nodeModules.pathFor([
+            pkgName,
+            browserNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
+          ]),
+          {},
+        );
+        this.namespacesForPackagesBrowser.set(pkgName, namespacesBrowser);
 
-          const namespacesWebsql = UtilsJson.readJson(
-            this.project.nodeModules.pathFor([
-              pkgName,
-              websqlNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
-            ]),
-            {},
-          );
-          this.namespacesForPackagesWebsql.set(pkgName, namespacesWebsql);
+        const reExportsBrowser = UtilsJson.readJson(
+          this.project.nodeModules.pathFor([
+            pkgName,
+            browserNpmPackage + prodSuffix + `.${reExportJson}`,
+          ]),
+          {},
+        );
+        this.reExportsForPackagesBrowser.set(pkgName, reExportsBrowser);
 
-          const reExportsWebsql = UtilsJson.readJson(
-            this.project.nodeModules.pathFor([
-              pkgName,
-              websqlNpmPackage + prodSuffix + `.${reExportJson}`,
-            ]),
-            {},
-          );
-          this.reExportsForPackagesWebsql.set(pkgName, reExportsWebsql);
-        },
-      );
-      //#endregion
+        const namespacesWebsql = UtilsJson.readJson(
+          this.project.nodeModules.pathFor([
+            pkgName,
+            websqlNpmPackage + prodSuffix + `.${splitNamespacesJson}`,
+          ]),
+          {},
+        );
+        this.namespacesForPackagesWebsql.set(pkgName, namespacesWebsql);
 
-      //#region set/update re-exports fro current pacakge
+        const reExportsWebsql = UtilsJson.readJson(
+          this.project.nodeModules.pathFor([
+            pkgName,
+            websqlNpmPackage + prodSuffix + `.${reExportJson}`,
+          ]),
+          {},
+        );
+        this.reExportsForPackagesWebsql.set(pkgName, reExportsWebsql);
+      },
+    );
+    //#endregion
+
+    //#region set/update re-exports fro current pacakge
+    if (!generatingAppCode) {
       this.setGeneratedReExportsToMapForCurrentPackage(
         this.reExportsForPackagesLib,
         libFromCompiledDist,
@@ -152,9 +161,12 @@ export class ProductionBuild {
         this.reExportsForPackagesWebsql,
         websqlFromCompiledDist,
       );
-      //#endregion
+    }
 
-      //#region generate re-exports files in normal build
+    //#endregion
+
+    //#region generate re-exports files in normal build
+    if (!generatingAppCode) {
       Helpers.taskStarted(`Generating re-exports files...`);
       this.saveGenerateReExportsIndProdDistForCurrentPackage(
         this.project.pathFor([
@@ -182,86 +194,105 @@ export class ProductionBuild {
         websqlFromCompiledDist,
       );
       Helpers.taskDone(`Done generating re-exports files.`);
-      //#endregion
-
-      //#region detect files
-      const filesBrowser = UtilsFilesFoldersSync.getFilesFrom(
-        this.project.pathFor(tmpSrcDist + prodSuffix),
-        {
-          recursive: true,
-          followSymlinks: false,
-        },
-      );
-
-      const filesWebsql = UtilsFilesFoldersSync.getFilesFrom(
-        this.project.pathFor(tmpSrcDistWebsql + prodSuffix),
-        {
-          recursive: true,
-          followSymlinks: false,
-        },
-      );
-
-      const filesLib = UtilsFilesFoldersSync.getFilesFrom(
-        this.project.pathFor(tmpSourceDist + prodSuffix),
-        {
-          recursive: true,
-          followSymlinks: false,
-        },
-      );
-      //#endregion
-
-      //#region merge all namespaces metadata
-      this.setGeneratedNamespacesDataForCurrentPackage(tmpSourceDist, filesLib);
-
-      this.setGeneratedNamespacesDataForCurrentPackage(
-        tmpSrcDist,
-        filesBrowser,
-      );
-
-      this.setGeneratedNamespacesDataForCurrentPackage(
-        tmpSrcDistWebsql,
-        filesWebsql,
-      );
-
-      this.combineNamespacesForCurrentPackage(
-        filesLib,
-        this.namespacesForPackagesLib,
-        libFromCompiledDist,
-      );
-      this.combineNamespacesForCurrentPackage(
-        filesBrowser,
-        this.namespacesForPackagesBrowser,
-        browserFromCompiledDist,
-      );
-      this.combineNamespacesForCurrentPackage(
-        filesWebsql,
-        this.namespacesForPackagesWebsql,
-        websqlFromCompiledDist,
-      );
-      //#endregion
-
-      //#endregion
-
-      //#region process production code
-      this.productionCodeReplacement(
-        filesLib,
-        this.namespacesForPackagesLib,
-        this.reExportsForPackagesLib,
-      );
-      this.productionCodeReplacement(
-        filesBrowser,
-        this.namespacesForPackagesBrowser,
-        this.reExportsForPackagesBrowser,
-      );
-      this.productionCodeReplacement(
-        filesWebsql,
-        this.namespacesForPackagesWebsql,
-        this.reExportsForPackagesWebsql,
-      );
-      //#endregion
     }
     //#endregion
+
+    //#region detect files
+    const filesBrowser = UtilsFilesFoldersSync.getFilesFrom(
+      this.project.pathFor(
+        (generatingAppCode ? tmpSrcAppDist : tmpSrcDist) + prodSuffix,
+      ),
+      {
+        recursive: true,
+        followSymlinks: false,
+      },
+    );
+
+    const filesWebsql = UtilsFilesFoldersSync.getFilesFrom(
+      this.project.pathFor(
+        (generatingAppCode ? tmpSrcAppDistWebsql : tmpSrcDistWebsql) +
+          prodSuffix,
+      ),
+      {
+        recursive: true,
+        followSymlinks: false,
+      },
+    );
+
+    const filesLib = generatingAppCode
+      ? [] // already done when generatingAppCode === false in npm lib build
+      : UtilsFilesFoldersSync.getFilesFrom(
+          this.project.pathFor(tmpSourceDist + prodSuffix),
+          {
+            recursive: true,
+            followSymlinks: false,
+          },
+        );
+    //#endregion
+
+    //#region merge all namespaces metadata
+
+    this.setGeneratedNamespacesDataForCurrentPackage(
+      // tmpSourceDist,
+      filesLib,
+    );
+
+    this.setGeneratedNamespacesDataForCurrentPackage(
+      // generatingAppCode ? tmpSrcAppDist : tmpSrcDist,
+      filesBrowser,
+    );
+
+    this.setGeneratedNamespacesDataForCurrentPackage(
+      // generatingAppCode ? tmpSrcAppDistWebsql : tmpSrcDistWebsql,
+      filesWebsql,
+    );
+
+    this.combineNamespacesForCurrentPackage(
+      filesLib,
+      this.namespacesForPackagesLib,
+      libFromCompiledDist,
+      generatingAppCode,
+    );
+    this.combineNamespacesForCurrentPackage(
+      filesBrowser,
+      this.namespacesForPackagesBrowser,
+      browserFromCompiledDist,
+      generatingAppCode,
+    );
+    this.combineNamespacesForCurrentPackage(
+      filesWebsql,
+      this.namespacesForPackagesWebsql,
+      websqlFromCompiledDist,
+      generatingAppCode,
+    );
+
+    //#endregion
+
+    //#endregion
+
+    //#region process production code
+    Helpers.taskStarted(`Production code replacement started`);
+    this.productionCodeReplacement(
+      filesLib,
+      this.namespacesForPackagesLib,
+      this.reExportsForPackagesLib,
+    );
+    this.productionCodeReplacement(
+      filesBrowser,
+      this.namespacesForPackagesBrowser,
+      this.reExportsForPackagesBrowser,
+    );
+    this.productionCodeReplacement(
+      filesWebsql,
+      this.namespacesForPackagesWebsql,
+      this.reExportsForPackagesWebsql,
+    );
+    Helpers.taskDone(`Production code replacement done`);
+    //#endregion
+
+    //#endregion
   }
+  //#endregion
 
   //#region methods / set generated re export to map
   private setGeneratedReExportsToMapForCurrentPackage(
@@ -311,7 +342,12 @@ export class ProductionBuild {
 
   //#region methods / set genearted namespaces data for current pacakges
   private setGeneratedNamespacesDataForCurrentPackage(
-    folder: typeof tmpSrcDist | typeof tmpSrcDistWebsql | typeof tmpSourceDist,
+    // folder:
+    //   | typeof tmpSrcAppDist
+    //   | typeof tmpSrcAppDistWebsql
+    //   | typeof tmpSrcDist
+    //   | typeof tmpSrcDistWebsql
+    //   | typeof tmpSourceDist,
     files: string[],
   ): void {
     //#region @backendFunc
@@ -367,6 +403,7 @@ export class ProductionBuild {
       | typeof libFromCompiledDist
       | typeof browserFromCompiledDist
       | typeof websqlFromCompiledDist,
+    generatingAppCode: boolean,
   ): void {
     //#region @backendFunc
     const data = files
@@ -381,13 +418,17 @@ export class ProductionBuild {
         return _.merge(a, jsonMap);
       }, {} as UtilsTypescript.SplitNamespaceResult);
 
-    Helpers.writeJson(
-      this.project.pathFor([
-        distMainProject + prodSuffix,
-        folderInDist + prodSuffix + `.${splitNamespacesJson}`,
-      ]),
-      data,
-    );
+    // no need saving just gather data for app build
+    if (!generatingAppCode) {
+      Helpers.writeJson(
+        this.project.pathFor([
+          distMainProject + prodSuffix,
+          folderInDist + prodSuffix + `.${splitNamespacesJson}`,
+        ]),
+        data,
+      );
+    }
+
     namespacesForPackages.set(this.nameForNpmPackage, data);
     //#endregion
   }

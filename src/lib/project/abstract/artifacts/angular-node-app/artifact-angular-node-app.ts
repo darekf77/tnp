@@ -84,6 +84,7 @@ import { DeploymentsController } from '../../taon-worker/deployments';
 import type { DeploymentReleaseData } from '../../taon-worker/deployments/deployments.models';
 import { DeploymentsUtils } from '../../taon-worker/deployments/deployments.utils';
 import { ProcessesController } from '../../taon-worker/processes/processes.controller';
+import { ProductionBuild } from '../__helpers__/production-build';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 import { InsideStructuresElectron } from '../electron-app/tools/inside-struct-electron';
 
@@ -102,6 +103,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   ReleasePartialOutput
 > {
   //#region fields & getters
+  public readonly productionBuild: ProductionBuild;
+
   public readonly migrationHelper: MigrationHelper;
 
   public readonly angularFeBasenameManager: AngularFeBasenameManager;
@@ -118,6 +121,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   constructor(readonly project: Project) {
     super(project, ReleaseArtifactTaon.ANGULAR_NODE_APP);
     this.migrationHelper = new MigrationHelper(project);
+    this.productionBuild = new ProductionBuild(project);
     this.angularFeBasenameManager = new AngularFeBasenameManager(project);
     this.insideStructureApp = new InsideStructuresApp(project);
     this.insideStructureElectron = new InsideStructuresElectron(project);
@@ -255,6 +259,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       );
     }
     //#endregion
+
+    this.productionBuild.runTask(buildOptions, true);
 
     const appDistOutBackendNodeAbsPath =
       this.getOutDirNodeBackendAppAbsPath(buildOptions);
