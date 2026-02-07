@@ -305,7 +305,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     //#region serve command
     const serveCommand =
-      `${this.NPM_RUN_NG_COMMAND} serve ${
+      `${TaonCommands.NPM_RUN_NG} serve ${
         buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
           ? AngularJsonTaskName.ELECTRON_APP
           : AngularJsonTaskName.ANGULAR_APP
@@ -320,7 +320,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     //#region build command
     const angularBuildCommand =
-      `${this.NPM_RUN_NG_COMMAND} build ${
+      `${TaonCommands.NPM_RUN_NG} build ${
         buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
           ? AngularJsonTaskName.ELECTRON_APP
           : AngularJsonTaskName.ANGULAR_APP

@@ -3,7 +3,12 @@ import { RegionRemover } from 'isomorphic-region-loader/src';
 import { config, extAllowedToReplace, TAGS } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath, glob, path } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
-import { Helpers, HelpersTaon, UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
+import {
+  Helpers,
+  HelpersTaon,
+  UtilsTypescript,
+  UtilsZip,
+} from 'tnp-helpers/src';
 
 import {
   binMainProject,
@@ -90,9 +95,6 @@ export abstract class BaseArtifact<
   protected readonly artifacts: IArtifactProcessObj;
 
   protected readonly globalHelper: ArtifactsGlobalHelper;
-
-  // when there is not global "ng" command -> npm-run ng.js works
-  protected readonly NPM_RUN_NG_COMMAND: string = TaonCommands.NPM_RUN_NG;
 
   //#region  public abstract methods / init
   /**
@@ -512,7 +514,10 @@ export abstract class BaseArtifact<
       ]);
     }
 
-    HelpersTaon.git.revertFileChanges(staticPagesProjLocation, BundledFiles.CNAME);
+    HelpersTaon.git.revertFileChanges(
+      staticPagesProjLocation,
+      BundledFiles.CNAME,
+    );
 
     if (options.createReadme) {
       Helpers.writeFile(
