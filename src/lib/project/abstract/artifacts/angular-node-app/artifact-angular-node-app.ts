@@ -964,21 +964,25 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         const contextName = contextsNames[i].contextName;
         const ctxBackend = _.cloneDeep(backendTemplapteObj);
 
+        //  `backend-app-node--${_.kebabCase(releaseOptions.website.domain)}--` +
         const containerIdentifierBackendNOde =
-          `backend-app-node--${_.kebabCase(releaseOptions.website.domain)}--` +
-          `v${_.kebabCase(this.project.packageJson.version)}--${contextName}--ctxIndex${contextRealIndex}`.toLowerCase();
+          `be--${_.kebabCase(releaseOptions.website.domain)}--` +
+          `v${_.kebabCase(this.project.packageJson.version)}--${
+            contextName
+          }--ctx${contextRealIndex}`.toLowerCase();
 
         //#region updating cloned backend template
         const traefikKeyBackend =
-          `${containerIdentifierBackendNOde}--` +
+          `${containerIdentifierBackendNOde}--env` +
           `${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
 
         const traefikLabelsBE = [
           `traefik.enable=true`,
-          `traefik.http.routers.${traefikKeyBackend}.rule=Host(\`${releaseOptions.website.domain}\`) && PathPrefix(\`/api/CTX/\`)`,
+          `traefik.http.routers.${traefikKeyBackend}.rule=Host(\`${releaseOptions.website.domain}\`) && PathPrefix(\`/api/${contextName}/\`)`,
           `traefik.http.routers.${traefikKeyBackend}.entrypoints=websecure`,
           // `traefik.http.routers.${traefikKeyBackend}.tls.certresolver=myresolver`,
-          `traefik.http.services.${traefikKeyBackend}.loadbalancer.server.port=$\{HOST_BACKEND_PORT_1\}`,
+          `traefik.http.services.${traefikKeyBackend}.loadbalancer.server.port=$\{HOST_BACKEND_PORT_${contextRealIndex}\}`,
+
           containerLabel,
           UtilsDocker.DOCKER_TAON_PROJECT_LABEL,
           // only when sripping prefix
@@ -992,27 +996,13 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         });
         ctxBackend.labels = { ...ctxBackend.labels, ...traefikLabelsBEObject };
         ctxBackend.container_name = containerIdentifierBackendNOde;
-        ctxBackend.ports[0] = `$\{HOST_BACKEND_PORT_${contextRealIndex}\}:$\{HOST_BACKEND_PORT_${contextRealIndex}\}`
+        ctxBackend.ports[0] = `$\{HOST_BACKEND_PORT_${contextRealIndex}\}:$\{HOST_BACKEND_PORT_${contextRealIndex}\}`;
         const all = _.cloneDeep(allValuesDotEnv) as Record<string, string>;
         for (const key of Object.keys(all)) {
           all[key] = `\${${key}}`;
         }
         ctxBackend.environment = all;
         ctxBackend.environment[ACTIVE_CONTEXT] = contextName;
-        (() => {
-          const keyLoadBalancerServerPort = `traefik.http.services.${traefikKeyBackend}.loadbalancer.server.port`;
-          const loadBalancerValue =
-            ctxBackend.labels[keyLoadBalancerServerPort];
-          ctxBackend.labels[keyLoadBalancerServerPort] =
-            loadBalancerValue?.replace('1', contextRealIndex.toString());
-        })();
-
-        (() => {
-          const httpRouterBackendPortKey = `traefik.http.routers.${traefikKeyBackend}.rule`;
-          const loadBalancerValue = ctxBackend.labels[httpRouterBackendPortKey];
-          ctxBackend.labels[httpRouterBackendPortKey] =
-            loadBalancerValue?.replace('CTX', contextName);
-        })();
 
         const specificForProjectSQliteDbLocation = crossPlatformPath([
           UtilsOs.getRealHomeDir(),
@@ -1041,8 +1031,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
       const ctxFrontend = _.cloneDeep(frontendTemplapteObj);
 
+      //  `angular-app-node--${_.kebabCase(releaseOptions.website.domain)}` +
       const newKeyForContainerFrontendAngular = (
-        `angular-app-node--${_.kebabCase(releaseOptions.website.domain)}` +
+        `fe--${_.kebabCase(releaseOptions.website.domain)}` +
         `--v${_.kebabCase(this.project.packageJson.version)}`
       ).toLowerCase();
 

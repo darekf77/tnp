@@ -747,7 +747,12 @@ export class Framework extends BaseFeatureForProject<Project> {
   }): Models.TaonContext[] {
     options = options || {};
     const detectedContexts = [...this._allDetectedNestedContexts(options)];
-    return detectedContexts.length > 0 ? detectedContexts : [];
+    return detectedContexts.sort((a, b) => {
+      const keyA = `${a.fileRelativePath}#${a.contextName}`.toLowerCase();
+      const keyB = `${b.fileRelativePath}#${b.contextName}`.toLowerCase();
+
+      return keyA.localeCompare(keyB);
+    });
   }
 
   contextFilter(relativePath: string): boolean {
