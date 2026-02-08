@@ -664,7 +664,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     releaseOptions = this.updateResolvedVersion(releaseOptions);
 
-    // DEV BUILD
     const { tmpProjNpmLibraryInNodeModulesAbsPath } = await this.buildPartial(
       releaseOptions.clone({
         build: {
@@ -672,9 +671,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
             releaseOptions.release.targetArtifact ===
             ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
           watch: false,
-        },
-        copyToManager: {
-          skip: true,
         },
       }),
     );
@@ -780,12 +776,16 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     Helpers.remove([tmpProjNpmLibraryInNodeModulesAbsPath, 'client']);
     //#endregion
 
+    let deploymentFunction: () => Promise<void> = void 0;
+
     if (allowedToNpmReleases.includes(releaseOptions.release.releaseType)) {
       if (!releaseOptions.release.skipNpmPublish) {
-        await projFromCompiled.releaseProcess.publishToNpm(
-          tmpProjNpmLibraryInNodeModulesAbsPath,
-          releaseOptions.release.autoReleaseUsingConfig,
-        );
+        deploymentFunction = async () => {
+          await projFromCompiled.releaseProcess.publishToNpm(
+            tmpProjNpmLibraryInNodeModulesAbsPath,
+            releaseOptions.release.autoReleaseUsingConfig,
+          );
+        };
       }
     } else {
       if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
@@ -830,6 +830,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       releaseProjPath,
       releaseType,
       projectsReposToPushAndTag: [this.project.location],
+      deploymentFunction
     };
     //#endregion
   }
