@@ -17,6 +17,7 @@ import {
   distMainProject,
   electronNgProj,
   externalLibsFromNgProject,
+  generatedFromAssets,
   indexJSElectronDist,
   libFromNgProject,
   libFromSrc,
@@ -25,6 +26,7 @@ import {
   packageJsonNgProject,
   prodSuffix,
   projectsFromNgTemplate,
+  pwaGeneratedFolder,
   sourceLinkInNodeModules,
   srcMainProject,
   srcNgProxyProject,
@@ -436,17 +438,15 @@ export class InsideStructAngularApp extends BaseInsideStruct {
 
           //#region TODO (what I am doing here) .. replace favicon.ico
           (() => {
+            const source = this.project.pathFor(
+              `${srcMainProject}/${assetsFromSrc}/${generatedFromAssets}` +
+                `/${pwaGeneratedFolder}/${CoreNgTemplateFiles.FAVICON_ICO}`,
+            );
+
             const faviconPathDest = crossPlatformPath([
               this.project.location,
               replacement(tmpProjectsStandalone),
               srcNgProxyProject,
-              CoreNgTemplateFiles.FAVICON_ICO,
-            ]);
-
-            const source = crossPlatformPath([
-              this.project.location,
-              srcNgProxyProject,
-              assetsFromNgProj,
               CoreNgTemplateFiles.FAVICON_ICO,
             ]);
 
