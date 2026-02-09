@@ -72,9 +72,19 @@ class $Build extends BaseCli {
 
   //#region other build commands / build library
   async lib() {
+    await this._lib();
+  }
+  async libProd() {
+    await this._lib(true);
+  }
+
+  async _lib(prod = false) {
     await this.project.build(
       EnvOptions.from({
         ...this.params,
+        build: {
+          prod,
+        },
         release: {
           ...this.params.release,
           targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,

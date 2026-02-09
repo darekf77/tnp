@@ -391,6 +391,7 @@ export async function run(
       ba: 'build:app',
       b: 'build',
       bl: 'build:lib',
+      blp: 'build:lib:prod',
       bvscode: 'build:vscode',
       d: 'docs',
       dw: 'docs:watch',
