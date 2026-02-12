@@ -478,16 +478,6 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   }
   //#endregion
 
-  //#region open in vscode
-  public openInVscode(): void {
-    //#region @backendFunc
-    this.project
-      .run(`${UtilsOs.detectEditor()} ${this.project.location}`)
-      .sync();
-    //#endregion
-  }
-  //#endregion
-
   //#region get out files for debugging
   /**
    * for debugging node_modules

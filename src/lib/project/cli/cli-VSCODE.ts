@@ -34,9 +34,7 @@ export class $Vscode extends BaseCli {
             global: {
               name: 'Apply global settings',
               action: async () => {
-                await BaseVscodeHelpers.applyProperGlobalSettings({
-                  editor: UtilsOs.detectEditor() || 'code',
-                });
+                await BaseVscodeHelpers.applyProperGlobalSettings();
                 await UtilsTerminal.pressAnyKeyToContinueAsync();
               },
             },
@@ -55,9 +53,7 @@ export class $Vscode extends BaseCli {
               name: 'Install all recommended extensions',
               action: async () => {
                 // UtilsTerminal.clearConsole();
-                await this.project.vsCodeHelpers.installExtensions({
-                  editor: UtilsOs.detectEditor() || 'code',
-                });
+                await this.project.vsCodeHelpers.installExtensions();
               },
             },
             initLocalSettings: {

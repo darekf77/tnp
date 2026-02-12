@@ -389,8 +389,9 @@ local VSCode instance.
       `Installing extension: ${path.basename(pathToVsixFile)} ` +
         `with creation date: ${fse.lstatSync(pathToVsixFile).birthtime}...`,
     );
+    const editor = this.project.ins.editor();
     Helpers.run(
-      `${UtilsOs.detectEditor()} --install-extension ${path.basename(pathToVsixFile)}`,
+      `${editor} --install-extension ${path.basename(pathToVsixFile)}`,
       {
         cwd: crossPlatformPath(path.dirname(pathToVsixFile)),
       },

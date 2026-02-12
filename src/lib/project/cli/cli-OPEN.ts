@@ -9,10 +9,15 @@ import {
   os,
   path,
 } from 'tnp-core/src';
-import { Helpers, HelpersTaon } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon, UtilsVSCode } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import { MESSAGES, packageJsonMainProject, taonJsonMainProject, TEMP_DOCS } from '../../constants';
+import {
+  MESSAGES,
+  packageJsonMainProject,
+  taonJsonMainProject,
+  TEMP_DOCS,
+} from '../../constants';
 import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
 
@@ -34,57 +39,46 @@ export class $Open extends BaseCli {
     this._exit();
   }
 
-  CORE_CONTAINER() {
-    const proj = this.project;
-    const container = this.project.ins.by(
-      LibTypeEnum.CONTAINER,
-      proj.framework.frameworkVersion,
-    );
-    if (container) {
-      container.run(`${UtilsOs.detectEditor()} .`).sync();
-    } else {
-      Helpers.error(`Core container not found...`, false, true);
+  async CORE_CONTAINER() {
+    if (!this.project?.framework?.coreContainer) {
+      Helpers.error(`This is not taon project`);
     }
+    await this.project?.framework?.coreContainer?.openInEditor();
     this._exit();
   }
 
-  CORE_PROJECT() {
-    if (
-      this.project.framework.isCoreProject &&
-      this.project.framework.frameworkVersionAtLeast('v2')
-    ) {
-      this.project
-        .run(
-          `${UtilsOs.detectEditor()} ${this.project.ins.by(this.project.type, this.project.framework.frameworkVersionMinusOne).location} &`,
-        )
-        .sync();
-    } else {
-      this.project
-        .run(
-          `${UtilsOs.detectEditor()} ${this.project.ins.by(this.project.type, this.project.framework.frameworkVersion).location} &`,
-        )
-        .sync();
+  async CORE_PROJECT() {
+    if (!this.project?.framework?.coreProject) {
+      Helpers.error(`This is not taon project`);
     }
+    await this.project?.framework?.coreProject?.openInEditor();
     this._exit();
   }
 
-  TNP_PROJECT() {
-    this.project.ins.Tnp.run(`${UtilsOs.detectEditor()} ${this.project.ins.Tnp.location} &`).sync();
+  async TNP_PROJECT() {
+    if (!this.project?.ins?.Tnp) {
+      Helpers.error(`This is not taon project`);
+    }
+    await this.project.ins.Tnp?.openInEditor();
     this._exit();
   }
 
-  UNSTAGE() {
+  async UNSTAGE() {
     const proj = this.project.ins.Current;
     const childrenThanAreLibs = proj.children.filter(c => {
-      return c.typeIs(...([LibTypeEnum.ISOMORPHIC_LIB] as CoreModels.LibType[]));
+      return c.typeIs(
+        ...([LibTypeEnum.ISOMORPHIC_LIB] as CoreModels.LibType[]),
+      );
     });
-    const unstageFiles = childrenThanAreLibs.filter(f =>
+    const unstageProjects = childrenThanAreLibs.filter(f =>
       f.git.thereAreSomeUncommitedChangeExcept([
         packageJsonMainProject,
         taonJsonMainProject,
       ]),
     );
-    unstageFiles.forEach(l => l.vsCodeHelpers.openInVscode());
+    for (const unstageProj of unstageProjects) {
+      await unstageProj.openInEditor();
+    }
     this._exit();
   }
 }

@@ -1052,7 +1052,7 @@ export class ArtifactManager {
         });
 
         if (res === 'openInVscode') {
-          project.vsCodeHelpers.openInVscode();
+          await project.openInEditor();
           await UtilsTerminal.pressAnyKeyToContinueAsync({
             message: 'Press any key to try release again',
           });

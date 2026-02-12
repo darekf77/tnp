@@ -68,6 +68,7 @@ import {
   SchemaGenerator,
 } from 'ts-json-schema-generator';
 
+import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
 import {
   containerPrefix,
   DEFAULT_FRAMEWORK_VERSION,
@@ -88,7 +89,6 @@ import { Models } from '../../models';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
 import { Project } from '../abstract/project';
 import type { TaonProjectResolve } from '../abstract/project-resolve';
-import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
 //#endregion
 
 export class $Global extends BaseGlobalCommandLine<
@@ -235,7 +235,7 @@ export class $Global extends BaseGlobalCommandLine<
 
     `,
     );
-    Helpers.run(`${UtilsOs.detectEditor()} ${newProj.location}`).sync();
+    Helpers.run(`${await this.ins.editor()} ${newProj.location}`).sync();
     Helpers.info(`Done`);
     this._exit();
     //#endregion
@@ -263,11 +263,11 @@ export class $Global extends BaseGlobalCommandLine<
   //#endregion
 
   //#region code instal ext
-  code() {
+  async code() {
     //#region @backendFunc
     this.project
       .run(
-        `${UtilsOs.detectEditor()} --install-extension ${this.args.join(' ')}`,
+        `${await this.ins.editor()} --install-extension ${this.args.join(' ')}`,
       )
       .sync();
     this._exit();
