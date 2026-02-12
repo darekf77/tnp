@@ -209,7 +209,7 @@ export class BrowserCompilation extends BaseClientCompiler {
 
   //#region methods / async action
   async asyncAction(event: ChangeOfFile) {
-    console.log(`${event.eventName?.toUpperCase()}: ${event.fileAbsolutePath}`)
+    // console.log(`${event.eventName?.toUpperCase()}: ${event.fileAbsolutePath}`)
     if (!this.codecutWEBSQL || !this.codecutNORMAL) {
       // TODO QUICK - but I thin it make sense => there is not backedn compilation for websql
       return;
