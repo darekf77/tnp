@@ -142,7 +142,8 @@ export class $Generate extends BaseCli {
         }
         Helpers.remove(generatedCodeAbsLoc, true);
       } else {
-        HelpersTaon.move(generatedCodeAbsLoc, destination);
+        HelpersTaon.copy(generatedCodeAbsLoc, destination);
+        Helpers.remove(generatedCodeAbsLoc, true);
       }
       //#region fixing active context imports
       if (
