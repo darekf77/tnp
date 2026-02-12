@@ -185,6 +185,7 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
 
   async libIndex() {
     //#region @backendFunc
+    this.project.taonJson.setShouldGenerateAutogenIndexFile(true);
     await this.project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
       {
         watch: false,
@@ -201,6 +202,7 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
 
   async appRoutes() {
     //#region @backendFunc
+    this.project.taonJson.setShouldGenerateAutogenAppRoutes(true);
     await this.project.artifactsManager.artifact.npmLibAndCliTool.appTsRoutesAutogenProvider.runTask();
     this._exit();
     //#endregion

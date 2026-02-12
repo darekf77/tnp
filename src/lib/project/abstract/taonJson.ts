@@ -530,10 +530,16 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  setShouldGenerateAutogenIndexFile(value: boolean) {
+  setShouldGenerateAutogenIndexFile(value: boolean):void {
     const data = this.data as Models.TaonJsonStandalone;
     data.shouldGenerateAutogenIndexFile = value;
     this.saveToDisk('updating shouldGenerateAutogenIndexFile');
+  }
+
+  setShouldGenerateAutogenAppRoutes(value: boolean): void {
+    const data = this.data as Models.TaonJsonStandalone;
+    data.shouldGenerateAutogenAppRoutesFile = value;
+    this.saveToDisk('updating shouldGenerateAutogenAppRoutesFile');
   }
 
   //#region should generate app.ts routes,imports and context initializations file
