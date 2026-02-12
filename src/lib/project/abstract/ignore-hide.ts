@@ -49,19 +49,20 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
   }
 
   private applyToChildren(toIgnore: string[]): string[] {
-    const chilredn = Utils.uniqArray([
-      ...(this.project.children || []).map(c => c.name),
-      ...(this.project.linkedProjects?.linkedProjects || []).map(
-        c => c.relativeClonePath,
-      ),
-    ]).filter(f => !!f);
-
-    return [
-      ...toIgnore,
-      ...chilredn.reduce((a, childFolderName) => {
-        return [...a, ...toIgnore.map(c => `${childFolderName}/${c}`)];
-      }, []),
-    ];
+    return toIgnore;
+    // TODO remvoe ?
+    // const chilredn = Utils.uniqArray([
+    //   ...(this.project.children || []).map(c => c.name),
+    //   ...(this.project.linkedProjects?.linkedProjects || []).map(
+    //     c => c.relativeClonePath,
+    //   ),
+    // ]).filter(f => !!f);
+    // return [
+    //   ...toIgnore,
+    //   ...chilredn.reduce((a, childFolderName) => {
+    //     return [...a, ...toIgnore.map(c => `${childFolderName}/${c}`)];
+    //   }, []),
+    // ];
   }
 
   getPatternsIgnoredInRepoButVisibleToUser(): string[] {
@@ -98,9 +99,37 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
     ].filter(c => !!c) as string[];
   }
 
+  // TODO use constants
+  hideInProject = [
+    'tmp-*',
+    'dist*',
+    '.tnp',
+    '.taon',
+    'tsconfig*',
+    '*.schema.json',
+    'eslint*',
+    'run.js',
+    'webpack*',
+    'index.js',
+    'index.js.map',
+    'index.d.ts',
+    '.gitignore',
+    '.npmignore',
+    '.npmrc',
+    '.prettierrc',
+    '.prettierignore',
+    'update-vscode-package-json.js',
+    '.editorconfig',
+    'websql',
+    'browser',
+    'node_modules',
+    'package.json',
+  ];
+
   protected alwaysIgnoredHiddenPatterns(): string[] {
     const toIgnore = [
       ...super.alwaysIgnoredHiddenPatterns(),
+      ...this.hideInProject,
       !this.project.framework.isCoreProject ? `*${dotFileTemplateExt}` : void 0,
     ].filter(f => !!f) as string[];
 
@@ -123,7 +152,11 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
   }
 
   alwaysUseRecursivePattern(): string[] {
-    return [...super.alwaysUseRecursivePattern(), `*${dotFileTemplateExt}`];
+    return [
+      ...super.alwaysUseRecursivePattern(),
+      `*${dotFileTemplateExt}`,
+      ...this.hideInProject,
+    ];
   }
 
   protected hiddenButNotNecessaryIgnoredInRepoFilesAndFolders(): string[] {
