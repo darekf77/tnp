@@ -1,6 +1,6 @@
 //#region imports
 import { TaonTempDatabasesFolder, TaonTempRoutesFolder } from 'taon/src';
-import { config, fileName } from 'tnp-core/src';
+import { config, fileName, Utils } from 'tnp-core/src';
 import { crossPlatformPath } from 'tnp-core/src';
 import {
   BaseFeatureForProject,
@@ -48,6 +48,22 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
     return true; // TODO for now true in future may be false - everything recreate from template
   }
 
+  private applyToChildren(toIgnore: string[]): string[] {
+    const chilredn = Utils.uniqArray([
+      ...(this.project.children || []).map(c => c.name),
+      ...(this.project.linkedProjects?.linkedProjects || []).map(
+        c => c.relativeClonePath,
+      ),
+    ]).filter(f => !!f);
+
+    return [
+      ...toIgnore,
+      ...chilredn.reduce((a, childFolderName) => {
+        return [...a, ...toIgnore.map(c => `${childFolderName}/${c}`)];
+      }, []),
+    ];
+  }
+
   getPatternsIgnoredInRepoButVisibleToUser(): string[] {
     // TODO
     return [
@@ -83,14 +99,16 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
   }
 
   protected alwaysIgnoredHiddenPatterns(): string[] {
-    return [
+    const toIgnore = [
       ...super.alwaysIgnoredHiddenPatterns(),
       !this.project.framework.isCoreProject ? `*${dotFileTemplateExt}` : void 0,
     ].filter(f => !!f) as string[];
+
+    return this.applyToChildren(toIgnore);
   }
 
   protected alwaysIgnoredAndHiddenFilesAndFolders(): string[] {
-    return [
+    const toIgnore = [
       ...super.alwaysIgnoredAndHiddenFilesAndFolders(),
       browserMainProject,
       websqlMainProject,
@@ -101,6 +119,7 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       distNoCutSrcMainProject + prodSuffix,
       packageJsonLockMainProject,
     ];
+    return this.applyToChildren(toIgnore);
   }
 
   alwaysUseRecursivePattern(): string[] {
@@ -108,7 +127,7 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
   }
 
   protected hiddenButNotNecessaryIgnoredInRepoFilesAndFolders(): string[] {
-    return [
+    const toIgnore = [
       ...super.hiddenButNotNecessaryIgnoredInRepoFilesAndFolders(),
       runJsMainProject,
       indexDtsMainProject,
@@ -116,22 +135,26 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       indexJsMapMainProject,
       updateVscodePackageJsonJsMainProject,
     ];
+    return this.applyToChildren(toIgnore);
   }
 
   protected hiddenButNotNecessaryIgnoredInRepoPatterns(): string[] {
-    return [
+    const toIgnore = [
       ...super.hiddenButNotNecessaryIgnoredInRepoPatterns(),
       '*.schema.json',
     ].filter(f => !!f) as string[];
+    return this.applyToChildren(toIgnore);
   }
 
   protected hiddenButNeverIgnoredInRepo(): string[] {
-    return [
+    const toIgnore = [
       ...super.hiddenButNeverIgnoredInRepo(),
       ...(Helpers.exists(this.project.pathFor(fileName.taon_jsonc))
         ? [fileName.package_json]
         : []),
     ];
+
+    return this.applyToChildren(toIgnore);
   }
 
   public getVscodeFilesFoldersAndPatternsToHide(): {
