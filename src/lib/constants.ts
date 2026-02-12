@@ -815,7 +815,9 @@ export const tsconfigNgProject = 'tsconfig.json';
 
 export const tsconfigSpecNgProject = 'tsconfig.spec.json';
 
-export const tsconfigForUnitTestsNgProject = 'tsconfig.spec-for-unit.json';
+// export const tsconfigForUnitTestsNgProject = 'tsconfig.spec-for-unit.json';
+
+export const tsconfigSpecJsonMain = 'tsconfig.spec.json';
 
 /**
  * TODO not used?

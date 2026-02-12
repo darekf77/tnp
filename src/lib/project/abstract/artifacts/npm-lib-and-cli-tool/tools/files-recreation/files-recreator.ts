@@ -26,6 +26,7 @@ import {
   tsconfigForSchemaJson,
   tsconfigBackendDistJson_PROD,
   esLintRuleNoNamespaceReExport,
+  tsconfigSpecJsonMain,
 } from '../../../../../../constants';
 import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
@@ -176,6 +177,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
     templates = [
       `${tsconfigJsonMainProject}${dotFileTemplateExt}`,
       `${tsconfigBackendDistJson}${dotFileTemplateExt}`,
+      `${tsconfigSpecJsonMain}${dotFileTemplateExt}`,
       `${tsconfigBackendDistJson_PROD}${dotFileTemplateExt}`,
     ];
 

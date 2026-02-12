@@ -28,7 +28,7 @@ import {
   testsFromSrc,
   THIS_IS_GENERATED_INFO_COMMENT,
   THIS_IS_GENERATED_STRING,
-  tsconfigForUnitTestsNgProject,
+  // tsconfigForUnitTestsNgProject,
   tsconfigJsonBrowserMainProject,
   tsconfigJsonIsomorphicMainProject,
   tsconfigJsonMainProject,
@@ -122,10 +122,10 @@ export class QuickFixes extends BaseQuickFixes<Project> {
             : ReleaseArtifactTaon.ANGULAR_NODE_APP,
         );
 
-        this.project.framework.recreateFileFromCoreProject({
-          fileRelativePath: [tempSrcDirName, tsconfigSpecNgProject],
-          relativePathInCoreProject: `${appTemplateFolder}/${tsconfigForUnitTestsNgProject}`,
-        });
+        // this.project.framework.recreateFileFromCoreProject({
+        //   fileRelativePath: [tempSrcDirName, tsconfigSpecNgProject],
+        //   relativePathInCoreProject: `${appTemplateFolder}/${tsconfigForUnitTestsNgProject}`,
+        // });
 
         this.project.framework.recreateFileFromCoreProject({
           fileRelativePath: [
