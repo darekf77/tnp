@@ -54,7 +54,7 @@ export const vscodeMenuItems = ({
           focustFirstElement();
           if (project?.location) {
             // runInTerminal(`${FRAMEWORK_NAME} push`, true);
-             progress?.report({ message: 'Pushing changes...' });
+            progress?.report({ message: 'Pushing changes...' });
             await project.git.pushProcess();
             progress?.report({ message: 'Done', increment: 100 });
           }
@@ -380,7 +380,16 @@ export const vscodeMenuItems = ({
                   progress?.report({
                     message: 'Generating export for all lib files',
                   });
-                  await project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask();
+                  await project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
+                    {
+                      watch: false,
+                    },
+                  );
+                  await project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
+                    {
+                      watch: false,
+                    },
+                  );
                   // vscode.commands.executeCommand('workbench.view.explorer');
                   progress?.report({
                     message: 'Done  generating export for all lib files',

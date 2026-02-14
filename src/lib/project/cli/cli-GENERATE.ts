@@ -208,6 +208,7 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
         watch: false,
       },
     );
+    Helpers.info(`Library index.ts regenerated`)
     this._exit();
     //#endregion
   }
