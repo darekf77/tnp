@@ -452,7 +452,7 @@ export const vscodeMenuItems = ({
     //             triggerActionOnClick: project => {
     //               if (project) {
     //                 Helpers.run(
-    //                   `${this.ins.editor()} --uninstall-extension taon-dev.${FRAMEWORK_NAME}-vscode-ext
+    //                   `${await this.ins.editor()} --uninstall-extension taon-dev.${FRAMEWORK_NAME}-vscode-ext
     // `,
     //                 ).sync();
     //                 vscode.commands.executeCommand('workbench.view.explorer');

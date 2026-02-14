@@ -389,7 +389,7 @@ local VSCode instance.
       `Installing extension: ${path.basename(pathToVsixFile)} ` +
         `with creation date: ${fse.lstatSync(pathToVsixFile).birthtime}...`,
     );
-    const editor = this.project.ins.editor();
+    const editor = await this.project.ins.editor();
     Helpers.run(
       `${editor} --install-extension ${path.basename(pathToVsixFile)}`,
       {

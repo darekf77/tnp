@@ -147,7 +147,7 @@ export class AppRoutesAutogenProvider extends BaseCompilerForProject<
     const generatedInitContextFunctions = this.contextsRelativePaths.map(r => {
       const baseName = path.basename(r);
       const cleanBasename = baseName.replace('.ts', '').replace('.tsx', '');
-      return `await ${_.upperFirst(_.camelCase(cleanBasename))}.initialize(); // ${TAGS.APP_TS_GENERATED}`;
+      return `${_.upperFirst(_.camelCase(cleanBasename))}, // ${TAGS.APP_TS_GENERATED}`;
     });
 
     appFileContent = UtilsTypescript.addBelowPlaceholder(

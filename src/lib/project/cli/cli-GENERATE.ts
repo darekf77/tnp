@@ -178,6 +178,18 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
       }
       //#endregion
     }
+    if (this.project?.taonJson.shouldGenerateAutogenIndexFile) {
+      await this.project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
+        {
+          watch: false,
+        },
+      );
+      await this.project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
+        {
+          watch: false,
+        },
+      );
+    }
     console.info('GENERATION DONE');
     this._exit(0);
     //#endregion

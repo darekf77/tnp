@@ -126,6 +126,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   public readonly insideStructureLib: InsideStructuresLib;
 
   public readonly indexAutogenProvider: IndexAutogenProvider;
+
   public readonly appTsRoutesAutogenProvider: AppRoutesAutogenProvider;
 
   public readonly filesTemplatesBuilder: FilesTemplatesBuilder;
