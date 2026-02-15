@@ -4,10 +4,7 @@ import { Helpers, _, path } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 import { BaseCompilerForProject } from 'tnp-helpers/src';
 
-import {
-  appTsFromSrc,
-  srcMainProject,
-} from '../../../../../constants';
+import { appTsFromSrc, srcMainProject } from '../../../../../constants';
 import type { Project } from '../../../project';
 //#endregion
 
@@ -107,20 +104,27 @@ export class AppRoutesAutogenProvider extends BaseCompilerForProject<
       generatedImports.join('\n'),
     );
 
-    const generateRoutes = this.routesRelativePaths.map(r => {
-      const baseName = path.basename(r);
-      const cleanBasename = baseName.replace('.ts', '').replace('.tsx', '');
-      r = r.replace(baseName, cleanBasename);
-      const importName = _.upperFirst(_.camelCase(cleanBasename));
+    const generateRoutes = this.routesRelativePaths
+      .filter(r => {
+        // console.log('checking ', this.project.pathFor([srcMainProject, r]));
+        return UtilsTypescript.fileHasDefaultExport(
+          this.project.pathFor([srcMainProject, r]),
+        );
+      })
+      .map(r => {
+        const baseName = path.basename(r);
+        const cleanBasename = baseName.replace('.ts', '').replace('.tsx', '');
+        r = r.replace(baseName, cleanBasename);
+        const importName = _.upperFirst(_.camelCase(cleanBasename));
 
-      let contextExistsForRoute = this.contextsRelativePaths.find(cr => {
-        return path.dirname(cr) === path.dirname(r);
-      });
-      contextExistsForRoute = contextExistsForRoute
-        ? contextExistsForRoute.replace('.ts', '').replace('.tsx', '')
-        : void 0;
+        let contextExistsForRoute = this.contextsRelativePaths.find(cr => {
+          return path.dirname(cr) === path.dirname(r);
+        });
+        contextExistsForRoute = contextExistsForRoute
+          ? contextExistsForRoute.replace('.ts', '').replace('.tsx', '')
+          : void 0;
 
-      return ` // ${TAGS.APP_TS_GENERATED}
+        return ` // ${TAGS.APP_TS_GENERATED}
     {
     path: '${path.dirname(r).replace('app/', '')}',
     ${
@@ -136,7 +140,7 @@ export class AppRoutesAutogenProvider extends BaseCompilerForProject<
     loadChildren: () =>
       import('./${r}').then(m => m.${importName}),
   },`;
-    });
+      });
 
     appFileContent = UtilsTypescript.addBelowPlaceholder(
       appFileContent,
