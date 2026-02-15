@@ -4,7 +4,13 @@ import { CoreModels, _, crossPlatformPath, os, path } from 'tnp-core/src';
 import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import { appFromSrc, MESSAGES, srcMainProject, TEMP_DOCS, testsFromSrc } from '../../constants';
+import {
+  appFromSrc,
+  MESSAGES,
+  srcMainProject,
+  TEMP_DOCS,
+  testsFromSrc,
+} from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
@@ -14,6 +20,14 @@ import { BaseCli } from './base-cli';
 
 // @ts-ignore TODO weird inheritance problem
 export class $Test extends BaseCli {
+  async __initialize__(): Promise<void> {
+    Helpers.error(
+      `UNIT/E2E tests command not implement yet. WORK IN PROGRESS.`,
+      false,
+      true,
+    );
+  }
+
   async _() {
     await this._testSelectors(false, false, this.argsWithParams);
   }

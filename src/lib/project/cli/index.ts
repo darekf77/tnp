@@ -16,6 +16,7 @@ import NEW from './cli-NEW';
 import OPEN from './cli-OPEN';
 import REFACTOR from './cli-REFACTOR';
 import RELEASE from './cli-RELEASE';
+import TEST from './cli-TEST';
 import VERSION from './cli-VERSION';
 import VSCODE from './cli-VSCODE';
 
@@ -39,6 +40,7 @@ export default [
   DOCKER,
   FILE_SYNC,
   CORE,
+  TEST,
 ];
 
 //#endregion
