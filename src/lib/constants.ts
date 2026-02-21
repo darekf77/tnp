@@ -90,7 +90,7 @@ export const friendlyNameForReleaseAutoConfigIsRequired = false;
 export const iconVscode128Basename = 'icon-vscode.png';
 
 export const startJsFromBin = 'start.js';
-export const startTsFromLib = 'start.ts';
+export const startTsFromLib = 'start-cli.ts';
 
 export const taonIgnore = '@taon' + '-' + 'ignore';
 

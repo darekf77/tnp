@@ -36,7 +36,7 @@ import cliClassArr from './project/cli/index';
 global.frameworkName = global.frameworkName ?? tnpPackageName;
 
 //#region startWrapper
-export function start(argv, filename): void {
+export function startCli(argv, filename): void {
   //#region @backendFunc
   const oraSpinner = require('ora');
 
@@ -485,4 +485,4 @@ export async function run(
   });
 }
 //#endregion
-export default start;
+export default startCli;
