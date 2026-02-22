@@ -197,26 +197,14 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
 
   async libIndex() {
     //#region @backendFunc
-    this.project.taonJson.setShouldGenerateAutogenIndexFile(true);
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
-      {
-        watch: false,
-      },
-    );
-    await this.project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
-      {
-        watch: false,
-      },
-    );
-    Helpers.info(`Library index.ts regenerated`)
+    await this.project.framework.generateLibIndex();
     this._exit();
     //#endregion
   }
 
   async appRoutes() {
     //#region @backendFunc
-    this.project.taonJson.setShouldGenerateAutogenAppRoutes(true);
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.appTsRoutesAutogenProvider.runTask();
+    await this.project.framework.generateAppRoutes();
     this._exit();
     //#endregion
   }

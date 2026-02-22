@@ -380,16 +380,7 @@ export const vscodeMenuItems = ({
                   progress?.report({
                     message: 'Generating export for all lib files',
                   });
-                  await project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
-                    {
-                      watch: false,
-                    },
-                  );
-                  await project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
-                    {
-                      watch: false,
-                    },
-                  );
+                  await project.framework.generateLibIndex();
                   // vscode.commands.executeCommand('workbench.view.explorer');
                   progress?.report({
                     message: 'Done  generating export for all lib files',
@@ -414,7 +405,7 @@ export const vscodeMenuItems = ({
                   progress?.report({
                     message: 'Generating app routes in app.ts...',
                   });
-                  await project.artifactsManager.artifact.npmLibAndCliTool.appTsRoutesAutogenProvider.runTask();
+                  await project.framework.generateAppRoutes();
                   progress?.report({
                     message: 'Done generating app routes code ',
                     increment: 100,

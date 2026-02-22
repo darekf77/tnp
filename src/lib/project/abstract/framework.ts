@@ -962,6 +962,7 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
   }
   //#endregion
 
+  //#region node modules building array
   NODE_BUILTIN_MODULES = [
     'node:child_process',
     'node:crypto',
@@ -1051,7 +1052,9 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
     'constants',
     'domain',
   ];
+  //#endregion
 
+  //#region set framewor version
   async setFrameworkVersion(
     newFrameworkVersion: CoreModels.FrameworkVersion,
     options?: { confirm?: boolean },
@@ -1095,7 +1098,9 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
     Helpers.taskDone(`Framework version set to ${newFrameworkVersion}`);
     //#endregion
   }
+  //#endregion
 
+  //#region set npm version
   async setNpmVersion(
     npmVersion: string,
     options?: { confirm?: boolean },
@@ -1126,4 +1131,33 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
     }
     //#endregion
   }
+  //#endregion
+
+  //#region generate lib index
+  async generateLibIndex(): Promise<void> {
+    //#region @backendFunc
+    this.project.taonJson.setShouldGenerateAutogenIndexFile(true);
+    await this.project.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
+      {
+        watch: false,
+      },
+    );
+    await this.project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
+      {
+        watch: false,
+      },
+    );
+    Helpers.info(`Library index.ts regenerated`);
+    //#endregion
+  }
+  //#endregion
+
+  //#region generate app routes
+  async generateAppRoutes(): Promise<void> {
+    //#region @backendFunc
+    this.project.taonJson.setShouldGenerateAutogenAppRoutes(true);
+    await this.project.artifactsManager.artifact.npmLibAndCliTool.appTsRoutesAutogenProvider.runTask();
+    //#endregion
+  }
+  //#endregion
 }
