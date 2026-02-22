@@ -9,6 +9,8 @@ import {
 } from 'tnp-helpers/src';
 
 import {
+  appAutoGenDocsMd,
+  appAutoGenJs,
   assetsFromSrc,
   browserMainProject,
   distMainProject,
@@ -84,6 +86,8 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       `/${srcMainProject}/${libFromSrc}/${migrationsFromLib}/${TaonGeneratedFiles.MIGRATIONS_INFO_MD}`,
       `/${srcMainProject}/${testsFromSrc}/${TaonGeneratedFiles.MOCHA_TESTS_INFO_MD}`,
       `/${srcMainProject}/${assetsFromSrc}/${sharedFromAssets}/${TaonGeneratedFiles.SHARED_FOLDER_INFO_TXT}`,
+      `/${srcMainProject}/${appAutoGenDocsMd}`,
+      `/${srcMainProject}/${appAutoGenJs}`,
       `/${dotVscodeMainProject}/${TaonGeneratedFiles.LAUNCH_JSON}`,
       !this.project.taonJson.storeGeneratedAssetsInRepository
         ? `/${srcMainProject}/${assetsFromSrc}/${generatedFromAssets}`

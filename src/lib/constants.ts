@@ -671,6 +671,9 @@ export enum TaonCommands {
 
 export const appTsFromSrc = 'app.ts';
 
+export const appAutoGenDocsMd = 'app.auto-gen-docs.md';
+
+export const appAutoGenJs = 'app.auto-gen-ver.js';
 export const appJsBackend = 'app.js';
 
 export const appScssFromSrc = 'app.scss';

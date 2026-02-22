@@ -13,9 +13,15 @@ import {
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
-import { getCleanImport } from '../../../../../../../app-utils';
 import {
+  extractFirstLevelRegions,
+  getCleanImport,
+} from '../../../../../../../app-utils';
+import {
+  appAutoGenDocsMd,
+  appAutoGenJs,
   appFromSrc,
+  appTsFromSrc,
   assetsFor,
   assetsFromNgProj,
   assetsFromNpmPackage,
@@ -51,6 +57,8 @@ import type { Project } from '../../../../../project';
 
 import { SplitFileProcess } from './file-split-process';
 //#endregion
+
+const notAllowedToPRocess = [appAutoGenDocsMd, appAutoGenJs];
 
 /**
  * Allow imports or exports with '/src' at the end
@@ -90,6 +98,18 @@ export class BrowserCodeCut {
   private rawContentForAPPONLYBrowser: string;
 
   private rawContentBackend: string;
+
+  //#region recreate app ts presentation files
+  static recreateAppTsPresentationFiles: () => void;
+
+  get recreateAppTsPresentationFiles(): () => void {
+    return BrowserCodeCut.recreateAppTsPresentationFiles;
+  }
+
+  set recreateAppTsPresentationFiles(v) {
+    BrowserCodeCut.recreateAppTsPresentationFiles = v;
+  }
+  //#endregion
 
   public get importExportsFromOrgContent(): UtilsTypescript.TsImportExport[] {
     return this.splitFileProcess?._importExports || [];
@@ -134,6 +154,14 @@ export class BrowserCodeCut {
     private project: Project,
     private buildOptions: EnvOptions,
   ) {
+    if (buildOptions.build.watch) {
+      if (!this.recreateAppTsPresentationFiles) {
+        this.recreateAppTsPresentationFiles = _.debounce(() => {
+          this.project.framework.recreateAppTsPresentationFiles();
+        }, 1000);
+      }
+    }
+
     //#region recognize namespaces for isomorphic packages
     this.nameForNpmPackage = project.nameForNpmPackage;
 
@@ -219,6 +247,9 @@ export class BrowserCodeCut {
   //#region private / methods & getters / init and save cuttabl file
   private initAndSaveCuttableFile(options: ReplaceOptionsExtended): void {
     //#region @backendFunc
+    if (notAllowedToPRocess.includes(this.relativePath)) {
+      return;
+    }
     return this.init()
       .REPLACERegionsForIsomorphicLib(_.cloneDeep(options) as any)
       .REPLACERegionsFromTsImportExport()
@@ -232,6 +263,10 @@ export class BrowserCodeCut {
     // const debugFiles = ['assets/cutsmall.jpg'];
 
     //#region @backendFunc
+    if (notAllowedToPRocess.includes(this.relativePath)) {
+      return;
+    }
+
     if (remove) {
       Helpers.removeIfExists(
         this.replaceAssetsPath(this.absFileSourcePathBrowserOrWebsql),
@@ -452,6 +487,11 @@ export class BrowserCodeCut {
     }
 
     if (isTsFile) {
+      //#region handle app.ts presentation files
+      if (this.relativePath === appTsFromSrc) {
+        this.recreateAppTsPresentationFiles();
+      }
+      //#endregion
       if (
         !this.relativePath.startsWith(`${appFromSrc}/`) &&
         !this.relativePath.startsWith(`${appFromSrc}.`)

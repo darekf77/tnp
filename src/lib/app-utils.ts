@@ -39,6 +39,65 @@ export const ALLOWED_TO_RELEASE: {
   ],
 };
 
+export const extractFirstLevelRegions = (
+  content: string,
+): { regionName: string; regionContent: string }[] => {
+  const lines = content.split(/\r?\n/);
+
+  const result: { regionName: string; regionContent: string }[] = [];
+
+  let depth = 0;
+  let currentRegionName: string | null = null;
+  let buffer: string[] = [];
+
+  for (const line of lines) {
+    const startMatch = line.match(/^\s*\/\/#region\s*(.*)$/);
+    const endMatch = line.match(/^\s*\/\/#endregion/);
+
+    // REGION START
+    if (startMatch) {
+      depth++;
+
+      // If entering first level
+      if (depth === 1) {
+        currentRegionName = startMatch[1].trim();
+        buffer = [];
+      } else if (depth > 1) {
+        // Nested region → keep it in content
+        buffer.push(line);
+      }
+
+      continue;
+    }
+
+    // REGION END
+    if (endMatch) {
+      if (depth === 1 && currentRegionName) {
+        result.push({
+          regionName: currentRegionName,
+          regionContent: buffer.join('\n'),
+        });
+
+        currentRegionName = null;
+        buffer = [];
+      } else if (depth > 1) {
+        // Nested region end → keep it
+        buffer.push(line);
+      }
+
+      depth--;
+      continue;
+    }
+
+    // Normal content inside first level region
+    if (depth >= 1 && currentRegionName) {
+      buffer.push(line);
+    }
+  }
+
+  return result;
+};
+
 /**
  * @returns relative path to proxy angular project build folder
  */

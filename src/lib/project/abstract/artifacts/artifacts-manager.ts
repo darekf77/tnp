@@ -406,6 +406,7 @@ export class ArtifactManager {
       await this.project.artifactsManager.globalHelper.branding.apply(
         !!initOptions.init.branding,
       );
+      this.project.framework.recreateAppTsPresentationFiles();
     }
 
     this.artifact.npmLibAndCliTool.unlinkNodeModulesWhenTnp();
