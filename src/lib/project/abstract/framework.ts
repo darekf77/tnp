@@ -918,7 +918,7 @@ export class Framework extends BaseFeatureForProject<Project> {
 
   public recreateAppTsPresentationFiles(): void {
     //#region @backendFunc
-    Helpers.info(`RECREATING app.ts presentation files`);
+    Helpers.info(`RECREATING app.ts presentation app.auto-gen* files`);
     let content = this.project.readFile([srcMainProject, appTsFromSrc]);
 
     this.project.writeFile(
@@ -939,6 +939,7 @@ ${extractFirstLevelRegions(content)
     content = content
       .replace(/\`/g, '\\`')
       .replace(/\$/g, '\\$')
+      .replace(/\@/g, `\${'@'}`)
       .replace(
         new RegExp(Utils.escapeStringForRegEx('#' + 'reg' + 'ion'), 'g'),
         `#\${'reg'+'ion'}`,
