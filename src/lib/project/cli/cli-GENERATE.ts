@@ -202,6 +202,10 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
     //#endregion
   }
 
+  async simplestAppTs() {
+
+  }
+
   async appRoutes() {
     //#region @backendFunc
     await this.project.framework.generateAppRoutes();

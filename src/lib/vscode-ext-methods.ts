@@ -514,6 +514,21 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+      //#region GENERATE simplest app.ts possible
+      {
+        group: groupGENERATE,
+        title: `taon simplest app.ts file`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% app-ts-simplest_flat  %entity%`,
+        options: {
+          titleWhenProcessing: 'generating simplest app.ts possible',
+          showSuccessMessage: false,
+          resolveVariables: [
+            { variable: 'entity', placeholder: `my-entity`, encode: true },
+          ],
+        },
+      },
+      //#endregion
+
       //#region GENERATE taon backend repository file
       {
         group: groupGENERATE,
