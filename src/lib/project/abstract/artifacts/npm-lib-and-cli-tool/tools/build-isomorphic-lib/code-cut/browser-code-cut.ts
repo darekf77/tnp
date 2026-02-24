@@ -488,7 +488,7 @@ export class BrowserCodeCut {
 
     if (isTsFile) {
       //#region handle app.ts presentation files
-      if (this.relativePath === appTsFromSrc) {
+      if (this.relativePath === appTsFromSrc && this.recreateAppTsPresentationFiles) {
         this.recreateAppTsPresentationFiles();
       }
       //#endregion
