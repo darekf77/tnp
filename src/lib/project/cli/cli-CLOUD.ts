@@ -23,7 +23,7 @@ import { BaseCli } from './base-cli';
 export class $Cloud extends BaseCli {
   declare params: EnvOptions & Partial<BaseCLiWorkerStartParams>;
 
-  static [UtilsCliClassMethod.staticClassNameProperty] = '$Cloud';
+  static [CoreModels.ClassNameStaticProperty] = '$Cloud';
 
   async __initialize__(): Promise<void> {
     //#region @backendFunc
