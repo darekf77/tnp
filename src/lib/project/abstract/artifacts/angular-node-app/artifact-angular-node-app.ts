@@ -1,7 +1,7 @@
 //#region imports
 import type { AxiosProgressEvent } from 'axios';
 import { MulterFileUploadResponse } from 'taon/src';
-import { config, dotTaonFolder } from 'tnp-core/src';
+import { config, dotTaonFolder, fse } from 'tnp-core/src';
 import {
   crossPlatformPath,
   path,
@@ -67,6 +67,7 @@ import {
   suffixLatest,
   TaonCommands,
   TaonGeneratedFiles,
+  tempSourceFolder,
   THIS_IS_GENERATED_STRING,
   tmpBaseHrefOverwrite,
   tmpSrcDist,
@@ -115,6 +116,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
   public readonly appHostsRecreateHelper: AppHostsRecreateHelper;
 
+  private readonly nameForNpmPackage: string;
+
+  // private readonly allIsomorphicPackagesFromMemory: string[];
+
   //#endregion
 
   //#region constructor
@@ -126,6 +131,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     this.insideStructureApp = new InsideStructuresApp(project);
     this.insideStructureElectron = new InsideStructuresElectron(project);
     this.appHostsRecreateHelper = new AppHostsRecreateHelper(project);
+    this.nameForNpmPackage = project.nameForNpmPackage;
+    // this.allIsomorphicPackagesFromMemory =
+    //   project.packagesRecognition.allIsomorphicPackagesFromMemory;
   }
   //#endregion
 
@@ -424,6 +432,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     const appBaseName = _.upperFirst(_.camelCase(this.project.name));
     const noConfigError = `TS2724: '"./app/app"' has no exported member named '${appBaseName}AppConfig'. Did you mean '${appBaseName}Config'?`;
     const noCompoenntError = `TS2614: Module '"./app/app"' has no exported member '${appBaseName}App'. Did you mean to use 'import ${appBaseName}App from "./app/app"' instead?`;
+    const externalLibInPorject = 'projects/external-libs/src/lib';
 
     if (!shouldSkipBuild) {
       await angularTempProj.execute(angularBuildAppCmd, {
@@ -449,6 +458,55 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           // console.log('LINE:', line);
 
           line = line.replace(tmpAppForDistRelativePath + '/', '');
+
+          if (line.includes(externalLibInPorject + '/')) {
+            let [__, packageName] =
+              line.split(externalLibInPorject + '/') || [];
+
+            packageName = _.first((packageName || '').split('/lib/'));
+
+            if (packageName) {
+              const tempSource = angularProjProxyPath({
+                envOptions: buildOptions,
+                project: this.project,
+                targetArtifact: buildOptions.release.targetArtifact,
+              });
+
+              let linkForRealSource: string;
+              const linkPath = this.project.pathFor([
+                tempSource,
+                externalLibInPorject,
+                packageName,
+                'lib',
+              ]);
+
+              try {
+                linkForRealSource = fse.readlinkSync(linkPath);
+              } catch (error) {}
+              if (typeof linkForRealSource === 'string') {
+                linkForRealSource = crossPlatformPath(
+                  linkForRealSource,
+                ).replace(/\/$/, '');
+              }
+
+              if (linkForRealSource) {
+                const relative = line
+                  .replace(`${externalLibInPorject}/${packageName}/lib/`, '')
+                  .trim();
+                console.log({ relative });
+
+                linkForRealSource = linkForRealSource
+                  .split('/')
+                  .slice(0, -2)
+                  .join('/');
+
+                line = line.replace(
+                  `${externalLibInPorject}/${packageName}/lib/${relative}`,
+                  `${linkForRealSource}/src/lib/${relative}`,
+                );
+              }
+            }
+          }
 
           if (line.includes('Warning:')) {
             line = line.replace(projectBasePath + '/', './');
