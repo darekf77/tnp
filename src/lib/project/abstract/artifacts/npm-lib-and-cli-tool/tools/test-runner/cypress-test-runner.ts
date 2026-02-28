@@ -7,20 +7,11 @@ import { Helpers } from 'tnp-helpers/src';
 import { UNIT_TEST_TIMEOUT } from '../../../../../../constants';
 import type { Project } from '../../../../project';
 
-export class CypressTestRunner
-  // @ts-ignore TODO weird inheritance problem
-  extends BaseFeatureForProject<Project>
-{
-  fileCommand(files: string[]) {
-    files = files.map(f => path.basename(f));
-    // console.log('files',files)
-    const useFiles = _.isArray(files) && files.length > 0;
-    const ext =
-      files.length > 1 || !_.first(files).endsWith('.test.ts')
-        ? '*.test.ts'
-        : '';
-    const res = `${useFiles ? `src/tests/**/*${files.length === 1 ? `${_.first(files)}` : `(${files.join('|')})`}${ext}` : 'src/**/*.test.ts'}`;
-    return res;
+import { BaseTestRunner } from './base-test-runner';
+
+export class CypressTestRunner extends BaseTestRunner {
+  fileCommand(files: string[]): string {
+    return this.getCommonFilePattern('e2e', files, ['.e2e.ts', '.e2e.tsx']);
   }
 
   async start(files?: string[], debug = false) {

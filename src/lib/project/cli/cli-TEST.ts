@@ -13,10 +13,12 @@ import {
 } from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions } from '../../options';
+import { BaseTestRunner } from '../abstract/artifacts/npm-lib-and-cli-tool/tools/test-runner/base-test-runner';
 import type { Project } from '../abstract/project';
 
 import { BaseCli } from './base-cli';
 //#endregion
+const runners = ['vite', 'mocha', 'jest', 'cypress'] as const;
 
 // @ts-ignore TODO weird inheritance problem
 export class $Test extends BaseCli {
@@ -28,171 +30,124 @@ export class $Test extends BaseCli {
     );
   }
 
+  //#region aliases
+  // constructor(...args) {
+  //   // @ts-ignore
+  //   super(...args);
+  //   for (const runner of runners) {
+  //     const upper = runner.toUpperCase();
+
+  //     // RUN
+  //     (this as any)[upper] = async () => this._runRunner(runner, false, false);
+
+  //     // RUN DEBUG
+  //     (this as any)[`${upper}_DEBUG`] = async () =>
+  //       this._runRunner(runner, false, true);
+
+  //     // WATCH
+  //     (this as any)[`${upper}_WATCH`] = async () =>
+  //       this._runRunner(runner, true, false);
+
+  //     // WATCH DEBUG
+  //     (this as any)[`${upper}_WATCH_DEBUG`] = async () =>
+  //       this._runRunner(runner, true, true);
+  //   }
+  // }
+  //#endregion
+
+  //#region command methods
   async _() {
-    await this._testSelectors(false, false, this.argsWithParams);
+    await this._testSelectors(false, false);
   }
 
-  WATCH = async (args: string) => {
-    await this._testSelectors(true, false, args);
-  };
+  async WATCH() {
+    await this._testSelectors(true, false);
+  }
 
-  WATCH_DEBUG = async (args: string) => {
-    await this._testSelectors(true, true, args);
-  };
+  async WATCH_DEBUG() {
+    await this._testSelectors(true, true);
+  }
 
-  TEST_DEBUG = async (args: string) => {
-    await this._testSelectors(false, true, args);
-  };
+  async DEBUG() {
+    await this._testSelectors(false, true);
+  }
+  //#endregion
 
-  MOCHA_WATCH = async (args: string) => {
-    await this._mochaTests(true, false, args);
-  };
-
-  MOCHA_WATCH_DEBUG = async (args: string) => {
-    await this._mochaTests(true, true, args);
-  };
-
-  MOCHA = async (args: string) => {
-    await this._mochaTests(false, false, args);
-  };
-
-  MOCHA_DEBUG = async (args: string) => {
-    await this._mochaTests(false, true, args);
-  };
-
-  JEST_WATCH = async (args: string) => {
-    await this._jestTests(true, false, args);
-  };
-
-  JEST_WATCH_DEBUG = async (args: string) => {
-    await this._jestTests(true, true, args);
-  };
-
-  JEST = async (args: string) => {
-    await this._jestTests(false, false, args);
-  };
-
-  JEST_DEBUG = async (args: string) => {
-    await this._jestTests(false, true, args);
-  };
-
-  async _testSelectors(watch: boolean, debug: boolean, args: string) {
-    const proj = this.project;
-    if (
-      !this.project.framework.isStandaloneProject ||
-      this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)
-    ) {
+  //#region 🔥 unified selector
+  async _testSelectors(watch: boolean, debug: boolean) {
+    //#region @backendFunc
+    if (!this.project.framework.isStandaloneProject) {
       Helpers.error(
-        `[${config.frameworkName}] tests for organization in progress `,
+        `[${config.frameworkName}] Not supported test command`,
         false,
         true,
       );
     }
 
-    const [possibleTest] = args.split(' ');
-    const testType = Models.TestTypeTaonArr.includes(possibleTest as any)
-      ? possibleTest
-      : void 0;
-    const res = testType
-      ? testType // @ts-ignore
-      : await Helpers.consoleGui.select<Models.TestTypeTaon>(
+    const firstArg = this.firstArg as any;
+    const argIsOption = runners.includes(firstArg);
+    if (argIsOption) {
+      this.args = this.args.filter(f => f !== firstArg);
+    }
+
+    const selected = argIsOption
+      ? firstArg
+      : await HelpersTaon.consoleGui.select<(typeof runners)[number]>(
           `What do you want to test ? ${
             !watch ? '(single run ' : '(watch mode '
-          } ${debug ? '- with debugger connected' : '- without debugger'})`,
-          [
-            {
-              name: `Mocha (backend tests from /${srcMainProject}/${testsFromSrc}/**/*.test.ts)`,
-              value: 'mocha',
-            },
-            {
-              name: `Jest (angular unit/integration tests from /${srcMainProject}/**/*.spec.ts )   `,
-              value: 'jest',
-            },
-            {
-              name: `Cypress (e2e tests from /${srcMainProject}/${appFromSrc}//**/*.e2e.ts )`,
-              value: 'cypress',
-            },
-          ],
+          } ${debug ? '- with debugger' : ''})`,
+          runners.map(r => ({
+            name: r.toUpperCase(),
+            value: r,
+          })),
         );
-    if (testType) {
-      args = args.split(' ').slice(1).join(' ');
-    }
 
-    if (res === 'mocha') {
-      await this._mochaTests(watch, debug, args);
-    } else if (res === 'jest') {
-      await this._jestTests(watch, debug, args);
-    } else if (res === 'cypress') {
-      await this._cypressTests(watch, debug, args);
-    } else {
-      this._exit();
-    }
+    await this._runRunner(selected as any, watch, debug);
+    //#endregion
   }
+  //#endregion
 
-  async _cypressTests(watch: boolean, debug: boolean, args: string) {
-    const proj = this.project;
-    await this.project.init(
-      EnvOptions.from({ purpose: 'initing before cypress tests' }),
-    );
+  //#region 🔥 single unified runner executor
+  private async _runRunner(
+    runner: (typeof runners)[number],
+    watch: boolean,
+    debug: boolean,
+  ) {
+    //#region @backendFunc
+    const args = this.args;
+    // await this.project.init(
+    //   EnvOptions.from({
+    //     purpose: `initing before ${runner} tests`,
+    //   }),
+    // );
+
+    const artifact = this.project.artifactsManager.artifact.npmLibAndCliTool;
+
+    const map: Record<string, any> = {
+      vite: artifact.testsVite,
+      mocha: artifact.testsMocha,
+      jest: artifact.testsJest,
+      cypress: artifact.testsCypress,
+    };
+
+    const instance: BaseTestRunner = map[runner];
+
+    if (!instance) {
+      this._exit();
+      return;
+    }
+
+    const parsedArgs = args.filter(Boolean);
+
     if (watch) {
-      await this.project.artifactsManager.artifact.npmLibAndCliTool.__testsCypress.startAndWatch(
-        args.trim().split(' '),
-        debug,
-      );
+      await instance.startAndWatch(parsedArgs, debug);
     } else {
-      await this.project.artifactsManager.artifact.npmLibAndCliTool.__testsCypress.start(
-        args.trim().split(' '),
-        debug,
-      );
-    }
-    if (!watch) {
+      await instance.start(parsedArgs, debug);
       this._exit();
     }
+    //#endregion
   }
-
-  async _mochaTests(watch: boolean, debug: boolean, args: string) {
-    await this.project.init(
-      EnvOptions.from({
-        purpose: 'initing before mocha tests',
-      }),
-    );
-    if (watch) {
-      await this.project.artifactsManager.artifact.npmLibAndCliTool.__tests.startAndWatch(
-        args.trim().split(' '),
-        debug,
-      );
-    } else {
-      await this.project.artifactsManager.artifact.npmLibAndCliTool.__tests.start(
-        args.trim().split(' '),
-        debug,
-      );
-    }
-    if (!watch) {
-      this._exit();
-    }
-  }
-
-  async _jestTests(watch: boolean, debug: boolean, args: string) {
-    await this.project.init(
-      EnvOptions.from({
-        purpose: 'initing before jest tests',
-      }),
-    );
-    if (watch) {
-      await this.project.artifactsManager.artifact.npmLibAndCliTool.__testsJest.startAndWatch(
-        debug,
-        args.trim(),
-      );
-    } else {
-      await this.project.artifactsManager.artifact.npmLibAndCliTool.__testsJest.start(
-        debug,
-        args.trim(),
-      );
-    }
-    if (!watch) {
-      this._exit();
-    }
-  }
+  //#endregion
 }
 
 export default {

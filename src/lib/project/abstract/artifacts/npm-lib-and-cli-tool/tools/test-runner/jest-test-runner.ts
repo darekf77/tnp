@@ -6,55 +6,31 @@ import { Helpers } from 'tnp-helpers/src';
 import { tempSourceFolder } from '../../../../../../constants';
 import type { Project } from '../../../../project';
 
-export class JestTestRunner
-  // @ts-ignore TODO weird inheritance problem
-  extends BaseFeatureForProject<Project>
-{
-  fileCommand(files: string[]) {
-    files = files.map(f => path.basename(f));
-    // console.log('files',files)
-    const useFiles = _.isArray(files) && files.length > 0;
-    const ext =
-      files.length > 1 || !_.first(files).endsWith('.test.ts')
-        ? '*.test.ts'
-        : '';
-    const res = `${useFiles ? `src/tests/**/*${files.length === 1 ? `${_.first(files)}` : `(${files.join('|')})`}${ext}` : 'src/**/*.test.ts'}`;
-    return res;
+import { BaseTestRunner } from './base-test-runner';
+
+export class JestTestRunner extends BaseTestRunner {
+ fileCommand(files: string[]): string {
+    return this.getCommonFilePattern('src', files, ['.spec.ts']);
   }
 
-  getCWD(args: string): string {
-    const websql: boolean = true;
-
-    const projCwd = crossPlatformPath([
-      this.project.location,
-      tempSourceFolder(true, websql),
-    ]);
-
-    // console.log(`
-
-    // Testing in: ${projCwd}
-
-    // `)
-    return projCwd;
-  }
-
-  async start(debug: boolean, args: string) {
+  async start(files: string[], debug: boolean) {
     let command: string;
 
     command = command = `npm-run jest --passWithNoTests`;
     command = Helpers._fixCommand(command);
 
-    Helpers.run(command, { output: true, cwd: this.getCWD(args) }).sync();
+    this.project.run(command, { output: true }).sync();
   }
 
-  async startAndWatch(debug: boolean, args: string) {
+  async startAndWatch(files: string[], debug: boolean) {
     let command = `npm-run jest --watchAll --passWithNoTests `;
 
     command = Helpers._fixCommand(command);
 
-    Helpers.run(command, {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: this.getCWD(args),
-    }).async();
+    this.project
+      .run(command, {
+        stdio: ['pipe', 'pipe', 'pipe'],
+      })
+      .async();
   }
 }

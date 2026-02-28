@@ -845,6 +845,7 @@ export const webpackConfigJsMainProject = 'webpack.config.js';
 
 export const esLintCustomRulesMainProject = 'eslint-rules';
 export const esLintConfigJsonMainProject = 'eslint.config.ts';
+export const vitestConfigJsonMainProject = 'vitest.config.ts';
 export const esLintRuleNoNamespaceReExport =
   'eslint-rules/no-namespace-reexport.ts';
 

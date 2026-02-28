@@ -81,6 +81,7 @@ import type { Project } from '../../project';
 import { AssetsManager } from '../angular-node-app/tools/assets-manager';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
+import { AppRoutesAutogenProvider } from './tools/app-routes-autogen-provider';
 import { IncrementalBuildProcess } from './tools/build-isomorphic-lib/compilations/incremental-build-process';
 import { CopyManager } from './tools/copy-manager/copy-manager';
 import { FilesTemplatesBuilder } from './tools/files-recreation';
@@ -89,7 +90,7 @@ import { InsideStructuresLib } from './tools/inside-struct-lib';
 import { CypressTestRunner } from './tools/test-runner/cypress-test-runner';
 import { JestTestRunner } from './tools/test-runner/jest-test-runner';
 import { MochaTestRunner } from './tools/test-runner/mocha-test-runner';
-import { AppRoutesAutogenProvider } from './tools/app-routes-autogen-provider';
+import { VitestTestRunner } from './tools/test-runner/vitest-test-runner';
 //#endregion
 
 export class ArtifactNpmLibAndCliTool extends BaseArtifact<
@@ -115,11 +116,13 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 > {
   //#region fields
 
-  public readonly __tests: MochaTestRunner;
+  public readonly testsMocha: MochaTestRunner;
 
-  public readonly __testsJest: JestTestRunner;
+  public readonly testsJest: JestTestRunner;
 
-  public readonly __testsCypress: CypressTestRunner;
+  public readonly testsVite: VitestTestRunner;
+
+  public readonly testsCypress: CypressTestRunner;
 
   public readonly copyNpmDistLibManager: CopyManager;
 
@@ -141,9 +144,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   constructor(project: Project) {
     super(project, ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL);
 
-    this.__tests = new MochaTestRunner(project);
-    this.__testsJest = new JestTestRunner(project);
-    this.__testsCypress = new CypressTestRunner(project);
+    this.testsMocha = new MochaTestRunner(project);
+    this.testsJest = new JestTestRunner(project);
+    this.testsVite = new VitestTestRunner(project);
+    this.testsCypress = new CypressTestRunner(project);
 
     this.copyNpmDistLibManager = CopyManager.for(project);
     this.indexAutogenProvider = new IndexAutogenProvider(project);
@@ -831,7 +835,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       releaseProjPath,
       releaseType,
       projectsReposToPushAndTag: [this.project.location],
-      deploymentFunction
+      deploymentFunction,
     };
     //#endregion
   }

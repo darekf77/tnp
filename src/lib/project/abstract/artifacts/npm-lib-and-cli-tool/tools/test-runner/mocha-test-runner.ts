@@ -8,24 +8,11 @@ import { Helpers } from 'tnp-helpers/src';
 import { UNIT_TEST_TIMEOUT } from '../../../../../../constants';
 import type { Project } from '../../../../project';
 
-export class MochaTestRunner
-  // @ts-ignore TODO weird inheritance problem
-  extends BaseFeatureForProject<Project>
-{
-  fileCommand(files: string[]) {
-    files = files.map(f => path.basename(f));
-    // console.log('files',files)
-    const useFiles = _.isArray(files) && files.length > 0;
-    const ext =
-      files.length > 1 || !_.first(files).endsWith('.test.ts')
-        ? '*.test.ts'
-        : '';
-    const res = `${
-      useFiles
-        ? `src/**/tests/**/*${files.length === 1 ? `${_.first(files)}` : `(${files.join('|')})`}${ext}`
-        : 'src/**/tests/*.test.ts'
-    }`;
-    return res;
+import { BaseTestRunner } from './base-test-runner';
+
+export class MochaTestRunner extends BaseTestRunner {
+  fileCommand(files: string[]): string {
+    return this.getCommonFilePattern('src/tests', files, ['.test.ts']);
   }
 
   async start(files?: string[], debug = false) {
@@ -39,7 +26,6 @@ export class MochaTestRunner
   }
 
   async startAndWatch(files?: string[], debug = false) {
-
     //#region @backendFunc
     if (this.project.typeIsNot(LibTypeEnum.ISOMORPHIC_LIB)) {
       Helpers.error(
@@ -60,6 +46,5 @@ export class MochaTestRunner
       cwd: this.project.location,
     }).async();
     //#endregion
-
   }
 }
