@@ -1,6 +1,6 @@
 //#region imports
 import { ChangeOfFile } from 'incremental-compiler/src';
-import { Log } from 'ng2-logger/src';
+import { Level, Log } from 'ng2-logger/src';
 import {
   config,
   LibTypeEnum,
@@ -35,7 +35,7 @@ import { SourceMappingUrl } from './source-maping-url';
 
 const REPLACE_INDEX_D_TS_IN_DEST_WHEN_WATCH = false;
 
-const log = Log.create('Base copy manager');
+const log = Log.create('Base copy manager', Level.WARN, Level.ERROR);
 
 export interface BaseCopyMangerInitialParams {
   // TOOD this does not work

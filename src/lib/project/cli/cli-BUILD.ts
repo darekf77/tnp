@@ -235,14 +235,25 @@ class $Build extends BaseCli {
     await this.watchLib();
   }
 
-  async cleanLib() {
+  async _clearBuild() {
     await this.project.clear();
+    if (this.project.framework.isContainer) {
+      for (const child of this.project.children) {
+        if (!child.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
+          await child.clear();
+        }
+      }
+    }
+
     await this.lib();
   }
 
+  async cleanLib() {
+    await this._clearBuild();
+  }
+
   async cleanBuild() {
-    await this.project.artifactsManager.artifact.npmLibAndCliTool.clearPartial();
-    await this._();
+    await this._clearBuild();
   }
   //#endregion
 
