@@ -37,6 +37,7 @@ import {
   testEnvironmentsMainProject,
   testsFromSrc,
   updateVscodePackageJsonJsMainProject,
+  vitestConfigJsonMainProject,
   websqlMainProject,
 } from '../../constants';
 
@@ -117,6 +118,7 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
     'index.js',
     'index.js.map',
     'index.d.ts',
+    vitestConfigJsonMainProject,
     '.gitignore',
     '.npmignore',
     '.npmrc',
@@ -146,6 +148,7 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       browserMainProject,
       websqlMainProject,
       websqlMainProject,
+      vitestConfigJsonMainProject,
       esLintCustomRulesMainProject,
       distMainProject + prodSuffix,
       distNoCutSrcMainProject,

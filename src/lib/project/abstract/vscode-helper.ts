@@ -313,6 +313,53 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     });
     //#endregion
 
+    //#region template for vite
+
+    // const portFortestDebugging = await this.project.registerAndAssignPort(
+    //   `test cli debugging port`,
+    //   {
+    //     startFrom: 9329,
+    //   },
+    // );
+
+    const templateForVite = () => {
+      return [
+        {
+          name: 'Vitest Debug (all *.test.ts files)',
+          type: 'node',
+          request: 'launch',
+          program: '${workspaceFolder}/node_modules/vitest/vitest.mjs',
+          args: ['run', '--environment', 'node', '--testTimeout', '60000'],
+          console: 'integratedTerminal',
+          skipFiles: ['<node_internals>/**'],
+          outFiles: this.outFiles,
+          sourceMapPathOverrides: this.sourceMapPathOverrides,
+          smartStep: true,
+        },
+
+        {
+          name: 'Vitest Debug (editor active test file)',
+          type: 'node',
+          request: 'launch',
+          program: '${workspaceFolder}/node_modules/vitest/vitest.mjs',
+          args: [
+            'run',
+            '${fileBasenameNoExtension}',
+            '--environment',
+            'node',
+            '--testTimeout',
+            '60000',
+          ],
+          console: 'integratedTerminal',
+          skipFiles: ['<node_internals>/**'],
+          outFiles: this.outFiles,
+          sourceMapPathOverrides: this.sourceMapPathOverrides,
+          smartStep: true,
+        },
+      ];
+    };
+    //#endregion
+
     //#region tempalte start normal nodejs server
     const templateForServer = (
       serverChild: Project,
@@ -394,6 +441,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     configurations = [
       // startNodemonServer()
+      ...templateForVite(),
     ];
 
     configurations.push(templateForServer(this.project, this.project, false));

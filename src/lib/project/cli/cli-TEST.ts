@@ -18,17 +18,20 @@ import type { Project } from '../abstract/project';
 
 import { BaseCli } from './base-cli';
 //#endregion
-const runners = ['vite', 'mocha', 'jest', 'cypress'] as const;
+const runners = [
+  'vite',
+  //  'mocha', 'jest', 'cypress'
+] as const;
 
 // @ts-ignore TODO weird inheritance problem
 export class $Test extends BaseCli {
-  async __initialize__(): Promise<void> {
-    Helpers.error(
-      `UNIT/E2E tests command not implement yet. WORK IN PROGRESS.`,
-      false,
-      true,
-    );
-  }
+  // async __initialize__(): Promise<void> {
+  //   Helpers.error(
+  //     `UNIT/E2E tests command not implement yet. WORK IN PROGRESS.`,
+  //     false,
+  //     true,
+  //   );
+  // }
 
   //#region aliases
   // constructor(...args) {
@@ -64,13 +67,13 @@ export class $Test extends BaseCli {
     await this._testSelectors(true, false);
   }
 
-  async WATCH_DEBUG() {
-    await this._testSelectors(true, true);
-  }
+  // async WATCH_DEBUG() {
+  //   await this._testSelectors(true, true);
+  // }
 
-  async DEBUG() {
-    await this._testSelectors(false, true);
-  }
+  // async DEBUG() {
+  //   await this._testSelectors(false, true);
+  // }
   //#endregion
 
   //#region 🔥 unified selector

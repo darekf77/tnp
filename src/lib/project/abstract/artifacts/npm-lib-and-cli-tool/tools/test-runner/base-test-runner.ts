@@ -1,6 +1,13 @@
-import { Project } from 'tnp/src';
 import { path, _, UtilsOs } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
+
+import { getProxyNgProj } from '../../../../../../app-utils';
+import {
+  srcMainProject,
+  vitestConfigJsonMainProject,
+} from '../../../../../../constants';
+import { EnvOptions, ReleaseArtifactTaon } from '../../../../../../options';
+import { Project } from '../../../../../../project/abstract/project';
 
 // @ts-ignore TODO weird inheritance problem
 export abstract class BaseTestRunner extends BaseFeatureForProject<Project> {
@@ -9,6 +16,19 @@ export abstract class BaseTestRunner extends BaseFeatureForProject<Project> {
   abstract startAndWatch(files: string[], debug: boolean): Promise<void>;
 
   abstract fileCommand(files: string[]): string;
+
+  async run(baseFolderForCode: string, command: string) {
+    await this.project.execute(command, {
+      askToTryAgainOnError: true,
+      outputLineReplace: (line: string) => {
+        //#region replace outut line for better debugging
+        // console.log('LINE:', line);
+
+        line = line.replace(baseFolderForCode + '/', srcMainProject + '/');
+        return line;
+      },
+    });
+  }
 
   getCommonFilePattern(
     where: 'src' | 'e2e' | 'src/tests',
