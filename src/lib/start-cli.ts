@@ -75,20 +75,8 @@ export function startCli(argv, filename): void {
 
   const spinnerIsDefault = !global.tnpNonInteractive;
 
-  const verboseInArgs = argv.includes(verbosePrefix);
-  global.hideLog = !verboseInArgs;
-
+  const verboseInArgs = !global.hideLog;
   global.skipCoreCheck = argv.some(a => a.startsWith(skipCoreCheck));
-
-  const verboseLevelArg = argv.find(a => a.startsWith(`${verbosePrefix}=`));
-  global.verboseLevel = verboseLevelArg
-    ? Number(verboseLevelArg.replace(`${verbosePrefix}=`, '')) || 0
-    : 0;
-
-  if (!verboseInArgs && verboseLevelArg) {
-    global.hideLog = false;
-  }
-  // console.log({ verbose, verboseLevelArg });
 
   const spinnerOnInArgs = argv.includes(spinnerPrefix);
   const spinnerOffInArgs =
