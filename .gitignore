@@ -39,6 +39,7 @@
 /**/tmp-*
 /**/tsconfig*
 /**/update-vscode-package-json.js
+/**/vitest.config.ts
 /**/webpack*
 /**/websql
 /browser
@@ -84,6 +85,7 @@
 /tmp*
 /tsconfig*
 /update-vscode-package-json.js
+/vitest.config.ts
 /webpack*
 /websql
 /yarn-error.log
