@@ -493,7 +493,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
                 const relative = line
                   .replace(`${externalLibInPorject}/${packageName}/lib/`, '')
                   .trim();
-                console.log({ relative });
+                // console.log({ relative });
 
                 linkForRealSource = linkForRealSource
                   .split('/')
