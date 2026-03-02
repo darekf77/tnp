@@ -96,6 +96,8 @@ export const taonIgnore = '@taon' + '-' + 'ignore';
 
 export const DEBUG_WORD = 'Debug/Start';
 
+export const GENERATE_CMD_COPY_TO_AI = 'generate-cmd-copy-to-ai'
+
 export const scriptsCommands = [
   'taon init',
   'taon start',

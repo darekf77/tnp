@@ -186,3 +186,35 @@ export const templateFolderForArtifact = (
 export const getCleanImport = (importName: string): string | undefined => {
   return UtilsTypescript.getCleanImport(importName);
 };
+
+
+export interface AiMdFile {
+  filename: string;
+  content: string;
+}
+
+export function parseAiMdContent(input: string): AiMdFile[] {
+  const results: AiMdFile[] = [];
+
+  // Match blocks like:
+  // # filename.ext (optional)
+  // ```lang
+  // content
+  // ```
+  const blockRegex =
+    /^#\s+(.+?)\s*(?:\([^)]+\))?\s*\n```[^\n]*\n([\s\S]*?)\n```/gm;
+
+  let match: RegExpExecArray | null;
+
+  while ((match = blockRegex.exec(input)) !== null) {
+    const rawFilename = match[1].trim();
+    const content = match[2];
+
+    results.push({
+      filename: rawFilename,
+      content,
+    });
+  }
+
+  return results;
+}

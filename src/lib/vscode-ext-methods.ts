@@ -25,6 +25,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
   const group = `${toolName}`;
   const groupOpen = `${toolName} open`;
   const groupGENERATE = `${toolName} generate`;
+  const groupAI = `${toolName} AI`;
   const groupRefactor = `${toolName} refactor`;
   const groupGroupOperations = `${toolName} projects operations`;
   // const groupTempFiles = `${toolName} temporary files`;
@@ -385,6 +386,81 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         options: {
           title: 'opening core project',
           findNearestProject: true,
+          showSuccessMessage: false,
+        },
+      },
+      //#endregion
+
+      //#region GENERATE index.ts in selected folder
+      {
+        group: groupAI,
+        title: `copy to clipboard all files/folders as single MD/AI ready format`,
+        exec: async ({ selectedUris, uri, vscode }) => {
+          const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
+          // vscode.window.showInformationMessage(WORKSPACE_MAIN_FOLDER_PATH);
+          const nearestProject = Project.ins.nearestTo(
+            WORKSPACE_MAIN_FOLDER_PATH,
+          );
+          if (!nearestProject) {
+            vscode.window.showErrorMessage(
+              `Cannot find project nearest project in path ${WORKSPACE_MAIN_FOLDER_PATH}`,
+            );
+            return;
+          }
+
+          vscode.env.clipboard.writeText(
+            await nearestProject.framework.copyToAiContent(
+              WORKSPACE_MAIN_FOLDER_PATH,
+            ),
+          );
+        },
+        options: {
+          titleWhenProcessing:
+            'copying files and folders to clipboard MD/AI ready format',
+          showSuccessMessage: false,
+        },
+      },
+      {
+        group: groupAI,
+        title: `paste from clipboard MD/AI ready format to files and folders`,
+        exec: async ({ selectedUris, uri, vscode }) => {
+          const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
+          // vscode.window.showInformationMessage(WORKSPACE_MAIN_FOLDER_PATH);
+          const nearestProject = Project.ins.nearestTo(
+            WORKSPACE_MAIN_FOLDER_PATH,
+          );
+          if (!nearestProject) {
+            vscode.window.showErrorMessage(
+              `Cannot find project nearest project in path ${WORKSPACE_MAIN_FOLDER_PATH}`,
+            );
+            return;
+          }
+
+          const textFromClipboard = await vscode.env.clipboard.readText();
+          const processed =
+            await nearestProject.framework.pasteFromAIMDContentToFiles(
+              WORKSPACE_MAIN_FOLDER_PATH,
+              textFromClipboard,
+            );
+          if (
+            processed.length > 0 &&
+            nearestProject?.taonJson.shouldGenerateAutogenIndexFile
+          ) {
+            await nearestProject.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
+              {
+                watch: false,
+              },
+            );
+            await nearestProject.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
+              {
+                watch: false,
+              },
+            );
+          }
+        },
+        options: {
+          titleWhenProcessing:
+            'pasting from md/ai content to files and folders',
           showSuccessMessage: false,
         },
       },

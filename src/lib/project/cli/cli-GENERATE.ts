@@ -29,6 +29,7 @@ import {
 import {
   appFromSrc,
   DEFAULT_FRAMEWORK_VERSION,
+  GENERATE_CMD_COPY_TO_AI,
   srcFromTaonImport,
   srcMainProject,
 } from '../../constants';
@@ -200,10 +201,6 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
     await this.project.framework.generateLibIndex();
     this._exit();
     //#endregion
-  }
-
-  async simplestAppTs() {
-
   }
 
   async appRoutes() {
