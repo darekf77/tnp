@@ -13,6 +13,7 @@ import type { Uri } from 'vscode';
 
 import { dirnameFromSourceToProject, whatToLinkFromCore } from './constants';
 import { Project } from './project/abstract/project';
+import { FrameworkUtils } from './framework-utils';
 
 interface CopyPasteTaonProjectJson {
   toCopy?: string;
@@ -394,24 +395,29 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       //#region GENERATE index.ts in selected folder
       {
         group: groupAI,
+        title: `copy tree of files`,
+        exec: async ({ selectedUris, uri, vscode }) => {
+          const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
+          // vscode.window.showInformationMessage(WORKSPACE_MAIN_FOLDER_PATH);
+          vscode.env.clipboard.writeText(
+            await FrameworkUtils.copyTree(WORKSPACE_MAIN_FOLDER_PATH),
+          );
+        },
+        options: {
+          titleWhenProcessing:
+            'copying files and folders to clipboard MD/AI ready format',
+          showSuccessMessage: false,
+        },
+      },
+      {
+        group: groupAI,
         title: `copy to clipboard all files/folders as single MD/AI ready format`,
         exec: async ({ selectedUris, uri, vscode }) => {
           const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
           // vscode.window.showInformationMessage(WORKSPACE_MAIN_FOLDER_PATH);
-          const nearestProject = Project.ins.nearestTo(
-            WORKSPACE_MAIN_FOLDER_PATH,
-          );
-          if (!nearestProject) {
-            vscode.window.showErrorMessage(
-              `Cannot find project nearest project in path ${WORKSPACE_MAIN_FOLDER_PATH}`,
-            );
-            return;
-          }
 
           vscode.env.clipboard.writeText(
-            await nearestProject.framework.copyToAiContent(
-              WORKSPACE_MAIN_FOLDER_PATH,
-            ),
+            await FrameworkUtils.copyToAiContent(WORKSPACE_MAIN_FOLDER_PATH),
           );
         },
         options: {
@@ -426,36 +432,33 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         exec: async ({ selectedUris, uri, vscode }) => {
           const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
           // vscode.window.showInformationMessage(WORKSPACE_MAIN_FOLDER_PATH);
+
+          const textFromClipboard = await vscode.env.clipboard.readText();
+          const processed = await FrameworkUtils.pasteFromAIMDContentToFiles(
+            WORKSPACE_MAIN_FOLDER_PATH,
+            textFromClipboard,
+          );
+
           const nearestProject = Project.ins.nearestTo(
             WORKSPACE_MAIN_FOLDER_PATH,
           );
-          if (!nearestProject) {
-            vscode.window.showErrorMessage(
-              `Cannot find project nearest project in path ${WORKSPACE_MAIN_FOLDER_PATH}`,
-            );
-            return;
-          }
 
-          const textFromClipboard = await vscode.env.clipboard.readText();
-          const processed =
-            await nearestProject.framework.pasteFromAIMDContentToFiles(
-              WORKSPACE_MAIN_FOLDER_PATH,
-              textFromClipboard,
-            );
-          if (
-            processed.length > 0 &&
-            nearestProject?.taonJson.shouldGenerateAutogenIndexFile
-          ) {
-            await nearestProject.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
-              {
-                watch: false,
-              },
-            );
-            await nearestProject.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
-              {
-                watch: false,
-              },
-            );
+          if (nearestProject) {
+            if (
+              processed.length > 0 &&
+              nearestProject?.taonJson.shouldGenerateAutogenIndexFile
+            ) {
+              await nearestProject.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
+                {
+                  watch: false,
+                },
+              );
+              await nearestProject.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
+                {
+                  watch: false,
+                },
+              );
+            }
           }
         },
         options: {
