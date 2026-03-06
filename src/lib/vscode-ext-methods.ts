@@ -12,8 +12,8 @@ import { CommandType } from 'tnp-helpers/src';
 import type { Uri } from 'vscode';
 
 import { dirnameFromSourceToProject, whatToLinkFromCore } from './constants';
-import { Project } from './project/abstract/project';
 import { FrameworkUtils } from './framework-utils';
+import { Project } from './project/abstract/project';
 
 interface CopyPasteTaonProjectJson {
   toCopy?: string;

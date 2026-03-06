@@ -484,7 +484,6 @@ class EnvOptionsRelease {
    */
   declare askUserBeforeFinalAction: boolean;
 
-
   /**
    * Task of auto release from config
    */
@@ -607,7 +606,9 @@ class EnvOptionsContainer {
 }
 //#endregion
 
-export class EnvOptions<PATHS = {}, CONFIGS = {}> {
+export class EnvOptions<
+  ENV_CONFIG = Record<string, string | number | boolean | null>,
+> {
   //#region static / from
 
   static async releaseSkipMenu(
@@ -840,9 +841,7 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
   //#region fields
   declare finishCallback: () => any;
 
-  declare paths?: PATHS;
-
-  declare config?: CONFIGS;
+  declare config?: ENV_CONFIG;
 
   declare purpose?: string;
 
@@ -906,10 +905,8 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
     override = override || {};
     EnvOptions.merge(this, override);
 
-    this.paths = this.paths || ({} as any);
     this.config = this.config || ({} as any);
 
-    this.paths = _.merge(this.paths, _.cloneDeep(override.paths));
     this.config = _.merge(this.config, _.cloneDeep(override.config));
 
     this.container = _.merge(new EnvOptionsContainer(), this.container);
@@ -1058,7 +1055,7 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
     options?: {
       skipPreservingFinishCallback?: boolean;
     },
-  ): EnvOptions {
+  ): EnvOptions<ENV_CONFIG> {
     //#region @backendFunc
     options = options || {};
     override = override || {};
@@ -1067,7 +1064,7 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
     const beforeCopyHookThis = this?.copyToManager?.beforeCopyHook;
     const toClone = _.cloneDeep(this);
     EnvOptions.merge(toClone, override);
-    const result = new EnvOptions(toClone);
+    const result = new EnvOptions(toClone as any);
     if (!options.skipPreservingFinishCallback) {
       if (orgFinishCallback) {
         result.finishCallback = orgFinishCallback;
@@ -1082,7 +1079,7 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
         result.copyToManager.beforeCopyHook = beforeCopyHookThis;
       }
     }
-    return result;
+    return result as any;
     //#endregion
   }
   //#endregion
@@ -1095,7 +1092,6 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
  * when generating environments
  */
 export const EnvOptionsDummyWithAllProps = EnvOptions.from({
-  paths: {},
   config: {},
   purpose: '-' as any,
   recursiveAction: '-' as any,
@@ -1196,7 +1192,7 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
   },
 });
 
-const allPathsEnvConfig = [];
+const allPathsEnvConfig: string[] = [];
 
 walk.Object(
   EnvOptionsDummyWithAllProps,
