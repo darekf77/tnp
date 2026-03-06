@@ -166,3 +166,18 @@ For every file:
 tnp refactor
 
 ```
+
+## Subproject
+
+Add subproject (stripe + cloudflare work )
+
+
+```bash
+tnp subproject add
+```
+
+Test worker with example data
+
+```bash
+tnp subproject test
+```
