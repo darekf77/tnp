@@ -72,6 +72,43 @@ export class SubProject extends BaseQuickFixes<Project> {
   }
   //#endregion
 
+  private async npmInstall(cwdWorker: string): Promise<void> {
+    //#region npm install
+
+    this.project.nodeModules.linkToLocation(cwdWorker);
+    Helpers.info(`Linking node_modules done`)
+    // let trysNpmInstall = 0;
+    // Helpers.info(`NPM INSTALL FOR WORKER`);
+    // while (true) {
+    //   try {
+    //     if (Helpers.exists([cwdWorker, nodeModulesSubPorject])) {
+    //       if (trysNpmInstall > 0) {
+    //         break;
+    //       }
+    //       if (
+    //         !(await UtilsTerminal.confirm({
+    //           message: 'Skip npm install for subproject ?',
+    //           defaultValue: true,
+    //         }))
+    //       ) {
+    //         break;
+    //       }
+    //     }
+    //     trysNpmInstall++;
+    //     Helpers.removeFileIfExists([cwdWorker, packageJsonLockSubProject]);
+    //     await UtilsExecProc.spawnAsync('npm install', {
+    //       cwd: cwdWorker,
+    //     }).waitUntilDoneOrThrow();
+    //     break;
+    //   } catch (error) {
+    //     if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
+    //       break;
+    //     }
+    //   }
+    // }
+    //#endregion
+  }
+
   //#region init process
   private async initProcess(absPathToSubproject: string): Promise<void> {
     //#region @backendFunc
@@ -82,37 +119,7 @@ export class SubProject extends BaseQuickFixes<Project> {
 
     // console.log({ cwdWorker });
 
-    //#region npm install
-    let trysNpmInstall = 0;
-    Helpers.info(`NPM INSTALL FOR WORKER`);
-    while (true) {
-      try {
-        if (Helpers.exists([cwdWorker, nodeModulesSubPorject])) {
-          if (trysNpmInstall > 0) {
-            break;
-          }
-          if (
-            !(await UtilsTerminal.confirm({
-              message: 'Skip npm install for subproject ?',
-              defaultValue: true,
-            }))
-          ) {
-            break;
-          }
-        }
-        trysNpmInstall++;
-        Helpers.removeFileIfExists([cwdWorker, packageJsonLockSubProject]);
-        await UtilsExecProc.spawnAsync('npm install', {
-          cwd: cwdWorker,
-        }).waitUntilDoneOrThrow();
-        break;
-      } catch (error) {
-        if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
-          break;
-        }
-      }
-    }
-    //#endregion
+    await this.npmInstall(cwdWorker);
 
     //#region login cloud flare
     let trysLogin = 0;
@@ -319,9 +326,10 @@ export class SubProject extends BaseQuickFixes<Project> {
   //#region test with example data
   public async testWithExampleData(): Promise<void> {
     //#region @backendFunc
-    const subprojects = this.getAllByType(
-      TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER,
-    );
+
+    const selectedType = TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER;
+
+    const subprojects = this.getAllByType(selectedType);
 
     const choices = subprojects.reduce((a, b) => {
       return {
@@ -337,6 +345,15 @@ export class SubProject extends BaseQuickFixes<Project> {
     });
 
     const url = `https://${chosenProject}.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev`;
+
+    const pathInsideProject = crossPlatformPath([
+      this.pathToTempalteInCurrentProject(selectedType),
+      chosenProject,
+    ]);
+
+    const cwdWorker = crossPlatformPath([pathInsideProject, chosenProject]);
+
+    await this.npmInstall(cwdWorker);
 
     const prouctChoices = {
       movieProduct: {
