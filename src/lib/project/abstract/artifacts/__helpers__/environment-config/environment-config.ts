@@ -372,7 +372,8 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
           if (!_.isObject(val)) {
             pathsWithValues.push(lodashPath);
             backendConstants.push(
-              `export const ENV_` +
+              `// ${lodashPath}
+export const ENV_` +
                 `${_.snakeCase(projectEnvConfig.release.targetArtifact).toUpperCase()}_` +
                 `${_.snakeCase(lodashPath).replace(/\ /g, '_').toUpperCase()} ` +
                 `= ${_.isString(val) ? `'${val}'` : val};`,
@@ -386,7 +387,8 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       for (const setUndefinedLodashPath of allPathsEnvConfig) {
         if (!pathsWithValues.includes(setUndefinedLodashPath)) {
           backendConstants.push(
-            `export const ENV_` +
+            `// ${setUndefinedLodashPath}
+export const ENV_` +
               `${_.snakeCase(projectEnvConfig.release.targetArtifact).toUpperCase()}_` +
               `${_.snakeCase(setUndefinedLodashPath).replace(/\ /g, '_').toUpperCase()} ` +
               `= undefined;`,
