@@ -199,37 +199,45 @@ export * from './${libFromSrc}';
             tsconfigNgProject,
           ]);
 
-          [libPackageJson, ngPackageJson, angularJson, tsconfigJson].forEach(
-            f => {
-              let content = Helpers.readFile(f) || '';
-              content = content.replace(
-                new RegExp(Utils.escapeStringForRegEx(myLibFromNgProject), 'g'),
-                f === libPackageJson
-                  ? `${this.project.name}/${this.initOptions.build.websql ? websqlMainProject : browserMainProject}`
-                  : this.project.name,
-              );
-              // TODO not needed?
-              // if (path.basename(f) === tsconfigNgProject) {
-              //   console.log(`CHANING ${f}`);
-              //   // debugger;
-              //   content = content.replace(
-              //     new RegExp(
-              //       Utils.escapeStringForRegEx(
-              //         `"${distFromNgBuild}/${this.project.name}`,
-              //       ),
-              //       'g',
-              //     ),
-              //     `"../../${distMainProject}/` +
-              //       `${this.initOptions.build.websql ? websqlMainProject : browserMainProject}` +
-              //       // proper compilation browser-prod / websql-prod
-              //       `${this.initOptions.build.prod ? `${prodSuffix}` : ''}` +
-              //       `/${this.project.name}`,
-              //   );
-              // }
+          [libPackageJson].forEach(f => {
+            let content = Helpers.readFile(f) || '';
+            content = content.replace(
+              new RegExp(Utils.escapeStringForRegEx(myLibFromNgProject), 'g'),
+              `${this.project.name}` +
+                `/${this.initOptions.build.websql ? websqlMainProject : browserMainProject}` +
+                `${this.initOptions.build.prod ? `${prodSuffix}` : ''}`,
+            );
 
-              Helpers.writeFile(f, content);
-            },
-          );
+            Helpers.writeFile(f, content);
+          });
+
+          [ngPackageJson, angularJson, tsconfigJson].forEach(f => {
+            let content = Helpers.readFile(f) || '';
+            content = content.replace(
+              new RegExp(Utils.escapeStringForRegEx(myLibFromNgProject), 'g'),
+              this.project.name,
+            );
+            // TODO not needed?
+            // if (path.basename(f) === tsconfigNgProject) {
+            //   console.log(`CHANING ${f}`);
+            //   // debugger;
+            //   content = content.replace(
+            //     new RegExp(
+            //       Utils.escapeStringForRegEx(
+            //         `"${distFromNgBuild}/${this.project.name}`,
+            //       ),
+            //       'g',
+            //     ),
+            //     `"../../${distMainProject}/` +
+            //       `${this.initOptions.build.websql ? websqlMainProject : browserMainProject}` +
+            //       // proper compilation browser-prod / websql-prod
+            //       `${this.initOptions.build.prod ? `${prodSuffix}` : ''}` +
+            //       `/${this.project.name}`,
+            //   );
+            // }
+
+            Helpers.writeFile(f, content);
+          });
 
           (() => {
             const json = Helpers.readJson(ngPackageJson); // dist is on purpose
