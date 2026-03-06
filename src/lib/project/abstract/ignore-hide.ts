@@ -28,12 +28,14 @@ import {
   localReleaseMainProject,
   migrationsFromLib,
   packageJsonLockMainProject,
+  packageJsonSubProject,
   prodSuffix,
   runJsMainProject,
   sharedFromAssets,
   srcMainProject,
   TaonGeneratedFiles,
   TaonGeneratedFolders,
+  TemplateFolder,
   testEnvironmentsMainProject,
   testsFromSrc,
   updateVscodePackageJsonJsMainProject,
@@ -105,32 +107,42 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
   }
 
   // TODO use constants
-  hideInProject = [
-    'tmp-*',
-    'dist*',
-    '.tnp',
-    '.taon',
-    'tsconfig*',
-    '*.schema.json',
-    'eslint*',
-    'run.js',
-    'webpack*',
-    'index.js',
-    'index.js.map',
-    'index.d.ts',
-    vitestConfigJsonMainProject,
-    '.gitignore',
-    '.npmignore',
-    '.npmrc',
-    '.prettierrc',
-    '.prettierignore',
-    'update-vscode-package-json.js',
-    '.editorconfig',
-    'websql',
-    'browser',
-    'node_modules',
-    'package.json',
-  ];
+  get hideInProject(): string[] {
+    let tohide = [
+      'tmp-*',
+      'dist*',
+      '.tnp',
+      '.taon',
+      'tsconfig*',
+      '*.schema.json',
+      'eslint*',
+      'run.js',
+      'webpack*',
+      'index.js',
+      'index.js.map',
+      'index.d.ts',
+      vitestConfigJsonMainProject,
+      '.gitignore',
+      '.npmignore',
+      '.npmrc',
+      '.prettierrc',
+      '.prettierignore',
+      'update-vscode-package-json.js',
+      '.editorconfig',
+      'websql',
+      'browser',
+      'node_modules',
+      'package.json',
+    ];
+
+    if (this.project.framework.isCoreProject) {
+      tohide = tohide.filter(f => f !== 'package.json');
+      tohide = tohide.filter(f => f !== '.gitignore');
+      tohide = tohide.filter(f => f !== 'tsconfig*');
+    }
+
+    return tohide;
+  }
 
   protected alwaysIgnoredHiddenPatterns(): string[] {
     const toIgnore = [
@@ -182,6 +194,7 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
     const toIgnore = [
       ...super.hiddenButNotNecessaryIgnoredInRepoPatterns(),
       '*.schema.json',
+      `!${TemplateFolder.templatesSubprojects}/**/${packageJsonSubProject}`,
     ].filter(f => !!f) as string[];
     return this.applyToChildren(toIgnore);
   }

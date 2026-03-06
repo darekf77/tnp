@@ -63,6 +63,7 @@ import {
   TaonCommands,
   TaonGeneratedFiles,
   taonJsonMainProject,
+  TempalteSubprojectType,
   testsFromSrc,
   THIS_IS_GENERATED_INFO_COMMENT,
   tmpBaseHrefOverwrite,
@@ -1569,6 +1570,18 @@ export const CURRENT_PACKAGE_VERSION = '${
             ? initOptions.release.resolvedNewVersion
             : this.project.packageJson.version
         }';
+
+export namespace TAON_STRIPE_CLOUDFLARE_WORKERS_URLS {
+${this.project.subProject
+  .getAllByType(TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER)
+  .map(c => {
+    return (
+      `\texport const ${_.upperFirst(_.camelCase(c.name))} ` +
+      `= 'https://${c.name}.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev';`
+    );
+  })}
+}
+
 ${THIS_IS_GENERATED_INFO_COMMENT}
       `,
       );

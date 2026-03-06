@@ -121,6 +121,16 @@ export namespace Models {
      */
     overrideNpmName?: string;
 
+
+    /**
+     * For taon-stripe-cloudflare-worker project types.
+     *
+     * Exmaple:
+     * form this "https://hamsterki-b4176.accountName.workers.dev"
+     * cloudFlareAccountSubdomain === "accountName"
+     */
+    cloudFlareAccountSubdomain?:string;
+
     /**
      * (STANDALONE) Application ID for standalone project.
      * This is used to identify the application inside application stores,

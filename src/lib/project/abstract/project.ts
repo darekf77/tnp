@@ -41,6 +41,7 @@ import { Refactor } from './refactor';
 import type { ReleaseProcess } from './release-process';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
+import { SubProject } from './sub-project';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -69,6 +70,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
   // @ts-ignore TODO weird inheritance problem
   public readonly npmHelpers: NpmHelpers;
+
+  public readonly subProject: SubProject;
 
   get packageJson(): PackageJSON {
     return this.npmHelpers.packageJson as any;
@@ -143,6 +146,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     this.quickFixes = new (require('./quick-fixes')
       .QuickFixes as typeof QuickFixes)(this);
+
+    this.subProject = new (require('./sub-project')
+      .SubProject as typeof SubProject)(this);
 
     this.linter = new (require('./linter').Linter as typeof Linter)(this);
 

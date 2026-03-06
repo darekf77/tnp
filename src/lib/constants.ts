@@ -96,7 +96,7 @@ export const taonIgnore = '@taon' + '-' + 'ignore';
 
 export const DEBUG_WORD = 'Debug/Start';
 
-export const GENERATE_CMD_COPY_TO_AI = 'generate-cmd-copy-to-ai'
+export const GENERATE_CMD_COPY_TO_AI = 'generate-cmd-copy-to-ai';
 
 export const scriptsCommands = [
   'taon init',
@@ -348,6 +348,25 @@ export const tmpSrcAppDistWebsql = 'tmp-src-app-dist-websql'; // ok for prod
 
 export const defaultConfiguration = 'defaultConfiguration';
 
+export const mainProjectSubProjects = 'sub-projects';
+
+export enum TempalteSubprojectType {
+  TAON_STRIPE_CLOUDFLARE_WORKER = 'taon-stripe-cloudflare-worker',
+}
+
+export const TempalteSubprojectTypeArr: TempalteSubprojectType[] = [
+  TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER,
+];
+
+export enum TempalteSubprojectGroup {
+  KEY_VALUE_FAST_WORKER_DATABASE = 'key-value-fast-worker-database',
+}
+
+export const TempalteSubprojectTypeGroup = {
+  [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]:
+    TempalteSubprojectGroup.KEY_VALUE_FAST_WORKER_DATABASE,
+};
+
 /**
  * template folders from isomorphic lib
  */
@@ -356,6 +375,8 @@ export enum TemplateFolder {
    * Core project for angular app webapp, library and electron app
    */
   templateApp = 'template-app',
+
+  templatesSubprojects = 'templates-subprojects',
 
   /**
    * @deprecated
@@ -434,6 +455,9 @@ export const reExportJson = 're-export.json';
  * Main project /dist folder
  */
 export const nodeModulesMainProject = folderName.node_modules;
+
+
+export const nodeModulesSubPorject = folderName.node_modules;
 
 /**
  * Main project /dist-nocutsrc folder (d.ts files without code cutting)
@@ -801,9 +825,13 @@ export const dotVscodeMainProject = '.vscode';
 
 export const packageJsonLockMainProject = fileName.package_lock_json;
 
+export const packageJsonLockSubProject = fileName.package_lock_json;
+
 export const yarnLockMainProject = fileName.yarn_lock;
 
 export const packageJsonMainProject = fileName.package_json;
+
+export const packageJsonSubProject = fileName.package_json;
 
 export const packageJsonNpmLib = fileName.package_json;
 

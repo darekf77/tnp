@@ -530,7 +530,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  setShouldGenerateAutogenIndexFile(value: boolean):void {
+  setShouldGenerateAutogenIndexFile(value: boolean): void {
     const data = this.data as Models.TaonJsonStandalone;
     data.shouldGenerateAutogenIndexFile = value;
     this.saveToDisk('updating shouldGenerateAutogenIndexFile');
@@ -540,6 +540,19 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     const data = this.data as Models.TaonJsonStandalone;
     data.shouldGenerateAutogenAppRoutesFile = value;
     this.saveToDisk('updating shouldGenerateAutogenAppRoutesFile');
+  }
+
+  setCloudFlareAccountSubdomain(value: string): void {
+    const data = this.data as Models.TaonJsonStandalone;
+    data.cloudFlareAccountSubdomain = value;
+    this.saveToDisk('updating cloudFlareAccountSubdomain');
+  }
+
+  get cloudFlareAccountSubdomain(): string {
+    //#region @backendFunc
+    const data = this.data as Models.TaonJsonStandalone;
+    return data?.cloudFlareAccountSubdomain;
+    //#endregion
   }
 
   //#region should generate app.ts routes,imports and context initializations file
