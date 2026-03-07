@@ -528,6 +528,8 @@ export const srcFromTaonImport = folderName.src;
  */
 export const srcDtsFromNpmPackage = 'src.d.ts';
 
+export const srcJSFromNpmPackage = 'src.js';
+
 export const myLibFromNgProject = 'my-lib';
 
 export const externalLibsFromNgProject = 'external-libs';

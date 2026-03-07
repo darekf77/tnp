@@ -3,7 +3,7 @@ import {
   Helpers,
   crossPlatformPath,
   child_process,
-} from 'tnp-core';
+} from 'tnp-core/src';
 
 Helpers.remove([__dirname, 'dist']);
 const tsFiles = glob.sync(crossPlatformPath([__dirname, `src/**/*.ts`]));

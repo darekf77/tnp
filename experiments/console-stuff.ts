@@ -1,4 +1,4 @@
-import { UtilsTerminal } from 'tnp-core/lib';
+import { UtilsTerminal } from 'tnp-core/src';
 
 const choices = {
   t1: {
