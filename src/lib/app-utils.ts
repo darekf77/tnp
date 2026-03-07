@@ -187,7 +187,6 @@ export const getCleanImport = (importName: string): string | undefined => {
   return UtilsTypescript.getCleanImport(importName);
 };
 
-
 export interface AiMdFile {
   filename: string;
   content: string;
@@ -196,13 +195,19 @@ export interface AiMdFile {
 export function parseAiMdContent(input: string): AiMdFile[] {
   const results: AiMdFile[] = [];
 
+  // Remove AI-MD wrapper markers if present
+  input = input
+    .replace(/===\s*start of AI-MD multi-file markdown structure\s*===/i, '')
+    .replace(/===\s*end of AI-MD multi-file markdown structure\s*===/i, '')
+    .trim();
+
   // Match blocks like:
   // # filename.ext (optional)
   // ```lang
   // content
   // ```
   const blockRegex =
-    /^#\s+(.+?)\s*(?:\([^)]+\))?\s*\n```[^\n]*\n([\s\S]*?)\n```/gm;
+    /^#?\s*([^\n`]+?)\s*(?:\([^)]+\))?\s*\n```[^\n]*\n([\s\S]*?)\n```/gm;
 
   let match: RegExpExecArray | null;
 
