@@ -17,7 +17,7 @@ import {
   TaonStripeCloudflareWorker,
   chalk,
 } from 'tnp-core/src';
-import { BaseQuickFixes, HelpersTaon } from 'tnp-helpers/src';
+import { BaseQuickFixes, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
   indexTsInSrcForWorker,
@@ -375,6 +375,8 @@ export class SubProject extends BaseQuickFixes<Project> {
   }
   //#endregion
 
+  // private magicRenameContent(content: string): string {}
+
   //#region methods & getters / recreate all
   async recreateAll(): Promise<void> {
     //#region backendFunc
@@ -418,7 +420,19 @@ export class SubProject extends BaseQuickFixes<Project> {
             let content = UtilsFilesFoldersSync.readFile(filePath);
             const rules = RenameRule.from(magicRenameRules);
             for (const rule of rules) {
-              content = rule.replaceInString(content);
+              content = content
+                .split('\n')
+                .map(line => {
+                  if (
+                    (line || '').trim().startsWith('imp' + 'ort') ||
+                    (line || '').trim().startsWith('exp' + 'ort') ||
+                    (line || '').trim().includes('@skip' + 'ReplaceTaon')
+                  ) {
+                    return line;
+                  }
+                  return rule.replaceInString(line);
+                })
+                .join('\n');
             }
             if (relativePath === indexTsInSrcForWorker) {
               const dbName = HelpersTaon.getValueFromJSONC(
@@ -435,6 +449,7 @@ export class SubProject extends BaseQuickFixes<Project> {
                   dbName,
                 ),
               );
+              UtilsTypescript.formatFile(filePath);
             } else {
               UtilsFilesFoldersSync.writeFile(filePath, content);
             }
@@ -520,9 +535,10 @@ export class SubProject extends BaseQuickFixes<Project> {
 
   //#region PUBLIC API
 
-  //#region PUBLIC API / select configure and add
-  public async selectConfigureAndAdd(): Promise<void> {
+  //#region PUBLIC API / add new and configure
+  public async addAndConfigure(): Promise<void> {
     //#region @backendFunc
+    await this.recreateAll();
     const choices = TempalteSubprojectTypeArr.reduce((a, b) => {
       return {
         [b]: {
@@ -536,11 +552,21 @@ export class SubProject extends BaseQuickFixes<Project> {
       question: `Select subproject that you want to add`,
     });
 
-    const nameForProject = await UtilsTerminal.input({
-      required: true,
-      defaultValue: `kv-db-${this.project.name}`,
-      question: `Name for worker`,
-    });
+    let nameForProject: string;
+    const alreadyAdded = this.getAll().map(c => path.basename(c));
+
+    while (true) {
+      nameForProject = await UtilsTerminal.input({
+        required: true,
+        defaultValue: `kv-db-${this.project.name}`,
+        question: `Name for worker`,
+      });
+      if (alreadyAdded.includes(nameForProject)) {
+        Helpers.info(`Name take.. try another one.`);
+        continue;
+      }
+      break;
+    }
 
     const coreProjTemplatePath = this.pathToTempalteInCore(select);
 
@@ -590,6 +616,7 @@ export class SubProject extends BaseQuickFixes<Project> {
   //#region PUBLIC API / test with example data
   public async testWithExampleData(): Promise<void> {
     //#region @backendFunc
+    await this.recreateAll();
     const subprojects = this.getAllSubProjects();
 
     const choices = subprojects.reduce((a, b) => {
@@ -750,9 +777,10 @@ export class SubProject extends BaseQuickFixes<Project> {
   }
   //#endregion
 
-  //#region PUBLIC API / set mode
+  //#region PUBLIC API / set mode for worker
   public async setModeForWorker(): Promise<void> {
     //#region @backendFunc
+    await this.recreateAll();
     const subprojects = this.getAllSubProjects();
 
     const choices = subprojects.reduce((a, b) => {
@@ -800,7 +828,7 @@ export class SubProject extends BaseQuickFixes<Project> {
         name: 'development',
       },
       exit: {
-        name: 'EXIT',
+        name: 'BACK',
       },
     };
 
@@ -810,7 +838,7 @@ export class SubProject extends BaseQuickFixes<Project> {
     });
 
     if (mode === 'exit') {
-      process.exit(0);
+      return;
     }
 
     await this.setMode(cwdWorker, mode as any);
@@ -819,9 +847,11 @@ export class SubProject extends BaseQuickFixes<Project> {
   }
   //#endregion
 
-  //#region PUBLIC API / set mode
+  //#region PUBLIC API / deploy worker
   public async deployWorker(): Promise<void> {
     //#region @backendFunc
+    await this.recreateAll();
+
     const subprojects = this.getAllSubProjects();
 
     const choices = subprojects.reduce((a, b) => {
@@ -870,7 +900,9 @@ export class SubProject extends BaseQuickFixes<Project> {
   //#endregion
 }
 
-//#region is wrangelr logged in
+//#region  helpers
+
+//#region  helpers / is wrangelr logged in
 async function isWranglerLoggedIn(cwd: string): Promise<boolean> {
   //#region @backendFunc
   try {
@@ -889,6 +921,7 @@ async function isWranglerLoggedIn(cwd: string): Promise<boolean> {
 }
 //#endregion
 
+//#region helpers / set secret cloudflare
 export async function setSecret(
   cwdWorker: string,
   name: string,
@@ -911,3 +944,6 @@ export async function setSecret(
   });
   //#endregion
 }
+//#endregion
+
+//#endregion

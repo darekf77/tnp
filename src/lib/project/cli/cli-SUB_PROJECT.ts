@@ -27,26 +27,42 @@ export class $SubProject extends BaseCli {
       deploy: {
         name: 'Deploy subproject',
       },
+      exit: {
+        name: 'EXIT',
+      },
     };
 
-    const select = Object.keys(choices).includes(this.firstArg)
-      ? this.firstArg
-      : await UtilsTerminal.select<keyof typeof choices>({
-          question: 'Select action',
-          choices,
-        });
+    let overrideSelect: keyof typeof choices = Object.keys(choices).includes(
+      this.firstArg,
+    )
+      ? (this.firstArg as any)
+      : void 0;
 
-    if (select === 'add') {
-      await this.project.subProject.selectConfigureAndAdd();
-    } else if (select === 'test') {
-      await this.project.subProject.testWithExampleData();
-    } else if (select === 'mode') {
-      await this.project.subProject.setModeForWorker();
-    } else if (select === 'deploy') {
-      await this.project.subProject.deployWorker();
+    while (true) {
+      let select = overrideSelect
+        ? overrideSelect
+        : await UtilsTerminal.select<keyof typeof choices>({
+            question: 'Select action',
+            choices,
+          });
+
+      if (overrideSelect) {
+        overrideSelect = void 0;
+      }
+
+      if (select === 'add') {
+        await this.project.subProject.addAndConfigure();
+      } else if (select === 'test') {
+        await this.project.subProject.testWithExampleData();
+      } else if (select === 'mode') {
+        await this.project.subProject.setModeForWorker();
+      } else if (select === 'deploy') {
+        await this.project.subProject.deployWorker();
+      } else if (select === 'exit') {
+        this._exit();
+      }
     }
 
-    this._exit();
     //#endregion
   }
 }
