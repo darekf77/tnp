@@ -247,6 +247,8 @@ export class ArtifactManager {
       await this.project.nodeModules.makeSureInstalled();
     }
 
+    await this.project.subProject?.recreateAll();
+
     //#region check isomorphic dependencies for npm lib
     if (this.project.framework.isStandaloneProject) {
       let missingDependencies: string[] = [];

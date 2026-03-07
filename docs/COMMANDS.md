@@ -176,8 +176,21 @@ Add subproject (stripe + cloudflare work )
 tnp subproject add
 ```
 
-Test worker with example data
+Test worker with example data (only in development mode)
 
 ```bash
 tnp subproject test
+```
+
+Set worker production/development mode
+
+```bash
+tnp subproject mode
+```
+
+
+Deploy worker
+
+```bash
+tnp subproject deploy
 ```

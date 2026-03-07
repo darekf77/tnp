@@ -823,7 +823,13 @@ export const localReleaseMainProject = 'local_release';
 
 export const dotInstallDate = '.install-date';
 
+export const KV_DATABASE_ONLINE_NAME = 'KV_DATABASE_ONLINE_NAME';
+
 export const dotVscodeMainProject = '.vscode';
+
+export const indexTsInSrcForWorker =  `src/index.ts`;
+
+export const wranglerJsonC =  `wrangler.jsonc`;
 
 export const packageJsonLockMainProject = fileName.package_lock_json;
 
@@ -847,6 +853,8 @@ export const packageJsonLibDist = fileName.package_json;
 
 export const tsconfigJsonMainProject = 'tsconfig.json';
 export const tsconfigNgProject = 'tsconfig.json';
+
+export const tsconfigSubProject = 'tsconfig.json';
 
 export const tsconfigSpecNgProject = 'tsconfig.spec.json';
 

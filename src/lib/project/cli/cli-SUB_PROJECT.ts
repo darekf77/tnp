@@ -16,10 +16,16 @@ export class $SubProject extends BaseCli {
 
     const choices = {
       add: {
-        name: 'Add new subproject to this project',
+        name: 'Add new subproject to this project (with deployment)',
       },
       test: {
         name: 'Test subproject',
+      },
+      mode: {
+        name: 'Set production/development mode for subproject',
+      },
+      deploy: {
+        name: 'Deploy subproject',
       },
     };
 
@@ -34,12 +40,15 @@ export class $SubProject extends BaseCli {
       await this.project.subProject.selectConfigureAndAdd();
     } else if (select === 'test') {
       await this.project.subProject.testWithExampleData();
+    } else if (select === 'mode') {
+      await this.project.subProject.setModeForWorker();
+    } else if (select === 'deploy') {
+      await this.project.subProject.deployWorker();
     }
 
     this._exit();
     //#endregion
   }
-
 }
 
 export default {

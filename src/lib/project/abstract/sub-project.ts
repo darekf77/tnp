@@ -1,7 +1,8 @@
-import { execSync } from 'child_process';
+//#region imports
+import { execSync, spawn } from 'child_process';
 import * as crypto from 'crypto';
 
-import { MagicRenamer } from 'magic-renamer/src';
+import { MagicRenamer, RenameRule } from 'magic-renamer/src';
 import {
   path,
   UtilsFilesFoldersSync,
@@ -14,31 +15,40 @@ import {
   fse,
   Utils,
   TaonStripeCloudflareWorker,
+  chalk,
 } from 'tnp-core/src';
-import { BaseQuickFixes } from 'tnp-helpers/src';
+import { BaseQuickFixes, HelpersTaon } from 'tnp-helpers/src';
 
 import {
+  indexTsInSrcForWorker,
+  KV_DATABASE_ONLINE_NAME,
   mainProjectSubProjects,
   nodeModulesSubPorject,
   packageJsonLockSubProject,
+  packageJsonSubProject,
+  TempalteSubprojectGroup,
   TempalteSubprojectType,
   TempalteSubprojectTypeArr,
   TempalteSubprojectTypeGroup,
   TemplateFolder,
+  tsconfigSubProject,
+  wranglerJsonC,
 } from '../../constants';
 
 import { Project } from './project';
+//#endregion
 
 // @ts-ignore TODO weird inheritance problem
-
 export class SubProject extends BaseQuickFixes<Project> {
-  //#region this project temp sub project folder
+  //#region methods & getters
+
+  //#region methods & getters / this project temp sub project folder
   private get tempSubProjectFolder(): string {
     return this.project.pathFor('tmp-subproject-temp');
   }
   //#endregion
 
-  //#region core project path template type
+  //#region methods & getters / core project path template type
   private pathToTempalteInCore(templateType: TempalteSubprojectType): string {
     return this.project.framework.coreProject.pathFor(
       `${TemplateFolder.templatesSubprojects}/${templateType}`,
@@ -46,7 +56,7 @@ export class SubProject extends BaseQuickFixes<Project> {
   }
   //#endregion
 
-  //#region this project path template type
+  //#region methods & getters / this project path template type
   private pathToTempalteInCurrentProject(
     templateType: TempalteSubprojectType,
   ): string {
@@ -56,7 +66,7 @@ export class SubProject extends BaseQuickFixes<Project> {
   }
   //#endregion
 
-  //#region worker name for
+  //#region methods & getters / worker name for
   private workerNameFor(description: string): string {
     //#region @backendFunc
     const base = _.kebabCase(description);
@@ -72,11 +82,12 @@ export class SubProject extends BaseQuickFixes<Project> {
   }
   //#endregion
 
+  //#region methods & getters / npm install
   private async npmInstall(cwdWorker: string): Promise<void> {
     //#region npm install
 
     this.project.nodeModules.linkToLocation(cwdWorker);
-    Helpers.info(`Linking node_modules done`)
+    Helpers.info(`Linking node_modules done`);
     // let trysNpmInstall = 0;
     // Helpers.info(`NPM INSTALL FOR WORKER`);
     // while (true) {
@@ -108,22 +119,40 @@ export class SubProject extends BaseQuickFixes<Project> {
     // }
     //#endregion
   }
+  //#endregion
 
-  //#region init process
-  private async initProcess(absPathToSubproject: string): Promise<void> {
+  //#region methods & getters / deplyment to cloud flare
+  async deployment(cwdWorker: string): Promise<void> {
     //#region @backendFunc
-    const cwdWorker = crossPlatformPath([
-      absPathToSubproject,
-      path.basename(absPathToSubproject),
-    ]);
+    await this.loginCliCloudFlare(cwdWorker);
+    Helpers.taskStarted(`STARTING DEPLOYMENT OF WORKER ${cwdWorker}`);
+    while (true) {
+      try {
+        Helpers.taskStarted(`Deploying worker to cloud flare...`);
+        const data = await UtilsExecProc.spawnAsync(`npm run deploy`, {
+          cwd: cwdWorker,
+        }).getOutput();
+        const accountName = this.extractWorkersDevInfo(data.stdout);
+        console.log(data.stdout);
+        Helpers.taskDone(`DONE DEPLOYMENT on acccount name "${accountName}"`);
+        this.project.taonJson.setCloudFlareAccountSubdomain(accountName);
+        break;
+      } catch (error) {
+        if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
+          break;
+        }
+      }
 
-    // console.log({ cwdWorker });
+      break;
+    }
+    //#endregion
+  }
+  //#endregion
 
-    await this.npmInstall(cwdWorker);
-
-    //#region login cloud flare
+  async loginCliCloudFlare(cwdWorker: string): Promise<void> {
+    //#region @backendFunc
     let trysLogin = 0;
-    Helpers.info(`CLOUD FLARE LOGIN`);
+    Helpers.info(`CHECKING CLI CLOUDFLARE LOGIN`);
     while (true) {
       try {
         const isLogggedIn = await isWranglerLoggedIn(cwdWorker);
@@ -152,6 +181,21 @@ export class SubProject extends BaseQuickFixes<Project> {
       }
     }
     //#endregion
+  }
+
+  //#region methods & getters / init process
+  private async initProcess(absPathToSubproject: string): Promise<void> {
+    //#region @backendFunc
+    const cwdWorker = crossPlatformPath([
+      absPathToSubproject,
+      path.basename(absPathToSubproject),
+    ]);
+
+    // console.log({ cwdWorker });
+
+    await this.npmInstall(cwdWorker);
+
+    await this.loginCliCloudFlare(cwdWorker);
 
     //#region create kv db
     Helpers.info(`KV DB CREATION`);
@@ -175,10 +219,7 @@ export class SubProject extends BaseQuickFixes<Project> {
         const rcFileContent = UtilsFilesFoldersSync.readFile(
           rcFilePath,
         ).replace(
-          new RegExp(
-            Utils.escapeStringForRegEx('KV_DATABASE_ONLINE_NAME'),
-            'g',
-          ),
+          new RegExp(Utils.escapeStringForRegEx(KV_DATABASE_ONLINE_NAME), 'g'),
           KV_DB_NAME,
         );
 
@@ -195,33 +236,291 @@ export class SubProject extends BaseQuickFixes<Project> {
     }
     //#endregion
 
-    //#region deploy to cloudflare
-    Helpers.info(`DEPLOYMENT`);
+    await this.deployment(cwdWorker);
+
+    //#region add stripe secret
+    Helpers.info(`ADDING STRIP SECRET`);
     while (true) {
       try {
-        Helpers.taskStarted(`Deploying worker to cloud flare...`);
-        const data = await UtilsExecProc.spawnAsync(`npm run deploy`, {
-          cwd: cwdWorker,
-        }).getOutput();
-        const accountName = this.extractWorkersDevInfo(data.stdout);
-        Helpers.taskDone(`DONE DEPLOYMENT on acccount name "${accountName}"`);
-        this.project.taonJson.setCloudFlareAccountSubdomain(accountName);
+        Helpers.taskStarted(`PLEASE WAIT FOR INPUT TO ADD STRIP SECRET ..`);
+        const data = await UtilsExecProc.spawnAsync(
+          `npx wrangler secret put STRIPE_SECRET_KEY`,
+          {
+            cwd: cwdWorker,
+          },
+        ).getOutput();
+        Helpers.taskDone(
+          `STRIPE SECRET SAVED for "${this.project.taonJson.cloudFlareAccountSubdomain}"`,
+        );
         break;
       } catch (error) {
         if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
           break;
         }
       }
-
       break;
     }
     //#endregion
+
+    //#region add stripe webhook secret
+    Helpers.info(
+      `ADDING STRIP ${chalk.bold('WEBHOOK')} SECRET (-> DIFFRENT THAT STRIPE SECRET)`,
+    );
+    while (true) {
+      try {
+        Helpers.info(`PLEASE ADD WEBHOOK IN STRIPE FOR ADDRESS:
+
+        ${
+          `https://${path.basename(cwdWorker)}` +
+          `.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev`
+        }
+
+
+          `);
+        await UtilsTerminal.pressAnyKeyToContinueAsync();
+
+        Helpers.taskStarted(
+          `PLEASE WAIT FOR INPUT TO ADD WEBHOOK STRIP SECRET ..`,
+        );
+        await UtilsExecProc.spawnAsync(
+          `npx wrangler secret put STRIPE_WEBHOOK_SECRET`,
+          {
+            cwd: cwdWorker,
+          },
+        ).getOutput();
+        Helpers.taskDone(
+          `STRIPE WEBHOOK SECRET SAVED for "${this.project.taonJson.cloudFlareAccountSubdomain}"`,
+        );
+        break;
+      } catch (error) {
+        if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
+          break;
+        }
+      }
+      break;
+    }
+    //#endregion
+
+    Helpers.info(`YOUR WORKER ${path.basename(cwdWorker)}
+
+      IS READY TO RECEIVING PAYMENTS AND USE INSIDE TAON
+
+      `);
 
     //#endregion
   }
   //#endregion
 
-  //#region select configure and add
+  private async setMode(
+    cwdWorker: string,
+    mode: 'production' | 'development',
+  ): Promise<void> {
+    cwdWorker;
+
+    while (true) {
+      try {
+        const ok = await setSecret(cwdWorker, 'WORKER_STRIPE_MODE', mode);
+        if (ok) {
+          break;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+      Helpers.warn(`Not able to set worker mode.`);
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: `Press any key to start again`,
+      });
+    }
+
+    Helpers.info(
+      `DONE. WORKER ${path.basename(cwdWorker)} is no in ${mode} mode`,
+    );
+  }
+
+  //#region methods & getters / get all sub projects
+  getAll(): string[] {
+    //#region @backendFunc
+    const all = TempalteSubprojectTypeArr.reduce((a, tempalteType) => {
+      const folderForSubproject =
+        this.pathToTempalteInCurrentProject(tempalteType);
+
+      return a.concat(
+        UtilsFilesFoldersSync.getFoldersFrom(folderForSubproject, {
+          omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
+        }),
+      );
+    }, []);
+
+    return all;
+    //#endregion
+  }
+  //#endregion
+
+  getAllSubProjects(): Project[] {
+    //#region @backendFunc
+    return this.getAll().map(c => this.project.ins.From(c));
+    //#endregion
+  }
+
+  //#region methods & getters / get core by
+  private coreProjectBy(
+    templateType: TempalteSubprojectType,
+  ): Project | undefined {
+    return this.project.ins.From(
+      this.project.framework.coreProject.pathFor([
+        TemplateFolder.templatesSubprojects,
+        templateType,
+      ]),
+    );
+  }
+  //#endregion
+
+  //#region methods & getters / recreate all
+  async recreateAll(): Promise<void> {
+    //#region backendFunc
+    const allProjectsPaths = this.getAll();
+
+    for (const chosenProjectAbscwd of allProjectsPaths) {
+      const templateType = path.basename(
+        path.dirname(chosenProjectAbscwd),
+      ) as TempalteSubprojectType;
+      const group = path.basename(
+        path.dirname(path.dirname(chosenProjectAbscwd)),
+      ) as TempalteSubprojectGroup;
+
+      const core = this.coreProjectBy(templateType);
+      const workerCore = this.project.ins.From(
+        core.pathFor(path.basename(core.name)),
+      );
+
+      const currentCwdWorker = crossPlatformPath([
+        chosenProjectAbscwd,
+        path.basename(chosenProjectAbscwd),
+      ]);
+
+      Helpers.logInfo(`Linking subproject: ${path.basename(currentCwdWorker)}`);
+
+      //#region handle woker data
+      (() => {
+        const filesForBranding = [
+          packageJsonSubProject,
+          tsconfigSubProject,
+          indexTsInSrcForWorker,
+        ];
+
+        workerCore.copy(filesForBranding).to([currentCwdWorker]);
+
+        const magicRenameRules = `${core.name} -> ${path.basename(chosenProjectAbscwd)}`;
+
+        for (const relativePath of filesForBranding) {
+          const filePath = crossPlatformPath([currentCwdWorker, relativePath]);
+          if (!Helpers.isFolder(filePath)) {
+            let content = UtilsFilesFoldersSync.readFile(filePath);
+            const rules = RenameRule.from(magicRenameRules);
+            for (const rule of rules) {
+              content = rule.replaceInString(content);
+            }
+            if (relativePath === indexTsInSrcForWorker) {
+              const dbName = HelpersTaon.getValueFromJSONC(
+                [currentCwdWorker, wranglerJsonC],
+                'kv_namespaces[0].binding',
+              );
+              UtilsFilesFoldersSync.writeFile(
+                filePath,
+                content.replace(
+                  new RegExp(
+                    Utils.escapeStringForRegEx(KV_DATABASE_ONLINE_NAME),
+                    'g',
+                  ),
+                  dbName,
+                ),
+              );
+            } else {
+              UtilsFilesFoldersSync.writeFile(filePath, content);
+            }
+          }
+        }
+      })();
+      //#endregion
+
+      //#region handle parent data
+      (() => {
+        const filesForBranding = [packageJsonSubProject, 'README.md', 'images'];
+
+        core.copy(filesForBranding).to([chosenProjectAbscwd]);
+
+        const magicRenameRules = `${core.name} -> ${path.basename(chosenProjectAbscwd)}`;
+
+        for (const relativePath of filesForBranding) {
+          const filePath = crossPlatformPath([
+            chosenProjectAbscwd,
+            relativePath,
+          ]);
+          if (!Helpers.isFolder(filePath)) {
+            let content = UtilsFilesFoldersSync.readFile(filePath);
+            const rules = RenameRule.from(magicRenameRules);
+            for (const rule of rules) {
+              content = rule.replaceInString(content);
+            }
+            UtilsFilesFoldersSync.writeFile(filePath, content);
+          }
+        }
+      })();
+      //#endregion
+
+      await this.npmInstall(currentCwdWorker);
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region methods & getters / get all by type
+  protected getAllByTypePaths(tempalteType: TempalteSubprojectType): string[] {
+    const folderForSubproject =
+      this.pathToTempalteInCurrentProject(tempalteType);
+
+    return UtilsFilesFoldersSync.getFoldersFrom(folderForSubproject).filter(
+      f => {
+        if (
+          tempalteType === TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER
+        ) {
+          return Helpers.exists([
+            f,
+            path.basename(f),
+            packageJsonLockSubProject,
+          ]);
+        }
+        return false;
+      },
+    );
+  }
+  //#endregion
+
+  //#region methods & getters / get all project by type
+  public getAllByType(tempalteType: TempalteSubprojectType): Project[] {
+    return this.getAllByTypePaths(tempalteType).map(c =>
+      this.project.ins.From(c),
+    );
+  }
+  //#endregion
+
+  //#region methods & getters / extract worker account name
+  public extractWorkersDevInfo(text: string) {
+    const match = text.match(/https:\/\/([^\.]+)\.([^\.]+)\.workers\.dev/);
+
+    if (!match) {
+      return undefined;
+    }
+
+    return match[2];
+  }
+  //#endregion
+
+  //#endregion
+
+  //#region PUBLIC API
+
+  //#region PUBLIC API / select configure and add
   public async selectConfigureAndAdd(): Promise<void> {
     //#region @backendFunc
     const choices = TempalteSubprojectTypeArr.reduce((a, b) => {
@@ -288,48 +587,10 @@ export class SubProject extends BaseQuickFixes<Project> {
   }
   //#endregion
 
-  //#region get all by type
-  protected getAllByTypePaths(tempalteType: TempalteSubprojectType): string[] {
-    return UtilsFilesFoldersSync.getFoldersFrom(
-      this.pathToTempalteInCurrentProject(tempalteType),
-    ).filter(f => {
-      if (
-        tempalteType === TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER
-      ) {
-        return Helpers.exists([f, path.basename(f), packageJsonLockSubProject]);
-      }
-      return false;
-    });
-  }
-  //#endregion
-
-  //#region get all project by type
-  public getAllByType(tempalteType: TempalteSubprojectType): Project[] {
-    return this.getAllByTypePaths(tempalteType).map(c =>
-      this.project.ins.From(c),
-    );
-  }
-  //#endregion
-
-  //#region extract worker account name
-  public extractWorkersDevInfo(text: string) {
-    const match = text.match(/https:\/\/([^\.]+)\.([^\.]+)\.workers\.dev/);
-
-    if (!match) {
-      return undefined;
-    }
-
-    return match[2];
-  }
-  //#endregion
-
-  //#region test with example data
+  //#region PUBLIC API / test with example data
   public async testWithExampleData(): Promise<void> {
     //#region @backendFunc
-
-    const selectedType = TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER;
-
-    const subprojects = this.getAllByType(selectedType);
+    const subprojects = this.getAllSubProjects();
 
     const choices = subprojects.reduce((a, b) => {
       return {
@@ -339,21 +600,34 @@ export class SubProject extends BaseQuickFixes<Project> {
       };
     }, {});
 
-    const chosenProject = await UtilsTerminal.select({
+    const chosenProjectName = await UtilsTerminal.select({
       question: 'Select project to test with exmaple data',
       choices,
     });
 
-    const url = `https://${chosenProject}.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev`;
+    const chosenProject = this.getAllSubProjects().find(
+      c => c.name === chosenProjectName,
+    );
 
-    const pathInsideProject = crossPlatformPath([
-      this.pathToTempalteInCurrentProject(selectedType),
-      chosenProject,
+    const templateType = path.basename(
+      path.dirname(chosenProject.location),
+    ) as TempalteSubprojectType;
+
+    const group = path.basename(
+      path.dirname(path.dirname(chosenProject.location)),
+    ) as TempalteSubprojectGroup;
+
+    const url = `https://${chosenProjectName}.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev`;
+
+    const currentProjectAbsPath = crossPlatformPath([
+      this.pathToTempalteInCurrentProject(templateType),
+      chosenProjectName,
     ]);
 
-    const cwdWorker = crossPlatformPath([pathInsideProject, chosenProject]);
-
-    await this.npmInstall(cwdWorker);
+    const cwdWorker = crossPlatformPath([
+      currentProjectAbsPath,
+      chosenProjectName,
+    ]);
 
     const prouctChoices = {
       movieProduct: {
@@ -475,6 +749,125 @@ export class SubProject extends BaseQuickFixes<Project> {
     //#endregion
   }
   //#endregion
+
+  //#region PUBLIC API / set mode
+  public async setModeForWorker(): Promise<void> {
+    //#region @backendFunc
+    const subprojects = this.getAllSubProjects();
+
+    const choices = subprojects.reduce((a, b) => {
+      return {
+        [b.name]: {
+          name: b.name,
+        },
+      };
+    }, {});
+
+    const chosenProjectName = await UtilsTerminal.select({
+      question: 'Select project to set mode:',
+      choices,
+    });
+
+    const chosenProject = this.getAllSubProjects().find(
+      c => c.name === chosenProjectName,
+    );
+
+    const templateType = path.basename(
+      path.dirname(chosenProject.location),
+    ) as TempalteSubprojectType;
+
+    const group = path.basename(
+      path.dirname(path.dirname(chosenProject.location)),
+    ) as TempalteSubprojectGroup;
+
+    const url = `https://${chosenProjectName}.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev`;
+
+    const currentProjectAbsPath = crossPlatformPath([
+      this.pathToTempalteInCurrentProject(templateType),
+      chosenProjectName,
+    ]);
+
+    const cwdWorker = crossPlatformPath([
+      currentProjectAbsPath,
+      chosenProjectName,
+    ]);
+
+    const setModeChoices = {
+      setProduction: {
+        name: 'production',
+      },
+      setDevelopment: {
+        name: 'development',
+      },
+      exit: {
+        name: 'EXIT',
+      },
+    };
+
+    const mode = await UtilsTerminal.select<keyof typeof setModeChoices>({
+      question: 'Select worker mode:',
+      choices: setModeChoices,
+    });
+
+    if (mode === 'exit') {
+      process.exit(0);
+    }
+
+    await this.setMode(cwdWorker, mode as any);
+
+    //#endregion
+  }
+  //#endregion
+
+  //#region PUBLIC API / set mode
+  public async deployWorker(): Promise<void> {
+    //#region @backendFunc
+    const subprojects = this.getAllSubProjects();
+
+    const choices = subprojects.reduce((a, b) => {
+      return {
+        [b.name]: {
+          name: b.name,
+        },
+      };
+    }, {});
+
+    const chosenProjectName = await UtilsTerminal.select({
+      question: 'Select project to deploy:',
+      choices,
+    });
+
+    const chosenProject = this.getAllSubProjects().find(
+      c => c.name === chosenProjectName,
+    );
+
+    const templateType = path.basename(
+      path.dirname(chosenProject.location),
+    ) as TempalteSubprojectType;
+
+    const group = path.basename(
+      path.dirname(path.dirname(chosenProject.location)),
+    ) as TempalteSubprojectGroup;
+
+    const url = `https://${chosenProjectName}.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev`;
+
+    const currentProjectAbsPath = crossPlatformPath([
+      this.pathToTempalteInCurrentProject(templateType),
+      chosenProjectName,
+    ]);
+
+    const cwdWorker = crossPlatformPath([
+      currentProjectAbsPath,
+      chosenProjectName,
+    ]);
+
+    await this.deployment(cwdWorker);
+
+    //#endregion
+  }
+  //#endregion
+
+  //#endregion
 }
 
 //#region is wrangelr logged in
@@ -495,3 +888,26 @@ async function isWranglerLoggedIn(cwd: string): Promise<boolean> {
   //#endregion
 }
 //#endregion
+
+export async function setSecret(
+  cwdWorker: string,
+  name: string,
+  value: string,
+): Promise<boolean> {
+  //#region @backendFunc
+  return new Promise<boolean>((resolve, reject) => {
+    const proc = spawn('npx', ['wrangler', 'secret', 'put', name], {
+      stdio: ['pipe', 'inherit', 'inherit'],
+      cwd: cwdWorker,
+    });
+
+    proc.stdin.write(value);
+    proc.stdin.end();
+
+    proc.on('close', code => {
+      if (code === 0) resolve(true);
+      else reject(new Error(`wrangler exited with ${code}`));
+    });
+  });
+  //#endregion
+}

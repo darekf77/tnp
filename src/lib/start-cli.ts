@@ -430,6 +430,7 @@ export async function run(
       'set:framework:version': 'version:set:framework:version',
       // 'ra': 'release:all',
       e: 'electron',
+      sub: 'subproject',
       ekill: 'electron:kill',
       car: 'release:auto:clear',
       autorelease: 'release:auto',
