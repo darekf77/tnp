@@ -378,7 +378,7 @@ export class SubProject extends BaseQuickFixes<Project> {
   // private magicRenameContent(content: string): string {}
 
   //#region methods & getters / recreate all
-  async recreateAll(): Promise<void> {
+  async initAll(): Promise<void> {
     //#region backendFunc
     const allProjectsPaths = this.getAll();
 
@@ -538,7 +538,7 @@ export class SubProject extends BaseQuickFixes<Project> {
   //#region PUBLIC API / add new and configure
   public async addAndConfigure(): Promise<void> {
     //#region @backendFunc
-    await this.recreateAll();
+    await this.initAll();
     const choices = TempalteSubprojectTypeArr.reduce((a, b) => {
       return {
         [b]: {
@@ -616,7 +616,7 @@ export class SubProject extends BaseQuickFixes<Project> {
   //#region PUBLIC API / test with example data
   public async testWithExampleData(): Promise<void> {
     //#region @backendFunc
-    await this.recreateAll();
+    await this.initAll();
     const subprojects = this.getAllSubProjects();
 
     const choices = subprojects.reduce((a, b) => {
@@ -780,7 +780,7 @@ export class SubProject extends BaseQuickFixes<Project> {
   //#region PUBLIC API / set mode for worker
   public async setModeForWorker(): Promise<void> {
     //#region @backendFunc
-    await this.recreateAll();
+    await this.initAll();
     const subprojects = this.getAllSubProjects();
 
     const choices = subprojects.reduce((a, b) => {
@@ -850,7 +850,7 @@ export class SubProject extends BaseQuickFixes<Project> {
   //#region PUBLIC API / deploy worker
   public async deployWorker(): Promise<void> {
     //#region @backendFunc
-    await this.recreateAll();
+    await this.initAll();
 
     const subprojects = this.getAllSubProjects();
 

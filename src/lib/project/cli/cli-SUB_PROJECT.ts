@@ -27,6 +27,9 @@ export class $SubProject extends BaseCli {
       deploy: {
         name: 'Deploy subproject',
       },
+      init: {
+        name: 'Init all sub-projects',
+      },
       exit: {
         name: 'EXIT',
       },
@@ -58,6 +61,8 @@ export class $SubProject extends BaseCli {
         await this.project.subProject.setModeForWorker();
       } else if (select === 'deploy') {
         await this.project.subProject.deployWorker();
+      } else if (select === 'init') {
+        await this.project.subProject.initAll();
       } else if (select === 'exit') {
         this._exit();
       }
