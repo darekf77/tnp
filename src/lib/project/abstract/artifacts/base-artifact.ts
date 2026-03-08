@@ -169,7 +169,9 @@ export abstract class BaseArtifact<
     releaseOptions: EnvOptions,
   ): Promise<string> {
     //#region @backendFunc
-    const staticPagesRepoBranch = `${releaseOptions.release.releaseType}-${this.currentArtifactName}`;
+    const staticPagesRepoBranch = `${
+      releaseOptions.release.envName + (releaseOptions.release.envNumber || '')
+    }-${releaseOptions.release.releaseType}-${this.currentArtifactName}`;
     const repoRoot = this.project.pathFor([
       `.${config.frameworkName}`,
       this.currentArtifactName,
