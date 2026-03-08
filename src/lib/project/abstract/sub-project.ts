@@ -502,7 +502,7 @@ export class SubProject extends BaseQuickFixes<Project> {
           return Helpers.exists([
             f,
             path.basename(f),
-            packageJsonLockSubProject,
+            packageJsonSubProject,
           ]);
         }
         return false;
@@ -513,9 +513,10 @@ export class SubProject extends BaseQuickFixes<Project> {
 
   //#region methods & getters / get all project by type
   public getAllByType(tempalteType: TempalteSubprojectType): Project[] {
-    return this.getAllByTypePaths(tempalteType).map(c =>
-      this.project.ins.From(c),
-    );
+    const allPaths = this.getAllByTypePaths(tempalteType);
+    const byType = allPaths.map(c => this.project.ins.From(c));
+
+    return byType;
   }
   //#endregion
 

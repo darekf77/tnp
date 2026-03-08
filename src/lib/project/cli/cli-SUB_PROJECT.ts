@@ -1,8 +1,9 @@
 import os from 'os';
 
-import { EnvOptions } from 'tnp/src';
 import { CoreModels, UtilsTerminal } from 'tnp-core/src';
 import { BaseCLiWorkerStartParams, HelpersTaon } from 'tnp-helpers/src';
+
+import { EnvOptions } from '../../options';
 
 import { BaseCli } from './base-cli';
 

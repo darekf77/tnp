@@ -78,7 +78,6 @@ export class PackageJSON extends BasePackageJson {
   }
 
   saveToDisk(purpose?: string): void {
-
     //#region @backendFunc
     if (
       this.project.framework.isStandaloneProject ||
@@ -100,6 +99,9 @@ export class PackageJSON extends BasePackageJson {
       }
       this.data.name = this.project.nameForNpmPackage;
       this.data.version = versionToPreserve;
+      if (!this.data.version) {
+        this.data.version = '0.0.0';
+      }
       this.data.main = 'dist/app.electron.js'; // fix for electron
       const showFirst = [
         'name',
@@ -144,17 +146,17 @@ export class PackageJSON extends BasePackageJson {
     }
     super.saveToDisk();
     //#endregion
-
   }
 
   resolvePossibleNewVersion(
     releaseVersionBumpType: CoreModels.ReleaseVersionType,
   ): string {
-
     //#region @backendFunc
     const pj = new BasePackageJson({
       jsonContent: {
-        version: this.project.packageJson.getBumpedVersionFor(releaseVersionBumpType),
+        version: this.project.packageJson.getBumpedVersionFor(
+          releaseVersionBumpType,
+        ),
       },
       reloadInMemoryCallback: data => {
         // console.log('new pj data', data);
@@ -203,6 +205,5 @@ export class PackageJSON extends BasePackageJson {
       pj.setVersion(pjtag.version);
     }
     //#endregion
-
   }
 }
