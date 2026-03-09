@@ -202,7 +202,9 @@ export class SubProject extends BaseQuickFixes<Project> {
     while (true) {
       const KV_DB_NAME = await UtilsTerminal.input({
         question: `Provide cloudflare KV database name to create`,
-        defaultValue: `SALES_KV_${_.snakeCase(this.project.name).toUpperCase()}`,
+        defaultValue: `SALES_KV_${_.snakeCase(
+          this.project.name,
+        ).toUpperCase()}`,
         validate: value => {
           return /^[A-Z0-9]+(?:_[A-Z0-9]+)*$/.test(value);
         },
@@ -264,7 +266,9 @@ export class SubProject extends BaseQuickFixes<Project> {
 
     //#region add stripe webhook secret
     Helpers.info(
-      `ADDING STRIP ${chalk.bold('WEBHOOK')} SECRET (-> DIFFRENT THAT STRIPE SECRET)`,
+      `ADDING STRIP ${chalk.bold(
+        'WEBHOOK',
+      )} SECRET (-> DIFFRENT THAT STRIPE SECRET)`,
     );
     while (true) {
       try {
@@ -412,7 +416,9 @@ export class SubProject extends BaseQuickFixes<Project> {
 
         workerCore.copy(filesForBranding).to([currentCwdWorker]);
 
-        const magicRenameRules = `${core.name} -> ${path.basename(chosenProjectAbscwd)}`;
+        const magicRenameRules = `${core.name} -> ${path.basename(
+          chosenProjectAbscwd,
+        )}`;
 
         for (const relativePath of filesForBranding) {
           const filePath = crossPlatformPath([currentCwdWorker, relativePath]);
@@ -464,7 +470,9 @@ export class SubProject extends BaseQuickFixes<Project> {
 
         core.copy(filesForBranding).to([chosenProjectAbscwd]);
 
-        const magicRenameRules = `${core.name} -> ${path.basename(chosenProjectAbscwd)}`;
+        const magicRenameRules = `${core.name} -> ${path.basename(
+          chosenProjectAbscwd,
+        )}`;
 
         for (const relativePath of filesForBranding) {
           const filePath = crossPlatformPath([
@@ -494,27 +502,23 @@ export class SubProject extends BaseQuickFixes<Project> {
     const folderForSubproject =
       this.pathToTempalteInCurrentProject(tempalteType);
 
-    return UtilsFilesFoldersSync.getFoldersFrom(folderForSubproject).filter(
-      f => {
-        if (
-          tempalteType === TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER
-        ) {
-          return Helpers.exists([
-            f,
-            path.basename(f),
-            packageJsonSubProject,
-          ]);
-        }
-        return false;
-      },
-    );
+    return UtilsFilesFoldersSync.getFoldersFrom(folderForSubproject, {
+      omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
+    }).filter(f => {
+      if (
+        tempalteType === TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER
+      ) {
+        return Helpers.exists([f, path.basename(f), packageJsonSubProject]);
+      }
+      return false;
+    });
   }
   //#endregion
 
   //#region methods & getters / get all project by type
   public getAllByType(tempalteType: TempalteSubprojectType): Project[] {
     const allPaths = this.getAllByTypePaths(tempalteType);
-    const byType = allPaths.map(c => this.project.ins.From(c));
+    const byType = allPaths.map(c => this.project.ins.From(c)).filter(f => !!f);
 
     return byType;
   }
