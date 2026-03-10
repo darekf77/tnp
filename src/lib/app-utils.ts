@@ -216,7 +216,7 @@ export function parseAiMdContent(input: string): AiMdFile[] {
     const content = match[2];
 
     results.push({
-      filename: rawFilename,
+      filename: (rawFilename || '').replace(`#`, '').trim(),
       content,
     });
   }
