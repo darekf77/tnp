@@ -396,7 +396,8 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       {
         group: groupAI,
         title: `copy tree of files`,
-        exec: async ({ selectedUris, uri, vscode }) => {
+        exec: async data => {
+          const { selectedUris, uri, vscode } = data;
           const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
           // vscode.window.showInformationMessage(WORKSPACE_MAIN_FOLDER_PATH);
           vscode.env.clipboard.writeText(
@@ -412,12 +413,18 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       {
         group: groupAI,
         title: `copy to clipboard all files/folders as single MD/AI ready format`,
-        exec: async ({ selectedUris, uri, vscode }) => {
+        exec: async data => {
+          let { selectedUris, uri, vscode } = data;
+          const arr = (selectedUris || []).map(c => crossPlatformPath(c.path));
+          // console.log({ arr });
           const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
           // vscode.window.showInformationMessage(WORKSPACE_MAIN_FOLDER_PATH);
 
           vscode.env.clipboard.writeText(
-            await FrameworkUtils.copyToAiContent(WORKSPACE_MAIN_FOLDER_PATH),
+            await FrameworkUtils.copyToAiContent(
+              WORKSPACE_MAIN_FOLDER_PATH,
+              arr,
+            ),
           );
         },
         options: {

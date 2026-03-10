@@ -14,23 +14,18 @@ export namespace FrameworkUtils {
   //#region copy component for AI
   export async function copyToAiContent(
     absPathToFolder: string,
+    onlyfiles: string[] = [],
   ): Promise<string> {
     //#region @backendFunc
     if (!Helpers.isFolder(absPathToFolder)) {
       absPathToFolder = crossPlatformPath(path.dirname(absPathToFolder));
     }
-    const files = UtilsFilesFoldersSync.getFilesFrom(absPathToFolder, {
-      followSymlinks: false,
-      recursive: false,
-    })
-      .filter(
-        f =>
-          f.endsWith('.ts') ||
-          f.endsWith('.tsx') ||
-          f.endsWith('.html') ||
-          f.endsWith('.scss'),
-      )
-      .filter(f => !['index.ts'].includes(path.basename(f)));
+    const files = onlyfiles
+      ? onlyfiles
+      : UtilsFilesFoldersSync.getFilesFrom(absPathToFolder, {
+          followSymlinks: false,
+          recursive: false,
+        });
 
     const content = `=== start of AI-MD multi-file markdown structure ===
 ${files
