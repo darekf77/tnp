@@ -102,6 +102,11 @@ export namespace Models {
      * Ask for confirmation before deployement to taon cloud
      */
     askUserBeforeFinalAction?: boolean;
+
+    /**
+     * Custom url for static pages repo release
+     */
+    staticPagesCustomRepoUrl?: string;
   }
 
   export type TaonArtifactInclude = ReleaseArtifactTaon[] | '*'; // for each artifact

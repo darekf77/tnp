@@ -176,7 +176,10 @@ export abstract class BaseArtifact<
       `.${config.frameworkName}`,
       this.currentArtifactName,
     ]);
-    const repoName = `repo-${this.project.name}-for-${releaseOptions.release.releaseType}`;
+    const repoName = `repo-${this.project.name}-for-${
+      releaseOptions.release.releaseType
+    }--env-${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
+
     const repoPath = crossPlatformPath([repoRoot, repoName]);
     const repoUrl = releaseOptions.release.staticPagesCustomRepoUrl
       ? releaseOptions.release.staticPagesCustomRepoUrl

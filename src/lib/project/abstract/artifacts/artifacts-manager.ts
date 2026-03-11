@@ -804,6 +804,7 @@ export class ArtifactManager {
             releaseType: item.releaseType || releaseOptions.release.releaseType,
             taonInstanceIp: item.taonInstanceIp,
             askUserBeforeFinalAction: item.askUserBeforeFinalAction,
+            staticPagesCustomRepoUrl:  item.staticPagesCustomRepoUrl,
           },
         });
         if (!this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
