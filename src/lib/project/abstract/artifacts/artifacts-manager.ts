@@ -3,6 +3,7 @@ import {
   config,
   dotTaonFolder,
   dotTnpFolder,
+  GlobalStorage,
   LibTypeEnum,
   taonPackageName,
   UtilsFilesFoldersSync,
@@ -18,6 +19,7 @@ import {
 } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
 import { tnpPackageName } from 'tnp-core/src';
+import { taonActionFromParent } from 'tnp-core/src';
 import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
@@ -760,6 +762,7 @@ export class ArtifactManager {
     }
 
     for (const child of children) {
+      GlobalStorage.set(taonActionFromParent, child.name);
       await child.artifactsManager.build(options);
     }
   }
@@ -1001,8 +1004,10 @@ export class ArtifactManager {
   ): Promise<void> {
     //#region @backendFunc
     const howManyChildren = children.length;
+
     for (let index = 0; index < children.length; index++) {
       const child = children[index];
+      GlobalStorage.set(taonActionFromParent, child.name);
       if (!options.isCiProcess) {
         UtilsTerminal.clearConsole();
       }

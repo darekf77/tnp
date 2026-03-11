@@ -1,7 +1,13 @@
 //#region imports
 import type { AxiosProgressEvent } from 'axios';
 import { MulterFileUploadResponse } from 'taon/src';
-import { config, dotTaonFolder, fse } from 'tnp-core/src';
+import {
+  config,
+  dotTaonFolder,
+  fse,
+  GlobalStorage,
+  taonActionFromParent,
+} from 'tnp-core/src';
 import {
   crossPlatformPath,
   path,
@@ -433,6 +439,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     const noConfigError = `TS2724: '"./app/app"' has no exported member named '${appBaseName}AppConfig'. Did you mean '${appBaseName}Config'?`;
     const noCompoenntError = `TS2614: Module '"./app/app"' has no exported member '${appBaseName}App'. Did you mean to use 'import ${appBaseName}App from "./app/app"' instead?`;
     const externalLibInPorject = 'projects/external-libs/src/lib';
+    const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
 
     if (!shouldSkipBuild) {
       await angularTempProj.execute(angularBuildAppCmd, {
@@ -558,6 +565,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
             );
           }
           // /Users/dfilipiak/npm/taon-projects/application-quiz/.angular/cache/21.0.4/app/vite/deps_ssr/chunk-NX6GOWNM.js:27649:15
+
+          if (taonActionFromParentName && line.includes('./src/')) {
+            line = line.replace('./src/', `./${taonActionFromParentName}/src/`);
+          }
 
           return line;
           //#endregion

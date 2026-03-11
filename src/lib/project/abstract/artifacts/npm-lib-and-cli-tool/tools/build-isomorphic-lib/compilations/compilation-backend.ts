@@ -1,5 +1,5 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { config, GlobalStorage, taonActionFromParent } from 'tnp-core/src';
 import { crossPlatformPath, fse, _, chalk } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
@@ -141,6 +141,7 @@ export class BackendCompilation {
     //#region @backendFunc
 
     let { commandJs, commandMaps } = options;
+    const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
 
     Helpers.getIsVerboseMode() &&
       console.log({
@@ -157,6 +158,10 @@ Starting (${
     `);
     const additionalReplace = (line: string) => {
       // nothing to replace for now
+      if (taonActionFromParentName && line.includes('./src/')) {
+        line = line.replace('./src/', `./${taonActionFromParentName}/src/`);
+      }
+
       return line;
     };
 
@@ -179,6 +184,7 @@ Starting (${
       },
       outputLineReplace: (line: string) => {
         //#region outputs replacement
+
         if (line.startsWith(`${tmpSourceDist + prodSuffix}/`)) {
           return additionalReplace(
             line.replace(

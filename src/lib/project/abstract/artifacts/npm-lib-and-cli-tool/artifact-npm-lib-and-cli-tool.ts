@@ -1,6 +1,12 @@
 //#region imports
 
-import { config, folderName, LibTypeEnum } from 'tnp-core/src';
+import {
+  config,
+  folderName,
+  GlobalStorage,
+  LibTypeEnum,
+  taonActionFromParent,
+} from 'tnp-core/src';
 import {
   chalk,
   CoreModels,
@@ -1222,6 +1228,8 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
   //#region private methods / fix terminal output paths
   private async outputFixNgLibBuild(buildOptions: EnvOptions): Promise<any> {
+    const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
+
     return {
       // askToTryAgainOnError: true,
       exitOnErrorCallback: async code => {
@@ -1237,6 +1245,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       },
       outputLineReplace: (line: string) => {
         // line = UtilsString.removeChalkSpecialChars(line);
+
         if (line.startsWith('WARNING: postcss-url')) {
           return ' --- [taon] IGNORED WARN ---- ';
         }
@@ -1291,6 +1300,10 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
             `/${srcMainProject}/${libs}/${moduleName}/`,
             `/${moduleName}/${srcMainProject}/${libFromSrc}/`,
           );
+        }
+
+        if (taonActionFromParentName && line.includes('./src/')) {
+          line = line.replace('./src/', `./${taonActionFromParentName}/src/`);
         }
 
         return line;
@@ -1533,6 +1546,10 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     //#region @backendFunc
     initOptions = EnvOptions.from(initOptions);
     if (this.project.framework.isStandaloneProject) {
+      const subProjects = this.project.subProject.getAllByType(
+        TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER,
+      );
+
       const dest = this.project.pathFor([
         srcMainProject,
         libFromSrc,
@@ -1571,16 +1588,14 @@ export const CURRENT_PACKAGE_VERSION = '${
             : this.project.packageJson.version
         }';
 
-export namespace TAON_STRIPE_CLOUDFLARE_WORKERS_URLS {
-${this.project.subProject
-  .getAllByType(TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER)
-  .map(c => {
-    return (
-      `\texport const ${_.upperFirst(_.camelCase(c.name))} ` +
-      `= 'https://${c.name}.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev';`
-    );
-  })}
-}
+${subProjects.length > 0 ? 'export namespace TAON_STRIPE_CLOUDFLARE_WORKERS_URLS {' : ''}
+${subProjects.map(c => {
+  return (
+    `\texport const ${_.upperFirst(_.camelCase(c.name))} ` +
+    `= 'https://${c.name}.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev';`
+  );
+})}
+${subProjects.length > 0 ? '}' : ''}
 
 ${THIS_IS_GENERATED_INFO_COMMENT}
       `,
