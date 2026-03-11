@@ -217,17 +217,17 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       ...super.getVscodeFilesFoldersAndPatternsToHide(),
     };
 
-    if (
-      this.project.framework.isContainer &&
-      this.project.taonJson.isOrganization
-    ) {
-      this.project.linkedProjects.linkedProjects
-        .map(f => f.relativeClonePath)
-        .map(c => `${crossPlatformPath(c)}`)
-        .forEach(c => {
-          result[c] = true;
-        });
-    }
+    // if (
+    //   this.project.framework.isContainer &&
+    //   this.project.taonJson.isOrganization
+    // ) {
+    //   this.project.linkedProjects.linkedProjects
+    //     .map(f => f.relativeClonePath)
+    //     .map(c => `${crossPlatformPath(c)}`)
+    //     .forEach(c => {
+    //       result[c] = true;
+    //     });
+    // }
 
     return result;
   }
