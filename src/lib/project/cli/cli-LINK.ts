@@ -117,10 +117,14 @@ export class $Link extends BaseCli {
         return (Helpers.readFile(f) || '').startsWith('#!/usr/bin/env');
       });
 
+    Helpers.removeFileIfExists(
+      this.project.pathFor([binMainProject, this.project.name]),
+    );
+
     // if (countLinkInPackageJsonBin.length === 0) {
     const pathNormalLink = this.project.pathFor([
       binMainProject,
-      this.project.name,
+      this.project.nameForCli,
     ]);
 
     Helpers.writeFile(
@@ -134,9 +138,16 @@ ${'req' + 'uire'}('./start');
     );
     countLinkInPackageJsonBin.push(pathNormalLink);
 
+    Helpers.removeFileIfExists(
+      this.project.pathFor([
+        binMainProject,
+        `${this.project.name}${debugSuffix.replace('--', '-')}`,
+      ]),
+    );
+
     const pathDebugLink = this.project.pathFor([
       binMainProject,
-      `${this.project.name}${debugSuffix.replace('--', '-')}`,
+      `${this.project.nameForCli}${debugSuffix.replace('--', '-')}`,
     ]);
 
     Helpers.writeFile(
@@ -150,9 +161,16 @@ ${'req' + 'uire'}('./start');
     );
     countLinkInPackageJsonBin.push(pathDebugLink);
 
+    Helpers.removeFileIfExists(
+      this.project.pathFor([
+        binMainProject,
+        `${this.project.name}${debugBrkSuffix.replace('--', '-')}`,
+      ]),
+    );
+
     const pathBrkDebugLink = this.project.pathFor([
       binMainProject,
-      `${this.project.name}${debugBrkSuffix.replace('--', '-')}`,
+      `${this.project.nameForCli}${debugBrkSuffix.replace('--', '-')}`,
     ]);
 
     Helpers.writeFile(
@@ -165,7 +183,8 @@ ${'req' + 'uire'}('./start');
     );
     countLinkInPackageJsonBin.push(pathBrkDebugLink);
 
-    if (this.project.name !== taonPackageName) { // QUICK_FIX For custom taon cli
+    if (this.project.nameForCli !== taonPackageName) {
+      // QUICK_FIX For custom taon cli
       this.project.framework.recreateFileFromCoreProject({
         forceRecrete: true,
         fileRelativePath: crossPlatformPath([srcMainProject, cliTsFromSrc]),
@@ -295,7 +314,7 @@ ${'req' + 'uire'}('./start');
     );
 
     const packageInGlobalNodeModules = crossPlatformPath(
-      path.resolve(path.join(globalNodeModules, project.name)),
+      path.resolve(path.join(globalNodeModules, project.nameForNpmPackage)),
     );
 
     // packageInGlobalNodeModules
