@@ -315,6 +315,8 @@ export async function run(
           a.startsWith('copy:and:rename') ||
           a.startsWith('generate') ||
           a.startsWith('shorten') ||
+          a.startsWith('vscode') ||
+          a.startsWith('repush') ||
           a === 'dumpPackagesVersions' ||
           a === 'melt' ||
           a === 'soft' ||

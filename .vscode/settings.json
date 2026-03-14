@@ -19,6 +19,8 @@
     "**/browser": true,
     "websql": true,
     "**/websql": true,
+    "vitest.config.ts": true,
+    "**/vitest.config.ts": true,
     "eslint-rules": true,
     "dist-prod": true,
     "dist-nocutsrc": true,
@@ -83,7 +85,8 @@
     ".idea": true,
     "webpack.*": true,
     ".eslintrc*": true,
-    "tslint.*": true
+    "tslint.*": true,
+    "!templates-subprojects/**/package.json": true
   },
 
   "search.exclude": {

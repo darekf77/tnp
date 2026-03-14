@@ -3,7 +3,12 @@ import { config, UtilsOs } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath, os, path } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { chalk } from 'tnp-core/src';
-import { BaseVscodeHelpers, Helpers, HelpersTaon } from 'tnp-helpers/src';
+import {
+  BaseVscodeHelpers,
+  Helpers,
+  HelpersTaon,
+  UtilsVSCode,
+} from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { MESSAGES, TEMP_DOCS } from '../../constants';
@@ -24,49 +29,55 @@ export class $Vscode extends BaseCli {
     try {
       while (true) {
         UtilsTerminal.clearConsole();
-        await UtilsTerminal.selectActionAndExecute(
-          {
-            firstLine: {
-              name: chalk.gray.bold(
-                'Please select Up/Down action or CTRL+C to exit',
-              ),
-            },
-            global: {
-              name: 'Apply global settings',
-              action: async () => {
-                await BaseVscodeHelpers.applyProperGlobalSettings();
-                await UtilsTerminal.pressAnyKeyToContinueAsync();
-              },
-            },
-            listInstalledExtensions: {
-              name: 'List installed extensions',
-              action: async () => {
-                UtilsTerminal.clearConsole();
-                await UtilsTerminal.previewLongList(
-                  this.project.vsCodeHelpers.installedExtensions,
-                  'List of installed extensions',
-                );
-                // UtilsTerminal.pressAnyKey();
-              },
-            },
-            installExtensions: {
-              name: 'Install all recommended extensions',
-              action: async () => {
-                // UtilsTerminal.clearConsole();
-                await this.project.vsCodeHelpers.installExtensions();
-              },
-            },
-            initLocalSettings: {
-              name: 'Init local settings',
-              action: async () => {
-                await this.INIT();
-              },
+
+        const items = {
+          firstLine: {
+            name: chalk.gray.bold(
+              'Please select Up/Down action or CTRL+C to exit',
+            ),
+          },
+          global: {
+            name: 'Apply global settings',
+            action: async () => {
+              await UtilsVSCode.applyProperGlobalSettings();
+              await UtilsTerminal.pressAnyKeyToContinueAsync();
             },
           },
-          {
-            autocomplete: false,
+          listInstalledExtensions: {
+            name: 'List installed extensions',
+            action: async () => {
+              UtilsTerminal.clearConsole();
+              await UtilsTerminal.previewLongList(
+                UtilsVSCode.installedExtensions().map(
+                  (c, index) => `${index + 1}. ${c}`,
+                ),
+                'List of installed extensions',
+              );
+              // UtilsTerminal.pressAnyKey();
+            },
           },
-        );
+          installExtensions: {
+            name: 'Install all recommended extensions',
+            action: async () => {
+              // UtilsTerminal.clearConsole();
+              await UtilsVSCode.installExtensions();
+            },
+          },
+          initLocalSettings: {
+            name: 'Init local settings',
+            action: async () => {
+              await this._init();
+            },
+          },
+        };
+
+        if (!this.project) {
+          delete items.initLocalSettings;
+        }
+
+        await UtilsTerminal.selectActionAndExecute(items, {
+          autocomplete: false,
+        });
         // lastAction = res.selected !== 'firstLine';
       }
     } catch (error) {
@@ -79,25 +90,38 @@ export class $Vscode extends BaseCli {
 
   //#region global
   GLOBAL(): void {
-    BaseVscodeHelpers.applyProperGlobalSettings();
+    UtilsVSCode.applyProperGlobalSettings();
     this._exit();
   }
   //#endregion
 
   TEMP_SHOW(): void {
+    if (!this.project) {
+      return;
+    }
     this._showfilesfor(this.project.ins.Current);
     this._exit();
   }
 
   TEMP_HIDE(): void {
+    if (!this.project) {
+      return;
+    }
     this._hidefilesfor(this.project);
     this._exit();
   }
 
-  INIT(): void {
+  _init() {
     this.project.vsCodeHelpers.toogleFilesVisibilityInVscode({
       action: 'hide-files',
     });
+  }
+
+  INIT(): void {
+    if (!this.project) {
+      return;
+    }
+    this._init();
     this._exit();
   }
 
