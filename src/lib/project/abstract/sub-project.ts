@@ -149,6 +149,7 @@ export class SubProject extends BaseQuickFixes<Project> {
   }
   //#endregion
 
+  //#region methods & getters / login to cloud flare
   async loginCliCloudFlare(cwdWorker: string): Promise<void> {
     //#region @backendFunc
     let trysLogin = 0;
@@ -182,6 +183,7 @@ export class SubProject extends BaseQuickFixes<Project> {
     }
     //#endregion
   }
+  //#endregion
 
   //#region methods & getters / init process
   private async initProcess(absPathToSubproject: string): Promise<void> {
@@ -240,8 +242,33 @@ export class SubProject extends BaseQuickFixes<Project> {
 
     await this.deployment(cwdWorker);
 
+    await this.addSecrets(cwdWorker);
+
+    Helpers.info(`YOUR WORKER ${path.basename(cwdWorker)}
+
+      IS READY TO RECEIVING PAYMENTS AND USE INSIDE TAON
+
+      `);
+    //#endregion
+  }
+  //#endregion
+
+  //#region methods & getters / add secrets
+  private async addSecrets(cwdWorker): Promise<void> {
+    //#region @backendFunc
+
     //#region add stripe secret
-    Helpers.info(`ADDING STRIP SECRET`);
+    Helpers.info(`
+
+
+      ADDING STRIP SECRET
+
+      Find in you stripe dashboard something like this:
+
+      Secret key   sk_test_someletterarehe  <- copy this
+
+
+      `);
     while (true) {
       try {
         Helpers.taskStarted(`PLEASE WAIT FOR INPUT TO ADD STRIP SECRET ..`);
@@ -250,7 +277,7 @@ export class SubProject extends BaseQuickFixes<Project> {
           {
             cwd: cwdWorker,
           },
-        ).getOutput();
+        ).waitUntilDoneOrThrow();
         Helpers.taskDone(
           `STRIPE SECRET SAVED for "${this.project.taonJson.cloudFlareAccountSubdomain}"`,
         );
@@ -276,8 +303,13 @@ export class SubProject extends BaseQuickFixes<Project> {
 
         ${
           `https://${path.basename(cwdWorker)}` +
-          `.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev`
+          `.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev${TaonStripeCloudflareWorker.HOOK_POST}`
         }
+
+        Find you Webhooks tab:
+
+        Signing secret
+        whsec_somekindofstringkey <- copy this
 
 
           `);
@@ -291,7 +323,7 @@ export class SubProject extends BaseQuickFixes<Project> {
           {
             cwd: cwdWorker,
           },
-        ).getOutput();
+        ).waitUntilDoneOrThrow();
         Helpers.taskDone(
           `STRIPE WEBHOOK SECRET SAVED for "${this.project.taonJson.cloudFlareAccountSubdomain}"`,
         );
@@ -305,16 +337,11 @@ export class SubProject extends BaseQuickFixes<Project> {
     }
     //#endregion
 
-    Helpers.info(`YOUR WORKER ${path.basename(cwdWorker)}
-
-      IS READY TO RECEIVING PAYMENTS AND USE INSIDE TAON
-
-      `);
-
     //#endregion
   }
   //#endregion
 
+  //#region methods & getters / set mode
   private async setMode(
     cwdWorker: string,
     mode: 'production' | 'development',
@@ -340,8 +367,9 @@ export class SubProject extends BaseQuickFixes<Project> {
       `DONE. WORKER ${path.basename(cwdWorker)} is no in ${mode} mode`,
     );
   }
+  //#endregion
 
-  //#region methods & getters / get all sub projects
+  //#region methods & getters / get all
   getAll(): string[] {
     //#region @backendFunc
     const all = TempalteSubprojectTypeArr.reduce((a, tempalteType) => {
@@ -360,11 +388,13 @@ export class SubProject extends BaseQuickFixes<Project> {
   }
   //#endregion
 
+  //#region methods & getters / get all subprojects
   getAllSubProjects(): Project[] {
     //#region @backendFunc
     return this.getAll().map(c => this.project.ins.From(c));
     //#endregion
   }
+  //#endregion
 
   //#region methods & getters / get core by
   private coreProjectBy(
@@ -378,8 +408,6 @@ export class SubProject extends BaseQuickFixes<Project> {
     );
   }
   //#endregion
-
-  // private magicRenameContent(content: string): string {}
 
   //#region methods & getters / recreate all
   async initAll(): Promise<void> {
@@ -847,6 +875,55 @@ export class SubProject extends BaseQuickFixes<Project> {
     }
 
     await this.setMode(cwdWorker, mode as any);
+
+    //#endregion
+  }
+  //#endregion
+
+  //#region PUBLIC API / set mode for worker
+  public async setWorkerSecrets(): Promise<void> {
+    //#region @backendFunc
+    await this.initAll();
+    const subprojects = this.getAllSubProjects();
+
+    const choices = subprojects.reduce((a, b) => {
+      return {
+        [b.name]: {
+          name: b.name,
+        },
+      };
+    }, {});
+
+    const chosenProjectName = await UtilsTerminal.select({
+      question: 'Select project to set stripe secrets:',
+      choices,
+    });
+
+    const chosenProject = this.getAllSubProjects().find(
+      c => c.name === chosenProjectName,
+    );
+
+    const templateType = path.basename(
+      path.dirname(chosenProject.location),
+    ) as TempalteSubprojectType;
+
+    const group = path.basename(
+      path.dirname(path.dirname(chosenProject.location)),
+    ) as TempalteSubprojectGroup;
+
+    const url = `https://${chosenProjectName}.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev`;
+
+    const currentProjectAbsPath = crossPlatformPath([
+      this.pathToTempalteInCurrentProject(templateType),
+      chosenProjectName,
+    ]);
+
+    const cwdWorker = crossPlatformPath([
+      currentProjectAbsPath,
+      chosenProjectName,
+    ]);
+
+    await this.addSecrets(cwdWorker);
 
     //#endregion
   }
