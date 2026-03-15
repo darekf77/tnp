@@ -1111,63 +1111,63 @@ ${this.project.children
 
   //#region not for npm / get trusted
 
-  //#region @notForNpm
-  getJsonCAttrs() {
-    //#region @backendFunc
-    console.log(`Scannign for args in jsonc files...`);
-    const jsoncContent = this.project.readFile(taonJsonMainProject);
-    walk.Object(Helpers.parse(jsoncContent, true), (value, jsonPath) => {
-      if (!this.firstArg || jsonPath.includes(this.firstArg)) {
-        // console.log('PATH: ' + jsonPath);
-        const attrs = UtilsJson.getAtrributiesFromJsonWithComments(
-          jsonPath,
-          jsoncContent,
-        );
-
-        console.log(
-          `${attrs.length > 0 ? chalk.bold('DETECTED') : 'DETECTED'} ` +
-            `(${attrs.length} tags): ${attrs.length > 0 ? chalk.bold(jsonPath) : jsonPath}`,
-          attrs
-            .map(c =>
-              chalk.red.underline(
-                c.name + (c.value ? '=' + chalk.bold(c.value) : ''),
-              ),
-            )
-            .join(', '),
-        );
-      }
-    });
-    this._exit();
-    //#endregion
-  }
-  //#endregion
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+  
 
   //#endregion
 
   //#region not for npm / tnp fix taon json
 
-  //#region @notForNpm
-  async taonJsonAddAutoElement() {
-    //#region @backendFunc
-    for (const child of this.project.children) {
-      child.taonJson.autoReleaseConfigAllowedItems = [
-        {
-          artifactName: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
-          taskName: 'npm library build',
-        },
-        {
-          artifactName: ReleaseArtifactTaon.ANGULAR_NODE_APP,
-          envName: CoreModels.EnvironmentName.DEV,
-          taskName: 'localhost-manual-dev-release',
-          releaseType: ReleaseType.MANUAL,
-          taonInstanceIp: '127.0.0.1',
-        },
-      ];
-    }
-    this._exit();
-    //#endregion
-  }
-  //#endregion
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+  
 
   //#endregion
 

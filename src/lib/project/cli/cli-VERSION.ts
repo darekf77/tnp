@@ -16,13 +16,13 @@ export class $Version extends BaseCli {
   public async _(): Promise<void> {
     // Helpers.log(`Framework name: '${config.frameworkName}'`);
 
-    //#region @notForNpm
-    if (ENV.notForNpm) {
-      Helpers.success(`I am secret project!!!`);
-    }
-    // const arr = [,2,3]
-    // console.log(_.first(arr))
-    //#endregion
+/* */
+/* */
+/* */
+/* */
+/* */
+/* */
+  
     // globalSpinner.instance.stop();
     // globalSpinner.instance.stop();
     // Helpers.info('spinner stopped, waiting 2 second');
