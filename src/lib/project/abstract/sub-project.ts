@@ -31,6 +31,7 @@ import {
   TempalteSubprojectTypeArr,
   TempalteSubprojectTypeGroup,
   TemplateFolder,
+  TemplateSubprojectDbPrefix,
   tsconfigSubProject,
   wranglerJsonC,
 } from '../../constants';
@@ -186,7 +187,10 @@ export class SubProject extends BaseQuickFixes<Project> {
   //#endregion
 
   //#region methods & getters / init process
-  private async initProcess(absPathToSubproject: string): Promise<void> {
+  private async initProcess(
+    absPathToSubproject: string,
+    selectedTempalte: TempalteSubprojectType,
+  ): Promise<void> {
     //#region @backendFunc
     const cwdWorker = crossPlatformPath([
       absPathToSubproject,
@@ -204,7 +208,7 @@ export class SubProject extends BaseQuickFixes<Project> {
     while (true) {
       const KV_DB_NAME = await UtilsTerminal.input({
         question: `Provide cloudflare KV database name to create`,
-        defaultValue: `SALES_KV_${_.snakeCase(
+        defaultValue: `${TemplateSubprojectDbPrefix[selectedTempalte]}_${_.snakeCase(
           this.project.name,
         ).toUpperCase()}`,
         validate: value => {
@@ -242,20 +246,32 @@ export class SubProject extends BaseQuickFixes<Project> {
 
     await this.deployment(cwdWorker);
 
-    await this.addSecrets(cwdWorker);
+    await this.addSecrets(cwdWorker, selectedTempalte);
 
-    Helpers.info(`YOUR WORKER ${path.basename(cwdWorker)}
+    Helpers.info(`
 
-      IS READY TO RECEIVING PAYMENTS AND USE INSIDE TAON
+        YOUR WORKER ${path.basename(cwdWorker)} IS READY.
 
-      `);
+        `);
+
     //#endregion
   }
   //#endregion
 
   //#region methods & getters / add secrets
-  private async addSecrets(cwdWorker): Promise<void> {
+  private async addSecrets(
+    cwdWorker: string,
+    selectedTempalte: TempalteSubprojectType,
+  ): Promise<void> {
     //#region @backendFunc
+
+    if (
+      selectedTempalte !== TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER
+    ) {
+      Helpers.warn(`Not allowed to set stripe secrets`);
+      await UtilsTerminal.pressAnyKeyToContinueAsync();
+      return;
+    }
 
     //#region add stripe secret
     Helpers.info(`
@@ -533,12 +549,7 @@ export class SubProject extends BaseQuickFixes<Project> {
     return UtilsFilesFoldersSync.getFoldersFrom(folderForSubproject, {
       omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
     }).filter(f => {
-      if (
-        tempalteType === TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER
-      ) {
-        return Helpers.exists([f, path.basename(f), packageJsonSubProject]);
-      }
-      return false;
+      return Helpers.exists([f, path.basename(f), packageJsonSubProject]);
     });
   }
   //#endregion
@@ -572,8 +583,10 @@ export class SubProject extends BaseQuickFixes<Project> {
   public async addAndConfigure(): Promise<void> {
     //#region @backendFunc
     await this.initAll();
+
     const choices = TempalteSubprojectTypeArr.reduce((a, b) => {
       return {
+        ...a,
         [b]: {
           name: b,
         },
@@ -640,7 +653,7 @@ export class SubProject extends BaseQuickFixes<Project> {
     // Helpers.remove(localTempPath); uncomment
     Helpers.remove([this.tempSubProjectFolder, generatedWorkerName]);
 
-    await this.initProcess(crossPlatformPath(pathInsideProject));
+    await this.initProcess(crossPlatformPath(pathInsideProject), select);
 
     //#endregion
   }
@@ -654,6 +667,7 @@ export class SubProject extends BaseQuickFixes<Project> {
 
     const choices = subprojects.reduce((a, b) => {
       return {
+        ...a,
         [b.name]: {
           name: b.name,
         },
@@ -818,6 +832,7 @@ export class SubProject extends BaseQuickFixes<Project> {
 
     const choices = subprojects.reduce((a, b) => {
       return {
+        ...a,
         [b.name]: {
           name: b.name,
         },
@@ -888,16 +903,18 @@ export class SubProject extends BaseQuickFixes<Project> {
 
     const choices = subprojects.reduce((a, b) => {
       return {
+        ...a,
         [b.name]: {
           name: b.name,
         },
       };
     }, {});
 
-    const chosenProjectName = await UtilsTerminal.select({
-      question: 'Select project to set stripe secrets:',
-      choices,
-    });
+    const chosenProjectName: TempalteSubprojectType =
+      await UtilsTerminal.select({
+        question: 'Select project to set stripe secrets:',
+        choices,
+      });
 
     const chosenProject = this.getAllSubProjects().find(
       c => c.name === chosenProjectName,
@@ -923,7 +940,7 @@ export class SubProject extends BaseQuickFixes<Project> {
       chosenProjectName,
     ]);
 
-    await this.addSecrets(cwdWorker);
+    await this.addSecrets(cwdWorker, chosenProjectName);
 
     //#endregion
   }
@@ -938,6 +955,7 @@ export class SubProject extends BaseQuickFixes<Project> {
 
     const choices = subprojects.reduce((a, b) => {
       return {
+        ...a,
         [b.name]: {
           name: b.name,
         },

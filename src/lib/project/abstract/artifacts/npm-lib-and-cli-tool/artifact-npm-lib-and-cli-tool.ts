@@ -1546,9 +1546,14 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     //#region @backendFunc
     initOptions = EnvOptions.from(initOptions);
     if (this.project.framework.isStandaloneProject) {
-      const subProjects = this.project.subProject.getAllByType(
-        TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER,
-      );
+      const subProjects = [
+        ...this.project.subProject.getAllByType(
+          TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER,
+        ),
+        ...this.project.subProject.getAllByType(
+          TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER,
+        ),
+      ];
 
       const dest = this.project.pathFor([
         srcMainProject,
@@ -1594,7 +1599,7 @@ ${subProjects.map(c => {
     `\texport const ${_.upperFirst(_.camelCase(c.name))} ` +
     `= 'https://${c.name}.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev';`
   );
-})}
+}).join('\n')}
 ${subProjects.length > 0 ? '}' : ''}
 
 ${THIS_IS_GENERATED_INFO_COMMENT}

@@ -352,11 +352,18 @@ export const mainProjectSubProjects = 'sub-projects';
 
 export enum TempalteSubprojectType {
   TAON_STRIPE_CLOUDFLARE_WORKER = 'taon-stripe-cloudflare-worker',
+  TAON_YT_CLOUDFLARE_WORKER = 'taon-yt-cloudflare-worker',
 }
 
 export const TempalteSubprojectTypeArr: TempalteSubprojectType[] = [
   TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER,
+  TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER,
 ];
+
+export const TemplateSubprojectDbPrefix = {
+  [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]: 'SALES_KV',
+  [TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER]: 'YT_DATA_KV',
+};
 
 export enum TempalteSubprojectGroup {
   KEY_VALUE_FAST_WORKER_DATABASE = 'key-value-fast-worker-database',
@@ -364,6 +371,8 @@ export enum TempalteSubprojectGroup {
 
 export const TempalteSubprojectTypeGroup = {
   [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]:
+    TempalteSubprojectGroup.KEY_VALUE_FAST_WORKER_DATABASE,
+  [TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER]:
     TempalteSubprojectGroup.KEY_VALUE_FAST_WORKER_DATABASE,
 };
 
@@ -455,7 +464,6 @@ export const reExportJson = 're-export.json';
  * Main project /dist folder
  */
 export const nodeModulesMainProject = folderName.node_modules;
-
 
 export const nodeModulesSubPorject = folderName.node_modules;
 
@@ -827,9 +835,9 @@ export const KV_DATABASE_ONLINE_NAME = 'KV_DATABASE_ONLINE_NAME';
 
 export const dotVscodeMainProject = '.vscode';
 
-export const indexTsInSrcForWorker =  `src/index.ts`;
+export const indexTsInSrcForWorker = `src/index.ts`;
 
-export const wranglerJsonC =  `wrangler.jsonc`;
+export const wranglerJsonC = `wrangler.jsonc`;
 
 export const packageJsonLockMainProject = fileName.package_lock_json;
 
