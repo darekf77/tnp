@@ -1,3 +1,4 @@
+import { path } from 'tnp-core/src';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
 import { EnvOptions, ReleaseArtifactTaon } from '../../../../../options';
@@ -13,12 +14,17 @@ import type { Project } from '../../../project';
  */ // @ts-ignore TODO weird inheritance problem
 export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
   public readonly rootBaseHref: string = '/';
-  public get baseHrefForGhPages(): string {
+
+  public getBaseHrefForGhPages(envOptions: EnvOptions): string {
+    if (envOptions.release.staticPagesCustomRepoUrl) {
+      return path.basename(
+        envOptions.release.staticPagesCustomRepoUrl.replace('.git', ''),
+      );
+    }
     return this.project.name;
   }
 
   private resolveBaseHrefForProj(envOptions: EnvOptions): string {
-
     //#region @backendFunc
     const overrideBaseHref: string = envOptions.build.baseHref;
     let baseHref = this.rootBaseHref;
@@ -33,7 +39,7 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
           if (envOptions.website.useDomain) {
             baseHref = this.rootBaseHref;
           } else {
-            baseHref = `/${this.baseHrefForGhPages}/`;
+            baseHref = `/${this.getBaseHrefForGhPages(envOptions)}/`;
           }
         }
       }
@@ -41,11 +47,9 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
 
     return baseHref;
     //#endregion
-
   }
 
   getBaseHref(envOptions: EnvOptions): string {
-
     //#region @backendFunc
     let baseHref = this.resolveBaseHrefForProj(envOptions);
 
@@ -54,11 +58,9 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
     baseHref = baseHref.replace(/\/\//g, '/');
     return baseHref;
     //#endregion
-
   }
 
   replaceBaseHrefInFile(fileAbsPath: string, initOptions: EnvOptions) {
-
     //#region @backendFunc
     let fileContent = Helpers.readFile(fileAbsPath);
     const frontendBaseHref =
@@ -70,6 +72,5 @@ export class AngularFeBasenameManager extends BaseFeatureForProject<Project> {
       .replace('<<<TO_REPLACE_PROJ_NAME>>>', this.project.name);
     Helpers.writeFile(fileAbsPath, fileContent);
     //#endregion
-
   }
 }

@@ -104,7 +104,10 @@ export namespace Models {
     askUserBeforeFinalAction?: boolean;
 
     /**
-     * Custom url for static pages repo release
+     * Custom url for static pages repo release (or custom prefix)
+     * example:
+     * - FULL LINK: 'https://githublink-env-stage'
+     * - PREFIX LINK:  '-env-test'  I wil be change to https://current-origin-env-test
      */
     staticPagesCustomRepoUrl?: string;
   }

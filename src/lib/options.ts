@@ -533,6 +533,15 @@ class EnvOptionsRelease {
    * (for quick local test releases)
    */
   declare removeReleaseOutputAfterLocalInstall?: boolean;
+
+  fixStaticPagesCustomRepoUrl(project?: Project): void {
+    if (this?.staticPagesCustomRepoUrl?.startsWith('-')) {
+      this.staticPagesCustomRepoUrl = `${project.git.originURL.replace(
+        '.git',
+        '',
+      )}${this.staticPagesCustomRepoUrl.replace('.git', '')}.git`;
+    }
+  }
 }
 //#endregion
 

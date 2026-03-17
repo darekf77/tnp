@@ -190,6 +190,8 @@ export class ArtifactManager {
   public async init(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
 
+    initOptions.release.fixStaticPagesCustomRepoUrl(this.project);
+
     //#region prevent not requested framework version
     if (this.project.framework.frameworkVersionLessThan('v4')) {
       Helpers.warn(`Skipping artifacts init for project: ${this.project.name}`);
@@ -804,12 +806,13 @@ export class ArtifactManager {
             releaseType: item.releaseType || releaseOptions.release.releaseType,
             taonInstanceIp: item.taonInstanceIp,
             askUserBeforeFinalAction: item.askUserBeforeFinalAction,
-            staticPagesCustomRepoUrl:  item.staticPagesCustomRepoUrl,
+            staticPagesCustomRepoUrl: item.staticPagesCustomRepoUrl,
           },
         });
         if (!this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
           await this.project.clear();
         }
+        clonedOptions.release.fixStaticPagesCustomRepoUrl(this.project);
         await this.release(clonedOptions, true);
       }
       return;
