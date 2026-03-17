@@ -523,13 +523,16 @@ export class SubProject extends BaseQuickFixes<Project> {
             chosenProjectAbscwd,
             relativePath,
           ]);
+          // console.log(`isFile ${!Helpers.isFolder(filePath)} ${filePath}`)
           if (!Helpers.isFolder(filePath)) {
             let content = UtilsFilesFoldersSync.readFile(filePath);
-            const rules = RenameRule.from(magicRenameRules);
-            for (const rule of rules) {
-              content = rule.replaceInString(content);
+            if (content) {
+              const rules = RenameRule.from(magicRenameRules);
+              for (const rule of rules) {
+                content = rule.replaceInString(content);
+              }
+              UtilsFilesFoldersSync.writeFile(filePath, content);
             }
-            UtilsFilesFoldersSync.writeFile(filePath, content);
           }
         }
       })();
