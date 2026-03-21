@@ -32,35 +32,11 @@ export class VitestTestRunner extends BaseTestRunner {
     return debug ? `node --inspect-brk ${base}` : `node ${base}`;
   }
 
-  protected vitestConfigTemplate(tmpSrouceDistOrOtherfolder) {
-    //#region @backendFunc
-    return `import { defineConfig } from 'vitest/config';
-
-export default defineConfig({
-  test: {
-    environment: 'node',
-    globals: true, // 👈 THIS is what you're missing
-    include: ['dist/**/*.{test}.js'],
-
-    exclude: [
-      '**/node_modules/**',
-    ],
-  },
-});
-
-
-    `;
-    //#endregion
-  }
-
   async start(files: string[], debug: boolean) {
     //#region @backendFunc
 
     const command = this.buildCommand(files, false, debug);
-    this.project.writeFile(
-      vitestConfigJsonMainProject,
-      this.vitestConfigTemplate(tmpSourceDist),
-    );
+
     await this.run(tmpSourceDist, command);
 
     //#endregion
@@ -70,10 +46,6 @@ export default defineConfig({
     //#region @backendFunc
 
     const command = this.buildCommand(files, true, debug);
-    this.project.writeFile(
-      vitestConfigJsonMainProject,
-      this.vitestConfigTemplate(tmpSourceDist),
-    );
 
     await this.run(tmpSourceDist, command);
 

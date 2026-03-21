@@ -2,10 +2,7 @@ import { path, _, UtilsOs } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
 import { getProxyNgProj } from '../../../../../../app-utils';
-import {
-  srcMainProject,
-  vitestConfigJsonMainProject,
-} from '../../../../../../constants';
+import { srcMainProject } from '../../../../../../constants';
 import { EnvOptions, ReleaseArtifactTaon } from '../../../../../../options';
 import { Project } from '../../../../../../project/abstract/project';
 

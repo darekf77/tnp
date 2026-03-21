@@ -136,6 +136,7 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
     ];
 
     if (this.project.framework.isCoreProject) {
+      tohide = tohide.filter(f => f !== vitestConfigJsonMainProject);
       tohide = tohide.filter(f => f !== 'package.json');
       tohide = tohide.filter(f => f !== '.gitignore');
       tohide = tohide.filter(f => f !== 'tsconfig*');
@@ -160,7 +161,6 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       browserMainProject,
       websqlMainProject,
       websqlMainProject,
-      vitestConfigJsonMainProject,
       esLintCustomRulesMainProject,
       distMainProject + prodSuffix,
       distNoCutSrcMainProject,
