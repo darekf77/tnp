@@ -4,6 +4,7 @@ import { crossPlatformPath, fse, _, chalk } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
 import {
+  COMPILATION_COMPLETE_TSC,
   distMainProject,
   distNoCutSrcMainProject,
   prodSuffix,
@@ -211,7 +212,7 @@ Starting (${
         //#endregion
       },
       resolvePromiseMsg: {
-        stdout: ['Found 0 errors. Watching for file changes'],
+        stdout: [COMPILATION_COMPLETE_TSC],
       },
     });
 

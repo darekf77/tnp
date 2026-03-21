@@ -280,7 +280,7 @@ ${'req' + 'uire'}('./start');
     //#region linking to global/local bin
     let globalBinFolderPath = path.dirname(
       (
-        _.first(
+        (_.first(
           Helpers.run(
             `${UtilsOs.isRunningInWindowsPowerShell() ? 'where.exe' : 'which'} ${config.frameworkName}`,
             { output: false },
@@ -288,7 +288,7 @@ ${'req' + 'uire'}('./start');
             .sync()
             .toString()
             .split('\n'),
-        ) || ''
+        ) || '') as string
       ).trim(),
     );
 

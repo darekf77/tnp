@@ -6,6 +6,7 @@ import {
   GlobalStorage,
   LibTypeEnum,
   taonActionFromParent,
+  tnpPackageName,
 } from 'tnp-core/src';
 import {
   chalk,
@@ -39,6 +40,7 @@ import {
   cliJSMapNpmPackage,
   cliJSNpmPackage,
   COMPILATION_COMPLETE_LIB_NG_BUILD,
+  COMPILATION_COMPLETE_TSC,
   CoreAssets,
   CoreNgTemplateFiles,
   defaultConfiguration,
@@ -248,6 +250,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   }> {
     //#region @backendFunc
 
+    /**
+     * TODO this may be possible with proper tsc build
+     */
+    const isDevelopmentBuildUseTscInsteadNgBuild = false; // !buildOptions.release.releaseType;
+
     if (!this.project.framework.isStandaloneProject) {
       Helpers.warn(
         `Project is not standalone. Skipping npm-lib-and-cli-tool build.`,
@@ -355,10 +362,13 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     //#region prepare commands + base href
     // const command = `${loadNvm} && ${this.npmRunNg} build ${this.name} ${watch ? '--watch' : ''}`;
-    const commandForLibraryBuild = `${TaonCommands.NPM_RUN_NG} build ${this.project.name} ${
-      buildOptions.build.watch ? '--watch' : ''
-    }`;
+    const commandForLibraryBuild = isDevelopmentBuildUseTscInsteadNgBuild
+      ? `${TaonCommands.NPM_RUN_TSC} -p tsconfig.typecheck.json --watch --preserveWatchOutput `
+      : `${TaonCommands.NPM_RUN_NG} build ${this.project.name} ${
+          buildOptions.build.watch ? '--watch' : ''
+        }`;
 
+    //#region show angular info function
     const showInfoAngular = () => {
       Helpers.info(
         `Starting browser Angular/TypeScirpt build.... ${
@@ -373,14 +383,17 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
       `);
 
-      Helpers.log(` command: ${commandForLibraryBuild}`);
+      Helpers.log(` command for ng build: ${commandForLibraryBuild}`);
     };
+    //#endregion
 
+    //#region resolve & save base href
     buildOptions.build.baseHref = !_.isUndefined(buildOptions.build.baseHref)
       ? buildOptions.build.baseHref
       : this.artifacts.angularNodeApp.angularFeBasenameManager.rootBaseHref;
 
     this.project.writeFile(tmpBaseHrefOverwrite, buildOptions.build.baseHref);
+    //#endregion
 
     Helpers.logInfo(`
 
@@ -420,22 +433,22 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#region ng build
     const outputOptions = await this.outputFixNgLibBuild(buildOptions);
 
+    const watchResolveString = isDevelopmentBuildUseTscInsteadNgBuild
+      ? COMPILATION_COMPLETE_TSC
+      : COMPILATION_COMPLETE_LIB_NG_BUILD;
+
     const runNgBuild = async () => {
       await proxyProject.execute(commandForLibraryBuild, {
         similarProcessKey: TaonCommands.NG,
         resolvePromiseMsg: {
-          stdout: buildOptions.build.watch
-            ? COMPILATION_COMPLETE_LIB_NG_BUILD
-            : undefined,
+          stdout: buildOptions.build.watch ? watchResolveString : undefined,
         },
         ...outputOptions,
       });
       await proxyProjectWebsql.execute(commandForLibraryBuild, {
         similarProcessKey: TaonCommands.NG,
         resolvePromiseMsg: {
-          stdout: buildOptions.build.watch
-            ? COMPILATION_COMPLETE_LIB_NG_BUILD
-            : undefined,
+          stdout: buildOptions.build.watch ? watchResolveString : undefined,
         },
         ...outputOptions,
       });
@@ -1594,12 +1607,14 @@ export const CURRENT_PACKAGE_VERSION = '${
         }';
 
 ${subProjects.length > 0 ? 'export namespace TAON_STRIPE_CLOUDFLARE_WORKERS_URLS {' : ''}
-${subProjects.map(c => {
-  return (
-    `\texport const ${_.upperFirst(_.camelCase(c.name))} ` +
-    `= 'https://${c.name}.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev';`
-  );
-}).join('\n')}
+${subProjects
+  .map(c => {
+    return (
+      `\texport const ${_.upperFirst(_.camelCase(c.name))} ` +
+      `= 'https://${c.name}.${this.project.taonJson.cloudFlareAccountSubdomain}.workers.dev';`
+    );
+  })
+  .join('\n')}
 ${subProjects.length > 0 ? '}' : ''}
 
 ${THIS_IS_GENERATED_INFO_COMMENT}

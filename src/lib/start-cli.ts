@@ -13,7 +13,7 @@ import {
 import { chalk, Helpers, UtilsNetwork, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { UtilsOs } from 'tnp-core/src';
-import { BaseCLiWorkerStartMode, BaseStartConfig } from 'tnp-helpers/src';
+import { BaseCLiWorkerStartMode, BaseStartConfig } from 'tnp-helpers/src'; // @backend
 
 // import { globalSpinner } from './constants';
 import {
@@ -29,7 +29,7 @@ import {
   verbosePrefix,
   websqlPrefix,
 } from './constants';
-import cliClassArr from './project/cli/index';
+import cliClassArr from './project/cli/index'; // @backend
 
 //#endregion
 
@@ -222,6 +222,7 @@ export async function run(
   argsv: string[],
   frameworkName: 'tnp' | 'taon',
 ): Promise<void> {
+  //#region @backendFunc
   config.frameworkName = frameworkName;
 
   if (frameworkName === tnpPackageName) {
@@ -474,6 +475,7 @@ export async function run(
       //#endregion
     },
   });
+  //#endregion
 }
 //#endregion
 export default startCli;

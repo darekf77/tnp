@@ -53,6 +53,7 @@ export class $New extends BaseCli {
     preOrgs: string;
     initGit: boolean;
   }> {
+    //#region @backendFunc
     //#region resolve variables
 
     nameFromArgs = nameFromArgs.replace('./', '');
@@ -373,6 +374,7 @@ export class $New extends BaseCli {
       preOrgs: autoCreateNormalContainersPathName,
       initGit,
     };
+    //#endregion
   }
   //#endregion
 

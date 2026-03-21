@@ -176,6 +176,8 @@ export const COMPILATION_COMPLETE_LIB_NG_BUILD =
 
 export const COMPILATION_COMPLETE_APP_NG_SERVE = 'Compiled successfully';
 
+export const COMPILATION_COMPLETE_TSC= 'Found 0 errors. Watching for file changes';
+
 // TODO get this from cli, global
 export const DEFAULT_FRAMEWORK_VERSION =
   `v${CURRENT_PACKAGE_VERSION.split('.')[0]}` as CoreModels.FrameworkVersion;
@@ -701,6 +703,7 @@ export enum BundledDocsFolders {
 }
 
 export enum TaonCommands {
+  NPM_RUN_TSC = 'npm-run tsc',
   NPM_RUN_NG = 'npm-run ng',
   NG = 'ng',
 }
