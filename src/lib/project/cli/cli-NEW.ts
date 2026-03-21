@@ -9,7 +9,12 @@ import {
   os,
   path,
 } from 'tnp-core/src';
-import { BasePackageJson, Helpers, HelpersTaon } from 'tnp-helpers/src';
+import {
+  BasePackageJson,
+  Helpers,
+  HelpersTaon,
+  UtilsVSCode,
+} from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
@@ -36,6 +41,15 @@ export class $New extends BaseCli {
       cwd: this.cwd,
     });
 
+    this._exit();
+  }
+
+  async open() {
+    const appName = await this._createContainersOrStandalone({
+      name: this.firstArg,
+      cwd: this.cwd,
+    });
+    UtilsVSCode.openFolder(crossPlatformPath([this.cwd, appName]));
     this._exit();
   }
 
@@ -406,7 +420,7 @@ export class $New extends BaseCli {
   //#region create container or standalone
   public async _createContainersOrStandalone(
     options: Models.NewSiteOptions,
-  ): Promise<void> {
+  ): Promise<string> {
     let { name: nameFromArgs, cwd } = options;
     const { appProj, containers, lastContainer, lastIsBrandNew, initGit } =
       await this._initContainersAndApps(cwd, nameFromArgs);
@@ -451,6 +465,7 @@ Hello from Container Project
     }
 
     Helpers.info(`DONE CREATING ${nameFromArgs}`);
+    return appProj.name;
   }
   //#endregion
 }
