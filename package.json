@@ -1,6 +1,6 @@
 {
   "name": "tnp",
-  "version": "21.0.138",
+  "version": "21.0.144",
   "scripts": {
     "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     "taon init": "taon init",
@@ -25,6 +25,18 @@
   "author": "Dariusz Filipiak",
   "private": false,
   "contributes": {
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "copyFilePath",
+          "when": "false"
+        },
+        {
+          "command": "copyRelativeFilePath",
+          "when": "false"
+        }
+      ]
+    },
     "views": {
       "projectsContainerTnp": [
         {

@@ -225,64 +225,65 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       //#endregion
 
       //#region OPEN DEBUGGABLE PATH
-      {
-        group: null,
-        title: `${toolName} open debuggable path`,
-        async exec({ vscode }) {
-          // opt.vscode.
-          const editorOrgFilePath = crossPlatformPath(
-            vscode.window.activeTextEditor.document.uri.fsPath,
-          );
-          let currentFilePath = editorOrgFilePath;
-          let relativePath: string = '';
-          let projectRoot = '';
-          while (true) {
-            currentFilePath = crossPlatformPath(path.dirname(currentFilePath));
-            if (
-              currentFilePath === '/' ||
-              !currentFilePath ||
-              currentFilePath.length < 3
-            ) {
-              break;
-            }
-            if (Helpers.isUnexistedLink(currentFilePath)) {
-              break;
-            }
-            if (fse.lstatSync(currentFilePath).isSymbolicLink()) {
-              projectRoot = dirnameFromSourceToProject(currentFilePath);
-              relativePath = crossPlatformPath([
-                whatToLinkFromCore,
-                editorOrgFilePath.replace(currentFilePath + '/', ''),
-              ]);
-              break;
-            }
-          }
+      // not needed when automatic redirect
+      // {
+      //   group: null,
+      //   title: `${toolName} open debuggable path`,
+      //   async exec({ vscode }) {
+      //     // opt.vscode.
+      //     const editorOrgFilePath = crossPlatformPath(
+      //       vscode.window.activeTextEditor.document.uri.fsPath,
+      //     );
+      //     let currentFilePath = editorOrgFilePath;
+      //     let relativePath: string = '';
+      //     let projectRoot = '';
+      //     while (true) {
+      //       currentFilePath = crossPlatformPath(path.dirname(currentFilePath));
+      //       if (
+      //         currentFilePath === '/' ||
+      //         !currentFilePath ||
+      //         currentFilePath.length < 3
+      //       ) {
+      //         break;
+      //       }
+      //       if (Helpers.isUnexistedLink(currentFilePath)) {
+      //         break;
+      //       }
+      //       if (fse.lstatSync(currentFilePath).isSymbolicLink()) {
+      //         projectRoot = dirnameFromSourceToProject(currentFilePath);
+      //         relativePath = crossPlatformPath([
+      //           whatToLinkFromCore,
+      //           editorOrgFilePath.replace(currentFilePath + '/', ''),
+      //         ]);
+      //         break;
+      //       }
+      //     }
 
-          const targetPath = crossPlatformPath([projectRoot, relativePath]);
+      //     const targetPath = crossPlatformPath([projectRoot, relativePath]);
 
-          // now close the original file if it's open
-          const unwantedUri = vscode.Uri.file(editorOrgFilePath);
-          const editors = vscode.window.visibleTextEditors;
-          const unwantedEditorPath = crossPlatformPath(unwantedUri.fsPath);
+      //     // now close the original file if it's open
+      //     const unwantedUri = vscode.Uri.file(editorOrgFilePath);
+      //     const editors = vscode.window.visibleTextEditors;
+      //     const unwantedEditorPath = crossPlatformPath(unwantedUri.fsPath);
 
-          for (const editor of editors) {
-            const editorPath = crossPlatformPath(editor.document.uri.fsPath);
+      //     for (const editor of editors) {
+      //       const editorPath = crossPlatformPath(editor.document.uri.fsPath);
 
-            if (editorPath === unwantedEditorPath) {
-              await vscode.window.showTextDocument(editor.document); // bring it to front
-              await vscode.commands.executeCommand(
-                'workbench.action.closeActiveEditor',
-              );
-            }
-          }
+      //       if (editorPath === unwantedEditorPath) {
+      //         await vscode.window.showTextDocument(editor.document); // bring it to front
+      //         await vscode.commands.executeCommand(
+      //           'workbench.action.closeActiveEditor',
+      //         );
+      //       }
+      //     }
 
-          const doc = await vscode.workspace.openTextDocument(targetPath);
-          await vscode.window.showTextDocument(doc);
-        },
-        options: {
-          titleWhenProcessing: `taon opening debuggable version of file.`,
-        },
-      },
+      //     const doc = await vscode.workspace.openTextDocument(targetPath);
+      //     await vscode.window.showTextDocument(doc);
+      //   },
+      //   options: {
+      //     titleWhenProcessing: `taon opening debuggable version of file.`,
+      //   },
+      // },
       //#endregion
 
       //#region OPEN WORKBENCH PATH
@@ -365,6 +366,36 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         },
       },
       //#endregion
+
+      {
+        title: `Copy Absolute Path (UNIX)`,
+        group: null,
+        exec: ({ vscode, uri, cwd }) => {
+          const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
+          vscode.env.clipboard.writeText(WORKSPACE_MAIN_FOLDER_PATH);
+        },
+        options: {
+          cancellable: false,
+          showSuccessMessage: false,
+          showOutputDataOnSuccess: false,
+        },
+      },
+
+      {
+        title: `Copy Relative Path (UNIX)`,
+        group: null,
+        exec: ({ vscode, uri, cwd }) => {
+          const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
+          vscode.env.clipboard.writeText(
+            WORKSPACE_MAIN_FOLDER_PATH.replace(cwd + '/', ''),
+          );
+        },
+        options: {
+          cancellable: false,
+          showSuccessMessage: false,
+          showOutputDataOnSuccess: false,
+        },
+      },
 
       //#region OPEN CORE CONTAINER
       {

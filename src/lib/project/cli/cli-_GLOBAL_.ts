@@ -9,6 +9,7 @@ import {
   config,
   dotTaonFolder,
   fg,
+  GlobalTaskManager,
   LibTypeEnum,
   taonContainers,
   tnpPackageName,
@@ -1111,63 +1112,61 @@ ${this.project.children
 
   //#region not for npm / get trusted
 
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-  
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
 
   //#endregion
 
   //#region not for npm / tnp fix taon json
 
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-  
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
+  /* */
 
   //#endregion
 
@@ -1944,9 +1943,12 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     //#endregion
   }
 
-  aaaaa() {
+  async aaaaa() {
+    GlobalTaskManager.start('aaa');
     console.info('GLOBAL COMMAND WORKS!');
-    this._exit();
+    GlobalTaskManager.stop('aaa', () => {
+      this._exit();
+    });
   }
 
   async spinner() {

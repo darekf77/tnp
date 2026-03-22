@@ -1,4 +1,4 @@
-import { vscodeExtMethods } from 'tnp/src';
+import { vscodeExtMethods, handleTaonRedirect } from 'tnp/src';
 import { executeCommand } from 'tnp-helpers/src'; // @backend
 import { ExtensionContext } from 'vscode';
 
@@ -8,6 +8,9 @@ import * as menu from './lib/vscode-ext-menu';
 const commands = vscodeExtMethods(FRAMEWORK_NAME);
 export async function activate(context: ExtensionContext) {
   const vscode = await import('vscode');
+
+  handleTaonRedirect(context, vscode);
+
   menu.activateMenuTnp(context, vscode, FRAMEWORK_NAME);
 
   //#region @backendFunc
@@ -32,7 +35,6 @@ export async function activate(context: ExtensionContext) {
     }
   }
   //#endregion
-
 }
 
 export function deactivate() {

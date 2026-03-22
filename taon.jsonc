@@ -35,7 +35,7 @@
       "envName": "prod",
       "envNumber": 1,
       "releaseType": "local",
-      "taskName": "local-cli"
+      "taskName": "local-cli",
     },
   ],
 
