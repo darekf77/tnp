@@ -16,7 +16,6 @@ export namespace ProcessesUtils {
       resolveWhenTextInOutput?: string;
     },
   ): Promise<void> => {
-
     //#region @backendFunc
     if (!processId) {
       throw new Error(`processId is required`);
@@ -59,7 +58,7 @@ export namespace ProcessesUtils {
           exhaustMap(() => {
             return processesController
               .getByProcessID(proc.id)
-              .request()
+              .request() // @ts-ignore
               .observable.pipe(map(r => r.body.rawJson));
           }),
           map(p => {
@@ -103,8 +102,6 @@ export namespace ProcessesUtils {
     // console.log(`Starting started...`);
     // await UtilsTerminal.pressAnyKeyToContinueAsync();
     //#endregion
-
   };
   //#endregion
-
 }
