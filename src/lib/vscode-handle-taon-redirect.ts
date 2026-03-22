@@ -189,7 +189,9 @@ export function handleTaonRedirect(
       const toRep = crossPlatformPath(path.dirname(match2[0]));
       const [porjPath] = originalPath.split(toRep);
       // console.log({ match2, porjPath, toRep });
-      originalPath = crossPlatformPath([porjPath, toRep, 'source/index.ts']);
+      if (await fse.exists(crossPlatformPath([porjPath, toRep, 'source']))) {
+        originalPath = crossPlatformPath([porjPath, toRep, 'source/index.ts']);
+      }
     }
     // else {
     //   return; // TODO REDIRECT AUTOMATICALLY ONLY src.d.ts

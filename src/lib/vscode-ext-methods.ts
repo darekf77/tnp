@@ -289,7 +289,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       //#region OPEN WORKBENCH PATH
       {
         group: null,
-        title: `${toolName} OPEN NEW WORKBENCH HERE`,
+        title: `OPEN IN NEW WORKBENCH HERE`,
         async exec({ vscode, uri }) {
           // Fallback: invoked from editor / command palette
           if (!uri && vscode.window.activeTextEditor) {
@@ -388,6 +388,21 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
           const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
           vscode.env.clipboard.writeText(
             WORKSPACE_MAIN_FOLDER_PATH.replace(cwd + '/', ''),
+          );
+        },
+        options: {
+          cancellable: false,
+          showSuccessMessage: false,
+          showOutputDataOnSuccess: false,
+        },
+      },
+      {
+        title: `Copy File Name`,
+        group: null,
+        exec: ({ vscode, uri, cwd }) => {
+          const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
+          vscode.env.clipboard.writeText(
+            path.basename(WORKSPACE_MAIN_FOLDER_PATH),
           );
         },
         options: {

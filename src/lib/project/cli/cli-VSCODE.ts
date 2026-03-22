@@ -63,6 +63,21 @@ export class $Vscode extends BaseCli {
               await UtilsVSCode.installExtensions();
             },
           },
+
+          installUninstallExtensions: {
+            name: 'Install all recommended and uninstall deprecated extensions',
+            action: async () => {
+              // UtilsTerminal.clearConsole();
+              await UtilsVSCode.installAndRemoveDeprecatedExtensions();
+            },
+          },
+          removeDeprecated: {
+            name: 'Uninstall deprecated extensions',
+            action: async () => {
+              // UtilsTerminal.clearConsole();
+              await UtilsVSCode.removeDeprecated();
+            },
+          },
           initLocalSettings: {
             name: 'Init local settings',
             action: async () => {
