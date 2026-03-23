@@ -1945,6 +1945,8 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
 
   async aaaaa() {
     GlobalTaskManager.start('aaa');
+    GlobalTaskManager.addProgress('aaa');
+    GlobalTaskManager.addProgress('aaa');
     console.info('GLOBAL COMMAND WORKS!');
     GlobalTaskManager.stop('aaa', () => {
       this._exit();
