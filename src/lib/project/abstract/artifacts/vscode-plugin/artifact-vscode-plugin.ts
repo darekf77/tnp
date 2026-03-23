@@ -1,5 +1,10 @@
 //#region imports
-import { config, UtilsOs } from 'tnp-core/src';
+import {
+  config,
+  UtilsFilesFolders,
+  UtilsFilesFoldersSync,
+  UtilsOs,
+} from 'tnp-core/src';
 import {
   CoreModels,
   crossPlatformPath,
@@ -238,6 +243,9 @@ export class ArtifactVscodePlugin extends BaseArtifact<
       }
 
       if (!shouldSkipBuild) {
+        UtilsFilesFoldersSync.getFilesFrom(extProj.location)
+          .filter(f => path.extname(f) === '.vsix')
+          .forEach(f => Helpers.removeFileIfExists(f));
         extProj
           .run(
             `node ${updateVscodePackageJsonJsMainProject} ` +
@@ -257,6 +265,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
             ? [`--baseImagesUrl "${this.project.taonJson.baseImagesUrl}"`]
             : []),
         ];
+
         extProj.run(`taon-vsce package ${args.join(' ')}`).sync();
       } catch (error) {
         throw 'Problem with vscode package metadata';
