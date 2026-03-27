@@ -92,7 +92,7 @@ import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
 import { AppRoutesAutogenProvider } from './tools/app-routes-autogen-provider';
 import { IncrementalBuildProcess } from './tools/build-isomorphic-lib/compilations/incremental-build-process';
-import { CopyManager } from './tools/copy-manager/copy-manager';
+import { CopyManagerStandalone } from './tools/copy-manager/copy-manager-standalone';
 import { FilesTemplatesBuilder } from './tools/files-recreation';
 import { IndexAutogenProvider } from './tools/index-autogen-provider';
 import { InsideStructuresLib } from './tools/inside-struct-lib';
@@ -133,7 +133,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
   public readonly testsCypress: CypressTestRunner;
 
-  public readonly copyNpmDistLibManager: CopyManager;
+  public readonly copyNpmDistLibManager: CopyManagerStandalone;
 
   public readonly insideStructureLib: InsideStructuresLib;
 
@@ -158,7 +158,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     this.testsVite = new VitestTestRunner(project);
     this.testsCypress = new CypressTestRunner(project);
 
-    this.copyNpmDistLibManager = CopyManager.for(project);
+    this.copyNpmDistLibManager = new CopyManagerStandalone(project);
     this.indexAutogenProvider = new IndexAutogenProvider(project);
     this.appTsRoutesAutogenProvider = new AppRoutesAutogenProvider(project);
     this.filesTemplatesBuilder = new FilesTemplatesBuilder(project);

@@ -176,7 +176,8 @@ export const COMPILATION_COMPLETE_LIB_NG_BUILD =
 
 export const COMPILATION_COMPLETE_APP_NG_SERVE = 'Compiled successfully';
 
-export const COMPILATION_COMPLETE_TSC= 'Found 0 errors. Watching for file changes';
+export const COMPILATION_COMPLETE_TSC =
+  'Found 0 errors. Watching for file changes';
 
 // TODO get this from cli, global
 export const DEFAULT_FRAMEWORK_VERSION =
@@ -930,6 +931,14 @@ export const taonJsonMainProject = fileName.taon_jsonc;
 
 export const updateVscodePackageJsonJsMainProject =
   'update-vscode-package-json.js';
+
+export const VERIFIED_BUILD_DATA = 'VERIFIED-BUILD-DATA.jsonc';
+
+export interface TaonVerifiedBuild {
+  commitHash: string;
+  commitName: string;
+  commitDate: string | Date;
+}
 
 export const routes = TaonTempRoutesFolder;
 

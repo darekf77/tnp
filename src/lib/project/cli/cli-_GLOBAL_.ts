@@ -1977,6 +1977,15 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     this._exit();
     //#endregion
   }
+
+  notVerifiedBuilds() {
+    Helpers.info(`Not verified isomorphic builds:`);
+    const pkgs =
+      this.project.framework.notVerifiedIsomorphicPackagesBuildsInNodeModules;
+    Helpers.info(`Found ${pkgs.length} `);
+    console.log(pkgs);
+    this._exit();
+  }
 }
 
 export default {

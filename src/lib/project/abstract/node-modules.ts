@@ -15,11 +15,7 @@ import {
   dateformat,
 } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
-import {
-  BaseNodeModules,
-  Helpers,
-  HelpersTaon,
-} from 'tnp-helpers/src';
+import { BaseNodeModules, Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import {
   assetsFromNgProj,
@@ -33,6 +29,7 @@ import {
   notAllowedAsPacakge,
   packageJsonLockMainProject,
   packageJsonMainProject,
+  packageJsonNpmLibAngular,
   skipCoreCheck,
   sourceLinkInNodeModules,
   srcDtsFromNpmPackage,
@@ -563,7 +560,7 @@ export class NodeModules extends BaseNodeModules {
     //#endregion
   }
 
-  checkIsomorphic(packageName: string) {
+  public checkIsomorphic(packageName: string): boolean {
     //#region @backendFunc
     let isIsomorphic = false;
     // !  TODO this in probably incorrect packages is never a link
@@ -574,12 +571,19 @@ export class NodeModules extends BaseNodeModules {
     const browser = crossPlatformPath([
       packageInNodeModulesPath,
       browserMainProject,
+      packageJsonNpmLibAngular,
     ]);
     const websql = crossPlatformPath([
       packageInNodeModulesPath,
       websqlMainProject,
+      packageJsonNpmLibAngular,
     ]);
-    isIsomorphic = Helpers.exists(browser) && Helpers.exists(websql);
+    const lib = crossPlatformPath([
+      packageInNodeModulesPath,
+      libFromCompiledDist,
+    ]);
+    isIsomorphic =
+      Helpers.exists(browser) && Helpers.exists(websql) && Helpers.exists(lib);
     return isIsomorphic;
     //#endregion
   }

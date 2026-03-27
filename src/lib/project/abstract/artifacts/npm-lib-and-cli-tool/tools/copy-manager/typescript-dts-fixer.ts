@@ -4,8 +4,6 @@ import { Helpers } from 'tnp-helpers/src';
 
 import { srcFromTaonImport } from '../../../../../../constants';
 
-import { CopyMangerHelpers } from './copy-manager-helpers';
-
 export const TS_NOCHECK = '// @ts-nocheck';
 
 /**

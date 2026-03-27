@@ -52,8 +52,10 @@ import {
   srcFromTaonImport,
   srcMainProject,
   TaonFileExtension,
+  TaonVerifiedBuild,
   THIS_IS_GENERATED_INFO_COMMENT,
   tmpLocalCopytoProjDist,
+  VERIFIED_BUILD_DATA,
 } from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions } from '../../options';
@@ -1165,4 +1167,22 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
     //#endregion
   }
   //#endregion
+
+  filterVerfiedBuilds(packagesNames: string[]): string[] {
+    return packagesNames.filter(f => {
+      const pathToVerifyFile = this.project.nodeModules.pathFor([
+        f,
+        VERIFIED_BUILD_DATA,
+      ]);
+      // console.log({ pathToVerifyFile });
+      return !(Helpers.readJsonC(pathToVerifyFile, {}) as TaonVerifiedBuild)
+        ?.commitHash;
+    });
+  }
+
+  get notVerifiedIsomorphicPackagesBuildsInNodeModules(): string[] {
+    return this.filterVerfiedBuilds(
+      this.project.framework.coreContainer.nodeModules.getIsomorphicPackagesNames(),
+    );
+  }
 }

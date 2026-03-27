@@ -1,28 +1,51 @@
-import { config, folderName, PREFIXES, Utils } from 'tnp-core/src';
+//#region imports
+import { ChangeOfFile } from 'incremental-compiler/src';
+import { Level, Log } from 'ng2-logger/src';
+import {
+  config,
+  dateformat,
+  folderName,
+  LibTypeEnum,
+  PREFIXES,
+  taonPackageName,
+  tnpPackageName,
+  Utils,
+} from 'tnp-core/src';
 import { crossPlatformPath, glob, path, _, fse } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
-import { Helpers, HelpersTaon } from 'tnp-helpers/src';
+import { BaseCompilerForProject, Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import {
   assetsFromNpmPackage,
   assetsFromSrc,
+  browserMainProject,
+  dirnameFromSourceToProject,
+  distFromNgBuild,
   distMainProject,
   distNoCutSrcMainProject,
   indexDtsMainProject,
   indexDtsNpmPackage,
   nodeModulesMainProject,
+  packageJsonMainProject,
   packageJsonNpmLib,
   prodSuffix,
   projectsFromNgTemplate,
   sharedFromAssets,
   sourceLinkInNodeModules,
+  srcJSFromNpmPackage,
   srcMainProject,
+  TaonVerifiedBuild,
   THIS_IS_GENERATED_INFO_COMMENT,
+  tmpAlreadyStartedCopyManager,
   tmpLibsForDist,
   tmpLocalCopytoProjDist,
   tmpSourceDist,
   tmpSrcDist,
   tmpSrcDistWebsql,
+  TO_REMOVE_TAG,
+  VERIFIED_BUILD_DATA,
+  websqlMainProject,
+  whatToLinkFromCore,
 } from '../../../../../../constants';
 import {
   EnvOptions,
@@ -31,13 +54,518 @@ import {
 } from '../../../../../../options';
 import type { Project } from '../../../../project';
 
-import { CopyManager } from './copy-manager';
-import { CopyMangerHelpers } from './copy-manager-helpers';
 import { SourceMappingUrl } from './source-maping-url';
 import { TypescriptDtsFixer } from './typescript-dts-fixer';
+//#endregion
 
-export class CopyManagerStandalone extends CopyManager {
+const log = Log.create('Base copy manager', Level.WARN, Level.ERROR);
+
+const REPLACE_INDEX_D_TS_IN_DEST_WHEN_WATCH = false;
+
+export interface BaseCopyMangerInitialParams {
+  // TOOD this does not work
+  skipCopyDistToLocalTempProject?: boolean;
+}
+
+export class CopyManagerStandalone extends BaseCompilerForProject<
+  BaseCopyMangerInitialParams,
+  // @ts-ignore TODO weird inheritance problem
+  Project
+> {
+  //#region fields
   dtsFixer: TypescriptDtsFixer;
+
+  isStartFromScratch: boolean = true;
+
+  public _isomorphicPackages = [] as string[];
+
+  protected buildOptions: EnvOptions;
+
+  protected copyto: Project[] = [];
+
+  protected renameDestinationFolder?: string;
+
+  updateTriggered = _.debounce(() => {
+    Helpers.log(`[copy-manager] update triggered`);
+  }, 1000);
+
+  protected async selectAllProjectCopyto() {
+    //#region  @backendFunc
+    const containerCoreProj = this.project.framework.coreContainer;
+
+    const independentProjects = [containerCoreProj];
+
+    if (
+      config.frameworkName === tnpPackageName &&
+      this.project.name !== tnpPackageName
+    ) {
+      // tnp in tnp is not being used at all
+      independentProjects.push(this.project.ins.Tnp);
+    }
+
+    this.copyto = [...independentProjects];
+    // console.log(this.copyto.map(c => 'COPYTO ' + c.nodeModules.path))
+    //#endregion
+  }
+
+  protected readonly notAllowedFiles: string[] = [
+    '.DS_Store',
+    // fileName.index_d_ts,
+  ];
+
+  protected browserwebsqlFolders: string[];
+
+  protected sourceFoldersToRemoveFromNpmPackage: string[];
+
+  //#endregion
+
+  //#region getters
+
+  //#region getters / source path to link
+
+  get sourcePathToLink(): string {
+    //#region @backendFunc
+    const sourceToLink = crossPlatformPath([
+      this.project.location,
+      whatToLinkFromCore,
+    ]);
+    return sourceToLink;
+    //#endregion
+  }
+  //#endregion
+
+  //#region getters / local temp proj path
+  get localTempProj() {
+    //#region @backendFunc
+    let localProj = this.project.ins.From(this.localTempProjPath) as Project;
+    return localProj;
+    //#endregion
+  }
+  //#endregion
+
+  //#region getters / project to copy to
+  /**
+   * when building from scratch:
+   * taon - uses ~/.taon/taon-containers/container-vXX
+   * tnp - uses ../taon-containers/container-vXX
+   *
+   * but when tnp is in deep refactor I need to use taon to build tnp
+   * and force taon to recognize core container from node_modules link
+   * inside project (instead normally from taon.json[frameworkVersion] property)
+   */
+  get projectToCopyTo() {
+    //#region @backendFunc
+
+    let result: Project[] = [];
+
+    const isTaonProdCli = taonPackageName === config.frameworkName;
+
+    //#region resolve all possible project for package distribution
+    let projectForNodeModulesPkgUpdate: Project[] = [
+      this.project.ins.by(
+        LibTypeEnum.CONTAINER,
+        this.project.framework.frameworkVersion,
+      ),
+      this.project.framework.coreContainer,
+    ];
+    //#endregion
+
+    projectForNodeModulesPkgUpdate.push(this.project.tnpCurrentCoreContainer);
+    projectForNodeModulesPkgUpdate = projectForNodeModulesPkgUpdate.filter(
+      f => !!f,
+    );
+
+    if (
+      isTaonProdCli &&
+      this.project.framework.isLinkToNodeModulesDifferentThanCoreContainer
+    ) {
+      try {
+        const possibleTnpLocation = crossPlatformPath(
+          dirnameFromSourceToProject(
+            this.project.pathFor([
+              nodeModulesMainProject,
+              tnpPackageName,
+              sourceLinkInNodeModules,
+            ]),
+          ),
+        );
+        const tnpProject = this.project.ins.From(possibleTnpLocation);
+        if (tnpProject) {
+          projectForNodeModulesPkgUpdate.push(tnpProject);
+        }
+      } catch (error) {}
+    }
+
+    if (this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
+      projectForNodeModulesPkgUpdate.push(this.project);
+    }
+
+    if (Array.isArray(this.copyto) && this.copyto.length > 0) {
+      result = [
+        this.localTempProj,
+        ...this.copyto,
+        ...projectForNodeModulesPkgUpdate,
+      ] as Project[];
+    } else {
+      result = [this.localTempProj, ...projectForNodeModulesPkgUpdate];
+    }
+
+    return Utils.uniqArray<Project>(result, 'location' as keyof Project);
+    //#endregion
+  }
+  //#endregion
+
+  //#region getters / isomorphic pacakges
+  get isomorphicPackages() {
+    //#region @backendFunc
+    const isomorphicPackages = [
+      ...this._isomorphicPackages,
+      this.rootPackageName,
+    ];
+    return isomorphicPackages;
+    //#endregion
+  }
+  //#endregion
+
+  //#endregion
+
+  //#region async action
+  async asyncAction(event: ChangeOfFile): Promise<void> {
+    //#region @backendFunc
+    const absoluteFilePath = crossPlatformPath(event.fileAbsolutePath);
+    // console.log('async event '+ absoluteFilePath)
+    this.contentReplaced(absoluteFilePath);
+
+    SourceMappingUrl.fixContent(absoluteFilePath, this.buildOptions);
+
+    let specificFileRelativePath: string;
+    let absoluteAssetFilePath: string;
+    if (absoluteFilePath.startsWith(this.monitoredOutDir)) {
+      specificFileRelativePath = absoluteFilePath.replace(
+        this.monitoredOutDir + '/',
+        '',
+      );
+    } else {
+      absoluteAssetFilePath = absoluteFilePath;
+    }
+
+    const projectToCopyTo = this.projectToCopyTo;
+
+    // Helpers.log(`ASYNC ACTION
+    // absoluteFilePath: ${absoluteFilePath}
+    // specificFileRelativePath: ${specificFileRelativePath}
+    // `);
+
+    //     Helpers.log(`
+    //     copyto project:
+    // ${projectToCopyTo.map(p => p.location).join('\n')}
+
+    //     `)
+
+    for (let index = 0; index < projectToCopyTo.length; index++) {
+      const projectToCopy = projectToCopyTo[index];
+      this._copyBuildedDistributionTo(projectToCopy, {
+        absoluteAssetFilePath,
+        specificFileRelativePath: event && specificFileRelativePath,
+        outDir: distFromNgBuild,
+        event,
+      });
+    }
+    this.updateTriggered();
+    //#endregion
+  }
+  //#endregion
+
+  //#region sync action
+  async syncAction(
+    files: string[],
+    initialParams: BaseCopyMangerInitialParams,
+  ): Promise<void> {
+    //#region @backendFunc
+
+    if (
+      this.project.hasFile(tmpAlreadyStartedCopyManager) &&
+      this.project.readFile(tmpAlreadyStartedCopyManager) === '-'
+    ) {
+      // @ts-ignore
+      this.isStartFromScratch = false;
+    } else {
+      this.project.writeFile(tmpAlreadyStartedCopyManager, '-');
+      // @ts-ignore
+      this.isStartFromScratch = true;
+    }
+
+    for (const fileAbsPath of files) {
+      this.contentReplaced(fileAbsPath);
+    }
+
+    const projectToCopyTo = this.projectToCopyTo;
+    if (initialParams?.skipCopyDistToLocalTempProject) {
+      projectToCopyTo.splice(
+        projectToCopyTo.findIndex(
+          p => p.location === this.localTempProj.location,
+        ),
+        1,
+      );
+    }
+
+    // (${proj.location}/${folderName.node_modules}/${this.rootPackageName})
+
+    if (projectToCopyTo.length > 0) {
+      const porjectINfo =
+        projectToCopyTo.length === 1
+          ? `project "${(_.first(projectToCopyTo as any) as Project).name}"`
+          : `all ${projectToCopyTo.length} projects`;
+
+      log.info(
+        `From now... ${porjectINfo} will be updated after every change...`,
+      );
+
+      Helpers.info(`[buildable-project] copying compiled code/assets to ${
+        projectToCopyTo.length
+      } other projects...
+${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
+      `);
+    }
+
+    for (let index = 0; index < projectToCopyTo.length; index++) {
+      const projectToCopy = projectToCopyTo[index];
+      log.data(`copying to ${projectToCopy?.name}`);
+      this._copyBuildedDistributionTo(projectToCopy, {
+        outDir: distFromNgBuild,
+      });
+      // if (this.buildOptions.buildForRelease && !global.tnpNonInteractive) {
+      //   Helpers.info('Things copied to :' + projectToCopy?.name);
+      //   if (!(await Helpers.consoleGui.question.yesNo('Is there everywthing ok with build ?'))) {
+      //     process.exit(0)
+      //   }
+      // }
+      log.data('copy done...');
+    }
+    if (this.isStartFromScratch) {
+      this.isStartFromScratch = false;
+    }
+    this.updateTriggered();
+    //#endregion
+  }
+  //#endregion
+
+  //#region content replace
+  /**
+   * @returns if trus - skip futher processing
+   */
+  protected contentReplaced(fileAbsolutePath: string): void {
+    //#region @backendFunc
+    // console.log('processing', fileAbsolutePath);
+    if (
+      !(
+        fileAbsolutePath.endsWith('.js') ||
+        fileAbsolutePath.endsWith('.js.map') ||
+        fileAbsolutePath.endsWith('.mjs') ||
+        fileAbsolutePath.endsWith('.mjs.map')
+      )
+    ) {
+      return;
+    }
+    let contentOrg = Helpers.readFile(fileAbsolutePath) || '';
+    const newContent = contentOrg.replace(
+      new RegExp(Utils.escapeStringForRegEx(TO_REMOVE_TAG), 'g'),
+      '',
+    );
+    if (newContent && contentOrg && newContent !== contentOrg) {
+      Helpers.writeFile(fileAbsolutePath, newContent);
+      // console.log(`[copy-manager] content replaced in ${fileAbsolutePath}`);
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region copy to builded distribution
+  public copyBuildedDistributionTo(destination: Project) {
+    //#region @backendFunc
+    return this._copyBuildedDistributionTo(destination);
+    //#endregion
+  }
+
+  /**
+   * There are 3 typese of --copyto build
+   * 1. dist build (wihout source maps buit without links)
+   * 2. dist build (with source maps and links) - when no buildOptions
+   * 3. same as 2 buit with watch
+   */
+  protected _copyBuildedDistributionTo(
+    destination: Project,
+    options?: {
+      absoluteAssetFilePath?: string;
+      specificFileRelativePath?: string;
+      outDir?: string;
+      event?: any;
+    },
+  ) {
+    //#region @backendFunc
+
+    //#region init & prepare parameters
+    const {
+      specificFileRelativePath = void 0,
+      absoluteAssetFilePath = void 0,
+    } = options || {};
+
+    // if (!specificFileRelativePath) {
+    //   debugger
+    //   Helpers.warn(`Invalid project: ${destination?.name}`)
+    //   return;
+    // }
+    if (!destination || !destination?.location) {
+      Helpers.warn(`Invalid project: ${destination?.name}`);
+      return;
+    }
+
+    const isTempLocalProj = destination.location === this.localTempProjPath;
+
+    if (!specificFileRelativePath) {
+      this.initalFixForDestination(destination);
+    }
+
+    const allFolderLinksExists = !this.buildOptions.build.watch
+      ? true
+      : this.linksForPackageAreOk(destination);
+
+    // if(specificFileRelativePath) {
+    //   Helpers.log(`[${destination?.name}] Specyfic file change (allFolderLinksExists=${allFolderLinksExists}) (event:${event})`
+    //   + ` ${outDir}${specificFileRelativePath}`);
+    // }
+    //#endregion
+
+    if (
+      (specificFileRelativePath || absoluteAssetFilePath) &&
+      allFolderLinksExists
+    ) {
+      // Helpers.log(`handle ${specificFileRelativePath || absoluteAssetFilePath}`);
+      if (absoluteAssetFilePath) {
+        this.handleCopyOfAssetFile(absoluteAssetFilePath, destination);
+      } else {
+        //#region handle single file
+
+        this.handleCopyOfSingleFile(
+          destination,
+          isTempLocalProj,
+          specificFileRelativePath,
+        );
+        if (
+          REPLACE_INDEX_D_TS_IN_DEST_WHEN_WATCH &&
+          this.buildOptions.build.watch &&
+          specificFileRelativePath.endsWith('/index.d.ts')
+        ) {
+          // TODO could be limited more
+          this.replaceIndexDtsForEntryProjectIndex(destination);
+        }
+        //#endregion
+      }
+    } else {
+      //#region handle all files
+      // Helpers.log('copying all files');
+      this.copyCompiledSourcesAndDeclarations(destination, isTempLocalProj);
+
+      log.d('copying surce maps');
+      this.copySourceMaps(destination, isTempLocalProj);
+      this.copySharedAssets(destination, isTempLocalProj);
+
+      this.removeSourceSymlinks(destination);
+      this.addSourceSymlinks(destination);
+
+      this.updateBackendFullDtsFiles(destination);
+      this.updateBackendFullDtsFiles(this.monitoredOutDir);
+
+      if (
+        REPLACE_INDEX_D_TS_IN_DEST_WHEN_WATCH &&
+        this.buildOptions.build.watch
+      ) {
+        this.replaceIndexDtsForEntryProjectIndex(destination);
+      }
+
+      this.addSrcJSToDestination(destination);
+
+      //#region copy/link package.json
+      const destPackageInNodeModules = destination.pathFor([
+        nodeModulesMainProject,
+        this.rootPackageName,
+      ]);
+
+      const packageJsonInDest = crossPlatformPath([
+        destPackageInNodeModules,
+        packageJsonNpmLib,
+      ]);
+
+      // console.log(`[copy-manager]
+
+      //   copying package.json "${packageJsonInDest}"
+
+      //   `);
+
+      try {
+        fse.unlinkSync(packageJsonInDest);
+      } catch (e) {}
+      if (this.isWatchCompilation && !isTempLocalProj) {
+        Helpers.createSymLink(
+          this.project.pathFor(packageJsonMainProject),
+          packageJsonInDest,
+        );
+      } else {
+        HelpersTaon.copyFile(
+          this.project.pathFor(packageJsonMainProject),
+          packageJsonInDest,
+        );
+        // for (
+        //   let index = 0;
+        //   index < CopyMangerHelpers.browserwebsqlFolders.length;
+        //   index++
+        // ) {
+        //   const currentBrowserFolder =
+        //     CopyMangerHelpers.browserwebsqlFolders[index];
+        //   const borwserOrWebsqlFolder = crossPlatformPath([
+        //     destPackageInNodeModules,
+        //     currentBrowserFolder,
+        //     packageJsonNpmLib,
+        //   ]);
+        //   console.log(`[copy-manager]
+
+        // copying package.json to "${borwserOrWebsqlFolder}"
+
+        // `);
+        // }
+      }
+      //#endregion
+
+      // TODO not working werid tsc issue with browser/index
+      // {const projectOudBorwserSrc = path.join(destination.location,
+      //   folderName.node_modules,
+      //   rootPackageName,
+      //   fileName.package_json
+      // );
+      // const projectOudBorwserDest = path.join(destination.location,
+      //   folderName.node_modules,
+      //   rootPackageName,
+      //   folderName.browser,
+      //   fileName.package_json
+      // );
+      // HelpersTaon.copyFile(projectOudBorwserSrc, projectOudBorwserDest);}
+      //#endregion
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region get browser websql folders
+  getBrowserwebsqlFolders(): string[] {
+    // const isProd = this.buildOptions.build.prod;
+    return [
+      browserMainProject,
+      websqlMainProject,
+      browserMainProject + prodSuffix,
+      websqlMainProject + prodSuffix,
+    ];
+  }
+  //#endregion
 
   //#region init
   public init(buildOptions: EnvOptions, renameDestinationFolder?: string) {
@@ -93,6 +621,40 @@ export class CopyManagerStandalone extends CopyManager {
     this.dtsFixer = TypescriptDtsFixer.for(this.isomorphicPackages);
 
     this.initWatching();
+    //#endregion
+  }
+  //#endregion
+
+  //#region replace d.ts files in destination after copy
+  addSrcJSToDestination(destination: Project) {
+    //#region @backendFunc
+    const location = destination.nodeModules.pathFor([
+      this.rootPackageName,
+      srcJSFromNpmPackage,
+    ]);
+    Helpers.writeFile(
+      location,
+      `"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+__exportStar(require("./lib"), exports);
+//# sourceMappingURL=index.js.map
+
+      `,
+    );
     //#endregion
   }
   //#endregion
@@ -477,6 +1039,32 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 ${THIS_IS_GENERATED_INFO_COMMENT}
             `.trimStart(),
     );
+
+    const verifyBuild = crossPlatformPath([
+      destination.nodeModules.pathFor(this.rootPackageName),
+      VERIFIED_BUILD_DATA,
+    ]);
+
+    if (this.buildOptions.build.watch) {
+      Helpers.removeFileIfExists(verifyBuild);
+    } else {
+      if (
+        this.buildOptions.build.prod ||
+        this.buildOptions.release.releaseType
+      ) {
+        try {
+          const lastCommitDate = this.project.git.lastCommitDate();
+          Helpers.writeJsonC(verifyBuild, {
+            commitHash: this.project.git.lastCommitHash() || '',
+            commitName: this.project.git.lastCommitMessage() || '',
+            commitDate: lastCommitDate
+              ? dateformat(lastCommitDate, 'dd-mm-yyyy HH:MM:ss')
+              : void 0,
+          } as TaonVerifiedBuild);
+        } catch (error) {}
+      }
+    }
+
     //#endregion
   }
   //#endregion
@@ -536,7 +1124,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     /**
      * browser websql browser-prod websql-prod
      */
-    currentBrowserFolder?:  string,
+    currentBrowserFolder?: string,
   ) {
     //#region @backendFunc
     const forBrowser = !!currentBrowserFolder;
@@ -632,7 +1220,9 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
           fileRelativePath,
         ),
       );
-      HelpersTaon.copyFile(fileAbsPath, destAbs, { dontCopySameContent: false });
+      HelpersTaon.copyFile(fileAbsPath, destAbs, {
+        dontCopySameContent: false,
+      });
     }
     //#endregion
   }
@@ -750,7 +1340,10 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       );
       // Helpers.log(`Eqal content with temp proj: ${}`)
       if (Helpers.exists(readyToCopyFileInLocalTempProj)) {
-        HelpersTaon.copyFile(readyToCopyFileInLocalTempProj, destinationFilePath);
+        HelpersTaon.copyFile(
+          readyToCopyFileInLocalTempProj,
+          destinationFilePath,
+        );
       }
       return;
     }
