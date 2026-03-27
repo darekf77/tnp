@@ -214,6 +214,9 @@ Starting (${
       resolvePromiseMsg: {
         stdout: [COMPILATION_COMPLETE_TSC],
       },
+      rebuildOnChange: buildOptions.build.watch
+        ? this.project.tmpSourceRebuildForBackendObs
+        : void 0,
     });
 
     Helpers.logInfo(`* Typescript compilation first part done`);
@@ -230,6 +233,9 @@ Starting (${
       resolvePromiseMsg: {
         stdout: ['Watching for file changes.'],
       },
+      rebuildOnChange: buildOptions.build.watch
+        ? this.project.tmpSourceRebuildForBackendObs
+        : void 0,
     });
 
     // Helpers.writeJson(

@@ -8,6 +8,7 @@ import {
   frontEndOnly,
   TAGS,
   Utils,
+  UtilsFilesFoldersSync,
   UtilsJson,
 } from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
@@ -75,6 +76,7 @@ const notAllowedToPRocess = [appAutoGenDocsMd, appAutoGenJs];
 export class BrowserCodeCut {
   //#region constants
   public static debugFile = [
+    // 'lib/start-cli.ts',
     // 'rest-request.ts',
     // 'models.ts',
     // '/endpoint-context.ts',
@@ -87,6 +89,7 @@ export class BrowserCodeCut {
   ];
 
   //#endregion
+
   //#region fields
   /**
    * slighted modifed app release dist
@@ -137,6 +140,8 @@ export class BrowserCodeCut {
 
   private readonly nameForNpmPackage: string;
 
+  private readonly isLinuxWatchModeAllowde: boolean;
+
   //#region @backend
   constructor(
     /**
@@ -164,6 +169,7 @@ export class BrowserCodeCut {
 
     //#region recognize namespaces for isomorphic packages
     this.nameForNpmPackage = project.nameForNpmPackage;
+    this.isLinuxWatchModeAllowde = project.isLinuxWatchModeAllowde();
 
     //#endregion
 
@@ -488,7 +494,10 @@ export class BrowserCodeCut {
 
     if (isTsFile) {
       //#region handle app.ts presentation files
-      if (this.relativePath === appTsFromSrc && this.recreateAppTsPresentationFiles) {
+      if (
+        this.relativePath === appTsFromSrc &&
+        this.recreateAppTsPresentationFiles
+      ) {
         this.recreateAppTsPresentationFiles();
       }
       //#endregion
@@ -497,41 +506,98 @@ export class BrowserCodeCut {
         !this.relativePath.startsWith(`${appFromSrc}.`)
       ) {
         // NORMAL TS BROWSER FILE FOR LIB
-        fse.writeFileSync(
-          this.absFileSourcePathBrowserOrWebsql,
+        const absFileSourcePathBrowserOrWebsqlCurrent = this
+          .isLinuxWatchModeAllowde
+          ? UtilsFilesFoldersSync.readFile(
+              this.absFileSourcePathBrowserOrWebsql,
+            )
+          : undefined;
+
+        const absFileSourcePathBrowserOrWebsqlNewContent =
           this.changeNpmNameToLocalLibNamePath(
             this.rawContentForBrowser,
             this.absFileSourcePathBrowserOrWebsql,
             { isBrowser: true },
-          ),
-          'utf8',
-        );
+          );
+        if (
+          absFileSourcePathBrowserOrWebsqlCurrent?.trimEnd() !==
+          absFileSourcePathBrowserOrWebsqlNewContent.trimEnd()
+        ) {
+          fse.writeFileSync(
+            this.absFileSourcePathBrowserOrWebsql,
+            absFileSourcePathBrowserOrWebsqlNewContent,
+            'utf8',
+          );
+        }
       }
       // NORMAL TS BROWSER FILE FOR APP
-      fse.writeFileSync(
-        this.absFileSourcePathBrowserOrWebsqlAPPONLY,
+      const absFileSourcePathBrowserOrWebsqlAPPONLYCurrent = this
+        .isLinuxWatchModeAllowde
+        ? UtilsFilesFoldersSync.readFile(
+            this.absFileSourcePathBrowserOrWebsqlAPPONLY,
+          )
+        : undefined;
+
+      const absFileSourcePathBrowserOrWebsqlAPPONLYNewContent =
         this.changeNpmNameToLocalLibNamePath(
           this.rawContentForAPPONLYBrowser,
           this.absFileSourcePathBrowserOrWebsqlAPPONLY,
           { isBrowser: true, libForApp: true },
-        ),
-        'utf8',
-      );
-    } else {
-      if (!this.relativePath.startsWith(`${appFromSrc}/`)) {
-        // NORMAL JSON, TXT (OR ANYTHING TEXT BASED) FOR BROWSER FILE FOR LIB
+        );
+
+      if (
+        absFileSourcePathBrowserOrWebsqlAPPONLYCurrent?.trimEnd() !==
+        absFileSourcePathBrowserOrWebsqlAPPONLYNewContent.trimEnd()
+      ) {
         fse.writeFileSync(
-          this.absFileSourcePathBrowserOrWebsql,
-          this.rawContentForBrowser,
+          this.absFileSourcePathBrowserOrWebsqlAPPONLY,
+          absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
           'utf8',
         );
       }
+    } else {
+      if (!this.relativePath.startsWith(`${appFromSrc}/`)) {
+        // NORMAL JSON, TXT (OR ANYTHING TEXT BASED) FOR BROWSER FILE FOR LIB
+        const absFileSourcePathBrowserOrWebsqlCurrent = this
+          .isLinuxWatchModeAllowde
+          ? UtilsFilesFoldersSync.readFile(
+              this.absFileSourcePathBrowserOrWebsql,
+            )
+          : undefined;
+
+        const absFileSourcePathBrowserOrWebsqlNewContent =
+          this.rawContentForBrowser;
+
+        if (
+          absFileSourcePathBrowserOrWebsqlCurrent?.trimEnd() !==
+          absFileSourcePathBrowserOrWebsqlNewContent.trimEnd()
+        ) {
+          fse.writeFileSync(
+            this.absFileSourcePathBrowserOrWebsql,
+            absFileSourcePathBrowserOrWebsqlNewContent,
+            'utf8',
+          );
+        }
+      }
       // NORMAL JSON, TXT (OR ANYTHING TEXT BASED) FOR BROWSER FILE FOR APP
-      fse.writeFileSync(
-        this.absFileSourcePathBrowserOrWebsqlAPPONLY,
-        this.rawContentForAPPONLYBrowser,
-        'utf8',
-      );
+      const absFileSourcePathBrowserOrWebsqlAPPONLYCurrent = this
+        .isLinuxWatchModeAllowde
+        ? Helpers.readFile(this.absFileSourcePathBrowserOrWebsqlAPPONLY)
+        : undefined;
+
+      const absFileSourcePathBrowserOrWebsqlAPPONLYNewContent =
+        this.rawContentForAPPONLYBrowser;
+
+      if (
+        absFileSourcePathBrowserOrWebsqlAPPONLYCurrent?.trimEnd() !==
+        absFileSourcePathBrowserOrWebsqlAPPONLYNewContent.trimEnd()
+      ) {
+        fse.writeFileSync(
+          this.absFileSourcePathBrowserOrWebsqlAPPONLY,
+          absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
+          'utf8',
+        );
+      }
     }
     //#endregion
   }
@@ -829,7 +895,11 @@ export class BrowserCodeCut {
         return;
       }
 
-      const contentStandalone =
+      const absoluteBackendDestFilePathCurrent = this.isLinuxWatchModeAllowde
+        ? UtilsFilesFoldersSync.readFile(absoluteBackendDestFilePath)
+        : undefined;
+
+      const absoluteBackendDestFilePathNewContent =
         isEmptyModuleBackendFile && isTsFile
           ? `export function dummy${new Date().getTime()}() { }`
           : this.changeNpmNameToLocalLibNamePath(
@@ -840,8 +910,17 @@ export class BrowserCodeCut {
               },
             );
 
-      // SAVE BACKEND FILE
-      fse.writeFileSync(absoluteBackendDestFilePath, contentStandalone, 'utf8');
+      if (
+        absoluteBackendDestFilePathCurrent?.trimEnd() !==
+        absoluteBackendDestFilePathNewContent.trimEnd()
+      ) {
+        // SAVE BACKEND FILE
+        fse.writeFileSync(
+          absoluteBackendDestFilePath,
+          absoluteBackendDestFilePathNewContent,
+          'utf8',
+        );
+      }
     }
     //#endregion
   }

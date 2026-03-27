@@ -443,6 +443,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         resolvePromiseMsg: {
           stdout: buildOptions.build.watch ? watchResolveString : undefined,
         },
+        rebuildOnChange: buildOptions.build.watch
+          ? this.project.tmpSourceRebuildForBrowserObs
+          : void 0,
         ...outputOptions,
       });
       await proxyProjectWebsql.execute(commandForLibraryBuild, {
@@ -450,6 +453,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         resolvePromiseMsg: {
           stdout: buildOptions.build.watch ? watchResolveString : undefined,
         },
+        rebuildOnChange: buildOptions.build.watch
+          ? this.project.tmpSourceRebuildForWebsqlObs
+          : void 0,
         ...outputOptions,
       });
     };

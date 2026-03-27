@@ -13,6 +13,7 @@ import {
   LibTypeEnum,
   taonContainers,
   tnpPackageName,
+  UtilsExecProc,
   UtilsFilesFoldersSync,
 } from 'tnp-core/src';
 import {
@@ -71,6 +72,7 @@ import {
 
 import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
 import {
+  COMPILATION_COMPLETE_TSC,
   containerPrefix,
   DEFAULT_FRAMEWORK_VERSION,
   globalSpinner,
@@ -90,6 +92,7 @@ import { Models } from '../../models';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
 import { Project } from '../abstract/project';
 import type { TaonProjectResolve } from '../abstract/project-resolve';
+import { Subject } from 'rxjs';
 //#endregion
 
 export class $Global extends BaseGlobalCommandLine<
@@ -1979,13 +1982,71 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
   }
 
   notVerifiedBuilds() {
+    //#region @backendFunc
     Helpers.info(`Not verified isomorphic builds:`);
     const pkgs =
       this.project.framework.notVerifiedIsomorphicPackagesBuildsInNodeModules;
     Helpers.info(`Found ${pkgs.length} `);
     console.log(pkgs);
     this._exit();
+    //#endregion
   }
+
+  async countWatchersLinux() {
+    //#region @backendFunc
+    console.log(await UtilsOs.getInotifyWatchCount());
+    this._exit();
+    //#endregion
+  }
+
+  // async tsc() {
+  //#region @backendFunc
+  // const rebuildOnChange = new Subject<{}>();
+
+  // const CTRL_C = '\u0003';
+
+  // process.stdin.setRawMode(true);
+  // process.stdin.resume();
+
+  // const cleanup = () => {
+  //   Helpers.info('Exiting...');
+
+  //   process.stdin.setRawMode(false);
+  //   process.stdin.pause();
+
+  //   process.exit(0);
+  // };
+
+  // process.stdin.on('data', (key: Buffer) => {
+  //   const str = key.toString();
+
+  //   if (str === CTRL_C) {
+  //     cleanup();
+  //     return;
+  //   }
+
+  //   Helpers.info(`Manual rebuild triggered...`);
+  //   rebuildOnChange.next({});
+  // });
+
+  // process.on('SIGINT', cleanup); // fallback (important)
+
+  // Helpers.info(
+  //   `Starting tsc in watch mode... Press any key to rebuild, Ctrl+C to exit...`,
+  // );
+
+  // await UtilsProcess.startAsync(
+  //   `npm-run tsc -w --preserveWatchOutput --listEmittedFiles`,
+  //   this.cwd,
+  //   {
+  //     rebuildOnChange: this.project.rebuildOnChange,
+  //     resolvePromiseMsg: {
+  //       stdout: COMPILATION_COMPLETE_TSC,
+  //     },
+  //   },
+  // );
+  //#endregion
+  // }
 }
 
 export default {

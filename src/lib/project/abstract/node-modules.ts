@@ -581,9 +581,11 @@ export class NodeModules extends BaseNodeModules {
     const lib = crossPlatformPath([
       packageInNodeModulesPath,
       libFromCompiledDist,
+      'index.js'
     ]);
     isIsomorphic =
       Helpers.exists(browser) && Helpers.exists(websql) && Helpers.exists(lib);
+
     return isIsomorphic;
     //#endregion
   }

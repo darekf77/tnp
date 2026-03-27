@@ -1,5 +1,6 @@
 //#region imports
-import { config, dotTaonFolder, LibTypeEnum } from 'tnp-core/src';
+import { Observable, Subject } from 'rxjs';
+import { chokidar, config, dotTaonFolder, LibTypeEnum } from 'tnp-core/src';
 import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
@@ -17,8 +18,14 @@ import {
   distMainProject,
   docsMainProject,
   nodeModulesMainProject,
+  packageJsonMainProject,
+  packageJsonNpmLib,
   srcMainProject,
   taonJsonMainProject,
+  tmpAllAssetsLinked,
+  tmpSourceDist,
+  tmpSrcAppDist,
+  tmpSrcAppDistWebsql,
 } from '../../constants';
 import { EnvOptions, ReleaseType } from '../../options';
 
@@ -39,9 +46,10 @@ import { TaonProjectResolve } from './project-resolve';
 import { QuickFixes } from './quick-fixes';
 import { Refactor } from './refactor';
 import type { ReleaseProcess } from './release-process';
+import { SubProject } from './sub-project';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
-import { SubProject } from './sub-project';
+import { LinuxFileWatcher } from './linux-file-watcher';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -490,6 +498,101 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     }
   }
   //#endregion
+
+  isLinuxWatchModeAllowde(): boolean {
+    //#region @backendFunc
+    if (global.linuxWatchInArgs) {
+      return true;
+    }
+    if (process.platform === 'darwin') {
+      return false;
+    }
+    if (process.platform === 'win32') {
+      return false;
+    }
+    return true;
+    //#endregion
+  }
+
+  getWatcherFor(
+    folders: string[],
+    watcherType: 'backend' | 'browser' | 'webslq',
+  ): Observable<{}> {
+    //#region @backendFunc
+    const watcher = new Subject<{}>();
+
+    const isomorphic = this.nodeModules.getIsomorphicPackagesNames();
+    // console.log({ isomorphic });
+
+    const pathsToWatch = [
+      ...folders,
+      ...isomorphic.map(p => this.nodeModules.pathFor([p, packageJsonNpmLib])),
+    ];
+
+    // console.log('Watching for changes in:', pathsToWatch);
+
+    chokidar
+      .watch(pathsToWatch, {
+        ignoreInitial: true,
+      })
+      .on('all', async (data, pathToFile) => {
+        // console.log('WATCHER CHANGE', { data, pathToFile, watcherType });
+        watcher.next({});
+      });
+    return watcher.asObservable();
+    //#endregion
+  }
+
+  get tmpSourceRebuildForBackendObs(): Observable<{}> | undefined {
+    if (!this.isLinuxWatchModeAllowde()) {
+      return;
+    }
+    const key = 'tmpSourceRebuildForBackendObs';
+    if (this.cache[key]) {
+      return this.cache[key];
+    }
+    const watcher = this.getWatcherFor(
+      [this.pathFor(tmpSourceDist)],
+      'backend',
+    );
+
+    this.cache[key] = watcher;
+    return this.cache[key];
+  }
+
+  get tmpSourceRebuildForBrowserObs(): Observable<{}> | undefined {
+    if (!this.isLinuxWatchModeAllowde()) {
+      return;
+    }
+    const key = 'tmpSourceRebuildForBrowserObs';
+    if (this.cache[key]) {
+      return this.cache[key];
+    }
+    const watcher = this.getWatcherFor(
+      [this.pathFor(tmpSrcAppDist)],
+      'browser',
+    );
+
+    this.cache[key] = watcher;
+    return this.cache[key];
+  }
+
+  get tmpSourceRebuildForWebsqlObs(): Observable<{}> | undefined {
+    if (!this.isLinuxWatchModeAllowde()) {
+      return;
+    }
+    const key = 'tmpSourceRebuildForWebsqlObs';
+    if (this.cache[key]) {
+      return this.cache[key];
+    }
+    const watcher = this.getWatcherFor(
+      [this.pathFor(tmpSrcAppDistWebsql)],
+      'webslq',
+    );
+
+    this.cache[key] = watcher;
+    return this.cache[key];
+  }
 
   protected hasValidAutoReleaseConfig(
     envOptions: EnvOptions,
