@@ -1953,6 +1953,18 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     });
   }
 
+  async notficationTest() {
+    //#region @backendFunc
+    await UtilsOs.sendNotification({
+      title: 'hello',
+      body: 'asdas',
+      subtitle: 'LOLLASLDLASLD',
+      timeoutMs: 1000,
+    });
+    this._exit();
+    //#endregion
+  }
+
   async spinner() {
     //#region @backend
     console.info('starting spinner');

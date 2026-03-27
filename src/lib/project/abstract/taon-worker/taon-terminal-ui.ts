@@ -1,7 +1,7 @@
 //#region imports
 import { URL } from 'url'; // @backend
 
-import { config, LibTypeEnum } from 'tnp-core/src';
+import { config, LibTypeEnum, UtilsEtcHosts } from 'tnp-core/src';
 import {
   Helpers,
   UtilsNetwork,
@@ -109,7 +109,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
             `,
           );
           const domains = UtilsNetwork.getEtcHostEntryByComment(
-            UtilsNetwork.SIMULATE_DOMAIN_TAG,
+            UtilsEtcHosts.SIMULATE_DOMAIN_TAG,
           );
           if (domains.length === 0) {
             await UtilsTerminal.pressAnyKeyToContinueAsync({
