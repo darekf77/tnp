@@ -1045,7 +1045,10 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       VERIFIED_BUILD_DATA,
     ]);
 
-    if (this.buildOptions.build.watch) {
+    if (
+      this.buildOptions.build.watch ||
+      (!this.buildOptions.build.watch && this.buildOptions.build.prod)
+    ) {
       Helpers.removeFileIfExists(verifyBuild);
     } else {
       if (

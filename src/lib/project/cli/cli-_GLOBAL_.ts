@@ -1953,7 +1953,7 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     });
   }
 
-  async notficationTest() {
+  async notyficationTest() {
     //#region @backendFunc
     await UtilsOs.sendNotification({
       title: 'hello',
