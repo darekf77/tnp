@@ -3,6 +3,8 @@
   "version": "v21",
 
   "dependenciesNamesForNpmLib": [
+    "node-notifier",
+    "dbus-next",
     "ora",
     "progress",
     "open",
@@ -49,6 +51,16 @@
     //   "artifactName": "npm-lib-and-cli-tool",
     //   "replaceWithNothing": true,
     // },
+    {
+      "description": "OS notyfications",
+      "isExternalFor": ["npm-lib-and-cli-tool"],
+      "packageName": "node-notifier",
+    },
+    {
+      "description": "Linux notyfications without deps",
+      "isExternalFor": ["npm-lib-and-cli-tool"],
+      "packageName": "dbus-next",
+    },
     {
       "description": "TypeScript Node.js runtime",
       // I am actually bundling ts in 'vscode-plugin'
