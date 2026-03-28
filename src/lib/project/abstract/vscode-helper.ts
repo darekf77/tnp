@@ -61,14 +61,15 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     this.currentSettingsValue['files.watcherExclude'] = {
       'local_release/**': true,
-      ...(this.project.isLinuxWatchModeAllowde()
-        ? {
-            'tmp-*/**': true,
-            '**/node_modules/**': true,
-            '**/dist/**': true,
-            '**/.git/**': true,
-          }
-        : {}),
+      // ...(this.project.isLinuxWatchModeAllowde()
+      //   ? {
+      'tmp-*/**': true,
+      '**/node_modules/**': true,
+      '**/dist/**': true,
+      '**/dist-nocutsrc/**': true,
+      // '**/.git/**': true,
+      //   }
+      // : {}),
     };
     // console.log(
     //   chalk.yellow(`Saving vscode settings.json with content:`),
