@@ -1,7 +1,7 @@
 //#region imports
 // import * as dockernode from 'dockerode';
 import { ChangeOfFile } from 'incremental-compiler/src';
-import { config } from 'tnp-core/src';
+import { config, UtilsFilesFolders, UtilsFilesFoldersSync } from 'tnp-core/src';
 import { CoreModels, crossPlatformPath, path } from 'tnp-core/src';
 import { fse } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
@@ -147,6 +147,8 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
   public writePortsToFile(): void {
     // #region @backend
     Helpers.taskStarted('Writing hosts and ports config to app.hosts ...');
+
+    //#region prepare data\
     const appHostsFile = this.project.pathFor([
       srcMainProject,
       TaonGeneratedFiles.APP_HOSTS_TS,
@@ -170,7 +172,11 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
       filesWithContexts[context.fileRelativePath].push(context.contextName);
     }
     let counter = 0;
+    const depecationMessage = `\n/** @deprecated avoid using HOST_CONFIG inside library code (src/lib/**) */\n`;
 
+    //#endregion
+
+    //#region contexts template
     const tempalte = (n?: number) => {
       return (
         `
@@ -233,10 +239,10 @@ export const FRONTEND_HOST_URL_ELECTRON${n ? `_${n}` : ''} = 'http://localhost:'
   `
       );
     };
-    const depecationMessage = `\n/** @deprecated avoid using HOST_CONFIG inside library code (src/lib/**) */\n`;
-    Helpers.writeFile(
-      appHostsFile,
-      `
+    //#endregion
+
+    //#region new data app hosts
+    const newData = `
 ${THIS_IS_GENERATED_INFO_COMMENT}
 ${'imp' + 'ort'} { APP_ID, BUILD_BASE_HREF } from '${'./lib/build-info._auto-generated_'}';
 ${migrationExported
@@ -372,9 +378,14 @@ ${contextIsInsideLibInsteadApp ? depecationMessage : `\n/** Name of context (var
 
 ${THIS_IS_GENERATED_INFO_COMMENT}
 
-      `,
-    );
-    Helpers.taskDone('Done writing ports and hosts to app.hosts.ts');
+      `;
+    //#endregion
+
+    const currentData = UtilsFilesFoldersSync.readFile(appHostsFile);
+    if (currentData?.trimEnd() !== newData.trimEnd()) {
+      UtilsFilesFoldersSync.writeFile(appHostsFile, newData);
+      Helpers.taskDone('Done writing ports and hosts to app.hosts.ts');
+    }
     //#endregion
   }
   //#endregion

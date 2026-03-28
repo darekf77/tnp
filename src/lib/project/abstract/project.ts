@@ -13,6 +13,7 @@ import {
 } from 'tnp-helpers/src';
 
 import {
+  assetsFromTempSrc,
   binMainProject,
   containerPrefix,
   distMainProject,
@@ -26,6 +27,8 @@ import {
   tmpSourceDist,
   tmpSrcAppDist,
   tmpSrcAppDistWebsql,
+  tmpSrcDist,
+  tmpSrcDistWebsql,
 } from '../../constants';
 import { EnvOptions, ReleaseType } from '../../options';
 
@@ -49,7 +52,6 @@ import type { ReleaseProcess } from './release-process';
 import { SubProject } from './sub-project';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
-import { LinuxFileWatcher } from './linux-file-watcher';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -501,8 +503,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
   isLinuxWatchModeAllowde(): boolean {
     //#region @backendFunc
-    if (global.linuxWatchInArgs) {
-      return true;
+    if (_.isBoolean(global.linuxWatchInArgs)) {
+      return global.linuxWatchInArgs;
     }
     if (process.platform === 'darwin') {
       return false;
@@ -535,9 +537,35 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       .watch(pathsToWatch, {
         ignoreInitial: true,
       })
-      .on('all', async (data, pathToFile) => {
-        // console.log('WATCHER CHANGE', { data, pathToFile, watcherType });
-        watcher.next({});
+      .on('all', async (eventWatcher, pathToFile) => {
+        const relative = crossPlatformPath(pathToFile).replace(
+          this.location + '/' + path.basename(folders[0]) + '/',
+          '',
+        );
+
+        if (watcherType === 'backend') {
+          if (!relative.startsWith(`${assetsFromTempSrc}/`)) {
+            // console.log('WATCHER CHANGE', {
+            //   eventWatcher,
+            //   pathToFile,
+            //   watcherType,
+            // });
+            watcher.next({});
+          }
+        } else {
+          if (
+            !relative.startsWith(`${assetsFromTempSrc}/`) &&
+            !relative.startsWith(`app/`) &&
+            !relative.startsWith(`app.`)
+          ) {
+            // console.log('WATCHER CHANGE', {
+            //   eventWatcher,
+            //   pathToFile,
+            //   watcherType,
+            // });
+            watcher.next({});
+          }
+        }
       });
     return watcher.asObservable();
     //#endregion
@@ -568,10 +596,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     if (this.cache[key]) {
       return this.cache[key];
     }
-    const watcher = this.getWatcherFor(
-      [this.pathFor(tmpSrcAppDist)],
-      'browser',
-    );
+    const watcher = this.getWatcherFor([this.pathFor(tmpSrcDist)], 'browser');
 
     this.cache[key] = watcher;
     return this.cache[key];
@@ -586,7 +611,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       return this.cache[key];
     }
     const watcher = this.getWatcherFor(
-      [this.pathFor(tmpSrcAppDistWebsql)],
+      [this.pathFor(tmpSrcDistWebsql)],
       'webslq',
     );
 
