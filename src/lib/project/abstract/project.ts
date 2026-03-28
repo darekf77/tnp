@@ -503,7 +503,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
   isLinuxWatchModeAllowde(): boolean {
     //#region @backendFunc
-    if (_.isBoolean(global.linuxWatchInArgs)) {
+    if (global.linuxWatchInArgs) {
       return global.linuxWatchInArgs;
     }
     if (process.platform === 'darwin') {

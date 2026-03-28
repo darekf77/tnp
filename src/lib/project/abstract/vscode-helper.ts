@@ -58,10 +58,22 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   saveCurrentSettings(): void {
     //#region @backendFunc
     // TODO QUCIK_FIX for asar that can be deleted because of vscode watcher
+
     this.currentSettingsValue['files.watcherExclude'] = {
       'local_release/**': true,
+      ...(this.project.isLinuxWatchModeAllowde()
+        ? {
+            'tmp-*/**': true,
+            '**/node_modules/**': true,
+            '**/dist/**': true,
+            '**/.git/**': true,
+          }
+        : {}),
     };
-
+    // console.log(
+    //   chalk.yellow(`Saving vscode settings.json with content:`),
+    //   this.currentSettingsValue['files.watcherExclude'],
+    // );
     super.saveCurrentSettings();
     //#endregion
   }

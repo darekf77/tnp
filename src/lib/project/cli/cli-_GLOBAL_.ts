@@ -1946,15 +1946,27 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     //#endregion
   }
 
-  async aaaaa() {
-    GlobalTaskManager.start('aaa');
-    GlobalTaskManager.addProgress('aaa');
-    GlobalTaskManager.addProgress('aaa');
-    console.info('GLOBAL COMMAND WORKS!');
-    GlobalTaskManager.stop('aaa', () => {
-      this._exit();
-    });
-  }
+  // async aaaaa() {
+  //   GlobalTaskManager.start('aaa');
+  //   GlobalTaskManager.addProgress('aaa');
+  //   GlobalTaskManager.addProgress('aaa');
+  //   console.info('GLOBAL COMMAND WORKS!');
+  //   GlobalTaskManager.stop('aaa', () => {
+  //     this._exit();
+  //   });
+  // }
+
+  // async bbbbb() {
+  //   Helpers.error(
+  //     `
+
+  //       Not able to publish to npm registry project in ${this.project.location}
+
+  //       `,
+  //     true,
+  //     true,
+  //   );
+  // }
 
   async notyficationTest() {
     //#region @backendFunc
