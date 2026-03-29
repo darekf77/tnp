@@ -71,7 +71,10 @@ export class $Link extends BaseCli {
     this._exit();
   }
 
-  _getDetectedLocalCLi() {
+  /**
+   * @returns Absolute paths for detected clis
+   */
+  _getDetectedLocalCLi(): string[] {
     const destBaseLatest = this.project.pathFor(
       `${nodeModulesMainProject}/${ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL}`,
     );
@@ -81,13 +84,17 @@ export class $Link extends BaseCli {
     });
   }
 
-  async local(pathToFolder: string) {
-    const localReleaseFolder =
-      pathToFolder ||
+  async local(absPathToFolderWithCli: string) {
+    let localReleaseFolder =
+      absPathToFolderWithCli ||
       this.firstArg ||
       `${localReleaseMainProject}/${
         ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL
-      }/${this.project.nameForCli}${suffixLatest}`;
+      }/${this.project.name}${suffixLatest}`;
+
+    if (!path.isAbsolute(localReleaseFolder)) {
+      localReleaseFolder = this.project.pathFor(localReleaseFolder);
+    }
 
     this.recreateCliBasicStructure();
 
@@ -98,10 +105,13 @@ export class $Link extends BaseCli {
     as global cli tool, please wait...
 
     `);
-    Helpers.run(`npm link`, { cwd: localReleaseFolder, output: true }).sync();
+    Helpers.run(`npm link --force`, {
+      cwd: localReleaseFolder,
+      output: true,
+    }).sync();
     Helpers.info(
       `Global link created for ` +
-        `local/repo version of ${chalk.bold(this.project.nameForCli)}`,
+        `local/repo version of ${chalk.bold(this.project.name)}`,
     );
     this._exit();
   }
