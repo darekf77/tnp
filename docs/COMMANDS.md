@@ -29,13 +29,22 @@ Supported artifacts by tnp cli:
 Single easy to remember build command
 
 ```bash 
-tnp build:lib # "ng build"  form npm lib and whole /src
-tnp bl
+tnp build:lib # Angular "ng build" form npm library code and whole /src.
+tnp bl        # This command is going to merge files in 
+              # desitnation node_modules bundle code.
+
+tnp clear:build:lib # Noraml build with clear tmp*, dist* at the beginning.
+tnp cbl             # This command is going to remove and replace files
+                    # desitnation node_modules bundle code.
+
+tnp build:lib:prod # Relase/production build (takes long time).
+tnp blp            # Production build does clear at the beginning.
 
 tnp build:watch:lib # "ng build --watch"  form npm lib and whole /src
 tnp bwl
 
 # REMEMBER: lib build command but be executed before each app/electron build
+tnp app # terminal menu
 
 tnp app:normal # "ng serve" for website apps
 tnp an
