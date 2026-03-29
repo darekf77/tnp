@@ -33,6 +33,7 @@ declare global {
              * when vscode plugin is running
              */
             tnpNonInteractive?: boolean;
+            taonBuildingFromParentName?: string;
             /**
              * When true it mean that CLI uses
              * single file version that

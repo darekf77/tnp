@@ -1,0 +1,605 @@
+//#region imports
+import { RegionRemover } from 'isomorphic-region-loader/lib-prod';
+import { MagicRenamer } from 'magic-renamer/lib-prod';
+import { TAGS, Utils__NS__escapeStringForRegEx, UtilsFilesFoldersSync__NS__writeFile } from 'tnp-core/lib-prod';
+import { crossPlatformPath, path, fse, ___NS__camelCase, ___NS__isString, ___NS__last, ___NS__startCase, ___NS__upperFirst, CoreModels__NS__ImageFileExtensionArr } from 'tnp-core/lib-prod';
+import { BasePackageJson, Helpers__NS__createSymLink, Helpers__NS__exists, Helpers__NS__filesFrom, Helpers__NS__mkdirp, Helpers__NS__readFile, Helpers__NS__readJson, Helpers__NS__remove, Helpers__NS__removeFileIfExists, Helpers__NS__writeFile, Helpers__NS__writeJson, HelpersTaon__NS__copyFile, HelpersTaon__NS__setValueToJSON, HelpersTaon__NS__setValueToJSONC } from 'tnp-helpers/lib-prod';
+import { templateFolderForArtifact } from '../../../../../app-utils';
+import { AngularJsonAppOrElectronTaskName, AngularJsonTaskName, appFromSrcInsideNgApp, assetsFromNgProj, assetsFromSrc, browserMainProject, CoreNgTemplateFiles, distMainProject, electronNgProj, externalLibsFromNgProject, generatedFromAssets, indexJSElectronDist, libFromNgProject, libFromSrc, myLibFromNgProject, ngProjectStylesScss, packageJsonNgProject, prodSuffix, projectsFromNgTemplate, pwaGeneratedFolder, sourceLinkInNodeModules, srcMainProject, srcNgProxyProject, TaonGeneratedFolders, tmp_FRONTEND_NORMAL_APP_PORT, tmp_FRONTEND_WEBSQL_APP_PORT, tmpAppsForDist, tmpAppsForDistElectron, tmpAppsForDistElectronWebsql, tmpAppsForDistWebsql, tmpSrcAppDist, tmpSrcAppDistWebsql, tmpSrcDist, tmpSrcDistWebsql, tsconfigNgProject, websqlMainProject, } from '../../../../../constants';
+import { ReleaseArtifactTaon } from '../../../../../options';
+import { InsideStruct } from '../../__helpers__/inside-structures/inside-struct';
+import { BaseInsideStruct } from '../../__helpers__/inside-structures/structs/base-inside-struct';
+import { resolvePathToAsset } from '../../__helpers__/inside-structures/structs/inside-struct-helpers';
+import { imageLoader } from '../../__helpers__/inside-structures/structs/loaders/image-loader';
+import { getLoader } from '../../__helpers__/inside-structures/structs/loaders/loaders';
+//#endregion
+export class InsideStructAngularApp extends BaseInsideStruct {
+    getCurrentArtifact() {
+        return ReleaseArtifactTaon.ANGULAR_NODE_APP;
+    }
+    get isElectron() {
+        return this.getCurrentArtifact() === ReleaseArtifactTaon.ELECTRON_APP;
+    }
+    resolveTmpProjectStandalonePath() {
+        const prodSuffixStr = this.initOptions.build.prod ? prodSuffix : '';
+        if (this.initOptions.build.websql) {
+            if (this.isElectron) {
+                return (tmpAppsForDistElectronWebsql + prodSuffixStr + `/${this.project.name}`);
+            }
+            else {
+                return tmpAppsForDistWebsql + prodSuffixStr + `/${this.project.name}`;
+            }
+        }
+        else {
+            if (this.isElectron) {
+                return tmpAppsForDistElectron + prodSuffixStr + `/${this.project.name}`;
+            }
+            else {
+                return tmpAppsForDist + prodSuffixStr + `/${this.project.name}`;
+            }
+        }
+    }
+    insideStruct() {
+        //#region @backendFunc
+        const tmpProjectsStandalone = this.resolveTmpProjectStandalonePath();
+        const templateFolderInCoreProject = templateFolderForArtifact(this.isElectron
+            ? ReleaseArtifactTaon.ELECTRON_APP
+            : ReleaseArtifactTaon.ANGULAR_NODE_APP);
+        const result = InsideStruct.from({
+            relateivePathesFromContainer: this.relativePaths(),
+            projectType: this.project.type,
+            frameworkVersion: this.project.framework.frameworkVersion,
+            pathReplacements: [
+                [
+                    new RegExp(`^${Utils__NS__escapeStringForRegEx(templateFolderInCoreProject + '/')}`),
+                    () => {
+                        return `${tmpProjectsStandalone}/`;
+                    },
+                ],
+            ],
+            linkNodeModulesTo: [`${templateFolderInCoreProject}/`],
+            linksFuncs: [
+                //#region what and where needs to linked
+                [
+                    // from this
+                    () => {
+                        let browserTsAppCode = this.initOptions.build.websql
+                            ? tmpSrcAppDistWebsql
+                            : tmpSrcAppDist;
+                        if (this.initOptions.build.prod) {
+                            browserTsAppCode = `${browserTsAppCode}${prodSuffix}`;
+                        }
+                        return browserTsAppCode;
+                    },
+                    // to this
+                    () => {
+                        const standalonePath = crossPlatformPath([
+                            templateFolderInCoreProject,
+                            srcNgProxyProject,
+                            appFromSrcInsideNgApp,
+                        ]);
+                        return standalonePath;
+                    },
+                ],
+                //#endregion
+            ],
+            endAction: async ({ replacement }) => {
+                //#region @backendFunc
+                //#region DONE - replacing ProjectName everywher
+                (() => {
+                    const magicRenameRules = `ProjectName->${___NS__upperFirst(___NS__camelCase(this.project.name))}`;
+                    // const filesToProcess = UtilsFilesFoldersSync__NS__getFilesFrom([
+                    //   project.location,
+                    //   replacement(tmpProjectsStandalone),
+                    //   srcNgProxyProject,
+                    // ]).filter(f => {
+                    //   return f.endsWith('.ts');
+                    // });
+                    const base = crossPlatformPath([
+                        this.project.location,
+                        replacement(tmpProjectsStandalone),
+                        srcNgProxyProject,
+                    ]);
+                    const filesToProcess = ['main.ts', 'main.server.ts'].map(rel => crossPlatformPath([base, rel]));
+                    for (const destinationAbsPath of filesToProcess) {
+                        // console.log({
+                        //   magicRenameRules,
+                        //   destinationAbsPath,
+                        // });
+                        let content = Helpers__NS__readFile(destinationAbsPath);
+                        const [fromReplace, toReplace] = magicRenameRules.split('->');
+                        content = content.replace(new RegExp(Utils__NS__escapeStringForRegEx(fromReplace), 'g'), toReplace);
+                        if (!this.initOptions.build.websql) {
+                            const regionsToRemove = [TAGS.WEBSQL_ONLY];
+                            content = RegionRemover.from(destinationAbsPath, content, regionsToRemove, this.project).output;
+                        }
+                        content = content.replace('<<<TO_REPLACE_CURRENT_PROJECT_GENERIC_NAME>>>', btoa(path.dirname(this.project.location)) +
+                            '___' +
+                            this.project.nameForNpmPackage);
+                        // const rules = RenameRule.from(magicRenameRules);
+                        // for (const rule of rules) {
+                        //   content = rule.replaceInString(content);
+                        // }
+                        Helpers__NS__writeFile(destinationAbsPath, content);
+                    }
+                })();
+                //#endregion
+                // @DEPRECATED - TODO only ssr pwa
+                //#region action after recreating/updating inside strcut
+                //         (() => {
+                //           [
+                //             `/${srcNgProxyProject}/${appFromSrcInsideNgApp}/app.module.ts`,
+                //           ].forEach(appModuleFileRelative => {
+                //             const appModuleFilePath = path.join(
+                //               project.location,
+                //               replacement(tmpProjectsStandalone),
+                //               appModuleFileRelative,
+                //             );
+                //             let appModuleFile = Helpers__NS__readFile(appModuleFilePath);
+                //             const moduleName =
+                //               ___NS__upperFirst(___NS__camelCase(project.name)) + 'Module';
+                //             appModuleFile = `
+                // import { ${moduleName} } from './${this.project.name}/${appFromSrcInsideNgApp}';
+                // ${appModuleFile}
+                // `;
+                //             appModuleFile = appModuleFile.replace(
+                //               '//<<<TO_REPLACE_MODULE>>>',
+                //               `${moduleName},`,
+                //             );
+                //             appModuleFile = this.replaceImportsForBrowserOrWebsql(
+                //               appModuleFile,
+                //               {
+                //                 websql: this.initOptions.build.websql,
+                //               },
+                //             );
+                //             // const enableServiceWorker =
+                //             //   !this.initOptions.build.angularSsr &&
+                //             //   this.initOptions.release.releaseType &&
+                //             //   !this.initOptions.build.pwa.disableServiceWorker;
+                //             const enableServiceWorker =
+                //               this.initOptions.release.releaseType &&
+                //               !this.initOptions.build.pwa.disableServiceWorker;
+                //             if (enableServiceWorker) {
+                //               // TODO it will colide with ng serve ?
+                //               appModuleFile = appModuleFile.replace(
+                //                 new RegExp(
+                //                   Utils__NS__escapeStringForRegEx('//distReleaseOnly'),
+                //                   'g',
+                //                 ),
+                //                 '',
+                //               );
+                //             }
+                //             Helpers__NS__writeFile(appModuleFilePath, appModuleFile);
+                //           });
+                //         })();
+                //#endregion
+                //#region DONE - replace sqljs-loader.ts - replace TO_REPLACE_BASENAME
+                (() => {
+                    const sqlJsLoadFileAbsPath = crossPlatformPath([
+                        this.project.location,
+                        replacement(tmpProjectsStandalone),
+                        srcNgProxyProject,
+                        CoreNgTemplateFiles.sqlJSLoaderTs,
+                    ]);
+                    this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.replaceBaseHrefInFile(sqlJsLoadFileAbsPath, this.initOptions);
+                    let sqlJSFileContent = Helpers__NS__readFile(sqlJsLoadFileAbsPath);
+                    sqlJSFileContent = this.replaceImportsForBrowserOrWebsql(sqlJSFileContent, {
+                        websql: this.initOptions.build.websql,
+                    });
+                    Helpers__NS__writeFile(sqlJsLoadFileAbsPath, sqlJSFileContent);
+                    // });
+                })();
+                //#endregion
+                //#region TODO - LOADERS & BACKGROUNDS REPLACEMENT
+                (() => {
+                    const frontendBaseHref = this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(this.initOptions);
+                    //#region LOADERS & BACKGROUNDS REPLACEMENT / replace app.component.html loader
+                    // (() => {
+                    //   const appModuleHtmlPath = path.join(
+                    //     project.location,
+                    //     replacement(tmpProjectsStandalone),
+                    //     `/${srcNgProxyProject}/${appFromSrcInsideNgApp}/app.component.html`,
+                    //   );
+                    //   let appHtmlFile = Helpers__NS__readFile(appModuleHtmlPath);
+                    //   const loaderData =
+                    //     this.initOptions.loading.afterAngularBootstrap.loader;
+                    //   const loaderIsImage = ___NS__isString(loaderData);
+                    //   if (loaderIsImage) {
+                    //     const pathToAsset =
+                    //       frontendBaseHref +
+                    //       resolvePathToAsset(this.project, loaderData);
+                    //     appHtmlFile = appHtmlFile.replace(
+                    //       '<!-- <<<TO_REPLACE_LOADER>>> -->',
+                    //       imageLoader(pathToAsset, false),
+                    //     );
+                    //   } else {
+                    //     const loaderToReplace = getLoader(
+                    //       loaderData?.name as any,
+                    //       loaderData?.color,
+                    //       false,
+                    //     );
+                    //     appHtmlFile = appHtmlFile.replace(
+                    //       '<!-- <<<TO_REPLACE_LOADER>>> -->',
+                    //       loaderToReplace,
+                    //     );
+                    //   }
+                    //   Helpers__NS__writeFile(appModuleHtmlPath, appHtmlFile);
+                    // })();
+                    //#endregion
+                    //#region LOADERS & BACKGROUNDS REPLACEMENT / replace app.component.ts body  background color
+                    // (() => {
+                    //   const appComponentAbsFilePath = path.join(
+                    //     project.location,
+                    //     replacement(tmpProjectsStandalone),
+                    //     `/${srcNgProxyProject}/${appFromSrcInsideNgApp}/app.component.ts`,
+                    //   );
+                    //   let appComponentFileContent = Helpers__NS__readFile(
+                    //     appComponentAbsFilePath,
+                    //   );
+                    //   const bgColor =
+                    //     this.initOptions.loading.afterAngularBootstrap.background;
+                    //   appComponentFileContent = appComponentFileContent.replace(
+                    //     'TAON_TO_REPLACE_COLOR',
+                    //     bgColor || '',
+                    //   );
+                    //   Helpers__NS__writeFile(
+                    //     appComponentAbsFilePath,
+                    //     appComponentFileContent,
+                    //   );
+                    // })();
+                    //#endregion
+                    //#region LOADERS & BACKGROUNDS REPLACEMENT / replace index.html body background color & loader
+                    (() => {
+                        const appModuleFilePath = path.join(this.project.location, replacement(tmpProjectsStandalone), `/${srcNgProxyProject}/${CoreNgTemplateFiles.INDEX_HTML_NG_APP}`);
+                        let indexHtmlFile = Helpers__NS__readFile(appModuleFilePath);
+                        const loaderData = this.initOptions.loading.preAngularBootstrap.loader;
+                        const loaderIsImage = ___NS__isString(loaderData);
+                        if (loaderIsImage) {
+                            const pathToAsset = frontendBaseHref +
+                                resolvePathToAsset(this.project, loaderData);
+                            indexHtmlFile = indexHtmlFile.replace('<!-- <<<TO_REPLACE_LOADER>>> -->', imageLoader(pathToAsset, true));
+                        }
+                        else {
+                            if (loaderData?.name) {
+                                const loaderToReplace = getLoader(loaderData?.name, loaderData?.color);
+                                indexHtmlFile = indexHtmlFile.replace('<!-- <<<TO_REPLACE_LOADER>>> -->', loaderToReplace);
+                            }
+                        }
+                        const bgColor = this.initOptions.loading.preAngularBootstrap.background;
+                        const bgColorStyle = bgColor
+                            ? `style="background-color: ${bgColor};"`
+                            : '';
+                        indexHtmlFile = indexHtmlFile.replace('TAON_TO_REPLACE_COLOR', bgColorStyle || '');
+                        Helpers__NS__writeFile(appModuleFilePath, indexHtmlFile);
+                    })();
+                    //#endregion
+                })();
+                //#endregion
+                //#region DONE -  replace app.component.html
+                (() => {
+                    const indexHtmlFilePath = crossPlatformPath([
+                        this.project.location,
+                        replacement(tmpProjectsStandalone),
+                        srcNgProxyProject,
+                        CoreNgTemplateFiles.INDEX_HTML_NG_APP,
+                    ]);
+                    let indexHtmlFile = Helpers__NS__readFile(indexHtmlFilePath);
+                    const title = this.initOptions.website.title;
+                    const titleToReplace = title
+                        ? title
+                        : ___NS__startCase(this.project.name);
+                    // console.log({
+                    //   titleToReplace
+                    // })
+                    indexHtmlFile = indexHtmlFile.replace('<title>App</title>', `<title>${titleToReplace}</title>`);
+                    Helpers__NS__writeFile(indexHtmlFilePath, indexHtmlFile);
+                })();
+                //#endregion
+                //#region DONE - replace style.scss
+                (() => {
+                    const stylesFilePath = crossPlatformPath([
+                        this.project.location,
+                        replacement(tmpProjectsStandalone),
+                        srcNgProxyProject,
+                        ngProjectStylesScss,
+                    ]);
+                    this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.replaceBaseHrefInFile(stylesFilePath, this.initOptions);
+                })();
+                //#endregion
+                //#region TODO (what I am doing here) .. replace favicon.ico
+                (() => {
+                    const source = this.project.pathFor(`${srcMainProject}/${assetsFromSrc}/${generatedFromAssets}` +
+                        `/${pwaGeneratedFolder}/${CoreNgTemplateFiles.FAVICON_ICO}`);
+                    const faviconPathDest = crossPlatformPath([
+                        this.project.location,
+                        replacement(tmpProjectsStandalone),
+                        srcNgProxyProject,
+                        CoreNgTemplateFiles.FAVICON_ICO,
+                    ]);
+                    if (Helpers__NS__exists(source)) {
+                        HelpersTaon__NS__copyFile(source, faviconPathDest);
+                    }
+                })();
+                //#endregion
+                //#region link assets DONE
+                (() => {
+                    let browserTsCode = this.initOptions.build.websql
+                        ? tmpSrcDistWebsql
+                        : tmpSrcDist;
+                    if (this.initOptions.build.prod) {
+                        browserTsCode = `${browserTsCode}${prodSuffix}`;
+                    }
+                    const assetsSource = this.project.pathFor([
+                        replacement(browserTsCode),
+                        assetsFromSrc,
+                    ]);
+                    if (!Helpers__NS__exists(assetsSource)) {
+                        Helpers__NS__mkdirp(assetsSource);
+                    }
+                    const assetsDest = crossPlatformPath([
+                        this.project.location,
+                        replacement(tmpProjectsStandalone),
+                        srcNgProxyProject,
+                        assetsFromNgProj,
+                    ]);
+                    Helpers__NS__remove(assetsDest);
+                    Helpers__NS__createSymLink(assetsSource, assetsDest);
+                })();
+                //#endregion
+                if (this.isElectron) {
+                    //#region electron DONE
+                    (() => {
+                        const electronBackend = this.project.pathFor(replacement(distMainProject));
+                        if (!Helpers__NS__exists(electronBackend)) {
+                            Helpers__NS__mkdirp(electronBackend);
+                        }
+                        const compileTs = crossPlatformPath([
+                            this.project.location,
+                            replacement(tmpProjectsStandalone),
+                            electronNgProj,
+                            TaonGeneratedFolders.COMPILED,
+                        ]);
+                        try {
+                            fse.unlinkSync(compileTs);
+                        }
+                        catch (error) {
+                            Helpers__NS__remove(compileTs);
+                        }
+                        Helpers__NS__createSymLink(electronBackend, compileTs);
+                        const packageJson = new BasePackageJson({
+                            cwd: crossPlatformPath(path.join(this.project.location, replacement(tmpProjectsStandalone), `/${packageJsonNgProject}`)),
+                        });
+                        packageJson.setName(this.project.name);
+                        if (this.initOptions.release.releaseType) {
+                            packageJson.setMainProperty(`${electronNgProj}/${indexJSElectronDist}`);
+                        }
+                        packageJson.setVersion(this.project.packageJson.version);
+                    })();
+                    //#endregion
+                }
+                const disablePwa = this.isElectron ||
+                    !this.initOptions.build.pwa ||
+                    this.initOptions.build.pwa.disableServiceWorker;
+                if (disablePwa) {
+                    (() => {
+                        const appModuleFilePath = crossPlatformPath([
+                            this.project.location,
+                            replacement(tmpProjectsStandalone),
+                            srcNgProxyProject,
+                            CoreNgTemplateFiles.INDEX_HTML_NG_APP,
+                        ]);
+                        let indexHtmlFile = Helpers__NS__readFile(appModuleFilePath);
+                        indexHtmlFile = indexHtmlFile.replace('<link rel="manifest" href="manifest.webmanifest">', '');
+                        Helpers__NS__writeFile(appModuleFilePath, indexHtmlFile);
+                    })();
+                    //#region disable pwa in angular json
+                    (() => {
+                        const angularJsonPath = crossPlatformPath([
+                            this.project.location,
+                            replacement(tmpProjectsStandalone),
+                            CoreNgTemplateFiles.ANGULAR_JSON,
+                        ]);
+                        // projects.app.architect.build.configurations["production-static"].serviceWorker
+                        // projects.app.architect.build.configurations.production.serviceWorker
+                        HelpersTaon__NS__setValueToJSON(angularJsonPath, `projects.${this.isElectron
+                            ? AngularJsonTaskName.ELECTRON_APP
+                            : AngularJsonTaskName.ANGULAR_APP}.architect.build.configurations[${AngularJsonAppOrElectronTaskName.productionSsr}].serviceWorker`, void 0);
+                        HelpersTaon__NS__setValueToJSON(angularJsonPath, `projects.${this.isElectron
+                            ? AngularJsonTaskName.ELECTRON_APP
+                            : AngularJsonTaskName.ANGULAR_APP}.architect.build.configurations[${AngularJsonAppOrElectronTaskName.productionStatic}].serviceWorker`, void 0);
+                    })();
+                    //#endregion
+                }
+                //#region DONE rebuild manifest + index.html
+                await (async () => {
+                    const manifestJsonPath = crossPlatformPath([
+                        this.project.location,
+                        replacement(tmpProjectsStandalone),
+                        srcNgProxyProject,
+                        CoreNgTemplateFiles.WEBMANIFEST_JSON,
+                    ]);
+                    if (disablePwa) {
+                        Helpers__NS__removeFileIfExists(manifestJsonPath);
+                        return;
+                    }
+                    const indexHtmlPath = crossPlatformPath([
+                        this.project.location,
+                        replacement(tmpProjectsStandalone),
+                        srcNgProxyProject,
+                        CoreNgTemplateFiles.INDEX_HTML_NG_APP,
+                    ]);
+                    const manifestJson = Helpers__NS__readJson(manifestJsonPath, {}, true);
+                    let indexHtml = Helpers__NS__readFile(indexHtmlPath);
+                    manifestJson.name =
+                        this.initOptions.build.pwa.name || ___NS__startCase(this.project.name);
+                    manifestJson.short_name =
+                        this.initOptions.build.pwa.short_name || this.project.name;
+                    const assetsPath = this.project.pathFor([
+                        srcMainProject,
+                        assetsFromSrc,
+                    ]);
+                    if (this.project.artifactsManager.globalHelper.branding.exist) {
+                        // apply pwa generated icons
+                        manifestJson.icons =
+                            this.project.artifactsManager.globalHelper.branding.iconsToAdd;
+                        indexHtml = indexHtml.replace(`<link rel="icon" type="image/x-icon" href="favicon.ico">`, '');
+                        indexHtml = indexHtml.replace(this.project.artifactsManager.globalHelper.branding
+                            .htmlIndexRepaceTag, this.project.artifactsManager.globalHelper.branding.htmlLinesToAdd.join('\n'));
+                        indexHtml = indexHtml.replace(`<link rel="icon" type="image/x-icon" href="/`, `<link rel="icon" type="image/x-icon" href="`);
+                    }
+                    else {
+                        // apply default icons
+                        const iconsPath = crossPlatformPath(path.join(assetsPath, 'icons'));
+                        const iconsFilesPathes = Helpers__NS__filesFrom(iconsPath).filter(f => {
+                            return CoreModels__NS__ImageFileExtensionArr.includes(path.extname(f).replace('.', ''));
+                        }); // glob.sync(`${iconsPath}/**/*.(png|jpeg|svg)`);
+                        manifestJson.icons = iconsFilesPathes.map(f => {
+                            return {
+                                src: f.replace(`${path.dirname(assetsPath)}/`, ''),
+                                sizes: ___NS__last(path.basename(f).replace(path.extname(f), '').split('-')),
+                                type: `image/${path.extname(f).replace('.', '')}`,
+                                purpose: 'maskable any',
+                            };
+                        });
+                    }
+                    manifestJson.icons = manifestJson.icons.map(c => {
+                        c.src = c.src.replace(/^\//, '');
+                        return c;
+                    });
+                    if (this.initOptions.build.watch) {
+                        const project = this.project;
+                        if (this.initOptions.build.websql) {
+                            const websqlAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_WEBSQL_APP_PORT + '_1')}`;
+                            manifestJson.start_url = websqlAppUrl;
+                        }
+                        else {
+                            const normalAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_NORMAL_APP_PORT + '_1')}`;
+                            manifestJson.start_url = normalAppUrl;
+                        }
+                    }
+                    else {
+                        if (this.initOptions.build.pwa.start_url) {
+                            manifestJson.start_url = this.initOptions.build.pwa.start_url;
+                        }
+                        else if (this.initOptions.website.useDomain) {
+                            manifestJson.start_url = `https://${this.initOptions.website.domain}/`;
+                        }
+                        else {
+                            manifestJson.start_url = `/${this.project.name}/`; // perfect for github.io OR when subdomain myproject.com/docs/
+                        }
+                    }
+                    Helpers__NS__writeJson(manifestJsonPath, manifestJson);
+                    Helpers__NS__writeFile(indexHtmlPath, indexHtml);
+                })();
+                //#endregion
+                //#region DONE replace base href
+                (() => {
+                    const angularJsonPath = crossPlatformPath([
+                        this.project.location,
+                        replacement(tmpProjectsStandalone),
+                        CoreNgTemplateFiles.ANGULAR_JSON,
+                    ]);
+                    HelpersTaon__NS__setValueToJSON(angularJsonPath, // TODO @LAST is here angular electron task needed ?
+                    `projects.${
+                    // this.isElectron
+                    // ? AngularJsonTaskName.ELECTRON_APP // TODO probably not need for now
+                    // :
+                    AngularJsonTaskName.ANGULAR_APP}.architect.build.options.baseHref`, this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(this.initOptions));
+                })();
+                //#endregion
+                //#region recreate node_moduels libs for ng serve
+                await (async () => {
+                    if (!this.initOptions.build.watch) {
+                        return;
+                    }
+                    // console.log('checking folders');
+                    // const isomorphicPackages =
+                    //   this.project.nodeModules.getIsomorphicPackagesNames();
+                    // console.log(isomorphicPackages);
+                    // 1. recreate projects/in-dev-packages-lib
+                    const isomorphicPackagesDevMode = this.project.nodeModules.getIsomorphicPackagesNamesInDevMode();
+                    // console.log(isomorphicPackagesDevMode);
+                    const tsconfigPath = crossPlatformPath([
+                        this.project.location,
+                        replacement(tmpProjectsStandalone),
+                        tsconfigNgProject,
+                    ]);
+                    const existedMyLib = crossPlatformPath([
+                        this.project.location,
+                        replacement(tmpProjectsStandalone),
+                        projectsFromNgTemplate,
+                        myLibFromNgProject,
+                    ]);
+                    const ins = MagicRenamer.Instance(existedMyLib, true);
+                    const rule = `${myLibFromNgProject} => ${externalLibsFromNgProject}`;
+                    ins.start(rule, []);
+                    // 2. link src to in-dev-packages-lib
+                    for (let index = 0; index < isomorphicPackagesDevMode.length; index++) {
+                        const packageName = isomorphicPackagesDevMode[index];
+                        const packageSource = this.project.nodeModules.pathFor([
+                            packageName,
+                            sourceLinkInNodeModules,
+                        ]);
+                        const packageSourceRealPath = crossPlatformPath(fse.realpathSync(packageSource));
+                        const projFromSrouce = this.project.ins.From(path.dirname(path.dirname(packageSourceRealPath)));
+                        if (projFromSrouce) {
+                            //#region link lib
+                            (() => {
+                                const sourceLibInProjects = projFromSrouce.pathFor([
+                                    (this.initOptions.build.websql
+                                        ? tmpSrcAppDistWebsql
+                                        : tmpSrcAppDist) +
+                                        (this.initOptions.build.prod ? prodSuffix : ''),
+                                    libFromNgProject,
+                                ]);
+                                const destinationLibInPorjects = crossPlatformPath([
+                                    this.project.location,
+                                    replacement(tmpProjectsStandalone),
+                                    projectsFromNgTemplate,
+                                    externalLibsFromNgProject,
+                                    srcNgProxyProject,
+                                    libFromNgProject,
+                                    projFromSrouce.nameForNpmPackage,
+                                    libFromSrc,
+                                ]);
+                                Helpers__NS__createSymLink(sourceLibInProjects, destinationLibInPorjects, {
+                                    continueWhenExistedFolderDoesntExists: true,
+                                });
+                            })();
+                            //#endregion
+                            HelpersTaon__NS__setValueToJSONC(tsconfigPath, `compilerOptions.paths['${projFromSrouce.nameForNpmPackage}/${this.initOptions.build.websql
+                                ? websqlMainProject
+                                : browserMainProject}']`, [
+                                crossPlatformPath([
+                                    projectsFromNgTemplate,
+                                    externalLibsFromNgProject,
+                                    srcNgProxyProject,
+                                    libFromNgProject,
+                                    projFromSrouce.nameForNpmPackage,
+                                    libFromSrc,
+                                ]),
+                            ]);
+                        }
+                        UtilsFilesFoldersSync__NS__writeFile([
+                            this.project.location,
+                            replacement(tmpProjectsStandalone),
+                            projectsFromNgTemplate,
+                            externalLibsFromNgProject,
+                            srcNgProxyProject,
+                            libFromNgProject,
+                            `${externalLibsFromNgProject}.ts`,
+                        ], `// @ts-nocheck
+${isomorphicPackagesDevMode.map(packageName => `export * from './${packageName}/${libFromSrc}';`).join('\n')}
+
+              `);
+                    }
+                })();
+                //#endregion
+                //#endregion
+            },
+        }, this.project);
+        return result;
+        //#endregion
+    }
+}
+//# sourceMappingURL=c:/Users/darek/projects/npm/taon-dev/tnp/dist/lib-prod/project/abstract/artifacts/angular-node-app/tools/inside-struct-angular-app.js.map

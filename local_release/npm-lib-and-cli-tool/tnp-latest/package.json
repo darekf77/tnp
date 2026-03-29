@@ -1,7 +1,26 @@
 {
   "name": "tnp",
-  "version": "21.0.41",
-  "scripts": {},
+  "version": "21.0.160",
+  "scripts": {
+    "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
+    "taon init": "taon init",
+    "taon start": "taon start",
+    "taon build:lib": "taon build:lib",
+    "taon build:watch:lib": "taon build:watch:lib",
+    "taon build:watch:app": "taon build:watch:app",
+    "taon build:watch:electron": "taon build:watch:electron",
+    "taon docs": "taon docs",
+    "taon docs:watch": "taon docs:watch",
+    "taon clear": "taon clear",
+    "taon release": "taon release",
+    "taon release:auto": "taon release:auto",
+    "taon release:install:locally": "taon release:install:locally",
+    "taon migration:create": "taon migration:create",
+    "taon migration:run": "taon migration:run",
+    "taon migration:revert": "taon migration:revert",
+    "taon vscode:temp:show": "taon vscode:temp:show",
+    "taon vscode:temp:hide": "taon vscode:temp:hide"
+  },
   "license": "MIT",
   "author": "Dariusz Filipiak",
   "private": false,
@@ -25,6 +44,8 @@
     }
   },
   "dependencies": {
+    "node-notifier": "~10.0.1",
+    "dbus-next": "0.10.2",
     "ora": "3.4.0",
     "progress": "2.0.3",
     "open": "7.2.1",
@@ -48,6 +69,7 @@
     "tnp-debug-brk": "bin/tnp-debug-brk"
   },
   "peerDependencies": {},
+  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/darekf77/tnp.git"

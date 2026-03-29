@@ -1,0 +1,461 @@
+//#region imports
+import { config, fileName, LibTypeEnum, taonPackageName, UtilsFilesFoldersSync__NS__getFoldersFrom } from 'tnp-core/lib-prod';
+import { path, crossPlatformPath, fse, PROGRESS_DATA, dateformat } from 'tnp-core/lib-prod';
+import { ___NS__isArray } from 'tnp-core/lib-prod';
+import { BaseNodeModules, Helpers__NS__createSymLink, Helpers__NS__exists, Helpers__NS__foldersFrom, Helpers__NS__info, Helpers__NS__isExistedSymlink, Helpers__NS__log, Helpers__NS__logInfo, Helpers__NS__remove, Helpers__NS__removeFileIfExists, Helpers__NS__removeFolderIfExists, Helpers__NS__writeFile, HelpersTaon__NS__move } from 'tnp-helpers/lib-prod';
+import { assetsFromNgProj, binMainProject, browserMainProject, dotGitIgnoreMainProject, dotInstallDate, dotNpmIgnoreMainProject, dotNpmrcMainProject, libFromCompiledDist, notAllowedAsPacakge, packageJsonLockMainProject, packageJsonMainProject, packageJsonNpmLibAngular, skipCoreCheck, sourceLinkInNodeModules, srcDtsFromNpmPackage, taonJsonMainProject, websqlMainProject, yarnLockMainProject, } from '../../constants';
+//#endregion
+// @ts-ignore TODO weird inheritance problem
+export class NodeModules extends BaseNodeModules {
+    project;
+    npmHelpers;
+    constructor(project, npmHelpers) {
+        super(project.location, 
+        // @ts-ignore TODO weird inheritance problem
+        npmHelpers);
+        this.project = project;
+        this.npmHelpers = npmHelpers;
+    }
+    /**
+     * TODO use this when async not available
+     */
+    reinstallSync() {
+        //#region @backendFunc
+        // TODO in future - check if node_modules are empty
+        // the problem is that I don't wanna check each time I am acessing core container
+        if (this.project.nodeModules.empty) {
+            this.project
+                .run(`${config.frameworkName} reinstall ${skipCoreCheck}`)
+                .sync();
+        }
+        //#endregion
+    }
+    //#region has package installed
+    hasPackageInstalled(packageName) {
+        //#region @backendFunc
+        const packagePath = crossPlatformPath([
+            this.path,
+            ...packageName.split('/'),
+            fileName.package_json,
+        ]);
+        return Helpers__NS__exists(packagePath);
+        //#endregion
+    }
+    //#region reinstall
+    /**
+     * OVERRIDDEN METHOD for taon use case
+     */
+    async reinstall(options) {
+        //#region @backendFunc
+        options = options || {};
+        if (this.project.framework.isContainer &&
+            !this.project.framework.isContainerCoreProject) {
+            Helpers__NS__log(`No need for package installation in normal container`);
+            return;
+        }
+        if (!global.globalSystemToolMode) {
+            return;
+        }
+        if (global.tnpNonInteractive) {
+            PROGRESS_DATA.log({
+                msg: `${this.npmHelpers.useLinkAsNodeModules ? 'SMART ' : ''} ` +
+                    `npm installation for "${this.project.genericName}" started..`,
+            });
+        }
+        Helpers__NS__log(`Packages full installation for ${this.project.genericName}`);
+        if (this.npmHelpers.useLinkAsNodeModules) {
+            await this.project.nodeModules.linkFromCoreContainer();
+        }
+        else {
+            //#region display message about long process for core container
+            if (config.frameworkName === taonPackageName &&
+                this.project.framework.isContainerCoreProject) {
+                Helpers__NS__info(`
+      [${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}]
+      This may take a long time (usually 10-15min on 0.5Gb/s internet connection)...
+      more than 1GB to download from npm...
+      `);
+            }
+            //#endregion
+            // TODO UNCOMMENT WHEN REALLY GOOD PACKGES CLOUD DEPLOYMENT
+            // options.generateYarnOrPackageJsonLock = true;
+            // options.removeYarnOrPackageJsonLock = false;
+            // options.skipRemovingNodeModules = true;
+            await super.reinstall(options);
+            //#region after npm install taon things
+            // TODO not a good idea
+            // this.project.quickFixes.unpackNodeModulesPackagesZipReplacements();
+            this.project.quickFixes.createDummyEmptyLibsReplacements([]); // TODO
+            this.project.quickFixes.removeBadTypesInNodeModules();
+            await this.project.packagesRecognition.start('after npm install');
+            if (!options.generateYarnOrPackageJsonLock) {
+                if (options.useYarn) {
+                    const yarnLockPath = this.project.pathFor(yarnLockMainProject);
+                    const yarnLockExists = fse.existsSync(yarnLockPath);
+                    if (yarnLockExists) {
+                        if (this.project.git.isInsideGitRepo) {
+                            this.project.git.resetFiles(yarnLockMainProject);
+                        }
+                    }
+                    else {
+                        fse.existsSync(yarnLockPath) &&
+                            Helpers__NS__removeFileIfExists(yarnLockPath);
+                    }
+                }
+                else {
+                    const packageLockPath = this.project.pathFor(packageJsonLockMainProject);
+                    fse.existsSync(packageLockPath) &&
+                        Helpers__NS__removeFileIfExists(packageLockPath);
+                }
+            }
+            Helpers__NS__writeFile([this.project.nodeModules.path, dotInstallDate], `[${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}]`);
+            if (this.project.nodeModules.shouldDedupePackages) {
+                this.project.nodeModules.dedupe();
+            }
+            // TODO QUICK FIX in version 19 fix all d.ts
+            this.project.quickFixes.excludeNodeModulesDtsFromTypescriptCheck([
+                this.project.nodeModules.pathFor('@types/glob/index.d.ts'),
+                this.project.nodeModules.pathFor('@types/lodash-es/debounce.d.ts'),
+                this.project.nodeModules.pathFor('chokidar/types/index.d.ts'),
+                this.project.nodeModules.pathFor('@angular/core/types/_discovery-chunk.d.ts'),
+                this.project.nodeModules.pathFor('@types/node/process.d.ts'),
+                this.project.nodeModules.pathFor('electron/electron.d.ts'),
+                this.project.nodeModules.pathFor('@angular/platform-browser/types/platform-browser.d.ts'),
+                this.project.nodeModules.pathFor('undici/types/formdata.d.ts'),
+                this.project.nodeModules.pathFor('@sweetalert2/ngx-sweetalert2/index.d.ts'),
+            ]);
+            this.project.quickFixes.fixSQLLiteModuleInNodeModules();
+            //#endregion
+        }
+        if (global.tnpNonInteractive) {
+            PROGRESS_DATA.log({ msg: `npm installation finish ok` });
+        }
+        //#endregion
+    }
+    //#endregion
+    //#region link from core container
+    async linkFromCoreContainer() {
+        //#region @backendFunc
+        const coreContainer = this.project.ins.by(LibTypeEnum.CONTAINER, this.project.framework.frameworkVersion);
+        if (this.project.location === coreContainer.location) {
+            Helpers__NS__logInfo(`Reinstalling node_modules for core container ${coreContainer.name}`);
+            await coreContainer.nodeModules.makeSureInstalled();
+            return;
+        }
+        // console.log(
+        //   `Linking from core container ${coreContainer.name} ${this.project.genericName}`,
+        // );
+        await coreContainer.nodeModules.makeSureInstalled();
+        //#region respect other proper core container linked node_modules
+        if (taonPackageName === config.frameworkName) {
+            try {
+                const realpathCCfromCurrentProj = fse.realpathSync(this.project.nodeModules.path);
+                const pathCCfromCurrentProj = crossPlatformPath(path.dirname(realpathCCfromCurrentProj));
+                const coreContainerFromNodeModules = this.project.ins.From(pathCCfromCurrentProj);
+                const isCoreContainer = coreContainerFromNodeModules?.framework.isCoreProject &&
+                    coreContainerFromNodeModules?.framework.isContainer &&
+                    coreContainerFromNodeModules.framework.frameworkVersionEquals(this.project.framework.frameworkVersion);
+                // console.log({
+                //   realpathCCfromCurrentProj,
+                //   pathCCfromCurrentProj,
+                //   isCoreContainer,
+                // });
+                if (isCoreContainer) {
+                    return;
+                }
+            }
+            catch (error) { }
+        }
+        //#endregion
+        try {
+            fse.unlinkSync(this.project.nodeModules.path);
+        }
+        catch (error) {
+            Helpers__NS__remove(this.project.nodeModules.path);
+        }
+        try {
+            if (Helpers__NS__exists(this.project.nodeModules.path)) {
+                Helpers__NS__removeFolderIfExists(this.project.nodeModules.path);
+            }
+        }
+        catch (error) { }
+        Helpers__NS__createSymLink(coreContainer.nodeModules.path, this.project.nodeModules.path);
+        // Helpers__NS__taskDone(
+        //   `Linking from core container ${coreContainer.name} ${this.project.genericName}`,
+        // );
+        //#endregion
+    }
+    //#endregion
+    //#region should dedupe packages
+    get shouldDedupePackages() {
+        if (this.project.framework.isContainer &&
+            !this.project.framework.isCoreProject) {
+            return false;
+        }
+        return (!this.project.npmHelpers.useLinkAsNodeModules &&
+            !this.project.nodeModules.isLink);
+    }
+    //#endregion
+    //#region compiled project files and folder
+    /**
+     * BIG TODO Organization project when compiled in dist folder
+     * should store backend files in lib folder
+     */
+    get compiledProjectFilesAndFolders() {
+        //#region @backendFunc
+        const jsDtsMapsArr = ['.js', '.js.map', '.d.ts'];
+        if (this.project.framework.isStandaloneProject) {
+            return [
+                binMainProject,
+                libFromCompiledDist,
+                assetsFromNgProj,
+                websqlMainProject,
+                browserMainProject,
+                taonJsonMainProject,
+                fileName.tnpEnvironment_json,
+                dotGitIgnoreMainProject,
+                dotNpmIgnoreMainProject,
+                dotNpmrcMainProject,
+                srcDtsFromNpmPackage,
+                ...this.project.taonJson.resources,
+                packageJsonMainProject,
+                packageJsonLockMainProject,
+                ...jsDtsMapsArr.reduce((a, b) => {
+                    return a.concat([
+                        ...['cli', 'index', 'start', 'run', 'global-typings'].map(aa => `${aa}${b}`),
+                    ]);
+                }, []),
+            ];
+        }
+        return [];
+        //#endregion
+    }
+    //#endregion
+    //#region dedupe
+    dedupe(selectedPackages, fake = false) {
+        //#region @backendFunc
+        const packages = (___NS__isArray(selectedPackages) && selectedPackages.length >= 1
+            ? selectedPackages
+            : this.packagesToDedupe);
+        this.dedupePackages(packages, false, fake);
+        //#endregion
+    }
+    //#endregion
+    //#region dedupe count
+    dedupeCount(selectedPackages) {
+        //#region @backendFunc
+        const packages = (___NS__isArray(selectedPackages) && selectedPackages.length >= 1
+            ? selectedPackages
+            : this.packagesToDedupe);
+        this.dedupePackages(packages, true);
+        //#endregion
+    }
+    //#endregion
+    //#region packages to dedupe
+    get packagesToDedupe() {
+        return [
+            'tnp-models', // TODO remove
+            'tnp-helpers',
+            'tnp-db', // TODO remove
+            'tnp-core',
+            'tnp-cli', // TODO remove
+            'tnp-config', // TODO remove
+            'tnp-tools', // TODO remove
+            'taon',
+            'taon-ui',
+            'taon-typeorm',
+            'taon-storage',
+            // "better-sqlite3",
+            // "any-project-cli",
+            'node-cli-test',
+            'fs-extra',
+            '@types/fs-extra',
+            'ng2-rest',
+            'ng2-logger',
+            'json10',
+            'lodash-walk-object',
+            'typescript-class-helpers',
+            'background-worker-process',
+            '@ngtools/webpack',
+            'portfinder',
+            'socket.io-client',
+            'socket.io',
+            'incremental-compiler',
+            'rxjs',
+            'webpack',
+            'webpack-dev-server',
+            '@angular/animations',
+            '@angular/cdk',
+            '@angular/common',
+            '@angular/compiler',
+            '@angular/http',
+            '@angular/core',
+            '@angular/forms',
+            '@angular/material',
+            '@angular/platform-browser',
+            '@angular/platform-browser-dynamic',
+            '@angular/pwa',
+            '@angular/platform-server',
+            '@angular/ssr',
+            '@angular/router',
+            '@angular/service-worker',
+            'zone.js',
+            'typescript',
+            'hammerjs',
+            'tslib',
+            '@angular-devkit/build-optimizer',
+            '@angular-devkit/build-angular',
+            '@angular-devkit/schematics',
+            '@angular-devkit/build-webpack',
+            '@angular/cli',
+            '@angular/compiler-cli',
+            '@angular-builders/custom-webpack',
+            '@angular/language-service',
+            'ts-node',
+            'tslint',
+            'prettier',
+            '@types/node',
+            'record-replay-req-res-scenario',
+            // [
+            //   'core-js',
+            //   '!babel-register',
+            //   '!babel-runtime',
+            //   '!babel-polyfill',
+            //   '@jimp*',
+            // ],
+            {
+                package: 'core-js',
+                excludeFrom: ['babel-register', 'babel-runtime', 'babel-polyfill'],
+                includeOnlyIn: ['@jimp'],
+            },
+            'core-js-compat',
+            '@ngx-formly/bootstrap',
+            '@ngx-formly/core',
+            '@ngx-formly/ionic',
+            '@ngx-formly/material',
+            'sql.js',
+            'axios',
+            'mocha',
+            'jest',
+            'chai',
+            'vpn-split',
+        ];
+    }
+    //#endregion
+    //#region remove tnp from itself
+    /**
+     * Remove already compiled package from node_modules
+     * in project with the same name
+     *
+     * let say we have project "my-project" and we want to remove
+     * "my-project" from node_modules of "my-project"
+     *
+     * This helper is helpful when we want to minified whole library
+     * into single file (using ncc)
+     */
+    async removeOwnPackage(actionwhenNotInNodeModules) {
+        //#region @backendFunc
+        const nodeModulesPath = this.project.nodeModules.path;
+        if (Helpers__NS__exists(nodeModulesPath)) {
+            const folderToMove = crossPlatformPath([
+                crossPlatformPath(fse.realpathSync(nodeModulesPath)),
+                this.project.name,
+            ]);
+            const folderTemp = crossPlatformPath([
+                crossPlatformPath(fse.realpathSync(nodeModulesPath)),
+                `temp-location-${this.project.name}`,
+            ]);
+            HelpersTaon__NS__move(folderToMove, folderTemp, {
+                purpose: `Moving own "${this.project.nameForNpmPackage}" package to temp location`,
+            });
+            await actionwhenNotInNodeModules();
+            HelpersTaon__NS__move(folderTemp, folderToMove, {
+                purpose: `Restoring own "${this.project.nameForNpmPackage}" package after action`,
+            });
+        }
+        //#endregion
+    }
+    //#endregion
+    getIsomorphicPackagesNames() {
+        //#region @backendFunc
+        return this.getAllPackagesNames().filter(packageName => this.checkIsomorphic(packageName));
+        //#endregion
+    }
+    getIsomorphicPackagesNamesInDevMode() {
+        //#region @backendFunc
+        return this.getAllPackagesNames().filter(packageName => this.checkIsomorphic(packageName) && this.checkIfInDevMode(packageName));
+        //#endregion
+    }
+    //#region get folders with packages
+    getAllPackagesNames = (options) => {
+        //#region @backendFunc
+        options = options || {};
+        const followSymlinks = !!options.followSymlinks;
+        let fromNodeModulesFolderSearch = UtilsFilesFoldersSync__NS__getFoldersFrom(this.path, {
+            recursive: false,
+            followSymlinks,
+        })
+            .reduce((a, b) => {
+            if (path.basename(b).startsWith('@')) {
+                const foldersFromB = Helpers__NS__foldersFrom(b)
+                    .filter(f => !notAllowedAsPacakge.includes(path.basename(f)))
+                    // .filter(f => Helpers__NS__exists([path.dirname(f), fileName.index_d_ts])) // QUICK_FIX @angular/animation
+                    .map(f => {
+                    return `${path.basename(b)}/${path.basename(f)}`;
+                });
+                return [...a, ...foldersFromB];
+            }
+            return [...a, b];
+        }, [])
+            .map(f => {
+            if (f.startsWith('@')) {
+                return f;
+            }
+            return path.basename(f);
+        });
+        return fromNodeModulesFolderSearch;
+        //#endregion
+    };
+    //#endregion
+    checkIfInDevMode(packageName) {
+        //#region @backendFunc
+        const packageInNodeModulesPath = crossPlatformPath([
+            this.realPath,
+            packageName,
+        ]);
+        return Helpers__NS__isExistedSymlink([
+            packageInNodeModulesPath,
+            sourceLinkInNodeModules,
+        ]);
+        //#endregion
+    }
+    checkIsomorphic(packageName) {
+        //#region @backendFunc
+        let isIsomorphic = false;
+        // !  TODO this in probably incorrect packages is never a link
+        const packageInNodeModulesPath = crossPlatformPath([
+            this.realPath,
+            packageName,
+        ]);
+        const browser = crossPlatformPath([
+            packageInNodeModulesPath,
+            browserMainProject,
+            packageJsonNpmLibAngular,
+        ]);
+        const websql = crossPlatformPath([
+            packageInNodeModulesPath,
+            websqlMainProject,
+            packageJsonNpmLibAngular,
+        ]);
+        const lib = crossPlatformPath([
+            packageInNodeModulesPath,
+            libFromCompiledDist,
+            'index.js'
+        ]);
+        isIsomorphic =
+            Helpers__NS__exists(browser) && Helpers__NS__exists(websql) && Helpers__NS__exists(lib);
+        return isIsomorphic;
+        //#endregion
+    }
+}
+//# sourceMappingURL=c:/Users/darek/projects/npm/taon-dev/tnp/dist/lib-prod/project/abstract/node-modules.js.map

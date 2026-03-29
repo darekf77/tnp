@@ -1,0 +1,513 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Vscode = void 0;
+//#region imports
+const lib_1 = require("tnp-core/lib");
+const lib_2 = require("tnp-core/lib");
+const lib_3 = require("tnp-core/lib");
+const lib_4 = require("tnp-helpers/lib");
+const constants_1 = require("../../constants");
+const options_1 = require("../../options");
+//#endregion
+/**
+ * Handle taon things related to vscode
+ * support for launch.json, settings.json etc
+ */
+class Vscode // @ts-ignore TODO weird inheritance problem
+// @ts-ignore TODO weird inheritance problem
+ extends lib_4.BaseVscodeHelpers {
+    //#region init
+    async init(options) {
+        options = options || {};
+        await this.saveLaunchJson();
+        this.saveTasksJson();
+        // modyfing settings.json
+        this.recreateJsonSchemaForDocs();
+        this.recreateJsonSchemaForTaon();
+        this.saveColorsForWindow();
+        this.saveCurrentSettings();
+        await super.init(options);
+    }
+    //#endregion
+    //#region save current settings
+    saveCurrentSettings() {
+        //#region @backendFunc
+        // TODO QUCIK_FIX for asar that can be deleted because of vscode watcher
+        this.currentSettingsValue['files.watcherExclude'] = {
+            'local_release/**': true,
+            // ...(this.project.isLinuxWatchModeAllowde()
+            //   ? {
+            'tmp-*/**': true,
+            '**/node_modules/**': true,
+            '**/dist/**': true,
+            '**/dist-nocutsrc/**': true,
+            // '**/.git/**': true,
+            //   }
+            // : {}),
+        };
+        // console.log(
+        //   chalk.yellow(`Saving vscode settings.json with content:`),
+        //   this.currentSettingsValue['files.watcherExclude'],
+        // );
+        super.saveCurrentSettings();
+        //#endregion
+    }
+    //#endregion
+    //#region save colors for window
+    saveColorsForWindow(checkingParent = false) {
+        //#region @backendFunc
+        const parentIsOrg = this.project.parent?.taonJson.isOrganization;
+        if (parentIsOrg) {
+            this.project.parent.vsCodeHelpers.saveColorsForWindow(true);
+        }
+        const parentSettings = parentIsOrg && this.project.parent.vsCodeHelpers.currentSettingsValue;
+        if (lib_2._.isNil(this.currentSettingsValue['workbench.colorCustomizations'])) {
+            this.currentSettingsValue['workbench.colorCustomizations'] = {
+                'activityBar.background': `${lib_4.UtilsVSCode.generateFancyColor()}`,
+            };
+        }
+        this.currentSettingsValue['workbench.colorCustomizations']['statusBar.background'] = `${parentIsOrg
+            ? parentSettings['workbench.colorCustomizations']['statusBar.background']
+            : this.currentSettingsValue['workbench.colorCustomizations']['statusBar.background'] || lib_4.UtilsVSCode.generateFancyColor()}`;
+        this.currentSettingsValue['workbench.colorCustomizations']['statusBar.debuggingBackground'] = `#15d8ff`; // nice blue for debugging
+        //#endregion
+    }
+    //#endregion
+    //#region recreate jsonc schema for docs
+    recreateJsonSchemaForDocs() {
+        //#region @backendFunc
+        const properSchema = {
+            fileMatch: [`/${constants_1.docsConfigJsonFileName}`],
+            url: `./${constants_1.docsConfigSchema}`,
+        };
+        const currentSchemas = lib_2._.get(this.currentSettingsValue, `['json.schemas']`) || [];
+        const toDeleteIndex = currentSchemas
+            .filter((x, i) => x => lib_2._.first(x.fileMatch)?.startsWith(`/${constants_1.docsConfigJsonFileName}`))
+            .map((_, i) => i);
+        for (const index of toDeleteIndex) {
+            currentSchemas.splice(index, 1);
+        }
+        currentSchemas.push(properSchema);
+        lib_2._.set(this.currentSettingsValue, '["json.schemas"]', currentSchemas);
+        //#endregion
+    }
+    //#endregion
+    //#region recreate jsonc schema for taon
+    recreateJsonSchemaForTaon() {
+        //#region @backendFunc
+        let currentSchemas = lib_2._.get(this.currentSettingsValue, `['json.schemas']`) || [];
+        const toDeleteIndex = currentSchemas
+            .filter((x, i) => x => lib_2._.first(x.fileMatch)?.startsWith(`/${constants_1.taonJsonMainProject}`))
+            .map((_, i) => i);
+        for (const index of toDeleteIndex) {
+            currentSchemas.splice(index, 1);
+        }
+        if (this.project.framework.isStandaloneProject) {
+            const properSchema = {
+                fileMatch: [`/${lib_1.fileName.taon_jsonc}`],
+                url: `./${constants_1.taonConfigSchemaJsonStandalone}`,
+            };
+            currentSchemas.push(properSchema);
+            if (!this.project.framework.isCoreProject) {
+                this.project.removeFile(constants_1.taonConfigSchemaJsonContainer);
+            }
+        }
+        else if (this.project.framework.isContainer) {
+            const properSchema = {
+                fileMatch: [`/${lib_1.fileName.taon_jsonc}`],
+                url: `./${constants_1.taonConfigSchemaJsonContainer}`,
+            };
+            currentSchemas.push(properSchema);
+            if (!this.project.framework.isCoreProject) {
+                this.project.removeFile(constants_1.taonConfigSchemaJsonStandalone);
+            }
+        }
+        this.project.removeFile('taon-config.schema.json'); // QUICK_FIX
+        lib_2._.set(this.currentSettingsValue, '["json.schemas"]', currentSchemas);
+        //#endregion
+    }
+    //#endregion
+    //#region vscode plugin dev pre launch task
+    get vscodePluginDevPreLaunchTask() {
+        //#region vscode update package.json
+        return {
+            label: 'Update package.json vscode metadata',
+            type: 'shell',
+            command: `cd ${this.project.artifactsManager.artifact.vscodePlugin
+                .getTmpVscodeProjPath()
+                .replace(this.project.location + '/', '')}` +
+                ` && node --no-deprecation ${constants_1.updateVscodePackageJsonJsMainProject} ${constants_1.appVscodeJSFromBuild.replace('.js', '')}`,
+            presentation: {
+                reveal: 'always',
+                panel: 'shared',
+            },
+            problemMatcher: [
+                {
+                    owner: 'custom',
+                    pattern: [
+                        {
+                            regexp: '^(.*)$',
+                            file: 1,
+                            line: 1,
+                            column: 1,
+                            message: 1,
+                        },
+                    ],
+                    background: {
+                        activeOnStart: true,
+                        beginsPattern: 'Update package.json vscode plugin metadata...',
+                        endsPattern: 'Done update package.json',
+                    },
+                },
+            ],
+            group: {
+                kind: 'build',
+                isDefault: true,
+            },
+        };
+    }
+    //#endregion
+    //#region save tasks.json
+    saveTasksJson() {
+        //#region @backendFunc
+        //#endregion
+        this.project.writeJson('.vscode/tasks.json', {
+            version: '2.0.0',
+            tasks: [this.vscodePluginDevPreLaunchTask],
+        });
+        //#endregion
+    }
+    //#endregion
+    //#region save launch.json
+    async saveLaunchJson() {
+        //#region @backendFunc
+        if (!this.project.framework.isStandaloneProject) {
+            return;
+        }
+        //#region standalone save
+        let configurations = [];
+        let compounds = [];
+        //#region template vscode config
+        const vscodeProjDevPath = `${constants_1.tmpVscodeProj}` + `/${options_1.Development}/${this.project.name}`;
+        const templatesVscodeExConfig = [
+            {
+                name: 'Debug/Start Vscode Plugin',
+                type: 'extensionHost',
+                request: 'launch',
+                runtimeExecutable: '${execPath}',
+                sourceMaps: true,
+                resolveSourceMapLocations: [
+                    '${workspaceFolder}/**',
+                    '!**/node_modules/**',
+                ],
+                args: [
+                    `--extensionDevelopmentPath=\${workspaceFolder}/${vscodeProjDevPath}`,
+                ],
+                sourceMapPathOverrides: this.sourceMapPathOverrides,
+                outFiles: [
+                    `\${workspaceFolder}/${vscodeProjDevPath}/out/**/*.js`,
+                    ...this.outFiles.slice(1), // skip dist
+                ],
+                preLaunchTask: this.vscodePluginDevPreLaunchTask.label,
+            },
+            // {
+            //   name: 'Extension Tests',
+            //   type: 'extensionHost',
+            //   request: 'launch',
+            //   runtimeExecutable: '${execPath}',
+            //   args: [
+            //     '--extensionDevelopmentPath=${workspaceFolder}',
+            //     '--extensionTestsPath=${workspaceFolder}/out/test',
+            //   ],
+            //   outFiles: ['${workspaceFolder}/out/test/**/*.js'],
+            //   preLaunchTask: 'npm: watch',
+            // },
+        ];
+        //#endregion
+        //#region template attach process
+        const templateAttachProcess = (debuggingPort = constants_1.DEFAULT_PORT.DEBUGGING_CLI_TOOL) => ({
+            type: 'node',
+            request: 'attach',
+            name: 'Attach to global cli tool',
+            autoAttachChildProcesses: false, // TODO probably no need for now
+            // port: debuggingPort,
+            skipFiles: ['<node_internals>/**'],
+            outFiles: this.outFiles,
+            sourceMapPathOverrides: this.sourceMapPathOverrides,
+        });
+        //#endregion
+        //#region template for vite
+        // const portFortestDebugging = await this.project.registerAndAssignPort(
+        //   `test cli debugging port`,
+        //   {
+        //     startFrom: 9329,
+        //   },
+        // );
+        const templateForVite = () => {
+            return [
+                {
+                    name: 'Vitest Debug (all *.test.ts files)',
+                    type: 'node',
+                    request: 'launch',
+                    program: '${workspaceFolder}/node_modules/vitest/vitest.mjs',
+                    args: ['run', '--environment', 'node', '--testTimeout', '60000'],
+                    console: 'integratedTerminal',
+                    skipFiles: ['<node_internals>/**'],
+                    outFiles: this.outFiles,
+                    sourceMapPathOverrides: this.sourceMapPathOverrides,
+                    smartStep: true,
+                },
+                {
+                    name: 'Vitest Debug (editor active test file)',
+                    type: 'node',
+                    request: 'launch',
+                    program: '${workspaceFolder}/node_modules/vitest/vitest.mjs',
+                    args: [
+                        'run',
+                        '${fileBasenameNoExtension}',
+                        '--environment',
+                        'node',
+                        '--testTimeout',
+                        '60000',
+                    ],
+                    console: 'integratedTerminal',
+                    skipFiles: ['<node_internals>/**'],
+                    outFiles: this.outFiles,
+                    sourceMapPathOverrides: this.sourceMapPathOverrides,
+                    smartStep: true,
+                },
+            ];
+        };
+        //#endregion
+        //#region tempalte start normal nodejs server
+        const templateForServer = (serverChild, clientProject, workspaceLevel) => {
+            // const backendPort = 4000;
+            const startServerTemplate = {
+                type: 'node',
+                request: 'launch',
+                name: `${constants_1.DEBUG_WORD} Server`,
+                program: '${workspaceFolder}/run.js',
+                cwd: void 0,
+                args: [
+                // `port=${backendPort}`
+                ],
+                outFiles: this.outFiles,
+                sourceMapPathOverrides: this.sourceMapPathOverrides,
+                // "outFiles": ["${workspaceFolder}/dist/**/*.js"], becouse of this debugging inside node_moudles
+                // with compy manager created moduels does not work..
+                runtimeArgs: this.__vscodeLaunchRuntimeArgs,
+            };
+            if (serverChild.name !== clientProject.name) {
+                let cwd = '${workspaceFolder}' + `/../ ${serverChild.name}`;
+                if (workspaceLevel) {
+                    cwd = '${workspaceFolder}' + `/${serverChild.name}`;
+                }
+                startServerTemplate.program = cwd + '/run.js';
+                startServerTemplate.cwd = cwd;
+            }
+            if (serverChild.location === clientProject.location &&
+                serverChild.framework.isStandaloneProject) {
+                // startServerTemplate.name = `${startServerTemplate.name} Standalone`
+            }
+            else {
+                startServerTemplate.name = `${startServerTemplate.name} '${serverChild.name}' for '${clientProject.name}'`;
+            }
+            // startServerTemplate.args.push(
+            //   `--ENVoverride=${encodeURIComponent(
+            //     JSON.stringify(
+            //       {
+            //         clientProjectName: clientProject.name,
+            //       } as Partial<EnvOptions>,
+            //       null,
+            //       4,
+            //     ),
+            //   )} `,
+            // );
+            return startServerTemplate;
+        };
+        //#endregion
+        //#region electron
+        const startElectronServeTemplate = (remoteDebugElectronPort) => {
+            return {
+                name: `${constants_1.DEBUG_WORD} Electron`,
+                type: 'node',
+                request: 'launch',
+                protocol: 'inspector',
+                cwd: '${workspaceFolder}',
+                runtimeExecutable: '${workspaceFolder}/node_modules/.bin/electron',
+                trace: 'verbose',
+                runtimeArgs: [
+                    '--serve',
+                    '.',
+                    `--remote-debugging-port=${remoteDebugElectronPort}`, // 9876
+                ],
+                windows: {
+                    runtimeExecutable: '${workspaceFolder}/node_modules/.bin/electron.cmd',
+                },
+            };
+        };
+        //#endregion
+        //#region handle standalone or worksapce child
+        configurations = [
+            // startNodemonServer()
+            ...templateForVite(),
+        ];
+        configurations.push(templateForServer(this.project, this.project, false));
+        // configurations.push(startNgServeTemplate(9000, void 0, false));
+        // const key =;
+        const portForElectronDebugging = await this.project.registerAndAssignPort(`electron debugging port`, {
+            startFrom: 9876,
+        });
+        configurations.push(startElectronServeTemplate(portForElectronDebugging));
+        // compounds.push({
+        //   name: `${DEBUG_WORD} (Server + Electron)`,
+        //   configurations: [...configurations.map(c => c.name)],
+        // });
+        const portForCliDebugging = await this.project.registerAndAssignPort(`cli debugging port`, {
+            startFrom: 9229,
+        });
+        configurations.push(templateAttachProcess(portForCliDebugging));
+        configurations.push(...templatesVscodeExConfig);
+        //#endregion
+        this.project.writeJson('.vscode/launch.json', {
+            version: '0.2.0',
+            configurations,
+            compounds,
+        });
+        configurations.forEach(c => {
+            // c.outFiles = ['${workspaceFolder}/dist/**/*.js', '!**/node_modules/**'];
+            delete c.outFiles;
+            delete c.sourceMapPathOverrides;
+            if (c.name === `${constants_1.DEBUG_WORD} Electron`) {
+                c.runtimeArgs[2] = `--remote-debugging-port=${constants_1.DEFAULT_PORT.DEBUGGING_ELECTRON}`; // 9876
+            }
+            if (c.request === 'attach') {
+                c.port = constants_1.DEFAULT_PORT.DEBUGGING_CLI_TOOL;
+            }
+        });
+        this.project.writeFile('.vscode/launch-backup.jsonc', `${constants_1.THIS_IS_GENERATED_INFO_COMMENT}\n` +
+            `${JSON.stringify({
+                version: '0.2.0',
+                configurations,
+                compounds,
+            }, null, 2)}` +
+            `\n${constants_1.THIS_IS_GENERATED_INFO_COMMENT}`);
+        //#endregion
+        //#endregion
+    }
+    //#endregion
+    //#region vscode launch.json runtime args
+    get __vscodeLaunchRuntimeArgs() {
+        //#region @backendFunc
+        return [
+            // '--nolazy',
+            // '-r',
+            // 'ts-node/register',
+            // // needs to be for debugging from node_modules
+            '--preserve-symlinks',
+            // // "--preserve-symlinks-main",NOT WORKING
+            // '--experimental-worker',
+        ];
+        //#endregion
+    }
+    //#endregion
+    //#region get out files for debugging
+    /**
+     * for debugging node_modules
+     * get out files for debugging
+     */
+    get outFiles() {
+        //#region @backendFunc
+        return [
+            `\${workspaceFolder}/${constants_1.distMainProject}/**/*.js`,
+            // '!**/node_modules/**',
+            // TODO this allow debugging thir party modules.. but it is not reliable
+            ...lib_3.Utils.uniqArray(this.project.packagesRecognition.allIsomorphicPackagesFromMemory
+                .filter(f => this.project.name !== f) // TODO or other names of this project
+                .map(packageName => {
+                const p = this.project.pathFor([
+                    constants_1.nodeModulesMainProject,
+                    packageName,
+                    constants_1.sourceLinkInNodeModules,
+                ]);
+                return lib_4.Helpers.isExistedSymlink(p)
+                    ? `${(0, constants_1.dirnameFromSourceToProject)(p)}/${constants_1.distMainProject}/${constants_1.whatToLinkFromCoreDeepPart}/**/*.js`.replace(/\/\//g, '/')
+                    : void 0;
+            })
+                .filter(f => !!f)),
+        ];
+        //#endregion
+    }
+    //#endregion
+    //#region get source map path overrides
+    get sourceMapPathOverrides() {
+        //#region @backendFunc
+        const sourceMapPathOverrides = {};
+        lib_3.Utils.uniqArray(this.project.packagesRecognition.allIsomorphicPackagesFromMemory)
+            .filter(f => this.project.name !== f) // TODO or other names of this project
+            .forEach(packageName => {
+            const p = this.project.pathFor([
+                constants_1.nodeModulesMainProject,
+                packageName,
+                constants_1.sourceLinkInNodeModules,
+            ]);
+            if (!lib_4.Helpers.isExistedSymlink(p)) {
+                return;
+            }
+            const realPathToPackage = (0, constants_1.dirnameFromSourceToProject)(p);
+            // Somehow this work if debuggable path
+            sourceMapPathOverrides[`*/${lib_2.path.basename(realPathToPackage)}/${constants_1.whatToLinkFromCore}/*`] =
+                `\${workspaceFolder}/${constants_1.nodeModulesMainProject}/${packageName}/${constants_1.sourceLinkInNodeModules}/*`;
+            // that thing should work
+            // sourceMapPathOverrides[`${realPathToPackage}/${whatToLinkFromCore}/*`] =
+            //   `\${workspaceFolder}/node_modules/${packageName}/source/*`;
+            // that was goog long time ago - when first good debugging made with chat gpt
+            // sourceMapPathOverrides[`${realPathToPackage}/src/lib/*`] =
+            //   `\${workspaceFolder}/node_modules/${packageName}/source/lib/*`;
+        });
+        return sourceMapPathOverrides;
+        //#endregion
+    }
+    //#endregion
+    //#region vscode all file template files
+    get __vscodeFileTemplates() {
+        //#region @backendFunc
+        if (this.project.framework.frameworkVersionAtLeast('v2')) {
+            return [];
+        }
+        return [];
+        //#endregion
+    }
+    //#endregion
+    //#region get vscode bottom color
+    getVscodeBottomColor() {
+        let overrideBottomColor = this.project?.parent?.taonJson.isOrganization &&
+            this.project.framework.isContainerChild
+            ? this.project?.parent.getValueFromJSONC('.vscode/settings.json', `['workbench.colorCustomizations']['statusBar.background']`)
+            : void 0;
+        return overrideBottomColor;
+    }
+    //#endregion
+    //#region refresh colors in settings for org and children
+    refreshColorsInSettings() {
+        super.refreshColorsInSettings();
+        if (this.project.taonJson.isOrganization) {
+            this.project.children.forEach(child => {
+                child.vsCodeHelpers.refreshColorsInSettings();
+            });
+        }
+    }
+    //#endregion
+    //#region get basic settings
+    async getBasicSettins() {
+        //#region @backendFunc
+        const settings = await super.getBasicSettins();
+        constants_1.frameworkBuildFolders.forEach(f => {
+            settings['search.exclude'][f] = true;
+        });
+        return settings;
+        //#endregion
+    }
+}
+exports.Vscode = Vscode;
+//# sourceMappingURL=c:/Users/darek/projects/npm/taon-dev/tnp/dist/lib/project/abstract/vscode-helper.js.map

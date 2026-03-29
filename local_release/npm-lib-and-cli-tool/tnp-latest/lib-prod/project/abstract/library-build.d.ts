@@ -1,0 +1,9 @@
+import { BaseLibraryBuild } from 'tnp-helpers/lib-prod';
+import type { Project } from './project';
+/**
+ * TODO implement this some day - taon is handling out of box angular projects
+ * => should be easy to implement
+ *
+ * this is only for angular/typescript projects - not isomorphic projects
+ */ export declare class LibraryBuild extends BaseLibraryBuild<Project> {
+}
