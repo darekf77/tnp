@@ -6,6 +6,7 @@ const env: Partial<EnvOptions> = {
   release: {
     cli: {
       includeNodeModules: true,
+      useLocalReleaseBranch: true,
     },
   },
 };
