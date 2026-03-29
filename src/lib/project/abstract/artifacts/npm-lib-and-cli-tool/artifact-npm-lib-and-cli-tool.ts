@@ -693,6 +693,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#region prepare variables
     let releaseType: ReleaseType = releaseOptions.release.releaseType;
 
+    const projectsReposToPushAndTag = [this.project.location];
+    const projectsReposToPush = [];
     releaseOptions = this.updateResolvedVersion(releaseOptions);
 
     const { tmpProjNpmLibraryInNodeModulesAbsPath } = await this.buildPartial(
@@ -821,7 +823,49 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     } else {
       if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
         //#region local release
-        const releaseDest = this.project.pathFor([
+        let destinationUrl = this.project.location;
+        if (releaseOptions.release.cli.useLocalReleaseBranch) {
+          const branchName =
+            `release/${releaseOptions.release.releaseType}/${this.project.name}--` +
+            `env-${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
+
+          const repoName = `${this.project.name}-${
+            releaseOptions.release.envName
+          }${releaseOptions.release.envNumber || ''}`;
+
+          const repoRoot = this.project.pathFor([
+            `.${config.frameworkName}`,
+            this.currentArtifactName,
+            releaseOptions.release.releaseType,
+          ]);
+
+          const repoPath = crossPlatformPath([repoRoot, repoName]);
+          const repoUrl = this.project.git.remoteOriginUrl;
+
+          if (!Helpers.exists(repoPath)) {
+            Helpers.mkdirp(repoRoot);
+            await HelpersTaon.git.clone({
+              cwd: repoRoot,
+              url: repoUrl,
+              override: true,
+              destinationFolderName: repoName,
+            });
+          }
+
+          HelpersTaon.git.resetHard(repoPath);
+          HelpersTaon.git.checkout(repoPath, branchName, {
+            createBranchIfNotExists: true,
+            fetchBeforeCheckout: true,
+            switchBranchWhenExists: true,
+          });
+
+          destinationUrl = repoPath;
+
+          projectsReposToPush.push(repoPath);
+        }
+
+        const releaseDest = crossPlatformPath([
+          destinationUrl,
           localReleaseMainProject,
           this.currentArtifactName,
           `${this.project.name}${suffixLatest}`,
@@ -860,7 +904,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       resolvedNewVersion: releaseOptions.release.resolvedNewVersion,
       releaseProjPath,
       releaseType,
-      projectsReposToPushAndTag: [this.project.location],
+      projectsReposToPush,
+      projectsReposToPushAndTag,
       deploymentFunction,
     };
     //#endregion

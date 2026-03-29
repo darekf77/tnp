@@ -933,7 +933,13 @@ export class ArtifactManager {
 
     //#region final actopm tag/push/release/deploy
 
-    if (releaseOptions.release.askUserBeforeFinalAction) {
+    let shouldAskQuestions = !releaseOptions.release.autoReleaseUsingConfig;
+
+    if (_.isBoolean(releaseOptions.release.askUserBeforeFinalAction)) {
+      shouldAskQuestions = releaseOptions.release.askUserBeforeFinalAction;
+    }
+
+    if (shouldAskQuestions) {
       await this.project.releaseProcess.checkBundleQuestion(
         this.project.location,
         `[${releaseOptions.release.releaseType}] Check ${chalk.bold('code')} before final action`,
@@ -941,10 +947,11 @@ export class ArtifactManager {
     }
 
     if (!releaseOptions.release.skipTagGitPush) {
-      if (!releaseOptions.release.autoReleaseUsingConfig) {
+      if (shouldAskQuestions) {
         Helpers.info(
           `Checking project path "${releaseOutput.releaseProjPath}" ..`,
         );
+
         await this.project.releaseProcess.checkBundleQuestion(
           releaseOutput.releaseProjPath,
           `[${releaseOptions.release.releaseType}] Check ${chalk.bold('bundled code')} before tagging/pushing`,
@@ -954,28 +961,46 @@ export class ArtifactManager {
       releaseOutput.projectsReposToPush =
         releaseOutput.projectsReposToPush || [];
 
+      //#region push repos
       for (const repoAbsPath of Utils.uniqArray(
         releaseOutput.projectsReposToPush,
       )) {
         Helpers.info(`Checking  path "${repoAbsPath}" `);
-        if (!releaseOptions.release.autoReleaseUsingConfig) {
+        if (shouldAskQuestions) {
           await this.project.releaseProcess.checkBundleQuestion(
             repoAbsPath,
             `[${releaseOptions.release.releaseType}] Check ${chalk.bold('project repo')} before pushing`,
           );
         }
-        await HelpersTaon.git.tagAndPushToGitRepo(repoAbsPath, {
-          newVersion: releaseOutput.resolvedNewVersion,
-          autoReleaseUsingConfig: releaseOptions.release.autoReleaseUsingConfig,
-          isCiProcess: releaseOptions.isCiProcess,
-          skipTag: true,
-        });
-      }
 
+        if (releaseOptions.release.pushToAllOriginsWhenLocalReleaseBranch) {
+          const allOrigins = HelpersTaon.git.allOrigins(this.project.location);
+          for (const origin of allOrigins) {
+            await HelpersTaon.git.addOriginIfNotExists(repoAbsPath,origin.origin,origin.url);
+            await HelpersTaon.git.tagAndPushToGitRepo(repoAbsPath, {
+              newVersion: releaseOutput.resolvedNewVersion,
+              skipAskingQuestionBeforePush: !shouldAskQuestions,
+              isCiProcess: releaseOptions.isCiProcess,
+              customOrigin: origin.origin,
+              skipTag: true,
+            });
+          }
+        } else {
+          await HelpersTaon.git.tagAndPushToGitRepo(repoAbsPath, {
+            newVersion: releaseOutput.resolvedNewVersion,
+            skipAskingQuestionBeforePush: !shouldAskQuestions,
+            isCiProcess: releaseOptions.isCiProcess,
+            skipTag: true,
+          });
+        }
+      }
+      //#endregion
+
+      //#region push and tag repos
       for (const repoAbsPath of Utils.uniqArray(
         releaseOutput.projectsReposToPushAndTag,
       )) {
-        if (!releaseOptions.release.autoReleaseUsingConfig) {
+        if (shouldAskQuestions) {
           Helpers.info(`Checking  path "${repoAbsPath}" ..`);
           await this.project.releaseProcess.checkBundleQuestion(
             repoAbsPath,
@@ -984,10 +1009,11 @@ export class ArtifactManager {
         }
         await HelpersTaon.git.tagAndPushToGitRepo(repoAbsPath, {
           newVersion: releaseOutput.resolvedNewVersion,
-          autoReleaseUsingConfig: releaseOptions.release.autoReleaseUsingConfig,
+          skipAskingQuestionBeforePush: !shouldAskQuestions,
           isCiProcess: releaseOptions.isCiProcess,
         });
       }
+      //#endregion
     }
 
     if (releaseOutput.deploymentFunction) {

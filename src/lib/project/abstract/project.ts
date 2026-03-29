@@ -285,7 +285,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         this.packageJson.setVersion(newVersion);
         await HelpersTaon.git.tagAndPushToGitRepo(this.location, {
           newVersion,
-          autoReleaseUsingConfig: releaseOptions.release.autoReleaseUsingConfig,
+          skipAskingQuestionBeforePush: releaseOptions.release.autoReleaseUsingConfig,
           isCiProcess: releaseOptions.isCiProcess,
           skipTag: false,
         });

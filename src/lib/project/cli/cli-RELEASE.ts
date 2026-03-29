@@ -235,7 +235,8 @@ class $Release extends BaseCli {
         release: {
           envName: releaseOpt.envName,
           envNumber: releaseOpt.envNumber,
-          skipTagGitPush: true,
+          // skipTagGitPush: true,
+          pushToAllOriginsWhenLocalReleaseBranch: true,
           skipResolvingGitChanges: true,
           targetArtifact: releaseOpt.targetArtifact,
           removeReleaseOutputAfterLocalInstall:
@@ -243,6 +244,7 @@ class $Release extends BaseCli {
           releaseType: ReleaseType.LOCAL,
           releaseVersionBumpType: 'patch',
           installLocally: true,
+          askUserBeforeFinalAction: false,
           skipReleaseQuestion: skipLibBuild,
           skipBuildingArtifacts: skipLibBuild
             ? [ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL]

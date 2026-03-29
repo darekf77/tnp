@@ -163,6 +163,10 @@ Starting (${
         line = line.replace('./src/', `./${taonActionFromParentName}/src/`);
       }
 
+      if (line.includes('../src/lib/')) {
+        line = line.replace('../src/lib/', './src/lib/');
+      }
+
       return line;
     };
 
