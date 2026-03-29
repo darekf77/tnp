@@ -1971,9 +1971,9 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
   async notyficationTest() {
     //#region @backendFunc
     await UtilsOs.sendNotification({
-      title: 'hello',
-      body: 'asdas',
-      subtitle: 'LOLLASLDLASLD',
+      title: 'hello ' + new Date().toString(),
+      body: 'asdas' + new Date().toString(),
+      subtitle: 'LOLLASLDLASLD ' + new Date().toString(),
       timeoutMs: 1000,
     });
     this._exit();
