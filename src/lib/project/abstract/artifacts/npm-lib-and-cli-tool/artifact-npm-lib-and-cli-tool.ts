@@ -917,7 +917,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     // TODO make it better
     while (true) {
       try {
-        rimraf.sync(this.project.pathFor(distMainProject) + '*');
+        if (this.project.name !== 'tnp') { // TODO QUICK_FIX DONT CLEAR DIST for cli to work
+          rimraf.sync(this.project.pathFor(distMainProject) + '*');
+        }
         rimraf.sync(this.project.pathFor(folderName.tmp) + '*');
         return;
       } catch (error) {

@@ -645,8 +645,7 @@ export class ArtifactManager {
       if (
         !buildOptions.build.watch &&
         buildOptions.build.prod &&
-        this.project.framework.isStandaloneProject &&
-        !this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer
+        this.project.framework.isStandaloneProject
       ) {
         await this.project.clear();
       }
@@ -809,9 +808,9 @@ export class ArtifactManager {
             staticPagesCustomRepoUrl: item.staticPagesCustomRepoUrl,
           },
         });
-        if (!this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
-          await this.project.clear();
-        }
+
+        await this.project.clear();
+
         clonedOptions.release.fixStaticPagesCustomRepoUrl(this.project);
         await this.release(clonedOptions, true);
       }
@@ -976,7 +975,11 @@ export class ArtifactManager {
         if (releaseOptions.release.pushToAllOriginsWhenLocalReleaseBranch) {
           const allOrigins = HelpersTaon.git.allOrigins(this.project.location);
           for (const origin of allOrigins) {
-            await HelpersTaon.git.addOriginIfNotExists(repoAbsPath,origin.origin,origin.url);
+            await HelpersTaon.git.addOriginIfNotExists(
+              repoAbsPath,
+              origin.origin,
+              origin.url,
+            );
             await HelpersTaon.git.tagAndPushToGitRepo(repoAbsPath, {
               newVersion: releaseOutput.resolvedNewVersion,
               skipAskingQuestionBeforePush: !shouldAskQuestions,

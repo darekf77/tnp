@@ -239,9 +239,7 @@ class $Build extends BaseCli {
     await this.project.clear();
     if (this.project.framework.isContainer) {
       for (const child of this.project.children) {
-        if (!child.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
-          await child.clear();
-        }
+        await child.clear();
       }
     }
 
@@ -393,34 +391,33 @@ class $Build extends BaseCli {
    */
   async mkdocs() {
     const mkdocsActions = {
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-  
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
+      /* */
 
       SERVE_DOCS_TAON: {
         name: 'Serve docs for www.taon.dev on 8000',
