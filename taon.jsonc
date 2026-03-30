@@ -136,18 +136,12 @@
     "contributes": {
       "commands": [
         {
-          "command": "workbench.action.reloadWindowTnp",
-          "group": null,
-        },
-        {
           "command": "extension.createFileTnp",
-          "group": null,
           "icon": "$(new-file)",
           "title": "Create New File",
         },
         {
           "command": "extension.createFolderTnp",
-          "group": null,
           "icon": "$(new-folder)",
           "title": "Create New Folder",
         },
