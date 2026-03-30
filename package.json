@@ -1,6 +1,6 @@
 {
   "name": "tnp",
-  "version": "21.0.166",
+  "version": "21.0.167",
   "scripts": {
     "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     "taon init": "taon init",
@@ -46,11 +46,11 @@
     "menus": {
       "explorer/context": [
         {
-          "command": "extension.createFileTaon",
+          "command": "extension.createFileTnp",
           "when": "explorerViewletVisible"
         },
         {
-          "command": "extension.createFolderTaon",
+          "command": "extension.createFolderTnp",
           "when": "explorerViewletVisible"
         }
       ]

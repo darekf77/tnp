@@ -155,11 +155,11 @@
       "menus": {
         "explorer/context": [
           {
-            "command": "extension.createFileTaon",
+            "command": "extension.createFileTnp",
             "when": "explorerViewletVisible",
           },
           {
-            "command": "extension.createFolderTaon",
+            "command": "extension.createFolderTnp",
             "when": "explorerViewletVisible",
           },
         ],
