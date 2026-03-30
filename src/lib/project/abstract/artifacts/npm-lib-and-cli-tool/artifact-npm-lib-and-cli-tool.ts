@@ -824,7 +824,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
         //#region local release
         let destinationUrl = this.project.location;
-        if (releaseOptions.release.cli.useLocalReleaseBranch) {
+        if (releaseOptions.release.useLocalReleaseBranch) {
           const branchName =
             `release/${releaseOptions.release.releaseType}/${this.project.name}--` +
             `env-${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;

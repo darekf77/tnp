@@ -333,12 +333,59 @@ export abstract class BaseArtifact<
       false,
     );
 
-    const localReleaseOutputBasePath = this.project.pathFor([
+    let localReleaseOutputBasePath = this.project.pathFor([
       localReleaseMainProject,
       this.currentArtifactName,
       `${this.project.name}${suffixLatest}`,
       architecturePrefix,
     ]);
+
+    if (releaseOptions.release.useLocalReleaseBranch) {
+      //#region clone proper branch
+      const branchName =
+        `release/${releaseOptions.release.releaseType}/${this.project.name}--` +
+        `env-${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
+
+      const repoName = `${this.project.name}-${
+        releaseOptions.release.envName
+      }${releaseOptions.release.envNumber || ''}`;
+
+      const repoRoot = this.project.pathFor([
+        `.${config.frameworkName}`,
+        this.currentArtifactName,
+        releaseOptions.release.releaseType,
+      ]);
+
+      const repoPath = crossPlatformPath([repoRoot, repoName]);
+      const repoUrl = this.project.git.remoteOriginUrl;
+
+      if (!Helpers.exists(repoPath)) {
+        Helpers.mkdirp(repoRoot);
+        await HelpersTaon.git.clone({
+          cwd: repoRoot,
+          url: repoUrl,
+          override: true,
+          destinationFolderName: repoName,
+        });
+      }
+
+      HelpersTaon.git.resetHard(repoPath);
+      HelpersTaon.git.checkout(repoPath, branchName, {
+        createBranchIfNotExists: true,
+        fetchBeforeCheckout: true,
+        switchBranchWhenExists: true,
+      });
+      //#endregion
+
+      localReleaseOutputBasePath = crossPlatformPath([
+        repoPath,
+        localReleaseMainProject,
+        this.currentArtifactName,
+        `${this.project.name}${suffixLatest}`,
+        architecturePrefix,
+      ]);
+    }
+
     Helpers.remove(localReleaseOutputBasePath);
     if (options.copyOnlyExtensions) {
       const zips = Helpers.getFilesFrom(outputFromBuildAbsPath, {

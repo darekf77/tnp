@@ -3,6 +3,10 @@ import baseEnv from '../../env';
 
 const env: Partial<EnvOptions<EnvVSCodePaths>> = {
   ...baseEnv,
+  release: {
+    ...baseEnv.release,
+    useLocalReleaseBranch: true,
+  },
 };
 export default env;
 
