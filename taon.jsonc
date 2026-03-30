@@ -137,6 +137,7 @@
       "commands": [
         {
           "command": "workbench.action.reloadWindowTnp",
+          "group": null,
         },
         {
           "command": "extension.createFileTnp",
