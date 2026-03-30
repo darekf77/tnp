@@ -134,6 +134,32 @@
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
     "contributes": {
+      "commands": [
+        {
+          "command": "extension.createFileTaon",
+          "group": null,
+          "icon": "$(new-file)",
+          "title": "Create New File",
+        },
+        {
+          "command": "extension.createFolderTaon",
+          "group": null,
+          "icon": "$(new-folder)",
+          "title": "Create New Folder",
+        },
+      ],
+      "menus": {
+        "explorer/context": [
+          {
+            "command": "extension.createFileTaon",
+            "when": "explorerViewletVisible",
+          },
+          {
+            "command": "extension.createFolderTaon",
+            "when": "explorerViewletVisible",
+          },
+        ],
+      },
       "views": {
         "projectsContainerTnp": [
           {

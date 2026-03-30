@@ -103,7 +103,7 @@ export const vscodePatchingCodium = (
   const appModel = new AppModel();
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('extension.createFile', (file: Uri) => {
+    vscode.commands.registerCommand('extension.createFileTaon', (file: Uri) => {
       appModel.createFileOrFolder(
         'file',
         file ? appModel.findDir(file.fsPath) : '/',
@@ -112,7 +112,7 @@ export const vscodePatchingCodium = (
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('extension.createFolder', (file: Uri) => {
+    vscode.commands.registerCommand('extension.createFolderTaon', (file: Uri) => {
       appModel.createFileOrFolder(
         'folder',
         file ? appModel.findDir(file.fsPath) : '/',
@@ -131,7 +131,7 @@ export const vscodePatchingCodium = (
 
   statusBar.text = `Reload`;
 
-  statusBar.command = `workbench.action.reloadWindow`;
+  statusBar.command = `workbench.action.reloadWindowTaon`;
 
   statusBar.tooltip = `Reload window`;
 

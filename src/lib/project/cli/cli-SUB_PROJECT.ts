@@ -22,6 +22,9 @@ export class $SubProject extends BaseCli {
       test: {
         name: 'Test subproject',
       },
+      login: {
+        name: 'Authenticate this computer',
+      },
       mode: {
         name: 'Set production/development mode for subproject',
       },
@@ -69,6 +72,8 @@ export class $SubProject extends BaseCli {
         await this.project.subProject.deployWorker();
       } else if (select === 'init') {
         await this.project.subProject.initAll();
+      } else if (select === 'login') {
+        await this.project.subProject.loginCliCloudFlare(process.cwd());
       } else if (select === 'exit') {
         this._exit();
       }
