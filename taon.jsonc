@@ -136,13 +136,16 @@
     "contributes": {
       "commands": [
         {
-          "command": "extension.createFileTaon",
+          "command": "workbench.action.reloadWindowTnp",
+        },
+        {
+          "command": "extension.createFileTnp",
           "group": null,
           "icon": "$(new-file)",
           "title": "Create New File",
         },
         {
-          "command": "extension.createFolderTaon",
+          "command": "extension.createFolderTnp",
           "group": null,
           "icon": "$(new-folder)",
           "title": "Create New Folder",

@@ -1,11 +1,11 @@
-import { fse, path } from 'tnp-core/src';
+import { fse, path, _ } from 'tnp-core/src';
 import type { ExtensionContext, Uri } from 'vscode';
 
 export const vscodePatchingCodium = (
   context: ExtensionContext,
   vscode: typeof import('vscode'),
+  frameworkName: 'taon' | 'tnp',
 ) => {
-
   // Based on https://github.com/ritwickdey/vscode-create-file-folder
 
   //#region app model
@@ -103,21 +103,27 @@ export const vscodePatchingCodium = (
   const appModel = new AppModel();
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('extension.createFileTaon', (file: Uri) => {
-      appModel.createFileOrFolder(
-        'file',
-        file ? appModel.findDir(file.fsPath) : '/',
-      );
-    }),
+    vscode.commands.registerCommand(
+      `extension.createFile${_.upperFirst(frameworkName)}`,
+      (file: Uri) => {
+        appModel.createFileOrFolder(
+          'file',
+          file ? appModel.findDir(file.fsPath) : '/',
+        );
+      },
+    ),
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('extension.createFolderTaon', (file: Uri) => {
-      appModel.createFileOrFolder(
-        'folder',
-        file ? appModel.findDir(file.fsPath) : '/',
-      );
-    }),
+    vscode.commands.registerCommand(
+      `extension.createFolder${_.upperFirst(frameworkName)}`,
+      (file: Uri) => {
+        appModel.createFileOrFolder(
+          'folder',
+          file ? appModel.findDir(file.fsPath) : '/',
+        );
+      },
+    ),
   );
   //#endregion
 
@@ -131,7 +137,7 @@ export const vscodePatchingCodium = (
 
   statusBar.text = `Reload`;
 
-  statusBar.command = `workbench.action.reloadWindowTaon`;
+  statusBar.command = `workbench.action.reloadWindow${_.upperFirst(frameworkName)}`;
 
   statusBar.tooltip = `Reload window`;
 

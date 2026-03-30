@@ -873,9 +873,13 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         Helpers.remove(releaseDest, true);
         HelpersTaon.copy(releaseProjPath, releaseDest);
 
-        Helpers.taskStarted(`Installing dependencies for local release...`);
-        Helpers.run(`npm install`, { cwd: releaseProjPath }).sync();
-        Helpers.taskDone(`Dependencies installed for local release.`);
+        // Helpers.taskStarted(`Installing dependencies for local release...
+
+        //   in ${releaseProjPath}
+
+        //   `);
+        // Helpers.run(`npm install --force`, { cwd: releaseProjPath }).sync();
+        // Helpers.taskDone(`Dependencies installed for local release.`);
 
         releaseProjPath = releaseDest;
         if (releaseOptions.release.lib.doNotIncludeLibFiles) {
@@ -885,8 +889,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
         if (releaseOptions.release.installLocally) {
           // console.log('SHOULD INSTALL LOCALLY');
-          Helpers.taskStarted('Linking local package globally...');
-          Helpers.run(`npm link`, { cwd: releaseProjPath }).sync();
+          Helpers.taskStarted(`Linking local package globally...
+
+            ${releaseProjPath}
+
+            `);
+          Helpers.run(`npm link --force`, { cwd: releaseProjPath }).sync();
           Helpers.taskDone(`Done linking local package globally.
 
             Now you can use it globally via CLI:

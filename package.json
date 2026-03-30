@@ -1,6 +1,6 @@
 {
   "name": "tnp",
-  "version": "21.0.162",
+  "version": "21.0.163",
   "scripts": {
     "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     "taon init": "taon init",
@@ -27,13 +27,16 @@
   "contributes": {
     "commands": [
       {
-        "command": "extension.createFileTaon",
+        "command": "workbench.action.reloadWindowTnp"
+      },
+      {
+        "command": "extension.createFileTnp",
         "group": null,
         "icon": "$(new-file)",
         "title": "Create New File"
       },
       {
-        "command": "extension.createFolderTaon",
+        "command": "extension.createFolderTnp",
         "group": null,
         "icon": "$(new-folder)",
         "title": "Create New Folder"
