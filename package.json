@@ -1,6 +1,6 @@
 {
   "name": "tnp",
-  "version": "21.0.165",
+  "version": "21.0.168",
   "scripts": {
     "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     "taon init": "taon init",
@@ -27,18 +27,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "workbench.action.reloadWindowTnp",
-        "group": null
-      },
-      {
         "command": "extension.createFileTnp",
-        "group": null,
         "icon": "$(new-file)",
         "title": "Create New File"
       },
       {
         "command": "extension.createFolderTnp",
-        "group": null,
         "icon": "$(new-folder)",
         "title": "Create New Folder"
       }
@@ -46,11 +40,11 @@
     "menus": {
       "explorer/context": [
         {
-          "command": "extension.createFileTaon",
+          "command": "extension.createFileTnp",
           "when": "explorerViewletVisible"
         },
         {
-          "command": "extension.createFolderTaon",
+          "command": "extension.createFolderTnp",
           "when": "explorerViewletVisible"
         }
       ]

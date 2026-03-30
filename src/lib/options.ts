@@ -141,11 +141,6 @@ class EnvOptionsBuildCli {
    * using  obscurejs
    */
   declare obscure: boolean;
-
-  /**
-   * Local release to special branch
-   */
-  declare useLocalReleaseBranch?: boolean;
 }
 //#endregion
 
@@ -543,6 +538,11 @@ class EnvOptionsRelease {
    * Local release to special branch
    */
   declare pushToAllOriginsWhenLocalReleaseBranch?: boolean;
+
+  /**
+   * Local release to special branch
+   */
+  declare useLocalReleaseBranch?: boolean;
 
   fixStaticPagesCustomRepoUrl(project?: Project): void {
     if (this?.staticPagesCustomRepoUrl?.startsWith('-')) {
@@ -1136,7 +1136,6 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
       uglify: '-' as any,
       obscure: '-' as any,
       compress: '-' as any,
-      useLocalReleaseBranch: '_' as any,
     },
     nodeBackendApp: {
       minify: '-' as any,
@@ -1161,6 +1160,7 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
     skipCodeCutting: '-' as any,
     skipBuildingArtifacts: '-' as any,
     pushToAllOriginsWhenLocalReleaseBranch: '-' as any,
+    useLocalReleaseBranch: '-' as any,
   },
   init: {
     branding: '-' as any,

@@ -137,10 +137,11 @@ export const vscodePatchingCodium = (
 
   statusBar.text = `Reload`;
 
-  statusBar.command = `workbench.action.reloadWindow${_.upperFirst(frameworkName)}`;
+  statusBar.command = `workbench.action.reloadWindow`;
 
   statusBar.tooltip = `Reload window`;
 
   statusBar.show();
+
   //#endregion
 };

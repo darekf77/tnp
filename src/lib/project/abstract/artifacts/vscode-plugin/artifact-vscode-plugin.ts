@@ -314,6 +314,7 @@ local VSCode instance.
       );
 
       projectsReposToPushAndTag.push(...releaseData.projectsReposToPushAndTag);
+      projectsReposToPush.push(...releaseData.projectsReposToPush)
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
     }
