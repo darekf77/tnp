@@ -112,7 +112,11 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
       return false;
     }
 
-    return this.project.framework.isStandaloneProject;
+    return (
+      this.project.framework.isStandaloneProject ||
+      (this.project.framework.isContainer &&
+        !this.project.framework.isContainerCoreProject)
+    );
     //#endregion
   }
   //#endregion

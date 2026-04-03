@@ -92,13 +92,6 @@ export class NodeModules extends BaseNodeModules {
   ): Promise<void> {
     //#region @backendFunc
     options = options || {};
-    if (
-      this.project.framework.isContainer &&
-      !this.project.framework.isContainerCoreProject
-    ) {
-      Helpers.log(`No need for package installation in normal container`);
-      return;
-    }
 
     if (!global.globalSystemToolMode) {
       return;
@@ -581,7 +574,7 @@ export class NodeModules extends BaseNodeModules {
     const lib = crossPlatformPath([
       packageInNodeModulesPath,
       libFromCompiledDist,
-      'index.js'
+      'index.js',
     ]);
     isIsomorphic =
       Helpers.exists(browser) && Helpers.exists(websql) && Helpers.exists(lib);
