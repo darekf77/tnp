@@ -276,7 +276,7 @@ export class ArtifactManager {
             that are not installed in node_modules.
 
             Please rebuild first your external dependency project(s):
-    ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join()}`,
+${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
           false,
           true,
         );
