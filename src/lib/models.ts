@@ -125,10 +125,17 @@ export namespace Models {
 
   export interface TaonJsonStandalone extends TaonJsonCommon {
     /**
+     * Additional development entrypoints for app.ts
+     * - it will create new vscode launch task
+     */
+    numOfAdditionalEntrypoints?: {
+      ['app.ts']: number;
+    };
+
+    /**
      * (STANDALONE) override npm name for build/relese
      */
     overrideNpmName?: string;
-
 
     /**
      * For taon-stripe-cloudflare-worker project types.
@@ -137,7 +144,7 @@ export namespace Models {
      * form this "https://hamsterki-b4176.accountName.workers.dev"
      * cloudFlareAccountSubdomain === "accountName"
      */
-    cloudFlareAccountSubdomain?:string;
+    cloudFlareAccountSubdomain?: string;
 
     /**
      * (STANDALONE) Application ID for standalone project.

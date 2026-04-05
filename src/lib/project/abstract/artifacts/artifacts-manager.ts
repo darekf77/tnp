@@ -5,6 +5,7 @@ import {
   dotTnpFolder,
   GlobalStorage,
   LibTypeEnum,
+  TAGS,
   taonPackageName,
   UtilsFilesFoldersSync,
 } from 'tnp-core/src';
@@ -20,7 +21,7 @@ import {
 import { fileName } from 'tnp-core/src';
 import { tnpPackageName } from 'tnp-core/src';
 import { taonActionFromParent } from 'tnp-core/src';
-import { Helpers, HelpersTaon } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
 import {
@@ -51,6 +52,7 @@ import type {
   ReleasePartialOutput,
 } from './base-artifact';
 import { FilesRecreator } from './npm-lib-and-cli-tool/tools/files-recreation';
+import { RegionRemover } from 'isomorphic-region-loader/src';
 //#endregion
 
 /**
@@ -1120,6 +1122,51 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
     ) {
       project.framework.recreateFileFromCoreProject({
         fileRelativePath: [srcMainProject, appTsFromSrc],
+      });
+
+      _.times(this.project.taonJson.numOfAdditionalEntrypointsForAppTs, n => {
+        const entrypointArgId = n + 1;
+        const destPath = this.project.pathFor([
+          srcMainProject,
+          appTsFromSrc.replace('.ts', `.server${entrypointArgId}.ts`),
+        ]);
+
+        if (!Helpers.exists(destPath)) {
+          const regionsToRemove = [TAGS.BROWSER];
+          project.framework.recreateFileFromCoreProject({
+            customDestinationLocation: destPath,
+            additionalEntrypointId: entrypointArgId,
+            fileRelativePath: [srcMainProject, appTsFromSrc],
+            modifyContentBeforeSave: content => {
+              content = RegionRemover.from(
+                destPath,
+                content,
+                regionsToRemove,
+                this.project,
+                // debug
+              ).output;
+              return content
+                .replace(
+                  'TAON IS STARTING',
+                  `TAON IS STARTING (server=${entrypointArgId})`,
+                )
+                .replace(
+                  new RegExp(Utils.escapeStringForRegEx('User'), 'g'),
+                  `UserServer${entrypointArgId}`,
+                )
+                .replace(
+                  new RegExp(Utils.escapeStringForRegEx('/* */'), 'g'),
+                  '',
+                );
+            },
+          });
+
+          UtilsTypescript.removeFirstLevelRegionsInFile(destPath);
+          UtilsTypescript.formatFile(destPath);
+          // TODO
+          // remove browser code
+          // format file
+        }
       });
 
       project.framework.preventNotExistedComponentAndModuleInAppTs();

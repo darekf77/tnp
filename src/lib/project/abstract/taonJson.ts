@@ -436,6 +436,19 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  get numOfAdditionalEntrypointsForAppTs(): number {
+    //#region @backendFunc
+    let res = (this.data as Models.TaonJsonStandalone)
+      ?.numOfAdditionalEntrypoints;
+
+    if (res && res['app.ts']) {
+      return Number(res['app.ts']) || 0;
+    }
+
+    return 0;
+    //#endregion
+  }
+
   /**
    * Peer deps to inlculde in npm lib
    * (relative paths to files or folders)
