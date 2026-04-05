@@ -269,7 +269,11 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     //#region standalone save
 
     let configurations = [];
-    let compounds: { name: string; configurations: any[] }[] = [];
+    let compounds: {
+      stopAll?: boolean;
+      name: string;
+      configurations: any[];
+    }[] = [];
 
     //#region template vscode config
     const vscodeProjDevPath =
@@ -277,7 +281,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     const templatesVscodeExConfig = [
       {
-        name: 'Debug/Start Vscode Plugin',
+        name: `${DEBUG_WORD} Vscode Plugin`,
         type: 'extensionHost',
         request: 'launch',
         runtimeExecutable: '${execPath}',
@@ -338,7 +342,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     const templateForVite = () => {
       return [
         {
-          name: 'Vitest Debug (all *.test.ts files)',
+          name: `${DEBUG_WORD} Vitest (all *.test.ts files)`,
           type: 'node',
           request: 'launch',
           program: '${workspaceFolder}/node_modules/vitest/vitest.mjs',
@@ -351,7 +355,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
         },
 
         {
-          name: 'Vitest Debug (editor active test file)',
+          name: `${DEBUG_WORD} Vitest (editor active test file)`,
           type: 'node',
           request: 'launch',
           program: '${workspaceFolder}/node_modules/vitest/vitest.mjs',
@@ -377,17 +381,24 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     const templateForServer = (
       serverChild: Project,
       clientProject: Project,
-      workspaceLevel: boolean,
+      additionalEntrypointId?: number | undefined,
     ) => {
       // const backendPort = 4000;
 
       const startServerTemplate = {
         type: 'node',
         request: 'launch',
-        name: `${DEBUG_WORD} Server`,
+        name: `${DEBUG_WORD} ${
+          additionalEntrypointId
+            ? `Server ${additionalEntrypointId}`
+            : 'Server for app.ts'
+        }`,
         program: '${workspaceFolder}/run.js',
         cwd: void 0,
         args: [
+          ...(additionalEntrypointId
+            ? [`additionalEntrypointId=${additionalEntrypointId}`]
+            : []),
           // `port=${backendPort}`
         ],
         outFiles: this.outFiles,
@@ -398,9 +409,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       };
       if (serverChild.name !== clientProject.name) {
         let cwd = '${workspaceFolder}' + `/../ ${serverChild.name}`;
-        if (workspaceLevel) {
-          cwd = '${workspaceFolder}' + `/${serverChild.name}`;
-        }
+
         startServerTemplate.program = cwd + '/run.js';
         startServerTemplate.cwd = cwd;
       }
@@ -457,7 +466,14 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       ...templateForVite(),
     ];
 
-    configurations.push(templateForServer(this.project, this.project, false));
+    const servers = [];
+
+    servers.push(templateForServer(this.project, this.project));
+    _.times(this.project.taonJson.numOfAdditionalEntrypointsForAppTs, n => {
+      servers.push(templateForServer(this.project, this.project, n + 1));
+    });
+
+    configurations.push(...servers);
     // configurations.push(startNgServeTemplate(9000, void 0, false));
     // const key =;
     const portForElectronDebugging = await this.project.registerAndAssignPort(
@@ -467,10 +483,20 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
       },
     );
     configurations.push(startElectronServeTemplate(portForElectronDebugging));
-    // compounds.push({
-    //   name: `${DEBUG_WORD} (Server + Electron)`,
-    //   configurations: [...configurations.map(c => c.name)],
-    // });
+
+    compounds.push({
+      name: `${DEBUG_WORD} All Server`,
+      stopAll: true,
+      configurations: [...servers.map(c => c.name)],
+    });
+
+    compounds.push({
+      name: `${DEBUG_WORD} All Additional Server`,
+      stopAll: true,
+      configurations: [
+        ...servers.filter(c => c.args?.length > 0).map(c => c.name),
+      ],
+    });
 
     const portForCliDebugging = await this.project.registerAndAssignPort(
       `cli debugging port`,
