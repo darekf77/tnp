@@ -1047,7 +1047,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
     if (
       this.buildOptions.build.watch ||
-      (!this.buildOptions.build.watch && this.buildOptions.build.prod)
+      (!this.buildOptions.build.watch && !this.buildOptions.build.prod)
     ) {
       Helpers.removeFileIfExists(verifyBuild);
     } else {
