@@ -265,13 +265,14 @@ export class SubProject extends BaseQuickFixes<Project> {
   ): Promise<void> {
     //#region @backendFunc
 
-    if (
-      selectedTempalte !== TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER
-    ) {
-      Helpers.warn(`Not allowed to set stripe secrets`);
-      await UtilsTerminal.pressAnyKeyToContinueAsync();
-      return;
-    }
+    // TODO
+    // if (
+    //   selectedTempalte !== TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER
+    // ) {
+    //   Helpers.warn(`Not allowed to set stripe secrets`);
+    //   await UtilsTerminal.pressAnyKeyToContinueAsync();
+    //   return;
+    // }
 
     //#region add stripe secret
     Helpers.info(`
@@ -1035,6 +1036,7 @@ export async function setSecret(
     const proc = spawn('npx', ['wrangler', 'secret', 'put', name], {
       stdio: ['pipe', 'inherit', 'inherit'],
       cwd: cwdWorker,
+      shell: true,
     });
 
     proc.stdin.write(value);
