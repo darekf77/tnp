@@ -925,7 +925,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     // TODO make it better
     while (true) {
       try {
-        if (this.project.name !== 'tnp') { // TODO QUICK_FIX DONT CLEAR DIST for cli to work
+        if (this.project.name !== 'tnp') {
+          // TODO QUICK_FIX DONT CLEAR DIST for cli to work
           rimraf.sync(this.project.pathFor(distMainProject) + '*');
         }
         rimraf.sync(this.project.pathFor(folderName.tmp) + '*');
@@ -1696,26 +1697,18 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       );
       return;
     }
-    const buildLibDone = `LIB BUILD DONE.. `;
-    const ifapp =
-      'if you want to start app build -> please run in other terminal command:';
-
-    // const bawOrba = buildOptions.watch ? 'baw' : 'ba';
-    const bawOrbaLong = buildOptions.build.watch
-      ? ' build:app:watch '
-      : ' build:app ';
-    const bawOrbaLongWebsql = buildOptions.build.watch
-      ? 'build:app:watch --websql'
-      : 'build:app --websql';
+    const buildLibDone = `${buildOptions.build.prod ? '[PRODUCTION] ' : ''}LIB BUILD DONE.. `;
 
     Helpers.taskDone(`${chalk.underline(`${buildLibDone}...`)}`);
     Helpers.success(`
 
-      ${ifapp}
+      if you want to start app build -> please run in other terminal command:
 
-      ${chalk.bold(config.frameworkName + bawOrbaLong)}
-      or
-      ${config.frameworkName} ${bawOrbaLongWebsql}
+      ${chalk.bold(config.frameworkName + 'app:normal')} # normal ng serve app
+      # ${chalk.bold(config.frameworkName + 'an')}
+      ${config.frameworkName} ${'app:websql'} # websql ng serve app
+      # ${config.frameworkName} ${'aw'}
+
       `);
 
     //#endregion
