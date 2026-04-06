@@ -76,6 +76,7 @@ const notAllowedToPRocess = [appAutoGenDocsMd, appAutoGenJs];
 export class BrowserCodeCut {
   //#region constants
   public static debugFile = [
+    // 'branding.ts'
     // 'lib/start-cli.ts',
     // 'rest-request.ts',
     // 'models.ts',
@@ -335,6 +336,11 @@ export class BrowserCodeCut {
 
     const allIsomorphicPackagesFromMemory =
       this.project.packagesRecognition.allIsomorphicPackagesFromMemory;
+
+    // this.debug &&
+    //   console.log({
+    //     allIsomorphicPackagesFromMemory,
+    //   });
 
     this.splitFileProcess = new SplitFileProcess(
       orgContent,

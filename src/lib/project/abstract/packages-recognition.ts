@@ -111,7 +111,6 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     recognizedPackages = Utils.uniqArray(
       [
         ...(recognizedPackages || []),
-        this.project.name,
         this.project.nameForNpmPackage,
         ...(fromNodeModulesFolderSearch || []),
         taonPackageName,
@@ -126,6 +125,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     );
     // Helpers.taskDone(`Search done. Watcher started...`);
     this.addIsomorphicPackagesToFile(recognizedPackages);
+    Helpers.logInfo(`Watching isomorphic pacakges from: ${this.jsonPath}`);
     fse.watch(this.jsonPath, (eventType, filename) => {
       if (filename) {
         try {
@@ -194,7 +194,7 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       Utils.uniqArray([
         ...this.coreContainer.packagesRecognition.inMemoryIsomorphicLibs,
         ...isomorphicPackagesNames,
-        this.project.name,
+
         this.project.nameForNpmPackage,
       ]);
     //#endregion
@@ -251,7 +251,6 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
     const result = Utils.uniqArray([
       ...this.coreContainer.packagesRecognition.inMemoryIsomorphicLibs,
       this.project.nameForNpmPackage,
-      this.project.name,
     ]);
     // console.log(`allIsomorphicPackagesFromMemory: ${result.join('\n ')}`);
     return result;
