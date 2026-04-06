@@ -135,6 +135,22 @@ export const vscodeMenuItems = ({
               },
             },
           ),
+
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} build:lib:prod`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} build:lib:prod`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
+
           //#endregion
 
           //#region items with actions / build docs
