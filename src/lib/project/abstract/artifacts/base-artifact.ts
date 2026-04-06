@@ -1,6 +1,11 @@
 //#region imports
 import { RegionRemover } from 'isomorphic-region-loader/src';
-import { config, extAllowedToReplace, TAGS } from 'tnp-core/src';
+import {
+  config,
+  extAllowedToReplace,
+  TAGS,
+  UtilsFilesFoldersSync,
+} from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath, glob, path } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
 import {
@@ -573,10 +578,14 @@ export abstract class BaseArtifact<
       ]);
     }
 
-    HelpersTaon.git.revertFileChanges(
-      staticPagesProjLocation,
-      BundledFiles.CNAME,
-    );
+    if (releaseOptions.website.domain && releaseOptions.website.useDomain) {
+      UtilsFilesFoldersSync.writeFile(
+        [staticPagesProjLocation, BundledFiles.CNAME],
+        releaseOptions.website.domain,
+      );
+    } else {
+      Helpers.removeFileIfExists([staticPagesProjLocation, BundledFiles.CNAME]);
+    }
 
     if (options.createReadme) {
       Helpers.writeFile(
