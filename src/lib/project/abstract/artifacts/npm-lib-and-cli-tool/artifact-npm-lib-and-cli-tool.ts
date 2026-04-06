@@ -256,7 +256,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     const isDevelopmentBuildUseTscInsteadNgBuild = false; // !buildOptions.release.releaseType;
 
     if (!this.project.framework.isStandaloneProject) {
-      Helpers.warn(
+      Helpers.logWarn(
         `Project is not standalone. Skipping npm-lib-and-cli-tool build.`,
       );
       return;
