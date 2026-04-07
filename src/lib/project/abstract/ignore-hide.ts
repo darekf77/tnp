@@ -49,10 +49,6 @@ import type { Project } from './project';
 export class IgnoreHide // @ts-ignore TODO weird inheritance problem
   extends BaseIgnoreHideHelpers<Project>
 {
-  protected storeInRepoConfigFiles(): boolean {
-    return true; // TODO for now true in future may be false - everything recreate from template
-  }
-
   private applyToChildren(toIgnore: string[]): string[] {
     return toIgnore;
     // TODO remvoe ?
@@ -104,6 +100,11 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
             .map(f => f.relativeClonePath)
             .map(c => `${crossPlatformPath(c)}`)),
     ].filter(c => !!c) as string[];
+  }
+
+  // ! TODO THIS IS COLLIDING WITH hide in project
+  protected storeInRepoConfigFiles(): boolean {
+    return true; // TODO for now true in future may be false - everything recreate from template
   }
 
   // TODO use constants
