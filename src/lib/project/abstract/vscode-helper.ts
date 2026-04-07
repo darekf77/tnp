@@ -484,19 +484,23 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
     );
     configurations.push(startElectronServeTemplate(portForElectronDebugging));
 
-    compounds.push({
-      name: `${DEBUG_WORD} All Server`,
-      stopAll: true,
-      configurations: [...servers.map(c => c.name)],
-    });
+    if (servers.length >= 2) {
+      compounds.push({
+        name: `${DEBUG_WORD} All Server`,
+        stopAll: true,
+        configurations: [...servers.map(c => c.name)],
+      });
+    }
 
-    compounds.push({
-      name: `${DEBUG_WORD} All Additional Server`,
-      stopAll: true,
-      configurations: [
-        ...servers.filter(c => c.args?.length > 0).map(c => c.name),
-      ],
-    });
+    if (servers.length >= 2) {
+      compounds.push({
+        name: `${DEBUG_WORD} All Additional Server`,
+        stopAll: true,
+        configurations: [
+          ...servers.filter(c => c.args?.length > 0).map(c => c.name),
+        ],
+      });
+    }
 
     const portForCliDebugging = await this.project.registerAndAssignPort(
       `cli debugging port`,
