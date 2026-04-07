@@ -53,12 +53,12 @@
     // },
     {
       "description": "OS notyfications",
-      "isExternalFor": ["npm-lib-and-cli-tool"],
+      "isExternalFor": "*",
       "packageName": "node-notifier",
     },
     {
       "description": "Linux notyfications without deps",
-      "isExternalFor": ["npm-lib-and-cli-tool"],
+      "isExternalFor": "*",
       "packageName": "dbus-next",
     },
     {
