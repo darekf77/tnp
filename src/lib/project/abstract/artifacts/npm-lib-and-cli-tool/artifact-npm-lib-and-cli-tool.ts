@@ -410,120 +410,123 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       `);
     //#endregion
 
+    const npmBuildProcess = async () => {
+      //#region incremental build
+      await incrementalBuildProcess.runTask({
+        taskName: 'isomorphic compilation',
+        watch: buildOptions.build.watch,
+      });
+      await this.assetsManager.runTask({
+        watch: buildOptions.build.watch,
+      });
+      showInfoAngular();
+      //#endregion
+
+      //#region ng build
+      const outputOptions = await this.outputFixNgLibBuild(buildOptions);
+
+      const watchResolveString = isDevelopmentBuildUseTscInsteadNgBuild
+        ? COMPILATION_COMPLETE_TSC
+        : COMPILATION_COMPLETE_LIB_NG_BUILD;
+
+      const runNgBuild = async () => {
+        await proxyProject.execute(commandForLibraryBuild, {
+          similarProcessKey: TaonCommands.NG,
+          resolvePromiseMsg: {
+            stdout: buildOptions.build.watch ? watchResolveString : undefined,
+          },
+          rebuildOnChange: buildOptions.build.watch
+            ? this.project.tmpSourceRebuildForBrowserObs
+            : void 0,
+          ...outputOptions,
+        });
+        await proxyProjectWebsql.execute(commandForLibraryBuild, {
+          similarProcessKey: TaonCommands.NG,
+          resolvePromiseMsg: {
+            stdout: buildOptions.build.watch ? watchResolveString : undefined,
+          },
+          rebuildOnChange: buildOptions.build.watch
+            ? this.project.tmpSourceRebuildForWebsqlObs
+            : void 0,
+          ...outputOptions,
+        });
+      };
+      //#endregion
+
+      //#region set angular.json default tasks
+
+      const tmpLibForDistNormalRelativePath = angularProjProxyPath({
+        project: this.project,
+        targetArtifact: buildOptions.release.targetArtifact,
+        envOptions: buildOptions.clone({
+          build: { websql: false },
+        }),
+      });
+
+      const tmpLibForDistWebsqlRelativePath = angularProjProxyPath({
+        project: this.project,
+        targetArtifact: buildOptions.release.targetArtifact,
+        envOptions: buildOptions.clone({
+          build: { websql: true },
+        }),
+      });
+
+      this.project.setValueToJSONC(
+        [tmpLibForDistNormalRelativePath, CoreNgTemplateFiles.ANGULAR_JSON],
+        `projects["${this.project.name}"].architect.build.${defaultConfiguration}`,
+        AngularJsonLibTaskNameResolveFor(buildOptions),
+      );
+
+      this.project.setValueToJSONC(
+        [tmpLibForDistWebsqlRelativePath, CoreNgTemplateFiles.ANGULAR_JSON],
+        `projects["${this.project.name}"].architect.build.${defaultConfiguration}`,
+        AngularJsonLibTaskNameResolveFor(buildOptions),
+      );
+
+      this.project.remove([tmpLibForDistNormalRelativePath, '.angular']);
+
+      this.project.remove([tmpLibForDistWebsqlRelativePath, '.angular']);
+
+      //#endregion
+
+      //#region  handle watch & normal mode
+
+      if (buildOptions.build.watch) {
+        await runNgBuild();
+      } else {
+        try {
+          await runNgBuild();
+        } catch (e) {
+          console.error(e);
+
+          Helpers.throwError(
+            `
+          Command failed: ${commandForLibraryBuild}
+
+          Not able to build project: ${this.project.genericName}`,
+          );
+        }
+      }
+
+      //#endregion
+    };
+
     //#region actuall build of taon npm lib
     if (
       !buildOptions.build.watch &&
       buildOptions.release.releaseType &&
       !buildOptions.release.skipCodeCutting
     ) {
-      this.__cutReleaseCodeFromSrc(buildOptions);
-    }
-
-    //#region incremental build
-    await incrementalBuildProcess.runTask({
-      taskName: 'isomorphic compilation',
-      watch: buildOptions.build.watch,
-    });
-    await this.assetsManager.runTask({
-      watch: buildOptions.build.watch,
-    });
-    showInfoAngular();
-    //#endregion
-
-    //#region ng build
-    const outputOptions = await this.outputFixNgLibBuild(buildOptions);
-
-    const watchResolveString = isDevelopmentBuildUseTscInsteadNgBuild
-      ? COMPILATION_COMPLETE_TSC
-      : COMPILATION_COMPLETE_LIB_NG_BUILD;
-
-    const runNgBuild = async () => {
-      await proxyProject.execute(commandForLibraryBuild, {
-        similarProcessKey: TaonCommands.NG,
-        resolvePromiseMsg: {
-          stdout: buildOptions.build.watch ? watchResolveString : undefined,
-        },
-        rebuildOnChange: buildOptions.build.watch
-          ? this.project.tmpSourceRebuildForBrowserObs
-          : void 0,
-        ...outputOptions,
-      });
-      await proxyProjectWebsql.execute(commandForLibraryBuild, {
-        similarProcessKey: TaonCommands.NG,
-        resolvePromiseMsg: {
-          stdout: buildOptions.build.watch ? watchResolveString : undefined,
-        },
-        rebuildOnChange: buildOptions.build.watch
-          ? this.project.tmpSourceRebuildForWebsqlObs
-          : void 0,
-        ...outputOptions,
-      });
-    };
-    //#endregion
-
-    //#region set angular.json default tasks
-
-    const tmpLibForDistNormalRelativePath = angularProjProxyPath({
-      project: this.project,
-      targetArtifact: buildOptions.release.targetArtifact,
-      envOptions: buildOptions.clone({
-        build: { websql: false },
-      }),
-    });
-
-    const tmpLibForDistWebsqlRelativePath = angularProjProxyPath({
-      project: this.project,
-      targetArtifact: buildOptions.release.targetArtifact,
-      envOptions: buildOptions.clone({
-        build: { websql: true },
-      }),
-    });
-
-    this.project.setValueToJSONC(
-      [tmpLibForDistNormalRelativePath, CoreNgTemplateFiles.ANGULAR_JSON],
-      `projects["${this.project.name}"].architect.build.${defaultConfiguration}`,
-      AngularJsonLibTaskNameResolveFor(buildOptions),
-    );
-
-    this.project.setValueToJSONC(
-      [tmpLibForDistWebsqlRelativePath, CoreNgTemplateFiles.ANGULAR_JSON],
-      `projects["${this.project.name}"].architect.build.${defaultConfiguration}`,
-      AngularJsonLibTaskNameResolveFor(buildOptions),
-    );
-
-    this.project.remove([tmpLibForDistNormalRelativePath, '.angular']);
-
-    this.project.remove([tmpLibForDistWebsqlRelativePath, '.angular']);
-
-    //#endregion
-
-    //#region  handle watch & normal mode
-
-    if (buildOptions.build.watch) {
-      await runNgBuild();
-    } else {
       try {
-        await runNgBuild();
-      } catch (e) {
-        console.error(e);
-
-        Helpers.throwError(
-          `
-          Command failed: ${commandForLibraryBuild}
-
-          Not able to build project: ${this.project.genericName}`,
-        );
+        this.__cutReleaseCodeFromSrc(buildOptions);
+        await npmBuildProcess();
+        this.__restoreCuttedReleaseCodeFromSrc(buildOptions);
+      } catch (error) {
+        this.__restoreCuttedReleaseCodeFromSrc(buildOptions);
+        throw error;
       }
-    }
-
-    //#endregion
-
-    if (
-      !buildOptions.build.watch &&
-      buildOptions.release.releaseType &&
-      !buildOptions.release.skipCodeCutting
-    ) {
-      this.__restoreCuttedReleaseCodeFromSrc(buildOptions);
+    } else {
+      await npmBuildProcess();
     }
     //#endregion
 
