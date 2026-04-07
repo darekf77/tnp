@@ -98,8 +98,8 @@ export class $Init extends BaseCli {
       `Do you wanna init project in this folder ?`,
     );
     if (yesNewProj) {
-      const responseProjectType = // @ts-ignore
-        await Helpers.autocompleteAsk<CoreModels.LibType>(
+      const responseProjectType =
+        await HelpersTaon.autocompleteAsk<CoreModels.LibType>(
           `Choose type of project`,
           [
             { name: 'Container', value: LibTypeEnum.CONTAINER },
