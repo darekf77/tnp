@@ -8,8 +8,10 @@ const env: Partial<EnvOptions> = {
   },
   release: {
     cli: {
+      ...(baseEnv.release?.cli || {}),
       includeNodeModules: true,
     },
+    useLocalReleaseBranch: true,
   },
 };
 export default env;

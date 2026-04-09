@@ -35,9 +35,14 @@
     {
       "artifactName": "npm-lib-and-cli-tool",
       "envName": "prod",
-      "envNumber": 1,
       "releaseType": "local",
-      "taskName": "local-cli",
+      "taskName": "cli:tool",
+    },
+    {
+      "artifactName": "vscode-plugin",
+      "envName": "prod",
+      "releaseType": "local",
+      "taskName": "vscode:plugin",
     },
   ],
 

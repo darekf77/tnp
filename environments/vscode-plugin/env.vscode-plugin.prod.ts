@@ -4,8 +4,9 @@ import type { EnvVSCodePaths } from './env.vscode-plugin.__';
 
 const env: Partial<EnvOptions<EnvVSCodePaths>> = {
   ...baseEnv,
-  paths: {
-    vscodeDeployPath: 'dev.taon.tnp.vscode-plugin',
+  release: {
+    ...baseEnv.release,
+    useLocalReleaseBranch: true,
   },
 };
 export default env;

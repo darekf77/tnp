@@ -235,7 +235,8 @@ class $Release extends BaseCli {
         release: {
           envName: releaseOpt.envName,
           envNumber: releaseOpt.envNumber,
-          // skipTagGitPush: true,
+          skipTagGitPush: true,
+          useLocalReleaseBranch: false,
           pushToAllOriginsWhenLocalReleaseBranch: true,
           skipResolvingGitChanges: true,
           targetArtifact: releaseOpt.targetArtifact,
