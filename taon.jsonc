@@ -49,6 +49,7 @@
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
   "resources": ["icon-menu-tnp.svg"],
 
+  //#region single bundle config
   "singleFileBundlingPackages": [
     // electron is replaced by default
     // {
@@ -133,6 +134,7 @@
       "packageName": "mariadb",
     },
   ],
+  //#endregion
 
   "storeLocalReleaseFilesInRepository": true,
 
@@ -142,11 +144,13 @@
       "commands": [
         {
           "command": "extension.createFileTnp",
+          "group": null,
           "icon": "$(new-file)",
           "title": "Create New File",
         },
         {
           "command": "extension.createFolderTnp",
+          "group": null,
           "icon": "$(new-folder)",
           "title": "Create New Folder",
         },
