@@ -451,6 +451,8 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
           '.',
           `--remote-debugging-port=${remoteDebugElectronPort}`, // 9876
         ],
+        outFiles: this.outFiles,
+        sourceMapPathOverrides: this.sourceMapPathOverrides,
         windows: {
           runtimeExecutable:
             '${workspaceFolder}/node_modules/.bin/electron.cmd',
