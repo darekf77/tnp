@@ -1708,9 +1708,9 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       if you want to start app build -> please run in other terminal command:
 
       ${chalk.bold(config.frameworkName + ' app:normal')} # normal ng serve app
-      # ${chalk.bold(config.frameworkName + ' an')}
+      ${chalk.bold(config.frameworkName + ' an')}
       ${config.frameworkName} ${'app:websql'} # websql ng serve app
-      # ${config.frameworkName} ${'aw'}
+      ${config.frameworkName} ${'aw'}
 
       `);
 
