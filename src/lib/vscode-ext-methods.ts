@@ -736,6 +736,21 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+       //#region GENERATE taon entity file
+       {
+        group: groupGENERATE,
+        title: `taon .entity.ts file`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-entity_flat  %entity%`,
+        options: {
+          titleWhenProcessing: 'generating taon entity file',
+          showSuccessMessage: false,
+          resolveVariables: [
+            { variable: 'entity', placeholder: `my-entity`, encode: true },
+          ],
+        },
+      },
+      //#endregion
+
       //#region GENERATE taon middleware file
       {
         group: groupGENERATE,
