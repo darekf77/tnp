@@ -17,7 +17,6 @@ import { UtilsTerminal } from 'tnp-core/src';
 import { TaonBaseCliWorkerController } from 'tnp-helpers/src';
 
 import { ERR_MESSAGE_DEPLOYMENT_NOT_FOUND } from '../../../../constants';
-import { ProcessesController } from '../processes/processes.controller';
 
 import { Deployments } from './deployments';
 import { DEPLOYMENT_LOCAL_FOLDER_PATH } from './deployments.constants';

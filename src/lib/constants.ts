@@ -982,8 +982,6 @@ export const TO_REMOVE_TAG = `/${'TO_REMOVE'
   .join('')}`;
 
 export const ERR_MESSAGE_DEPLOYMENT_NOT_FOUND = 'DEPLOYMENT_NOT_FOUND';
-export const ERR_MESSAGE_PROCESS_NOT_FOUND = 'PROCESS_NOT_FOUND';
-// console.log('TO_REMOVE_TAG', TO_REMOVE_TAG);
 
 export const migrationsFromLib = folderName.migrations;
 

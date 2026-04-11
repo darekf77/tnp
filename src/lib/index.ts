@@ -6,3 +6,4 @@ export * from './vscode-ext-menu';
 export * from './vscode-handle-taon-redirect';
 export * from './vscode-patching';
 export * from './start-cli'; // @backend
+export * from './project/cli/cli-_GLOBAL_'; // @backend

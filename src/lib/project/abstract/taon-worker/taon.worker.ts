@@ -15,7 +15,7 @@ import type { TaonProjectResolve } from '../project-resolve';
 
 import { DeploymentsWorker } from './deployments/deployments.worker';
 import { InstancesWorker } from './instances/instances.worker';
-import { ProcessesWorker } from './processes/processes.worker';
+import { ProcessesWorker } from '@taon-dev/cloud/src';
 import { TaonTerminalUI } from './taon-terminal-ui';
 import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
@@ -101,7 +101,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
 
     this.dependencyWorkers.set(
       this.processesWorker.serviceID,
-      this.processesWorker,
+      this.processesWorker as any,
     );
     this.dependencyWorkers.set(
       this.deploymentsWorker.serviceID,
