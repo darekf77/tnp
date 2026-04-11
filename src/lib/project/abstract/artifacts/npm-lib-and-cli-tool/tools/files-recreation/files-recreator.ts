@@ -1,6 +1,6 @@
 //#region imports
 import * as JSON5 from 'json5';
-import { config } from 'tnp-core/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import { fse, crossPlatformPath, CoreModels, chalk } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
@@ -76,8 +76,12 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
   projectSpecificFilesForContainer(): string[] {
     return [
       taonConfigSchemaJsonContainer,
-      esLintConfigJsonMainProject,
-      esLintRuleNoNamespaceReExport,
+      `${LibTypeEnum.ISOMORPHIC_LIB}-${
+        this.project.framework.frameworkVersion
+      }/${esLintConfigJsonMainProject}`,
+      `${LibTypeEnum.ISOMORPHIC_LIB}-${
+        this.project.framework.frameworkVersion
+      }/${esLintRuleNoNamespaceReExport}`,
     ];
   }
 

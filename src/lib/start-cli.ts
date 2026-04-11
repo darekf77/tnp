@@ -385,6 +385,7 @@ export async function run(
       a: 'app',
       an: 'app:normal',
       aw: 'app:websql',
+      ae: 'app:electron',
       ba: 'build:app',
       b: 'build',
       bl: 'build:lib',

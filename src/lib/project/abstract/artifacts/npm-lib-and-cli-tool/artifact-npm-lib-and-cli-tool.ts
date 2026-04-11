@@ -1711,6 +1711,8 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       ${chalk.bold(config.frameworkName + ' an')}
       ${config.frameworkName} ${'app:websql'} # websql ng serve app
       ${config.frameworkName} ${'aw'}
+      ${config.frameworkName} ${'app:electron'} # electron ng serve app
+      ${config.frameworkName} ${'ae'}
 
       `);
 
