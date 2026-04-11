@@ -1,5 +1,7 @@
 //#region imports
-import { config } from 'tnp-core/src';
+import { ProcessesWorker } from '@taon-dev/cloud/src';
+import { TraefikProvider } from '@taon-dev/cloud/src';
+import { config, LibTypeEnum } from 'tnp-core/src';
 import { _, UtilsTerminal } from 'tnp-core/src';
 import {
   BaseCliWorker,
@@ -15,11 +17,10 @@ import type { TaonProjectResolve } from '../project-resolve';
 
 import { DeploymentsWorker } from './deployments/deployments.worker';
 import { InstancesWorker } from './instances/instances.worker';
-import { ProcessesWorker } from '@taon-dev/cloud/src';
 import { TaonTerminalUI } from './taon-terminal-ui';
 import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
-import { TraefikProvider } from './traefik/traefik.provider';
+
 //#endregion
 
 export class TaonProjectsWorker extends BaseCliWorker<
@@ -28,20 +29,19 @@ export class TaonProjectsWorker extends BaseCliWorker<
 > {
   //#region properties
 
-  // @ts-ignore
-  terminalUI = new TaonTerminalUI(this);
+  readonly terminalUI = new TaonTerminalUI(this);
 
-  workerContextTemplate = TaonProjectsContextTemplate as any; // TODO for some reason as any is nessesary
+  readonly workerContextTemplate = TaonProjectsContextTemplate as any; // TODO for some reason as any is nessesary
 
-  controllerClass = TaonProjectsController;
+  readonly controllerClass = TaonProjectsController;
 
-  public deploymentsWorker: DeploymentsWorker;
+  public readonly deploymentsWorker: DeploymentsWorker;
 
-  public instancesWorker: InstancesWorker;
+  public readonly instancesWorker: InstancesWorker;
 
-  public processesWorker: ProcessesWorker;
+  public readonly processesWorker: ProcessesWorker;
 
-  public traefikProvider = new TraefikProvider(this);
+  public readonly traefikProvider: TraefikProvider;
   //#endregion
 
   //#region constructor
@@ -65,6 +65,10 @@ export class TaonProjectsWorker extends BaseCliWorker<
     // console.log('Initializing TaonProjectsWorker...');
 
     //#region @backend
+    this.traefikProvider = new TraefikProvider(() =>
+      ins.by(LibTypeEnum.ISOMORPHIC_LIB).pathFor(`docker-templates/traefik`),
+    );
+
     this.deploymentsWorker = new DeploymentsWorker(
       'taon-project-deployments-worker',
       () => `${config.frameworkName} cloud:deployments ${skipCoreCheck}`,

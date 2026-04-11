@@ -1,5 +1,5 @@
 //#region imports
-import type * as ora from 'ora';
+
 import { TaonTempDatabasesFolder, TaonTempRoutesFolder } from 'taon/src';
 import {
   config,
@@ -138,17 +138,6 @@ export const OVERRIDE_FROM_TNP = [
   'scripts',
 ];
 
-export const globalSpinner = {
-  get instance(): Pick<
-    ora.Ora,
-    'start' | 'text' | 'succeed' | 'stop' | 'fail'
-  > {
-    //#region @backendFunc
-    return global.spinner;
-    //#endregion
-  },
-};
-
 export const startSpinner = 'start-spinner';
 export const stopSpinner = 'stop-spinner';
 export const failSpinner = 'fail-spinner';
@@ -183,23 +172,11 @@ export const COMPILATION_COMPLETE_TSC =
 export const DEFAULT_FRAMEWORK_VERSION =
   `v${CURRENT_PACKAGE_VERSION.split('.')[0]}` as CoreModels.FrameworkVersion;
 
-let taonRepoPathUserInUserDir: string = '';
-
-//#region @backend
-taonRepoPathUserInUserDir = crossPlatformPath([
-  UtilsOs.getRealHomeDir(),
-  dotTaonFolder,
-  taonContainers,
-]);
-//#endregion
-
-const taonBasePathToGlobalDockerTemplates: string = crossPlatformPath([
-  UtilsOs.getRealHomeDir(),
-  dotTaonFolder,
-  dockerTemplates,
-]);
-
-export { taonRepoPathUserInUserDir, taonBasePathToGlobalDockerTemplates };
+export {
+  taonRepoPathUserInUserDir,
+  taonBasePathToGlobalDockerTemplates,
+  globalSpinner
+} from 'tnp-core/src';
 
 /**
  * Prevents taon from checking core container when
