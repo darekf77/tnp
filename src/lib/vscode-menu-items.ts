@@ -221,6 +221,23 @@ export const vscodeMenuItems = ({
           ),
           //#endregion
 
+          //#region items with actions /  app electron
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} app:electron`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} app:electron`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
+          //#endregion
+
           //#region items with actions /  start
           new ProjectItem(
             `$ ${FRAMEWORK_NAME} release:auto npm`,
