@@ -359,33 +359,17 @@ export class NodeModules extends BaseNodeModules {
       }
   )[] {
     return [
-      'tnp-models', // TODO remove
-      'tnp-helpers',
-      'tnp-db', // TODO remove
-      'tnp-core',
-      'tnp-cli', // TODO remove
-      'tnp-config', // TODO remove
-      'tnp-tools', // TODO remove
-      'taon',
-      'taon-ui',
-      'taon-typeorm',
-      'taon-storage',
+      ...this.getIsomorphicPackagesNames(),
       // "better-sqlite3",
       // "any-project-cli",
       'node-cli-test',
       'fs-extra',
       '@types/fs-extra',
-      'ng2-rest',
-      'ng2-logger',
-      'json10',
-      'lodash-walk-object',
-      'typescript-class-helpers',
       'background-worker-process',
       '@ngtools/webpack',
       'portfinder',
       'socket.io-client',
       'socket.io',
-      'incremental-compiler',
       'rxjs',
       'webpack',
       'webpack-dev-server',
@@ -420,7 +404,6 @@ export class NodeModules extends BaseNodeModules {
       'tslint',
       'prettier',
       '@types/node',
-      'record-replay-req-res-scenario',
       // [
       //   'core-js',
       //   '!babel-register',
