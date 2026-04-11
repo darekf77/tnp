@@ -1,6 +1,7 @@
 //#region imports
 import { ProcessesWorker } from '@taon-dev/cloud/src';
 import { TraefikProvider } from '@taon-dev/cloud/src';
+import { InstancesWorker } from '@taon-dev/cloud/src';
 import { config, LibTypeEnum } from 'tnp-core/src';
 import { _, UtilsTerminal } from 'tnp-core/src';
 import {
@@ -16,7 +17,6 @@ import { skipCoreCheck } from '../../../constants';
 import type { TaonProjectResolve } from '../project-resolve';
 
 import { DeploymentsWorker } from './deployments/deployments.worker';
-import { InstancesWorker } from './instances/instances.worker';
 import { TaonTerminalUI } from './taon-terminal-ui';
 import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
