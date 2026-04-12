@@ -113,7 +113,7 @@ export class TaonProjectsWorker extends BaseCliWorker<
     );
     this.dependencyWorkers.set(
       this.instancesWorker.serviceID,
-      this.instancesWorker,
+      this.instancesWorker as any,
     );
 
     //#endregion

@@ -817,10 +817,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     if (allowedToNpmReleases.includes(releaseOptions.release.releaseType)) {
       if (!releaseOptions.release.skipNpmPublish) {
         deploymentFunction = async () => {
-          await projFromCompiled.releaseProcess.publishToNpm(
-            tmpProjNpmLibraryInNodeModulesAbsPath,
-            releaseOptions.release.autoReleaseUsingConfig,
-          );
+          await projFromCompiled.releaseProcess.publishToNpm({
+            skipQuestionsToUser: releaseOptions.release.autoReleaseUsingConfig,
+          });
         };
       }
     } else {

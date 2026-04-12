@@ -14,6 +14,7 @@ import {
   BaseFeatureForProject,
   BasePackageJson,
   BaseJsonFileReaderOptions,
+  UtilsNpm,
 } from 'tnp-helpers/src';
 import { PackageJson, PackageJson as PackageJsonType } from 'type-fest';
 
@@ -99,6 +100,17 @@ export class PackageJSON extends BasePackageJson {
       }
       this.data.name = this.project.nameForNpmPackage;
       this.data.version = versionToPreserve;
+      if (!this.data.version) {
+        try {
+          const latestTag = (this.project.git.lastTagVersionName || '').replace(
+            'v',
+            '',
+          );
+          if (UtilsNpm.isProperVersion(latestTag)) {
+            this.data.version = latestTag;
+          }
+        } catch (error) {}
+      }
       if (!this.data.version) {
         this.data.version = '0.0.0';
       }

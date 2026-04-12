@@ -261,6 +261,10 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       await this.npmHelpers.makeSureLoggedInToNpmRegistry();
     }
 
+    if(!this.packageJson.exists) {
+      await this.init();
+    }
+
     const newVersion = this.packageJson.resolvePossibleNewVersion(
       releaseOptions.release.releaseVersionBumpType,
     );
