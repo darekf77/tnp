@@ -709,7 +709,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
           ...proj.taonJson.isomorphicDependenciesForNpmLib,
           ...proj.taonJson.peerDependenciesNamesForNpmLib,
         ],
-        proj => proj.nameForNpmPackage,
+        proj => proj.name,
         this.project.taonJson.overridePackagesOrder,
       );
 

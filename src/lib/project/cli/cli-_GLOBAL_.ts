@@ -1724,7 +1724,7 @@ ${this.project.children
           ...proj.taonJson.isomorphicDependenciesForNpmLib,
           ...proj.taonJson.peerDependenciesNamesForNpmLib,
         ],
-        proj => proj.nameForNpmPackage,
+        proj => proj.name,
         this.project.taonJson.overridePackagesOrder,
       )
       .filter(d => d.framework.isStandaloneProject);

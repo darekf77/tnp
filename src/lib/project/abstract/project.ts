@@ -305,7 +305,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
             ...proj.taonJson.isomorphicDependenciesForNpmLib,
             ...proj.taonJson.peerDependenciesNamesForNpmLib,
           ],
-          proj => proj.nameForNpmPackage,
+          proj => proj.name,
           this.taonJson.overridePackagesOrder,
         )
         .filter(
