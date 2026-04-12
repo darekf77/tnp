@@ -332,7 +332,8 @@ export namespace Models {
 
     /**
      * (CONTAINER) override order of packages during release or buildq
-     * so dependencies are released first
+     * so dependencies are released first. Use projects names (or basename)
+     * and not npm names.
      */
     overridePackagesOrder: string[];
 
