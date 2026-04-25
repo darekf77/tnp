@@ -25,7 +25,6 @@ import type { TaonProjectsWorker } from './taon.worker';
 //#endregion
 
 export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> {
-
   //#region methods / header text
   protected async headerText(): Promise<string> {
     return 'Taon.dev';
@@ -34,7 +33,6 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
 
   //#region methods / header
   async header(): Promise<void> {
-
     //#region @backendFunc
     // return super.header();
     let consoleLogoPath: string;
@@ -72,13 +70,11 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       });
     });
     //#endregion
-
   }
   //#endregion
 
   //#region methods / get domains menu
   protected async getDomainsMenu(): Promise<void> {
-
     //#region @backendFunc
     while (true) {
       UtilsTerminal.clearConsole();
@@ -133,17 +129,14 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       }
     }
     //#endregion
-
   }
   //#endregion
 
   //#region methods / get worker terminal actions
   getWorkerTerminalActions(): BaseWorkerTerminalActionReturnType {
-
     //#region @backendFunc
 
     const myActions = {
-
       //#region enableCloud
       enableCloud: {
         name: '',
@@ -257,8 +250,8 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       },
       //#endregion
 
-       //#region scheduler
-       scheduler: {
+      //#region scheduler
+      scheduler: {
         name: 'Manage Scheduler',
         action: async () => {
           console.log('Scheduler in progress... ');
@@ -269,8 +262,19 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       },
       //#endregion
 
-       //#region environments
-       settings: {
+      //#region processes
+      devmode: {
+        name: 'Manage Dev Mode',
+        action: async () => {
+          await this.worker.devModeWorker.terminalUI.infoScreen({
+            exitIsOnlyReturn: true,
+          });
+        },
+      },
+      //#endregion
+
+      //#region environments
+      settings: {
         name: 'Settings',
         action: async () => {
           console.log('Setting in progress... ');
@@ -280,7 +284,6 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
         },
       },
       //#endregion
-
     };
 
     delete myActions.environments;
@@ -299,8 +302,6 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       ...super.getWorkerTerminalActions({ chooseAction: false }),
     };
     //#endregion
-
   }
   //#endregion
-
 }

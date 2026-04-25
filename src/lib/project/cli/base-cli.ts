@@ -4,9 +4,13 @@ import { BaseCommandLineFeature } from 'tnp-helpers/src';
 import { globalSpinner } from '../../constants';
 import { EnvOptions } from '../../options';
 import type { Project } from '../abstract/project';
+import type { TaonProjectResolve } from '../abstract/project-resolve';
 
 // @ts-ignore TODO weird inheritance problem
 export class BaseCli extends BaseCommandLineFeature<EnvOptions, Project> {
+  // @ts-ignore
+  ins: TaonProjectResolve;
+
   async __initialize__(): Promise<void> {
     this.params = EnvOptions.from(this.params);
     // await this.__recreateEnvForArtifactAndEnvironment(); // TODO this taks too much time
@@ -27,7 +31,6 @@ export class BaseCli extends BaseCommandLineFeature<EnvOptions, Project> {
       });
       delete this.params['skipMenuAuto'];
     }
-
   }
 
   protected async __recreateEnvForArtifactAndEnvironment(): Promise<void> {

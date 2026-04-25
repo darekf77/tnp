@@ -168,8 +168,6 @@ export class BrowserCompilation extends BaseClientCompiler {
 
     //#endregion
 
-    // TODO @LAST fix everywhere _PROD
-
     this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting(
       this.buildOptions,
     );

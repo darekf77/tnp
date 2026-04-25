@@ -1,4 +1,5 @@
 //#region imports
+import { Taon, TaonBaseContext } from 'taon/src';
 import {
   config,
   dotTaonFolder,
@@ -8,6 +9,7 @@ import {
   taonProjects,
   tnpPackageName,
   urlRepoTaonContainers,
+  Utils,
 } from 'tnp-core/src';
 import { LibTypeArr } from 'tnp-core/src';
 import {
@@ -34,9 +36,14 @@ import {
   taonJsonMainProject,
   taonRepoPathUserInUserDir,
 } from '../../constants';
-// import { $Global } from '../cli/cli-_GLOBAL_';
+import { EnvOptions } from '../../options';
 
 import type { Project } from './project';
+import { DevBuildController } from './taon-worker/dev-build';
+import { DevBuildContext } from './taon-worker/dev-build/dev-build.abstract.context';
+import { DevBuildRepository } from './taon-worker/dev-build/dev-build.repository';
+import { DevBuildUtils } from './taon-worker/dev-build/dev-build.utils';
+import { DevMode } from './taon-worker/dev-mode/dev-mode.models';
 import { TaonProjectsWorker } from './taon-worker/taon.worker';
 //#endregion
 
@@ -505,8 +512,26 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   }
   //#endregion
 
+  public readonly devBuildRepository: DevBuildRepository;
+
+  public readonly currentActionPort: number;
+
+  async notifyMainWorkerThatDevMode(
+    project: Project,
+    envOptions: EnvOptions,
+  ): Promise<void> {
+    //#region @backendFunc
+    const obj = await DevBuildUtils.startAcionWorker();
+    Object.assign(this, obj);
+    UtilsOs.safeExitProgramCleanUp(obj.exitProgramCleaningFn);
+
+    this.devBuildRepository.project = project;
+    await project.taonBuildObserver.updateAction();
+    //#endregion
+  }
+
   //#region initial check
-  public initialCheck() {
+  public initialCheck(): void {
     //#region @backendFunc
     if (this.hasResolveCoreDepsAndFolder) {
       return;
@@ -570,7 +595,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   //#endregion
 
   //#region path resolved
-  private pathResolved(...partOfPath: string[]) {
+  private pathResolved(...partOfPath: string[]): string {
     //#region @backendFunc
     // console.log('pathResolved', partOfPath);
 

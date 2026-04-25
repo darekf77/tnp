@@ -198,7 +198,7 @@ export const argsToClear = [
 
 export const verbosePrefix = '-verbose';
 export const spinnerPrefix = '-spinner';
-export const linuxWatchPrefix = '-linuxWatch';
+export const lightWatcherPrefix = '-lightWatcher';
 export const websqlPrefix = '-websql';
 
 export const folder_shared_folder_info = 'shared_folder_info.txt';

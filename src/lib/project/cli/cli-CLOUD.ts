@@ -232,6 +232,24 @@ export class $Cloud extends BaseCli {
   }
   //#endregion
 
+  //#region deployments
+  @UtilsCliClassMethod.decoratorMethod('devmode')
+  async devmode(): Promise<void> {
+    // UtilsTerminal.drawBigText('Deployments');
+    // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
+    const { Project } = await import('../abstract/project');
+    await Project.ins.taonProjectsWorker.devModeWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          ...this.params,
+          mode: BaseCLiWorkerStartMode.IN_CURRENT_PROCESS,
+        },
+        calledFrom: 'cli-CLOUD/$Cloud.devmode',
+      },
+    });
+  }
+  //#endregion
+
   //#region instances
   @UtilsCliClassMethod.decoratorMethod('instances')
   async instances(): Promise<void> {

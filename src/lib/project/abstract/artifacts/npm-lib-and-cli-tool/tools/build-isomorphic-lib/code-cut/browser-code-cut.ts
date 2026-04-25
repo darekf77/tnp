@@ -141,8 +141,6 @@ export class BrowserCodeCut {
 
   private readonly nameForNpmPackage: string;
 
-  private readonly isLinuxWatchModeAllowde: boolean;
-
   //#region @backend
   constructor(
     /**
@@ -170,7 +168,6 @@ export class BrowserCodeCut {
 
     //#region recognize namespaces for isomorphic packages
     this.nameForNpmPackage = project.nameForNpmPackage;
-    this.isLinuxWatchModeAllowde = project.isLinuxWatchModeAllowde();
 
     //#endregion
 
@@ -512,8 +509,8 @@ export class BrowserCodeCut {
         !this.relativePath.startsWith(`${appFromSrc}.`)
       ) {
         // NORMAL TS BROWSER FILE FOR LIB
-        const absFileSourcePathBrowserOrWebsqlCurrent = this
-          .isLinuxWatchModeAllowde
+        const absFileSourcePathBrowserOrWebsqlCurrent = this.project.watcher
+          .isTaonLightWatcherMode
           ? UtilsFilesFoldersSync.readFile(
               this.absFileSourcePathBrowserOrWebsql,
             )
@@ -537,8 +534,8 @@ export class BrowserCodeCut {
         }
       }
       // NORMAL TS BROWSER FILE FOR APP
-      const absFileSourcePathBrowserOrWebsqlAPPONLYCurrent = this
-        .isLinuxWatchModeAllowde
+      const absFileSourcePathBrowserOrWebsqlAPPONLYCurrent = this.project
+        .watcher.isTaonLightWatcherMode
         ? UtilsFilesFoldersSync.readFile(
             this.absFileSourcePathBrowserOrWebsqlAPPONLY,
           )
@@ -564,8 +561,8 @@ export class BrowserCodeCut {
     } else {
       if (!this.relativePath.startsWith(`${appFromSrc}/`)) {
         // NORMAL JSON, TXT (OR ANYTHING TEXT BASED) FOR BROWSER FILE FOR LIB
-        const absFileSourcePathBrowserOrWebsqlCurrent = this
-          .isLinuxWatchModeAllowde
+        const absFileSourcePathBrowserOrWebsqlCurrent = this.project.watcher
+          .isTaonLightWatcherMode
           ? UtilsFilesFoldersSync.readFile(
               this.absFileSourcePathBrowserOrWebsql,
             )
@@ -586,8 +583,8 @@ export class BrowserCodeCut {
         }
       }
       // NORMAL JSON, TXT (OR ANYTHING TEXT BASED) FOR BROWSER FILE FOR APP
-      const absFileSourcePathBrowserOrWebsqlAPPONLYCurrent = this
-        .isLinuxWatchModeAllowde
+      const absFileSourcePathBrowserOrWebsqlAPPONLYCurrent = this.project
+        .watcher.isTaonLightWatcherMode
         ? Helpers.readFile(this.absFileSourcePathBrowserOrWebsqlAPPONLY)
         : undefined;
 
@@ -901,7 +898,8 @@ export class BrowserCodeCut {
         return;
       }
 
-      const absoluteBackendDestFilePathCurrent = this.isLinuxWatchModeAllowde
+      const absoluteBackendDestFilePathCurrent = this.project.watcher
+        .isTaonLightWatcherMode
         ? UtilsFilesFoldersSync.readFile(absoluteBackendDestFilePath)
         : undefined;
 

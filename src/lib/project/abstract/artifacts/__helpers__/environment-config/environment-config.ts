@@ -180,7 +180,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
           fromWatcher,
         ),
       ).clone({
-        // TODO @LAST APPLY ALL FIELDS FROM
+        // ! TODO APPLY ALL FIELDS FROM
         // must be reapplied after cloning envOptions also
         release: {
           targetArtifact: envOptions.release.targetArtifact,

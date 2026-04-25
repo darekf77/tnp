@@ -21,7 +21,7 @@ import {
   debugSuffix,
   failSpinner,
   globalSpinner,
-  linuxWatchPrefix,
+  lightWatcherPrefix,
   skipCoreCheck,
   spinnerPrefix,
   startSpinner,
@@ -80,8 +80,11 @@ export function startCli(argv, filename): void {
   global.skipCoreCheck = argv.some(a => a.startsWith(skipCoreCheck));
 
   const spinnerOnInArgs = argv.includes(spinnerPrefix);
-  const linuxWatchInArgs = argv.includes(linuxWatchPrefix);
-  global.linuxWatchInArgs = linuxWatchInArgs;
+  const lightWatcherInArgs = argv.includes(lightWatcherPrefix);
+
+  // console.log({ lightWatcherInArgs, argv });
+
+  global.lightWatcherInArgs = lightWatcherInArgs;
 
   const spinnerOffInArgs =
     argv.includes(`${spinnerPrefix}=false`) ||
@@ -91,7 +94,7 @@ export function startCli(argv, filename): void {
   //#region clean argv
   argv = argv
     .filter(a => !a.startsWith(spinnerPrefix))
-    .filter(a => !a.startsWith(linuxWatchPrefix))
+    .filter(a => !a.startsWith(lightWatcherPrefix))
     .filter(a => a !== childprocsecretarg)
     .filter(a => a !== skipCoreCheck)
     .filter(a => !a.startsWith(verbosePrefix))
@@ -151,7 +154,7 @@ export function startCli(argv, filename): void {
       verboseInArgs ? verbosePrefix : '',
       global.skipCoreCheck ? skipCoreCheck : '',
       spinnerOnInArgs ? spinnerPrefix : '',
-      linuxWatchInArgs ? linuxWatchPrefix : '',
+      lightWatcherInArgs ? lightWatcherPrefix : '',
       childprocsecretarg,
     ].filter(Boolean);
 

@@ -7,6 +7,7 @@ import { globalSpinner } from '../../constants';
 import { Project } from '../abstract/project'; // TODO QUICK FIX for version
 
 import { BaseCli } from './base-cli';
+import { DevBuildModels } from '../abstract/taon-worker/dev-build/dev-build.models';
 
 declare const ENV: any;
 
@@ -14,46 +15,8 @@ declare const ENV: any;
 export class $Version extends BaseCli {
   //#region _
   public async _(): Promise<void> {
-    // Helpers.log(`Framework name: '${config.frameworkName}'`);
-
-/* */
-/* */
-/* */
-/* */
-/* */
-/* */
-  
-    // globalSpinner.instance.stop();
-    // globalSpinner.instance.stop();
-    // Helpers.info('spinner stopped, waiting 2 second');
-    // await Utils.wait(5);
-    // Helpers.info('spinner started again, waiting 2 second');
-    // globalSpinner.instance.start();
-    // await Utils.wait(5);
-
-    // globalSpinner.instance.succeed('niger!');
-    // globalSpinner.instance.stop();
-
-    // a(1);
-    // Helpers.info(`${config.frameworkName} location: ${ this.Tnp.location}`)
-    // await Utils.wait(1);
-    // Helpers.info(`${config.frameworkName} location: ${ this.Tnp.location}`)
-    // await Utils.wait(1);
-    // Helpers.info(`${config.frameworkName} location: ${ this.Tnp.location}`)
-    // await Utils.wait(1);
-    // Helpers.info(`${config.frameworkName} location: ${ this.Tnp.location}`)
-    // await Utils.wait(1);
-    // Helpers.info(`${config.frameworkName} location: ${ this.Tnp.location}`)
-    // Helpers.info('waiting...');
-
-    // global.spinner?.start();
-    // Helpers.info('waiting next time!!. ..');
-
-    // log.data('Hellleoeoeo')
-
-    // TODO QUICK FIX
     const tnpProj = Project.ins.Tnp;
-    //
+
     const taonProj = Project.ins.From([
       fse.realpathSync(path.dirname(tnpProj.location)),
       taonPackageName,
@@ -64,7 +27,7 @@ export class $Version extends BaseCli {
   Tnp: ${tnpProj?.packageJson.version ? `v${tnpProj.packageJson.version}` : '-'}
 
     `);
-    // await Utils.wait(5);
+
     this._exit();
   }
   //#endregion

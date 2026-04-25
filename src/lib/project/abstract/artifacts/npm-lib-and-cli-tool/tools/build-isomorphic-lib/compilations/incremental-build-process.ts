@@ -9,6 +9,7 @@ import { srcMainProject } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import { ProductionBuild } from '../../../../../../../project/abstract/artifacts/__helpers__/production-build';
 import type { Project } from '../../../../../project';
+import { TaonBuildObserver } from '../../taon-build-observer';
 
 import { BackendCompilation } from './compilation-backend';
 import { BrowserCompilation } from './compilation-browser';
@@ -30,6 +31,7 @@ export class IncrementalBuildProcess {
   constructor(
     private project: Project,
     private buildOptions: EnvOptions,
+    taonBuildObserver: TaonBuildObserver,
   ) {
     Helpers.log(
       `[incremental-build-process] for project: ${project.genericName}`,
@@ -50,7 +52,11 @@ export class IncrementalBuildProcess {
 
     //#region int backend compilation
 
-    this.backendCompilation = new BackendCompilation(buildOptions, project);
+    this.backendCompilation = new BackendCompilation(
+      buildOptions,
+      project,
+      taonBuildObserver,
+    );
 
     Helpers.log(
       `[incremental-build-process] this.backendCompilation exists: ${!!this.backendCompilation}`,

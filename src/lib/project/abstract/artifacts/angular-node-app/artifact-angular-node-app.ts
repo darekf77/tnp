@@ -718,7 +718,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   async getBrowserENVJSON(releaseOptions: EnvOptions): Promise<any> {
     //#region @backendFunc
 
-    // TODO @LAST handle when domain is ip address
+    // TODO handle when domain is ip address
 
     const data = {};
     const contextsNames = this.project.framework.getAllDetectedTaonContexts({

@@ -9,6 +9,7 @@ import { MIGRATIONS_CLASSES_FOR_TaonProjectsContext } from '../../../migrations'
 
 import { TaonBuild } from './taon-build.entity';
 import { TaonEnv } from './taon-env.entity';
+import { TaonIsomorphicPkgsDetectionRepository } from './taon-isomorphic-pkgs-detection.repository';
 import { TaonProject } from './taon-project.entity';
 import { TaonProjectsController } from './taon.controller';
 //#endregion
@@ -18,10 +19,10 @@ export const TaonProjectsContextTemplate = Taon.createContextTemplate(() => ({
   appId: 'dev.taon.projects.worker',
   contexts: { TaonBaseContext },
   controllers: { TaonProjectsController },
+  repositories: { TaonIsomorphicPkgsDetectionRepository },
   entities: { TaonProject, TaonBuild, TaonEnv },
   migrations: { ...MIGRATIONS_CLASSES_FOR_TaonProjectsContext },
-  skipWritingServerRoutes:
-    taonPackageName === config.frameworkName,
+  skipWritingServerRoutes: taonPackageName === config.frameworkName,
   ...getBaseCliWorkerDatabaseConfig(
     'taon-projects-worker',
     'DROP_DB+MIGRATIONS',

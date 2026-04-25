@@ -87,6 +87,7 @@ import {
   ReleaseType,
 } from '../../../../options';
 import type { Project } from '../../project';
+import { DevMode } from '../../taon-worker/dev-mode/dev-mode.models';
 import { AssetsManager } from '../angular-node-app/tools/assets-manager';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
@@ -96,6 +97,7 @@ import { CopyManagerStandalone } from './tools/copy-manager/copy-manager-standal
 import { FilesTemplatesBuilder } from './tools/files-recreation';
 import { IndexAutogenProvider } from './tools/index-autogen-provider';
 import { InsideStructuresLib } from './tools/inside-struct-lib';
+import { TaonBuildObserver } from './tools/taon-build-observer';
 import { CypressTestRunner } from './tools/test-runner/cypress-test-runner';
 import { JestTestRunner } from './tools/test-runner/jest-test-runner';
 import { MochaTestRunner } from './tools/test-runner/mocha-test-runner';
@@ -145,6 +147,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
   public readonly assetsManager: AssetsManager;
 
+  public readonly taonBuildObserver: TaonBuildObserver;
+
   //#endregion
 
   //#region constructor
@@ -164,6 +168,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     this.filesTemplatesBuilder = new FilesTemplatesBuilder(project);
     this.insideStructureLib = new InsideStructuresLib(project);
     this.assetsManager = new AssetsManager(project);
+    this.taonBuildObserver = new TaonBuildObserver(project);
   }
   //#endregion
 
@@ -269,6 +274,15 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     buildOptions = await this.project.artifactsManager.init(buildOptions);
 
+    if (this.project.watcher.isTaonLightWatcherMode) {
+      await this.project.ins.notifyMainWorkerThatDevMode(
+        this.project,
+        buildOptions,
+      );
+
+      this.taonBuildObserver.start();
+    }
+
     //#region handle prod build 2 sequences
     if (buildOptions.build.prod) {
       await this.buildPartial(
@@ -322,13 +336,16 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#endregion
 
     Helpers.logInfo(
-      `Start of (${buildOptions.build.watch ? 'watch' : 'normal'}) lib building...`,
+      `Start of (${
+        buildOptions.build.watch ? 'watch' : 'normal'
+      }) lib building...`,
     );
 
     //#region init incremental process
     const incrementalBuildProcess = new IncrementalBuildProcess(
       this.project,
       buildOptions,
+      this.taonBuildObserver,
     );
     //#endregion
 
@@ -423,7 +440,20 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       //#endregion
 
       //#region ng build
-      const outputOptions = await this.outputFixNgLibBuild(buildOptions);
+      const outputOptionsNormal = this.outputFixNgLibBuild(
+        buildOptions.clone({
+          build: {
+            websql: false,
+          },
+        }),
+      );
+      const outputOptionsWebsql = this.outputFixNgLibBuild(
+        buildOptions.clone({
+          build: {
+            websql: true,
+          },
+        }),
+      );
 
       const watchResolveString = isDevelopmentBuildUseTscInsteadNgBuild
         ? COMPILATION_COMPLETE_TSC
@@ -436,9 +466,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
             stdout: buildOptions.build.watch ? watchResolveString : undefined,
           },
           rebuildOnChange: buildOptions.build.watch
-            ? this.project.tmpSourceRebuildForBrowserObs
+            ? this.project.watcher.rebuildTriggerWatcher('browser')
             : void 0,
-          ...outputOptions,
+          ...outputOptionsNormal,
         });
         await proxyProjectWebsql.execute(commandForLibraryBuild, {
           similarProcessKey: TaonCommands.NG,
@@ -446,9 +476,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
             stdout: buildOptions.build.watch ? watchResolveString : undefined,
           },
           rebuildOnChange: buildOptions.build.watch
-            ? this.project.tmpSourceRebuildForWebsqlObs
+            ? this.project.watcher.rebuildTriggerWatcher('websql')
             : void 0,
-          ...outputOptions,
+          ...outputOptionsWebsql,
         });
       };
       //#endregion
@@ -672,10 +702,23 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
    `
         : `
      [${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}]
-     End of Building ${this.project.genericName} ${buildOptions.build.websql ? '[WEBSQL]' : ''}
+     End of Building ${this.project.genericName} ${
+       buildOptions.build.websql ? '[WEBSQL]' : ''
+     }
 
    `,
     );
+
+    if (!buildOptions.build.watch) {
+      if (this.project.watcher.isTaonLightWatcherMode) {
+        await this.taonBuildObserver.updateAction({
+          backend: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+          browser: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+          websql: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+        });
+      }
+    }
+
     //#endregion
 
     return {
@@ -829,7 +872,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         if (releaseOptions.release.useLocalReleaseBranch) {
           const branchName =
             `release/${releaseOptions.release.releaseType}/${this.project.name}--` +
-            `env-${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
+            `env-${releaseOptions.release.envName}${
+              releaseOptions.release.envNumber || ''
+            }`;
 
           const repoName = `${this.project.name}-${
             releaseOptions.release.envName
@@ -1129,7 +1174,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       const pjBackendLib = {
         name: packageName,
         version: newVersion,
-        // ! TODO @LAST ADD ESM SUPPORT
+        // ! TODO ADD ESM SUPPORT
         // sideEffects: this.project.packageJson.sideEffects,
         // module: 'fesm2022/json10-writer-browser.mjs',
         // typings: 'types/json10-writer-browser.d.ts',
@@ -1304,17 +1349,49 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   //#endregion
 
   //#region private methods / fix terminal output paths
-  private async outputFixNgLibBuild(buildOptions: EnvOptions): Promise<any> {
+  private outputFixNgLibBuild(
+    buildOptions: EnvOptions,
+  ): CoreModels.ExecuteOptions {
     const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
 
     return {
+      resolvePromiseMsgCallback: {
+        anyStd: () => {
+          if (this.project.watcher.isTaonLightWatcherMode) {
+            if (buildOptions.build.websql) {
+              this.taonBuildObserver.debouceUpdateSuccess({
+                websql: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+              });
+            } else {
+              this.taonBuildObserver.debouceUpdateSuccess({
+                browser: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+              });
+            }
+          }
+        },
+      },
       // askToTryAgainOnError: true,
       exitOnErrorCallback: async code => {
+        const errorMessage = 'Angular ng build compilation lib error';
+        if (this.project.watcher.isTaonLightWatcherMode) {
+          if (buildOptions.build.websql) {
+            await this.taonBuildObserver.debouceUpdateError({
+              websql: DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+              errorMessage,
+            });
+          } else {
+            await this.taonBuildObserver.debouceUpdateError({
+              browser: DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+              errorMessage,
+            });
+          }
+        }
+
         if (buildOptions.release.releaseType) {
-          throw 'Typescript compilation lib error';
+          throw errorMessage;
         } else {
           Helpers.error(
-            `[${config.frameworkName}] Typescript compilation lib error (code=${code})`,
+            `[${config.frameworkName}] ${errorMessage} (code=${code})`,
             false,
             true,
           );
@@ -1659,9 +1736,13 @@ export const PROJECT_NPM_NAME = '${this.project.nameForNpmPackage}';
 /**
  * Taon version from you project taon.json
  */
-export const CURRENT_PACKAGE_TAON_VERSION = '${this.project.taonJson.frameworkVersion}';
+export const CURRENT_PACKAGE_TAON_VERSION = '${
+          this.project.taonJson.frameworkVersion
+        }';
 /**
- *  Autogenerated by current cli tool. Use *${config.frameworkName} release* to bump version.
+ *  Autogenerated by current cli tool. Use *${
+   config.frameworkName
+ } release* to bump version.
  */
 export const CURRENT_PACKAGE_VERSION = '${
           initOptions.release.releaseType &&
@@ -1670,7 +1751,11 @@ export const CURRENT_PACKAGE_VERSION = '${
             : this.project.packageJson.version
         }';
 
-${subProjects.length > 0 ? 'export namespace TAON_STRIPE_CLOUDFLARE_WORKERS_URLS {' : ''}
+${
+  subProjects.length > 0
+    ? 'export namespace TAON_STRIPE_CLOUDFLARE_WORKERS_URLS {'
+    : ''
+}
 ${subProjects
   .map(c => {
     return (
@@ -1695,11 +1780,15 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     //#region @backendFunc
     if (buildOptions.release.releaseType) {
       Helpers.logInfo(
-        `${buildOptions.build.prod ? '[PROD]' : '[DEV]'} Lib build part done...  `,
+        `${
+          buildOptions.build.prod ? '[PROD]' : '[DEV]'
+        } Lib build part done...  `,
       );
       return;
     }
-    const buildLibDone = `${buildOptions.build.prod ? '[PRODUCTION] ' : ''}LIB BUILD DONE.. `;
+    const buildLibDone = `${
+      buildOptions.build.prod ? '[PRODUCTION] ' : ''
+    }LIB BUILD DONE.. `;
 
     Helpers.taskDone(`${chalk.underline(`${buildLibDone}...`)}`);
     Helpers.success(`

@@ -73,7 +73,7 @@ export class SplitFileProcess {
 
   private processImportsExports(): void {
     for (const imp of this._importExports) {
-      // TODO @LAST better detect deep isomorphic packages
+      // TODO better detect deep isomorphic packages
       const matchRegex = new RegExp(
         `^(${this.isomorphicLibraries
           .sort((a, b) => b.length - a.length)

@@ -20,6 +20,7 @@ import { DeploymentsWorker } from './deployments/deployments.worker';
 import { TaonTerminalUI } from './taon-terminal-ui';
 import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
+import { DevModeWorker } from './dev-mode/dev-mode.worker';
 
 //#endregion
 
@@ -42,6 +43,8 @@ export class TaonProjectsWorker extends BaseCliWorker<
   public readonly processesWorker: ProcessesWorker;
 
   public readonly traefikProvider: TraefikProvider;
+
+  public readonly devModeWorker: DevModeWorker;
   //#endregion
 
   //#region constructor
@@ -82,6 +85,11 @@ export class TaonProjectsWorker extends BaseCliWorker<
       () => `${config.frameworkName} cloud:processes ${skipCoreCheck}`,
     );
 
+    this.devModeWorker = new DevModeWorker(
+      'taon-project-dev-mode-worker',
+      () => `${config.frameworkName} cloud:devmode ${skipCoreCheck}`,
+    );
+
     // this.deploymentsWorker = new DeploymentsWorker(
     //   'taon-project-deployments-worker',
     //   `${global.frameworkName} ${UtilsCliClassMethod.getFrom($Cloud.prototype.deployments)}`,
@@ -114,6 +122,11 @@ export class TaonProjectsWorker extends BaseCliWorker<
     this.dependencyWorkers.set(
       this.instancesWorker.serviceID,
       this.instancesWorker as any,
+    );
+
+    this.dependencyWorkers.set(
+      this.devModeWorker.serviceID,
+      this.devModeWorker as any,
     );
 
     //#endregion

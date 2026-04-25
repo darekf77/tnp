@@ -1,5 +1,10 @@
 //#region imports
-import { config, GlobalStorage, taonActionFromParent } from 'tnp-core/src';
+import {
+  config,
+  CoreModels,
+  GlobalStorage,
+  taonActionFromParent,
+} from 'tnp-core/src';
 import { crossPlatformPath, fse, _, chalk } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
@@ -16,7 +21,9 @@ import {
 import { Models } from '../../../../../../../models';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
+import { DevMode } from '../../../../../taon-worker/dev-mode/dev-mode.models';
 import { ProductionBuild } from '../../../../__helpers__/production-build';
+import { TaonBuildObserver } from '../../taon-build-observer';
 //#endregion
 
 export class BackendCompilation {
@@ -37,6 +44,7 @@ export class BackendCompilation {
   constructor(
     public buildOptions: EnvOptions,
     public project: Project,
+    private taonBuildObserver: TaonBuildObserver,
   ) {}
   //#endregion
 
@@ -174,13 +182,30 @@ Starting (${
     const cwd = this.project.location;
     await Helpers.execute(commandJs, cwd, {
       similarProcessKey: 'tsc',
+      resolvePromiseMsgCallback: {
+        anyStd: () => {
+          if (this.project.watcher.isTaonLightWatcherMode) {
+            this.taonBuildObserver.debouceUpdateSuccess({
+              backend: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+            });
+          }
+        },
+      },
       exitOnErrorCallback: async code => {
         //#region handle error
+        const errorMessage = `Typescript compilation (backend) error`;
+        if (this.project.watcher.isTaonLightWatcherMode) {
+          await this.taonBuildObserver.debouceUpdateError({
+            backend: DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+            errorMessage,
+          });
+        }
+
         if (buildOptions.release.releaseType) {
-          throw 'Typescript compilation (backend)';
+          throw errorMessage;
         } else {
           Helpers.error(
-            `[${config.frameworkName}] Typescript compilation (backend) error (code=${code})`,
+            `[${config.frameworkName}] ${errorMessage} (code=${code})`,
             false,
             true,
           );
@@ -219,7 +244,7 @@ Starting (${
         stdout: [COMPILATION_COMPLETE_TSC],
       },
       rebuildOnChange: buildOptions.build.watch
-        ? this.project.tmpSourceRebuildForBackendObs
+        ? this.project.watcher.rebuildTriggerWatcher('backend')
         : void 0,
     });
 
@@ -238,7 +263,7 @@ Starting (${
         stdout: ['Watching for file changes.'],
       },
       rebuildOnChange: buildOptions.build.watch
-        ? this.project.tmpSourceRebuildForBackendObs
+        ? this.project.watcher.rebuildTriggerWatcher('backend')
         : void 0,
     });
 

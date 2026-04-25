@@ -184,7 +184,7 @@ export class Docs extends BaseDebounceCompilerForProject<
       } catch (error) {}
 
       if (Helpers.exists(this.docsConfigSchemaPath)) {
-        // TODO @LAST GENERATE DOCS CONFIG SCHAMA IN CORE PROJECTS
+        // TODO GENERATE DOCS CONFIG SCHAMA IN CORE PROJECTS
         Helpers.createSymLink(
           this.docsConfigSchemaPath,
           this.project.pathFor(docsConfigSchema),
@@ -592,7 +592,7 @@ markdown_extensions:
   }
   //#endregion
 
-  // TODO @LAST hande @render tag in md files
+  // TODO hande @render tag in md files
 
   //#region private methods / copy files to docs folder
   private copyFilesToTempDocsFolder(

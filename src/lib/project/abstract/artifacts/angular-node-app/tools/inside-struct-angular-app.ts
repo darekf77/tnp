@@ -706,7 +706,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             ]);
 
             HelpersTaon.setValueToJSON(
-              angularJsonPath, // TODO @LAST is here angular electron task needed ?
+              angularJsonPath, // TODO is here angular electron task needed ?
               `projects.${
                 // this.isElectron
                 // ? AngularJsonTaskName.ELECTRON_APP // TODO probably not need for now

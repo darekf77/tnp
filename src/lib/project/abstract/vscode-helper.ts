@@ -61,7 +61,7 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
 
     this.currentSettingsValue['files.watcherExclude'] = {
       'local_release/**': true,
-      // ...(this.project.isLinuxWatchModeAllowde()
+      // ...(this.project.isTaonLightWatcherMode
       //   ? {
       'tmp-*/**': true,
       '**/node_modules/**': true,

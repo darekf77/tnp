@@ -61,7 +61,7 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
       if (relativePath.startsWith(migrationsFromLib)) {
         return;
       }
-      // TODO @LAST this is not watching files!
+      // TODO this is not watching files!
       // console.log(`Processing file for index autogen: ${relativePath}`);
 
       const isBrowserSpecific = frontendFiles.some(ext =>

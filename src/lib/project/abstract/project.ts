@@ -52,6 +52,7 @@ import type { ReleaseProcess } from './release-process';
 import { SubProject } from './sub-project';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
+import { LightWeightWatcher } from './lightweight-watcher';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -59,7 +60,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#region static
 
   //#region static / instance of resolve
-  static ins = new TaonProjectResolve(Project, () => {
+  static ins: TaonProjectResolve = new TaonProjectResolve(Project, () => {
     //#region @backendFunc
     return global.frameworkName;
     //#endregion
@@ -82,6 +83,12 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   public readonly npmHelpers: NpmHelpers;
 
   public readonly subProject: SubProject;
+
+  public readonly watcher: LightWeightWatcher;
+
+  get taonBuildObserver() {
+    return this.artifactsManager.artifact.npmLibAndCliTool.taonBuildObserver;
+  }
 
   get packageJson(): PackageJSON {
     return this.npmHelpers.packageJson as any;
@@ -159,6 +166,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     this.subProject = new (require('./sub-project')
       .SubProject as typeof SubProject)(this);
+
+    this.watcher = new (require('./lightweight-watcher')
+      .LightWeightWatcher as typeof LightWeightWatcher)(this);
 
     this.linter = new (require('./linter').Linter as typeof Linter)(this);
 
@@ -261,7 +271,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       await this.npmHelpers.makeSureLoggedInToNpmRegistry();
     }
 
-    if(!this.packageJson.exists) {
+    if (!this.packageJson.exists) {
       await this.init();
     }
 
@@ -289,7 +299,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         this.packageJson.setVersion(newVersion);
         await HelpersTaon.git.tagAndPushToGitRepo(this.location, {
           newVersion,
-          skipAskingQuestionBeforePush: releaseOptions.release.autoReleaseUsingConfig,
+          skipAskingQuestionBeforePush:
+            releaseOptions.release.autoReleaseUsingConfig,
           isCiProcess: releaseOptions.isCiProcess,
           skipTag: false,
         });
@@ -305,7 +316,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
             ...proj.taonJson.isomorphicDependenciesForNpmLib,
             ...proj.taonJson.peerDependenciesNamesForNpmLib,
           ],
-          proj => proj.name,
+          proj => proj.nameForNpmPackage,
+          proj => proj.nameForNpmPackage,
           this.taonJson.overridePackagesOrder,
         )
         .filter(
@@ -505,124 +517,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   }
   //#endregion
 
-  isLinuxWatchModeAllowde(): boolean {
-    //#region @backendFunc
-    if (global.linuxWatchInArgs) {
-      return global.linuxWatchInArgs;
-    }
-    if (process.platform === 'darwin') {
-      return false;
-    }
-    if (process.platform === 'win32') {
-      return false;
-    }
-    return true;
-    //#endregion
-  }
-
-  getWatcherFor(
-    folders: string[],
-    watcherType: 'backend' | 'browser' | 'webslq',
-  ): Observable<{}> {
-    //#region @backendFunc
-    const watcher = new Subject<{}>();
-
-    const isomorphic = this.nodeModules.getIsomorphicPackagesNames();
-    // console.log({ isomorphic });
-
-    const pathsToWatch = [
-      ...folders,
-      ...isomorphic.map(p => this.nodeModules.pathFor([p, packageJsonNpmLib])),
-    ];
-
-    // console.log('Watching for changes in:', pathsToWatch);
-
-    chokidar
-      .watch(pathsToWatch, {
-        ignoreInitial: true,
-      })
-      .on('all', async (eventWatcher, pathToFile) => {
-        const relative = crossPlatformPath(pathToFile).replace(
-          this.location + '/' + path.basename(folders[0]) + '/',
-          '',
-        );
-
-        if (watcherType === 'backend') {
-          if (!relative.startsWith(`${assetsFromTempSrc}/`)) {
-            // console.log('WATCHER CHANGE', {
-            //   eventWatcher,
-            //   pathToFile,
-            //   watcherType,
-            // });
-            watcher.next({});
-          }
-        } else {
-          if (
-            !relative.startsWith(`${assetsFromTempSrc}/`) &&
-            !relative.startsWith(`app/`) &&
-            !relative.startsWith(`app.`)
-          ) {
-            // console.log('WATCHER CHANGE', {
-            //   eventWatcher,
-            //   pathToFile,
-            //   watcherType,
-            // });
-            watcher.next({});
-          }
-        }
-      });
-    return watcher.asObservable();
-    //#endregion
-  }
-
-  get tmpSourceRebuildForBackendObs(): Observable<{}> | undefined {
-    if (!this.isLinuxWatchModeAllowde()) {
-      return;
-    }
-    const key = 'tmpSourceRebuildForBackendObs';
-    if (this.cache[key]) {
-      return this.cache[key];
-    }
-    const watcher = this.getWatcherFor(
-      [this.pathFor(tmpSourceDist)],
-      'backend',
-    );
-
-    this.cache[key] = watcher;
-    return this.cache[key];
-  }
-
-  get tmpSourceRebuildForBrowserObs(): Observable<{}> | undefined {
-    if (!this.isLinuxWatchModeAllowde()) {
-      return;
-    }
-    const key = 'tmpSourceRebuildForBrowserObs';
-    if (this.cache[key]) {
-      return this.cache[key];
-    }
-    const watcher = this.getWatcherFor([this.pathFor(tmpSrcDist)], 'browser');
-
-    this.cache[key] = watcher;
-    return this.cache[key];
-  }
-
-  get tmpSourceRebuildForWebsqlObs(): Observable<{}> | undefined {
-    if (!this.isLinuxWatchModeAllowde()) {
-      return;
-    }
-    const key = 'tmpSourceRebuildForWebsqlObs';
-    if (this.cache[key]) {
-      return this.cache[key];
-    }
-    const watcher = this.getWatcherFor(
-      [this.pathFor(tmpSrcDistWebsql)],
-      'webslq',
-    );
-
-    this.cache[key] = watcher;
-    return this.cache[key];
-  }
-
+  //#region has valid auto release config
   protected hasValidAutoReleaseConfig(
     envOptions: EnvOptions,
     options?: {
@@ -691,14 +586,14 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     //#endregion
   }
+  //#endregion
 
-  // get env(): EnvOptions  //
-  //   return this.environmentConfig.config;
-  // }
+  //#region branding
 
   get branding() {
     return this.artifactsManager.globalHelper.branding;
   }
+  //#endregion
 
   //#region taon relative projects paths
   /**
@@ -733,12 +628,14 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   }
   //#endregion
 
+  //#region name for cli
   get nameForCli(): string {
     if (this.taonJson.overrideNameForCli) {
       return this.taonJson.overrideNameForCli;
     }
     return this.name;
   }
+  //#endregion
 
   //#region name for npm package
   /**

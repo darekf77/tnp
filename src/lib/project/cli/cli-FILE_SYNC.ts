@@ -16,7 +16,7 @@ import { BaseCli } from './base-cli';
 // @ts-ignore TODO weird inheritance problem
 class $FileSync extends BaseCli {
   public async _(): Promise<void> {
-    // TODO @LAST in progress
+    // ! TODO in progress
     return;
     const [androidFolder, macPhotosLibrary, ...onlyProcessFiles] = this.args;
     await UtilsFileSync.forFolders({

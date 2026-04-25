@@ -222,6 +222,15 @@ export namespace Models {
     isomorphicDependenciesForNpmLib: string[];
 
     /**
+     * (STANDALONE) If not defined:
+     * devModeDependenciesForNpmLib === isomorphicDependenciesForNpmLib
+     * if defined -> this array is begin used for dev mode isomorphic dependencies when
+     * building locally projects in watch mode `taon build:lib:watch`
+     * or normal mode `taon build:lib`
+     */
+    devModeDependenciesForNpmLib: string[];
+
+    /**
      * (STANDALONE) At beginning after node_modules installation taon is checking is
      * packages are installed - if not it will throw error.
      * Also.. this peerDependencies are going to be included in released npm lib
@@ -331,8 +340,9 @@ export namespace Models {
     linkNodeModulesFromCoreContainer?: boolean;
 
     /**
-     * (CONTAINER) override order of packages during release or buildq
-     * so dependencies are released first
+     * (CONTAINER) override order of packages during release or build
+     * so dependencies are released first. Use projects names (or basename)
+     * and not npm names.
      */
     overridePackagesOrder: string[];
 

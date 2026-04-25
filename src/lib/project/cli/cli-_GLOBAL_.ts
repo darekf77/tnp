@@ -208,7 +208,7 @@ export class $Global extends BaseGlobalCommandLine<
   async fork() {
     //#region @backendFunc
     Helpers.error(`Not implemented yet`, false, true);
-    return; // TODO @LAST
+    return; // TODO
     const argv = this.args;
     const githubUrl = _.first(argv);
     let projectName = _.last(githubUrl.replace('.git', '').split('/'));
@@ -1429,13 +1429,13 @@ ${this.project.children
       f => f.framework.isStandaloneProject,
     )) {
       Helpers.info(`Updating ${child.name} version from npm...`);
-      const version = await child.npmHelpers.getPackageVersionFromNpmRegistry(
+      const foundVer = await child.npmHelpers.getPackageVersionFromNpmRegistry(
         child.nameForNpmPackage,
       );
-      console.info(`Found version: ${version} for ${child.nameForNpmPackage}`);
+      console.info(`Found version: ${foundVer} for ${child.nameForNpmPackage}`);
       containerCore.taonJson.overridePackageJsonManager.updateDependency({
         packageName: child.nameForNpmPackage,
-        version: `~${version}`,
+        version: `~${foundVer}`,
       });
     }
     Helpers.info(`Container deps updated`);
@@ -1724,7 +1724,8 @@ ${this.project.children
           ...proj.taonJson.isomorphicDependenciesForNpmLib,
           ...proj.taonJson.peerDependenciesNamesForNpmLib,
         ],
-        proj => proj.name,
+        proj => proj.nameForNpmPackage,
+        proj => proj.nameForNpmPackage,
         this.project.taonJson.overridePackagesOrder,
       )
       .filter(d => d.framework.isStandaloneProject);
@@ -1941,6 +1942,15 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     );
 
     Helpers.taskDone(`Folders found: ${folders.length}`);
+    this._exit();
+    //#endregion
+  }
+
+  async devModeWorker() {
+    //#region @backendFunc
+    await this.ins.notifyMainWorkerThatDevMode(this.project, EnvOptions.from({}));
+    Helpers.info('waiting');
+    await UtilsTerminal.pressAnyKeyToContinueAsync();
     this._exit();
     //#endregion
   }
