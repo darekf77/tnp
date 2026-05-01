@@ -128,7 +128,7 @@ export class $Link extends BaseCli {
       });
 
     Helpers.removeFileIfExists(
-      this.project.pathFor([binMainProject, this.project.name]),
+      this.project.pathFor([binMainProject, this.project.nameForCli]),
     );
 
     // if (countLinkInPackageJsonBin.length === 0) {
@@ -151,7 +151,7 @@ ${'req' + 'uire'}('./start');
     Helpers.removeFileIfExists(
       this.project.pathFor([
         binMainProject,
-        `${this.project.name}${debugSuffix.replace('--', '-')}`,
+        `${this.project.nameForCli}${debugSuffix.replace('--', '-')}`,
       ]),
     );
 
@@ -174,7 +174,7 @@ ${'req' + 'uire'}('./start');
     Helpers.removeFileIfExists(
       this.project.pathFor([
         binMainProject,
-        `${this.project.name}${debugBrkSuffix.replace('--', '-')}`,
+        `${this.project.nameForCli}${debugBrkSuffix.replace('--', '-')}`,
       ]),
     );
 
