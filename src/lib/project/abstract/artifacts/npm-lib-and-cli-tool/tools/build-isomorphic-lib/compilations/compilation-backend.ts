@@ -185,9 +185,9 @@ Starting (${
       resolvePromiseMsgCallback: {
         anyStd: () => {
           if (this.project.watcher.isTaonLightWatcherMode) {
-            this.taonBuildObserver.debouceUpdateSuccess({
-              backend: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-            });
+            this.taonBuildObserver.backendState.set(
+              DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+            );
           }
         },
       },
@@ -195,10 +195,11 @@ Starting (${
         //#region handle error
         const errorMessage = `Typescript compilation (backend) error`;
         if (this.project.watcher.isTaonLightWatcherMode) {
-          await this.taonBuildObserver.debouceUpdateError({
-            backend: DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-            errorMessage,
-          });
+          this.taonBuildObserver.backendState.set(
+            DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+          );
+          this.taonBuildObserver.errorBackend.set(errorMessage);
+          await this.taonBuildObserver.updateAction();
         }
 
         if (buildOptions.release.releaseType) {
@@ -243,9 +244,7 @@ Starting (${
       resolvePromiseMsg: {
         stdout: [COMPILATION_COMPLETE_TSC],
       },
-      rebuildOnChange: buildOptions.build.watch
-        ? this.project.watcher.rebuildTriggerWatcher('backend')
-        : void 0,
+      rebuildOnChange: this.project.watcher.rebuildTriggerWatcher('backend'),
     });
 
     Helpers.logInfo(`* Typescript compilation first part done`);
@@ -262,9 +261,7 @@ Starting (${
       resolvePromiseMsg: {
         stdout: ['Watching for file changes.'],
       },
-      rebuildOnChange: buildOptions.build.watch
-        ? this.project.watcher.rebuildTriggerWatcher('backend')
-        : void 0,
+      rebuildOnChange: this.project.watcher.rebuildTriggerWatcher('backend'),
     });
 
     // Helpers.writeJson(

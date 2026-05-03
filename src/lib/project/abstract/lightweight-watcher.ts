@@ -1,6 +1,6 @@
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 import { Project } from './project';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { chokidar, CoreModels } from 'tnp-core/src';
 import { crossPlatformPath, path } from 'tnp-core/src';
 import {
@@ -15,7 +15,11 @@ import {
 export class LightWeightWatcher extends BaseFeatureForProject<Project> {
   //#region fields
   private codeWatchers = new Map<CoreModels.BuildType, Subject<{}>>();
-  private rebuildWatchers = new Map<CoreModels.BuildType, Subject<{}>>();
+
+  private rebuildWatchers = new Map<
+    CoreModels.BuildType,
+    BehaviorSubject<{}>
+  >();
   //#endregion
 
   //#region public methods
@@ -23,35 +27,40 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
   //#region public methods / is taon light weight mode allowed
   public get isTaonLightWatcherMode(): boolean {
     //#region @backendFunc
-    if (global.lightWatcherInArgs) {
-      return global.lightWatcherInArgs;
-    }
-    if (process.platform === 'darwin') {
-      return false;
-    }
-    if (process.platform === 'win32') {
-      return false;
-    }
     return true;
+    // if (global.lightWatcherInArgs) {
+    //   return global.lightWatcherInArgs;
+    // }
+    // if (process.platform === 'darwin') {
+    //   return false;
+    // }
+    // if (process.platform === 'win32') {
+    //   return false;
+    // }
+    // return true;
     //#endregion
   }
   //#endregion
 
   //#region public methods / trigger rebuild of
-  public triggerRebuildOf(buildType: CoreModels.BuildType) {
+  public triggerRebuildOf(buildType: CoreModels.BuildType): void {
     //#region @backendFunc
 
     if (!buildType || !CoreModels.BuildTypeArr.includes(buildType)) {
       Helpers.warn(`[triggerRebuildOf] Wrong trigger "${buildType}"`);
       return;
     }
-    this.rebuildWatchers.get(buildType).next({});
+    Helpers.logInfo(`TRIGGER REBUILD ${buildType}`);
+    this.rebuildTriggerWatcher(buildType).next({});
+
     //#endregion
   }
   //#endregion
 
   //#region public methods / trigger rebuild of
-  public cancelAndSetAsReadyForRebuildTrigger(buildType: CoreModels.BuildType) {
+  public cancelAndSetAsReadyForRebuildTrigger(
+    buildType: CoreModels.BuildType,
+  ): void {
     //#region @backendFunc
 
     if (!buildType || !CoreModels.BuildTypeArr.includes(buildType)) {
@@ -60,7 +69,7 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
       );
       return;
     }
-    // TODO
+    // TODO @LAST
     //#endregion
   }
   //#endregion
@@ -74,7 +83,7 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
       return;
     }
     if (!this.rebuildWatchers.has(buildType)) {
-      const subject = new Subject();
+      const subject = new BehaviorSubject({});
       this.rebuildWatchers.set(buildType, subject);
     }
     return this.rebuildWatchers.get(buildType);

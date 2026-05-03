@@ -10,6 +10,7 @@ import {
   taonPackageName,
   tnpPackageName,
   Utils,
+  UtilsFilesFoldersSync,
 } from 'tnp-core/src';
 import { crossPlatformPath, glob, path, _, fse } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
@@ -987,13 +988,20 @@ __exportStar(require("./lib"), exports);
       monitorDir,
     );
 
-    this.removeSourceLinksFolders(pkgLocInDestNodeModules);
-
-    // TODO this thing is failing when copying unexisted file on macos
-    HelpersTaon.copy(monitorDir, pkgLocInDestNodeModules, {
-      copySymlinksAsFiles: false,
-      filter,
-    });
+    // TODO QUIKC_FIX
+    try {
+      this.removeSourceLinksFolders(pkgLocInDestNodeModules);
+      UtilsFilesFoldersSync.copyFolder(monitorDir, pkgLocInDestNodeModules, {
+        copySymlinksAsFiles: false,
+        filter,
+      });
+    } catch (error) {
+      Helpers.remove(pkgLocInDestNodeModules);
+      UtilsFilesFoldersSync.copyFolder(monitorDir, pkgLocInDestNodeModules, {
+        copySymlinksAsFiles: false,
+        filter,
+      });
+    }
 
     //#endregion
 
@@ -1342,7 +1350,10 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         ),
       );
       // Helpers.log(`Eqal content with temp proj: ${}`)
-      if (Helpers.exists(readyToCopyFileInLocalTempProj)) {
+      if (
+        Helpers.exists(readyToCopyFileInLocalTempProj) &&
+        !Helpers.isFolder(readyToCopyFileInLocalTempProj)
+      ) {
         HelpersTaon.copyFile(
           readyToCopyFileInLocalTempProj,
           destinationFilePath,
@@ -1397,10 +1408,12 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         );
       }
     } else {
-      Helpers.writeFile(
-        destinationFilePath,
-        Helpers.readFile(absOrgFilePathInDist) || '',
-      );
+      const fileContentWrite = Helpers.readFile(absOrgFilePathInDist) || '';
+      if (Helpers.isFolder(destinationFilePath) && !fileContentWrite?.trim()) {
+        // nothing to do
+      } else {
+        UtilsFilesFoldersSync.writeFile(destinationFilePath, fileContentWrite);
+      }
     }
 
     // TODO check this

@@ -8,7 +8,7 @@ import {
   Body,
   Query,
 } from 'taon/src';
-import { _ } from 'tnp-core/src';
+import { _, CoreModels } from 'tnp-core/src';
 import { TaonBaseCliWorkerController } from 'tnp-helpers/src';
 
 import { Project } from '../../project';
@@ -72,6 +72,48 @@ export class DevModeController extends TaonBaseCliWorkerController {
         .getAllLogMessage()
         .slice(-1 * Number(last));
       return data;
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region get watch build projects
+  @GET()
+  getPoolOfDevModePorjects(
+    @Query('frameworkVersion') frameworkVersion: CoreModels.FrameworkVersion,
+  ): Taon.Response<DevMode.ProjectBuildNotificaiton[]> {
+    //#region @backendFunc
+    return async (req, res) => {
+      const data =
+        await this.devModeRepository.getPoolOfDevModePorjects(frameworkVersion);
+      return data;
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region get watch build projects
+  @GET()
+  getAllFrameworkVersionInDevMode(): Taon.Response<
+    CoreModels.FrameworkVersion[]
+  > {
+    //#region @backendFunc
+    return async (req, res) => {
+      const data =
+        await this.devModeRepository.getAllFrameworkVersionInDevMode();
+      return data;
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region get log messages
+  @GET()
+  clearLogMessages(): Taon.Response<boolean> {
+    //#region @backendFunc
+    return async (req, res) => {
+      await this.devModeRepository.clearMessage();
+      return true;
     };
     //#endregion
   }

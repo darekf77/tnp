@@ -10,6 +10,7 @@ import {
   HTML,
   POST,
   Body,
+  Symbols,
 } from 'taon/src';
 import { _, CoreModels } from 'tnp-core/src';
 
@@ -43,14 +44,15 @@ export class DevBuildController extends TaonBaseController {
       //   commandStatus,
       //   jsonDbLocation,
       // });
+      const project = this.devBuildRepository.getProject();
       return `
 <html>
 <head><title>Action on project Info</title></head>
 <body>
-    <h1>Project path: "${this.devBuildRepository.project?.location}" is</h1>
+    <h1>Project path: "${project?.location}" is</h1>
     <h1>command name: ${currentCommand} </h1>
     <h1>command status: ${commandStatus} </h1>
-    <h4>version: ${this.devBuildRepository.project?.packageJson?.version}</h4>
+    <h4>version: ${project?.packageJson?.version}</h4>
     <h4>pid: ${process.pid}</h4><br>
     <script>
      // setTimeout(() => {
@@ -77,15 +79,41 @@ export class DevBuildController extends TaonBaseController {
   //#endregion
 
   //#region give permission to build
+  @GET()
+  getStatusInfo(): Taon.Response<DevMode.BuildStatusInfo> {
+    //#region @backenFunc
+    return async (req, res) => {
+      // console.log(`instance ${this[Symbols.taonInstanceId]}`);
+      const project = this.devBuildRepository.getProject();
+      return project.taonBuildObserver.buildStatusInfo;
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region give permission to build
   @POST()
-  givePermissionForBuild(
+  triggerRebuildOf(
     @Query('buildType') buildType: CoreModels.BuildType,
   ): Taon.Response<DevMode.BuildStatusInfo> {
     //#region @backenFunc
     return async (req, res) => {
-      return this.devBuildRepository.project.taonBuildObserver.triggerRebuildOf(
-        buildType,
-      );
+      const project = this.devBuildRepository.getProject();
+      project.taonBuildObserver.states
+        .get(buildType)
+        .set(DevMode.ProjectBuildStatus.__SET_READY_FOR_REBUILD__);
+      return project.taonBuildObserver.buildStatusInfo;
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region health heck
+  @POST()
+  healthCheck(): Taon.Response<boolean> {
+    //#region @backenFunc
+    return async (req, res) => {
+      return true;
     };
     //#endregion
   }
@@ -98,9 +126,11 @@ export class DevBuildController extends TaonBaseController {
   ): Taon.Response<DevMode.BuildStatusInfo> {
     //#region @backenFunc
     return async (req, res) => {
-      return this.devBuildRepository.project.taonBuildObserver.cancelAndSetAsReadyForRebuildTrigger(
-        buildType,
-      );
+      const project = this.devBuildRepository.getProject();
+      project.taonBuildObserver.states
+        .get(buildType)
+        .set(DevMode.ProjectBuildStatus.__CANCEL_BUILD__);
+      return project.taonBuildObserver.buildStatusInfo;
     };
     //#endregion
   }

@@ -465,9 +465,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           resolvePromiseMsg: {
             stdout: buildOptions.build.watch ? watchResolveString : undefined,
           },
-          rebuildOnChange: buildOptions.build.watch
-            ? this.project.watcher.rebuildTriggerWatcher('browser')
-            : void 0,
+          rebuildOnChange:
+            this.project.watcher.rebuildTriggerWatcher('browser'),
           ...outputOptionsNormal,
         });
         await proxyProjectWebsql.execute(commandForLibraryBuild, {
@@ -475,9 +474,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           resolvePromiseMsg: {
             stdout: buildOptions.build.watch ? watchResolveString : undefined,
           },
-          rebuildOnChange: buildOptions.build.watch
-            ? this.project.watcher.rebuildTriggerWatcher('websql')
-            : void 0,
+          rebuildOnChange: this.project.watcher.rebuildTriggerWatcher('websql'),
           ...outputOptionsWebsql,
         });
       };
@@ -1359,13 +1356,13 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         anyStd: () => {
           if (this.project.watcher.isTaonLightWatcherMode) {
             if (buildOptions.build.websql) {
-              this.taonBuildObserver.debouceUpdateSuccess({
-                websql: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-              });
+              this.taonBuildObserver.websqlState.set(
+                DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+              );
             } else {
-              this.taonBuildObserver.debouceUpdateSuccess({
-                browser: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-              });
+              this.taonBuildObserver.browserState.set(
+                DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+              );
             }
           }
         },
@@ -1375,15 +1372,17 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         const errorMessage = 'Angular ng build compilation lib error';
         if (this.project.watcher.isTaonLightWatcherMode) {
           if (buildOptions.build.websql) {
-            await this.taonBuildObserver.debouceUpdateError({
-              websql: DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-              errorMessage,
-            });
+            this.taonBuildObserver.websqlState.set(
+              DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+            );
+            this.taonBuildObserver.errorWebsql.set(errorMessage);
+            await this.taonBuildObserver.updateAction();
           } else {
-            await this.taonBuildObserver.debouceUpdateError({
-              browser: DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-              errorMessage,
-            });
+            this.taonBuildObserver.browserState.set(
+              DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+            );
+            this.taonBuildObserver.errorBrowser.set(errorMessage);
+            await this.taonBuildObserver.updateAction();
           }
         }
 

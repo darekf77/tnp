@@ -5,6 +5,9 @@ export namespace DevMode {
   export const MAX_NUMBER_OF_CONCURENT_BUILDS = 1;
 
   export enum ProjectBuildStatus {
+    __CANCEL_BUILD__ = '__CANCEL_BUILD__',
+    __SET_READY_FOR_REBUILD__ = '__SET_READY_FOR_REBUILD__',
+
     /**
      * 1. default state of porject
      */
@@ -21,6 +24,7 @@ export namespace DevMode {
      * 3. workers request trigger build in project
      */
     BUILDING = 'BUILDING',
+
     /**
      * 4. project is going to repeat build (user triggered changes)
      */
@@ -34,6 +38,11 @@ export namespace DevMode {
      * 5. project build done - now other projects can rebuild
      */
     DONE_BUILDING_SUCCESS = 'DONE_BUILDING_SUCCESS',
+
+    /**
+     * After BUILDING_BUT_CANCELLED triggerd
+     */
+    BUILD_CANCEL_DONE = 'BUILD_CANCEL_DONE',
     /**
      * 6. build error - other project are being build
      * BUT when user again start building this -> this project has priority
@@ -42,11 +51,20 @@ export namespace DevMode {
     COMPILATION_ERROR = 'COMPILATION_ERROR',
   }
 
+  // export const statusesAllowedForBuildTrigger = [
+  //   ProjectBuildStatus.READ_FOR_BUILD_TRIGGER,
+  //   ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+  //   ProjectBuildStatus.NOT_STARTED,
+  //   ProjectBuildStatus.COMPILATION_ERROR,
+  // ];
+
   export interface BuildStatusInfo {
     browser?: ProjectBuildStatus;
     websql?: ProjectBuildStatus;
     backend?: ProjectBuildStatus;
-    errorMessage?: string;
+    errorBackend?: string;
+    errorBrowser?: string;
+    errorWebsql?: string;
   }
 
   export class ProjectBuildNotificaiton extends TaonBaseClass {
@@ -94,11 +112,17 @@ export namespace DevMode {
     //#endregion
 
     get allBuildsSucceed() {
-      return this.everyBuildsWithStatus(ProjectBuildStatus.DONE_BUILDING_SUCCESS);
+      return this.everyBuildsWithStatus(
+        ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+      );
     }
 
     get uniqueKey(): string {
       return `${this.location}__${this.nameForNpmPackage}__${this.port}`;
+    }
+
+    get isWatchBuild(): boolean {
+      return this.buildType === 'watch';
     }
 
     declare buildStatusInfo?: BuildStatusInfo;
@@ -106,6 +130,8 @@ export namespace DevMode {
     declare lastError?: string;
 
     declare name?: string;
+
+    declare buildType?: 'watch' | 'normal';
 
     declare nameForNpmPackage?: string;
 

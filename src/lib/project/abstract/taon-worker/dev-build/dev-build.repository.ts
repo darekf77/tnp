@@ -4,14 +4,16 @@ import {
   TaonBaseRepository,
   TaonBaseKvRepository,
   TaonRepository,
+  Symbols,
 } from 'taon/src';
 import { Raw } from 'taon-typeorm/src';
 import { _ } from 'tnp-core/src';
 
-import { DevBuildModels } from './dev-build.models';
 import { EnvOptions } from '../../../../options';
 import { Project } from '../../project';
 import { DevMode } from '../dev-mode/dev-mode.models';
+
+import { DevBuildModels } from './dev-build.models';
 //#endregion
 
 @TaonRepository({
@@ -22,13 +24,20 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
   commandStatus?: DevBuildModels.CommandStatus;
 }> {
   //#region fields & getters
-  #project: Project = void 0;
-  set project(v) {
-    this.#project = v;
+  private project: Project = void 0;
+
+  private envOptions: EnvOptions = void 0;
+
+  setProject(project: Project): void {
+    this.project = project;
   }
 
-  get project(): Project {
-    return this.#project;
+  setEnvOptions(envOptions: EnvOptions): void {
+    this.envOptions = envOptions;
+  }
+
+  getProject(): Project {
+    return this.project;
   }
   //#endregion
 
@@ -87,6 +96,7 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
     opt = opt || {};
     const dataToRequest = DevMode.ProjectBuildNotificaiton.from({
       name: this.project.name,
+      buildType: this.envOptions?.build?.watch ? 'watch' : 'normal',
       nameForNpmPackage: this.project.nameForNpmPackage,
       location: this.project.location,
       port: this.project.ins.currentActionPort,
