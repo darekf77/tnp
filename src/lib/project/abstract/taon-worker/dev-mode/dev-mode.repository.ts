@@ -132,6 +132,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
   }
   //#endregion
 
+  //#region API / private methods / get what should be rebuild
   async getWhatShouldBeRebuild(
     body: DevMode.ProjectBuildNotificaiton,
   ): Promise<{
@@ -157,6 +158,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     return result;
     //#endregion
   }
+  //#endregion
 
   //#region API / public methods / set as leader project and return dependencies
   async setAsLeadProjectAndReturnDependcies(
@@ -166,11 +168,6 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     //#region @backendFunc
 
     const frameworkVersion = projectRequestestingLeadPos.coreContainerVersion;
-
-    this.addMessage(`typeof ${dirtyBuild} `);
-    try {
-      this.addMessage(JSON.stringify(dirtyBuild));
-    } catch (error) {}
 
     await this.merge('shouldBeRebuild', {
       [frameworkVersion]: dirtyBuild,
@@ -486,44 +483,6 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     );
 
     return poolOfDevModeProjects;
-    //#endregion
-  }
-  //#endregion
-
-  //#region API / private methods / update taon build status
-  private async updateTaonBuildStatus(
-    project: DevMode.ProjectBuildNotificaiton,
-    buildType: CoreModels.BuildType,
-    status: DevMode.ProjectBuildStatus,
-  ): Promise<DevMode.BuildStatusInfo> {
-    //#region @backendFunc
-
-    const devBuildController = await this.getDevBuildControllerForPort(
-      project.port,
-    );
-
-    this.addMessage(
-      `[updateTaonBuildStatus] Change status (${status}) for build ${buildType} in ${project.nameForNpmPackage}`,
-    );
-    try {
-      const data = await devBuildController.updateTaonBuildStatus(
-        buildType,
-        status,
-      ).request!({
-        // timeout: 1000,
-      });
-      return data.body.json;
-    } catch (error) {
-      if (error instanceof HttpResponseError) {
-        const err = error as HttpResponseError<RestErrorResponseWrapper>;
-        this.addMessage(err.body.json.message.trim());
-        this.addMessage(err.body.json.details.trim());
-      }
-
-      this.addMessage(`[updateTaonBuildStatus] request error`);
-    }
-    return project.buildStatusInfo;
-
     //#endregion
   }
   //#endregion

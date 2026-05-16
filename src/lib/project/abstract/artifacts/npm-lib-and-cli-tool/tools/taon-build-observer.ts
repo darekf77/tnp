@@ -22,6 +22,10 @@ import {
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
 import {
+  DEBOUCE_takeLeadOfBuildingDebounce,
+  DEBOUNCE_debouceUpdate,
+  DEBOUNCE_notifyLeaderAboutBuildDone,
+  DEBOUNCE_trigerLeadBuilding,
   debugModeTaonLightWeightWatchMode,
   TaonGeneratedFiles,
   watcherPrefix,
@@ -94,11 +98,7 @@ export class TaonBuildObserver extends BaseFeatureForProject<Project> {
       }
       if (nextState === DevMode.ProjectBuildStatus.BUILDING) {
         debugMode &&
-          console.log(`
-
-          START BUILD FOR ${buildType}
-
-          `);
+          console.log(`START BUILD FOR ${buildType}`);
         this.project.watcher.triggerRebuildOf(buildType);
       }
       if (nextState === DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS) {
@@ -123,6 +123,9 @@ export class TaonBuildObserver extends BaseFeatureForProject<Project> {
 
   writeBuildStatus = _.throttle(() => {
     //#region @backend
+    if (!debugModeTaonLightWeightWatchMode) {
+      return;
+    }
     this.project.writeFile(
       TaonGeneratedFiles.BUILD_STATUS_MD,
       `# CURRENT BUILD STATUS
@@ -165,7 +168,7 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
       );
     }
     //#endregion
-  }, 500);
+  }, DEBOUNCE_notifyLeaderAboutBuildDone);
   //#endregion
 
   //#region fields & getters / modify state before setting
@@ -224,7 +227,7 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
   //#region fields & getters / debouce update
   private debouceUpdate = _.debounce(async () => {
     await this.updateAction();
-  }, 1000);
+  }, DEBOUNCE_debouceUpdate);
   //#endregion
 
   //#region fields & getters / machine state
@@ -471,7 +474,7 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
       return;
     }
     this.takeLeadOfBuildingDebounce();
-  }, 200);
+  }, DEBOUNCE_trigerLeadBuilding);
 
   public buildsNotifiers = new Map<
     CoreModels.BuildType,
@@ -503,17 +506,17 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
 
   private takeLeadOfBuildingDebounce = _.debounce(async () => {
     await this.takeLeadOfBuilding();
-  }, 1000);
+  }, DEBOUCE_takeLeadOfBuildingDebounce);
 
   public async takeLeadOfBuilding(options?: {
     skipSelf?: boolean;
   }): Promise<void> {
-    //#region @
+    //#region @backend
     options = options || {};
     this.projectStaredLeadingBuild = true;
 
     while (true) {
-      Helpers.logInfo('Taking lead of building');
+      Helpers.log('Taking lead of building');
       this.isDrityLeadBuild = false;
 
       //#region get all project for building

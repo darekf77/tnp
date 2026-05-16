@@ -232,7 +232,7 @@ export class $Cloud extends BaseCli {
   }
   //#endregion
 
-  //#region deployments
+  //#region devmode
   @UtilsCliClassMethod.decoratorMethod('devmode')
   async devmode(): Promise<void> {
     // UtilsTerminal.drawBigText('Deployments');

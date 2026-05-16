@@ -46,6 +46,10 @@
     },
   ],
 
+  "devModeDependenciesForNpmLib": [
+    "tnp-helpers"
+  ],
+
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
   "resources": ["icon-menu-tnp.svg"],
 

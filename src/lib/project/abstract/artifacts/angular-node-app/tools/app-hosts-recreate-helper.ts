@@ -135,7 +135,7 @@ export class AppHostsRecreateHelper extends BaseDebounceCompilerForProject<
       return this.project.framework.contextFilter(relativePath);
     });
     if (changeOfFiles.length === 0) {
-      Helpers.logInfo(`No file detected that affects app.hosts.ts`);
+      Helpers.log(`No file detected that affects app.hosts.ts`);
       return;
     }
     await this.rebuild(changeOfFiles, asyncEvent);
