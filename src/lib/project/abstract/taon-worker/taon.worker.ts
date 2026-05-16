@@ -2,6 +2,7 @@
 import { ProcessesWorker } from '@taon-dev/cloud/src';
 import { TraefikProvider } from '@taon-dev/cloud/src';
 import { InstancesWorker } from '@taon-dev/cloud/src';
+import { EndpointContext } from 'taon/src';
 import { config, LibTypeEnum } from 'tnp-core/src';
 import { _, UtilsTerminal } from 'tnp-core/src';
 import {
@@ -17,13 +18,12 @@ import { skipCoreCheck } from '../../../constants';
 import type { TaonProjectResolve } from '../project-resolve';
 
 import { DeploymentsWorker } from './deployments/deployments.worker';
+import { DevBuildController } from './dev-build/dev-build.controller';
+import { DevBuildUtils } from './dev-build/dev-build.utils';
+import { DevModeWorker } from './dev-mode/dev-mode.worker';
 import { TaonTerminalUI } from './taon-terminal-ui';
 import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
-import { DevModeWorker } from './dev-mode/dev-mode.worker';
-import { EndpointContext } from 'taon/src';
-import { DevBuildController } from './dev-build/dev-build.controller';
-import { DevBuildUtils } from './dev-build/dev-build.utils';
 
 //#endregion
 
@@ -126,7 +126,6 @@ export class TaonProjectsWorker extends BaseCliWorker<
       this.instancesWorker.serviceID,
       this.instancesWorker as any,
     );
-
     this.dependencyWorkers.set(
       this.devModeWorker.serviceID,
       this.devModeWorker as any,
@@ -205,6 +204,16 @@ export class TaonProjectsWorker extends BaseCliWorker<
           mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
         },
         calledFrom: 'taon projects/instancesWorker worker start',
+      },
+    });
+
+    Helpers.taskStarted(`Waiting for taon dev mode manager to be started...`);
+    await this.devModeWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
+        },
+        calledFrom: 'taon development worker start',
       },
     });
 
