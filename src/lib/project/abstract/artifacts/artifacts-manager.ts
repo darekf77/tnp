@@ -123,6 +123,7 @@ export class ArtifactManager {
       `);
 
     this.project.removeFile([TaonGeneratedFiles.BUILD_INFO_MD]);
+    this.project.removeFile([TaonGeneratedFiles.BUILD_STATUS_MD]);
 
     if (this.project.framework.isStandaloneProject) {
       this.project.removeFolderByRelativePath(dotTnpFolder);

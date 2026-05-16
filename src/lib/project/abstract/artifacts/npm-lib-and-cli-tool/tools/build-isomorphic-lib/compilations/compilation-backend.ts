@@ -3,6 +3,7 @@ import {
   config,
   CoreModels,
   GlobalStorage,
+  startAsync,
   taonActionFromParent,
 } from 'tnp-core/src';
 import { crossPlatformPath, fse, _, chalk } from 'tnp-core/src';
@@ -12,6 +13,7 @@ import {
   COMPILATION_COMPLETE_TSC,
   distMainProject,
   distNoCutSrcMainProject,
+  libEsm,
   prodSuffix,
   srcMainProject,
   tmpSourceDist,
@@ -96,7 +98,7 @@ export class BackendCompilation {
 
     //#region cmd
     let prepareCmd = (specificTsconfig: string) => {
-      let commandJs, commandMaps;
+      let commandJs, commandMaps, commandJsEsm;
       let nocutsrcFolder = this.project.pathFor(
         distNoCutSrcMainProject + (buildOptions.build.prod ? prodSuffix : ''),
       );
@@ -112,9 +114,12 @@ export class BackendCompilation {
 
       commandJs = `${tsExe} ${Object.values(paramsJS).join(' ')}  `;
       commandMaps = `${tsExe} ${Object.values(paramsMaps).join(' ')} `;
+      delete paramsJS.outDir;
+      commandJsEsm = `${tsExe} ${Object.values(paramsJS).join(' ').replace('.backend.', '.backend-esm.')}  `;
       return {
         commandJs, // use tsconfig.backend.dist<.prod>.json
         commandMaps, // uses main tsconfig.json to from /src directly everything
+        commandJsEsm,
         // commandDts
       };
     };
@@ -128,43 +133,31 @@ export class BackendCompilation {
       ),
     );
 
-    await this.buildStandardLibVer(buildOptions, {
-      ...prepareCmd(tsconfigBackendPath),
-      generateDeclarations,
-    });
+    const { commandJs, commandJsEsm, commandMaps } =
+      prepareCmd(tsconfigBackendPath);
 
-    //#endregion
-  }
-
-  //#endregion
-
-  //#region methods / build standard lib version
-  protected async buildStandardLibVer(
-    buildOptions: EnvOptions,
-    options: {
-      commandJs: string;
-      commandMaps: string;
-      generateDeclarations: boolean;
-    },
-  ): Promise<void> {
-    //#region @backendFunc
-
-    let { commandJs, commandMaps } = options;
     const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
 
     Helpers.getIsVerboseMode() &&
       console.log({
         commandJs,
         commandMaps,
+        commandJsEsm,
       });
 
     Helpers.info(`
 
-Starting (${
+    [compilation-backend] Starting (${
       buildOptions.build.watch ? 'watch' : 'normal'
     }) backend TypeScript build....
 
     `);
+
+    const cwd = this.project.location;
+
+    await this.project.nodeModules.makeSureInstalled();
+
+    //#region output line replace
     const additionalReplace = (line: string) => {
       // nothing to replace for now
       if (taonActionFromParentName && line.includes('./src/')) {
@@ -178,116 +171,174 @@ Starting (${
       return line;
     };
 
-    await this.project.nodeModules.makeSureInstalled();
-    const cwd = this.project.location;
-    await Helpers.execute(commandJs, cwd, {
+    const outputLineReplace = (line: string): string => {
+      //#region outputs replacement
+
+      if (line.startsWith(`${tmpSourceDist + prodSuffix}/`)) {
+        return additionalReplace(
+          line.replace(
+            `${tmpSourceDist + prodSuffix}/`,
+            `./${srcMainProject}/`,
+          ),
+        );
+      }
+
+      if (line.startsWith(`${tmpSourceDist}/`)) {
+        return additionalReplace(
+          line.replace(`${tmpSourceDist}/`, `./${srcMainProject}/`),
+        );
+      }
+
+      return additionalReplace(
+        line
+          .replace(`../${tmpSourceDist + prodSuffix}/`, `./${srcMainProject}/`)
+          .replace(`../${tmpSourceDist}/`, `./${srcMainProject}/`),
+      );
+      //#endregion
+    };
+
+    //#endregion
+
+    const errorMessageCjs = `Typescript compilation (backend commonjs) error`;
+    const errorMessageEsm = `Typescript compilation (backend esm) error`;
+
+    //#region compilation commonjs backend
+
+    await startAsync(commandJs, cwd, {
       similarProcessKey: 'tsc',
-      resolvePromiseMsgCallback: {
-        anyStd: () => {
-          if (this.project.watcher.isTaonLightWatcherMode) {
-            this.taonBuildObserver.debouceUpdateSuccess({
-              backend: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-            });
-          }
-        },
-      },
-      exitOnErrorCallback: async code => {
-        //#region handle error
-        const errorMessage = `Typescript compilation (backend) error`;
+      resolvePromiseMsgCallback_anystd: () => {
         if (this.project.watcher.isTaonLightWatcherMode) {
-          await this.taonBuildObserver.debouceUpdateError({
-            backend: DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-            errorMessage,
-          });
+          this.taonBuildObserver.backendCjsState.set(
+            DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+          );
+        }
+      },
+      onExitCallback: async (code, resolve, reject) => {
+        //#region handle error
+
+        if (this.project.watcher.isTaonLightWatcherMode) {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject();
+          }
+          this.taonBuildObserver.backendCjsState.set(
+            DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+          );
+          this.taonBuildObserver.errorBackend.set(errorMessageCjs);
+          await this.taonBuildObserver.updateAction();
         }
 
         if (buildOptions.release.releaseType) {
-          throw errorMessage;
+          throw errorMessageCjs;
         } else {
-          Helpers.error(
-            `[${config.frameworkName}] ${errorMessage} (code=${code})`,
-            false,
-            true,
-          );
+          if (buildOptions.build.watch) {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject();
+            }
+          } else {
+            Helpers.error(
+              `[${config.frameworkName}] ${errorMessageCjs} (code=${code})`,
+              false,
+              true,
+            );
+          }
         }
         //#endregion
       },
-      outputLineReplace: (line: string) => {
-        //#region outputs replacement
-
-        if (line.startsWith(`${tmpSourceDist + prodSuffix}/`)) {
-          return additionalReplace(
-            line.replace(
-              `${tmpSourceDist + prodSuffix}/`,
-              `./${srcMainProject}/`,
-            ),
-          );
-        }
-
-        if (line.startsWith(`${tmpSourceDist}/`)) {
-          return additionalReplace(
-            line.replace(`${tmpSourceDist}/`, `./${srcMainProject}/`),
-          );
-        }
-
-        return additionalReplace(
-          line
-            .replace(
-              `../${tmpSourceDist + prodSuffix}/`,
-              `./${srcMainProject}/`,
-            )
-            .replace(`../${tmpSourceDist}/`, `./${srcMainProject}/`),
-        );
-        //#endregion
-      },
-      resolvePromiseMsg: {
-        stdout: [COMPILATION_COMPLETE_TSC],
-      },
-      rebuildOnChange: buildOptions.build.watch
-        ? this.project.watcher.rebuildTriggerWatcher('backend')
-        : void 0,
+      outputLineReplace: (line: string) => outputLineReplace(line),
+      resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
+      rebuildOnChange:
+        this.project.watcher.rebuildTriggerWatcher('backend-cjs'),
     });
+    //#endregion
 
-    Helpers.logInfo(`* Typescript compilation first part done`);
+    Helpers.logInfo(`* Typescript compilation first part done (cjs)`);
 
     await this.project.nodeModules.makeSureInstalled();
 
-    await Helpers.execute(commandMaps, cwd, {
+    //#region compilation esm backend
+    if (!buildOptions.build.prod) {
+      // in prod normal build is esm - not need for this
+      await startAsync(commandJsEsm, cwd, {
+        similarProcessKey: 'tsc',
+        resolvePromiseMsgCallback_anystd: () => {
+          if (this.project.watcher.isTaonLightWatcherMode) {
+            this.taonBuildObserver.backendEsmState.set(
+              DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+            );
+          }
+        },
+        onExitCallback: async (code, resolve, reject) => {
+          //#region handle error
+          if (this.project.watcher.isTaonLightWatcherMode) {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject();
+            }
+            this.taonBuildObserver.backendEsmState.set(
+              DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+            );
+            this.taonBuildObserver.errorBackend.set(errorMessageEsm);
+            await this.taonBuildObserver.updateAction();
+          }
+
+          if (buildOptions.release.releaseType) {
+            throw errorMessageEsm;
+          } else {
+            if (buildOptions.build.watch) {
+              if (code === 0) {
+                resolve();
+              } else {
+                reject();
+              }
+            } else {
+              Helpers.error(
+                `[${config.frameworkName}] ${errorMessageEsm} (code=${code})`,
+                false,
+                true,
+              );
+            }
+          }
+          //#endregion
+        },
+        outputLineReplace: (line: string) => outputLineReplace(line),
+        resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
+        rebuildOnChange:
+          this.project.watcher.rebuildTriggerWatcher('backend-esm'),
+      });
+    }
+    //#endregion
+
+    Helpers.logInfo(`* Typescript compilation second part done (esm)`);
+
+    await this.project.nodeModules.makeSureInstalled();
+
+    //#region compilation js maps backend
+    await startAsync(commandMaps, cwd, {
       similarProcessKey: 'tsc',
-      hideOutput: {
-        stderr: true,
-        stdout: true,
-        acceptAllExitCodeAsSuccess: true,
+      hideOutput_stderr: true,
+      hideOutput_stdout: true,
+      resolvePromiseMsgCallback_anystd: () => {
+        if (this.project.watcher.isTaonLightWatcherMode) {
+          this.taonBuildObserver.backendJsMapsState.set(
+            DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+          );
+        }
       },
-      resolvePromiseMsg: {
-        stdout: ['Watching for file changes.'],
+      onExitCallback: async (code, resolve, reject) => {
+        resolve(); // TODO this is throwing tsocnfig errpr
       },
-      rebuildOnChange: buildOptions.build.watch
-        ? this.project.watcher.rebuildTriggerWatcher('backend')
-        : void 0,
+      resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
+      rebuildOnChange:
+        this.project.watcher.rebuildTriggerWatcher('backend-js-maps'),
     });
+    //#endregion
 
-    // Helpers.writeJson(
-    //   [
-    //     cwd,
-    //     this.buildOptions.build.prod
-    //       ? `${distMainProject}${prodSuffix}`
-    //       : distMainProject,
-    //     libFromCompiledDist,
-    //     packageJsonLibDist,
-    //   ],
-    //   {
-    //     name: `${this.project.nameForNpmPackage}/${
-    //       libFromCompiledDist + this.buildOptions.build.prod ? prodSuffix : ''
-    //     }`,
-    //     type: 'module',
-    //     exports: {
-    //       '.': './index.js',
-    //     },
-    //   },
-    // );
-
-    Helpers.logInfo(`* Typescript compilation second part done`);
+    Helpers.logInfo(`* Typescript compilation thrid part done (js maps)`);
     Helpers.info(`
 
     Backend TypeScript build done....

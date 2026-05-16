@@ -46,50 +46,67 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   //#region constructor
 
   //#region @backend
-  constructor(project: Project, defaultValue?: Partial<Models.TaonJson>) {
+  constructor(
+    private project: Project,
+    private defaultValue?: Partial<Models.TaonJson>,
+  ) {
     super(project);
-
-    this.data = Helpers.readJson5([project.pathFor(taonJsonMainProject)]);
-    if (!this.data && defaultValue) {
-      this.data = _.cloneDeep(defaultValue as any);
-    }
-
-    this.overridePackageJsonManager = new BasePackageJson({
-      jsonContent: this.data.packageJsonOverride || {},
-      reloadInMemoryCallback: data => {
-        if (this.data && this.overridePackageJsonManager) {
-          this.data.packageJsonOverride = data;
-          this.saveToDisk();
-        }
-      },
-    });
+    this.project = project;
+    this.defaultValue = defaultValue;
+    this.readFromdisk(project.pathFor(taonJsonMainProject));
   }
   //#endregion
+
+  private readFromdisk(pathToTaonJson: string, reloading = false): void {
+    //#region @backendFunc
+    const defaultValue = this.defaultValue;
+    try {
+      // @ts-expect-error
+      this.data = Helpers.readJson5(pathToTaonJson);
+      if (!this.data && defaultValue) {
+        // @ts-expect-error
+        this.data = _.cloneDeep(defaultValue as any);
+      }
+
+      // @ts-expect-error
+      this.overridePackageJsonManager = new BasePackageJson({
+        jsonContent: this.data.packageJsonOverride || {},
+        reloadInMemoryCallback: data => {
+          if (this.data && this.overridePackageJsonManager) {
+            this.data.packageJsonOverride = data;
+            this.saveToDisk();
+          }
+        },
+      });
+      if (reloading) {
+        Helpers.log(`Reloading taon.jsonc done in ${pathToTaonJson}`);
+      } else {
+        Helpers.log(`Reading taon.jsonc done in ${pathToTaonJson}`);
+      }
+    } catch (error) {
+      Helpers.error(
+        `Not able to update taon.json from disk
+
+        ${pathToTaonJson}
+
+        `,
+        false,
+        true,
+      );
+    }
+    //#endregion
+  }
 
   //#endregion
 
   //#region reload from disk
   /**
-   * ! TODO EXPERMIENTAL
+   * Reload taon json from disk
    * @deprecated
    */
   public reloadFromDisk(): void {
     //#region @backendFunc
-    const newData =
-      Helpers.readJson5([this.project.pathFor(taonJsonMainProject)]) ||
-      this.data;
-
-    walk.Object(
-      newData,
-      (value, lodashPath) => {
-        if (_.isNil(value) || _.isFunction(value) || _.isObject(value)) {
-          // skipping
-        } else {
-          _.set(this.data, lodashPath, value);
-        }
-      },
-      { walkGetters: false },
-    );
+    this.readFromdisk(this.path, true);
     //#endregion
   }
   //#endregion

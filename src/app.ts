@@ -25,7 +25,7 @@
 // import Aura from '@primeng/themes/aura'; // @browser
 // import { MaterialCssVarsModule } from 'angular-material-css-vars'; // @browser
 // // import { providePrimeNG } from 'primeng/config'; // @browser
-// import { BehaviorSubject, Observable, map, switchMap } from 'rxjs';
+// import { Observable, map, switchMap } from 'rxjs';
 // import {
 //   Taon,
 //   TaonBaseContext,
@@ -93,8 +93,7 @@
 
 //   userApiService = inject(UserApiService);
 
-//   private refresh = new BehaviorSubject<void>(undefined);
-
+//
 //   readonly users$: Observable<User[]> = this.refresh.pipe(
 //     switchMap(() =>
 //       this.userApiService.userController

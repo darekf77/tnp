@@ -10,6 +10,7 @@ import {
   taonPackageName,
   tnpPackageName,
   Utils,
+  UtilsFilesFoldersSync,
 } from 'tnp-core/src';
 import { crossPlatformPath, glob, path, _, fse } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
@@ -25,6 +26,7 @@ import {
   distNoCutSrcMainProject,
   indexDtsMainProject,
   indexDtsNpmPackage,
+  libEsm,
   nodeModulesMainProject,
   packageJsonMainProject,
   packageJsonNpmLib,
@@ -43,6 +45,7 @@ import {
   tmpSrcDist,
   tmpSrcDistWebsql,
   TO_REMOVE_TAG,
+  USE_LIB_ESM_INSTEAD_LIB,
   VERIFIED_BUILD_DATA,
   websqlMainProject,
   whatToLinkFromCore,
@@ -632,29 +635,41 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       this.rootPackageName,
       srcJSFromNpmPackage,
     ]);
-    Helpers.writeFile(
-      location,
-      `"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __exportStar = (this && this.__exportStar) || function(m, exports) {
-    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-__exportStar(require("./lib"), exports);
-//# sourceMappingURL=index.js.map
 
-      `,
-    );
+    if (USE_LIB_ESM_INSTEAD_LIB) {
+      Helpers.writeFile(
+        location,
+        `export * from './${libEsm}';
+import def from './${libEsm}';
+export default def;
+        `,
+      );
+    } else {
+      Helpers.writeFile(
+        location,
+        `"use strict";
+  var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+      if (k2 === undefined) k2 = k;
+      var desc = Object.getOwnPropertyDescriptor(m, k);
+      if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+        desc = { enumerable: true, get: function() { return m[k]; } };
+      }
+      Object.defineProperty(o, k2, desc);
+  }) : (function(o, m, k, k2) {
+      if (k2 === undefined) k2 = k;
+      o[k2] = m[k];
+  }));
+  var __exportStar = (this && this.__exportStar) || function(m, exports) {
+      for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+  };
+  Object.defineProperty(exports, "__esModule", { value: true });
+  __exportStar(require("./lib"), exports);
+  //# sourceMappingURL=index.js.map
+
+        `,
+      );
+    }
+
     //#endregion
   }
   //#endregion
@@ -987,13 +1002,20 @@ __exportStar(require("./lib"), exports);
       monitorDir,
     );
 
-    this.removeSourceLinksFolders(pkgLocInDestNodeModules);
-
-    // TODO this thing is failing when copying unexisted file on macos
-    HelpersTaon.copy(monitorDir, pkgLocInDestNodeModules, {
-      copySymlinksAsFiles: false,
-      filter,
-    });
+    // TODO QUIKC_FIX
+    try {
+      this.removeSourceLinksFolders(pkgLocInDestNodeModules);
+      UtilsFilesFoldersSync.copyFolder(monitorDir, pkgLocInDestNodeModules, {
+        copySymlinksAsFiles: false,
+        filter,
+      });
+    } catch (error) {
+      Helpers.remove(pkgLocInDestNodeModules);
+      UtilsFilesFoldersSync.copyFolder(monitorDir, pkgLocInDestNodeModules, {
+        copySymlinksAsFiles: false,
+        filter,
+      });
+    }
 
     //#endregion
 
@@ -1342,7 +1364,10 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         ),
       );
       // Helpers.log(`Eqal content with temp proj: ${}`)
-      if (Helpers.exists(readyToCopyFileInLocalTempProj)) {
+      if (
+        Helpers.exists(readyToCopyFileInLocalTempProj) &&
+        !Helpers.isFolder(readyToCopyFileInLocalTempProj)
+      ) {
         HelpersTaon.copyFile(
           readyToCopyFileInLocalTempProj,
           destinationFilePath,
@@ -1397,10 +1422,12 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         );
       }
     } else {
-      Helpers.writeFile(
-        destinationFilePath,
-        Helpers.readFile(absOrgFilePathInDist) || '',
-      );
+      const fileContentWrite = Helpers.readFile(absOrgFilePathInDist) || '';
+      if (Helpers.isFolder(destinationFilePath) && !fileContentWrite?.trim()) {
+        // nothing to do
+      } else {
+        UtilsFilesFoldersSync.writeFile(destinationFilePath, fileContentWrite);
+      }
     }
 
     // TODO check this

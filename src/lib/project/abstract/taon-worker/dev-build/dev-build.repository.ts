@@ -4,14 +4,16 @@ import {
   TaonBaseRepository,
   TaonBaseKvRepository,
   TaonRepository,
+  Symbols,
 } from 'taon/src';
 import { Raw } from 'taon-typeorm/src';
 import { _ } from 'tnp-core/src';
 
-import { DevBuildModels } from './dev-build.models';
 import { EnvOptions } from '../../../../options';
 import { Project } from '../../project';
 import { DevMode } from '../dev-mode/dev-mode.models';
+
+import { DevBuildModels } from './dev-build.models';
 //#endregion
 
 @TaonRepository({
@@ -22,23 +24,29 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
   commandStatus?: DevBuildModels.CommandStatus;
 }> {
   //#region fields & getters
-  #project: Project = void 0;
-  set project(v) {
-    this.#project = v;
+  private project: Project = void 0;
+
+  private envOptions: EnvOptions = void 0;
+
+  setProject(project: Project): void {
+    this.project = project;
   }
 
-  get project(): Project {
-    return this.#project;
+  setEnvOptions(envOptions: EnvOptions): void {
+    this.envOptions = envOptions;
+  }
+
+  getProject(): Project {
+    return this.project;
   }
   //#endregion
 
   //#region public methods / update pool
   async updatePool(opt: {
     buildStatusInfo: DevMode.BuildStatusInfo;
-    lastError?: string;
   }): Promise<DevMode.ProjectBuildNotificaiton[]> {
     //#region @backendFunc
-    const ctrl =
+    const devModeController =
       await Project.ins.taonProjectsWorker.devModeWorker.getRemoteControllerFor(
         {
           methodOptions: {
@@ -49,7 +57,7 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
 
     const dataToRequest = this.dataToRequest(opt);
 
-    const data = await ctrl.updatePool(dataToRequest).request!();
+    const data = await devModeController.updatePool(dataToRequest).request!();
 
     return data.body.json;
     //#endregion
@@ -79,14 +87,15 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
 
   //#region private method / data to request
 
-  private dataToRequest(opt?: {
+  public dataToRequest(opt?: {
     buildStatusInfo?: DevMode.BuildStatusInfo;
-    lastError?: string;
-  }) {
+  }): DevMode.ProjectBuildNotificaiton {
     //#region @backendFunc
     opt = opt || {};
+    this.project.taonJson.reloadFromDisk();
     const dataToRequest = DevMode.ProjectBuildNotificaiton.from({
       name: this.project.name,
+      buildType: this.envOptions?.build?.watch ? 'watch' : 'normal',
       nameForNpmPackage: this.project.nameForNpmPackage,
       location: this.project.location,
       port: this.project.ins.currentActionPort,
@@ -94,7 +103,6 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
         this.project.taonJson.devModeDependenciesForNpmLib,
 
       buildStatusInfo: opt.buildStatusInfo,
-      lastError: opt.lastError,
       coreContainerVersion: this.project.taonJson.frameworkVersion,
     });
 

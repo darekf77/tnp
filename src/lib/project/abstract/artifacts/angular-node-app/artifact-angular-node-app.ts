@@ -444,20 +444,26 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     if (!shouldSkipBuild) {
       await angularTempProj.execute(angularBuildAppCmd, {
         similarProcessKey: TaonCommands.NG,
-        resolvePromiseMsg: {
-          stdout: COMPILATION_COMPLETE_APP_NG_SERVE,
-        },
+        resolvePromiseMsg_stdout: COMPILATION_COMPLETE_APP_NG_SERVE,
 
         //#region command execute params
-        exitOnErrorCallback: async code => {
+        onExitCallback: async (code, resolve, reject) => {
           if (buildOptions.release.releaseType) {
             throw 'Angular compilation lib error!';
           } else {
-            Helpers.error(
-              `[${config.frameworkName}] Typescript compilation error (code=${code})`,
-              false,
-              true,
-            );
+            if (buildOptions.build.watch) {
+              if (code === 0) {
+                resolve();
+              } else {
+                reject();
+              }
+            } else {
+              Helpers.error(
+                `[${config.frameworkName}] Typescript compilation error (code=${code})`,
+                false,
+                true,
+              );
+            }
           }
         },
         outputLineReplace: (line: string) => {

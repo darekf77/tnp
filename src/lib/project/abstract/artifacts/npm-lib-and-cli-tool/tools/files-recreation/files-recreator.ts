@@ -28,6 +28,8 @@ import {
   esLintRuleNoNamespaceReExport,
   tsconfigSpecJsonMain,
   vitestConfigJsonMainProject,
+  tsconfigBackendEsmDistJson,
+  tsconfigBackendEsmDistJson_PROD,
 } from '../../../../../../constants';
 import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
@@ -187,8 +189,10 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
     templates = [
       `${tsconfigJsonMainProject}${dotFileTemplateExt}`,
       `${tsconfigBackendDistJson}${dotFileTemplateExt}`,
+      `${tsconfigBackendEsmDistJson}${dotFileTemplateExt}`,
       `${tsconfigSpecJsonMain}${dotFileTemplateExt}`,
       `${tsconfigBackendDistJson_PROD}${dotFileTemplateExt}`,
+      `${tsconfigBackendEsmDistJson_PROD}${dotFileTemplateExt}`,
     ];
 
     if (this.project.framework.frameworkVersionAtLeast('v2')) {

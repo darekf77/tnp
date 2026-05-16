@@ -525,8 +525,20 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     Object.assign(this, obj);
     UtilsOs.safeExitProgramCleanUp(obj.exitProgramCleaningFn);
 
-    this.devBuildRepository.project = project;
-    await project.taonBuildObserver.updateAction();
+    this.devBuildRepository.setProject(project);
+    this.devBuildRepository.setEnvOptions(envOptions);
+    await project.taonBuildObserver.updateAction({
+      // isomorphic: DevMode.ProjectBuildStatus.BUILDING,
+      // 'copy-manager': DevMode.ProjectBuildStatus.BUILDING,
+      'backend-cjs': DevMode.ProjectBuildStatus.BUILDING,
+      'backend-esm': DevMode.ProjectBuildStatus.BUILDING,
+      'backend-js-maps': DevMode.ProjectBuildStatus.BUILDING,
+      browser: DevMode.ProjectBuildStatus.BUILDING,
+      websql: DevMode.ProjectBuildStatus.BUILDING,
+      'backend-watcher-error': '',
+      'browser-watcher-error': '',
+      'websql-watcher-error': '',
+    });
     //#endregion
   }
 

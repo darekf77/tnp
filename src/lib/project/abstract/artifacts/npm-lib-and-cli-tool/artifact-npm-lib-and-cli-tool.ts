@@ -21,7 +21,7 @@ import {
 import { _ } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
 import { BasePackageJson, Helpers, HelpersTaon } from 'tnp-helpers/src';
-
+import { ProcessStartOptions } from 'tnp-core/src';
 import {
   angularProjProxyPath,
   getProxyNgProj,
@@ -462,22 +462,19 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       const runNgBuild = async () => {
         await proxyProject.execute(commandForLibraryBuild, {
           similarProcessKey: TaonCommands.NG,
-          resolvePromiseMsg: {
-            stdout: buildOptions.build.watch ? watchResolveString : undefined,
-          },
-          rebuildOnChange: buildOptions.build.watch
-            ? this.project.watcher.rebuildTriggerWatcher('browser')
-            : void 0,
+          resolvePromiseMsg_stdout: buildOptions.build.watch
+            ? watchResolveString
+            : undefined,
+          rebuildOnChange:
+            this.project.watcher.rebuildTriggerWatcher('browser'),
           ...outputOptionsNormal,
         });
         await proxyProjectWebsql.execute(commandForLibraryBuild, {
           similarProcessKey: TaonCommands.NG,
-          resolvePromiseMsg: {
-            stdout: buildOptions.build.watch ? watchResolveString : undefined,
-          },
-          rebuildOnChange: buildOptions.build.watch
-            ? this.project.watcher.rebuildTriggerWatcher('websql')
-            : void 0,
+          resolvePromiseMsg_stdout: buildOptions.build.watch
+            ? watchResolveString
+            : undefined,
+          rebuildOnChange: this.project.watcher.rebuildTriggerWatcher('websql'),
           ...outputOptionsWebsql,
         });
       };
@@ -682,10 +679,21 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         //#endregion
       }
       this.copyNpmDistLibManager.init(buildOptions);
+      // if (
+      //   buildOptions.build.watch &&
+      //   this.project.watcher.isTaonLightWatcherMode
+      // ) {
+
+      //   await this.copyNpmDistLibManager.runTask({
+      //     taskName: 'copyto manger',
+      //     watch: false,
+      //   });
+      // } else {
       await this.copyNpmDistLibManager.runTask({
         taskName: 'copyto manger',
         watch: buildOptions.build.watch,
       });
+      // }
     }
     //#endregion
 
@@ -712,12 +720,23 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     if (!buildOptions.build.watch) {
       if (this.project.watcher.isTaonLightWatcherMode) {
         await this.taonBuildObserver.updateAction({
-          backend: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+          // isomorphic: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+          'backend-cjs': DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+          'backend-esm': DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+          'backend-js-maps': DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
           browser: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
           websql: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+          // 'copy-manager': DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+          'backend-watcher-error': '',
+          'browser-watcher-error': '',
+          'websql-watcher-error': '',
+        });
+        await this.taonBuildObserver.takeLeadOfBuilding({
+          skipSelf: true,
         });
       }
     }
+    this.taonBuildObserver.firstBuildDoneAndLeadBuildIsAllowed();
 
     //#endregion
 
@@ -1351,50 +1370,63 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   //#region private methods / fix terminal output paths
   private outputFixNgLibBuild(
     buildOptions: EnvOptions,
-  ): CoreModels.ExecuteOptions {
+  ): Partial<ProcessStartOptions> {
     const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
+    const errorMessage = `Angular ng build (${buildOptions.build.websql ? 'websql' : 'browser'}) compilation lib error`;
 
     return {
-      resolvePromiseMsgCallback: {
-        anyStd: () => {
-          if (this.project.watcher.isTaonLightWatcherMode) {
-            if (buildOptions.build.websql) {
-              this.taonBuildObserver.debouceUpdateSuccess({
-                websql: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-              });
-            } else {
-              this.taonBuildObserver.debouceUpdateSuccess({
-                browser: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-              });
-            }
-          }
-        },
-      },
-      // askToTryAgainOnError: true,
-      exitOnErrorCallback: async code => {
-        const errorMessage = 'Angular ng build compilation lib error';
+      resolvePromiseMsgCallback_anystd: () => {
         if (this.project.watcher.isTaonLightWatcherMode) {
           if (buildOptions.build.websql) {
-            await this.taonBuildObserver.debouceUpdateError({
-              websql: DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-              errorMessage,
-            });
+            this.taonBuildObserver.websqlState.set(
+              DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+            );
           } else {
-            await this.taonBuildObserver.debouceUpdateError({
-              browser: DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-              errorMessage,
-            });
+            this.taonBuildObserver.browserState.set(
+              DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+            );
+          }
+        }
+      },
+      // askToTryAgainOnError: true,
+      onExitCallback: async (code, resolve, reject) => {
+        if (this.project.watcher.isTaonLightWatcherMode) {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject();
+          }
+          if (buildOptions.build.websql) {
+            this.taonBuildObserver.websqlState.set(
+              DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+            );
+            this.taonBuildObserver.errorWebsql.set(errorMessage);
+            await this.taonBuildObserver.updateAction();
+          } else {
+            this.taonBuildObserver.browserState.set(
+              DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+            );
+            this.taonBuildObserver.errorBrowser.set(errorMessage);
+            await this.taonBuildObserver.updateAction();
           }
         }
 
         if (buildOptions.release.releaseType) {
           throw errorMessage;
         } else {
-          Helpers.error(
-            `[${config.frameworkName}] ${errorMessage} (code=${code})`,
-            false,
-            true,
-          );
+          if (buildOptions.build.watch) {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject();
+            }
+          } else {
+            Helpers.error(
+              `[${config.frameworkName}] ${errorMessage} (code=${code})`,
+              false,
+              true,
+            );
+          }
         }
       },
       outputLineReplace: (line: string) => {
@@ -1462,7 +1494,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
 
         return line;
       },
-    } as CoreModels.ExecuteOptions;
+    } as Partial<ProcessStartOptions>;
   }
   //#endregion
 

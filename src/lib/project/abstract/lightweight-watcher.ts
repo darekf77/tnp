@@ -1,8 +1,8 @@
-import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
-import { Project } from './project';
-import { Observable, Subject } from 'rxjs';
-import { chokidar, CoreModels } from 'tnp-core/src';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { chokidar, CoreModels, _ } from 'tnp-core/src';
 import { crossPlatformPath, path } from 'tnp-core/src';
+import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
+
 import {
   assetsFromTempSrc,
   packageJsonNpmLib,
@@ -11,11 +11,17 @@ import {
   tmpSrcDistWebsql,
 } from '../../constants';
 
+import { Project } from './project';
+
 // @ts-ignore TODO weird inheritance problem
 export class LightWeightWatcher extends BaseFeatureForProject<Project> {
   //#region fields
-  private codeWatchers = new Map<CoreModels.BuildType, Subject<{}>>();
-  private rebuildWatchers = new Map<CoreModels.BuildType, Subject<{}>>();
+  private codeWatchers = new Map<CoreModels.BuildWatcherType, Subject<{}>>();
+
+  private rebuildWatchers = new Map<
+    CoreModels.BuildType,
+    BehaviorSubject<{}>
+  >();
   //#endregion
 
   //#region public methods
@@ -23,14 +29,8 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
   //#region public methods / is taon light weight mode allowed
   public get isTaonLightWatcherMode(): boolean {
     //#region @backendFunc
-    if (global.lightWatcherInArgs) {
-      return global.lightWatcherInArgs;
-    }
-    if (process.platform === 'darwin') {
-      return false;
-    }
-    if (process.platform === 'win32') {
-      return false;
+    if (_.isBoolean(global.oldWatcherInArgs)) {
+      return !global.oldWatcherInArgs;
     }
     return true;
     //#endregion
@@ -38,20 +38,29 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region public methods / trigger rebuild of
-  public triggerRebuildOf(buildType: CoreModels.BuildType) {
+  public triggerRebuildOf(buildType: CoreModels.BuildType): void {
     //#region @backendFunc
 
-    if (!buildType || !CoreModels.BuildTypeArr.includes(buildType)) {
+    if (
+      !buildType ||
+      !CoreModels.BuildWatcherTypeArr.includes(
+        CoreModels.buildTypeToWatcherFn(buildType),
+      )
+    ) {
       Helpers.warn(`[triggerRebuildOf] Wrong trigger "${buildType}"`);
       return;
     }
-    this.rebuildWatchers.get(buildType).next({});
+    Helpers.logInfo(`TRIGGER REBUILD ${buildType}`);
+    this.rebuildTriggerWatcher(buildType).next({});
+
     //#endregion
   }
   //#endregion
 
   //#region public methods / trigger rebuild of
-  public cancelAndSetAsReadyForRebuildTrigger(buildType: CoreModels.BuildType) {
+  public cancelAndSetAsReadyForRebuildTrigger(
+    buildType: CoreModels.BuildType,
+  ): void {
     //#region @backendFunc
 
     if (!buildType || !CoreModels.BuildTypeArr.includes(buildType)) {
@@ -60,7 +69,7 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
       );
       return;
     }
-    // TODO
+    // TODO @LAST
     //#endregion
   }
   //#endregion
@@ -74,7 +83,7 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
       return;
     }
     if (!this.rebuildWatchers.has(buildType)) {
-      const subject = new Subject();
+      const subject = new BehaviorSubject({});
       this.rebuildWatchers.set(buildType, subject);
     }
     return this.rebuildWatchers.get(buildType);
@@ -84,16 +93,16 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
 
   //#region public methods / get ts code obserable for
   public getTsCodeObservableFor(
-    buildType: CoreModels.BuildType,
+    buildType: CoreModels.BuildWatcherType,
   ): Observable<{}> | undefined {
-    if (buildType === 'backend') {
+    if (buildType === 'backend-watcher') {
       return this.tmpSourceRebuildForBackendObs;
     }
-    if (buildType === 'browser') {
+    if (buildType === 'browser-watcher') {
       return this.tmpSourceRebuildForBrowserObs;
     }
 
-    if (buildType === 'websql') {
+    if (buildType === 'websql-watcher') {
       return this.tmpSourceRebuildForWebsqlObs;
     }
   }
@@ -109,7 +118,7 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
    */
   private getWatcherFor(
     folders: string[],
-    watcherType: CoreModels.BuildType,
+    watcherType: CoreModels.BuildWatcherType,
   ): Observable<{}> {
     //#region @backendFunc
     if (this.codeWatchers.has(watcherType)) {
@@ -140,7 +149,7 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
           '',
         );
 
-        if (watcherType === 'backend') {
+        if (watcherType === 'backend-watcher') {
           if (!relative.startsWith(`${assetsFromTempSrc}/`)) {
             // console.log('WATCHER CHANGE', {
             //   eventWatcher,
@@ -177,7 +186,7 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
     }
     const watcher = this.getWatcherFor(
       [this.project.pathFor(tmpSourceDist)],
-      'backend',
+      'backend-watcher',
     );
 
     this.project.cache[key] = watcher;
@@ -191,7 +200,7 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
     }
     const watcher = this.getWatcherFor(
       [this.project.pathFor(tmpSrcDist)],
-      'browser',
+      'browser-watcher',
     );
 
     this.project.cache[key] = watcher;
@@ -205,7 +214,7 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
     }
     const watcher = this.getWatcherFor(
       [this.project.pathFor(tmpSrcDistWebsql)],
-      'websql',
+      'websql-watcher',
     );
 
     this.project.cache[key] = watcher;

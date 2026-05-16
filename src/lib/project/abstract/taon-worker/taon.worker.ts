@@ -21,6 +21,9 @@ import { TaonTerminalUI } from './taon-terminal-ui';
 import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
 import { DevModeWorker } from './dev-mode/dev-mode.worker';
+import { EndpointContext } from 'taon/src';
+import { DevBuildController } from './dev-build/dev-build.controller';
+import { DevBuildUtils } from './dev-build/dev-build.utils';
 
 //#endregion
 
@@ -133,6 +136,29 @@ export class TaonProjectsWorker extends BaseCliWorker<
   }
 
   //#endregion
+
+  private contexts = new Map<number, EndpointContext>();
+
+  public async getDevBuildControllerForPort(
+    port: number | string,
+  ): Promise<DevBuildController> {
+    //#region @backendFunc
+    port = Number(port);
+    let contextForPort = this.contexts.get(Number(port));
+    if (!contextForPort) {
+      const ref = await DevBuildUtils.context
+        .cloneAsRemote({
+          overrideRemoteHost: `http://localhost:${port}`,
+        })
+        .initialize();
+      contextForPort = ref;
+      this.contexts.set(Number(port), ref);
+    }
+
+    const devBuildController = contextForPort.getInstanceBy(DevBuildController);
+    return devBuildController;
+    //#endregion
+  }
 
   //#region methods / start normally in current process
   /**

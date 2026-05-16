@@ -10,8 +10,9 @@ import {
   HTML,
   POST,
   Body,
+  Symbols,
 } from 'taon/src';
-import { _, CoreModels } from 'tnp-core/src';
+import { _, chalk, CoreModels, Helpers, UtilsTerminal } from 'tnp-core/src';
 
 import type { EnvOptions } from '../../../../options';
 import { Project } from '../../project';
@@ -26,7 +27,7 @@ import { DevBuildRepository } from './dev-build.repository';
 export class DevBuildController extends TaonBaseController {
   devBuildRepository = this.injectKvRepository(DevBuildRepository);
 
-  //#region html info
+  //#region API / html info
   @HTML({
     pathIsGlobal: true,
     path: '/info',
@@ -43,14 +44,15 @@ export class DevBuildController extends TaonBaseController {
       //   commandStatus,
       //   jsonDbLocation,
       // });
+      const project = this.devBuildRepository.getProject();
       return `
 <html>
 <head><title>Action on project Info</title></head>
 <body>
-    <h1>Project path: "${this.devBuildRepository.project?.location}" is</h1>
+    <h1>Project path: "${project?.location}" is</h1>
     <h1>command name: ${currentCommand} </h1>
     <h1>command status: ${commandStatus} </h1>
-    <h4>version: ${this.devBuildRepository.project?.packageJson?.version}</h4>
+    <h4>version: ${project?.packageJson?.version}</h4>
     <h4>pid: ${process.pid}</h4><br>
     <script>
      // setTimeout(() => {
@@ -65,7 +67,7 @@ export class DevBuildController extends TaonBaseController {
   }
   //#endregion
 
-  //#region get all data
+  //#region API / get all data
   @GET()
   getAllData(): Taon.Response<{}> {
     //#region @websqlFunc
@@ -76,31 +78,102 @@ export class DevBuildController extends TaonBaseController {
   }
   //#endregion
 
-  //#region give permission to build
-  @POST()
-  givePermissionForBuild(
-    @Query('buildType') buildType: CoreModels.BuildType,
-  ): Taon.Response<DevMode.BuildStatusInfo> {
+  //#region API / get status info
+  @GET()
+  getStatusInfo(): Taon.Response<DevMode.BuildStatusInfo> {
     //#region @backenFunc
     return async (req, res) => {
-      return this.devBuildRepository.project.taonBuildObserver.triggerRebuildOf(
-        buildType,
-      );
+      // console.log(`instance ${this[Symbols.taonInstanceId]}`);
+      const project = this.devBuildRepository.getProject();
+      return project.taonBuildObserver.buildStatusInfo;
     };
     //#endregion
   }
   //#endregion
 
-  //#region give permission to build
+  //#region API / health heck
   @POST()
-  cancelAndSetAsReadyForRebuildTrigger(
+  healthCheck(): Taon.Response<boolean> {
+    //#region @backenFunc
+    return async (req, res) => {
+      return true;
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region API / unlock leader build queue
+  @POST()
+  unlockLeaderQueue(
     @Query('buildType') buildType: CoreModels.BuildType,
+  ): Taon.Response<boolean> {
+    //#region @backenFunc
+    return async (req, res) => {
+      const project = this.devBuildRepository.getProject();
+      const notifier = project.taonBuildObserver.buildsNotifiers.get(buildType);
+      // Helpers.logInfo(`unlocking ${buildType} in leader`)
+      notifier.next();
+      return true;
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region API / unlock leader build queue
+  @POST()
+  setLeadBuildDirtyIfRunning(): Taon.Response<boolean> {
+    //#region @backenFunc
+    return async (req, res) => {
+      const project = this.devBuildRepository.getProject();
+      project.taonBuildObserver.setLeadBuildDirtyIfRunning();
+      return true;
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region API / display rebuild done message
+  @POST()
+  displayRebuildDoneMessage(
+    @Query('startedBy') startedBy: string,
+  ): Taon.Response<boolean> {
+    //#region @backenFunc
+    return async (req, res) => {
+      const project = this.devBuildRepository.getProject();
+      UtilsTerminal.drawHorizontalLine();
+      console.log(
+        chalk.green(`
+
+    REBUILD STARED BY ${startedBy}
+    DONE FOR ${chalk.bold(project.nameForNpmPackage)}
+
+        `),
+      );
+      UtilsTerminal.drawHorizontalLine();
+      return true;
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region API / update taon build status in child
+  @POST()
+  updateTaonBuildStatus(
+    @Query('buildType') buildType: CoreModels.BuildType,
+    @Query('status') status: DevMode.ProjectBuildStatus,
+    @Query('leaderPort') leaderPort?: number | string,
   ): Taon.Response<DevMode.BuildStatusInfo> {
     //#region @backenFunc
     return async (req, res) => {
-      return this.devBuildRepository.project.taonBuildObserver.cancelAndSetAsReadyForRebuildTrigger(
-        buildType,
-      );
+      if (leaderPort) {
+        leaderPort = Number(leaderPort);
+      }
+
+      const project = this.devBuildRepository.getProject();
+      project.taonBuildObserver.toNotifyLeaderPort = Number(leaderPort);
+      project.taonBuildObserver.toNotifyBuildType = buildType;
+      project.taonBuildObserver.states.get(buildType).set(status);
+      return project.taonBuildObserver.buildStatusInfo;
     };
     //#endregion
   }
