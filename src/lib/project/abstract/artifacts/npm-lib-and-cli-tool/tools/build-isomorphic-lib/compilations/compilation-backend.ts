@@ -199,12 +199,58 @@ export class BackendCompilation {
 
     //#endregion
 
-    const errorMessageCjs = `Typescript compilation (backend commonjs) error`;
-    const errorMessageEsm = `Typescript compilation (backend esm) error`;
+    const handlExitError = async (
+      code: number,
+      resolve: () => void,
+      reject: () => void,
+      buildtype: CoreModels.BuildType,
+    ): Promise<void> => {
+      const errorMesssage = `Typescript compilation (backend ${buildtype}) error`;
+
+      if (this.project.watcher.isTaonLightWatcherMode) {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject();
+        }
+        this.taonBuildObserver.backendCjsState.set(
+          DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+        );
+        this.taonBuildObserver.errorBackend.set(errorMesssage);
+        await this.taonBuildObserver.updateAction();
+      }
+
+      if (buildOptions.release.releaseType) {
+        if (code === 0) {
+          resolve();
+        } else {
+          throw errorMesssage;
+        }
+      } else {
+        if (buildOptions.build.watch) {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject();
+          }
+        } else {
+          if (code === 0) {
+            resolve();
+          } else {
+            Helpers.error(
+              `[${config.frameworkName}] ${errorMesssage} (code=${code})`,
+              false,
+              true,
+            );
+          }
+        }
+      }
+    };
 
     //#region compilation commonjs backend
 
     await startAsync(commandJs, cwd, {
+      uniqueName: 'tsc cjs',
       similarProcessKey: 'tsc',
       resolvePromiseMsgCallback_anystd: () => {
         if (this.project.watcher.isTaonLightWatcherMode) {
@@ -213,41 +259,8 @@ export class BackendCompilation {
           );
         }
       },
-      onExitCallback: async (code, resolve, reject) => {
-        //#region handle error
-
-        if (this.project.watcher.isTaonLightWatcherMode) {
-          if (code === 0) {
-            resolve();
-          } else {
-            reject();
-          }
-          this.taonBuildObserver.backendCjsState.set(
-            DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-          );
-          this.taonBuildObserver.errorBackend.set(errorMessageCjs);
-          await this.taonBuildObserver.updateAction();
-        }
-
-        if (buildOptions.release.releaseType) {
-          throw errorMessageCjs;
-        } else {
-          if (buildOptions.build.watch) {
-            if (code === 0) {
-              resolve();
-            } else {
-              reject();
-            }
-          } else {
-            Helpers.error(
-              `[${config.frameworkName}] ${errorMessageCjs} (code=${code})`,
-              false,
-              true,
-            );
-          }
-        }
-        //#endregion
-      },
+      onExitCallback: async (code, resolve, reject) =>
+        handlExitError(code, resolve, reject, 'backend-cjs'),
       outputLineReplace: (line: string) => outputLineReplace(line),
       resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
       rebuildOnChange:
@@ -263,6 +276,7 @@ export class BackendCompilation {
     if (!buildOptions.build.prod) {
       // in prod normal build is esm - not need for this
       await startAsync(commandJsEsm, cwd, {
+        uniqueName: 'tsc esm',
         similarProcessKey: 'tsc',
         resolvePromiseMsgCallback_anystd: () => {
           if (this.project.watcher.isTaonLightWatcherMode) {
@@ -271,40 +285,8 @@ export class BackendCompilation {
             );
           }
         },
-        onExitCallback: async (code, resolve, reject) => {
-          //#region handle error
-          if (this.project.watcher.isTaonLightWatcherMode) {
-            if (code === 0) {
-              resolve();
-            } else {
-              reject();
-            }
-            this.taonBuildObserver.backendEsmState.set(
-              DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-            );
-            this.taonBuildObserver.errorBackend.set(errorMessageEsm);
-            await this.taonBuildObserver.updateAction();
-          }
-
-          if (buildOptions.release.releaseType) {
-            throw errorMessageEsm;
-          } else {
-            if (buildOptions.build.watch) {
-              if (code === 0) {
-                resolve();
-              } else {
-                reject();
-              }
-            } else {
-              Helpers.error(
-                `[${config.frameworkName}] ${errorMessageEsm} (code=${code})`,
-                false,
-                true,
-              );
-            }
-          }
-          //#endregion
-        },
+        onExitCallback: async (code, resolve, reject) =>
+          handlExitError(code, resolve, reject, 'backend-cjs'),
         outputLineReplace: (line: string) => outputLineReplace(line),
         resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
         rebuildOnChange:
@@ -319,6 +301,7 @@ export class BackendCompilation {
 
     //#region compilation js maps backend
     await startAsync(commandMaps, cwd, {
+      uniqueName: 'tsc js maps',
       similarProcessKey: 'tsc',
       hideOutput_stderr: true,
       hideOutput_stdout: true,

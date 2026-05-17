@@ -2,10 +2,12 @@
 import { Record } from 'immutable';
 import {
   ErrorBody,
+  HttpResponse,
   HttpResponseError,
   RestErrorResponseWrapper,
 } from 'ng2-rest/src';
 import { debounceTime } from 'rxjs';
+import { Models, Taon } from 'taon/src';
 import {
   _,
   chalk,
@@ -27,12 +29,14 @@ import {
   DEBOUNCE_notifyLeaderAboutBuildDone,
   DEBOUNCE_trigerLeadBuilding,
   debugModeTaonLightWeightWatchMode,
+  OBSERVER_PARALLELS,
   TaonGeneratedFiles,
   watcherPrefix,
 } from '../../../../../constants';
 import { DevMode } from '../../../../abstract/taon-worker/dev-mode/dev-mode.models';
 import { Project } from '../../../project';
 
+import { BuildLeader } from './build-leader-process';
 import { TaonStateMachine } from './taon-build-state-machine';
 //#endregion
 
@@ -40,6 +44,10 @@ import { TaonStateMachine } from './taon-build-state-machine';
 export class TaonBuildObserver extends BaseFeatureForProject<Project> {
   // TODO remove anyStd from exitprocess
   // TODO when in watch mode exit -> delete first all subprocesses (keep them here)
+
+  leader: BuildLeader;
+
+  public toNotifyLeaderPort: number;
 
   //#region fields & getters / allowed state map
   private allowedStateMap = new Map<
@@ -97,16 +105,15 @@ export class TaonBuildObserver extends BaseFeatureForProject<Project> {
         this.project.watcher.cancelAndSetAsReadyForRebuildTrigger(buildType);
       }
       if (nextState === DevMode.ProjectBuildStatus.BUILDING) {
-        debugMode &&
-          console.log(`START BUILD FOR ${buildType}`);
+        debugMode && console.log(`START BUILD FOR ${buildType}`);
         this.project.watcher.triggerRebuildOf(buildType);
       }
       if (nextState === DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS) {
         const buildWatcherTypeKey = CoreModels.buildTypeToWatcherFn(buildType);
         this.dirtyBuild.set(buildWatcherTypeKey, false);
 
-        if (this.toNotifyBuildType === buildType && this.toNotifyLeaderPort) {
-          this.notifyLeaderAboutBuildDone();
+        if (this.toNotifyLeaderPort) {
+          this.notifyLeaderAboutBuildDone(buildType);
         }
       }
       this.writeBuildStatus();
@@ -146,10 +153,12 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
   }, 300);
 
   //#region fields & getters / notifye build leader about child build done
-  private notifyLeaderAboutBuildDone = _.debounce(async () => {
+  private async notifyLeaderAboutBuildDone(
+    toNotifyBuildType: CoreModels.BuildType,
+  ): Promise<void> {
     //#region @backend
     Helpers.log(
-      `Notifying leader that build status changed ${this.toNotifyBuildType}`,
+      `Notifying leader that build status changed ${toNotifyBuildType}`,
     );
     try {
       const devBuildControllerForProj =
@@ -157,18 +166,18 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
           this.toNotifyLeaderPort,
         );
 
-      await devBuildControllerForProj.unlockLeaderQueue(this.toNotifyBuildType)
+      await devBuildControllerForProj.unlockLeaderQueue(toNotifyBuildType)
         .request!();
       Helpers.log(
-        `Done notifying leader that build status changed ${this.toNotifyBuildType} (port=${this.toNotifyLeaderPort})`,
+        `Done notifying leader that build status changed ${toNotifyBuildType} (port=${this.toNotifyLeaderPort})`,
       );
     } catch (error) {
       Helpers.error(
-        `Not able to notify build leader about status chagne of ${this.toNotifyBuildType}`,
+        `Not able to notify build leader about status chagne of ${toNotifyBuildType}`,
       );
     }
     //#endregion
-  }, DEBOUNCE_notifyLeaderAboutBuildDone);
+  }
   //#endregion
 
   //#region fields & getters / modify state before setting
@@ -411,6 +420,13 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
   }
   //#endregion
 
+  //#region constructor
+  constructor(project: Project) {
+    super(project);
+    this.leader = new BuildLeader(project, this);
+  }
+  //#endregion
+
   //#region private methods / merge status
   private mergeStatus(info: DevMode.BuildStatusInfo): void {
     if (!_.isObject(info)) {
@@ -445,333 +461,6 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
   }
   //#endregion
 
-  //#region lead build
-
-  public firstBuildDoneAndLeadBuildIsAllowed() {
-    // @ts-expect-error
-    this._firstBuildDoneAndLeadBuildIsAllowed = true;
-  }
-  private readonly _firstBuildDoneAndLeadBuildIsAllowed = false;
-  public toNotifyLeaderPort: number;
-
-  public toNotifyBuildType: CoreModels.BuildType;
-
-  private isDrityLeadBuild = false;
-
-  public setAsDirty(): void {
-    Helpers.warn(`Build dirty. Starting build again.`);
-    this.isDrityLeadBuild = true;
-    for (const [key, notifer] of this.buildsNotifiers.entries()) {
-      notifer.next();
-    }
-  }
-
-  private projectStaredLeadingBuild = false;
-
-  private trigerLeadBuilding = _.debounce(() => {
-    if (this.projectStaredLeadingBuild) {
-      this.setAsDirty();
-      return;
-    }
-    this.takeLeadOfBuildingDebounce();
-  }, DEBOUNCE_trigerLeadBuilding);
-
-  public buildsNotifiers = new Map<
-    CoreModels.BuildType,
-    ReturnType<typeof UtilsWaitNotifier.getNotifier>
-  >();
-
-  private recreateNotifiers(): void {
-    //#region @backend
-    for (const buildType of CoreModels.BuildTypeArr) {
-      if (!this.buildsNotifiers.has(buildType)) {
-        this.buildsNotifiers.set(
-          buildType,
-          UtilsWaitNotifier.getNotifier({
-            // max 3 minutes to finish build part
-            exitTimeoutMs: 200 * 1000,
-          }),
-        );
-      }
-    }
-    //#endregion
-  }
-
-  public setLeadBuildDirtyIfRunning(): void {
-    Helpers.warn(`Trying to set lead build as dirty.`);
-    if (this.projectStaredLeadingBuild) {
-      this.setAsDirty();
-    }
-  }
-
-  private takeLeadOfBuildingDebounce = _.debounce(async () => {
-    await this.takeLeadOfBuilding();
-  }, DEBOUCE_takeLeadOfBuildingDebounce);
-
-  public async takeLeadOfBuilding(options?: {
-    skipSelf?: boolean;
-  }): Promise<void> {
-    //#region @backend
-    options = options || {};
-    this.projectStaredLeadingBuild = true;
-
-    while (true) {
-      Helpers.log('Taking lead of building');
-      this.isDrityLeadBuild = false;
-
-      //#region get all project for building
-      const devModeControllerWorker =
-        await this.project.ins.taonProjectsWorker.devModeWorker.getRemoteControllerFor(
-          {
-            methodOptions: {
-              calledFrom: 'taon build observer',
-            },
-          },
-        );
-
-      let currentProjectData =
-        this.project.ins.devBuildRepository.dataToRequest({
-          buildStatusInfo: this.buildStatusInfo,
-        });
-
-      try {
-        const dirtyBuild = Array.from(this.dirtyBuild.entries())
-          .filter(([key, value]) => value)
-          .reduce(
-            (a, [key, value]) => {
-              return { ...a, [key]: value };
-            },
-            {} as { [key in CoreModels.BuildWatcherType]: boolean },
-          );
-        var allDepProjectData = await devModeControllerWorker
-          .setAsLeadProjectAndReturnDependcies(currentProjectData, dirtyBuild)!
-          .request();
-      } catch (error) {
-        if (error instanceof HttpResponseError) {
-          const err = error as HttpResponseError<RestErrorResponseWrapper>;
-          Helpers.error(err.body.json.message, true, true);
-        }
-        this.projectStaredLeadingBuild = false;
-        this.isDrityLeadBuild = false;
-        return;
-      }
-
-      let allDepProject = (allDepProjectData.body.json || []).map(c =>
-        DevMode.ProjectBuildNotificaiton.from(c),
-      );
-
-      if (options.skipSelf) {
-        allDepProject = allDepProject.filter(
-          f => f.uniqueKey !== currentProjectData.uniqueKey,
-        );
-      }
-
-      Helpers.info(`
-        Rebuilding in order...
-
-${allDepProject.map((c, i) => `${i + 1}. ${c.port} ${c.nameForNpmPackage}`).join('\n')}
-
-        `);
-
-      //#endregion
-
-      //#region leader check fn
-      const isLeaderCheck = async (): Promise<boolean> => {
-        let isStillLeader = await devModeControllerWorker
-          .checkIfStillBuildLeader(currentProjectData)!
-          .request();
-
-        return isStillLeader.body.booleanValue;
-      };
-      //#endregion
-
-      let shouldBeRebuildArr = CoreModels.BuildTypeArr;
-      try {
-        var shouoldBeRebuildData = await devModeControllerWorker
-          .getWhatShouldBeRebuild(currentProjectData)!
-          .request();
-
-        shouldBeRebuildArr = Object.keys(
-          shouoldBeRebuildData.body.json,
-        ) as CoreModels.BuildType[];
-      } catch (error) {
-        Helpers.warn(`Not able to access worker to get partial rebuild info`);
-      }
-
-      Helpers.info(`Should be rebuild: ${shouldBeRebuildArr}`);
-
-      //#region build project by project in order
-      for (let projInde = 0; projInde < allDepProject.length; projInde++) {
-        //#region prepare child project controller
-        const proj = allDepProject[projInde];
-
-        const devBuildControllerForProj =
-          await this.project.ins.taonProjectsWorker.getDevBuildControllerForPort(
-            proj.port,
-          );
-        //#endregion
-
-        let workerHealty = true;
-
-        //#region execute builds
-        for (const buildType of shouldBeRebuildArr) {
-          Helpers.taskStarted(
-            `Building build type "${buildType}" for ${proj.port} ${proj.nameForNpmPackage}`,
-          );
-
-          currentProjectData =
-            this.project.ins.devBuildRepository.dataToRequest({
-              buildStatusInfo: this.buildStatusInfo,
-            });
-
-          if (this.isDrityLeadBuild) {
-            Helpers.logInfo(
-              'Restarting lead build - current project code changes.',
-            );
-            break;
-          }
-
-          const cancelMessage = () => {
-            Helpers.logInfo(
-              chalk.green(
-                'Lead build cancel - project is no longer leading build',
-              ),
-            );
-          };
-
-          //#region check if build is still leader
-          if (!(await isLeaderCheck())) {
-            this.projectStaredLeadingBuild = false;
-            cancelMessage();
-            return;
-          }
-          //#endregion
-
-          if (this.isDrityLeadBuild) {
-            Helpers.logInfo(
-              'Restarting lead build - current project code changes.',
-            );
-            break;
-          }
-
-          //#region check if worker healty
-          let maxTrys = 3;
-          do {
-            try {
-              await devBuildControllerForProj.healthCheck().request({
-                timeout: 500,
-              });
-            } catch (error) {
-              workerHealty = false;
-            }
-            break;
-          } while (--maxTrys > 0);
-          if (!workerHealty) {
-            break;
-          }
-          //#endregion
-
-          if (this.isDrityLeadBuild) {
-            Helpers.logInfo(
-              'Restarting lead build - current project code changes.',
-            );
-            break;
-          }
-
-          await devBuildControllerForProj
-            .updateTaonBuildStatus(
-              buildType,
-              DevMode.ProjectBuildStatus.__START_BUILD__,
-              this.project.ins.currentActionPort,
-            )
-            .request();
-
-          //#region check if build is still leader
-          if (!(await isLeaderCheck())) {
-            this.projectStaredLeadingBuild = false;
-            cancelMessage();
-            return;
-          }
-          //#endregion
-
-          Helpers.logInfo(
-            `Waiting for build "${buildType}" done  in  ${proj.nameForNpmPackage} (port=${proj.port}) `,
-          );
-
-          await this.buildsNotifiers.get(buildType).wait();
-
-          //#region check if build is still leader
-          if (!(await isLeaderCheck())) {
-            this.projectStaredLeadingBuild = false;
-            cancelMessage();
-            return;
-          }
-          //#endregion
-
-          Helpers.taskDone(
-            `Build "${buildType}" done  in  ${proj.nameForNpmPackage}`,
-          );
-
-          if (this.isDrityLeadBuild) {
-            Helpers.logInfo(
-              'Restarting lead build - current project code changes.',
-            );
-            break;
-          }
-        }
-        //#endregion
-
-        if (!currentProjectData.isEqual(proj)) {
-          try {
-            await devBuildControllerForProj
-              .displayRebuildDoneMessage(this.project.nameForNpmPackage)
-              .request({
-                timeout: 500,
-              });
-          } catch (error) {}
-        }
-
-        if (!workerHealty) {
-          continue;
-        }
-        if (this.isDrityLeadBuild) {
-          break;
-        }
-      }
-      //#endregion
-
-      if (this.isDrityLeadBuild) {
-        continue;
-      }
-
-      // UtilsTerminal.drawHorizontalLine();
-      console.log(
-        chalk.green(`
-
-    BUILD (CURRENT LIB + DEPENDECIES) ${chalk.bold('DONE')}.
-
-        `),
-      );
-      // UtilsTerminal.drawHorizontalLine();
-
-      try {
-        await devModeControllerWorker
-          .finishLeadBuildAndUnregisterLeadProject(currentProjectData)!
-          .request({
-            timeout: 500,
-          });
-      } catch (error) {
-        config.frameworkName === tnpPackageName && console.log(error);
-        Helpers.logWarn(`Not able to unregister lead build project`, false);
-      }
-      break;
-    }
-    this.projectStaredLeadingBuild = false;
-    //#endregion
-  }
-
-  //#endregion
-
   //#region public methods / start
   start(): void {
     //#region @backendFunc
@@ -780,7 +469,7 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.port} ${c.nameForNpmPackage}`).join
       STARING TAON LIGHTWEIGHT WATCHER MODE
 
       `);
-    this.recreateNotifiers();
+    this.leader.recreateNotifiers();
 
     //#region handle code changes
     const handleCodeChanges = (
@@ -790,7 +479,7 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.port} ${c.nameForNpmPackage}`).join
         .getTsCodeObservableFor(buildType)
         // .pipe()
         .subscribe(() => {
-          if (!this._firstBuildDoneAndLeadBuildIsAllowed) {
+          if (!this.leader.isAllowedForLeadBuild) {
             //#region handle error before allowed lead build
             if (buildType === 'backend-watcher' && this.anyBackendError) {
               if (
@@ -829,7 +518,7 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.port} ${c.nameForNpmPackage}`).join
             return;
           }
           this.dirtyBuild.set(buildType, true);
-          this.trigerLeadBuilding();
+          this.leader.trigerLeadBuilding();
         });
     };
     //#endregion

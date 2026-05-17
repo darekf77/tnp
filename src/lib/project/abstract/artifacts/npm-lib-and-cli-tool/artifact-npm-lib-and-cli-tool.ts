@@ -7,6 +7,7 @@ import {
   LibTypeEnum,
   taonActionFromParent,
   tnpPackageName,
+  UtilsCli,
 } from 'tnp-core/src';
 import {
   chalk,
@@ -461,6 +462,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
       const runNgBuild = async () => {
         await proxyProject.execute(commandForLibraryBuild, {
+          uniqueName: 'ng build browser',
           similarProcessKey: TaonCommands.NG,
           resolvePromiseMsg_stdout: buildOptions.build.watch
             ? watchResolveString
@@ -470,6 +472,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           ...outputOptionsNormal,
         });
         await proxyProjectWebsql.execute(commandForLibraryBuild, {
+          uniqueName: 'ng build websql',
           similarProcessKey: TaonCommands.NG,
           resolvePromiseMsg_stdout: buildOptions.build.watch
             ? watchResolveString
@@ -731,12 +734,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           'browser-watcher-error': '',
           'websql-watcher-error': '',
         });
-        await this.taonBuildObserver.takeLeadOfBuilding({
+        await this.taonBuildObserver.leader.takeLeadOfBuilding({
           skipSelf: true,
         });
       }
     }
-    this.taonBuildObserver.firstBuildDoneAndLeadBuildIsAllowed();
+    this.taonBuildObserver.leader.firstBuildDoneAndLeadBuildIsAllowed();
 
     //#endregion
 
@@ -1823,7 +1826,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     }LIB BUILD DONE.. `;
 
     Helpers.taskDone(`${chalk.underline(`${buildLibDone}...`)}`);
+    const time =UtilsCli.getTimeFromThisCLIScriptStart();
     Helpers.success(`
+      Time of first build: ${time.ms} miliseconds
+      (or ${time.sec} seconds)
+      (or ${time.min} minutes)
 
       if you want to start app build -> please run in other terminal command:
 

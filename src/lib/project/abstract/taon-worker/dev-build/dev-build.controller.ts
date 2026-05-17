@@ -110,8 +110,9 @@ export class DevBuildController extends TaonBaseController {
     //#region @backenFunc
     return async (req, res) => {
       const project = this.devBuildRepository.getProject();
-      const notifier = project.taonBuildObserver.buildsNotifiers.get(buildType);
-      // Helpers.logInfo(`unlocking ${buildType} in leader`)
+      const notifier =
+        project.taonBuildObserver.leader.buildsNotifiers.get(buildType);
+      Helpers.logInfo(`unlocking ${buildType} in leader`);
       notifier.next();
       return true;
     };
@@ -125,7 +126,7 @@ export class DevBuildController extends TaonBaseController {
     //#region @backenFunc
     return async (req, res) => {
       const project = this.devBuildRepository.getProject();
-      project.taonBuildObserver.setLeadBuildDirtyIfRunning();
+      project.taonBuildObserver.leader.setLeadBuildDirtyIfRunning();
       return true;
     };
     //#endregion
@@ -171,7 +172,6 @@ export class DevBuildController extends TaonBaseController {
 
       const project = this.devBuildRepository.getProject();
       project.taonBuildObserver.toNotifyLeaderPort = Number(leaderPort);
-      project.taonBuildObserver.toNotifyBuildType = buildType;
       project.taonBuildObserver.states.get(buildType).set(status);
       return project.taonBuildObserver.buildStatusInfo;
     };
