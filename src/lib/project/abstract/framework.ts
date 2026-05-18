@@ -61,6 +61,7 @@ import { Models } from '../../models';
 import { EnvOptions } from '../../options';
 
 import type { Project } from './project';
+import { DevMode } from './taon-worker/dev-mode/dev-mode.models';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -1202,4 +1203,73 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
       this.project.framework.coreContainer.nodeModules.getIsomorphicPackagesNames(),
     );
   }
+
+  //#region handle exit error
+  async handlExitError(
+    buildOptions: EnvOptions,
+    code: number,
+    resolve: () => void,
+    reject: () => void,
+    buildtype: CoreModels.BuildType,
+    errorMesssage: string,
+  ): Promise<void> {
+    //#region @backendFunc
+    if (this.project.watcher.isTaonLightWatcherMode) {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject();
+      }
+
+      if (buildtype === 'browser' || buildtype === 'websql') {
+        // handle browser/websql
+        if (buildOptions.build.websql) {
+          this.project.taonBuildObserver.websqlState.set(
+            DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+          );
+          this.project.taonBuildObserver.errorWebsql.set(errorMesssage);
+        } else {
+          this.project.taonBuildObserver.browserState.set(
+            DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+          );
+          this.project.taonBuildObserver.errorBrowser.set(errorMesssage);
+        }
+      } else {
+        // handle backend
+        this.project.taonBuildObserver.states
+          .get(buildtype)
+          .set(DevMode.ProjectBuildStatus.COMPILATION_ERROR);
+        this.project.taonBuildObserver.errorBackend.set(errorMesssage);
+      }
+      await this.project.taonBuildObserver.updateAction();
+    }
+
+    if (buildOptions.release.releaseType) {
+      if (code === 0) {
+        resolve();
+      } else {
+        throw errorMesssage;
+      }
+    } else {
+      if (buildOptions.build.watch) {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject();
+        }
+      } else {
+        if (code === 0) {
+          resolve();
+        } else {
+          Helpers.error(
+            `[${config.frameworkName}] ${errorMesssage} (code=${code})`,
+            false,
+            true,
+          );
+        }
+      }
+    }
+    //#endregion
+  }
+  //#endregion
 }

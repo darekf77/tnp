@@ -281,7 +281,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         buildOptions,
       );
 
-      this.taonBuildObserver.start();
+      this.taonBuildObserver.start(buildOptions);
     }
 
     //#region handle prod build 2 sequences
@@ -720,6 +720,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
    `,
     );
 
+    //#endregion
+
+    //#region trigger build observer
     if (!buildOptions.build.watch) {
       if (this.project.watcher.isTaonLightWatcherMode) {
         await this.taonBuildObserver.updateAction({
@@ -734,13 +737,17 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           'browser-watcher-error': '',
           'websql-watcher-error': '',
         });
-        await this.taonBuildObserver.leader.takeLeadOfBuilding({
-          skipSelf: true,
-        });
+        const taonActionFromParentName =
+          GlobalStorage.get(taonActionFromParent);
+
+        if (!taonActionFromParentName) {
+          await this.taonBuildObserver.leader.takeLeadOfBuilding({
+            skipSelf: true,
+          });
+        }
       }
     }
     this.taonBuildObserver.leader.firstBuildDoneAndLeadBuildIsAllowed();
-
     //#endregion
 
     return {
@@ -1391,47 +1398,15 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
           }
         }
       },
-      // askToTryAgainOnError: true,
-      onExitCallback: async (code, resolve, reject) => {
-        if (this.project.watcher.isTaonLightWatcherMode) {
-          if (code === 0) {
-            resolve();
-          } else {
-            reject();
-          }
-          if (buildOptions.build.websql) {
-            this.taonBuildObserver.websqlState.set(
-              DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-            );
-            this.taonBuildObserver.errorWebsql.set(errorMessage);
-            await this.taonBuildObserver.updateAction();
-          } else {
-            this.taonBuildObserver.browserState.set(
-              DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-            );
-            this.taonBuildObserver.errorBrowser.set(errorMessage);
-            await this.taonBuildObserver.updateAction();
-          }
-        }
-
-        if (buildOptions.release.releaseType) {
-          throw errorMessage;
-        } else {
-          if (buildOptions.build.watch) {
-            if (code === 0) {
-              resolve();
-            } else {
-              reject();
-            }
-          } else {
-            Helpers.error(
-              `[${config.frameworkName}] ${errorMessage} (code=${code})`,
-              false,
-              true,
-            );
-          }
-        }
-      },
+      onExitCallback: async (code, resolve, reject) =>
+        this.project.framework.handlExitError(
+          buildOptions,
+          code,
+          resolve,
+          reject,
+          buildOptions.build.websql ? 'websql' : 'browser',
+          errorMessage,
+        ),
       outputLineReplace: (line: string) => {
         // line = UtilsString.removeChalkSpecialChars(line);
 
@@ -1826,7 +1801,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     }LIB BUILD DONE.. `;
 
     Helpers.taskDone(`${chalk.underline(`${buildLibDone}...`)}`);
-    const time =UtilsCli.getTimeFromThisCLIScriptStart();
+    const time = UtilsCli.getTimeFromThisCLIScriptStart();
     Helpers.success(`
       Time of first build: ${time.ms} miliseconds
       (or ${time.sec} seconds)

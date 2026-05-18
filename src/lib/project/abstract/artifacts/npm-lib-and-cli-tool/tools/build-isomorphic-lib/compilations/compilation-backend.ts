@@ -199,54 +199,6 @@ export class BackendCompilation {
 
     //#endregion
 
-    const handlExitError = async (
-      code: number,
-      resolve: () => void,
-      reject: () => void,
-      buildtype: CoreModels.BuildType,
-    ): Promise<void> => {
-      const errorMesssage = `Typescript compilation (backend ${buildtype}) error`;
-
-      if (this.project.watcher.isTaonLightWatcherMode) {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject();
-        }
-        this.taonBuildObserver.backendCjsState.set(
-          DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-        );
-        this.taonBuildObserver.errorBackend.set(errorMesssage);
-        await this.taonBuildObserver.updateAction();
-      }
-
-      if (buildOptions.release.releaseType) {
-        if (code === 0) {
-          resolve();
-        } else {
-          throw errorMesssage;
-        }
-      } else {
-        if (buildOptions.build.watch) {
-          if (code === 0) {
-            resolve();
-          } else {
-            reject();
-          }
-        } else {
-          if (code === 0) {
-            resolve();
-          } else {
-            Helpers.error(
-              `[${config.frameworkName}] ${errorMesssage} (code=${code})`,
-              false,
-              true,
-            );
-          }
-        }
-      }
-    };
-
     //#region compilation commonjs backend
 
     await startAsync(commandJs, cwd, {
@@ -260,7 +212,14 @@ export class BackendCompilation {
         }
       },
       onExitCallback: async (code, resolve, reject) =>
-        handlExitError(code, resolve, reject, 'backend-cjs'),
+        this.project.framework.handlExitError(
+          buildOptions,
+          code,
+          resolve,
+          reject,
+          'backend-cjs',
+          `Typescript compilation (backend commonjs) error`,
+        ),
       outputLineReplace: (line: string) => outputLineReplace(line),
       resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
       rebuildOnChange:
@@ -286,7 +245,14 @@ export class BackendCompilation {
           }
         },
         onExitCallback: async (code, resolve, reject) =>
-          handlExitError(code, resolve, reject, 'backend-cjs'),
+          this.project.framework.handlExitError(
+            buildOptions,
+            code,
+            resolve,
+            reject,
+            'backend-esm',
+            `Typescript compilation (backend esm) error`,
+          ),
         outputLineReplace: (line: string) => outputLineReplace(line),
         resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
         rebuildOnChange:
