@@ -33,6 +33,7 @@ import {
   TaonGeneratedFiles,
   watcherPrefix,
 } from '../../../../../constants';
+import { EnvOptions } from '../../../../../options';
 import { DevMode } from '../../../../abstract/taon-worker/dev-mode/dev-mode.models';
 import { Project } from '../../../project';
 
@@ -462,7 +463,7 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
   //#endregion
 
   //#region public methods / start
-  start(): void {
+  start(envOptions: EnvOptions): void {
     //#region @backendFunc
     Helpers.info(`
 
@@ -523,8 +524,10 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
     };
     //#endregion
 
-    for (const watcherType of CoreModels.BuildWatcherTypeArr) {
-      handleCodeChanges(watcherType);
+    if (envOptions.build.watch) {
+      for (const watcherType of CoreModels.BuildWatcherTypeArr) {
+        handleCodeChanges(watcherType);
+      }
     }
 
     chokidar.watch(this.project.taonJson.path).on('change', () => {
