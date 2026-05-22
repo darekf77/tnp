@@ -467,7 +467,8 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
     //#region @backendFunc
     Helpers.info(`
 
-      STARING TAON LIGHTWEIGHT WATCHER MODE
+      USING TAON NEW BUILD MODE
+      (to use old add flag -oldBuildMode)
 
       `);
     this.leader.recreateNotifiers();

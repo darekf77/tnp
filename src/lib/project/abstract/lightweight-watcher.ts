@@ -29,8 +29,8 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
   //#region public methods / is taon light weight mode allowed
   public get isTaonLightWatcherMode(): boolean {
     //#region @backendFunc
-    if (_.isBoolean(global.oldWatcherInArgs)) {
-      return !global.oldWatcherInArgs;
+    if (_.isBoolean(global.oldBuildModeInArgs)) {
+      return !global.oldBuildModeInArgs;
     }
     return true;
     //#endregion

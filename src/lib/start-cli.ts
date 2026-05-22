@@ -21,7 +21,7 @@ import {
   debugSuffix,
   failSpinner,
   globalSpinner,
-  oldWatcherPrefix,
+  oldBuildModePrefix,
   skipCoreCheck,
   spinnerPrefix,
   startSpinner,
@@ -80,12 +80,12 @@ export function startCli(argv, filename): void {
   global.skipCoreCheck = argv.some(a => a.startsWith(skipCoreCheck));
 
   const spinnerOnInArgs = argv.includes(spinnerPrefix);
-  const oldWatcherInArgs = argv.includes(oldWatcherPrefix);
+  const oldBuildModeInArgs = argv.includes(oldBuildModePrefix);
 
-  // console.log({ oldWatcherInArgs, argv });
+  // console.log({ oldBuildModeInArgs, argv });
 
-  if (oldWatcherInArgs) {
-    global.oldWatcherInArgs = oldWatcherInArgs;
+  if (oldBuildModeInArgs) {
+    global.oldBuildModeInArgs = oldBuildModeInArgs;
   }
 
   const spinnerOffInArgs =
@@ -96,7 +96,7 @@ export function startCli(argv, filename): void {
   //#region clean argv
   argv = argv
     .filter(a => !a.startsWith(spinnerPrefix))
-    .filter(a => !a.startsWith(oldWatcherPrefix))
+    .filter(a => !a.startsWith(oldBuildModePrefix))
     .filter(a => a !== childprocsecretarg)
     .filter(a => a !== skipCoreCheck)
     .filter(a => !a.startsWith(verbosePrefix))
@@ -156,7 +156,7 @@ export function startCli(argv, filename): void {
       verboseInArgs ? verbosePrefix : '',
       global.skipCoreCheck ? skipCoreCheck : '',
       spinnerOnInArgs ? spinnerPrefix : '',
-      oldWatcherInArgs ? oldWatcherPrefix : '',
+      oldBuildModeInArgs ? oldBuildModePrefix : '',
       childprocsecretarg,
     ].filter(Boolean);
 

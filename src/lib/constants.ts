@@ -201,7 +201,7 @@ export const watcherPrefix = '-watcher';
 
 export const verbosePrefix = '-verbose';
 export const spinnerPrefix = '-spinner';
-export const oldWatcherPrefix = '-oldWatcher';
+export const oldBuildModePrefix = '-oldBuildMode';
 export const websqlPrefix = '-websql';
 
 export const folder_shared_folder_info = 'shared_folder_info.txt';
