@@ -24,6 +24,9 @@ import {
   taonJsonMainProject,
   updateVscodePackageJsonJsMainProject,
   appVscodeJSFromBuild,
+  srcMainProject,
+  appAutoGenDocsMd,
+  appAutoGenJs,
 } from '../../constants';
 import { Models } from '../../models';
 import { Development, EnvOptions } from '../../options';
@@ -34,10 +37,8 @@ import type { Project } from './project';
 /**
  * Handle taon things related to vscode
  * support for launch.json, settings.json etc
- */
-export class Vscode // @ts-ignore TODO weird inheritance problem
-  extends BaseVscodeHelpers<Project>
-{
+ */ // @ts-ignore TODO weird inheritance problem
+export class Vscode extends BaseVscodeHelpers<Project> {
   //#region init
   async init(options?: { skipHiddingTempFiles?: boolean }): Promise<void> {
     options = options || {};
@@ -685,9 +686,13 @@ export class Vscode // @ts-ignore TODO weird inheritance problem
   async getBasicSettins(): Promise<object> {
     //#region @backendFunc
     const settings = await super.getBasicSettins();
+    // console.log({ settings });
     frameworkBuildFolders.forEach(f => {
       settings['search.exclude'][f] = true;
     });
+
+    settings['search.exclude'][`${srcMainProject}/${appAutoGenDocsMd}`] = true;
+    settings['search.exclude'][`${srcMainProject}/${appAutoGenJs}`] = true;
     return settings;
     //#endregion
   }
