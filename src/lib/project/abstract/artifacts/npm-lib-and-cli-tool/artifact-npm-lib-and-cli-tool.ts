@@ -383,7 +383,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     const commandForLibraryBuild = isDevelopmentBuildUseTscInsteadNgBuild
       ? `${TaonCommands.NPM_RUN_TSC} -p tsconfig.typecheck.json --watch --preserveWatchOutput `
       : `${TaonCommands.NPM_RUN_NG} build ${this.project.name} ${
-          buildOptions.build.watch ? '--watch' : ''
+          buildOptions.build.watch &&
+          !this.project.watcher.isTaonLightWatcherMode
+            ? '--watch'
+            : ''
         }`;
 
     //#region show angular info function

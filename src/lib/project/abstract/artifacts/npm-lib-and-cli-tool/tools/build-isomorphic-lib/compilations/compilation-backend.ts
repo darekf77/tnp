@@ -82,7 +82,8 @@ export class BackendCompilation {
     }: Models.TscCompileOptions,
   ) {
     //#region @backendFunc
-    const watch = buildOptions.build.watch;
+    const watch =
+      buildOptions.build.watch && !this.project.watcher.isTaonLightWatcherMode;
 
     if (!this.isEnableCompilation) {
       Helpers.log(
