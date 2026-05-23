@@ -463,6 +463,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       const runNgBuild = async () => {
         await proxyProject.execute(commandForLibraryBuild, {
           uniqueName: 'ng build browser',
+          prefix: true,
           similarProcessKey: TaonCommands.NG,
           resolvePromiseMsg_stdout: buildOptions.build.watch
             ? watchResolveString
@@ -473,6 +474,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         });
         await proxyProjectWebsql.execute(commandForLibraryBuild, {
           uniqueName: 'ng build websql',
+          prefix: true,
           similarProcessKey: TaonCommands.NG,
           resolvePromiseMsg_stdout: buildOptions.build.watch
             ? watchResolveString
@@ -737,14 +739,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           'browser-watcher-error': '',
           'websql-watcher-error': '',
         });
-        const taonActionFromParentName =
-          GlobalStorage.get(taonActionFromParent);
-
-        if (!taonActionFromParentName) {
-          await this.taonBuildObserver.leader.takeLeadOfBuilding({
-            skipSelf: true,
-          });
-        }
       }
     }
     this.taonBuildObserver.leader.firstBuildDoneAndLeadBuildIsAllowed();
@@ -1798,7 +1792,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     }
     const buildLibDone = `${
       buildOptions.build.prod ? '[PRODUCTION] ' : ''
-    }LIB BUILD DONE.. `;
+    }LIB BUILD DONE (${chalk.bold(this.project.nameForNpmPackage)}).. `;
 
     Helpers.taskDone(`${chalk.underline(`${buildLibDone}...`)}`);
     const time = UtilsCli.getTimeFromThisCLIScriptStart();

@@ -11,14 +11,17 @@ import {
 import { Raw } from 'taon-typeorm/src';
 import {
   _,
+  config,
   CoreModels,
   crossPlatformPath,
   Helpers,
   taonPackageName,
+  tnpPackageName,
   Utils,
   UtilsOs,
   UtilsProcess,
   UtilsProjects,
+  UtilsTerminal,
   UtilsWaitNotifier,
 } from 'tnp-core/src';
 import { BaseProjectResolver } from 'tnp-helpers/src';
@@ -31,6 +34,7 @@ import { DevBuildUtils } from '../dev-build/dev-build.utils';
 
 import { DevMode } from './dev-mode.models';
 import { DevModeUtils } from './dev-mode.utils';
+import { DevBuildModels } from '../dev-build/dev-build.models';
 
 //#endregion
 
@@ -144,6 +148,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     const result = {} as {
       [key in CoreModels.BuildType]: boolean;
     };
+    data[frameworkVersion] = data[frameworkVersion] ?? ({} as any);
     if (data[frameworkVersion]['backend-watcher']) {
       result['backend-cjs'] = true;
       result['backend-esm'] = true;
@@ -264,22 +269,21 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     changedProjects?: DevMode.ProjectBuildNotificaiton[];
     deletedProjects?: DevMode.ProjectBuildNotificaiton[];
     frameworkVersion: CoreModels.FrameworkVersion;
-  }) {
+  }): Promise<void> {
     //#region @backendFunc
 
-    //#region update and sort build queue
-    const resolver = new BaseProjectResolver(
-      DevMode.ProjectBuildNotificaiton,
-      () => 'test-cli-dummy',
-    );
+    //#region save/update/sort pool of dev mode projects
 
-    const sortedPoolOfDevModeProjects =
-      resolver.sortGroupOfProject<DevMode.ProjectBuildNotificaiton>(
-        opt.newListOfPorjects,
-        proj => proj.devModeDependenciesNames || [],
-        proj => proj.nameForNpmPackage,
-        proj => proj.uniqueKey,
-      );
+    const sortedPoolOfDevModeProjects = UtilsProjects.sortGroupOfProject({
+      projects: opt.newListOfPorjects,
+      resoveDepsArray: proj => proj.devModeDependenciesNames || [],
+      projNameToCompare: proj => proj.nameForNpmPackage,
+      projUniqueKeyToCompare: proj => proj.uniqueKey,
+    });
+
+    this.addMessage(
+      `saving pool (${sortedPoolOfDevModeProjects.length}) ${sortedPoolOfDevModeProjects.map(c => `(${c.port})${c.nameForNpmPackage}`).join(',')}`,
+    );
 
     await this.merge('poolOfDevModeProjects', {
       [opt.frameworkVersion]: sortedPoolOfDevModeProjects,
@@ -308,12 +312,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
       );
 
       for (const deletedBuild of opt.deletedProjects || []) {
-        const ref = this.contexts.get(Number(deletedBuild.port));
-        if (ref) {
-          await ref.destroy();
-        }
-        this.contexts.delete(Number(deletedBuild.port));
-
+        await this.deleteContextByPort(deletedBuild.port);
         if (leadProj && leadProj.isEqual(deletedBuild)) {
           await this.set('currentLeadProject', null);
         }
@@ -326,32 +325,47 @@ export class DevModeRepository extends TaonBaseKvRepository<{
   }
   //#endregion
 
+  //#region API/ private methods / deletec context by port
+  private async deleteContextByPort(port: number | string): Promise<void> {
+    //#region @backendFunc
+    port = Number(port);
+    const ref = this.contexts.get(port);
+    if (ref) {
+      await ref.destroy();
+    }
+    this.contexts.delete(port);
+    //#endregion
+  }
+  //#endregion
+
   //#region API/ public methods / delete from pool
   public async deleteFromPool(
-    projs:
+    projectsToDelete:
       | DevMode.ProjectBuildNotificaiton
       | DevMode.ProjectBuildNotificaiton[],
-  ) {
+  ): Promise<DevMode.ProjectBuildNotificaiton[]> {
     //#region @backendFunc
-    if (!Array.isArray(projs)) {
-      projs = [projs];
+    if (!Array.isArray(projectsToDelete)) {
+      projectsToDelete = [projectsToDelete];
     }
 
     const allDeleted: DevMode.ProjectBuildNotificaiton[] = [];
 
-    for (let index = 0; index < projs.length; index++) {
-      const proj = projs[index];
-      const frameworkVersion = proj.coreContainerVersion;
+    this.addMessage(`to delete ${allDeleted.map(c => c.uniqueKey).join(',')}`);
+
+    for (let index = 0; index < projectsToDelete.length; index++) {
+      const projToDelete = projectsToDelete[index];
+      const frameworkVersion = projToDelete.coreContainerVersion;
       const poolOfDevModeProjectsData = (await this.get(
         'poolOfDevModeProjects',
       )) || {
-        [proj.coreContainerVersion]: [],
+        [projToDelete.coreContainerVersion]: [],
       };
 
       const requiredToBeInLeadBuildData = (await this.get(
         'requiredToBeInLeadBuild',
       )) || {
-        [proj.coreContainerVersion]: [],
+        [projToDelete.coreContainerVersion]: [],
       };
 
       poolOfDevModeProjectsData[frameworkVersion] =
@@ -376,8 +390,9 @@ export class DevModeRepository extends TaonBaseKvRepository<{
 
       const deletedProjects: DevMode.ProjectBuildNotificaiton[] = [];
       poolOfDevModeProjects = poolOfDevModeProjects.filter(f => {
-        const isBuildFromBody = f.isEqual(proj);
-        if (isBuildFromBody) {
+        const isDeleted = f.isEqual(projToDelete);
+        if (isDeleted) {
+          this.addMessage(`Deleting ${f.uniqueKey}`);
           requiredToBeInLeadBuildMap.delete(f.uniqueKey);
           deletedProjects.push(f);
           allDeleted.push(f);
@@ -398,7 +413,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
       });
 
       this.addMessage(
-        `removing from pool - package "${proj.nameForNpmPackage}" port ${proj.port}`,
+        `removing from pool - package "${projToDelete.nameForNpmPackage}" port ${projToDelete.port}`,
       );
     }
 
@@ -608,7 +623,64 @@ export class DevModeRepository extends TaonBaseKvRepository<{
 
   //#region API / protected methods / use in db memory
   protected useInMemoryDB(): boolean {
-    return false;
+    return !debugModeTaonLightWeightWatchMode;
+  }
+  //#endregion
+
+  //#region API /  private methods / scann for processes
+  async scanAndAddExitingProcesses(): Promise<void> {
+    //#region @backendFunc
+    Helpers.taskStarted(`Scanning for existing build processes...`);
+    const limit = 20;
+
+    for (let index = 0; index < limit; index++) {
+      const portToCheck = DevBuildModels.START_PORT_BUID_PROCESS + index;
+      const possibleDevBuildController =
+        await this.getDevBuildControllerForPort(portToCheck);
+      try {
+        await possibleDevBuildController.healthCheck()!.request({
+          timeout: 500,
+        });
+        const statusData = await possibleDevBuildController
+          .getProjectInfo()!
+          .request({
+            timeout: 500,
+          });
+
+        const frameworkVersion = statusData.body.json.coreContainerVersion;
+        const data = (await this.get('poolOfDevModeProjects')) || {
+          [frameworkVersion]: [],
+        };
+        const newProjBuild = DevMode.ProjectBuildNotificaiton.from(
+          statusData.body.json,
+        );
+        const newListOfPorjects = (data[frameworkVersion] || []).map(c =>
+          DevMode.ProjectBuildNotificaiton.from(c),
+        );
+        const oldListOfProjects = [...newListOfPorjects];
+        const projectsMap = new Map(
+          newListOfPorjects.map(c => [c.uniqueKey, c]),
+        );
+        if (!projectsMap.has(newProjBuild.uniqueKey)) {
+          newListOfPorjects.push(newProjBuild);
+          await this.updatePoolOfDevProjects({
+            frameworkVersion,
+            newListOfPorjects,
+            oldListOfProjects,
+          });
+          Helpers.info(
+            `Added existed porject build from port ${newProjBuild.port}`,
+          );
+        } else {
+          await this.deleteContextByPort(portToCheck);
+        }
+      } catch (error) {
+        config.frameworkName === tnpPackageName && console.log(error);
+      }
+      // await UtilsTerminal.pressAnyKeyToContinueAsync();
+    }
+    Helpers.taskDone('Done scanning for existing build processes');
+    //#endregion
   }
   //#endregion
 
@@ -622,6 +694,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     if (WRITE_LOG_TO_FILE) {
       Helpers.writeJson(this.pathToLog, []);
     }
+    await this.scanAndAddExitingProcesses();
   }
   //#endregion
 

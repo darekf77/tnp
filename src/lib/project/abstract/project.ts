@@ -228,14 +228,25 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   async build(buildOptions?: EnvOptions): Promise<void> {
     buildOptions = EnvOptions.from(buildOptions);
 
+    let skipProjectsNames = [] as string[];
     if (this.framework.isStandaloneProject) {
       await this.artifactsManager.build(buildOptions);
+      skipProjectsNames = [this.nameForNpmPackage];
     }
     if (this.framework.isContainer) {
       buildOptions.build.watch = false; // there is no need to watch for container ever
       await this.artifactsManager.build(buildOptions);
       if (buildOptions.recursiveAction) {
         await this.artifactsManager.buildAllChildren(buildOptions);
+      }
+      skipProjectsNames = this.children.map(c => c.nameForNpmPackage);
+    }
+
+    if (!buildOptions.build.watch) {
+      if (this.watcher.isTaonLightWatcherMode) {
+        await this.taonBuildObserver.leader.takeLeadOfBuilding({
+          skipProjectsNames,
+        });
       }
     }
 

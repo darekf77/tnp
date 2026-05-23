@@ -112,7 +112,7 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
 
   //#region private methods / take lead of building
   public async takeLeadOfBuilding(options?: {
-    skipSelf?: boolean;
+    skipProjectsNames?: string[];
   }): Promise<void> {
     //#region @backend
     options = options || {};
@@ -172,9 +172,9 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
         DevMode.ProjectBuildNotificaiton.from(c),
       );
 
-      if (options.skipSelf) {
+      if (options.skipProjectsNames) {
         allDepProject = allDepProject.filter(
-          f => f.uniqueKey !== getCurrentProjectData().uniqueKey,
+          f => !options.skipProjectsNames.includes(f.nameForNpmPackage),
         );
       }
 
@@ -246,7 +246,9 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
         Helpers.warn(`Not able to access worker to get partial rebuild info`);
       }
 
-      Helpers.info(`Should be rebuild: ${shouldBeRebuildArr}`);
+      Helpers.info(
+        `Should be rebuild: ${shouldBeRebuildArr.length > 0 ? shouldBeRebuildArr.join(',') : `< nothing >`}`,
+      );
       //#endregion
 
       //#region build project by project in order
@@ -286,23 +288,88 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
             `Building ${proj.nameForNpmPackage}(port=${proj.port}) ${shouldBeRebuildArr.join(',')},`,
           );
 
-          //#region start all build and wait for all to finish
-          const promises = [] as Promise<any>[];
-          for (const buildType of shouldBeRebuildArr) {
-            promises.push(this.buildsNotifiers.get(buildType).wait());
-          }
+          //#region process build and wait fn
+          const processBuildAndWaitFn = async (
+            rebuildArr,
+          ): Promise<boolean> => {
+            const promises = [] as Promise<any>[];
+            for (const buildType of rebuildArr) {
+              promises.push(this.buildsNotifiers.get(buildType).wait());
+            }
 
-          for (const buildType of shouldBeRebuildArr) {
-            await devBuildControllerForProj
-              .updateTaonBuildStatus(
-                buildType,
-                DevMode.ProjectBuildStatus.__START_BUILD__,
-                this.project.ins.currentActionPort,
-              )
-              .request();
-          }
+            for (const buildType of rebuildArr) {
+              await devBuildControllerForProj
+                .updateTaonBuildStatus(
+                  buildType,
+                  DevMode.ProjectBuildStatus.__START_BUILD__,
+                  this.project.ins.currentActionPort,
+                )
+                .request();
+            }
 
-          await Promise.all(promises);
+            try {
+              await Promise.all(promises);
+              return true;
+            } catch (error) {
+              return false;
+            }
+          };
+          //#endregion
+
+          //#region start all build and wait for all to finish (backend)
+          if (
+            shouldBeRebuildArr.includes('backend-cjs') ||
+            shouldBeRebuildArr.includes('backend-esm') ||
+            shouldBeRebuildArr.includes('backend-js-maps')
+          ) {
+            const buildOK = await processBuildAndWaitFn(
+              shouldBeRebuildArr.filter(f =>
+                (
+                  [
+                    'backend-cjs',
+                    'backend-esm',
+                    'backend-js-maps',
+                  ] as CoreModels.BuildType[]
+                ).includes(f),
+              ),
+            );
+            if (!buildOK) {
+              this.setAsDirty();
+            }
+          }
+          //#endregion
+
+          //#region skip/restart build if is dirty
+          if (this.isDrityLeadBuild) {
+            Helpers.logInfo(
+              'Restarting lead build - current project code changes.',
+            );
+            break;
+          }
+          //#endregion
+
+          //#region check if build is still leader
+          if (!(await isLeaderCheck())) {
+            this.projectStaredLeadingBuild = false;
+            cancelMessage();
+            return;
+          }
+          //#endregion
+
+          //#region start all build and wait for all to finish (frontend)
+          if (
+            shouldBeRebuildArr.includes('browser') ||
+            shouldBeRebuildArr.includes('websql')
+          ) {
+            const buildOK = await processBuildAndWaitFn(
+              shouldBeRebuildArr.filter(f =>
+                (['browser', 'websql'] as CoreModels.BuildType[]).includes(f),
+              ),
+            );
+            if (!buildOK) {
+              this.setAsDirty();
+            }
+          }
           //#endregion
 
           Helpers.taskDone(

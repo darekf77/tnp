@@ -91,6 +91,19 @@ export class DevBuildController extends TaonBaseController {
   }
   //#endregion
 
+   //#region API / get status info
+  @GET()
+  getProjectInfo(): Taon.Response<DevMode.ProjectBuildNotificaiton> {
+    //#region @backenFunc
+    return async (req, res) => {
+      // console.log(`instance ${this[Symbols.taonInstanceId]}`);
+      const projectBuild = this.devBuildRepository.getProjectInfo();
+      return projectBuild;
+    };
+    //#endregion
+  }
+  //#endregion
+
   //#region API / health heck
   @POST()
   healthCheck(): Taon.Response<boolean> {

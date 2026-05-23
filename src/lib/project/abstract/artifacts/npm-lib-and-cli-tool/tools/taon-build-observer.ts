@@ -136,7 +136,7 @@ export class TaonBuildObserver extends BaseFeatureForProject<Project> {
     }
     this.project.writeFile(
       TaonGeneratedFiles.BUILD_STATUS_MD,
-      `# CURRENT BUILD STATUS
+      `# CURRENT BUILD STATUS (build port=${this.project.ins.currentActionPort})
 ### Backend
 **CommonJS** : ${this.buildStatusInfo['backend-cjs']} <br>
 **ESM**:  ${this.buildStatusInfo['backend-esm']}<br>
@@ -455,9 +455,14 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
   public async updateAction(info?: DevMode.BuildStatusInfo): Promise<void> {
     //#region @backendFunc
     this.mergeStatus(info);
-    await this.project.ins.devBuildRepository.updatePool({
-      buildStatusInfo: this.buildStatusInfo,
-    });
+    try {
+      await this.project.ins.devBuildRepository.updatePool({
+        buildStatusInfo: this.buildStatusInfo,
+      });
+    } catch (error) {
+      Helpers.warn(`ERORRO: Not able to connect to main worker...`);
+    }
+
     //#endregion
   }
   //#endregion

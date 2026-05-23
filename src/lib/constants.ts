@@ -164,6 +164,8 @@ export const USE_MIGRATIONS_DATA_IN_HOST_CONFIG = false;
 export const COMPILATION_COMPLETE_LIB_NG_BUILD =
   'Compilation complete. Watching for file changes';
 
+export const COMPILATION_WATCHING_STARTED = 'Watching for file changes';
+
 export const COMPILATION_COMPLETE_APP_NG_SERVE = 'Compiled successfully';
 
 export const COMPILATION_COMPLETE_TSC =

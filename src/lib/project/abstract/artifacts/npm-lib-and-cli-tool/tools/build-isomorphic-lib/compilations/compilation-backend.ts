@@ -5,12 +5,14 @@ import {
   GlobalStorage,
   startAsync,
   taonActionFromParent,
+  tnpPackageName,
 } from 'tnp-core/src';
 import { crossPlatformPath, fse, _, chalk } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
 import {
   COMPILATION_COMPLETE_TSC,
+  COMPILATION_WATCHING_STARTED,
   distMainProject,
   distNoCutSrcMainProject,
   libEsm,
@@ -96,35 +98,6 @@ export class BackendCompilation {
       preserveWatchOutput: ` --preserveWatchOutput `,
     };
 
-    //#region cmd
-    let prepareCmd = (specificTsconfig: string) => {
-      let commandJs, commandMaps, commandJsEsm;
-      let nocutsrcFolder = this.project.pathFor(
-        distNoCutSrcMainProject + (buildOptions.build.prod ? prodSuffix : ''),
-      );
-
-      const paramsJS = {
-        mapRoot: ` --mapRoot ${nocutsrcFolder} `,
-        project: `--project ${specificTsconfig}`,
-        ...paramasCommon,
-      };
-      const paramsMaps = { ...paramasCommon };
-      paramsMaps.outDir = ` --outDir ${nocutsrcFolder}`;
-      paramsMaps.noEmitOnError = !watch ? ' --noEmitOnError false ' : '';
-
-      commandJs = `${tsExe} ${Object.values(paramsJS).join(' ')}  `;
-      commandMaps = `${tsExe} ${Object.values(paramsMaps).join(' ')} `;
-      delete paramsJS.outDir;
-      commandJsEsm = `${tsExe} ${Object.values(paramsJS).join(' ').replace('.backend.', '.backend-esm.')}  `;
-      return {
-        commandJs, // use tsconfig.backend.dist<.prod>.json
-        commandMaps, // uses main tsconfig.json to from /src directly everything
-        commandJsEsm,
-        // commandDts
-      };
-    };
-    //#endregion
-
     const tsconfigBackendPath = crossPlatformPath(
       this.project.pathFor(
         buildOptions.build.prod
@@ -133,8 +106,23 @@ export class BackendCompilation {
       ),
     );
 
-    const { commandJs, commandJsEsm, commandMaps } =
-      prepareCmd(tsconfigBackendPath);
+    let nocutsrcFolder = this.project.pathFor(
+      distNoCutSrcMainProject + (buildOptions.build.prod ? prodSuffix : ''),
+    );
+
+    const paramsJS = {
+      mapRoot: ` --mapRoot ${nocutsrcFolder} `,
+      project: `--project ${tsconfigBackendPath}`,
+      ...paramasCommon,
+    };
+    const paramsMaps = { ...paramasCommon };
+    paramsMaps.outDir = ` --outDir ${nocutsrcFolder}`;
+    paramsMaps.noEmitOnError = !watch ? ' --noEmitOnError false ' : '';
+
+    const commandJs = `${tsExe} ${Object.values(paramsJS).join(' ')}  `;
+    const commandMaps = `${tsExe} ${Object.values(paramsMaps).join(' ')} `;
+    delete paramsJS.outDir;
+    const commandJsEsm = `${tsExe} ${Object.values(paramsJS).join(' ').replace('.backend.', '.backend-esm.')}  `;
 
     const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
 
@@ -203,6 +191,7 @@ export class BackendCompilation {
 
     await startAsync(commandJs, cwd, {
       uniqueName: 'tsc cjs',
+      prefix: true,
       similarProcessKey: 'tsc',
       resolvePromiseMsgCallback_anystd: () => {
         if (this.project.watcher.isTaonLightWatcherMode) {
@@ -236,6 +225,7 @@ export class BackendCompilation {
       // in prod normal build is esm - not need for this
       await startAsync(commandJsEsm, cwd, {
         uniqueName: 'tsc esm',
+        prefix: true,
         similarProcessKey: 'tsc',
         resolvePromiseMsgCallback_anystd: () => {
           if (this.project.watcher.isTaonLightWatcherMode) {
@@ -269,6 +259,7 @@ export class BackendCompilation {
     await startAsync(commandMaps, cwd, {
       uniqueName: 'tsc js maps',
       similarProcessKey: 'tsc',
+      prefix: true,
       hideOutput_stderr: true,
       hideOutput_stdout: true,
       resolvePromiseMsgCallback_anystd: () => {
@@ -281,7 +272,7 @@ export class BackendCompilation {
       onExitCallback: async (code, resolve, reject) => {
         resolve(); // TODO this is throwing tsocnfig errpr
       },
-      resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
+      resolvePromiseMsg_stdout: [COMPILATION_WATCHING_STARTED],
       rebuildOnChange:
         this.project.watcher.rebuildTriggerWatcher('backend-js-maps'),
     });

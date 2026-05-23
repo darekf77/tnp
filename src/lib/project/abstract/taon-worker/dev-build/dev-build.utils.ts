@@ -17,6 +17,7 @@ import { TaonProjectResolve } from '../../project-resolve';
 
 import { DevBuildContext } from './dev-build.abstract.context';
 import { DevBuildController } from './dev-build.controller';
+import { DevBuildModels } from './dev-build.models';
 import { DevBuildRepository } from './dev-build.repository';
 
 export namespace DevBuildUtils {
@@ -52,7 +53,7 @@ export namespace DevBuildUtils {
     //#region @backendFunc
 
     const currentActionPort = await Utils.getFreePort({
-      startFrom: 7777,
+      startFrom: DevBuildModels.START_PORT_BUID_PROCESS,
     });
     const workerMainContext = context.cloneAsNormal({
       overrideHost: `http://localhost:${currentActionPort}`,
@@ -70,31 +71,34 @@ export namespace DevBuildUtils {
     const devBuildRepository =
       await wokerMainContextRef.getInstanceBy(DevBuildRepository);
 
-    const exitProgramCleaningFn = async () => {
-      return await new Promise<void>(async resolve => {
-        Helpers.getIsVerboseMode() && console.log('KILLING ACTION WORKER(S)');
-        for (const buildProj of devBuildRepository.allProjectsInProcess()) {
+    const exitProgramCleaningFn = () => {
+      return new Promise<void>(async resolve => {
+        const allWorkers = devBuildRepository.allProjectsInProcess();
+        for (const buildProj of allWorkers) {
           try {
+            Helpers.logInfo(
+              `Deleting from pool ${buildProj.nameForNpmPackage} ${buildProj.port} ${buildProj.location}`,
+            );
             await devBuildRepository.deleteFromPool(buildProj);
           } catch (error) {
             config.frameworkName === tnpPackageName && console.error(error);
-            Helpers.warn(
+            Helpers.logWarn(
               `Not able to delete project from main worker projecs pool`,
             );
           }
         }
-        for (const buildProj of devBuildRepository.allProjectsInProcess()) {
+        for (const buildProj of allWorkers) {
           try {
             await contexts.get(Number(buildProj.port)).destroy();
           } catch (error) {
             config.frameworkName === tnpPackageName && console.error(error);
-            Helpers.warn(
+            Helpers.logWarn(
               `Not able to delete destry context for ${buildProj.nameForNpmPackage} ` +
                 `(port=${buildProj.port})`,
             );
           }
         }
-        Helpers.getIsVerboseMode() && console.log('FINAL EXIT');
+        Helpers.info('Taon Build Exit Cleaning Done');
         Helpers.removeFileIfExists(devBuildRepository.jsonDbLocation);
         resolve();
       });

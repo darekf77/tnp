@@ -47,7 +47,7 @@ export class FilesTemplatesBuilder extends BaseFeatureForProject<Project> {
       // Helpers.log(`Started for ${f}`);
 
       this.processFile(filePath, fileContent, initOptions, soft);
-      Helpers.logInfo(`Processed DONE for ${f}`);
+      Helpers.log(`Processed DONE for ${f}`);
     }
     this.project.quickFixes.recreateTempSourceNecessaryFilesForTesting(
       initOptions,

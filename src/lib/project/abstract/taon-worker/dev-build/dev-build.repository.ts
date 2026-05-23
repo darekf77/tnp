@@ -56,6 +56,15 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
     return this.project;
   }
 
+  async getProjectInfo(): Promise<DevMode.ProjectBuildNotificaiton> {
+    //#region @backendFunc
+    const dataToRequest = this.dataToRequest({
+      buildStatusInfo: this.project.taonBuildObserver.buildStatusInfo,
+    });
+    return dataToRequest;
+    //#endregion
+  }
+
   //#region private methods / get main worker contorller
   private async getMainWorkerController(): Promise<DevModeController> {
     //#region @backendFunc
@@ -63,7 +72,7 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
       await Project.ins.taonProjectsWorker.devModeWorker.getRemoteControllerFor(
         {
           methodOptions: {
-            calledFrom: 'dev build controller',
+            calledFrom: 'dev build repository',
           },
         },
       );
