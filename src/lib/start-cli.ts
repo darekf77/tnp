@@ -40,7 +40,6 @@ global.frameworkName = global.frameworkName ?? tnpPackageName;
 export function startCli(argv, filename): void {
   //#region @backendFunc
   const oraSpinner = require('ora');
-
   //#region quick fixes
 
   global.globalSystemToolMode = true;
@@ -266,25 +265,27 @@ export async function run(
   }
 
   //#region prevent incorrect /etc/hosts file
-  const isGraphicsCapableOs =
-    UtilsOs.isRunningInOsWithGraphicsCapableEnvironment();
-  Helpers.logInfo(`Checking your /etc/hosts file...`);
-  try {
-    if (!UtilsNetwork.etcHostHasProperLocalhostIp4Entry()) {
-      globalSpinner.instance.stop();
-      Helpers.error(
-        `Your ${UtilsNetwork.getEtcHostsPath()} file does not have proper entry for "localhost" hostname.
+  if (tnpPackageName === config.frameworkName) {
+    const isGraphicsCapableOs =
+      UtilsOs.isRunningInOsWithGraphicsCapableEnvironment();
+    Helpers.logInfo(`Checking your /etc/hosts file...`);
+    try {
+      if (!UtilsNetwork.etcHostHasProperLocalhostIp4Entry()) {
+        globalSpinner.instance.stop();
+        Helpers.error(
+          `Your ${UtilsNetwork.getEtcHostsPath()} file does not have proper entry for "localhost" hostname.
 
       Please add:
       ${chalk.bold('127.0.0.1 localhost')}
       `,
-        isGraphicsCapableOs,
-        true,
-      );
-      await UtilsTerminal.pressAnyKeyToContinueAsync();
+          isGraphicsCapableOs,
+          true,
+        );
+        await UtilsTerminal.pressAnyKeyToContinueAsync();
+      }
+    } catch (error) {
+      console.error(`Not able to check your /etc/hosts file`);
     }
-  } catch (error) {
-    console.error(`Not able to check your /etc/hosts file`);
   }
 
   // TODO not needed for now
