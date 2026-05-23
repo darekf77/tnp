@@ -235,7 +235,7 @@ export async function run(
   //#region @backendFunc
   config.frameworkName = frameworkName;
 
-  if (frameworkName === tnpPackageName) {
+  if (Helpers.getIsVerboseMode()) {
     process.on('unhandledRejection', (err, promise) => {
       const reason = err as Error;
       console.error('Unhandled Promise Rejection at:', promise);
