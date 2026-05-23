@@ -481,7 +481,7 @@ export const distFromNgBuild = folderName.dist;
 
 export const distEsm = 'dist-esm';
 
-export const libEsm = 'dist-esm';
+export const libEsm = 'lib-esm';
 
 /**
  * Dist from sass loader
