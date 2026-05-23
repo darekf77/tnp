@@ -47,9 +47,9 @@
   ],
 
   "devModeDependenciesForNpmLib": [
-    "tnp-helpers"
+    "tnp-helpers",
+    "tnp-core",
   ],
-
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
   "resources": ["icon-menu-tnp.svg"],
 

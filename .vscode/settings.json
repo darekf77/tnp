@@ -120,7 +120,9 @@
     "dist-*": true,
     "**/dist-*": true,
     "*.rest": true,
-    "**/*.rest": true
+    "**/*.rest": true,
+    "src/app.auto-gen-docs.md": true,
+    "src/app.auto-gen-ver.js": true
   },
 
   "workbench.colorCustomizations": {
@@ -191,7 +193,7 @@
     "**/src/**"
   ],
 
-  "window.title": "npm/taon-dev/tnp  [ ${activeEditorShort} ]",
+  "window.title": "taon-dev/tnp () [ ${activeEditorShort}]",
 
   "json.schemas": [
     {
