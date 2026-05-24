@@ -163,7 +163,6 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
           config.frameworkName === tnpPackageName && console.error(error);
           Helpers.error(err.body.json.message || err.body.text, true, true);
         }
-        errorMainWorkerCommunication();
         this.projectStaredLeadingBuild = false;
         this.isDrityLeadBuild = false;
         return;
