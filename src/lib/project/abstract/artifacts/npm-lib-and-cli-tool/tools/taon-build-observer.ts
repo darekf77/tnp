@@ -30,6 +30,8 @@ import {
   DEBOUNCE_trigerLeadBuilding,
   debugModeTaonLightWeightWatchMode,
   OBSERVER_PARALLELS,
+  oldBuildModePrefix,
+  oldBuildModePrefixShort,
   TaonGeneratedFiles,
   watcherPrefix,
 } from '../../../../../constants';
@@ -106,7 +108,7 @@ export class TaonBuildObserver extends BaseFeatureForProject<Project> {
         this.project.watcher.cancelAndSetAsReadyForRebuildTrigger(buildType);
       }
       if (nextState === DevMode.ProjectBuildStatus.BUILDING) {
-        debugMode && console.log(`START BUILD FOR ${buildType}`);
+        Helpers.logInfo(`Start build for ${buildType}`);
         this.project.watcher.triggerRebuildOf(buildType);
       }
       if (nextState === DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS) {
@@ -460,6 +462,8 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
         buildStatusInfo: this.buildStatusInfo,
       });
     } catch (error) {
+      config.frameworkName === tnpPackageName &&
+        console.error('update action', error);
       Helpers.warn(`ERORRO: Not able to connect to main worker...`);
     }
 
@@ -473,7 +477,7 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
     Helpers.info(`
 
       USING TAON NEW BUILD MODE
-      (to use old add flag -oldBuildMode)
+(to use old add flag ${oldBuildModePrefix} or short version ${oldBuildModePrefixShort})
 
       `);
     this.leader.recreateNotifiers();

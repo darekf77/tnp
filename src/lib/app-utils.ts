@@ -1,9 +1,11 @@
-import { crossPlatformPath, Helpers, Utils } from 'tnp-core/src';
+import { config, crossPlatformPath, Helpers, Utils } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 
 import {
   browserFromImport,
   libFromImport,
+  oldBuildModePrefix,
+  oldBuildModePrefixShort,
   prodSuffix,
   TemplateFolder,
   tmpAppsForDist,
@@ -223,3 +225,15 @@ export function parseAiMdContent(input: string): AiMdFile[] {
 
   return results;
 }
+
+export const errorMainWorkerCommunication = (): void => {
+  Helpers.warn(`Not able to communicate with main worker or current build worker:
+- restart build (that is failing)
+OR
+- restart taon worker: ${config.frameworkName} cloud --restart
+OR
+- use old build mode that does not need worker
+(add flag ${oldBuildModePrefix} or short version ${oldBuildModePrefixShort})
+
+  `);
+};

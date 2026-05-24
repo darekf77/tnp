@@ -8,6 +8,7 @@ import {
   taonActionFromParent,
   tnpPackageName,
   UtilsCli,
+  UtilsTime,
 } from 'tnp-core/src';
 import {
   chalk,
@@ -180,7 +181,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
 
-    Helpers.taskStarted(
+    const initTask = Helpers.actionStarted(
       `Initing project: ${chalk.bold(this.project.genericName)} ${
         initOptions.init.struct ? '(without packages install)' : ''
       } `,
@@ -227,9 +228,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       }
     }
 
-    Helpers.log(
-      `Init DONE for project: ${chalk.bold(this.project.genericName)} `,
-    );
+    initTask.done();
 
     this.project.quickFixes.makeSureDistFolderExists();
 
@@ -1790,9 +1789,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     Helpers.taskDone(`${chalk.underline(`${buildLibDone}...`)}`);
     const time = UtilsCli.getTimeFromThisCLIScriptStart();
     Helpers.success(`
-      Time of first build: ${time.ms} miliseconds
-      (or ${time.sec} seconds)
-      (or ${time.min} minutes)
+      Time of first build: ${UtilsTime.formatDuration(Number(time.ms))}
 
       if you want to start app build -> please run in other terminal command:
 

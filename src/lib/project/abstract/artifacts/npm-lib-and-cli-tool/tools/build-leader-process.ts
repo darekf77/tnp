@@ -8,15 +8,16 @@ import {
   _,
   Utils,
 } from 'tnp-core/src';
-import { DevBuildController } from '../../../../abstract/taon-worker/dev-build/dev-build.controller';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
+import { errorMainWorkerCommunication } from '../../../../../app-utils';
 import {
   DEBOUCE_takeLeadOfBuildingDebounce,
   DEBOUNCE_trigerLeadBuilding,
   OBSERVER_PARALLELS,
 } from '../../../../../constants';
 import type { Project } from '../../../../abstract/project';
+import { DevBuildController } from '../../../../abstract/taon-worker/dev-build/dev-build.controller';
 import { DevMode } from '../../../../abstract/taon-worker/dev-mode/dev-mode.models';
 
 import type { TaonBuildObserver } from './taon-build-observer';
@@ -159,10 +160,10 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
       } catch (error) {
         if (error instanceof HttpResponseError) {
           const err = error as HttpResponseError<RestErrorResponseWrapper>;
-          Helpers.error(err.body.json.message, true, true);
-        } else {
-          Helpers.warn(`Not able to communicate with watch mode main worker`);
+          config.frameworkName === tnpPackageName && console.error(error);
+          Helpers.error(err.body.json.message || err.body.text, true, true);
         }
+        errorMainWorkerCommunication();
         this.projectStaredLeadingBuild = false;
         this.isDrityLeadBuild = false;
         return;
@@ -196,7 +197,9 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
 
           return isStillLeader.body.booleanValue;
         } catch (error) {
-          config.frameworkName === tnpPackageName && console.log(error);
+          config.frameworkName === tnpPackageName &&
+            console.error(`is leader check` + error);
+          errorMainWorkerCommunication();
           return false;
         }
       };
@@ -214,11 +217,14 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
             });
             return true;
           } catch (error) {
-            config.frameworkName === tnpPackageName && console.log(error);
+            config.frameworkName === tnpPackageName &&
+              console.error(`is project healty`, error);
             await Utils.waitMilliseconds(100);
           }
           break;
         } while (--maxTrys > 0);
+        Helpers.warn(`Project is down.`);
+        errorMainWorkerCommunication();
         return false;
       };
       //#endregion
@@ -242,8 +248,11 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
           shouoldBeRebuildData.body.json,
         ) as CoreModels.BuildType[];
       } catch (error) {
-        config.frameworkName === tnpPackageName && console.error(error);
+        config.frameworkName === tnpPackageName &&
+          console.error('resove what to rebuild', error);
+
         Helpers.warn(`Not able to access worker to get partial rebuild info`);
+        errorMainWorkerCommunication();
       }
 
       Helpers.info(
@@ -311,6 +320,10 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
               await Promise.all(promises);
               return true;
             } catch (error) {
+              config.frameworkName === tnpPackageName &&
+                console.error(`update trigger build status`, error);
+              Helpers.warn(`Update/wait failed.`);
+              errorMainWorkerCommunication();
               return false;
             }
           };
@@ -468,7 +481,10 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
                 timeout: 500,
               });
           } catch (error) {
-            config.frameworkName === tnpPackageName && console.log(error);
+            config.frameworkName === tnpPackageName &&
+              console.error(`display rebuild done message`, error);
+            Helpers.warn(`Can't display rebuild message in child build.`);
+            errorMainWorkerCommunication();
           }
         }
         //#endregion
@@ -509,8 +525,10 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
             timeout: 500,
           });
       } catch (error) {
-        config.frameworkName === tnpPackageName && console.log(error);
-        Helpers.logWarn(`Not able to unregister lead build project`, false);
+        config.frameworkName === tnpPackageName &&
+          console.log(`finish build lead`, error);
+        Helpers.warn(`Not able to unregister lead build project`);
+        errorMainWorkerCommunication();
       }
       //#endregion
 

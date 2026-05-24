@@ -730,18 +730,22 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   //#region update isomorphic external depenencies
   public detectAndUpdateNpmExternalDependencies(): void {
     //#region @backendFunc
-    Helpers.taskStarted(`Updating isomorphic external dependencies`);
+    const task = Helpers.actionStarted(
+      `Updating isomorphic external dependencies`,
+    );
     let allDetectedNpmDeps =
       this.project.framework.allDetectedExternalNPmDependenciesForNpmLibCode;
 
     this.setDependenciesNamesForNpmLib(allDetectedNpmDeps);
-    Helpers.taskDone(`Done updating npm external dependencies`);
+    task.done();
     //#endregion
   }
 
   public detectAndUpdateIsomorphicExternalDependencies(): void {
     //#region @backendFunc
-    Helpers.taskStarted(`Updating isomorphic external dependencies`);
+    const task = Helpers.actionStarted(
+      `Updating isomorphic external dependencies`,
+    );
     let allDetectedIsomorphicDeps =
       this.project.framework
         .allDetectedExternalIsomorphicDependenciesForNpmLibCode;
@@ -773,7 +777,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     );
 
     this.setPeerDependenciesNamesForNpmLib(peerDependenciesNamesForNpmLib);
-    Helpers.taskDone(`Done updating isomorphic external dependencies`);
+    task.done();
     //#endregion
   }
   //#endregion
