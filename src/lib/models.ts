@@ -117,7 +117,6 @@ export namespace Models {
   export interface TscCompileOptions {
     watch?: boolean;
     generateDeclarations?: boolean;
-    tsExe?: string;
     diagnostics?: boolean;
     hideErrors?: boolean;
     debug?: boolean;

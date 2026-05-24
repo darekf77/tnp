@@ -154,7 +154,7 @@ export class DevBuildController extends TaonBaseController {
     //#region @backenFunc
     return async (req, res) => {
       const project = this.devBuildRepository.getProject();
-      UtilsTerminal.drawHorizontalLine();
+      // UtilsTerminal.drawHorizontalLine();
       console.log(
         chalk.green(`
 
@@ -163,7 +163,7 @@ export class DevBuildController extends TaonBaseController {
 
         `),
       );
-      UtilsTerminal.drawHorizontalLine();
+      // UtilsTerminal.drawHorizontalLine();
       return true;
     };
     //#endregion

@@ -18,6 +18,7 @@ import {
   libEsm,
   prodSuffix,
   srcMainProject,
+  TaonCommands,
   tmpSourceDist,
   tsconfigBackendDistJson,
   tsconfigBackendDistJson_PROD,
@@ -75,11 +76,7 @@ export class BackendCompilation {
   //#region methods / lib compilation
   async libCompilation(
     buildOptions: EnvOptions,
-    {
-      generateDeclarations = false,
-      tsExe = 'npm-run tsc',
-      diagnostics = false,
-    }: Models.TscCompileOptions,
+    { diagnostics = false }: Models.TscCompileOptions,
   ) {
     //#region @backendFunc
     const watch =
@@ -91,6 +88,12 @@ export class BackendCompilation {
       );
       return;
     }
+
+    const tscTool = TaonCommands.NPM_RUN_TSC;
+    // this.project.watcher.isTaonLightWatcherMode
+    //   ? TaonCommands.NPM_RUN_TSCGO
+    //   : TaonCommands.NPM_RUN_TSC;
+
     const paramasCommon = {
       watch: watch ? ' -w ' : '',
       outDir: ` --outDir ${distMainProject + (buildOptions.build.prod ? prodSuffix : '')} `,
@@ -120,10 +123,10 @@ export class BackendCompilation {
     paramsMaps.outDir = ` --outDir ${nocutsrcFolder}`;
     paramsMaps.noEmitOnError = !watch ? ' --noEmitOnError false ' : '';
 
-    const commandJs = `${tsExe} ${Object.values(paramsJS).join(' ')}  `;
-    const commandMaps = `${tsExe} ${Object.values(paramsMaps).join(' ')} `;
+    const commandJs = `${tscTool} ${Object.values(paramsJS).join(' ')}  `;
+    const commandMaps = `${tscTool} ${Object.values(paramsMaps).join(' ')} `;
     delete paramsJS.outDir;
-    const commandJsEsm = `${tsExe} ${Object.values(paramsJS).join(' ').replace('.backend.', '.backend-esm.')}  `;
+    const commandJsEsm = `${tscTool} ${Object.values(paramsJS).join(' ').replace('.backend.', '.backend-esm.')}  `;
 
     const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
 
@@ -191,9 +194,9 @@ export class BackendCompilation {
     //#region compilation commonjs backend
 
     await startAsync(commandJs, cwd, {
-      uniqueName: 'tsc cjs',
+      uniqueName: `${tscTool} cjs`,
       prefix: true,
-      similarProcessKey: 'tsc',
+      similarProcessKey: `${tscTool}`,
       resolvePromiseMsgCallback_anystd: () => {
         if (this.project.watcher.isTaonLightWatcherMode) {
           this.taonBuildObserver.backendCjsState.set(
@@ -225,9 +228,9 @@ export class BackendCompilation {
     if (!buildOptions.build.prod) {
       // in prod normal build is esm - not need for this
       await startAsync(commandJsEsm, cwd, {
-        uniqueName: 'tsc esm',
+        uniqueName: `${tscTool} esm`,
         prefix: true,
-        similarProcessKey: 'tsc',
+        similarProcessKey: `${tscTool}`,
         resolvePromiseMsgCallback_anystd: () => {
           if (this.project.watcher.isTaonLightWatcherMode) {
             this.taonBuildObserver.backendEsmState.set(
@@ -258,8 +261,8 @@ export class BackendCompilation {
 
     //#region compilation js maps backend
     await startAsync(commandMaps, cwd, {
-      uniqueName: 'tsc js maps',
-      similarProcessKey: 'tsc',
+      uniqueName: `${tscTool} js maps`,
+      similarProcessKey: `${tscTool}`,
       prefix: true,
       hideOutput_stderr: true,
       hideOutput_stdout: true,

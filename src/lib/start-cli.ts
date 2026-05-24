@@ -22,6 +22,7 @@ import {
   failSpinner,
   globalSpinner,
   oldBuildModePrefix,
+  oldBuildModePrefixShort,
   skipCoreCheck,
   spinnerPrefix,
   startSpinner,
@@ -79,7 +80,8 @@ export function startCli(argv, filename): void {
   global.skipCoreCheck = argv.some(a => a.startsWith(skipCoreCheck));
 
   const spinnerOnInArgs = argv.includes(spinnerPrefix);
-  const oldBuildModeInArgs = argv.includes(oldBuildModePrefix);
+  const oldBuildModeInArgs =
+    argv.includes(oldBuildModePrefix) || argv.includes(oldBuildModePrefixShort);
 
   // console.log({ oldBuildModeInArgs, argv });
 

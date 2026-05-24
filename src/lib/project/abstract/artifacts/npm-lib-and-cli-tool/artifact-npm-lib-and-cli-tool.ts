@@ -256,11 +256,6 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   }> {
     //#region @backendFunc
 
-    /**
-     * TODO this may be possible with proper tsc build
-     */
-    const isDevelopmentBuildUseTscInsteadNgBuild = false; // !buildOptions.release.releaseType;
-
     if (!this.project.framework.isStandaloneProject) {
       Helpers.logWarn(
         `Project is not standalone. Skipping npm-lib-and-cli-tool build.`,
@@ -380,14 +375,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     //#region prepare commands + base href
     // const command = `${loadNvm} && ${this.npmRunNg} build ${this.name} ${watch ? '--watch' : ''}`;
-    const commandForLibraryBuild = isDevelopmentBuildUseTscInsteadNgBuild
-      ? `${TaonCommands.NPM_RUN_TSC} -p tsconfig.typecheck.json --watch --preserveWatchOutput `
-      : `${TaonCommands.NPM_RUN_NG} build ${this.project.name} ${
-          buildOptions.build.watch &&
-          !this.project.watcher.isTaonLightWatcherMode
-            ? '--watch'
-            : ''
-        }`;
+    const commandForLibraryBuild = `${TaonCommands.NPM_RUN_NG} build ${this.project.name} ${
+      buildOptions.build.watch && !this.project.watcher.isTaonLightWatcherMode
+        ? '--watch'
+        : ''
+    }`;
 
     //#region show angular info function
     const showInfoAngular = () => {
@@ -459,9 +451,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         }),
       );
 
-      const watchResolveString = isDevelopmentBuildUseTscInsteadNgBuild
-        ? COMPILATION_COMPLETE_TSC
-        : COMPILATION_COMPLETE_LIB_NG_BUILD;
+      const watchResolveString = COMPILATION_COMPLETE_LIB_NG_BUILD;
 
       const runNgBuild = async () => {
         await proxyProject.execute(commandForLibraryBuild, {

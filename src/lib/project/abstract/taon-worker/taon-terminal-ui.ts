@@ -264,7 +264,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
 
       //#region processes
       devmode: {
-        name: 'Manage Dev Mode',
+        name: 'Manage Builds',
         action: async () => {
           await this.worker.devModeWorker.terminalUI.infoScreen({
             exitIsOnlyReturn: true,

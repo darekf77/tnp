@@ -204,6 +204,7 @@ export const watcherPrefix = '-watcher';
 export const verbosePrefix = '-verbose';
 export const spinnerPrefix = '-spinner';
 export const oldBuildModePrefix = '-oldBuildMode';
+export const oldBuildModePrefixShort = '-obm';
 export const websqlPrefix = '-websql';
 
 export const folder_shared_folder_info = 'shared_folder_info.txt';
@@ -695,6 +696,7 @@ export enum BundledDocsFolders {
 
 export enum TaonCommands {
   NPM_RUN_TSC = 'npm-run tsc',
+  NPM_RUN_TSCGO = 'npm-run tsgo',
   NPM_RUN_NG = 'npm-run ng',
   NG = 'ng',
 }

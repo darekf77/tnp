@@ -50,7 +50,7 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
       Helpers.warn(`[triggerRebuildOf] Wrong trigger "${buildType}"`);
       return;
     }
-    Helpers.logInfo(`TRIGGER REBUILD ${buildType}`);
+    Helpers.log(`TRIGGER REBUILD ${buildType}`);
     this.rebuildTriggerWatcher(buildType).next({});
 
     //#endregion
