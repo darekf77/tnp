@@ -242,12 +242,10 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       skipProjectsNames = this.children.map(c => c.nameForNpmPackage);
     }
 
-    if (!buildOptions.build.watch) {
-      if (this.watcher.isTaonLightWatcherMode) {
-        await this.taonBuildObserver.leader.takeLeadOfBuilding({
-          skipProjectsNames,
-        });
-      }
+    if (this.watcher.isTaonLightWatcherMode) {
+      await this.taonBuildObserver.leader.takeLeadOfBuilding({
+        skipProjectsNames,
+      });
     }
 
     if (!buildOptions.build.watch && !!buildOptions.release.targetArtifact) {
