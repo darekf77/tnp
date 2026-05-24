@@ -191,7 +191,7 @@ export class Branding extends BaseFeatureForProject<Project> {
 /* */
 /* */
 /* */
-  
+
 
     Helpers.log(`Project ${proj.genericName} branding ended`);
     //#endregion
@@ -206,6 +206,7 @@ export class Branding extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     try {
       const sharePackageName = 'sharp';
+      // @taon-ignore
       const sharp = require(sharePackageName) as typeof import('sharp');
       // Ensure input file exists
       if (!Helpers.exists(absPathToLogoPng)) {
