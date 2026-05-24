@@ -50,5 +50,5 @@ ForEach-Object { dism /Online /Remove-ProvisionedAppxPackage /PackageName:$_}
 fn shift f10
 OOBE\BYPASSNRO
 
-
-
+# old powershell suggestion
+Set-PSReadLineOption -PredictionViewStyle InlineView
