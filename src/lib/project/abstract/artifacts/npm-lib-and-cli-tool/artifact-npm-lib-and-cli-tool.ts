@@ -279,7 +279,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     }
 
     //#region handle prod build 2 sequences
-    if (buildOptions.build.prod) {
+    if (
+      buildOptions.build.prod &&
+      !buildOptions.release.lib.doNotIncludeLibFiles
+    ) {
       await this.buildPartial(
         buildOptions.clone({
           build: {

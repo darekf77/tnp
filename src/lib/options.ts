@@ -1048,6 +1048,9 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
     if (this.build.watch && this.build.prod) {
       this.build.prod = false; // QUICK_FIX no prod for development
     }
+    if (this.build.prod && this.release.lib.doNotIncludeLibFiles) {
+      this.build.prod = false; // QUICK_FIX no prod for development
+    }
   }
   //#endregion
 

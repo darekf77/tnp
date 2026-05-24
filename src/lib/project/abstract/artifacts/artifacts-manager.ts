@@ -644,6 +644,9 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
       if (buildOptions.build.watch && buildOptions.build.prod) {
         buildOptions.build.prod = false; // QUICK_FIX no prod for development
       }
+      if (buildOptions.release.lib.doNotIncludeLibFiles) {
+        buildOptions.build.prod = false; // QUICK_FIX no prod for development
+      }
 
       if (
         !buildOptions.build.watch &&
