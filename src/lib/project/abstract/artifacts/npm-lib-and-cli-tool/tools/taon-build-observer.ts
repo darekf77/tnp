@@ -464,6 +464,12 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
     } catch (error) {
       config.frameworkName === tnpPackageName &&
         console.error('update action', error);
+
+      if (error instanceof HttpResponseError) {
+        const err = error as HttpResponseError<RestErrorResponseWrapper>;
+        Helpers.error(err.body.json.message || err.body.text, true, true);
+      }
+
       Helpers.warn(`ERORRO: Not able to connect to main worker...`);
     }
 
