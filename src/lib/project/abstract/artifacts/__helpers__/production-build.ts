@@ -167,7 +167,7 @@ export class ProductionBuild {
 
     //#region generate re-exports files in normal build
     if (!generatingAppCode) {
-      Helpers.taskStarted(`Generating re-exports files...`);
+      const task = Helpers.actionStarted(`Generating re-exports files...`);
       this.saveGenerateReExportsIndProdDistForCurrentPackage(
         this.project.pathFor([
           tmpSourceDist,
@@ -193,7 +193,7 @@ export class ProductionBuild {
         this.namespacesForPackagesWebsql,
         websqlFromCompiledDist,
       );
-      Helpers.taskDone(`Done generating re-exports files.`);
+      task.done();
     }
     //#endregion
 
@@ -271,7 +271,7 @@ export class ProductionBuild {
     //#endregion
 
     //#region process production code
-    Helpers.taskStarted(`Production code replacement started`);
+    const task = Helpers.actionStarted(`Production code replacement started`);
     this.productionCodeReplacement(
       filesLib,
       this.namespacesForPackagesLib,
@@ -287,7 +287,7 @@ export class ProductionBuild {
       this.namespacesForPackagesWebsql,
       this.reExportsForPackagesWebsql,
     );
-    Helpers.taskDone(`Production code replacement done`);
+    task.done()
     //#endregion
 
     //#endregion
