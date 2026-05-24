@@ -8,8 +8,7 @@ import type { TaonProjectResolve } from '../abstract/project-resolve';
 
 // @ts-ignore TODO weird inheritance problem
 export class BaseCli extends BaseCommandLineFeature<EnvOptions, Project> {
-  // @ts-ignore
-  ins: TaonProjectResolve;
+  declare ins: TaonProjectResolve;
 
   async __initialize__(): Promise<void> {
     this.params = EnvOptions.from(this.params);

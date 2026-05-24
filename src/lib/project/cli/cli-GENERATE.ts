@@ -3,6 +3,7 @@ import { MagicRenamer } from 'magic-renamer/src';
 import {
   backendNodejsOnlyFiles,
   config,
+  CoreModels,
   extAllowedToExportAndReplaceTSJSCodeFiles,
   frontendFiles,
   LibTypeEnum,
@@ -43,7 +44,8 @@ import { BaseCli } from './base-cli';
  * TODO refactor move to tnp-helpers
  */ // @ts-ignore TODO weird inheritance problem
 export class $Generate extends BaseCli {
-  // @ts-ignore TODO weird inheritance problem
+  static [CoreModels.ClassNameStaticProperty] = '$Generate';
+
   async _() {
     //#region @backendFunc
     let [absPath, moduleName, entityName] = this.args;
@@ -132,7 +134,7 @@ export class $Generate extends BaseCli {
       //#endregion
     } else {
       const ins = MagicRenamer.Instance(exampleLocation);
-      ins.start(`${myEntity} -> ${newEntityName}`,[]);
+      ins.start(`${myEntity} -> ${newEntityName}`, []);
       if (isFlat) {
         const files = Helpers.filesFrom(generatedCodeAbsLoc, true);
         for (let index = 0; index < files.length; index++) {
