@@ -103,6 +103,9 @@ export class TaonBuildObserver extends BaseFeatureForProject<Project> {
     currentState: DevMode.ProjectBuildStatus,
     debugMode: boolean,
   ): void => {
+    if (!this.project.watcher.isTaonLightWatcherMode) {
+      return;
+    }
     if (currentState !== nextState) {
       if (nextState === DevMode.ProjectBuildStatus.BUILDING_BUT_CANCELLED) {
         this.project.watcher.cancelAndSetAsReadyForRebuildTrigger(buildType);
@@ -160,6 +163,9 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
     toNotifyBuildType: CoreModels.BuildType,
   ): Promise<void> {
     //#region @backend
+    if (!this.project.watcher.isTaonLightWatcherMode) {
+      return;
+    }
     Helpers.log(
       `Notifying leader that build status changed ${toNotifyBuildType}`,
     );
@@ -456,6 +462,9 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
    */
   public async updateAction(info?: DevMode.BuildStatusInfo): Promise<void> {
     //#region @backendFunc
+    if (!this.project.watcher.isTaonLightWatcherMode) {
+      return;
+    }
     this.mergeStatus(info);
     try {
       await this.project.ins.devBuildRepository.updatePool({

@@ -116,6 +116,9 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
     skipProjectsNames?: string[];
   }): Promise<void> {
     //#region @backend
+    if (!this.project.watcher.isTaonLightWatcherMode) {
+      return;
+    }
     options = options || {};
     this.projectStaredLeadingBuild = true;
 

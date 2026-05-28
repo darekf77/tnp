@@ -1205,6 +1205,37 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
   }
 
   //#region handle exit error
+
+  private async notifyObserver(
+    buildOptions: EnvOptions,
+    buildtype: CoreModels.BuildType,
+    errorMesssage: string,
+  ): Promise<void> {
+    //#region @backendFunc
+    if (buildtype === 'browser' || buildtype === 'websql') {
+      // handle browser/websql
+      if (buildOptions.build.websql) {
+        this.project.taonBuildObserver.websqlState.set(
+          DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+        );
+        this.project.taonBuildObserver.errorWebsql.set(errorMesssage);
+      } else {
+        this.project.taonBuildObserver.browserState.set(
+          DevMode.ProjectBuildStatus.COMPILATION_ERROR,
+        );
+        this.project.taonBuildObserver.errorBrowser.set(errorMesssage);
+      }
+    } else {
+      // handle backend
+      this.project.taonBuildObserver.states
+        .get(buildtype)
+        .set(DevMode.ProjectBuildStatus.COMPILATION_ERROR);
+      this.project.taonBuildObserver.errorBackend.set(errorMesssage);
+    }
+    await this.project.taonBuildObserver.updateAction();
+    //#endregion
+  }
+
   async handlExitError(
     buildOptions: EnvOptions,
     code: number,
@@ -1214,41 +1245,23 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
     errorMesssage: string,
   ): Promise<void> {
     //#region @backendFunc
+
+    //#region watcher mode
     if (this.project.watcher.isTaonLightWatcherMode) {
       if (code === 0) {
         resolve();
       } else {
         reject();
       }
-
-      if (buildtype === 'browser' || buildtype === 'websql') {
-        // handle browser/websql
-        if (buildOptions.build.websql) {
-          this.project.taonBuildObserver.websqlState.set(
-            DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-          );
-          this.project.taonBuildObserver.errorWebsql.set(errorMesssage);
-        } else {
-          this.project.taonBuildObserver.browserState.set(
-            DevMode.ProjectBuildStatus.COMPILATION_ERROR,
-          );
-          this.project.taonBuildObserver.errorBrowser.set(errorMesssage);
-        }
-      } else {
-        // handle backend
-        this.project.taonBuildObserver.states
-          .get(buildtype)
-          .set(DevMode.ProjectBuildStatus.COMPILATION_ERROR);
-        this.project.taonBuildObserver.errorBackend.set(errorMesssage);
-      }
-      await this.project.taonBuildObserver.updateAction();
     }
+    await this.notifyObserver(buildOptions, buildtype, errorMesssage);
+    //#endregion
 
     if (buildOptions.release.releaseType) {
       if (code === 0) {
         resolve();
       } else {
-        throw errorMesssage;
+        throw errorMesssage; // TODO @LAST fix this for release build exit
       }
     } else {
       if (buildOptions.build.watch) {

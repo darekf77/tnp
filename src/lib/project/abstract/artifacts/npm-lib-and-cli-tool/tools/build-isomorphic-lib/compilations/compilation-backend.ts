@@ -83,20 +83,28 @@ export class BackendCompilation {
       return;
     }
 
+    const isMacOSorWindows =
+      process.platform === 'darwin' || process.platform === 'win32';
+
+    const skipLightWeightWatcherFor_CjsESM = !isMacOSorWindows;
+    const skipLightWeightWatcherFor_jsMaps = false;
+
     const tscTool = TaonCommands.NPM_RUN_TSC;
     // this.project.watcher.isTaonLightWatcherMode
     //   ? TaonCommands.NPM_RUN_TSCGO
     //   : TaonCommands.NPM_RUN_TSC;
 
-    const isMacOSorWindows =
-      process.platform === 'darwin' || process.platform === 'win32';
-
-    const watchModeCjsESM =
-      buildOptions.build.watch &&
-      (!this.project.watcher.isTaonLightWatcherMode || isMacOSorWindows);
-
-    const watchModeJsMaps =
+    let watchModeCjsESM =
       buildOptions.build.watch && !this.project.watcher.isTaonLightWatcherMode;
+    if (skipLightWeightWatcherFor_CjsESM) {
+      watchModeCjsESM = buildOptions.build.watch;
+    }
+
+    let watchModeJsMaps =
+      buildOptions.build.watch && !this.project.watcher.isTaonLightWatcherMode;
+    if (skipLightWeightWatcherFor_jsMaps) {
+      watchModeCjsESM = buildOptions.build.watch;
+    }
 
     const tsconfigBackendCjsPath = crossPlatformPath(
       this.project.pathFor(
@@ -197,11 +205,9 @@ export class BackendCompilation {
       prefix: true,
       similarProcessKey: `${tscTool}`,
       resolvePromiseMsgCallback_anystd: () => {
-        if (this.project.watcher.isTaonLightWatcherMode) {
-          this.taonBuildObserver.backendCjsState.set(
-            DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-          );
-        }
+        this.taonBuildObserver.backendCjsState.set(
+          DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+        );
       },
       onExitCallback: async (code, resolve, reject) =>
         this.project.framework.handlExitError(
@@ -215,6 +221,8 @@ export class BackendCompilation {
       outputLineReplace: (line: string) => outputLineReplace(line),
       resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
       rebuildOnChange:
+        this.project.watcher.isTaonLightWatcherMode &&
+        !skipLightWeightWatcherFor_CjsESM &&
         this.project.watcher.rebuildTriggerWatcher('backend-cjs'),
     });
     //#endregion
@@ -231,11 +239,9 @@ export class BackendCompilation {
         prefix: true,
         similarProcessKey: `${tscTool}`,
         resolvePromiseMsgCallback_anystd: () => {
-          if (this.project.watcher.isTaonLightWatcherMode) {
-            this.taonBuildObserver.backendEsmState.set(
-              DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-            );
-          }
+          this.taonBuildObserver.backendEsmState.set(
+            DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+          );
         },
         onExitCallback: async (code, resolve, reject) =>
           this.project.framework.handlExitError(
@@ -249,6 +255,8 @@ export class BackendCompilation {
         outputLineReplace: (line: string) => outputLineReplace(line),
         resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
         rebuildOnChange:
+          this.project.watcher.isTaonLightWatcherMode &&
+          !skipLightWeightWatcherFor_CjsESM &&
           this.project.watcher.rebuildTriggerWatcher('backend-esm'),
       });
     }
@@ -266,17 +274,17 @@ export class BackendCompilation {
       hideOutput_stderr: true,
       hideOutput_stdout: true,
       resolvePromiseMsgCallback_anystd: () => {
-        if (this.project.watcher.isTaonLightWatcherMode) {
-          this.taonBuildObserver.backendJsMapsState.set(
-            DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-          );
-        }
+        this.taonBuildObserver.backendJsMapsState.set(
+          DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+        );
       },
       onExitCallback: async (code, resolve, reject) => {
         resolve(); // TODO this is throwing tsocnfig errpr
       },
       resolvePromiseMsg_stdout: [COMPILATION_WATCHING_STARTED],
       rebuildOnChange:
+        this.project.watcher.isTaonLightWatcherMode &&
+        !skipLightWeightWatcherFor_jsMaps &&
         this.project.watcher.rebuildTriggerWatcher('backend-js-maps'),
     });
     //#endregion
