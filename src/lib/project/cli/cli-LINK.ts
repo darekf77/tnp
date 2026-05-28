@@ -1,5 +1,11 @@
 //#region imports
-import { config, fileName, folderName, taonPackageName } from 'tnp-core/src';
+import {
+  config,
+  fileName,
+  folderName,
+  taonPackageName,
+  Utils,
+} from 'tnp-core/src';
 import { chalk, _, crossPlatformPath, glob, path, UtilsOs } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
 import { BaseCommandLineFeature, Helpers, HelpersTaon } from 'tnp-helpers/src';
@@ -82,10 +88,6 @@ export class $Link extends BaseCli {
 
   //#region api / local
   async local(absPathToFolderWithCli: string) {
-    await this._local(absPathToFolderWithCli, true);
-  }
-
-  async _local(absPathToFolderWithCli: string, exit = true) {
     //#region @backend
     let localReleaseFolder =
       absPathToFolderWithCli ||
@@ -115,10 +117,8 @@ export class $Link extends BaseCli {
       `Global link created for ` +
         `local/repo version of ${chalk.bold(this.project.name)}`,
     );
-    if (exit) {
-      this._exit();
-    }
 
+    this._exit();
     //#endregion
   }
   //#endregion
@@ -206,9 +206,12 @@ export class $Link extends BaseCli {
     const repoPath = crossPlatformPath([repoRoot, repoName]);
     const repoUrl = this.project.git.remoteOriginUrl;
 
-    const detectedBranches = this.project.git
-      .getBranchesNamesBy(/release\/local\//)
-      .filter(f => !f.startsWith('remotes/'));
+    const detectedBranches = Utils.uniqArray(
+      this.project.git
+        .getBranchesNamesBy(/release\/local\//)
+        .map(f => f.replace('remotes/origin/', ''))
+        .filter(f => f.startsWith('release/local/')),
+    );
     // console.log({ detectedBranches });
 
     const selectedBranch =
@@ -292,9 +295,7 @@ export class $Link extends BaseCli {
       );
     }
 
-    await this._local(selectedCliPath, false);
-
-    Helpers.info(`Done linking globally ${selectedBranch}`);
+    await this.local(selectedCliPath);
     //#endregion
   }
   //#endregion
