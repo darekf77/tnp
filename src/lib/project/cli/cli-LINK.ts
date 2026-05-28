@@ -1,3 +1,4 @@
+//#region imports
 import { config, fileName, folderName, taonPackageName } from 'tnp-core/src';
 import { chalk, _, crossPlatformPath, glob, path, UtilsOs } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
@@ -26,11 +27,13 @@ import { EnvOptions, ReleaseArtifactTaon } from '../../options';
 import type { Project } from '../abstract/project';
 
 import { BaseCli } from './base-cli';
+//#endregion
 
 /**
  * TODO refactor move to tnp-helpers
  */ // @ts-ignore TODO weird inheritance problem
 export class $Link extends BaseCli {
+  //#region _
   async _() {
     let project = this.project;
 
@@ -53,6 +56,9 @@ export class $Link extends BaseCli {
             },
           };
         }, {}),
+        release: {
+          name: 'Link repo with special release branch as global cli tool',
+        },
       };
       const res = await UtilsTerminal.select<keyof typeof options>({
         question: 'What would you like to link?',
@@ -62,29 +68,25 @@ export class $Link extends BaseCli {
 
       if (res === 'global') {
         await this.global();
+      } else if (res === 'release') {
+        await this.global();
       } else {
-        await this.local(res);
+        await this.local(res as any);
       }
     }
 
     Helpers.info(`Linking DONE!`);
     this._exit();
   }
+  //#endregion
 
-  /**
-   * @returns Absolute paths for detected clis
-   */
-  _getDetectedLocalCLi(): string[] {
-    const destBaseLatest = this.project.pathFor(
-      `${nodeModulesMainProject}/${ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL}`,
-    );
-    return Helpers.foldersFrom(destBaseLatest).filter(f => {
-      const proj = this.ins.From(f);
-      return !!proj;
-    });
+  //#region api / local
+  async local(absPathToFolderWithCli: string) {
+    await this._local(absPathToFolderWithCli, true);
   }
 
-  async local(absPathToFolderWithCli: string) {
+  async _local(absPathToFolderWithCli: string, exit = true) {
+    //#region @backend
     let localReleaseFolder =
       absPathToFolderWithCli ||
       this.firstArg ||
@@ -113,9 +115,191 @@ export class $Link extends BaseCli {
       `Global link created for ` +
         `local/repo version of ${chalk.bold(this.project.name)}`,
     );
-    this._exit();
-  }
+    if (exit) {
+      this._exit();
+    }
 
+    //#endregion
+  }
+  //#endregion
+
+  //#region api / global
+  async global() {
+    //#region @backendFunc
+    let project = this.project;
+    // if (process.platform !== 'win32') {
+    //   await Helpers.isElevated();
+    // }
+
+    let globalBinFolderPath = path.dirname(
+      (
+        (_.first(
+          Helpers.run(
+            `${UtilsOs.isRunningInWindowsPowerShell() ? 'where.exe' : 'which'} ${config.frameworkName}`,
+            { output: false },
+          )
+            .sync()
+            .toString()
+            .split('\n'),
+        ) || '') as string
+      ).trim(),
+    );
+
+    // console.log(`globalBinFolderPath "${globalBinFolderPath}"`, );
+    // process.exit(0)
+    if (process.platform === 'win32') {
+      globalBinFolderPath = crossPlatformPath(globalBinFolderPath);
+      if (/^\/[a-z]\//.test(globalBinFolderPath)) {
+        globalBinFolderPath = globalBinFolderPath.replace(
+          /^\/[a-z]\//,
+          `${globalBinFolderPath.charAt(1).toUpperCase()}:/`,
+        );
+      }
+    }
+
+    const globalNodeModules = crossPlatformPath(
+      path.join(
+        globalBinFolderPath,
+        process.platform === 'win32'
+          ? folderName.node_modules
+          : `../${libFromNpmPackage}/${folderName.node_modules}`,
+      ),
+    );
+
+    const packageInGlobalNodeModules = crossPlatformPath(
+      path.resolve(path.join(globalNodeModules, project.nameForNpmPackage)),
+    );
+
+    // packageInGlobalNodeModules
+    Helpers.removeIfExists(packageInGlobalNodeModules);
+    project.linkTo(packageInGlobalNodeModules);
+
+    if (!Helpers.exists(project.pathFor(binMainProject))) {
+      Helpers.mkdirp(project.pathFor(binMainProject));
+    }
+
+    this.recreateCliBasicStructure(globalBinFolderPath);
+
+    this._exit();
+    //#endregion
+  }
+  //#endregion
+
+  //#region api / release
+  async release() {
+    //#region @backendFunc
+    const repoName = `repo-${this.project.name}-release-cli`;
+    const repoRoot = this.project.pathFor([
+      `.${config.frameworkName}`,
+      'linked-clis',
+    ]);
+
+    try {
+      this.project.git.fetch(true);
+    } catch (error) {
+      Helpers.error(
+        `Not able to fetch in ${this.project.location}`,
+        false,
+        true,
+      );
+    }
+    const repoPath = crossPlatformPath([repoRoot, repoName]);
+    const repoUrl = this.project.git.remoteOriginUrl;
+
+    const detectedBranches = this.project.git
+      .getBranchesNamesBy(/release\/local\//)
+      .filter(f => !f.startsWith('remotes/'));
+    // console.log({ detectedBranches });
+
+    const selectedBranch =
+      detectedBranches.length <= 1
+        ? _.first(detectedBranches)
+        : await UtilsTerminal.select({
+            question: `Select release branch to link`,
+            choices: detectedBranches.map(c => {
+              return { name: c, value: c };
+            }),
+          });
+
+    if (!selectedBranch) {
+      Helpers.error(`No branch to clone for cli relase link.`, false, true);
+    }
+
+    if (!Helpers.exists(repoPath)) {
+      Helpers.mkdirp(repoRoot);
+      try {
+        await HelpersTaon.git.clone({
+          cwd: repoRoot,
+          url: repoUrl,
+          override: true,
+          destinationFolderName: repoName,
+        });
+      } catch (error) {
+        Helpers.error(`Not able to clone selected release branch`, false, true);
+      }
+    }
+
+    try {
+      HelpersTaon.git.resetHard(repoPath);
+      HelpersTaon.git.checkout(repoPath, selectedBranch, {
+        createBranchIfNotExists: false,
+        fetchBeforeCheckout: false,
+        switchBranchWhenExists: false,
+      });
+    } catch (error) {
+      Helpers.error(
+        `Not able to switch to branch=${selectedBranch}.`,
+        false,
+        true,
+      );
+    }
+
+    const projFromRepo = this.project.ins.From(repoPath);
+    if (!projFromRepo) {
+      Helpers.error(
+        `Cloned release branch is not a taon project repo.`,
+        false,
+        true,
+      );
+    }
+
+    try {
+      await projFromRepo.git.pullCurrentBranch();
+    } catch (error) {
+      Helpers.error(
+        `Not able to pull branch=${selectedBranch} in ${projFromRepo.location}`,
+        false,
+        true,
+      );
+    }
+
+    const localClis = this._getDetectedLocalCLi(projFromRepo);
+    const selectedCliPath =
+      localClis.length <= 1
+        ? _.first(localClis)
+        : await UtilsTerminal.select({
+            question: `Select version to link from branch=${selectedBranch}`,
+            choices: localClis.map(c => {
+              return { name: c, value: c };
+            }),
+          });
+
+    if (!selectedCliPath) {
+      Helpers.error(
+        `Not detected local clis in branch=${selectedBranch}.`,
+        false,
+        true,
+      );
+    }
+
+    await this._local(selectedCliPath, false);
+
+    Helpers.info(`Done linking globally ${selectedBranch}`);
+    //#endregion
+  }
+  //#endregion
+
+  //#region recreate cli basic structure
   recreateCliBasicStructure(globalBinFolderPath?: string) {
     //#region @backendFunc
 
@@ -279,67 +463,6 @@ ${'req' + 'uire'}('./start');
     }
     //#endregion
   }
-
-  //#region global link
-  async global() {
-    let project = this.project;
-    // if (process.platform !== 'win32') {
-    //   await Helpers.isElevated();
-    // }
-
-    //#region linking to global/local bin
-    let globalBinFolderPath = path.dirname(
-      (
-        (_.first(
-          Helpers.run(
-            `${UtilsOs.isRunningInWindowsPowerShell() ? 'where.exe' : 'which'} ${config.frameworkName}`,
-            { output: false },
-          )
-            .sync()
-            .toString()
-            .split('\n'),
-        ) || '') as string
-      ).trim(),
-    );
-
-    // console.log(`globalBinFolderPath "${globalBinFolderPath}"`, );
-    // process.exit(0)
-    if (process.platform === 'win32') {
-      globalBinFolderPath = crossPlatformPath(globalBinFolderPath);
-      if (/^\/[a-z]\//.test(globalBinFolderPath)) {
-        globalBinFolderPath = globalBinFolderPath.replace(
-          /^\/[a-z]\//,
-          `${globalBinFolderPath.charAt(1).toUpperCase()}:/`,
-        );
-      }
-    }
-
-    const globalNodeModules = crossPlatformPath(
-      path.join(
-        globalBinFolderPath,
-        process.platform === 'win32'
-          ? folderName.node_modules
-          : `../${libFromNpmPackage}/${folderName.node_modules}`,
-      ),
-    );
-
-    const packageInGlobalNodeModules = crossPlatformPath(
-      path.resolve(path.join(globalNodeModules, project.nameForNpmPackage)),
-    );
-
-    // packageInGlobalNodeModules
-    Helpers.removeIfExists(packageInGlobalNodeModules);
-    project.linkTo(packageInGlobalNodeModules);
-
-    if (!Helpers.exists(project.pathFor(binMainProject))) {
-      Helpers.mkdirp(project.pathFor(binMainProject));
-    }
-
-    this.recreateCliBasicStructure(globalBinFolderPath);
-
-    this._exit();
-    //#endregion
-  }
   //#endregion
 
   //#region write win 32 link files
@@ -465,6 +588,27 @@ EXIT /b
     }
   }
   //#endregion
+
+  //#region get detected local cli
+  /**
+   * @returns Absolute paths for detected clis
+   */
+  _getDetectedLocalCLi(project = this.project): string[] {
+    const destBaseLatest = project.pathFor(
+      `${localReleaseMainProject}/${ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL}`,
+    );
+    return Helpers.foldersFrom(destBaseLatest).filter(f => {
+      const proj = this.ins.From(f);
+      return !!proj;
+    });
+  }
+  //#endregion
+
+  localDetected() {
+    const localClis = this._getDetectedLocalCLi();
+    console.log({ localClis });
+    this._exit();
+  }
 }
 
 export default {
