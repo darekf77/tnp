@@ -22,6 +22,7 @@ import {
   tmpSourceDist,
   tsconfigBackendDistJson,
   tsconfigBackendDistJson_PROD,
+  tsconfigBackendEsmDistJson,
 } from '../../../../../../../constants';
 import { Models } from '../../../../../../../models';
 import { EnvOptions } from '../../../../../../../options';
@@ -67,20 +68,13 @@ export class BackendCompilation {
       fse.mkdirpSync(outDistPath);
     }
 
-    await this.libCompilation(this.buildOptions, {
-      generateDeclarations: true,
-    });
+    await this.libCompilation(this.buildOptions);
     //#endregion
   }
 
   //#region methods / lib compilation
-  async libCompilation(
-    buildOptions: EnvOptions,
-    { diagnostics = false }: Models.TscCompileOptions,
-  ) {
+  async libCompilation(buildOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
-    const watch =
-      buildOptions.build.watch && !this.project.watcher.isTaonLightWatcherMode;
 
     if (!this.isEnableCompilation) {
       Helpers.log(
@@ -94,15 +88,17 @@ export class BackendCompilation {
     //   ? TaonCommands.NPM_RUN_TSCGO
     //   : TaonCommands.NPM_RUN_TSC;
 
-    const paramasCommon = {
-      watch: watch ? ' -w ' : '',
-      outDir: ` --outDir ${distMainProject + (buildOptions.build.prod ? prodSuffix : '')} `,
-      noEmitOnError: !watch ? ' --noEmitOnError true ' : '',
-      extendedDiagnostics: diagnostics ? ' --extendedDiagnostics ' : '',
-      preserveWatchOutput: ` --preserveWatchOutput `,
-    };
+    const isMacOSorWindows =
+      process.platform === 'darwin' || process.platform === 'win32';
 
-    const tsconfigBackendPath = crossPlatformPath(
+    const watchModeCjsESM =
+      buildOptions.build.watch &&
+      (!this.project.watcher.isTaonLightWatcherMode || isMacOSorWindows);
+
+    const watchModeJsMaps =
+      buildOptions.build.watch && !this.project.watcher.isTaonLightWatcherMode;
+
+    const tsconfigBackendCjsPath = crossPlatformPath(
       this.project.pathFor(
         buildOptions.build.prod
           ? tsconfigBackendDistJson_PROD
@@ -110,29 +106,32 @@ export class BackendCompilation {
       ),
     );
 
-    let nocutsrcFolder = this.project.pathFor(
+    const tsconfigBackendEsmPath = crossPlatformPath(
+      this.project.pathFor(tsconfigBackendEsmDistJson),
+    );
+
+    const nocutsrcFolder = this.project.pathFor(
       distNoCutSrcMainProject + (buildOptions.build.prod ? prodSuffix : ''),
     );
 
-    const paramsJS = {
-      mapRoot: ` --mapRoot ${nocutsrcFolder} `,
-      project: `--project ${tsconfigBackendPath}`,
-      ...paramasCommon,
-    };
-    const paramsMaps = { ...paramasCommon };
-    paramsMaps.outDir = ` --outDir ${nocutsrcFolder}`;
-    paramsMaps.noEmitOnError = !watch ? ' --noEmitOnError false ' : '';
-
-    const commandJs = `${tscTool} ${Object.values(paramsJS).join(' ')}  `;
-    const commandMaps = `${tscTool} ${Object.values(paramsMaps).join(' ')} `;
-    delete paramsJS.outDir;
-    const commandJsEsm = `${tscTool} ${Object.values(paramsJS).join(' ').replace('.backend.', '.backend-esm.')}  `;
+    const common = ` --preserveWatchOutput  `;
+    const commandCjs =
+      `${tscTool} --outDir ${distMainProject + (buildOptions.build.prod ? prodSuffix : '')}  ` +
+      ` --project ${tsconfigBackendCjsPath}  ${watchModeCjsESM ? '-w' : ''}  ${common}  ` +
+      ` --mapRoot ${nocutsrcFolder} `;
+    const commandJsEsm =
+      `${tscTool}  ` +
+      `  --project ${tsconfigBackendEsmPath}  ${watchModeCjsESM ? '-w' : ''}  ${common} ` +
+      ` --mapRoot ${nocutsrcFolder} `;
+    const commandMaps =
+      `${tscTool} --outDir ${nocutsrcFolder} ${watchModeJsMaps ? '-w' : ''}   ` +
+      `   ${common} `;
 
     const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
 
     Helpers.getIsVerboseMode() &&
       console.log({
-        commandJs,
+        commandCjs,
         commandMaps,
         commandJsEsm,
       });
@@ -193,7 +192,7 @@ export class BackendCompilation {
 
     //#region compilation commonjs backend
 
-    await startAsync(commandJs, cwd, {
+    await startAsync(commandCjs, cwd, {
       uniqueName: `${tscTool} cjs`,
       prefix: true,
       similarProcessKey: `${tscTool}`,
