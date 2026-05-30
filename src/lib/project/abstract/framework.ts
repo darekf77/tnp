@@ -1206,7 +1206,7 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
 
   //#region handle exit error
 
-  private async notifyObserver(
+  public async notifyObserver(
     buildOptions: EnvOptions,
     buildtype: CoreModels.BuildType,
     errorMesssage: string,

@@ -1001,4 +1001,8 @@ export const DEBOUNCE_debouceUpdate = 500;
 
 export const OBSERVER_PARALLELS = true;
 
+export const isMacOSorWindows =
+  process.platform === 'darwin' || process.platform === 'win32';
 
+export const skipLightWeightWatcherFor_CjsESM = isMacOSorWindows;
+export const skipLightWeightWatcherFor_jsMaps = false;

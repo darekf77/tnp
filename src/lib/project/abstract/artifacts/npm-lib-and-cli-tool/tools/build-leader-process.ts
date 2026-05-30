@@ -15,6 +15,7 @@ import {
   DEBOUCE_takeLeadOfBuildingDebounce,
   DEBOUNCE_trigerLeadBuilding,
   OBSERVER_PARALLELS,
+  skipLightWeightWatcherFor_CjsESM,
 } from '../../../../../constants';
 import type { Project } from '../../../../abstract/project';
 import { DevBuildController } from '../../../../abstract/taon-worker/dev-build/dev-build.controller';
@@ -105,7 +106,7 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region private methods / tak lead of building debouced
+  //#region private methods / take lead of building debouced
   private takeLeadOfBuildingDebounce = _.debounce(async () => {
     await this.takeLeadOfBuilding();
   }, DEBOUCE_takeLeadOfBuildingDebounce);
@@ -255,6 +256,12 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
 
         Helpers.warn(`Not able to access worker to get partial rebuild info`);
         errorMainWorkerCommunication();
+      }
+
+      if (skipLightWeightWatcherFor_CjsESM) {
+        shouldBeRebuildArr = shouldBeRebuildArr.filter(
+          f => f !== 'backend-cjs' && f !== 'backend-esm',
+        );
       }
 
       Helpers.info(

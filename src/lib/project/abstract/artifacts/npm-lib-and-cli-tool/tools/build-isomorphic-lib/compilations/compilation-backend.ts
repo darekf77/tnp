@@ -17,6 +17,8 @@ import {
   distNoCutSrcMainProject,
   libEsm,
   prodSuffix,
+  skipLightWeightWatcherFor_CjsESM,
+  skipLightWeightWatcherFor_jsMaps,
   srcMainProject,
   TaonCommands,
   tmpSourceDist,
@@ -83,12 +85,6 @@ export class BackendCompilation {
       return;
     }
 
-    const isMacOSorWindows =
-      process.platform === 'darwin' || process.platform === 'win32';
-
-    const skipLightWeightWatcherFor_CjsESM = !isMacOSorWindows;
-    const skipLightWeightWatcherFor_jsMaps = false;
-
     const tscTool = TaonCommands.NPM_RUN_TSC;
     // this.project.watcher.isTaonLightWatcherMode
     //   ? TaonCommands.NPM_RUN_TSCGO
@@ -139,6 +135,9 @@ export class BackendCompilation {
 
     Helpers.getIsVerboseMode() &&
       console.log({
+        'buildOptions.build.watch': buildOptions.build.watch,
+        watchModeCjsESM,
+        watchModeJsMaps,
         commandCjs,
         commandMaps,
         commandJsEsm,
@@ -170,31 +169,40 @@ export class BackendCompilation {
       return line;
     };
 
-    const outputLineReplace = (line: string): string => {
-      //#region outputs replacement
+    const outputLineReplace =
+      (buildType: CoreModels.BuildType) =>
+      (line: string): string => {
+        //#region outputs replacement
 
-      if (line.startsWith(`${tmpSourceDist + prodSuffix}/`)) {
+        if (line.includes('error TS')) {
+          this.project.framework.notifyObserver(buildOptions, buildType, line);
+        }
+
+        if (line.startsWith(`${tmpSourceDist + prodSuffix}/`)) {
+          return additionalReplace(
+            line.replace(
+              `${tmpSourceDist + prodSuffix}/`,
+              `./${srcMainProject}/`,
+            ),
+          );
+        }
+
+        if (line.startsWith(`${tmpSourceDist}/`)) {
+          return additionalReplace(
+            line.replace(`${tmpSourceDist}/`, `./${srcMainProject}/`),
+          );
+        }
+
         return additionalReplace(
-          line.replace(
-            `${tmpSourceDist + prodSuffix}/`,
-            `./${srcMainProject}/`,
-          ),
+          line
+            .replace(
+              `../${tmpSourceDist + prodSuffix}/`,
+              `./${srcMainProject}/`,
+            )
+            .replace(`../${tmpSourceDist}/`, `./${srcMainProject}/`),
         );
-      }
-
-      if (line.startsWith(`${tmpSourceDist}/`)) {
-        return additionalReplace(
-          line.replace(`${tmpSourceDist}/`, `./${srcMainProject}/`),
-        );
-      }
-
-      return additionalReplace(
-        line
-          .replace(`../${tmpSourceDist + prodSuffix}/`, `./${srcMainProject}/`)
-          .replace(`../${tmpSourceDist}/`, `./${srcMainProject}/`),
-      );
-      //#endregion
-    };
+        //#endregion
+      };
 
     //#endregion
 
@@ -218,7 +226,8 @@ export class BackendCompilation {
           'backend-cjs',
           `Typescript compilation (backend commonjs) error`,
         ),
-      outputLineReplace: (line: string) => outputLineReplace(line),
+      outputLineReplace: (line: string) =>
+        outputLineReplace('backend-cjs')(line),
       resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
       rebuildOnChange:
         this.project.watcher.isTaonLightWatcherMode &&
@@ -252,7 +261,8 @@ export class BackendCompilation {
             'backend-esm',
             `Typescript compilation (backend esm) error`,
           ),
-        outputLineReplace: (line: string) => outputLineReplace(line),
+        outputLineReplace: (line: string) =>
+          outputLineReplace('backend-esm')(line),
         resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
         rebuildOnChange:
           this.project.watcher.isTaonLightWatcherMode &&
