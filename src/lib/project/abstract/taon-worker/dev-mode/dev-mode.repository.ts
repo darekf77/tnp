@@ -71,6 +71,8 @@ export class DevModeRepository extends TaonBaseKvRepository<{
   //#region fields
   private logMessages: string[] = [];
 
+  private deletingNow = new Map<string, DevMode.ProjectBuildNotificaiton>();
+
   private contexts = new Map<number, EndpointContext>();
 
   //#endregion
@@ -86,7 +88,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     const currentLead = DevMode.ProjectBuildNotificaiton.from(
       await this.get('currentLeadProject'),
     );
-    if (currentLead.isEqual(body)) {
+    if (currentLead && currentLead.isEqual(body)) {
       await this.set('currentLeadProject', null);
 
       //#region remove required builds when normal lead build
@@ -339,6 +341,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
   //#endregion
 
   //#region API/ public methods / delete from pool
+
   public async deleteFromPool(
     projectsToDelete:
       | DevMode.ProjectBuildNotificaiton
@@ -348,6 +351,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     if (!Array.isArray(projectsToDelete)) {
       projectsToDelete = [projectsToDelete];
     }
+    this.deletingNow = new Map(projectsToDelete.map(c => [c.uniqueKey, c]));
 
     const allDeleted: DevMode.ProjectBuildNotificaiton[] = [];
 
@@ -397,6 +401,8 @@ export class DevModeRepository extends TaonBaseKvRepository<{
           deletedProjects.push(f);
           allDeleted.push(f);
           return false;
+        } else {
+          this.addMessage(`no equal to ${f.uniqueKey}`);
         }
         return true;
       });
@@ -415,6 +421,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
       this.addMessage(
         `removing from pool - package "${projToDelete.nameForNpmPackage}" port ${projToDelete.port}`,
       );
+      this.deletingNow = new Map();
     }
 
     return allDeleted;
@@ -459,6 +466,9 @@ export class DevModeRepository extends TaonBaseKvRepository<{
   //#region API/ public methods / update pool
   public async updatePool(body: DevMode.ProjectBuildNotificaiton) {
     //#region @backendFunc
+    if (this.deletingNow.has(body.uniqueKey)) {
+      return;
+    }
     const frameworkVersion = body.coreContainerVersion;
     const poolOfDevModeProjectsData = (await this.get(
       'poolOfDevModeProjects',
