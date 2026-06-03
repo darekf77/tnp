@@ -1407,12 +1407,21 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
           `./${srcMainProject}/`,
         );
 
+        //#region use simpler node_modules path
+        if (line.includes(`../../../../${nodeModulesMainProject}/`)) {
+          line = line.replace(
+            `../../../../${nodeModulesMainProject}/`,
+            `./${nodeModulesMainProject}/`,
+          );
+        }
+
         if (line.includes(`../../${nodeModulesMainProject}/`)) {
           line = line.replace(
             `../../${nodeModulesMainProject}/`,
             `./${nodeModulesMainProject}/`,
           );
         }
+        //#endregion
 
         // ../../../../tmpSrcDistWebsql/lib/layout-proj-ng-related/layout-proj-ng-related.component.scss
         if (line.includes(`../../../../${tmpSrcDistWebsql + prodSuffix}/`)) {
