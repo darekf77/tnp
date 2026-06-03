@@ -198,6 +198,7 @@ export class ProductionBuild {
     //#endregion
 
     //#region detect files
+    const taskDetectingFile = Helpers.actionStarted(`Delecting files...`);
     const filesBrowser = UtilsFilesFoldersSync.getFilesFrom(
       this.project.pathFor(
         (generatingAppCode ? tmpSrcAppDist : tmpSrcDist) + prodSuffix,
@@ -228,10 +229,13 @@ export class ProductionBuild {
             followSymlinks: false,
           },
         );
+    taskDetectingFile.done();
     //#endregion
 
     //#region merge all namespaces metadata
-
+    const taskSettingGeneratedNamespacesData = Helpers.actionStarted(
+      `Setting generated namespace data...`,
+    );
     this.setGeneratedNamespacesDataForCurrentPackage(
       // tmpSourceDist,
       filesLib,
@@ -246,7 +250,11 @@ export class ProductionBuild {
       // generatingAppCode ? tmpSrcAppDistWebsql : tmpSrcDistWebsql,
       filesWebsql,
     );
+    taskSettingGeneratedNamespacesData.done();
 
+    const taskCombiningNamespaces = Helpers.actionStarted(
+      `Combining namespaces...`,
+    );
     this.combineNamespacesForCurrentPackage(
       filesLib,
       this.namespacesForPackagesLib,
@@ -265,7 +273,7 @@ export class ProductionBuild {
       websqlFromCompiledDist,
       generatingAppCode,
     );
-
+    taskCombiningNamespaces.done();
     //#endregion
 
     //#endregion
@@ -287,7 +295,7 @@ export class ProductionBuild {
       this.namespacesForPackagesWebsql,
       this.reExportsForPackagesWebsql,
     );
-    task.done()
+    task.done();
     //#endregion
 
     //#endregion
