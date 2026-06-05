@@ -41,8 +41,8 @@ export namespace DevBuildUtils {
       },
     },
     logs: {
-      routes: true,
-      db: true,
+      // routes: true,
+      // db: true,
     },
     disabledRealtime: true,
     skipWritingServerRoutes: true,
