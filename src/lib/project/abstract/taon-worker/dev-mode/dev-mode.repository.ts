@@ -26,19 +26,22 @@ import {
 } from 'tnp-core/src';
 import { BaseProjectResolver } from 'tnp-helpers/src';
 
-import { debugModeTaonLightWeightWatchMode } from '../../../../constants';
+import {
+  debugModeTaonLightWeightWatchMode,
+  ERR_MESSAGE_PROJECT_ALREADY_PART_OF_BUILD,
+} from '../../../../constants';
 import { Project } from '../../project';
 import { TaonProjectResolve } from '../../project-resolve';
 import { DevBuildController } from '../dev-build/dev-build.controller';
+import { DevBuildModels } from '../dev-build/dev-build.models';
 import { DevBuildUtils } from '../dev-build/dev-build.utils';
 
 import { DevMode } from './dev-mode.models';
 import { DevModeUtils } from './dev-mode.utils';
-import { DevBuildModels } from '../dev-build/dev-build.models';
 
 //#endregion
 
-const WRITE_LOG_TO_FILE = debugModeTaonLightWeightWatchMode;
+const WRITE_LOG_TO_FILE = true;
 
 @TaonRepository({
   className: 'DevModeRepository',
@@ -211,9 +214,10 @@ export class DevModeRepository extends TaonBaseKvRepository<{
           const leadController = await this.getDevBuildControllerForPort(
             currentLeadProject.port,
           );
-          await leadController.setLeadBuildDirtyIfRunning()!.request({
+          await leadController.cancelLeadBuildIfRunning()!.request({
             timeout: 500,
           });
+          await this.set('currentLeadProject', null);
         } catch (error) {
           this.addMessage(`Not able to set lead build as dirty`);
           throw error;
@@ -221,6 +225,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
 
         await Taon.error({
           message: `Project already part of "${currentLeadProject.nameForNpmPackage}" build`,
+          code: ERR_MESSAGE_PROJECT_ALREADY_PART_OF_BUILD,
         });
         return;
       }
@@ -258,6 +263,9 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     const buildLeader = DevMode.ProjectBuildNotificaiton.from(
       await this.get('currentLeadProject'),
     );
+    if (!buildLeader) {
+      return false;
+    }
     return buildLeader.uniqueKey === body.uniqueKey;
     //#endregion
   }
@@ -355,7 +363,9 @@ export class DevModeRepository extends TaonBaseKvRepository<{
 
     const allDeleted: DevMode.ProjectBuildNotificaiton[] = [];
 
-    this.addMessage(`to delete ${allDeleted.map(c => c.uniqueKey).join(',')}`);
+    this.addMessage(
+      `to delete: ${projectsToDelete.map(c => c.uniqueKey).join(',')}`,
+    );
 
     for (let index = 0; index < projectsToDelete.length; index++) {
       const projToDelete = projectsToDelete[index];
@@ -419,9 +429,20 @@ export class DevModeRepository extends TaonBaseKvRepository<{
       });
 
       this.addMessage(
-        `removing from pool - package "${projToDelete.nameForNpmPackage}" port ${projToDelete.port}`,
+        `removing from pool done package: "${projToDelete.nameForNpmPackage}" port ${projToDelete.port}`,
       );
-      this.deletingNow = new Map();
+      setTimeout(async () => {
+        // QUICK_FIX prevent accidental update
+        this.deletingNow = new Map();
+
+        const afterSomeTime = (await this.get('poolOfDevModeProjects')) || {
+          [projToDelete.coreContainerVersion]: [],
+        };
+
+        this.addMessage(
+          `after some time ${afterSomeTime[frameworkVersion].map(c => c.nameForNpmPackage).join(',')}`,
+        );
+      }, 500);
     }
 
     return allDeleted;
@@ -463,11 +484,76 @@ export class DevModeRepository extends TaonBaseKvRepository<{
   }
   //#endregion
 
+  //#region API/ public methods / check if project already in build pool
+  async checkIfProjectAlreadyInBuildPool(
+    body: DevMode.ProjectBuildNotificaiton,
+  ): Promise<boolean> {
+    //#region @backendFunc
+    const frameworkVersion = body.coreContainerVersion;
+    const poolOfDevModeProjectsData = (await this.get(
+      'poolOfDevModeProjects',
+    )) || {
+      [frameworkVersion]: [],
+    };
+    poolOfDevModeProjectsData[frameworkVersion] =
+      poolOfDevModeProjectsData[frameworkVersion] || [];
+
+    let poolOfDevModeProjects = poolOfDevModeProjectsData[frameworkVersion].map(
+      f => DevMode.ProjectBuildNotificaiton.from(f),
+    );
+
+    const foundedSimilarProj = poolOfDevModeProjects.find(
+      f =>
+        f.location === body.location &&
+        f.nameForNpmPackage === body.nameForNpmPackage,
+    );
+
+    if (foundedSimilarProj) {
+      this.addMessage(`Found similar project ${foundedSimilarProj.uniqueKey}`);
+      if (
+        foundedSimilarProj.port === body.port &&
+        foundedSimilarProj.buildType === body.buildType
+      ) {
+        this.addMessage(
+          `project on similar port exists ${foundedSimilarProj.uniqueKey}`,
+        );
+        return false;
+      }
+      if (
+        foundedSimilarProj.buildType === 'watch' &&
+        body.buildType === 'normal'
+      ) {
+        this.addMessage(`killing watch build ${foundedSimilarProj.uniqueKey}`);
+        await this.childKillProcess(foundedSimilarProj);
+      } else {
+        this.addMessage(`checking health ${foundedSimilarProj.uniqueKey}`);
+        const healtyBuild =
+          await this.childQuickHealthCheck(foundedSimilarProj);
+        if (healtyBuild) {
+          this.addMessage(`healthy ${foundedSimilarProj.uniqueKey}`);
+          return true;
+        }
+        this.addMessage(`not healthy ${foundedSimilarProj.uniqueKey}`);
+      }
+
+      await this.deleteFromPool(foundedSimilarProj);
+    }
+
+    return false;
+    //#endregion
+  }
+  //#endregion
+
   //#region API/ public methods / update pool
-  public async updatePool(body: DevMode.ProjectBuildNotificaiton) {
+  public async updatePool(
+    body: DevMode.ProjectBuildNotificaiton,
+  ): Promise<DevMode.ProjectBuildNotificaiton[]> {
     //#region @backendFunc
     if (this.deletingNow.has(body.uniqueKey)) {
-      return;
+      this.addMessage(
+        `Not updating (because in deletion process) ${body.uniqueKey}`,
+      );
+      return [];
     }
     const frameworkVersion = body.coreContainerVersion;
     const poolOfDevModeProjectsData = (await this.get(
@@ -546,16 +632,25 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     );
 
     this.addMessage(`Health check in ${project.nameForNpmPackage}`);
-    let maxTrys = 3;
-    do {
-      try {
-        await devBuildController.healthCheck().request!({
-          timeout: 500,
-        });
-        return true;
-      } catch (error) {}
-    } while (--maxTrys > 0);
-    return false;
+    return await DevModeUtils.healthCheck(devBuildController);
+    //#endregion
+  }
+  //#endregion
+
+  //#region API / private methods / quick health check
+  private async childKillProcess(project: DevMode.ProjectBuildNotificaiton) {
+    //#region @backendFunc
+
+    const devBuildController = await this.getDevBuildControllerForPort(
+      project.port,
+    );
+
+    try {
+      await devBuildController.kill().request!();
+      this.addMessage(`kill done ${project.uniqueKey}`);
+    } catch (error) {
+      this.addMessage(`not able to kill child ${project.uniqueKey}`);
+    }
     //#endregion
   }
   //#endregion
@@ -577,7 +672,11 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     //#region @backendFunc
     const data = await this.get('poolOfDevModeProjects');
     // console.log({ data });
-    return data[frameworkVersion];
+    const arr = data[frameworkVersion] || [];
+    this.addMessage(
+      `Sending (${arr.length}) ${arr.map(c => c.nameForNpmPackage).join(',')}`,
+    );
+    return arr;
     //#endregion
   }
   //#endregion
@@ -592,7 +691,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
   pathToLog = crossPlatformPath([
     UtilsOs.getRealHomeDir(),
     `.${taonPackageName}`,
-    `log-files-for/deb-mode-worker.json`,
+    `log-files-for/builds-worker.json`,
   ]);
   //#endregion
 
@@ -611,11 +710,11 @@ export class DevModeRepository extends TaonBaseKvRepository<{
   //#region API /  private methods / add message
   private addMessage(msg: string): void {
     //#region @backendFunc
-    if (debugModeTaonLightWeightWatchMode) {
-      this.logMessages.push(msg);
-      this.logMessages = this.logMessages.slice(-100);
-      this.debouceWriteLog();
-    }
+
+    this.logMessages.push(msg);
+    this.logMessages = this.logMessages.slice(-100);
+    this.debouceWriteLog();
+
     //#endregion
   }
   //#endregion
@@ -693,6 +792,8 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     //#endregion
   }
   //#endregion
+
+  //#region API / public methods / update isomorphic pacakges
 
   //#region API / init _
   async _() {

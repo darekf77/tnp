@@ -418,6 +418,24 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
 
   //#endregion
 
+  //#region fields & getters / all statuses ok
+  public get allStatusesOK(): boolean {
+    const buildstatus = this.buildStatusInfo;
+
+    return (
+      buildstatus['backend-cjs'] ===
+        DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS &&
+      buildstatus['backend-esm'] ===
+        DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS &&
+      buildstatus['backend-js-maps'] ===
+        DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS &&
+      buildstatus['browser'] ===
+        DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS &&
+      buildstatus['websql'] === DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS
+    );
+  }
+  //#endregion
+
   //#region fields & getters / build status info
   public get buildStatusInfo(): DevMode.BuildStatusInfo {
     return {
@@ -462,6 +480,15 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
   }
   //#endregion
 
+  async triggerCopymanager(): Promise<void> {
+    await this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.runTask(
+      {
+        taskName: 'copyto manger leader build',
+        watch: false,
+      },
+    );
+  }
+
   //#region public method / update action
   /**
    * errors or non-watch mode needs to for instant predictable updates
@@ -472,6 +499,10 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
       return;
     }
     this.mergeStatus(info);
+
+    if (this.allStatusesOK) {
+      await this.triggerCopymanager();
+    }
     try {
       await this.project.ins.devBuildRepository.updatePool({
         buildStatusInfo: this.buildStatusInfo,
@@ -556,6 +587,7 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
     //#endregion
 
     if (envOptions.build.watch) {
+      // console.log('STARING WATCH BUILD ');
       for (const watcherType of CoreModels.BuildWatcherTypeArr) {
         handleCodeChanges(watcherType);
       }

@@ -10,6 +10,7 @@ import {
   tnpPackageName,
   urlRepoTaonContainers,
   Utils,
+  UtilsWaitNotifier,
 } from 'tnp-core/src';
 import { LibTypeArr } from 'tnp-core/src';
 import {
@@ -516,12 +517,34 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
   public readonly currentActionPort: number;
 
+  public readonly packagesFromWorker = new Map<
+    CoreModels.FrameworkVersion,
+    string[]
+  >();
+
+  /**
+   * TODO @LAST
+   * I am not building different pacakges version not - BUT MAYBE IN FUTURE
+   */
+  public setFromWorker(
+    packagesFromWorker: string[],
+    frameworkVersion: CoreModels.FrameworkVersion,
+  ): void {
+    // console.log({ frameworkVersion, packagesFromWorker });
+    this.packagesFromWorker.set(frameworkVersion, packagesFromWorker);
+  }
+
+  public notifierIsomorphicPackages = UtilsWaitNotifier.getNotifier({
+    // max 3 minutes to finish build part
+    exitTimeoutMs: 30 * 1000,
+  });
+
   async notifyMainWorkerThatDevMode(
     project: Project,
     envOptions: EnvOptions,
   ): Promise<void> {
     //#region @backendFunc
-    const obj = await DevBuildUtils.startAcionWorker();
+    const obj = await DevBuildUtils.startAcionWorker(project);
     Object.assign(this, obj);
     UtilsOs.safeExitProgramCleanUp(obj.exitProgramCleaningFn);
 
@@ -531,6 +554,18 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       port: obj.currentActionPort,
     });
     this.devBuildRepository.setEnvOptions(envOptions);
+
+    const alreadyINPool =
+      await this.devBuildRepository.checkIfProjectAlreadyInBuildPool();
+
+    if (alreadyINPool) {
+      Helpers.error(
+        `Build already in progress for ${this.devBuildRepository.dataToRequest().uniqueKey}`,
+        false,
+        true,
+      );
+    }
+
     await project.taonBuildObserver.updateAction({
       // isomorphic: DevMode.ProjectBuildStatus.BUILDING,
       // 'copy-manager': DevMode.ProjectBuildStatus.BUILDING,

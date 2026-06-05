@@ -43,7 +43,13 @@ export class Vscode extends BaseVscodeHelpers<Project> {
   async init(options?: { skipHiddingTempFiles?: boolean }): Promise<void> {
     options = options || {};
 
-    await this.saveLaunchJson();
+    await this.project.packagesRecognition.registerUpdate(async packages => {
+      await this.saveLaunchJson(
+        this.getOutFiles(packages),
+        this.getSourceMapPathOverrides(packages),
+      );
+    });
+
     this.saveTasksJson();
 
     // modyfing settings.json
@@ -261,7 +267,10 @@ export class Vscode extends BaseVscodeHelpers<Project> {
   //#endregion
 
   //#region save launch.json
-  public async saveLaunchJson(): Promise<void> {
+  public async saveLaunchJson(
+    outFiles: any[],
+    sourceMapPathOverrides: any,
+  ): Promise<void> {
     //#region @backendFunc
     if (!this.project.framework.isStandaloneProject) {
       return;
@@ -294,10 +303,10 @@ export class Vscode extends BaseVscodeHelpers<Project> {
         args: [
           `--extensionDevelopmentPath=\${workspaceFolder}/${vscodeProjDevPath}`,
         ],
-        sourceMapPathOverrides: this.sourceMapPathOverrides,
+        sourceMapPathOverrides,
         outFiles: [
           `\${workspaceFolder}/${vscodeProjDevPath}/out/**/*.js`,
-          ...this.outFiles.slice(1), // skip dist
+          ...outFiles.slice(1), // skip dist
         ],
         preLaunchTask: this.vscodePluginDevPreLaunchTask.label,
       },
@@ -326,8 +335,8 @@ export class Vscode extends BaseVscodeHelpers<Project> {
       autoAttachChildProcesses: false, // TODO probably no need for now
       // port: debuggingPort,
       skipFiles: ['<node_internals>/**'],
-      outFiles: this.outFiles,
-      sourceMapPathOverrides: this.sourceMapPathOverrides,
+      outFiles,
+      sourceMapPathOverrides,
     });
     //#endregion
 
@@ -350,8 +359,8 @@ export class Vscode extends BaseVscodeHelpers<Project> {
           args: ['run', '--environment', 'node', '--testTimeout', '60000'],
           console: 'integratedTerminal',
           skipFiles: ['<node_internals>/**'],
-          outFiles: this.outFiles,
-          sourceMapPathOverrides: this.sourceMapPathOverrides,
+          outFiles,
+          sourceMapPathOverrides,
           smartStep: true,
         },
 
@@ -370,8 +379,8 @@ export class Vscode extends BaseVscodeHelpers<Project> {
           ],
           console: 'integratedTerminal',
           skipFiles: ['<node_internals>/**'],
-          outFiles: this.outFiles,
-          sourceMapPathOverrides: this.sourceMapPathOverrides,
+          outFiles,
+          sourceMapPathOverrides,
           smartStep: true,
         },
       ];
@@ -402,8 +411,8 @@ export class Vscode extends BaseVscodeHelpers<Project> {
             : []),
           // `port=${backendPort}`
         ],
-        outFiles: this.outFiles,
-        sourceMapPathOverrides: this.sourceMapPathOverrides,
+        outFiles,
+        sourceMapPathOverrides,
         // "outFiles": ["${workspaceFolder}/dist/**/*.js"], becouse of this debugging inside node_moudles
         // with compy manager created moduels does not work..
         runtimeArgs: this.__vscodeLaunchRuntimeArgs,
@@ -452,8 +461,8 @@ export class Vscode extends BaseVscodeHelpers<Project> {
           '.',
           `--remote-debugging-port=${remoteDebugElectronPort}`, // 9876
         ],
-        outFiles: this.outFiles,
-        sourceMapPathOverrides: this.sourceMapPathOverrides,
+        outFiles,
+        sourceMapPathOverrides,
         windows: {
           runtimeExecutable:
             '${workspaceFolder}/node_modules/.bin/electron.cmd',
@@ -577,42 +586,40 @@ export class Vscode extends BaseVscodeHelpers<Project> {
    * for debugging node_modules
    * get out files for debugging
    */
-  get outFiles() {
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  getOutFiles(allIsomorphicPackagesFromMemory: string[]) {
     //#region @backendFunc
     return [
       `\${workspaceFolder}/${distMainProject}/**/*.js`,
       // '!**/node_modules/**',
       // TODO this allow debugging thir party modules.. but it is not reliable
-      ...Utils.uniqArray(
-        this.project.packagesRecognition.allIsomorphicPackagesFromMemory
-          .filter(f => this.project.name !== f) // TODO or other names of this project
-          .map(packageName => {
-            const p = this.project.pathFor([
-              nodeModulesMainProject,
-              packageName,
-              sourceLinkInNodeModules,
-            ]);
-            return Helpers.isExistedSymlink(p)
-              ? `${dirnameFromSourceToProject(p)}/${distMainProject}/${whatToLinkFromCoreDeepPart}/**/*.js`.replace(
-                  /\/\//g,
-                  '/',
-                )
-              : void 0;
-          })
-          .filter(f => !!f),
-      ),
+
+      ...allIsomorphicPackagesFromMemory
+        .filter(f => this.project.name !== f) // TODO or other names of this project
+        .map(packageName => {
+          const p = this.project.pathFor([
+            nodeModulesMainProject,
+            packageName,
+            sourceLinkInNodeModules,
+          ]);
+          return Helpers.isExistedSymlink(p)
+            ? `${dirnameFromSourceToProject(p)}/${distMainProject}/${whatToLinkFromCoreDeepPart}/**/*.js`.replace(
+                /\/\//g,
+                '/',
+              )
+            : void 0;
+        })
+        .filter(f => !!f),
     ];
     //#endregion
   }
   //#endregion
 
   //#region get source map path overrides
-  get sourceMapPathOverrides() {
+  getSourceMapPathOverrides(allIsomorphicPackagesFromMemory: string[]) {
     //#region @backendFunc
     const sourceMapPathOverrides = {};
-    Utils.uniqArray(
-      this.project.packagesRecognition.allIsomorphicPackagesFromMemory,
-    )
+    allIsomorphicPackagesFromMemory
       .filter(f => this.project.name !== f) // TODO or other names of this project
       .forEach(packageName => {
         const p = this.project.pathFor([

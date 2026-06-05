@@ -192,7 +192,6 @@ export class ArtifactManager {
   //#region public methods / init
   public async init(initOptions: EnvOptions): Promise<EnvOptions> {
     //#region @backendFunc
-
     initOptions.release.fixStaticPagesCustomRepoUrl(this.project);
 
     //#region prevent not requested framework version
@@ -389,9 +388,10 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
     this.project.taonJson.saveToDisk('init');
     this.project.environmentConfig.updateGeneratedValues(initOptions);
 
-    this.project.packagesRecognition.addIsomorphicPackagesToFile([
+    await this.project.packagesRecognition.addIsomorphicPackagesToFile([
       this.project.nameForNpmPackage,
     ]);
+
     if (this.project.framework.isStandaloneProject) {
       await this.project.artifactsManager.artifact.angularNodeApp.appHostsRecreateHelper.runTask(
         {

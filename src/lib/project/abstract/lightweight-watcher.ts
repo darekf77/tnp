@@ -98,6 +98,7 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
     if (buildType === 'backend-watcher') {
       return this.tmpSourceRebuildForBackendObs;
     }
+
     if (buildType === 'browser-watcher') {
       return this.tmpSourceRebuildForBrowserObs;
     }

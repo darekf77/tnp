@@ -9,7 +9,12 @@ import {
   UtilsTerminal,
 } from 'tnp-core/src';
 import { UtilsCliClassMethod, UtilsOs } from 'tnp-core/src';
-import { BaseCLiWorkerStartMode, Helpers, HelpersTaon, UtilsZip } from 'tnp-helpers/src';
+import {
+  BaseCLiWorkerStartMode,
+  Helpers,
+  HelpersTaon,
+  UtilsZip,
+} from 'tnp-helpers/src';
 import { BaseCLiWorkerStartParams } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../options';
@@ -232,13 +237,13 @@ export class $Cloud extends BaseCli {
   }
   //#endregion
 
-  //#region devmode
-  @UtilsCliClassMethod.decoratorMethod('devmode')
-  async devmode(): Promise<void> {
+  //#region builds
+  @UtilsCliClassMethod.decoratorMethod('builds')
+  async builds(): Promise<void> {
     // UtilsTerminal.drawBigText('Deployments');
     // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
     const { Project } = await import('../abstract/project');
-    await Project.ins.taonProjectsWorker.devModeWorker.cliStartProcedure({
+    await Project.ins.taonProjectsWorker.buildsWorker.cliStartProcedure({
       methodOptions: {
         cliParams: {
           ...this.params,
@@ -247,6 +252,26 @@ export class $Cloud extends BaseCli {
         calledFrom: 'cli-CLOUD/$Cloud.devmode',
       },
     });
+  }
+  //#endregion
+
+  //#region builds
+  @UtilsCliClassMethod.decoratorMethod('isomorphicPackages')
+  async isomorphicPackages(): Promise<void> {
+    // UtilsTerminal.drawBigText('Deployments');
+    // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
+    const { Project } = await import('../abstract/project');
+    await Project.ins.taonProjectsWorker.isomorphicPackagesWorker.cliStartProcedure(
+      {
+        methodOptions: {
+          cliParams: {
+            ...this.params,
+            mode: BaseCLiWorkerStartMode.IN_CURRENT_PROCESS,
+          },
+          calledFrom: 'cli-CLOUD/$Cloud.devmode',
+        },
+      },
+    );
   }
   //#endregion
 

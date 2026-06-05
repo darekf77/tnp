@@ -245,8 +245,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   //#region build partial
   async buildPartial(
     buildOptions: EnvOptions,
-    opt?: {
-      normalBuildBeforeProd: boolean;
+    optionsBuildPartial?: {
+      normalBuildBeforeProd?: boolean;
     },
   ): Promise<{
     tmpProjNpmLibraryInNodeModulesAbsPath: string;
@@ -270,12 +270,18 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     buildOptions = await this.project.artifactsManager.init(buildOptions);
 
     if (this.project.watcher.isTaonLightWatcherMode) {
-      await this.project.ins.notifyMainWorkerThatDevMode(
-        this.project,
-        buildOptions,
-      );
+      if (!optionsBuildPartial || !optionsBuildPartial.normalBuildBeforeProd) {
+        Helpers.info(`Creating server for project build.`);
+        await this.project.assignActionPort();
+        await this.project.ins.notifyMainWorkerThatDevMode(
+          this.project,
+          buildOptions,
+        );
 
-      this.taonBuildObserver.start(buildOptions);
+        await this.project.packagesRecognition.startFromServer();
+
+        this.taonBuildObserver.start(buildOptions);
+      }
     }
 
     //#region handle prod build 2 sequences
@@ -415,7 +421,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     ${
       buildOptions.build.prod
         ? '[PROD]'
-        : `[DEV${opt?.normalBuildBeforeProd ? '-BEFORE-PROD' : ''}]`
+        : `[DEV${optionsBuildPartial?.normalBuildBeforeProd ? '-BEFORE-PROD' : ''}]`
     } Building lib for base href: ${
       !_.isUndefined(buildOptions.build.baseHref)
         ? `'` + buildOptions.build.baseHref + `'`
@@ -456,6 +462,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       const watchResolveString = COMPILATION_COMPLETE_LIB_NG_BUILD;
 
       const runNgBuild = async () => {
+        const taskBrowser = Helpers.actionStarted('ng build browser');
         await proxyProject.execute(commandForLibraryBuild, {
           uniqueName: 'ng build browser',
           prefix: true,
@@ -467,6 +474,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
             this.project.watcher.rebuildTriggerWatcher('browser'),
           ...outputOptionsNormal,
         });
+        taskBrowser.done();
+        const taskWebsql = Helpers.actionStarted('ng build websql');
         await proxyProjectWebsql.execute(commandForLibraryBuild, {
           uniqueName: 'ng build websql',
           prefix: true,
@@ -477,6 +486,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           rebuildOnChange: this.project.watcher.rebuildTriggerWatcher('websql'),
           ...outputOptionsWebsql,
         });
+        taskWebsql.done();
       };
       //#endregion
 
@@ -558,7 +568,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#endregion
 
     //#region start copy manager
-    if (!buildOptions.copyToManager.skip && !opt?.normalBuildBeforeProd) {
+    this.copyNpmDistLibManager.init(buildOptions);
+
+    if (
+      !buildOptions.copyToManager.skip &&
+      !optionsBuildPartial?.normalBuildBeforeProd
+    ) {
       if (_.isFunction(buildOptions.copyToManager.beforeCopyHook)) {
         await buildOptions.copyToManager.beforeCopyHook();
       }
@@ -678,7 +693,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
         //#endregion
       }
-      this.copyNpmDistLibManager.init(buildOptions);
+
       // if (
       //   buildOptions.build.watch &&
       //   this.project.watcher.isTaonLightWatcherMode
@@ -689,16 +704,19 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       //     watch: false,
       //   });
       // } else {
-      await this.copyNpmDistLibManager.runTask({
-        taskName: 'copyto manger',
-        watch: buildOptions.build.watch,
-      });
+      if (!this.project.watcher.isTaonLightWatcherMode) {
+        await this.copyNpmDistLibManager.runTask({
+          taskName: 'copyto manger',
+          watch: buildOptions.build.watch,
+        });
+      }
+
       // }
     }
     //#endregion
 
     //#region show ending info
-    if (!opt?.normalBuildBeforeProd) {
+    if (!optionsBuildPartial?.normalBuildBeforeProd) {
       this.showMesageWhenBuildLibDone(buildOptions);
     }
 
@@ -736,7 +754,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         });
       }
     }
-    this.taonBuildObserver.leader.firstBuildDoneAndLeadBuildIsAllowed();
+    if (!buildOptions.release.releaseType) {
+      this.taonBuildObserver.leader.firstBuildDoneAndLeadBuildIsAllowed();
+    }
     //#endregion
 
     return {

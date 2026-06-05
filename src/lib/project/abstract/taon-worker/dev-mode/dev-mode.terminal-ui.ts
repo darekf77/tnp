@@ -5,8 +5,9 @@ import {
   BaseWorkerTerminalActionReturnType,
 } from 'tnp-helpers/src';
 
-import { DevModeWorker } from './dev-mode.worker';
 import { DevMode } from './dev-mode.models';
+import { DevModeUtils } from './dev-mode.utils';
+import { DevModeWorker } from './dev-mode.worker';
 //#endregion
 
 export class DevModeTerminalUI extends BaseCliWorkerTerminalUI<DevModeWorker> {
@@ -102,7 +103,7 @@ export class DevModeTerminalUI extends BaseCliWorkerTerminalUI<DevModeWorker> {
 
       //#region trigger rebuild
       getStuffFromBackend: {
-        name: 'Trigger rebuild of watch build',
+        name: 'Get list of builds',
         action: async () => {
           this.worker.getRemoteControllerFor;
           const devModeWorker = await this.worker.getRemoteControllerFor({
@@ -131,9 +132,8 @@ export class DevModeTerminalUI extends BaseCliWorkerTerminalUI<DevModeWorker> {
           });
 
           const listOfPool = (
-            await devModeWorker.getAllDevModeProjects(
-              currentFrameworkVersion,
-            ).request!()
+            await devModeWorker.getAllDevModeProjects(currentFrameworkVersion)
+              .request!()
           ).body.json.map(f => DevMode.ProjectBuildNotificaiton.from(f));
 
           if (listOfPool.length === 0) {
@@ -163,6 +163,9 @@ export class DevModeTerminalUI extends BaseCliWorkerTerminalUI<DevModeWorker> {
               displayDetails: {
                 name: 'Display details',
               },
+              healthCheck: {
+                name: 'Health check',
+              },
               back: {
                 name: 'Back to previous menu',
               },
@@ -176,18 +179,28 @@ export class DevModeTerminalUI extends BaseCliWorkerTerminalUI<DevModeWorker> {
             });
 
             if (selectedAction === 'displayDetails') {
+              //#region display details
               const devBuildController =
                 await devModeWorker.devModeRepository.getDevBuildControllerForPort(
                   currentActionBuild.port,
                 );
 
               Helpers.info(
-                `Details of build (port=${currentActionBuild.port}})${currentActionBuild.location}`,
+                `Details of build (port=${currentActionBuild.port}})${currentActionBuild.location}
+
+                loading...
+                `,
               );
               try {
                 const data =
-                  await devBuildController.getStatusInfo().request!();
-                console.table(data.body.json);
+                  await devBuildController.getProjectInfo().request!();
+
+                const projBuild = data.body.json;
+                console.table(`Build type: ${projBuild.buildType}`);
+                console.table(
+                  `Dependencies: ${(projBuild.devModeDependenciesNames || []).join(',')}`,
+                );
+                console.table(projBuild.buildStatusInfo);
               } catch (error) {
                 config.frameworkName === 'tnp' && console.log(error);
                 await UtilsTerminal.pressAnyKeyToContinueAsync({
@@ -195,6 +208,32 @@ export class DevModeTerminalUI extends BaseCliWorkerTerminalUI<DevModeWorker> {
                     'Not able to perform action.. Press any key to continue.',
                 });
               }
+              //#endregion
+            }
+
+            if (selectedAction === 'healthCheck') {
+              //#region display details
+              const devBuildController =
+                await devModeWorker.devModeRepository.getDevBuildControllerForPort(
+                  currentActionBuild.port,
+                );
+
+              Helpers.info(
+                `Checking health of build (port=${currentActionBuild.port}})${currentActionBuild.location}`,
+              );
+              try {
+                await DevModeUtils.healthCheck(devBuildController);
+                console.log('BUILD IS OK');
+              } catch (error) {
+                config.frameworkName === 'tnp' && console.log(error);
+
+                console.log('BUILD IS NOT OK');
+                await UtilsTerminal.pressAnyKeyToContinueAsync({
+                  message:
+                    'Not able to perform action.. Press any key to continue.',
+                });
+              }
+              //#endregion
             }
           }
 

@@ -102,6 +102,20 @@ export class DevModeController extends TaonBaseCliWorkerController {
   }
   //#endregion
 
+  //#region API / update dev mode pool
+  @POST()
+  checkIfProjectAlreadyInBuildPool(
+    @Body() body: DevMode.ProjectBuildNotificaiton,
+  ): Taon.Response<boolean> {
+    //#region @backendFunc
+    return async (req, res) => {
+      body = DevMode.ProjectBuildNotificaiton.from(body);
+      return this.devModeRepository.checkIfProjectAlreadyInBuildPool(body);
+    };
+    //#endregion
+  }
+  //#endregion
+
   //#region API / delete from dev mode pool
   @POST()
   deleteFromPool(

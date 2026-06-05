@@ -1,6 +1,12 @@
 //#region imports
 import { Observable, Subject } from 'rxjs';
-import { chokidar, config, dotTaonFolder, LibTypeEnum } from 'tnp-core/src';
+import {
+  chokidar,
+  config,
+  dotTaonFolder,
+  LibTypeEnum,
+  Utils,
+} from 'tnp-core/src';
 import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
@@ -39,6 +45,7 @@ import type { Framework } from './framework';
 import { Git } from './git';
 import { IgnoreHide } from './ignore-hide';
 import { LibraryBuild } from './library-build';
+import { LightWeightWatcher } from './lightweight-watcher';
 import { LinkedProjects } from './linked-projects';
 import { Linter } from './linter';
 import { NodeModules } from './node-modules';
@@ -50,9 +57,10 @@ import { QuickFixes } from './quick-fixes';
 import { Refactor } from './refactor';
 import type { ReleaseProcess } from './release-process';
 import { SubProject } from './sub-project';
+import { DevBuildModels } from './taon-worker/dev-build/dev-build.models';
+import { DevMode } from './taon-worker/dev-mode/dev-mode.models';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
-import { LightWeightWatcher } from './lightweight-watcher';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -645,6 +653,38 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     return this.name;
   }
   //#endregion
+
+  //#region private method / data to request
+  public dataToRequest(): DevMode.ProjectBuildNotificaiton {
+    //#region @backendFunc
+    const project: Project = this;
+    const dataToRequest = DevMode.ProjectBuildNotificaiton.from({
+      name: project.name,
+      nameForNpmPackage: project.nameForNpmPackage,
+      location: project.location,
+      port: this.currentActionPort,
+      devModeDependenciesNames: project.taonJson.devModeDependenciesForNpmLib,
+      coreContainerVersion: project.taonJson.frameworkVersion,
+    });
+
+    return dataToRequest;
+    //#endregion
+  }
+  //#endregion
+
+  public readonly currentActionPort: number;
+
+  async assignActionPort(): Promise<void> {
+    if (!this.watcher.isTaonLightWatcherMode) {
+      return;
+    }
+    const currentActionPort = await Utils.getFreePort({
+      startFrom: DevBuildModels.START_PORT_BUID_PROCESS,
+    });
+
+    //@ts-expect-error
+    this.currentActionPort = currentActionPort;
+  }
 
   //#region name for npm package
   /**

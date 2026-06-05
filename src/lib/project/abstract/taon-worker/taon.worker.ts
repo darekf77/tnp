@@ -21,6 +21,7 @@ import { DeploymentsWorker } from './deployments/deployments.worker';
 import { DevBuildController } from './dev-build/dev-build.controller';
 import { DevBuildUtils } from './dev-build/dev-build.utils';
 import { DevModeWorker } from './dev-mode/dev-mode.worker';
+import { IsomorphicPackagesWorker } from './isomorphic-packages/isomorphic-packages.worker';
 import { TaonTerminalUI } from './taon-terminal-ui';
 import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
@@ -47,7 +48,9 @@ export class TaonProjectsWorker extends BaseCliWorker<
 
   public readonly traefikProvider: TraefikProvider;
 
-  public readonly devModeWorker: DevModeWorker;
+  public readonly buildsWorker: DevModeWorker;
+
+  public readonly isomorphicPackagesWorker: IsomorphicPackagesWorker;
   //#endregion
 
   //#region constructor
@@ -88,9 +91,14 @@ export class TaonProjectsWorker extends BaseCliWorker<
       () => `${config.frameworkName} cloud:processes ${skipCoreCheck}`,
     );
 
-    this.devModeWorker = new DevModeWorker(
-      'taon-project-dev-mode-worker',
-      () => `${config.frameworkName} cloud:devmode ${skipCoreCheck}`,
+    this.buildsWorker = new DevModeWorker(
+      'taon-project-builds-worker',
+      () => `${config.frameworkName} cloud:builds ${skipCoreCheck}`,
+    );
+
+    this.isomorphicPackagesWorker = new IsomorphicPackagesWorker(
+      'taon-project-isomorphic-pacakges-worker',
+      () => `${config.frameworkName} cloud:isomorphicPackages ${skipCoreCheck}`,
     );
 
     // this.deploymentsWorker = new DeploymentsWorker(
@@ -127,8 +135,13 @@ export class TaonProjectsWorker extends BaseCliWorker<
       this.instancesWorker as any,
     );
     this.dependencyWorkers.set(
-      this.devModeWorker.serviceID,
-      this.devModeWorker as any,
+      this.buildsWorker.serviceID,
+      this.buildsWorker as any,
+    );
+
+    this.dependencyWorkers.set(
+      this.isomorphicPackagesWorker.serviceID,
+      this.isomorphicPackagesWorker as any,
     );
 
     //#endregion
@@ -207,8 +220,18 @@ export class TaonProjectsWorker extends BaseCliWorker<
       },
     });
 
-    Helpers.taskStarted(`Waiting for taon dev mode manager to be started...`);
-    await this.devModeWorker.cliStartProcedure({
+    Helpers.taskStarted(`Waiting for taon builds manager to be started...`);
+    await this.buildsWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
+        },
+        calledFrom: 'taon development worker start',
+      },
+    });
+
+    Helpers.taskStarted(`Waiting for taon packages manager to be started...`);
+    await this.isomorphicPackagesWorker.cliStartProcedure({
       methodOptions: {
         cliParams: {
           mode: BaseCLiWorkerStartMode.CHILD_PROCESS,

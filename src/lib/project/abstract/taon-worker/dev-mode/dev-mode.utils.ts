@@ -1,5 +1,7 @@
 import { UtilsProjects } from 'tnp-core/src';
 
+import type { DevBuildController } from '../dev-build/dev-build.controller';
+
 import { DevMode } from './dev-mode.models';
 
 export namespace DevModeUtils {
@@ -15,5 +17,22 @@ export namespace DevModeUtils {
       onlyAffectedByProject,
     });
     return allProjects;
+  };
+
+  export const healthCheck = async (
+    devBuildController: DevBuildController,
+  ): Promise<boolean> => {
+    //#region @backendFunc
+    let maxTrys = 3;
+    do {
+      try {
+        await devBuildController.healthCheck().request!({
+          timeout: 500,
+        });
+        return true;
+      } catch (error) {}
+    } while (--maxTrys > 0);
+    return false;
+    //#endregion
   };
 }

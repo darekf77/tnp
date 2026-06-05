@@ -112,17 +112,13 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
     initialParams?: {},
   ): Promise<void> {
     //#region @backendFunc
-    Helpers.logInfo(
-      `IndexAutogenProvider for project: ${this.project.genericName}`,
-    );
+    const task = Helpers.actionStarted(`auto index ts regeneration`);
     // console.log(`Generating index autogen file...`, { absolteFilesPathes });
     for (const absFilePath of absolteFilesPathes) {
       this.processFile(absFilePath);
     }
     this.writeIndexFile();
-    Helpers.taskDone(
-      `IndexAutogenProvider for project: ${this.project.genericName}`,
-    );
+    task.done();
     //#endregion
   }
 }

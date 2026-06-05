@@ -41,20 +41,18 @@ export namespace DevBuildUtils {
       },
     },
     logs: {
-      // routes: true,
-      // db: true,
+      routes: true,
+      db: true,
     },
     disabledRealtime: true,
     skipWritingServerRoutes: true,
   }));
 
   const contexts = new Map<number, EndpointContext>();
-  export const startAcionWorker = async () => {
-    //#region @backendFunc
 
-    const currentActionPort = await Utils.getFreePort({
-      startFrom: DevBuildModels.START_PORT_BUID_PROCESS,
-    });
+  export const startAcionWorker = async (project: Project) => {
+    //#region @backendFunc
+    const currentActionPort = project.currentActionPort;
     const workerMainContext = context.cloneAsNormal({
       overrideHost: `http://localhost:${currentActionPort}`,
     });

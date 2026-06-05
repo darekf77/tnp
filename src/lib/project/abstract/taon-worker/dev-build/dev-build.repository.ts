@@ -7,7 +7,7 @@ import {
   Symbols,
 } from 'taon/src';
 import { Raw } from 'taon-typeorm/src';
-import { _ } from 'tnp-core/src';
+import { _, Helpers } from 'tnp-core/src';
 
 import { EnvOptions } from '../../../../options';
 import { Project } from '../../project';
@@ -69,13 +69,11 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
   private async getMainWorkerController(): Promise<DevModeController> {
     //#region @backendFunc
     const devModeController =
-      await Project.ins.taonProjectsWorker.devModeWorker.getRemoteControllerFor(
-        {
-          methodOptions: {
-            calledFrom: 'dev build repository',
-          },
+      await Project.ins.taonProjectsWorker.buildsWorker.getRemoteControllerFor({
+        methodOptions: {
+          calledFrom: 'dev build repository',
         },
-      );
+      });
     return devModeController;
     //#endregion
   }
@@ -85,18 +83,33 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
   //#region public methods / update pool
   async updatePool(opt: {
     buildStatusInfo: DevMode.BuildStatusInfo;
-  }): Promise<DevMode.ProjectBuildNotificaiton[]> {
+  }): Promise<void> {
     //#region @backendFunc
     const devModeControllerMainWorker = await this.getMainWorkerController();
     const dataToRequest = this.dataToRequest(opt);
 
-    const data =
-      await devModeControllerMainWorker.updatePool(dataToRequest).request!();
-
-    return data.body.json;
+    await devModeControllerMainWorker.updatePool(dataToRequest).request!();
     //#endregion
   }
-  //#endregion
+  //#endregion\
+
+  async checkIfProjectAlreadyInBuildPool(): Promise<boolean> {
+    //#region @backendFunc
+    const devModeControllerMainWorker = await this.getMainWorkerController();
+    const dataToRequest = this.dataToRequest();
+
+    Helpers.logInfo(
+      `Checking if already in progress ${dataToRequest.uniqueKey}`,
+    );
+
+    const data =
+      await devModeControllerMainWorker.checkIfProjectAlreadyInBuildPool(
+        dataToRequest,
+      ).request!();
+
+    return data.body.booleanValue;
+    //#endregion
+  }
 
   //#region public methods / delete from pool
   public async deleteFromPool(

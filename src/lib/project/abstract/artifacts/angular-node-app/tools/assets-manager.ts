@@ -55,7 +55,7 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
   //#region constructor
   constructor(project: Project) {
     super(project, {
-      taskName: `AssetsManagerFor${_.kebabCase(project.location)}`,
+      taskName: `AssetsManager for ${_.kebabCase(project.nameForNpmPackage)}`,
       followSymlinks: true,
       folderPath: [project.pathFor(tmpAllAssetsLinked)],
     });
@@ -178,14 +178,14 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
     if (asyncEvent) {
       // console.log('Async event triggered, skipping action', changeOfFiles);
     } else {
-      this.linkAssetToJoindedProject();
+      await this.linkAssetToJoindedProject();
     }
     this.copyAssetsToTempFolders(changeOfFiles, asyncEvent);
   }
   //#endregion
 
   //#region link joinded assets
-  linkAssetToJoindedProject(): void {
+  async linkAssetToJoindedProject(): Promise<void> {
     //#region @backendFunc
     if (!Helpers.exists(this.tmpAllAssetsLinkedInCoreContainerAbsPath)) {
       Helpers.mkdirp(this.tmpAllAssetsLinkedInCoreContainerAbsPath);
@@ -200,9 +200,18 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
     );
 
     const coreContainerPath = this.project.framework.coreContainer.location;
-    this.project.packagesRecognition.allIsomorphicPackagesFromMemory.map(
-      pkgName => {
-        this;
+
+    await this.project.packagesRecognition.registerUpdate(packages => {
+      packages.map(pkgName => {
+        const dest = crossPlatformPath([
+          this.tmpAllAssetsLinkedInCoreContainerAbsPath,
+          pkgName,
+          'assets/shared',
+        ]);
+        try {
+          fse.unlinkSync(dest);
+        } catch (error) {}
+
         Helpers.createSymLink(
           crossPlatformPath([
             coreContainerPath,
@@ -211,17 +220,14 @@ export class AssetsManager extends BaseDebounceCompilerForProject<
             assetsFromNpmPackage,
             sharedFromAssets,
           ]),
-          crossPlatformPath([
-            this.tmpAllAssetsLinkedInCoreContainerAbsPath,
-            pkgName,
-            'assets/shared',
-          ]),
+          dest,
           {
             continueWhenExistedFolderDoesntExists: true,
           },
         );
-      },
-    );
+      });
+    });
+
     //#endregion
   }
   //#endregion

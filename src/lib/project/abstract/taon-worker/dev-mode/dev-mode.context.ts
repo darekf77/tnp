@@ -6,7 +6,7 @@ import { DevModeController } from './dev-mode.controller';
 import { DevModeRepository } from './dev-mode.repository';
 //#endregion
 
-const appId = 'dev-mode-worker-app.project.worker';
+const appId = 'builds-worker-app.project.worker';
 
 export const DevModeContext = createContextTemplate(() => ({
   contextName: 'DevModeContext',

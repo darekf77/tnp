@@ -143,13 +143,9 @@ export class BackendCompilation {
         commandJsEsm,
       });
 
-    Helpers.info(`
-
-    [compilation-backend] Starting (${
-      buildOptions.build.watch ? 'watch' : 'normal'
-    }) backend TypeScript build....
-
-    `);
+    const backendCompilationTask = Helpers.actionStarted(
+      `Starting (${buildOptions.build.watch ? 'watch' : 'normal'}) backend TypeScript build....`,
+    );
 
     const cwd = this.project.location;
 
@@ -207,7 +203,7 @@ export class BackendCompilation {
     //#endregion
 
     //#region compilation commonjs backend
-
+    const taskCjs = Helpers.actionStarted(`Typescript compilation (cjs)`);
     await startAsync(commandCjs, cwd, {
       uniqueName: `${tscTool} cjs`,
       prefix: true,
@@ -234,14 +230,14 @@ export class BackendCompilation {
         !skipLightWeightWatcherFor_CjsESM &&
         this.project.watcher.rebuildTriggerWatcher('backend-cjs'),
     });
+    taskCjs.done();
     //#endregion
-
-    Helpers.logInfo(`* Typescript compilation first part done (cjs)`);
 
     await this.project.nodeModules.makeSureInstalled();
 
     //#region compilation esm backend
     if (!buildOptions.build.prod) {
+      const taskJsEsm = Helpers.actionStarted(`Typescript compilation (ems)`);
       // in prod normal build is esm - not need for this
       await startAsync(commandJsEsm, cwd, {
         uniqueName: `${tscTool} esm`,
@@ -269,13 +265,14 @@ export class BackendCompilation {
           !skipLightWeightWatcherFor_CjsESM &&
           this.project.watcher.rebuildTriggerWatcher('backend-esm'),
       });
+      taskJsEsm.done();
     }
     //#endregion
 
-    Helpers.logInfo(`* Typescript compilation second part done (esm)`);
-
+    const taskJsMaps = Helpers.actionStarted(
+      `Typescript compilation (js maps)`,
+    );
     await this.project.nodeModules.makeSureInstalled();
-
     //#region compilation js maps backend
     await startAsync(commandMaps, cwd, {
       uniqueName: `${tscTool} js maps`,
@@ -299,12 +296,8 @@ export class BackendCompilation {
     });
     //#endregion
 
-    Helpers.logInfo(`* Typescript compilation thrid part done (js maps)`);
-    Helpers.info(`
-
-    Backend TypeScript build done....
-
-        `);
+    taskJsMaps.done();
+    backendCompilationTask.done();
 
     if (buildOptions.build.watch) {
       // console.log(Helpers.terminalLine());

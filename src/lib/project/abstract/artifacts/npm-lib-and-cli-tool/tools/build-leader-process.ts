@@ -14,6 +14,7 @@ import { errorMainWorkerCommunication } from '../../../../../app-utils';
 import {
   DEBOUCE_takeLeadOfBuildingDebounce,
   DEBOUNCE_trigerLeadBuilding,
+  ERR_MESSAGE_PROJECT_ALREADY_PART_OF_BUILD,
   OBSERVER_PARALLELS,
   skipLightWeightWatcherFor_CjsESM,
 } from '../../../../../constants';
@@ -43,6 +44,8 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
 
   private isDrityLeadBuild = false;
 
+  private isBuildCanceled = false;
+
   public buildsNotifiers = new Map<
     CoreModels.BuildType,
     ReturnType<typeof UtilsWaitNotifier.getNotifier>
@@ -59,10 +62,18 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region public methods / set as dirty
+  //#region public methods / set as dirty or cancel
   public setAsDirty(): void {
-    Helpers.warn(`Build dirty. Starting build again.`);
+    Helpers.warn(`Lead Build dirty in this process - restarting.`);
     this.isDrityLeadBuild = true;
+    for (const [key, notifer] of this.buildsNotifiers.entries()) {
+      notifer.next();
+    }
+  }
+
+  public setAsCanceled(): void {
+    Helpers.warn(`Lead Build canceld in this process.`);
+    this.isBuildCanceled = true;
     for (const [key, notifer] of this.buildsNotifiers.entries()) {
       notifer.next();
     }
@@ -106,13 +117,20 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region private methods / take lead of building debouced
-  private takeLeadOfBuildingDebounce = _.debounce(async () => {
-    await this.takeLeadOfBuilding();
-  }, DEBOUCE_takeLeadOfBuildingDebounce);
+  //#region public methods / cancel leader build if running
+  public cancelLeadBuildIfRunning(): void {
+    Helpers.warn(`Trying to cancel lead build.`);
+    if (this.projectStaredLeadingBuild) {
+      this.setAsCanceled();
+    }
+  }
   //#endregion
 
   //#region private methods / take lead of building
+  private takeLeadOfBuildingDebounce = _.debounce(async () => {
+    await this.takeLeadOfBuilding();
+  }, DEBOUCE_takeLeadOfBuildingDebounce);
+
   public async takeLeadOfBuilding(options?: {
     skipProjectsNames?: string[];
   }): Promise<void> {
@@ -123,9 +141,18 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
     options = options || {};
     this.projectStaredLeadingBuild = true;
 
+    //#region error message
+    const cancelMessage = 'Canceling lead build. Other process will take over.';
+    const noLongerLeadMessage =
+      'Project is no longer build leader. Other process will take over.';
+    const dirtyMessage =
+      'Restarting lead build - current (or external) project code changes.';
+    //#endregion
+
     while (true) {
       Helpers.log('Taking lead of building');
       this.isDrityLeadBuild = false;
+      this.isBuildCanceled = false;
 
       //#region get current project data fn
       const getCurrentProjectData = () =>
@@ -134,17 +161,20 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
         });
       //#endregion
 
-      //#region set as leader and get all project for building
+      //#region prepare dev controller
       const devModeControllerWorker =
-        await this.project.ins.taonProjectsWorker.devModeWorker.getRemoteControllerFor(
+        await this.project.ins.taonProjectsWorker.buildsWorker.getRemoteControllerFor(
           {
             methodOptions: {
               calledFrom: 'taon build observer',
             },
           },
         );
+      //#endregion
 
+      //#region set as leader and get all project for building
       try {
+        //#region try request projects for build
         const dirtyBuild = Array.from(
           this.taonBuildObserver.dirtyBuild.entries(),
         )
@@ -161,17 +191,31 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
             dirtyBuild,
           )!
           .request();
+        //#endregion
       } catch (error) {
+        //#region handle request project errors
         if (error instanceof HttpResponseError) {
           const err = error as HttpResponseError<RestErrorResponseWrapper>;
-          config.frameworkName === tnpPackageName && console.error(error);
-          Helpers.error(err.body.json.message || err.body.text, true, true);
+          if (
+            err?.body?.json?.code === ERR_MESSAGE_PROJECT_ALREADY_PART_OF_BUILD
+          ) {
+            Helpers.logInfo(`Taking over lead build.`);
+            this.setAsDirty();
+            continue;
+          } else {
+            config.frameworkName === tnpPackageName && console.error(error);
+            Helpers.error(err.body.json.message || err.body.text, true, true);
+          }
         }
         this.projectStaredLeadingBuild = false;
         this.isDrityLeadBuild = false;
+        this.isBuildCanceled = false;
         return;
+        //#endregion
       }
+      //#endregion
 
+      //#region filter porject for build
       let allDepProject = (allDepProjectData.body.json || []).map(c =>
         DevMode.ProjectBuildNotificaiton.from(c),
       );
@@ -188,7 +232,6 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
 ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})`).join('\n')}
 
         `);
-
       //#endregion
 
       //#region leader check fn
@@ -201,7 +244,8 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
           return isStillLeader.body.booleanValue;
         } catch (error) {
           config.frameworkName === tnpPackageName &&
-            console.error(`is leader check` + error);
+            console.error(`ERROR leader check`);
+          config.frameworkName === tnpPackageName && console.error(error);
           errorMainWorkerCommunication();
           return false;
         }
@@ -229,14 +273,6 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
         Helpers.warn(`Project is down.`);
         errorMainWorkerCommunication();
         return false;
-      };
-      //#endregion
-
-      //#region cancel mesage fn
-      const cancelMessage = () => {
-        Helpers.logInfo(
-          chalk.green('Lead build cancel - project is no longer leading build'),
-        );
       };
       //#endregion
 
@@ -291,10 +327,12 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
         //#endregion
 
         //#region skip/restart build if is dirty
+        if (this.isBuildCanceled) {
+          Helpers.logInfo(cancelMessage);
+          return;
+        }
         if (this.isDrityLeadBuild) {
-          Helpers.logInfo(
-            'Restarting lead build - current project code changes.',
-          );
+          Helpers.logInfo(dirtyMessage);
           break;
         }
         //#endregion
@@ -302,7 +340,7 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
         if (OBSERVER_PARALLELS) {
           //#region execute parallels builds
 
-          Helpers.taskStarted(
+          const taskBuilding = Helpers.actionStarted(
             `Building ${proj.nameForNpmPackage}(port=${proj.port}) ${shouldBeRebuildArr.join(',')},`,
           );
 
@@ -362,10 +400,12 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
           //#endregion
 
           //#region skip/restart build if is dirty
+          if (this.isBuildCanceled) {
+            Helpers.logInfo(cancelMessage);
+            return;
+          }
           if (this.isDrityLeadBuild) {
-            Helpers.logInfo(
-              'Restarting lead build - current project code changes.',
-            );
+            Helpers.logInfo(dirtyMessage);
             break;
           }
           //#endregion
@@ -373,7 +413,7 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
           //#region check if build is still leader
           if (!(await isLeaderCheck())) {
             this.projectStaredLeadingBuild = false;
-            cancelMessage();
+            Helpers.logInfo(noLongerLeadMessage);
             return;
           }
           //#endregion
@@ -394,9 +434,7 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
           }
           //#endregion
 
-          Helpers.taskDone(
-            `Done Building ${proj.nameForNpmPackage}(port=${proj.port})`,
-          );
+          taskBuilding.done();
           //#endregion
         } else {
           //#region execute builds
@@ -406,10 +444,12 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
             );
 
             //#region skip/restart build if is dirty
+            if (this.isBuildCanceled) {
+              Helpers.logInfo(cancelMessage);
+              return;
+            }
             if (this.isDrityLeadBuild) {
-              Helpers.logInfo(
-                'Restarting lead build - current project code changes.',
-              );
+              Helpers.logInfo(dirtyMessage);
               break;
             }
             //#endregion
@@ -417,16 +457,18 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
             //#region check if build is still leader
             if (!(await isLeaderCheck())) {
               this.projectStaredLeadingBuild = false;
-              cancelMessage();
+              Helpers.logInfo(noLongerLeadMessage);
               return;
             }
             //#endregion
 
             //#region skip/restart build if is dirty
+            if (this.isBuildCanceled) {
+              Helpers.logInfo(cancelMessage);
+              return;
+            }
             if (this.isDrityLeadBuild) {
-              Helpers.logInfo(
-                'Restarting lead build - current project code changes.',
-              );
+              Helpers.logInfo(dirtyMessage);
               break;
             }
             //#endregion
@@ -444,7 +486,7 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
             //#region check if build is still leader
             if (!(await isLeaderCheck())) {
               this.projectStaredLeadingBuild = false;
-              cancelMessage();
+              Helpers.logInfo(noLongerLeadMessage);
               return;
             }
             //#endregion
@@ -460,16 +502,18 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
             //#region check if build is still leader
             if (!(await isLeaderCheck())) {
               this.projectStaredLeadingBuild = false;
-              cancelMessage();
+              Helpers.logInfo(noLongerLeadMessage);
               return;
             }
             //#endregion
 
             //#region skip/restart build if is dirty
+            if (this.isBuildCanceled) {
+              Helpers.logInfo(cancelMessage);
+              return;
+            }
             if (this.isDrityLeadBuild) {
-              Helpers.logInfo(
-                'Restarting lead build - current project code changes.',
-              );
+              Helpers.logInfo(dirtyMessage);
               break;
             }
             //#endregion
@@ -499,10 +543,12 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
         //#endregion
 
         //#region skip/restart build if is dirty
+        if (this.isBuildCanceled) {
+          Helpers.logInfo(cancelMessage);
+          return;
+        }
         if (this.isDrityLeadBuild) {
-          Helpers.logInfo(
-            'Restarting lead build - current project code changes.',
-          );
+          Helpers.logInfo(dirtyMessage);
           break;
         }
         //#endregion
@@ -511,6 +557,10 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
       //#endregion
 
       //#region restart when dirty build
+      if (this.isBuildCanceled) {
+        return;
+      }
+
       if (this.isDrityLeadBuild) {
         continue;
       }

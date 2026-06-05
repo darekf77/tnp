@@ -87,7 +87,7 @@ export class IncrementalBuildProcess {
   //#region  methods / browser task anme
   protected browserTaksName(taskName: string, bc: BrowserCompilation) {
     //#region @backendFunc
-    return `browser ${taskName} in ${path.basename(this.project.location)}`;
+    return `browser ${taskName} for ${this.project.nameForNpmPackage}`;
     //#endregion
   }
   //#endregion

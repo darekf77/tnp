@@ -80,8 +80,6 @@ export class CopyManagerStandalone extends BaseCompilerForProject<
 
   isStartFromScratch: boolean = true;
 
-  public _isomorphicPackages = [] as string[];
-
   protected buildOptions: EnvOptions;
 
   protected copyto: Project[] = [];
@@ -219,13 +217,13 @@ export class CopyManagerStandalone extends BaseCompilerForProject<
   //#endregion
 
   //#region getters / isomorphic pacakges
-  get isomorphicPackages() {
+  get isomorphicPackages(): string[] {
     //#region @backendFunc
-    const isomorphicPackages = [
-      ...this._isomorphicPackages,
+    const arr = Utils.uniqArray([
+      ...this.project.packagesRecognition.allIsomorphicPackagesFromMemory,
       this.rootPackageName,
-    ];
-    return isomorphicPackages;
+    ]);
+    return arr;
     //#endregion
   }
   //#endregion
@@ -280,12 +278,16 @@ export class CopyManagerStandalone extends BaseCompilerForProject<
   //#endregion
 
   //#region sync action
+  private firstTime = true;
+
   async syncAction(
     files: string[],
     initialParams: BaseCopyMangerInitialParams,
   ): Promise<void> {
     //#region @backendFunc
-
+    const taskCopyManger = Helpers.actionStarted(
+      `UPDATING NODE_MODULES PACKAGES`,
+    );
     if (
       this.project.hasFile(tmpAlreadyStartedCopyManager) &&
       this.project.readFile(tmpAlreadyStartedCopyManager) === '-'
@@ -324,11 +326,14 @@ export class CopyManagerStandalone extends BaseCompilerForProject<
         `From now... ${porjectINfo} will be updated after every change...`,
       );
 
-      Helpers.info(`[buildable-project] copying compiled code/assets to ${
-        projectToCopyTo.length
-      } other projects...
+      if (this.firstTime) {
+        this.firstTime = false;
+        Helpers.info(`[copy-manager] copying compiled code/assets to ${
+          projectToCopyTo.length
+        } other projects...
 ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       `);
+      }
     }
 
     for (let index = 0; index < projectToCopyTo.length; index++) {
@@ -349,6 +354,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       this.isStartFromScratch = false;
     }
     this.updateTriggered();
+    taskCopyManger.done();
     //#endregion
   }
   //#endregion
@@ -604,12 +610,9 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
     }
 
     // console.log('this.copyto', this.copyto);
-
-    this._isomorphicPackages =
-      this.project.packagesRecognition.allIsomorphicPackagesFromMemory;
-
+    const isomorphicPackages = this.isomorphicPackages;
     Helpers.log(
-      `Operating on ${this.isomorphicPackages.length} isomorphic packages...`,
+      `Operating on ${isomorphicPackages.length} isomorphic packages...`,
     );
     this.recreateTempProj();
 
@@ -621,7 +624,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       const fileAbsPath = files[index];
       SourceMappingUrl.fixContent(fileAbsPath, buildOptions);
     }
-    this.dtsFixer = TypescriptDtsFixer.for(this.isomorphicPackages);
+    this.dtsFixer = TypescriptDtsFixer.for(isomorphicPackages);
 
     this.initWatching();
     //#endregion

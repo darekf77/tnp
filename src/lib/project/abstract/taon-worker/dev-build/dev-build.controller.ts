@@ -91,7 +91,7 @@ export class DevBuildController extends TaonBaseController {
   }
   //#endregion
 
-   //#region API / get status info
+  //#region API / get status info
   @GET()
   getProjectInfo(): Taon.Response<DevMode.ProjectBuildNotificaiton> {
     //#region @backenFunc
@@ -99,6 +99,20 @@ export class DevBuildController extends TaonBaseController {
       // console.log(`instance ${this[Symbols.taonInstanceId]}`);
       const projectBuild = this.devBuildRepository.getProjectInfo();
       return projectBuild;
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region API / health heck
+  @POST()
+  kill(): Taon.Response<boolean> {
+    //#region @backenFunc
+    return async (req, res) => {
+      setTimeout(() => {
+        process.exit(0);
+      }, 500);
+      return true;
     };
     //#endregion
   }
@@ -133,6 +147,27 @@ export class DevBuildController extends TaonBaseController {
   }
   //#endregion
 
+  //#region API / set isomoprhic packages
+  @POST()
+  setIsomorphicPackages(
+    @Body('packages') packages: string[],
+    @Query('frameworkVersion') frameworkVersion: CoreModels.FrameworkVersion,
+  ): Taon.Response<boolean> {
+    //#region @backenFunc
+    return async (req, res) => {
+      const task = Helpers.actionStarted(
+        'Setting isomorphic packages from worker',
+      );
+      const { Project } = await import('../../../abstract/project');
+      Project.ins.setFromWorker(packages, frameworkVersion);
+      Project.ins.notifierIsomorphicPackages.next();
+      task.done();
+      return true;
+    };
+    //#endregion
+  }
+  //#endregion
+
   //#region API / unlock leader build queue
   @POST()
   setLeadBuildDirtyIfRunning(): Taon.Response<boolean> {
@@ -140,6 +175,19 @@ export class DevBuildController extends TaonBaseController {
     return async (req, res) => {
       const project = this.devBuildRepository.getProject();
       project.taonBuildObserver.leader.setLeadBuildDirtyIfRunning();
+      return true;
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region API / unlock leader build queue
+  @POST()
+  cancelLeadBuildIfRunning(): Taon.Response<boolean> {
+    //#region @backenFunc
+    return async (req, res) => {
+      const project = this.devBuildRepository.getProject();
+      project.taonBuildObserver.leader.cancelLeadBuildIfRunning();
       return true;
     };
     //#endregion
