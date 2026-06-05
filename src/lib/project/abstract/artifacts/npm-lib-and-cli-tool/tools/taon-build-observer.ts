@@ -489,6 +489,8 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
     );
   }
 
+  private alreadyDoneCopyMangerForThisTick = false;
+
   //#region public method / update action
   /**
    * errors or non-watch mode needs to for instant predictable updates
@@ -501,8 +503,14 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
     this.mergeStatus(info);
 
     if (this.allStatusesOK) {
-      await this.triggerCopymanager();
+      if (!this.alreadyDoneCopyMangerForThisTick) {
+        this.alreadyDoneCopyMangerForThisTick = true;
+        await this.triggerCopymanager();
+      }
+    } else {
+      this.alreadyDoneCopyMangerForThisTick = false;
     }
+
     try {
       await this.project.ins.devBuildRepository.updatePool({
         buildStatusInfo: this.buildStatusInfo,
