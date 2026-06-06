@@ -195,39 +195,21 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     let currentLeadProject = DevMode.ProjectBuildNotificaiton.from(
       await this.get('currentLeadProject'),
     );
-    if (
+
+    let shouldKillExistingLeader =
       currentLeadProject &&
-      currentLeadProject.uniqueKey !== projectRequestestingLeadPos.uniqueKey
-    ) {
-      const currentLeadDepsTree = await this.getDepsTreeFor(
-        projects,
-        currentLeadProject.nameForNpmPackage,
-        currentLeadProject.coreContainerVersion,
-      );
+      currentLeadProject.uniqueKey !== projectRequestestingLeadPos.uniqueKey;
 
-      if (
-        currentLeadDepsTree.some(
-          f => f.uniqueKey === projectRequestestingLeadPos.uniqueKey,
-        )
-      ) {
-        try {
-          const leadController = await this.getDevBuildControllerForPort(
-            currentLeadProject.port,
-          );
-          await leadController.cancelLeadBuildIfRunning()!.request({
-            timeout: 500,
-          });
-          await this.set('currentLeadProject', null);
-        } catch (error) {
-          this.addMessage(`Not able to set lead build as dirty`);
-          throw error;
-        }
-
-        await Taon.error({
-          message: `Project already part of "${currentLeadProject.nameForNpmPackage}" build`,
-          code: ERR_MESSAGE_PROJECT_ALREADY_PART_OF_BUILD,
+    if (shouldKillExistingLeader) {
+      try {
+        const leadController = await this.getDevBuildControllerForPort(
+          currentLeadProject.port,
+        );
+        await leadController.cancelLeadBuildIfRunning()!.request({
+          timeout: 500,
         });
-        return;
+      } catch (error) {
+        this.addMessage(`Not able to set lead build as dirty`);
       }
     }
     //#endregion
@@ -249,6 +231,13 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     this.addMessage(
       `After sorting for ${projectRequestestingLeadPos.nameForNpmPackage}: ${projects.map(c => c.nameForNpmPackage).join(',')}`,
     );
+
+    if (shouldKillExistingLeader) {
+      await Taon.error({
+        message: `Taking over build from "${currentLeadProject.nameForNpmPackage}"`,
+        code: ERR_MESSAGE_PROJECT_ALREADY_PART_OF_BUILD,
+      });
+    }
 
     return projects;
     //#endregion

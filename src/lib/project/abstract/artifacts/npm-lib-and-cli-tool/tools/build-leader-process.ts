@@ -64,7 +64,7 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
 
   //#region public methods / set as dirty or cancel
   public setAsDirty(): void {
-    Helpers.warn(`Lead Build dirty in this process - restarting.`);
+    Helpers.logWarn(`Lead Build dirty in this process - restarting.`);
     this.isDrityLeadBuild = true;
     for (const [key, notifer] of this.buildsNotifiers.entries()) {
       notifer.next();
@@ -72,7 +72,7 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
   }
 
   public setAsCanceled(): void {
-    Helpers.warn(`Lead Build canceld in this process.`);
+    Helpers.logWarn(`Lead Build canceld in this process.`);
     this.isBuildCanceled = true;
     for (const [key, notifer] of this.buildsNotifiers.entries()) {
       notifer.next();
@@ -150,7 +150,7 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
     //#endregion
 
     while (true) {
-      Helpers.log('Taking lead of building');
+      Helpers.logInfo('Taking lead of building');
       this.isDrityLeadBuild = false;
       this.isBuildCanceled = false;
 
@@ -210,6 +210,7 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
         this.projectStaredLeadingBuild = false;
         this.isDrityLeadBuild = false;
         this.isBuildCanceled = false;
+        Helpers.logInfo(`Build shutdown.. unknow error`);
         return;
         //#endregion
       }
@@ -241,6 +242,9 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
             .checkIfStillBuildLeader(getCurrentProjectData())!
             .request();
 
+          Helpers.logInfo(
+            `Is build still leader (according to worker): ${isStillLeader.body.booleanValue}`,
+          );
           return isStillLeader.body.booleanValue;
         } catch (error) {
           config.frameworkName === tnpPackageName &&
@@ -290,7 +294,9 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
         config.frameworkName === tnpPackageName &&
           console.error('resove what to rebuild', error);
 
-        Helpers.warn(`Not able to access worker to get partial rebuild info`);
+        Helpers.warn(
+          `Not able to access worker to get partial rebuild info. Rebuilding all.`,
+        );
         errorMainWorkerCommunication();
       }
 
@@ -322,13 +328,17 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
 
         //#region skip build project worker not healty
         if (!(await isProjectHealty(devBuildControllerForProj))) {
-          break;
+          Helpers.info(
+            `Ommiting build not healty project: ${proj.nameForNpmPackage}`,
+          );
+          continue;
         }
         //#endregion
 
         //#region skip/restart build if is dirty
         if (this.isBuildCanceled) {
           Helpers.logInfo(cancelMessage);
+          this.projectStaredLeadingBuild = false;
           return;
         }
         if (this.isDrityLeadBuild) {
@@ -402,6 +412,7 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
           //#region skip/restart build if is dirty
           if (this.isBuildCanceled) {
             Helpers.logInfo(cancelMessage);
+            this.projectStaredLeadingBuild = false;
             return;
           }
           if (this.isDrityLeadBuild) {
@@ -434,10 +445,22 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
           }
           //#endregion
 
+          //#region skip/restart build if is dirty
+          if (this.isBuildCanceled) {
+            Helpers.logInfo(cancelMessage);
+            this.projectStaredLeadingBuild = false;
+            return;
+          }
+          if (this.isDrityLeadBuild) {
+            Helpers.logInfo(dirtyMessage);
+            break;
+          }
+          //#endregion
+
           taskBuilding.done();
           //#endregion
         } else {
-          //#region execute builds
+          //#region DONT USE execute builds
           for (const buildType of shouldBeRebuildArr) {
             Helpers.taskStarted(
               `Building build type "${buildType}" for ${proj.port} ${proj.nameForNpmPackage}`,
@@ -545,6 +568,7 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
         //#region skip/restart build if is dirty
         if (this.isBuildCanceled) {
           Helpers.logInfo(cancelMessage);
+          this.projectStaredLeadingBuild = false;
           return;
         }
         if (this.isDrityLeadBuild) {
@@ -558,10 +582,12 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
 
       //#region restart when dirty build
       if (this.isBuildCanceled) {
+        this.projectStaredLeadingBuild = false;
         return;
       }
 
       if (this.isDrityLeadBuild) {
+        Helpers.logInfo(`Restarting dirty build...`);
         continue;
       }
       //#endregion
@@ -588,6 +614,8 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
           console.log(`finish build lead`, error);
         Helpers.warn(`Not able to unregister lead build project`);
         errorMainWorkerCommunication();
+        this.projectStaredLeadingBuild = false;
+        return;
       }
       //#endregion
 
