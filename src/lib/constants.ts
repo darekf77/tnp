@@ -5,6 +5,7 @@ import {
   config,
   dockerTemplates,
   dotTaonFolder,
+  extForStyles,
   fileName,
   folderName,
   taonContainers,
@@ -1008,3 +1009,9 @@ export const isMacOSorWindows =
 
 export const skipLightWeightWatcherFor_CjsESM = isMacOSorWindows;
 export const skipLightWeightWatcherFor_jsMaps = false;
+
+export const endingsStylesComponentsContainers = extForStyles
+  .map(c => [`.component${c}`, `.container${c}`])
+  .reduce((a, b) => a.concat(b));
+
+export const timestampPrefixComment = '// timestamp';

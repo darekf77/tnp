@@ -4,7 +4,9 @@ import { ReplaceOptionsExtended } from 'isomorphic-region-loader/src';
 import {
   chalk,
   config,
+  dateformat,
   extAllowedToReplace,
+  extForStyles,
   frontEndOnly,
   TAGS,
   Utils,
@@ -33,15 +35,23 @@ import {
   browserNpmPackage,
   browserTypeString,
   distMainProject,
+  endingsStylesComponentsContainers,
   indexTsFromLibFromSrc,
   libFromImport,
   libFromNpmPackage,
   libFromSrc,
   libTypeString,
+  ngProjectStylesScss,
   prodSuffix,
   splitNamespacesJson,
   srcFromTaonImport,
   srcMainProject,
+  srcNgProxyProject,
+  timestampPrefixComment,
+  tmpAppsForDist,
+  tmpAppsForDistElectron,
+  tmpAppsForDistElectronWebsql,
+  tmpAppsForDistWebsql,
   tmpSourceDist,
   tmpSrcAppDist,
   tmpSrcAppDistWebsql,
@@ -600,6 +610,60 @@ export class BrowserCodeCut {
           absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
           'utf8',
         );
+      }
+
+      this.fixAngularNotWatchingScssOutsideComponents();
+    }
+    //#endregion
+  }
+
+  //#endregion
+
+  //#region private / methods & getters / quick fix scss hot relaod
+  /**
+   * QUICK_FIX angular is not watching non-component for hot reaload
+   * -> saving anything to src/style.scss triggers reload of css
+   */
+  private fixAngularNotWatchingScssOutsideComponents() {
+    //#region @backendFunc
+    if (!this.buildOptions.release.releaseType) {
+      if (extForStyles.some(c => this.relativePath.endsWith(c))) {
+        if (
+          endingsStylesComponentsContainers.some(c =>
+            this.relativePath.endsWith(c),
+          )
+        ) {
+          return;
+        }
+
+        // console.log('RELOADIN STYLE.SCSS');
+        [
+          tmpAppsForDist,
+          tmpAppsForDistWebsql,
+          tmpAppsForDistElectron,
+          tmpAppsForDistElectronWebsql,
+        ]
+          .map(c =>
+            this.project.pathFor([
+              c,
+              this.project.name,
+              srcNgProxyProject,
+              ngProjectStylesScss,
+            ]),
+          )
+          .forEach(stylesAbsPathFile => {
+            let content = UtilsFilesFoldersSync.readFile(stylesAbsPathFile);
+            if (content) {
+              content = content
+                .split('\n')
+                .filter(f => !f.includes(timestampPrefixComment))
+                .join('\n');
+
+              content = `${content}\n${timestampPrefixComment} ${dateformat(new Date(), 'dd-mm-yyyy_HH:MM:ss')}`;
+              UtilsFilesFoldersSync.writeFile(stylesAbsPathFile, content);
+              // console.info(`Fixing ${stylesAbsPathFile}`);
+            }
+          });
       }
     }
     //#endregion
