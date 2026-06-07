@@ -176,12 +176,12 @@ export class BrowserCompilation extends BaseClientCompiler {
 
     const relativePathesToProcess = absFilesFromSrc.map(absFilePath => {
       const relativePath = absFilePath.replace(`${filesBase}/`, '');
-      const isScssOrSass = extForSassLikeFiles.includes(
+      const isStyleOrHtml = [...extForSassLikeFiles, '.html'].includes(
         path.extname(path.basename(relativePath)),
       );
-      if (isScssOrSass) {
-        const destScss = this.sassDestFor(relativePath);
-        HelpersTaon.copyFile(absFilePath, destScss);
+      if (isStyleOrHtml) {
+        const destStyleOrHtml = this.sassOrHtmlDestFor(relativePath);
+        HelpersTaon.copyFile(absFilePath, destStyleOrHtml);
       }
       return relativePath;
     });
@@ -194,7 +194,7 @@ export class BrowserCompilation extends BaseClientCompiler {
   }
   //#endregion
 
-  private sassDestFor(relativePath: string): string {
+  private sassOrHtmlDestFor(relativePath: string): string {
     //#region @backendFunc
     const destScss = this.project.pathFor(
       `${distMainProject}/${path
@@ -287,7 +287,8 @@ export class BrowserCompilation extends BaseClientCompiler {
         if (!isScssOrSass) {
           return;
         }
-        const destinationFileScssPath = this.sassDestFor(relativeFilePath);
+        const destinationFileScssPath =
+          this.sassOrHtmlDestFor(relativeFilePath);
 
         if (event.eventName === 'unlinkDir') {
           try {
