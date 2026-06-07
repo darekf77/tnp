@@ -348,8 +348,13 @@ export const TempalteSubprojectTypeArr: TempalteSubprojectType[] = [
   TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER,
 ];
 
+export const TemplateSubprojectWorkerPrefix = {
+  [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]: 'stripe',
+  [TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER]: 'yt',
+};
+
 export const TemplateSubprojectDbPrefix = {
-  [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]: 'SALES_KV',
+  [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]: 'STRIPE_SALES_KV',
   [TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER]: 'YT_DATA_KV',
 };
 

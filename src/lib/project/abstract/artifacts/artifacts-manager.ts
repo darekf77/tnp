@@ -253,7 +253,7 @@ export class ArtifactManager {
       await this.project.nodeModules.makeSureInstalled();
     }
 
-    await this.project.subProject?.initAll();
+    await this.project.subProject?.repo.initAll();
 
     //#region check isomorphic dependencies for npm lib
     if (this.project.framework.isStandaloneProject) {

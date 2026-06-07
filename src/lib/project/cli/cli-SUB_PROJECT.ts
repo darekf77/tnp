@@ -6,6 +6,7 @@ import { BaseCLiWorkerStartParams, HelpersTaon } from 'tnp-helpers/src';
 import { EnvOptions } from '../../options';
 
 import { BaseCli } from './base-cli';
+import { CloudFlarePorjectsUtils } from '../abstract/cloud-flare-projects/cloud-flare-projects.utils';
 
 export class $SubProject extends BaseCli {
   declare params: EnvOptions & Partial<BaseCLiWorkerStartParams>;
@@ -19,8 +20,8 @@ export class $SubProject extends BaseCli {
       add: {
         name: 'Add new subproject to this project (with deployment)',
       },
-      test: {
-        name: 'Test subproject',
+      teststripe: {
+        name: 'Test stripe subproject',
       },
       login: {
         name: 'Authenticate this computer',
@@ -34,7 +35,7 @@ export class $SubProject extends BaseCli {
       deploy: {
         name: 'Deploy subproject',
       },
-      init: {
+      initall: {
         name: 'Init all sub-projects',
       },
       exit: {
@@ -43,9 +44,9 @@ export class $SubProject extends BaseCli {
     };
 
     let overrideSelect: keyof typeof choices = Object.keys(choices).includes(
-      this.firstArg,
+      this.firstArg?.toLowerCase(),
     )
-      ? (this.firstArg as any)
+      ? (this.firstArg?.toLowerCase() as any)
       : void 0;
 
     while (true) {
@@ -62,18 +63,18 @@ export class $SubProject extends BaseCli {
 
       if (select === 'add') {
         await this.project.subProject.addAndConfigure();
-      } else if (select === 'test') {
-        await this.project.subProject.testWithExampleData();
+      } else if (select === 'teststripe') {
+        await this.project.subProject.testStripeProjectWithExampleData();
       } else if (select === 'mode') {
         await this.project.subProject.setModeForWorker();
       } else if (select === 'secrets') {
-        await this.project.subProject.setWorkerSecrets();
+        await this.project.subProject.setWorkerStripeSecrets();
       } else if (select === 'deploy') {
         await this.project.subProject.deployWorker();
-      } else if (select === 'init') {
-        await this.project.subProject.initAll();
+      } else if (select === 'initall') {
+        await this.project.subProject.repo.initAll();
       } else if (select === 'login') {
-        await this.project.subProject.loginCliCloudFlare(process.cwd());
+        await CloudFlarePorjectsUtils.loginCliCloudFlare();
       } else if (select === 'exit') {
         this._exit();
       }
