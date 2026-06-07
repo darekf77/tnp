@@ -449,7 +449,11 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         //#region command execute params
         onExitCallback: async (code, resolve, reject) => {
           if (buildOptions.release.releaseType) {
-            throw 'Angular compilation lib error!';
+            if (code === 0) {
+              resolve();
+            } else {
+              throw `Angular compilation app build error! code=${code}`;
+            }
           } else {
             if (buildOptions.build.watch) {
               if (code === 0) {
@@ -459,7 +463,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
               }
             } else {
               Helpers.error(
-                `[${config.frameworkName}] Typescript compilation error (code=${code})`,
+                `[${config.frameworkName}] Angular compilation app build error (code=${code})`,
                 false,
                 true,
               );
