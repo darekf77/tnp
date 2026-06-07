@@ -205,6 +205,7 @@ export abstract class BaseArtifact<
       fetchBeforeCheckout: true,
       switchBranchWhenExists: true,
     });
+
     return repoPath;
     //#endregion
   }
@@ -586,6 +587,11 @@ export abstract class BaseArtifact<
     } else {
       Helpers.removeFileIfExists([staticPagesProjLocation, BundledFiles.CNAME]);
     }
+
+    Helpers.writeJson([staticPagesProjLocation, `project-taon-metadata.json`], {
+      name: this.project.nameForNpmPackage,
+      version: this.project.packageJson.version,
+    });
 
     if (options.createReadme) {
       Helpers.writeFile(
