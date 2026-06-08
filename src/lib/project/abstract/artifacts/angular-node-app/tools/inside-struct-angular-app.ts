@@ -18,11 +18,14 @@ import {
   electronNgProj,
   externalLibsFromNgProject,
   generatedFromAssets,
+  globalScssFromSrc,
   indexJSElectronDist,
   libFromNgProject,
   libFromSrc,
   myLibFromNgProject,
   ngProjectStylesScss,
+  ngProjectTailwindCss,
+  nodeModulesMainProject,
   packageJsonNgProject,
   prodSuffix,
   projectsFromNgTemplate,
@@ -30,6 +33,8 @@ import {
   sourceLinkInNodeModules,
   srcMainProject,
   srcNgProxyProject,
+  tailwindscsimport,
+  tailwindScssImportRegex,
   TaonGeneratedFolders,
   tmp_FRONTEND_NORMAL_APP_PORT,
   tmp_FRONTEND_WEBSQL_APP_PORT,
@@ -529,6 +534,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             //#endregion
           }
 
+          //#region disable pwa
           const disablePwa =
             this.isElectron ||
             !this.initOptions.build.pwa ||
@@ -582,6 +588,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             })();
             //#endregion
           }
+          //#endregion
 
           //#region DONE rebuild manifest + index.html
           await (async () => {
@@ -839,6 +846,76 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                 `// @ts-nocheck
 ${isomorphicPackagesDevMode.map(packageName => `export * from './${packageName}/${libFromSrc}';`).join('\n')}
 
+              `,
+              );
+            }
+          })();
+          //#endregion
+
+          //#region recreate tailwind stuff
+          (() => {
+            if (!this.initOptions.release.releaseType) {
+              return;
+            }
+            const tailWindFileNgProjAbsPath = crossPlatformPath([
+              this.project.location,
+              replacement(tmpProjectsStandalone),
+              srcNgProxyProject,
+              ngProjectTailwindCss,
+            ]);
+
+            const globalScssInTempProj = crossPlatformPath([
+              this.project.location,
+              replacement(tmpProjectsStandalone),
+              srcNgProxyProject,
+              appFromSrcInsideNgApp,
+              globalScssFromSrc,
+            ]);
+
+            const globalFileSrcAbsPath = this.project.pathFor([
+              srcMainProject,
+              globalScssFromSrc,
+            ]);
+
+            const globalScssContent =
+              UtilsFilesFoldersSync.readFile(globalFileSrcAbsPath);
+
+            if (tailwindScssImportRegex.test(globalScssContent)) {
+              const globalScssInTempProjContent =
+                UtilsFilesFoldersSync.readFile(globalScssInTempProj);
+              UtilsFilesFoldersSync.writeFile(
+                globalScssInTempProj,
+                (globalScssInTempProjContent || '').replace(
+                  tailwindScssImportRegex,
+                  '/* tailwind import separated */\n',
+                ),
+              );
+
+              const allFoldersWithHtml =
+                this.project.packagesRecognition.allIsomorphicPackagesFromMemory
+                  .map(c => {
+                    return this.project.pathFor([
+                      nodeModulesMainProject,
+                      c,
+                      'html',
+                      libFromSrc,
+                    ]);
+                  })
+                  .filter(f => Helpers.exists(f))
+                  .map(c => c.replace(`${this.project.location}/`, ''));
+
+              Helpers.logInfo(
+                `Fixing tailwindcss import for release: ${tailWindFileNgProjAbsPath}`,
+              );
+              UtilsFilesFoldersSync.writeFile(
+                tailWindFileNgProjAbsPath,
+                `${tailwindscsimport}
+
+/* source for tailwind from isomorphic packages (${allFoldersWithHtml.length}/${
+                  this.project.packagesRecognition
+                    .allIsomorphicPackagesFromMemory.length
+                }) has html separted. */
+${allFoldersWithHtml.map(c => `@source "../${c}/**/*.html";`).join('\n')}
               `,
               );
             }

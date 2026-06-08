@@ -42,11 +42,15 @@ import {
   libFromSrc,
   libTypeString,
   ngProjectStylesScss,
+  ngProjectTailwindCss,
+  nodeModulesMainProject,
   prodSuffix,
   splitNamespacesJson,
   srcFromTaonImport,
   srcMainProject,
   srcNgProxyProject,
+  tailwindscsimport,
+  tailwindScssImportRegex,
   timestampPrefixComment,
   tmpAppsForDist,
   tmpAppsForDistElectron,
@@ -514,6 +518,7 @@ export class BrowserCodeCut {
         this.recreateAppTsPresentationFiles();
       }
       //#endregion
+
       if (
         !this.relativePath.startsWith(`${appFromSrc}/`) &&
         !this.relativePath.startsWith(`${appFromSrc}.`)

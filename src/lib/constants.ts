@@ -454,6 +454,12 @@ export const splitNamespacesJson = 'split-namespaces.json';
 
 export const reExportJson = 're-export.json';
 
+export const tailwindscsimport = `@${'imp' + 'ort'} "tailwindcss";`;
+
+export const tailwindScssImportRegex = new RegExp(
+  `@import\\s+["']tailwindcss["']\\s*;?\\s*`,
+);
+
 /**
  * Main project /dist folder
  */
@@ -719,6 +725,8 @@ export const appScssFromSrc = 'app.scss';
 export const globalScssFromSrc = 'global.scss';
 
 export const ngProjectStylesScss = 'styles.scss';
+
+export const ngProjectTailwindCss = 'tailwind.css';
 
 export const appElectronTsFromSrc = 'app.electron.ts';
 
