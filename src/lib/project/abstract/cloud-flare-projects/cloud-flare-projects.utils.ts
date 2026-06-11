@@ -41,11 +41,15 @@ export namespace CloudFlarePorjectsUtils {
   export async function isWranglerLoggedIn(): Promise<boolean> {
     //#region @backendFunc
     try {
-      const data =
-        (await UtilsExecProc.spawnAsync(
-          'npx wrangler whoami',
-        ).getStdoutWithoutShowingOrThrow()) || '';
-      if (data.includes('You are not authenticated')) {
+      const data = await UtilsExecProc.spawnAsync(
+        'npx wrangler whoami',
+      ).getOutput();
+      const dataStr = data.stdout + data.stderr;
+      if (
+        dataStr.includes('You are not authenticated') ||
+        dataStr.includes('failed to fetch auth to') ||
+        dataStr.includes('ERROR')
+      ) {
         return false;
       }
       return true;
