@@ -105,7 +105,9 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
   //#region get all subprojects
   private getAllSubProjects(): Project[] {
     //#region @backendFunc
-    return this.getAllFoldersWithProjects().map(c => this.project.ins.From(c));
+    return this.getAllFoldersWithProjects()
+      .map(c => this.project.ins.From(c))
+      .filter(f => !!f);
     //#endregion
   }
   //#endregion
