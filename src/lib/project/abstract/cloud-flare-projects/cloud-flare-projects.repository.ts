@@ -114,7 +114,8 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
 
   //#region get all cloud flare projects
   public getAll(): CloudFlareProject[] {
-    return this.getAllSubProjects().map(c => {
+    const allFolders = this.getAllSubProjects();
+    return allFolders.map(c => {
       return CloudFlarePorjectsUtils.cloudFlareProjectFrom(
         c.location,
         this.project,
@@ -169,6 +170,25 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
   //#region recreate all
   async initAll(): Promise<void> {
     //#region backendFunc
+    const allFolder = this.getAllFoldersWithProjects();
+
+    for (const absProjPath of allFolder) {
+      const selectedTempalte = path.basename(path.dirname(absProjPath));
+      const coreProj = this.project.ins.From(
+        this.project.framework.coreProject.pathFor([
+          TemplateFolder.templatesSubprojects,
+          selectedTempalte,
+        ]),
+      );
+
+      if (coreProj) {
+        CloudFlarePorjectsUtils.initProjectFilesAndAssets(
+          coreProj!,
+          absProjPath,
+        );
+      }
+    }
+
     const allProjects = this.getAll();
 
     for (const proj of allProjects) {

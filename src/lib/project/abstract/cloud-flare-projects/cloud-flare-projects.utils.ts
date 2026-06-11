@@ -1,11 +1,28 @@
 import { execSync, spawn } from 'child_process';
 import * as crypto from 'crypto';
-import { Helpers, Utils, UtilsExecProc, UtilsTerminal } from 'tnp-core/src';
+import {
+  crossPlatformPath,
+  Helpers,
+  path,
+  Utils,
+  UtilsExecProc,
+  UtilsFilesFoldersSync,
+  UtilsTerminal,
+} from 'tnp-core/src';
 import type { Project } from '../project';
 import { CloudFlareProject } from './cloud-flare-project';
 import { CloudFlareStripeWorkerPorject } from './cloud-flare-stripe-worker-project';
 import { CloudFlareYtWorkerPorject } from './cloud-flare-yt-worker-project';
 import { TempalteSubprojectType } from 'tnp/src';
+import { RenameRule } from 'magic-renamer/src';
+import {
+  indexTsInSrcForWorker,
+  KV_DATABASE_ONLINE_NAME,
+  packageJsonSubProject,
+  tsconfigSubProject,
+  wranglerJsonC,
+} from '../../../constants';
+import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 export namespace CloudFlarePorjectsUtils {
   //#region extract worker account name
@@ -101,6 +118,7 @@ export namespace CloudFlarePorjectsUtils {
   }
   //#endregion
 
+  //#region cloud flare project from
   export const cloudFlareProjectFrom = (
     absLocation: string,
     parentProject: Project,
@@ -124,5 +142,115 @@ export namespace CloudFlarePorjectsUtils {
     }
 
     return proj;
+  };
+  //#endregion
+
+  export const initProjectFilesAndAssets = (
+    coreCloudFlareProject: Project,
+    cloudFlareProjectLocation: string,
+  ) => {
+    //#region @backendFunc
+    const absLocationPath = cloudFlareProjectLocation;
+
+    const cwdWorker = crossPlatformPath([
+      absLocationPath,
+      path.basename(absLocationPath),
+    ]);
+
+    const name = path.basename(absLocationPath);
+    Helpers.writeJson([absLocationPath, packageJsonSubProject], {
+      name,
+    });
+
+    Helpers.writeJson([cwdWorker, packageJsonSubProject], {
+      name,
+    });
+
+    const workerCore = coreCloudFlareProject.ins.From(
+      coreCloudFlareProject.pathFor(coreCloudFlareProject.name),
+    );
+
+    //#region handle woker data
+    (() => {
+      const filesForBranding = [
+        packageJsonSubProject,
+        tsconfigSubProject,
+        indexTsInSrcForWorker,
+      ];
+
+      workerCore.copy(filesForBranding).to([cwdWorker]);
+
+      const magicRenameRules = `${coreCloudFlareProject.name} -> ${name}`;
+
+      for (const relativePath of filesForBranding) {
+        const filePath = crossPlatformPath([cwdWorker, relativePath]);
+        if (!Helpers.isFolder(filePath)) {
+          let content = UtilsFilesFoldersSync.readFile(filePath) || '';
+          const rules = RenameRule.from(magicRenameRules);
+          for (const rule of rules) {
+            content = content
+              .split('\n')
+              .map(line => {
+                if (
+                  (line || '').trim().startsWith('imp' + 'ort') ||
+                  (line || '').trim().startsWith('exp' + 'ort') ||
+                  (line || '').trim().includes('@skip' + 'ReplaceTaon')
+                ) {
+                  return line;
+                }
+                return rule.replaceInString(line);
+              })
+              .join('\n');
+          }
+          if (relativePath === indexTsInSrcForWorker) {
+            const dbName = HelpersTaon.getValueFromJSONC(
+              [cwdWorker, wranglerJsonC],
+              'kv_namespaces[0].binding',
+            );
+            UtilsFilesFoldersSync.writeFile(
+              filePath,
+              content.replace(
+                new RegExp(
+                  Utils.escapeStringForRegEx(KV_DATABASE_ONLINE_NAME),
+                  'g',
+                ),
+                dbName,
+              ),
+            );
+            UtilsTypescript.formatFile(filePath);
+          } else {
+            UtilsFilesFoldersSync.writeFile(filePath, content);
+          }
+        }
+      }
+    })();
+    //#endregion
+
+    //#region handle parent data
+    (() => {
+      const filesForBranding = [packageJsonSubProject, 'README.md', 'images'];
+
+      coreCloudFlareProject.copy(filesForBranding).to([absLocationPath]);
+
+      const magicRenameRules = `${coreCloudFlareProject.name} -> ${name}`;
+
+      for (const relativePath of filesForBranding) {
+        const filePath = crossPlatformPath([absLocationPath, relativePath]);
+        // console.log(`isFile ${!Helpers.isFolder(filePath)} ${filePath}`)
+        if (!Helpers.isFolder(filePath)) {
+          let content = UtilsFilesFoldersSync.readFile(filePath);
+          if (content) {
+            const rules = RenameRule.from(magicRenameRules);
+            for (const rule of rules) {
+              content = rule.replaceInString(content);
+            }
+            UtilsFilesFoldersSync.writeFile(filePath, content);
+          }
+        }
+      }
+    })();
+    //#endregion
+
+    //#endregion
   };
 }

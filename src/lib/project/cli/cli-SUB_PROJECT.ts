@@ -17,6 +17,9 @@ export class $SubProject extends BaseCli {
     //#region @backend
 
     const choices = {
+      info: {
+        name: 'Get info about subproject embeded in this taon project',
+      },
       add: {
         name: 'Add new subproject to this project (with deployment)',
       },
@@ -61,7 +64,9 @@ export class $SubProject extends BaseCli {
         overrideSelect = void 0;
       }
 
-      if (select === 'add') {
+      if (select === 'info') {
+        await this.project.subProject.getInfo();
+      } else if (select === 'add') {
         await this.project.subProject.addAndConfigure();
       } else if (select === 'teststripe') {
         await this.project.subProject.testStripeProjectWithExampleData();

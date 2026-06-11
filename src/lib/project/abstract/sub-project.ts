@@ -50,10 +50,32 @@ import { CloudFlareStripeWorkerPorject } from './cloud-flare-projects/cloud-flar
 // @ts-ignore TODO weird inheritance problem
 export class SubProject extends BaseFeatureForProject<Project> {
   public readonly repo: CloudFlareProjectsRepository;
+
   constructor(project: Project) {
     super(project);
     this.repo = new CloudFlareProjectsRepository(project);
   }
+
+  //#region PUBLIC API / set mode for worker
+  public async getInfo(): Promise<void> {
+    //#region @backendFunc
+    await this.repo.initAll();
+    const chosenProject = await this.selectAnyProject();
+
+    Helpers.info(`
+
+      name: ${chosenProject.name}
+      location: ${chosenProject.absLocationPath}
+      template type: ${chosenProject.selectedTempalte}
+
+
+      `);
+
+    await UtilsTerminal.pressAnyKeyToContinueAsync();
+
+    //#endregion
+  }
+  //#endregion
 
   //#region PUBLIC API / add new and configure
   public async addAndConfigure(): Promise<void> {

@@ -75,92 +75,10 @@ export class CloudFlareProject {
     //#region @backendFunc
     Helpers.logInfo(`Linking subproject: ${this.displayName}`);
     const coreProject = this.coreProject;
-    const workerCore = this.workerCore;
-
-    //#region handle woker data
-    (() => {
-      const filesForBranding = [
-        packageJsonSubProject,
-        tsconfigSubProject,
-        indexTsInSrcForWorker,
-      ];
-
-      workerCore.copy(filesForBranding).to([this.cwdWorker]);
-
-      const magicRenameRules = `${coreProject.name} -> ${this.name}`;
-
-      for (const relativePath of filesForBranding) {
-        const filePath = crossPlatformPath([this.cwdWorker, relativePath]);
-        if (!Helpers.isFolder(filePath)) {
-          let content = UtilsFilesFoldersSync.readFile(filePath);
-          const rules = RenameRule.from(magicRenameRules);
-          for (const rule of rules) {
-            content = content
-              .split('\n')
-              .map(line => {
-                if (
-                  (line || '').trim().startsWith('imp' + 'ort') ||
-                  (line || '').trim().startsWith('exp' + 'ort') ||
-                  (line || '').trim().includes('@skip' + 'ReplaceTaon')
-                ) {
-                  return line;
-                }
-                return rule.replaceInString(line);
-              })
-              .join('\n');
-          }
-          if (relativePath === indexTsInSrcForWorker) {
-            const dbName = HelpersTaon.getValueFromJSONC(
-              [this.cwdWorker, wranglerJsonC],
-              'kv_namespaces[0].binding',
-            );
-            UtilsFilesFoldersSync.writeFile(
-              filePath,
-              content.replace(
-                new RegExp(
-                  Utils.escapeStringForRegEx(KV_DATABASE_ONLINE_NAME),
-                  'g',
-                ),
-                dbName,
-              ),
-            );
-            UtilsTypescript.formatFile(filePath);
-          } else {
-            UtilsFilesFoldersSync.writeFile(filePath, content);
-          }
-        }
-      }
-    })();
-    //#endregion
-
-    //#region handle parent data
-    (() => {
-      const filesForBranding = [packageJsonSubProject, 'README.md', 'images'];
-
-      coreProject.copy(filesForBranding).to([this.absLocationPath]);
-
-      const magicRenameRules = `${coreProject.name} -> ${this.name}`;
-
-      for (const relativePath of filesForBranding) {
-        const filePath = crossPlatformPath([
-          this.absLocationPath,
-          relativePath,
-        ]);
-        // console.log(`isFile ${!Helpers.isFolder(filePath)} ${filePath}`)
-        if (!Helpers.isFolder(filePath)) {
-          let content = UtilsFilesFoldersSync.readFile(filePath);
-          if (content) {
-            const rules = RenameRule.from(magicRenameRules);
-            for (const rule of rules) {
-              content = rule.replaceInString(content);
-            }
-            UtilsFilesFoldersSync.writeFile(filePath, content);
-          }
-        }
-      }
-    })();
-    //#endregion
-
+    CloudFlarePorjectsUtils.initProjectFilesAndAssets(
+      coreProject!,
+      this.absLocationPath,
+    );
     await this.npmInstall();
     //#endregion
   }
