@@ -1,3 +1,4 @@
+global.frameworkName = 'tnp';
 Error.stackTraceLimit = 100;
 global.i0 = {
   defineInjectable: function () { }

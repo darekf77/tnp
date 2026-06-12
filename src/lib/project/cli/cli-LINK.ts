@@ -100,7 +100,7 @@ export class $Link extends BaseCli {
       localReleaseFolder = this.project.pathFor(localReleaseFolder);
     }
 
-    this.recreateCliBasicStructure();
+    this.createGlobalSystemLinks();
 
     Helpers.info(`Linking
 
@@ -178,7 +178,7 @@ export class $Link extends BaseCli {
       Helpers.mkdirp(project.pathFor(binMainProject));
     }
 
-    this.recreateCliBasicStructure(globalBinFolderPath);
+    this.createGlobalSystemLinks(globalBinFolderPath);
 
     this._exit();
     //#endregion
@@ -301,118 +301,9 @@ export class $Link extends BaseCli {
   //#endregion
 
   //#region recreate cli basic structure
-  recreateCliBasicStructure(globalBinFolderPath?: string) {
+  createGlobalSystemLinks(globalBinFolderPath?: string): void {
     //#region @backendFunc
-
-    const pattern = `${this.project.pathFor(binMainProject)}/*`;
-    const countLinkInPackageJsonBin = glob
-      .sync(pattern)
-      .map(f => crossPlatformPath(f))
-      .filter(f => {
-        return (Helpers.readFile(f) || '').startsWith('#!/usr/bin/env');
-      });
-
-    Helpers.removeFileIfExists(
-      this.project.pathFor([binMainProject, this.project.nameForCli]),
-    );
-
-    // if (countLinkInPackageJsonBin.length === 0) {
-    const pathNormalLink = this.project.pathFor([
-      binMainProject,
-      this.project.nameForCli,
-    ]);
-
-    Helpers.writeFile(
-      pathNormalLink,
-      `#!/usr/bin/env -S node --no-deprecation
-//#${'reg' + 'ion'} @${'back' + 'end'}
-// --stack-trace-limit=10000
-${'req' + 'uire'}('./start');
-//#${'endreg' + 'ion'}
-`,
-    );
-    countLinkInPackageJsonBin.push(pathNormalLink);
-
-    Helpers.removeFileIfExists(
-      this.project.pathFor([
-        binMainProject,
-        `${this.project.nameForCli}${debugSuffix.replace('--', '-')}`,
-      ]),
-    );
-
-    const pathDebugLink = this.project.pathFor([
-      binMainProject,
-      `${this.project.nameForCli}${debugSuffix.replace('--', '-')}`,
-    ]);
-
-    Helpers.writeFile(
-      pathDebugLink,
-      `#!/usr/bin/env -S node --inspect --stack-trace-limit=10000 --no-deprecation
-//#${'reg' + 'ion'} @${'back' + 'end'}
-// --stack-trace-limit=10000
-${'req' + 'uire'}('./start');
-//#${'endreg' + 'ion'}
-`,
-    );
-    countLinkInPackageJsonBin.push(pathDebugLink);
-
-    Helpers.removeFileIfExists(
-      this.project.pathFor([
-        binMainProject,
-        `${this.project.nameForCli}${debugBrkSuffix.replace('--', '-')}`,
-      ]),
-    );
-
-    const pathBrkDebugLink = this.project.pathFor([
-      binMainProject,
-      `${this.project.nameForCli}${debugBrkSuffix.replace('--', '-')}`,
-    ]);
-
-    Helpers.writeFile(
-      pathBrkDebugLink,
-      `#!/usr/bin/env -S node --inspect-brk --stack-trace-limit=10000 --no-deprecation
-//#${'reg' + 'ion'} @${'back' + 'end'}
-${'req' + 'uire'}('./start');
-//#${'endreg' + 'ion'}
-`,
-    );
-    countLinkInPackageJsonBin.push(pathBrkDebugLink);
-
-    if (this.project.nameForCli !== taonPackageName) {
-      // QUICK_FIX For custom taon cli
-      this.project.framework.recreateFileFromCoreProject({
-        forceRecrete: true,
-        fileRelativePath: crossPlatformPath([srcMainProject, cliTsFromSrc]),
-      });
-    }
-
-    this.project.framework.recreateFileFromCoreProject({
-      forceRecrete: true,
-      fileRelativePath: crossPlatformPath([srcMainProject, indexTsFromSrc]),
-    });
-
-    this.project.framework.recreateFileFromCoreProject({
-      forceRecrete: true,
-      fileRelativePath: crossPlatformPath([binMainProject, startJsFromBin]),
-    });
-
-    if (!this.project.hasFile([srcMainProject, libFromSrc, startTsFromLib])) {
-      this.project.framework.recreateFileFromCoreProject({
-        fileRelativePath: crossPlatformPath([
-          srcMainProject,
-          libFromSrc,
-          startTsFromLib,
-        ]),
-      });
-    }
-
-    // }
-
-    const bin = {};
-    countLinkInPackageJsonBin.forEach(p => {
-      bin[path.basename(p)] = `${binMainProject}/${path.basename(p)}`;
-    });
-    this.project.packageJson.bin = bin;
+    this.project.artifactsManager.recreateCliBasicStructure();
 
     if (globalBinFolderPath && _.isObject(this.project.packageJson.bin)) {
       Object.keys(this.project.packageJson.bin).forEach(globalName => {

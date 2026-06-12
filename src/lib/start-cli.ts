@@ -35,8 +35,6 @@ import cliClassArr from './project/cli/index'; // @backend
 
 //#endregion
 
-global.frameworkName = global.frameworkName ?? tnpPackageName;
-
 //#region startWrapper
 export function startCli(argv, filename): void {
   //#region @backendFunc

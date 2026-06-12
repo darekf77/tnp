@@ -66,7 +66,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     // }
     if (UtilsOs.isRunningInVscodeExtension()) {
       //#region @backend
-      config.frameworkName = config.frameworkName || (taonPackageName as any);
+      console.log('config.frameworkName', config.frameworkName);
 
       const allTaonContainersCoreContainers = Helpers.foldersFrom(
         [UtilsOs.getRealHomeDir(), dotTaonFolder, taonContainers],
