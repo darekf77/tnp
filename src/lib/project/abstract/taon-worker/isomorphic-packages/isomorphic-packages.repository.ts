@@ -14,8 +14,10 @@ import {
   taonPackageName,
   Utils,
   UtilsOs,
+  UtilsTerminal,
 } from 'tnp-core/src';
 
+import { CURRENT_PACKAGE_TAON_VERSION } from '../../../../build-info._auto-generated_';
 import { debugModeTaonLightWeightWatchMode } from '../../../../constants';
 import { DevBuildController } from '../dev-build/dev-build.controller';
 import { DevBuildUtils } from '../dev-build/dev-build.utils';
@@ -23,7 +25,7 @@ import { DevMode } from '../dev-mode/dev-mode.models';
 
 //#endregion
 
-const WRITE_LOG_TO_FILE = debugModeTaonLightWeightWatchMode;
+const WRITE_LOG_TO_FILE = true;
 
 @TaonRepository({
   className: 'IsomorphicPackagesRepository',
@@ -40,7 +42,13 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
   //#region _ init
   async _() {
     await this.set('isomorphicPackages', {} as any);
+    if (WRITE_LOG_TO_FILE) {
+      Helpers.writeJson(this.pathToLog, []);
+    }
     this.addMessage(`Started worker`);
+
+    await this.updateIsomoprhicFor(CURRENT_PACKAGE_TAON_VERSION);
+    // await UtilsTerminal.pressAnyKeyToContinueAsync();
   }
   //#endregion
 
@@ -67,11 +75,11 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
   //#region API /  private methods / add message
   private addMessage(msg: string): void {
     //#region @backendFunc
-    if (debugModeTaonLightWeightWatchMode) {
-      this.logMessages.push(msg);
-      this.logMessages = this.logMessages.slice(-100);
-      this.debouceWriteLog();
-    }
+
+    this.logMessages.push(msg);
+    this.logMessages = this.logMessages.slice(-100);
+    this.debouceWriteLog();
+
     //#endregion
   }
   //#endregion
@@ -137,8 +145,8 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
 
   //#region API / private methods / update isomorphic pcakges
   private async updateIsomoprhicFor(
-    frameworkVersion: CoreModels.FrameworkVersion,
-    body: DevMode.ProjectBuildNotificaiton,
+    frameworkVersion?: CoreModels.FrameworkVersion,
+    body?: DevMode.ProjectBuildNotificaiton,
   ): Promise<string[]> {
     //#region @backendFunc
 
@@ -157,7 +165,9 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
 
     let poolProjectsBuilds = poolBuildsData.body.json || [];
 
-    poolProjectsBuilds.push(body);
+    if (body) {
+      poolProjectsBuilds.push(body);
+    }
 
     poolProjectsBuilds = Utils.uniqArray(poolProjectsBuilds, 'uniqueKey');
 
@@ -182,18 +192,25 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
 
     this.addMessage(`saving ${sorted.join(',')}`);
 
-    for (const projBUild of poolProjectsBuilds) {
-      this.addMessage(`updating ${projBUild.nameForNpmPackage}`);
-      const ctrl = await this.getDevBuildControllerForPort(projBUild.port);
-      try {
-        await ctrl.setIsomorphicPackages(sorted, frameworkVersion).request!();
-      } catch (error) {
-        this.addMessage(error);
-        this.addMessage(
-          `Error during update of ${projBUild.nameForNpmPackage} from ${projBUild.location}`,
-        );
+    if (!body) {
+      this.addMessage(
+        `initing and skipping pool update (no body of new package)`,
+      );
+    } else {
+      for (const projBUild of poolProjectsBuilds) {
+        this.addMessage(`updating ${projBUild.nameForNpmPackage}`);
+        const ctrl = await this.getDevBuildControllerForPort(projBUild.port);
+        try {
+          await ctrl.setIsomorphicPackages(sorted, frameworkVersion).request!();
+        } catch (error) {
+          this.addMessage(error);
+          this.addMessage(
+            `Error during update of ${projBUild.nameForNpmPackage} from ${projBUild.location}`,
+          );
+        }
       }
     }
+
     this.addMessage(`Done update of isomorphic packages`);
 
     return sorted;

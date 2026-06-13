@@ -166,8 +166,10 @@ export class $Global extends BaseGlobalCommandLine<
   //#region detect packages
   async detectPackages() {
     //#region @backendFunc
-    this.project.removeFile(tmpIsomorphicPackagesJson);
-    await this.project.packagesRecognition.start('detecting packages');
+    console.log('Isomorphic packages.. detecting.. ')
+    console.log(this.project.nodeModules.getIsomorphicPackagesNames())
+    // this.project.removeFile(tmpIsomorphicPackagesJson);
+    // await this.project.packagesRecognition.start('detecting packages');
     // console.log(this.project.framework.a)
     this._exit();
     //#endregion
@@ -193,9 +195,10 @@ export class $Global extends BaseGlobalCommandLine<
   }
   //#endregion
 
-  //#region kill all node
+  //#region kill all java
   async killAllJava() {
     //#region @backendFunc
+    debugger
     Helpers.info('Killing all java processes...');
     await UtilsProcess.killAllJava();
     Helpers.info('DONE KILL ALL JAVA PROCESSES');

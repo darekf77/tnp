@@ -4,6 +4,8 @@ import { Helpers } from 'tnp-helpers/src';
 
 import { srcFromTaonImport } from '../../../../../../constants';
 
+import type { CopyManagerStandalone } from './copy-manager-standalone';
+
 export const TS_NOCHECK = '// @ts-nocheck';
 
 /**
@@ -23,11 +25,13 @@ export const TS_NOCHECK = '// @ts-nocheck';
  */
 export class TypescriptDtsFixer {
   //#region singleton
-  public static for(isomorphicPackages: string[]) {
-    return new TypescriptDtsFixer(isomorphicPackages);
+  public static for(copyManagerStandalone: CopyManagerStandalone) {
+    return new TypescriptDtsFixer(copyManagerStandalone);
   }
 
-  private constructor(protected readonly isomorphicPackages: string[] = []) {}
+  private constructor(
+    protected readonly copyManagerStandalone: CopyManagerStandalone,
+  ) {}
   //#endregion
 
   //#region helpers / fix dts import
@@ -35,7 +39,7 @@ export class TypescriptDtsFixer {
   forBackendContent(content: string) {
     //#region @backendFunc
     content = content ? content : '';
-    const isomorphicPackages = this.isomorphicPackages;
+    const isomorphicPackages = this.copyManagerStandalone.isomorphicPackages;
     for (let index = 0; index < isomorphicPackages.length; index++) {
       const isomorphicPackageName = isomorphicPackages[index];
       content = (content || '').replace(
@@ -72,7 +76,7 @@ export class TypescriptDtsFixer {
     // if(path.basename(filepath) === 'framework-context.d.ts') {
     //   debugger
     // }
-    const isomorphicPackages = this.isomorphicPackages;
+    const isomorphicPackages = this.copyManagerStandalone.isomorphicPackages;
     for (let index = 0; index < isomorphicPackages.length; index++) {
       const isomorphicPackageName = isomorphicPackages[index];
       content = (content || '').replace(

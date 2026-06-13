@@ -286,8 +286,11 @@ export class CopyManagerStandalone extends BaseCompilerForProject<
   ): Promise<void> {
     //#region @backendFunc
     const taskCopyManger = Helpers.actionStarted(
-      `UPDATING NODE_MODULES PACKAGES`,
+      `UPDATING NODE_MODULES PACKAGES (${files.length} files)`,
     );
+
+    // console.log({ files });
+
     if (
       this.project.hasFile(tmpAlreadyStartedCopyManager) &&
       this.project.readFile(tmpAlreadyStartedCopyManager) === '-'
@@ -298,6 +301,13 @@ export class CopyManagerStandalone extends BaseCompilerForProject<
       this.project.writeFile(tmpAlreadyStartedCopyManager, '-');
       // @ts-ignore
       this.isStartFromScratch = true;
+    }
+
+    for (let index = 0; index < files.length; index++) {
+      const fileAbsPath = files[index];
+      if (fileAbsPath.endsWith('.js')) {
+        SourceMappingUrl.fixContent(fileAbsPath, this.buildOptions);
+      }
     }
 
     for (const fileAbsPath of files) {
@@ -610,21 +620,13 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
     }
 
     // console.log('this.copyto', this.copyto);
-    const isomorphicPackages = this.isomorphicPackages;
+
+    this.dtsFixer = TypescriptDtsFixer.for(this);
+
     Helpers.log(
-      `Operating on ${isomorphicPackages.length} isomorphic packages...`,
+      `Operating on ${this.isomorphicPackages.length} isomorphic packages...`,
     );
     this.recreateTempProj();
-
-    const files = Helpers.filesFrom(this.monitoredOutDir, true).filter(f =>
-      f.endsWith('.js'),
-    );
-
-    for (let index = 0; index < files.length; index++) {
-      const fileAbsPath = files[index];
-      SourceMappingUrl.fixContent(fileAbsPath, buildOptions);
-    }
-    this.dtsFixer = TypescriptDtsFixer.for(isomorphicPackages);
 
     this.initWatching();
     //#endregion

@@ -15,7 +15,7 @@ export class $SubProject extends BaseCli {
 
   async _() {
     //#region @backend
-    UtilsTerminal.clearConsole();
+
     const choices = {
       info: {
         name: 'Get info about subproject embeded in this taon project',
@@ -53,6 +53,8 @@ export class $SubProject extends BaseCli {
       : void 0;
 
     while (true) {
+      UtilsTerminal.clearConsole();
+
       let select = overrideSelect
         ? overrideSelect
         : await UtilsTerminal.select<keyof typeof choices>({
@@ -83,6 +85,9 @@ export class $SubProject extends BaseCli {
       } else if (select === 'exit') {
         this._exit();
       }
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: 'Press any key to show main menu',
+      });
     }
 
     //#endregion
