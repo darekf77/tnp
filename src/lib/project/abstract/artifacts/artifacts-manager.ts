@@ -294,8 +294,13 @@ ${'req' + 'uire'}('./start');
     this.project.framework.recreateFileFromCoreProject({
       forceRecrete: true,
       fileRelativePath: crossPlatformPath([binMainProject, startJsFromBin]),
-      modifyContentBeforeSave: content =>
-        `global.frameworkName = '${this.project.nameForCli}';\n${content}`,
+      modifyContentBeforeSave: content => {
+        content = (content || '')
+          .split('\n')
+          .filter(l => !l.includes('global.frameworkName'))
+          .join('\n');
+        return `global.frameworkName = '${this.project.nameForCli}';\n${content}`;
+      },
     });
 
     if (!this.project.hasFile([srcMainProject, libFromSrc, startTsFromLib])) {
@@ -423,7 +428,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
     });
 
     this.project.framework.recreateVarsScss(initOptions);
-    this.recreateCliBasicStructure()
+    this.recreateCliBasicStructure();
 
     // TODO QUICK_FIX change env to something else
     Helpers.removeFileIfExists(
