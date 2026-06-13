@@ -24,16 +24,16 @@ export class $SubProject extends BaseCli {
         name: 'Add new subproject to this project (with deployment)',
       },
       teststripe: {
-        name: 'Test stripe subproject',
+        name: 'Test stripe worker subproject',
       },
       login: {
-        name: 'Authenticate this computer',
+        name: 'Authenticate this computer with wrangler',
       },
       mode: {
         name: 'Set production/development mode for subproject',
       },
       secrets: {
-        name: 'Set stripe secrets keys',
+        name: 'Set secrets keys to worker environment',
       },
       deploy: {
         name: 'Deploy subproject',
@@ -73,7 +73,7 @@ export class $SubProject extends BaseCli {
       } else if (select === 'mode') {
         await this.project.subProject.setModeForWorker();
       } else if (select === 'secrets') {
-        await this.project.subProject.setWorkerStripeSecrets();
+        await this.project.subProject.setWorkerSecrets();
       } else if (select === 'deploy') {
         await this.project.subProject.deployWorker();
       } else if (select === 'initall') {

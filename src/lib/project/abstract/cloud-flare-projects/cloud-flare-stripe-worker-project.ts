@@ -7,77 +7,38 @@ import {
   UtilsExecProc,
   UtilsTerminal,
 } from 'tnp-core/src';
-import { CloudFlareProject } from './cloud-flare-project';
+
 import { TempalteSubprojectType } from '../../../constants';
+
+import { CloudFlareProject } from './cloud-flare-project';
+import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
 //#endregion
 
 export class CloudFlareStripeWorkerPorject extends CloudFlareProject {
-  //#region init process
-  public async afterCreation(): Promise<void> {
-    //#region @backendFunc
-
-    await super.afterCreation();
-
-    if (
-      await UtilsTerminal.confirm({
-        message: `Woudl you like to add stripe secret keys to worker ?`,
-        defaultValue: true,
-      })
-    ) {
-      await this.addStripeSecrets();
-    }
-
-    //#endregion
-  }
-  //#endregion
-
-  //#region add stripe secrets
-  public async addStripeSecrets(): Promise<void> {
-    //#region @backendFunc
-
-    //#region add stripe secret
-    Helpers.info(`
+  //#region api secreate keys data
+  protected apiSecretsKeyData(): CloudFlarePorjectsUtils.SecretKeyData[] {
+    return [
+      //#region stripe secret key
+      {
+        key: 'STRIPE_SECRET_KEY',
+        description: `
 
 
       ADDING STRIP SECRET
 
       Find in you stripe dashboard something like this:
 
-      Secret key   sk_test_someletterarehe  <- copy this
+      Secret key   sk_test_somestringhere  <- copy this
 
 
-      `);
-    while (true) {
-      try {
-        Helpers.taskStarted(`PLEASE WAIT FOR INPUT TO ADD STRIP SECRET ..`);
-        const data = await UtilsExecProc.spawnAsync(
-          `npx wrangler secret put STRIPE_SECRET_KEY`,
-          {
-            cwd: this.cwdWorker,
-          },
-        ).waitUntilDoneOrThrow();
-        Helpers.taskDone(
-          `STRIPE SECRET SAVED for "${this.taonParentProject.taonJson.cloudFlareAccountSubdomain}"`,
-        );
-        break;
-      } catch (error) {
-        if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
-          break;
-        }
-      }
-      break;
-    }
-    //#endregion
+      `,
+      },
+      //#endregion
 
-    //#region add stripe webhook secret
-    Helpers.info(
-      `ADDING STRIP ${chalk.bold(
-        'WEBHOOK',
-      )} SECRET (-> DIFFRENT THAT STRIPE SECRET)`,
-    );
-    while (true) {
-      try {
-        Helpers.info(`PLEASE ADD WEBHOOK IN STRIPE FOR ADDRESS:
+      //#region stripe webhook key
+      {
+        key: 'STRIPE_WEBHOOK_SECRET',
+        description: `PLEASE ADD WEBHOOK IN STRIPE FOR ADDRESS:
 
         ${this.workerUrl}${TaonStripeCloudflareWorker.HOOK_POST}
 
@@ -86,33 +47,11 @@ export class CloudFlareStripeWorkerPorject extends CloudFlareProject {
         Signing secret
         whsec_somekindofstringkey <- copy this
 
-
-          `);
-        await UtilsTerminal.pressAnyKeyToContinueAsync();
-
-        Helpers.taskStarted(
-          `PLEASE WAIT FOR INPUT TO ADD WEBHOOK STRIP SECRET ..`,
-        );
-        await UtilsExecProc.spawnAsync(
-          `npx wrangler secret put STRIPE_WEBHOOK_SECRET`,
-          {
-            cwd: this.cwdWorker,
-          },
-        ).waitUntilDoneOrThrow();
-        Helpers.taskDone(
-          `STRIPE WEBHOOK SECRET SAVED for "${this.taonParentProject.taonJson.cloudFlareAccountSubdomain}"`,
-        );
-        break;
-      } catch (error) {
-        if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
-          break;
-        }
-      }
-      break;
-    }
-    //#endregion
-
-    //#endregion
+        and press any key to continue...
+          `,
+      },
+      //#endregion
+    ];
   }
   //#endregion
 }

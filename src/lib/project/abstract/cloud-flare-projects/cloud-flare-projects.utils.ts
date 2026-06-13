@@ -1,5 +1,8 @@
 import { execSync, spawn } from 'child_process';
 import * as crypto from 'crypto';
+
+import { RenameRule } from 'magic-renamer/src';
+import { TempalteSubprojectType } from 'tnp/src';
 import {
   crossPlatformPath,
   Helpers,
@@ -9,12 +12,8 @@ import {
   UtilsFilesFoldersSync,
   UtilsTerminal,
 } from 'tnp-core/src';
-import type { Project } from '../project';
-import { CloudFlareProject } from './cloud-flare-project';
-import { CloudFlareStripeWorkerPorject } from './cloud-flare-stripe-worker-project';
-import { CloudFlareYtWorkerPorject } from './cloud-flare-yt-worker-project';
-import { TempalteSubprojectType } from 'tnp/src';
-import { RenameRule } from 'magic-renamer/src';
+import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
+
 import {
   indexTsInSrcForWorker,
   KV_DATABASE_ONLINE_NAME,
@@ -22,7 +21,11 @@ import {
   tsconfigSubProject,
   wranglerJsonC,
 } from '../../../constants';
-import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
+import type { Project } from '../project';
+
+import { CloudFlareProject } from './cloud-flare-project';
+import { CloudFlareStripeWorkerPorject } from './cloud-flare-stripe-worker-project';
+import { CloudFlareYtWorkerPorject } from './cloud-flare-yt-worker-project';
 
 export namespace CloudFlarePorjectsUtils {
   //#region extract worker account name
@@ -149,6 +152,7 @@ export namespace CloudFlarePorjectsUtils {
   };
   //#endregion
 
+  //#region init project file and assets
   export const initProjectFilesAndAssets = (
     coreCloudFlareProject: Project,
     cloudFlareProjectLocation: string,
@@ -257,4 +261,11 @@ export namespace CloudFlarePorjectsUtils {
 
     //#endregion
   };
+  //#endregion
+
+  export interface SecretKeyData {
+    key: string;
+    description: string;
+    afterAddedFn?: () => void | Promise<void>;
+  }
 }

@@ -170,7 +170,6 @@ export class SubProject extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     await this.repo.initAll();
     const chosenProject = await this.selectStripeProject();
-    await chosenProject.addStripeSecrets();
 
     const prouctChoices = {
       movieProduct: {
@@ -329,11 +328,11 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region PUBLIC API / set secrets for worker
-  public async setWorkerStripeSecrets(): Promise<void> {
+  public async setWorkerSecrets(): Promise<void> {
     //#region @backendFunc
     await this.repo.initAll();
-    const chosenProject = await this.selectStripeProject();
-    await chosenProject.addStripeSecrets();
+    const chosenProject = await this.selectAnyProject();
+    await chosenProject.setApiSecreats();
     //#endregion
   }
   //#endregion
@@ -387,19 +386,7 @@ export class SubProject extends BaseFeatureForProject<Project> {
 
     const chosenProject = await this.selectLocation(subprojects);
 
-    return chosenProject;
-    //#endregion
-  }
-  //#endregion
-
-  //#region private methods / select yt porject
-  private async selectYtProject(): Promise<CloudFlareYtWorkerPorject> {
-    //#region @backendFunc
-    const subprojects = this.repo.getAll_YT_Projects();
-
-    const chosenProject = await this.selectLocation(subprojects);
-
-    return chosenProject as CloudFlareYtWorkerPorject;
+    return chosenProject as any;
     //#endregion
   }
   //#endregion
@@ -409,7 +396,7 @@ export class SubProject extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     const subprojects = this.repo.getAll_Stripe_Projects();
 
-    const chosenProject = await this.selectLocation(subprojects);
+    const chosenProject = await this.selectLocation(subprojects as any);
 
     return chosenProject as CloudFlareStripeWorkerPorject;
     //#endregion
