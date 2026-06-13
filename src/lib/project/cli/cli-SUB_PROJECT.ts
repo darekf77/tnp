@@ -15,7 +15,7 @@ export class $SubProject extends BaseCli {
 
   async _() {
     //#region @backend
-
+    UtilsTerminal.clearConsole();
     const choices = {
       info: {
         name: 'Get info about subproject embeded in this taon project',

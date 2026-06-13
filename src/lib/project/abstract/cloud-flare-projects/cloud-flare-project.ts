@@ -165,9 +165,8 @@ export class CloudFlareProject {
           cwd: this.cwdWorker,
         }).getOutput();
         const accountName = CloudFlarePorjectsUtils.extractWorkersDevInfo(
-          data.stdout,
+          data.stdout + data.stderr,
         );
-        console.log(data.stdout);
         Helpers.taskDone(`DONE DEPLOYMENT on acccount name "${accountName}"`);
         this.taonParentProject.taonJson.setCloudFlareAccountSubdomain(
           accountName,
@@ -176,6 +175,8 @@ export class CloudFlareProject {
       } catch (error) {
         if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
           break;
+        } else {
+          continue;
         }
       }
 
@@ -284,7 +285,7 @@ export class CloudFlareProject {
             });
           }, {}),
           custom: {
-            name: 'SET CUSTOME KEY',
+            name: 'SET CUSTOM KEY',
           },
           return: {
             name: '<return to main menu>',
@@ -315,6 +316,12 @@ export class CloudFlareProject {
             },
           ];
           break;
+        }
+        if (choice === 'return') {
+          return;
+        } else {
+          const keyData = this.apiSecretsKeyData().find(c => c.key === choice);
+          selectedSecretKeysToAdd = [keyData];
         }
 
         break;
