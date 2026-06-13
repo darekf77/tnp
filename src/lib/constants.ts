@@ -177,8 +177,6 @@ export const DEFAULT_FRAMEWORK_VERSION =
   `v${CURRENT_PACKAGE_VERSION.split('.')[0]}` as CoreModels.FrameworkVersion;
 
 export {
-  taonRepoPathUserInUserDir,
-  taonBasePathToGlobalDockerTemplates,
   globalSpinner,
 } from 'tnp-core/src';
 

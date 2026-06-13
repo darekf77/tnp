@@ -23,6 +23,7 @@ import {
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { CLI, UtilsOs } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
+import {taonRepoPathUserInUserDirFn } from 'tnp-core/src';
 import { Helpers, BaseProjectResolver, HelpersTaon } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
@@ -35,7 +36,7 @@ import {
   packageJsonMainProject,
   skipCoreCheck,
   taonJsonMainProject,
-  taonRepoPathUserInUserDir,
+
 } from '../../constants';
 import { EnvOptions } from '../../options';
 
@@ -372,10 +373,10 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
    */
   sync({ syncFromCommand }: { syncFromCommand?: boolean } = {}): void {
     //#region @backendFunc
-    const cwd = taonRepoPathUserInUserDir;
+    const cwd = taonRepoPathUserInUserDirFn();
 
     const oldTaonFolder = crossPlatformPath([
-      path.dirname(taonRepoPathUserInUserDir),
+      path.dirname(cwd),
       taonPackageName,
     ]);
 
@@ -587,6 +588,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     if (this.hasResolveCoreDepsAndFolder) {
       return;
     }
+    const taonRepoPathUserInUserDir = taonRepoPathUserInUserDirFn();
     const morhiVscode = crossPlatformPath([
       path.dirname(taonRepoPathUserInUserDir),
       `${taonProjects}/${dotVscodeMainProject}`,
