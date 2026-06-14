@@ -2,6 +2,7 @@
 import { RegionRemover } from 'isomorphic-region-loader/src';
 import {
   config,
+  CoreModels,
   dotTaonFolder,
   dotTnpFolder,
   glob,
@@ -203,7 +204,9 @@ export class ArtifactManager {
   //#region recreate cli basic structure
   recreateCliBasicStructure(): void {
     //#region @backendFunc
-
+    if (this.project.taonJson.type !== LibTypeEnum.ISOMORPHIC_LIB) {
+      return;
+    }
     const pattern = `${this.project.pathFor(binMainProject)}/*`;
     const countLinkInPackageJsonBin = glob
       .sync(pattern)
