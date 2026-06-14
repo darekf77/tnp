@@ -202,8 +202,11 @@ export class ArtifactManager {
   //#region public methods / init
 
   //#region recreate cli basic structure
-  recreateCliBasicStructure(): void {
+  recreateCliBasicStructure(options?: {
+    skipRecreatingTsFiles?: boolean;
+  }): void {
     //#region @backendFunc
+    options = options || {};
     if (this.project.taonJson.type !== LibTypeEnum.ISOMORPHIC_LIB) {
       return;
     }
@@ -281,39 +284,41 @@ ${'req' + 'uire'}('./start');
     );
     countLinkInPackageJsonBin.push(pathBrkDebugLink);
 
-    if (this.project.nameForCli !== taonPackageName) {
-      // QUICK_FIX For custom taon cli
+    if (!options.skipRecreatingTsFiles) {
+      if (this.project.nameForCli !== taonPackageName) {
+        // QUICK_FIX For custom taon cli
+        this.project.framework.recreateFileFromCoreProject({
+          forceRecrete: true,
+          fileRelativePath: crossPlatformPath([srcMainProject, cliTsFromSrc]),
+        });
+      }
+
       this.project.framework.recreateFileFromCoreProject({
         forceRecrete: true,
-        fileRelativePath: crossPlatformPath([srcMainProject, cliTsFromSrc]),
+        fileRelativePath: crossPlatformPath([srcMainProject, indexTsFromSrc]),
       });
-    }
 
-    this.project.framework.recreateFileFromCoreProject({
-      forceRecrete: true,
-      fileRelativePath: crossPlatformPath([srcMainProject, indexTsFromSrc]),
-    });
-
-    this.project.framework.recreateFileFromCoreProject({
-      forceRecrete: true,
-      fileRelativePath: crossPlatformPath([binMainProject, startJsFromBin]),
-      modifyContentBeforeSave: content => {
-        content = (content || '')
-          .split('\n')
-          .filter(l => !l.includes('global.frameworkName'))
-          .join('\n');
-        return `global.frameworkName = '${this.project.nameForCli}';\n${content}`;
-      },
-    });
-
-    if (!this.project.hasFile([srcMainProject, libFromSrc, startTsFromLib])) {
       this.project.framework.recreateFileFromCoreProject({
-        fileRelativePath: crossPlatformPath([
-          srcMainProject,
-          libFromSrc,
-          startTsFromLib,
-        ]),
+        forceRecrete: true,
+        fileRelativePath: crossPlatformPath([binMainProject, startJsFromBin]),
+        modifyContentBeforeSave: content => {
+          content = (content || '')
+            .split('\n')
+            .filter(l => !l.includes('global.frameworkName'))
+            .join('\n');
+          return `global.frameworkName = '${this.project.nameForCli}';\n${content}`;
+        },
       });
+
+      if (!this.project.hasFile([srcMainProject, libFromSrc, startTsFromLib])) {
+        this.project.framework.recreateFileFromCoreProject({
+          fileRelativePath: crossPlatformPath([
+            srcMainProject,
+            libFromSrc,
+            startTsFromLib,
+          ]),
+        });
+      }
     }
 
     const bin = {};
@@ -431,7 +436,9 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
     });
 
     this.project.framework.recreateVarsScss(initOptions);
-    this.recreateCliBasicStructure();
+    this.recreateCliBasicStructure({
+      skipRecreatingTsFiles: true,
+    });
 
     // TODO QUICK_FIX change env to something else
     Helpers.removeFileIfExists(
