@@ -176,9 +176,7 @@ export const COMPILATION_COMPLETE_TSC =
 export const DEFAULT_FRAMEWORK_VERSION =
   `v${CURRENT_PACKAGE_VERSION.split('.')[0]}` as CoreModels.FrameworkVersion;
 
-export {
-  globalSpinner,
-} from 'tnp-core/src';
+export { globalSpinner } from 'tnp-core/src';
 
 /**
  * Prevents taon from checking core container when
@@ -339,21 +337,25 @@ export const mainProjectSubProjects = 'sub-projects';
 export enum TempalteSubprojectType {
   TAON_STRIPE_CLOUDFLARE_WORKER = 'taon-stripe-cloudflare-worker',
   TAON_YT_CLOUDFLARE_WORKER = 'taon-yt-cloudflare-worker',
+  TAON_EMAIL_CLOUDFLARE_WORKER = 'taon-email-cloudflare-worker',
 }
 
 export const TempalteSubprojectTypeArr: TempalteSubprojectType[] = [
   TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER,
   TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER,
+  TempalteSubprojectType.TAON_EMAIL_CLOUDFLARE_WORKER,
 ];
 
 export const TemplateSubprojectWorkerPrefix = {
   [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]: 'stripe',
   [TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER]: 'yt',
+  [TempalteSubprojectType.TAON_EMAIL_CLOUDFLARE_WORKER]: 'email',
 };
 
 export const TemplateSubprojectDbPrefix = {
   [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]: 'STRIPE_SALES_KV',
   [TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER]: 'YT_DATA_KV',
+  [TempalteSubprojectType.TAON_EMAIL_CLOUDFLARE_WORKER]: 'EMAIL_DATA_KV',
 };
 
 export enum TempalteSubprojectGroup {
@@ -364,6 +366,8 @@ export const TempalteSubprojectTypeGroup = {
   [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]:
     TempalteSubprojectGroup.KEY_VALUE_FAST_WORKER_DATABASE,
   [TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER]:
+    TempalteSubprojectGroup.KEY_VALUE_FAST_WORKER_DATABASE,
+  [TempalteSubprojectType.TAON_EMAIL_CLOUDFLARE_WORKER]:
     TempalteSubprojectGroup.KEY_VALUE_FAST_WORKER_DATABASE,
 };
 

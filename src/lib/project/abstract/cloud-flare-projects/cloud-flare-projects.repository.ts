@@ -34,6 +34,7 @@ import { RenameRule } from 'magic-renamer/src';
 import { CloudFlareYtWorkerPorject } from './cloud-flare-yt-worker-project';
 import { CloudFlareStripeWorkerPorject } from './cloud-flare-stripe-worker-project';
 import { CloudFlareProject } from './cloud-flare-project';
+import { CloudFlareEmailWorkerPorject } from './cloud-flare-email-worker-project';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -131,6 +132,17 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
         f.selectedTempalte === TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER
       );
     }) as CloudFlareYtWorkerPorject[];
+  }
+  //#endregion
+
+  //#region get all cloud flare email projects
+  public getAll_Email_Projects(): CloudFlareEmailWorkerPorject[] {
+    return this.getAll().filter(f => {
+      return (
+        f.selectedTempalte ===
+        TempalteSubprojectType.TAON_EMAIL_CLOUDFLARE_WORKER
+      );
+    }) as CloudFlareEmailWorkerPorject[];
   }
   //#endregion
 

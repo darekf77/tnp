@@ -70,6 +70,7 @@ export class $SubProject extends BaseCli {
         await this.project.subProject.getInfo();
       } else if (select === 'add') {
         await this.project.subProject.addAndConfigure();
+        await this.project.init();
       } else if (select === 'teststripe') {
         await this.project.subProject.testStripeProjectWithExampleData();
       } else if (select === 'mode') {

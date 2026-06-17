@@ -1,9 +1,9 @@
 //#region imports
+import { TaonStripeCloudflareWorker } from '@taon-dev/api-workers/src';
 import {
   chalk,
   Helpers,
   path,
-  TaonStripeCloudflareWorker,
   UtilsExecProc,
   UtilsTerminal,
 } from 'tnp-core/src';

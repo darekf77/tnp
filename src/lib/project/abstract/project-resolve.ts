@@ -23,7 +23,7 @@ import {
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
 import { CLI, UtilsOs } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
-import {taonRepoPathUserInUserDirFn } from 'tnp-core/src';
+import { taonRepoPathUserInUserDirFn } from 'tnp-core/src';
 import { Helpers, BaseProjectResolver, HelpersTaon } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
@@ -36,7 +36,6 @@ import {
   packageJsonMainProject,
   skipCoreCheck,
   taonJsonMainProject,
-
 } from '../../constants';
 import { EnvOptions } from '../../options';
 

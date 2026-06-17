@@ -26,6 +26,7 @@ import type { Project } from '../project';
 import { CloudFlareProject } from './cloud-flare-project';
 import { CloudFlareStripeWorkerPorject } from './cloud-flare-stripe-worker-project';
 import { CloudFlareYtWorkerPorject } from './cloud-flare-yt-worker-project';
+import { CloudFlareEmailWorkerPorject } from './cloud-flare-email-worker-project';
 
 export namespace CloudFlarePorjectsUtils {
   //#region extract worker account name
@@ -132,7 +133,8 @@ export namespace CloudFlarePorjectsUtils {
   ):
     | CloudFlareProject
     | CloudFlareStripeWorkerPorject
-    | CloudFlareYtWorkerPorject => {
+    | CloudFlareYtWorkerPorject
+    | CloudFlareEmailWorkerPorject => {
     const proj = new CloudFlareProject(absLocation, parentProject);
 
     if (
@@ -146,6 +148,13 @@ export namespace CloudFlarePorjectsUtils {
       proj.selectedTempalte === TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER
     ) {
       return new CloudFlareYtWorkerPorject(absLocation, parentProject);
+    }
+
+    if (
+      proj.selectedTempalte ===
+      TempalteSubprojectType.TAON_EMAIL_CLOUDFLARE_WORKER
+    ) {
+      return new CloudFlareEmailWorkerPorject(absLocation, parentProject);
     }
 
     return proj;
