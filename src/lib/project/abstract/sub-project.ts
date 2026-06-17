@@ -330,9 +330,18 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#region PUBLIC API / set secrets for worker
   public async setWorkerSecrets(): Promise<void> {
     //#region @backendFunc
-    await this.repo.initAll();
-    const chosenProject = await this.selectAnyProject();
-    await chosenProject.setApiSecreats();
+    while (true) {
+      await this.repo.initAll();
+      const chosenProject = await this.selectAnyProject();
+      await chosenProject.setApiSecreats();
+      const again = await UtilsTerminal.confirm({
+        message: `Would you like to set secret again to project ?`,
+        defaultValue: true,
+      });
+      if (!again) {
+        return;
+      }
+    }
     //#endregion
   }
   //#endregion
@@ -340,9 +349,19 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#region PUBLIC API / deploy worker
   public async deployWorker(): Promise<void> {
     //#region @backendFunc
-    await this.repo.initAll();
-    const chosenProject = await this.selectAnyProject();
-    await chosenProject.deployment();
+    while (true) {
+      await this.repo.initAll();
+      const chosenProject = await this.selectAnyProject();
+      await chosenProject.deployment();
+      const again = await UtilsTerminal.confirm({
+        message: `Would you like to deploy any project again ?`,
+        defaultValue: true,
+      });
+      if (!again) {
+        return;
+      }
+    }
+
     //#endregion
   }
   //#endregion

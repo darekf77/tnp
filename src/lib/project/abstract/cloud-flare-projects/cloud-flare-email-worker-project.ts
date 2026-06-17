@@ -20,7 +20,7 @@ export class CloudFlareEmailWorkerPorject extends CloudFlareProject {
         key: 'SENDER_EMAIL' as keyof TaonEmailContactEnv as string,
         description: `
 
-        Your website "fake" email..
+        Your website "fake" email.. contact@website-emails.mattbachata.pl
 
         `,
       },
@@ -54,6 +54,7 @@ export class CloudFlareEmailWorkerPorject extends CloudFlareProject {
         description: `
 
         Resend email provider API KEY
+        (use website-emails.mattbachata.pl instead just mattbachata.pl for sesend)
 
         `,
       },
