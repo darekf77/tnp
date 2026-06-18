@@ -93,9 +93,10 @@ export class Branding extends BaseFeatureForProject<Project> {
       const coreLogoPath = coreLogoProj.pathFor(fileName.logo_png);
 
       HelpersTaon.copyFile(coreLogoPath, sourceLogoPng);
+      Helpers.info(`Project ${proj.genericName} recreated default logo`);
     }
 
-    Helpers.log(`Project ${proj.genericName} branding started`);
+    Helpers.info(`Project ${proj.genericName} branding started`);
 
     const dest = this.path;
 
