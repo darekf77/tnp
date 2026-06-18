@@ -1774,7 +1774,7 @@ export const CURRENT_PACKAGE_VERSION = '${
 
 ${
   subProjects.length > 0
-    ? 'export namespace TAON_STRIPE_CLOUDFLARE_WORKERS_URLS {'
+    ? 'export namespace TAON_CLOUDFLARE_WORKERS_URLS {'
     : ''
 }
 ${subProjects
