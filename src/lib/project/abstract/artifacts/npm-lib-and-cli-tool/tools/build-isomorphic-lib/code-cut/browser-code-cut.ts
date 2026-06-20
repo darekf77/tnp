@@ -868,6 +868,14 @@ export class BrowserCodeCut {
           from: `url("/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
           to: `url("${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         },
+        {
+          from: `Taon.asset('/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: `Taon.asset('${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        },
+        {
+          from: `Taon.asset("/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+          to: `Taon.asset("${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        },
         /**
          *
 
