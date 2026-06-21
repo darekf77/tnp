@@ -629,7 +629,7 @@ ${allFoldersWithHtml.map(c => `@source "../${c}/**/*.html";`).join('\n')}
 
     return injectImportsHtml(
       currentHtmlContent,
-      importsFileContent || '< nothing injected >',
+      importsFileContent || '<!-- nothing injected as imports.html -->',
     );
     //#endregion
   }
