@@ -46,6 +46,7 @@ import {
   srcMainProject,
   srcNgProxyProject,
   tailwindScssImportRegex,
+  tailwindScssImportRegexGlobal,
   tempAppForFolder,
   tempSourceFolder,
   timestampPrefixComment,
@@ -615,7 +616,7 @@ export class BrowserCodeCut {
           Helpers.logInfo(`Replacing for tailwind.css`);
           absFileSourcePathBrowserOrWebsqlAPPONLYNewContent =
             absFileSourcePathBrowserOrWebsqlAPPONLYNewContent.replace(
-              tailwindScssImportRegex,
+              tailwindScssImportRegexGlobal,
               '/* tailwind import separated */\n',
             );
         } else {

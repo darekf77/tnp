@@ -20,6 +20,8 @@ import {
   indexScssFromSrcLib,
   indexTsFromLibFromSrc,
   libFromSrc,
+  markerEndImport,
+  markerStartImport,
   migrationsFromLib,
   nodeModulesMainProject,
   sharedFromAssets,
@@ -634,17 +636,15 @@ ${allFoldersWithHtml.map(c => `@source "../${c}/**/*.html";`).join('\n')}
   //#endregion
 }
 
-const markerStart = '<!-- TAON_IMPORTS_HTML_START -->';
-const markerEnd = '<!-- TAON_IMPORTS_HTML_END -->';
-
+//#region helper inject imports
 export const injectImportsHtml = (
   indexHtml: string,
   importsHtml: string,
 ): string => {
-  const block = `${markerStart}\n${importsHtml.trim()}\n${markerEnd}`;
+  const block = `${markerStartImport}\n${importsHtml.trim()}\n${markerEndImport}`;
 
   const existingBlockRegex = new RegExp(
-    `${escapeRegex(markerStart)}[\\s\\S]*?${escapeRegex(markerEnd)}`,
+    `${escapeRegex(markerStartImport)}[\\s\\S]*?${escapeRegex(markerEndImport)}`,
     'm',
   );
 
@@ -658,3 +658,4 @@ export const injectImportsHtml = (
 export const escapeRegex = (value: string): string => {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 };
+//#endregion

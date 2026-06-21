@@ -1520,7 +1520,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         // console.log('IS DIRECTORY', file)
         // console.log('IS DIRECTORY DEST', dest)
         const filter = src => {
-          return !/.*node_modules.*/g.test(src);
+          return !/.*node_modules.*/.test(src);
         };
         HelpersTaon.copy(file, dest, { filter });
       } else {

@@ -458,7 +458,9 @@ export const reExportJson = 're-export.json';
 
 export const tailwindscsimport = `@${'imp' + 'ort'} "tailwindcss";`;
 
-export const tailwindScssImportRegex =
+export const tailwindScssImportRegex = /@import\s+["']tailwindcss["']\s*;?/;
+
+export const tailwindScssImportRegexGlobal =
   /@import\s+["']tailwindcss["']\s*;?/g;
 
 /**
@@ -1056,3 +1058,6 @@ export const endingsStylesComponentsContainers = extForStyles
   .reduce((a, b) => a.concat(b));
 
 export const timestampPrefixComment = '// timestamp';
+
+export const markerStartImport = '<!-- TAON_IMPORTS_HTML_START -->';
+export const markerEndImport = '<!-- TAON_IMPORTS_HTML_END -->';

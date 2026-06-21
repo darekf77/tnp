@@ -341,9 +341,12 @@ export class $Global extends BaseGlobalCommandLine<
     //#region @backendFunc
     const project = this.project as Project;
 
-    const regexEnd = /from\s+(\'|\").+(\'|\")/g;
-    const singleLineImporrt = /import\((\'|\"|\`).+(\'|\"|\`)\)/g;
-    const singleLineRequire = /require\((\'|\"|\`).+(\'|\"|\`)\)/g;
+    const regexEndGlobal = /from\s+(\'|\").+(\'|\")/g;
+    const regexEndNormal = /from\s+(\'|\").+(\'|\")/;
+    const singleLineImportNormal = /import\((\'|\"|\`).+(\'|\"|\`)\)/;
+    const singleLineImportGlobal = /import\((\'|\"|\`).+(\'|\"|\`)\)/g;
+    const singleLineRequireNormal = /require\((\'|\"|\`).+(\'|\"|\`)\)/;
+    const singleLineRequireGlobal = /require\((\'|\"|\`).+(\'|\"|\`)\)/g;
     const srcEnd = /\/src(\'|\"|\`)/;
     const betweenApos = /(\'|\"|\`).+(\'|\"|\`)/g;
 
@@ -395,25 +398,25 @@ export class $Global extends BaseGlobalCommandLine<
             ) {
               return line;
             }
-            if (regexEnd.test(line)) {
+            if (regexEndNormal.test(line)) {
               return processAddSrcAtEnd(
-                regexEnd,
+                regexEndGlobal,
                 line,
                 packages,
                 'from_import_export',
               );
             }
-            if (singleLineImporrt.test(line)) {
+            if (singleLineImportNormal.test(line)) {
               return processAddSrcAtEnd(
-                singleLineImporrt,
+                singleLineImportGlobal,
                 line,
                 packages,
                 'imports',
               );
             }
-            if (singleLineRequire.test(line)) {
+            if (singleLineImportNormal.test(line)) {
               return processAddSrcAtEnd(
-                singleLineRequire,
+                singleLineRequireGlobal,
                 line,
                 packages,
                 'require',
