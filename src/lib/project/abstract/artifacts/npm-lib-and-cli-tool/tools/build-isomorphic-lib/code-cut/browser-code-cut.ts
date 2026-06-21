@@ -3,7 +3,6 @@ import { RegionRemover } from 'isomorphic-region-loader/src';
 import { ReplaceOptionsExtended } from 'isomorphic-region-loader/src';
 import {
   chalk,
-  config,
   dateformat,
   extAllowedToReplace,
   extForStyles,
@@ -11,15 +10,11 @@ import {
   TAGS,
   Utils,
   UtilsFilesFoldersSync,
-  UtilsJson,
 } from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
-import {
-  extractFirstLevelRegions,
-  getCleanImport,
-} from '../../../../../../../app-utils';
+import { getCleanImport } from '../../../../../../../app-utils';
 import {
   appAutoGenDocsMd,
   appAutoGenJs,
@@ -31,26 +26,22 @@ import {
   assetsFromSrc,
   assetsFromTempSrc,
   browserFromImport,
-  browserMainProject,
-  browserNpmPackage,
   browserTypeString,
-  distMainProject,
   endingsStylesComponentsContainers,
+  globalScssFromSrc,
   indexTsFromLibFromSrc,
   libFromImport,
-  libFromNpmPackage,
   libFromSrc,
   libTypeString,
   ngProjectStylesScss,
   ngProjectTailwindCss,
-  nodeModulesMainProject,
   prodSuffix,
-  splitNamespacesJson,
   srcFromTaonImport,
   srcMainProject,
   srcNgProxyProject,
-  tailwindscsimport,
   tailwindScssImportRegex,
+  tempAppForFolder,
+  tempSourceFolder,
   timestampPrefixComment,
   tmpAppsForDist,
   tmpAppsForDistElectron,
@@ -63,8 +54,6 @@ import {
   tmpSrcDistWebsql,
   TO_REMOVE_TAG,
   websqlFromImport,
-  websqlMainProject,
-  websqlNpmPackage,
   websqlTypeString,
 } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
@@ -574,6 +563,7 @@ export class BrowserCodeCut {
         );
       }
     } else {
+      // console.log(`handle ${this.relativePath}`);
       if (!this.relativePath.startsWith(`${appFromSrc}/`)) {
         // NORMAL JSON, TXT (OR ANYTHING TEXT BASED) FOR BROWSER FILE FOR LIB
         const absFileSourcePathBrowserOrWebsqlCurrent = this.project.watcher
@@ -600,11 +590,70 @@ export class BrowserCodeCut {
       // NORMAL JSON, TXT (OR ANYTHING TEXT BASED) FOR BROWSER FILE FOR APP
       const absFileSourcePathBrowserOrWebsqlAPPONLYCurrent = this.project
         .watcher.isTaonLightWatcherMode
-        ? Helpers.readFile(this.absFileSourcePathBrowserOrWebsqlAPPONLY)
+        ? UtilsFilesFoldersSync.readFile(
+            this.absFileSourcePathBrowserOrWebsqlAPPONLY,
+          )
         : undefined;
 
-      const absFileSourcePathBrowserOrWebsqlAPPONLYNewContent =
+      let absFileSourcePathBrowserOrWebsqlAPPONLYNewContent =
         this.rawContentForAPPONLYBrowser;
+
+      if (this.relativePath === globalScssFromSrc) {
+        if (
+          tailwindScssImportRegex.test(
+            absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
+          )
+        ) {
+          Helpers.logInfo(`Replacing for tailwind.css`);
+          absFileSourcePathBrowserOrWebsqlAPPONLYNewContent =
+            absFileSourcePathBrowserOrWebsqlAPPONLYNewContent.replace(
+              tailwindScssImportRegex,
+              '/* tailwind import separated */\n',
+            );
+        } else {
+          Helpers.logInfo(`Does not include tailwind.css`);
+        }
+        //#region updatae tailwind .css
+        [
+          tempAppForFolder({
+            websql: this.buildOptions.build.websql,
+            prod: this.buildOptions.build.prod,
+            electron: false,
+          }),
+          tempAppForFolder({
+            websql: this.buildOptions.build.websql,
+            prod: this.buildOptions.build.prod,
+            electron: true,
+          }),
+        ].forEach(tmpFolderAppsFor => {
+          const tailWindFileNgProjAbsPath = crossPlatformPath([
+            this.project.location,
+            tmpFolderAppsFor,
+            this.project.name,
+            srcNgProxyProject,
+            ngProjectTailwindCss,
+          ]);
+
+          if (Helpers.exists(tailWindFileNgProjAbsPath)) {
+            const currentContentTailwindCss = UtilsFilesFoldersSync.readFile(
+              tailWindFileNgProjAbsPath,
+            );
+            const newContentTailwindCss =
+              this.project.quickFixes.updateTailwindCssContent(
+                tailWindFileNgProjAbsPath,
+                this.buildOptions,
+              );
+            if (currentContentTailwindCss !== newContentTailwindCss) {
+              Helpers.logInfo(`Updating empty tailwind.css`);
+              UtilsFilesFoldersSync.writeFile(
+                tailWindFileNgProjAbsPath,
+                newContentTailwindCss,
+              );
+            }
+          }
+        });
+        //#endregion
+      }
 
       if (
         absFileSourcePathBrowserOrWebsqlAPPONLYCurrent?.trimEnd() !==

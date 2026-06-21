@@ -33,8 +33,6 @@ import {
   sourceLinkInNodeModules,
   srcMainProject,
   srcNgProxyProject,
-  tailwindscsimport,
-  tailwindScssImportRegex,
   TaonGeneratedFolders,
   tmp_FRONTEND_NORMAL_APP_PORT,
   tmp_FRONTEND_WEBSQL_APP_PORT,
@@ -773,9 +771,16 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                 packageName,
                 sourceLinkInNodeModules,
               ]);
-              const packageSourceRealPath = crossPlatformPath(
-                fse.realpathSync(packageSource),
-              );
+              const packageSourceRealPath =
+                fse.existsSync(packageSource) &&
+                crossPlatformPath(fse.realpathSync(packageSource));
+
+              if (!packageJsonNgProject) {
+                Helpers.warn(
+                  `Recreation failded.. path does not exits ${packageJsonNgProject}`,
+                );
+                continue;
+              }
 
               const projFromSrouce = this.project.ins.From(
                 path.dirname(path.dirname(packageSourceRealPath)),
@@ -854,9 +859,6 @@ ${isomorphicPackagesDevMode.map(packageName => `export * from './${packageName}/
 
           //#region recreate tailwind stuff
           (() => {
-            if (!this.initOptions.release.releaseType) {
-              return;
-            }
             const tailWindFileNgProjAbsPath = crossPlatformPath([
               this.project.location,
               replacement(tmpProjectsStandalone),
@@ -864,61 +866,11 @@ ${isomorphicPackagesDevMode.map(packageName => `export * from './${packageName}/
               ngProjectTailwindCss,
             ]);
 
-            const globalScssInTempProj = crossPlatformPath([
-              this.project.location,
-              replacement(tmpProjectsStandalone),
-              srcNgProxyProject,
-              appFromSrcInsideNgApp,
-              globalScssFromSrc,
-            ]);
-
-            const globalFileSrcAbsPath = this.project.pathFor([
-              srcMainProject,
-              globalScssFromSrc,
-            ]);
-
-            const globalScssContent =
-              UtilsFilesFoldersSync.readFile(globalFileSrcAbsPath);
-
-            if (tailwindScssImportRegex.test(globalScssContent)) {
-              const globalScssInTempProjContent =
-                UtilsFilesFoldersSync.readFile(globalScssInTempProj);
-              UtilsFilesFoldersSync.writeFile(
-                globalScssInTempProj,
-                (globalScssInTempProjContent || '').replace(
-                  tailwindScssImportRegex,
-                  '/* tailwind import separated */\n',
-                ),
-              );
-
-              const allFoldersWithHtml =
-                this.project.packagesRecognition.allIsomorphicPackagesFromMemory
-                  .map(c => {
-                    return this.project.pathFor([
-                      nodeModulesMainProject,
-                      c,
-                      'html',
-                      libFromSrc,
-                    ]);
-                  })
-                  .filter(f => Helpers.exists(f))
-                  .map(c => c.replace(`${this.project.location}/`, ''));
-
-              Helpers.logInfo(
-                `Fixing tailwindcss import for release: ${tailWindFileNgProjAbsPath}`,
-              );
-              UtilsFilesFoldersSync.writeFile(
-                tailWindFileNgProjAbsPath,
-                `${tailwindscsimport}
-
-/* source for tailwind from isomorphic packages (${allFoldersWithHtml.length}/${
-                  this.project.packagesRecognition
-                    .allIsomorphicPackagesFromMemory.length
-                }) has html separted. */
-${allFoldersWithHtml.map(c => `@source "../${c}/**/*.html";`).join('\n')}
-              `,
-              );
-            }
+            const content = this.project.quickFixes.updateTailwindCssContent(
+              tailWindFileNgProjAbsPath,
+              this.initOptions,
+            );
+            UtilsFilesFoldersSync.writeFile(tailWindFileNgProjAbsPath, content);
           })();
           //#endregion
 

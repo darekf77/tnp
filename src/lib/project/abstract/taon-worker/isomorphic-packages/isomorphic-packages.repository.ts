@@ -47,7 +47,7 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
     }
     this.addMessage(`Started worker`);
 
-    await this.updateIsomoprhicFor(CURRENT_PACKAGE_TAON_VERSION);
+    await this.updateIsomoprhicFor([CURRENT_PACKAGE_TAON_VERSION]);
     // await UtilsTerminal.pressAnyKeyToContinueAsync();
   }
   //#endregion
@@ -105,13 +105,39 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
   //#endregion
 
   //#region API / public methods / update isomorphic pcakges throttle
-  updateIsomorphicPackagesThrottle = _.throttle(
-    (
-      frameworkVersion: CoreModels.FrameworkVersion,
-      body: DevMode.ProjectBuildNotificaiton,
-    ) => this.updateIsomoprhicFor(frameworkVersion, body),
-    1000,
-  );
+
+  private updateIsomorphicPackagesThrottleMap = new Map<
+    CoreModels.FrameworkVersion,
+    Function
+  >();
+
+  private packgesQueueForUpdate = new Map<
+    CoreModels.FrameworkVersion,
+    DevMode.ProjectBuildNotificaiton[]
+  >();
+
+  public updateIsomorphicArrayThrothle(
+    body: DevMode.ProjectBuildNotificaiton,
+  ): void {
+    const frameworkVersion = body.coreContainerVersion;
+    this.addMessage(
+      `notify that update needed of framework ${frameworkVersion}`,
+    );
+    if (!this.packgesQueueForUpdate.get(frameworkVersion)) {
+      this.packgesQueueForUpdate.set(frameworkVersion, []);
+    }
+
+    this.packgesQueueForUpdate.get(frameworkVersion).push(body);
+
+    if (!this.updateIsomorphicPackagesThrottleMap.has(frameworkVersion)) {
+      this.updateIsomorphicPackagesThrottleMap.set(
+        frameworkVersion,
+        _.throttle(() => this.updateIsomoprhicFor(), 1000),
+      );
+    }
+    this.updateIsomorphicPackagesThrottleMap.get(frameworkVersion)();
+  }
+
   //#endregion
 
   //#region API / protected methods / use in db memory
@@ -145,60 +171,77 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
 
   //#region API / private methods / update isomorphic pcakges
   private async updateIsomoprhicFor(
-    frameworkVersion?: CoreModels.FrameworkVersion,
-    body?: DevMode.ProjectBuildNotificaiton,
-  ): Promise<string[]> {
+    detectFor?: CoreModels.FrameworkVersion[],
+  ): Promise<void> {
     //#region @backendFunc
 
-    this.addMessage(`staring detection`);
-    const { Project } = await import('../../../abstract/project');
-    const coreContainer = Project.ins.by('container', frameworkVersion);
-    const allIsomorphicPackagesFromNodeModules: string[] =
-      coreContainer.nodeModules.getIsomorphicPackagesNames();
+    const frameworkVersions = detectFor
+      ? detectFor
+      : (Utils.uniqArray(
+          Array.from(this.packgesQueueForUpdate.keys()).map(c => c),
+        ) as CoreModels.FrameworkVersion[]);
 
-    const devModeController =
-      await Project.ins.taonProjectsWorker.buildsWorker.getRemoteControllerFor();
+    for (const frameworkVersion of frameworkVersions) {
+      // const frameworkVersion =
 
-    const poolBuildsData =
-      await devModeController.getAllDevModeProjects(frameworkVersion)
-        .request!();
+      this.addMessage(`staring detection for version "${frameworkVersion}"`);
+      const { Project } = await import('../../../abstract/project');
+      const coreContainer = Project.ins.by('container', frameworkVersion);
+      const allIsomorphicPackagesFromNodeModules: string[] =
+        coreContainer.nodeModules.getIsomorphicPackagesNames();
 
-    let poolProjectsBuilds = poolBuildsData.body.json || [];
+      const devModeController =
+        await Project.ins.taonProjectsWorker.buildsWorker.getRemoteControllerFor();
 
-    if (body) {
-      poolProjectsBuilds.push(body);
-    }
+      const poolBuildsData =
+        await devModeController.getAllDevModeProjects(frameworkVersion)
+          .request!();
 
-    poolProjectsBuilds = Utils.uniqArray(poolProjectsBuilds, 'uniqueKey');
+      let poolProjectsBuilds = poolBuildsData.body.json || [];
 
-    this.addMessage(
-      `poolProjectsBuilds ` +
-        poolProjectsBuilds.map(c => c.nameForNpmPackage).join(','),
-    );
+      const projectsInQueue = (
+        this.packgesQueueForUpdate.get(frameworkVersion) || []
+      ).map(c => DevMode.ProjectBuildNotificaiton.from(c));
 
-    const namesFromActiveBuilds = poolProjectsBuilds.reduce((a, b) => {
-      return [...a, b.nameForNpmPackage, ...b.devModeDependenciesNames];
-    }, [] as string[]);
+      if (projectsInQueue.length > 0) {
+        poolProjectsBuilds.push(...projectsInQueue);
+      }
 
-    const sorted = Utils.uniqArray(
-      [...allIsomorphicPackagesFromNodeModules, ...namesFromActiveBuilds]
-        .filter(f => !!f)
-        .sort((a, b) => a.localeCompare(b)),
-    );
+      poolProjectsBuilds = Utils.uniqArray(poolProjectsBuilds, 'uniqueKey');
 
-    await this.merge('isomorphicPackages', {
-      [frameworkVersion]: sorted,
-    });
-
-    this.addMessage(`saving ${sorted.join(',')}`);
-
-    if (!body) {
       this.addMessage(
-        `initing and skipping pool update (no body of new package)`,
+        `poolProjectsBuilds for "${frameworkVersion}" ` +
+          poolProjectsBuilds
+            .map(c => `${c.nameForNpmPackage}(${c.coreContainerVersion})`)
+            .join(','),
       );
-    } else {
+
+      const namesFromActiveBuilds = poolProjectsBuilds.reduce((a, b) => {
+        return [...a, b.nameForNpmPackage, ...b.devModeDependenciesNames];
+      }, [] as string[]);
+
+      const sorted = Utils.uniqArray(
+        [...allIsomorphicPackagesFromNodeModules, ...namesFromActiveBuilds]
+          .filter(f => !!f)
+          .sort((a, b) => a.localeCompare(b)),
+      );
+
+      await this.merge('isomorphicPackages', {
+        [frameworkVersion]: sorted,
+      });
+
+      this.addMessage(`saving for "${frameworkVersion}" ${sorted.join(',')}`);
+
+      // if (!body) {
+      //   this.addMessage(
+      //     `initing and skipping pool update (no body of new package)`,
+      //   );
+      // } else {
+      Helpers.info(
+        `Starting update of ${poolProjectsBuilds.length} child(s) for "${frameworkVersion}"`,
+      );
       for (const projBUild of poolProjectsBuilds) {
-        this.addMessage(`updating ${projBUild.nameForNpmPackage}`);
+        this.addMessage(`updating  ${projBUild.nameForNpmPackage}`);
         const ctrl = await this.getDevBuildControllerForPort(projBUild.port);
         try {
           await ctrl.setIsomorphicPackages(sorted, frameworkVersion).request!();
@@ -209,11 +252,13 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
           );
         }
       }
+      // }
+      this.packgesQueueForUpdate.set(frameworkVersion, []);
+      this.addMessage(
+        `Done update of isomorphic packages for "${frameworkVersion}`,
+      );
     }
 
-    this.addMessage(`Done update of isomorphic packages`);
-
-    return sorted;
     //#endregion
   }
   //#endregion

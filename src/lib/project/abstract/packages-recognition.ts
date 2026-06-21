@@ -129,7 +129,6 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
       await this.project.ins.taonProjectsWorker.isomorphicPackagesWorker.getRemoteControllerFor();
 
     await isomorphicPackagesController.updateIsomoprhicFor(
-      this.project.taonJson.frameworkVersion,
       this.project.dataToRequest(),
     ).request!();
 

@@ -530,7 +530,11 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     packagesFromWorker: string[],
     frameworkVersion: CoreModels.FrameworkVersion,
   ): void {
-    // console.log({ frameworkVersion, packagesFromWorker });
+    Helpers.info(
+      `Updating (${packagesFromWorker.length}) isomorpihic packages from worker ...
+      framework version = ${frameworkVersion}   `,
+    );
+    Helpers.logInfo(packagesFromWorker.join('\n'));
     this.packagesFromWorker.set(frameworkVersion, packagesFromWorker);
   }
 

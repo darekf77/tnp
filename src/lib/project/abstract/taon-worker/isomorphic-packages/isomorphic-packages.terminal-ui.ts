@@ -61,7 +61,7 @@ export class IsomorphicPackagesTerminalUI extends BaseCliWorkerTerminalUI<Isomor
           const list =
             (await ctrl.getAllFor(currentFrameworkVersion).request())?.body
               .json || [];
-          console.log(list.join(','));
+          console.log(list.join('\n'));
           Helpers.info(`Fetched ${list.length} packages names`);
           await UtilsTerminal.pressAnyKeyToContinueAsync({
             message: 'Press any key to go back to main menu',

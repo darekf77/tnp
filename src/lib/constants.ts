@@ -458,9 +458,8 @@ export const reExportJson = 're-export.json';
 
 export const tailwindscsimport = `@${'imp' + 'ort'} "tailwindcss";`;
 
-export const tailwindScssImportRegex = new RegExp(
-  `@import\\s+["']tailwindcss["']\\s*;?\\s*`,
-);
+export const tailwindScssImportRegex =
+  /@import\s+["']tailwindcss["']\s*;?/g;
 
 /**
  * Main project /dist folder
@@ -815,6 +814,29 @@ export function tempSourceFolder(
   }
 } // ok for prod
 
+export function tempAppForFolder({
+  websql,
+  electron,
+  prod,
+}: {
+  websql: boolean;
+  electron: boolean;
+  prod: boolean;
+}): string {
+  if (!electron && websql) {
+    return tmpAppsForDistWebsql + (prod ? prodSuffix : '');
+  }
+  if (!electron && !websql) {
+    return tmpAppsForDist + (prod ? prodSuffix : '');
+  }
+  if (electron && websql) {
+    return tmpAppsForDistElectronWebsql + (prod ? prodSuffix : '');
+  }
+  if (electron && !websql) {
+    return tmpAppsForDistElectron + (prod ? prodSuffix : '');
+  }
+} // ok for prod
+
 export const ENV_INJECT_COMMENT = '<!--ENV_INJECT-->';
 export const isomorphicPackagesJsonKey = 'isomorphicPackages';
 
@@ -897,6 +919,8 @@ export const tsconfigBackendEsmDistJson_PROD =
 export const tsconfigForSchemaJson = 'tsconfig-for-schema.json';
 
 export const tsconfigJsonIsomorphicMainProject = 'tsconfig.isomorphic.json';
+
+export const TS_NOCHECK = '// @ts-nocheck';
 
 export const dotNpmrcMainProject = fileName._npmrc;
 

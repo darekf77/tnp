@@ -1,10 +1,19 @@
 //#region imports
-import { Taon, ClassHelpers, TaonController, GET, POST, Query, Body } from 'taon/src';
+import {
+  Taon,
+  ClassHelpers,
+  TaonController,
+  GET,
+  POST,
+  Query,
+  Body,
+} from 'taon/src';
 import { _, CoreModels } from 'tnp-core/src';
 import { TaonBaseCliWorkerController } from 'tnp-helpers/src';
 
-import { IsomorphicPackagesRepository } from './isomorphic-packages.repository';
 import { DevMode } from '../dev-mode/dev-mode.models';
+
+import { IsomorphicPackagesRepository } from './isomorphic-packages.repository';
 //#endregion
 
 @TaonController({
@@ -31,16 +40,12 @@ export class IsomorphicPackagesController extends TaonBaseCliWorkerController {
   //#region update isomorphic packages for framework version
   @POST()
   updateIsomoprhicFor(
-    @Query('frameworkVersion') frameworkVersion: CoreModels.FrameworkVersion,
     @Body() body: DevMode.ProjectBuildNotificaiton,
   ): Taon.Response<boolean> {
     //#region @backendFunc
     return async (req, res) => {
       body = DevMode.ProjectBuildNotificaiton.from(body);
-      this.isomorphicPackagesRepository.updateIsomorphicPackagesThrottle(
-        frameworkVersion,
-        body
-      );
+      this.isomorphicPackagesRepository.updateIsomorphicArrayThrothle(body);
       return true;
     };
     //#endregion

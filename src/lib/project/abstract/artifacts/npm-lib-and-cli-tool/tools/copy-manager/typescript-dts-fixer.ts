@@ -1,12 +1,16 @@
-import { config, Utils } from 'tnp-core/src';
+//#region imports
+import { config, Utils, UtilsFilesFoldersSync } from 'tnp-core/src';
 import { crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
-import { srcFromTaonImport } from '../../../../../../constants';
+import {
+  sourceLinkInNodeModules,
+  srcFromTaonImport,
+  TS_NOCHECK,
+} from '../../../../../../constants';
 
 import type { CopyManagerStandalone } from './copy-manager-standalone';
-
-export const TS_NOCHECK = '// @ts-nocheck';
+//#endregion
 
 /**
  * TODO QUICK_FIX: for typescript compiler doing wrong imports/exports in d.ts files
@@ -39,9 +43,14 @@ export class TypescriptDtsFixer {
   forBackendContent(content: string) {
     //#region @backendFunc
     content = content ? content : '';
-    const isomorphicPackages = this.copyManagerStandalone.isomorphicPackages;
+    const isomorphicPackages =
+      this.copyManagerStandalone.project.packagesRecognition
+        .allIsomorphicPackagesFromMemory;
+
     for (let index = 0; index < isomorphicPackages.length; index++) {
       const isomorphicPackageName = isomorphicPackages[index];
+
+      //#region replace package/src
       content = (content || '').replace(
         new RegExp(
           Utils.escapeStringForRegEx(
@@ -61,6 +70,29 @@ export class TypescriptDtsFixer {
         ),
         `${isomorphicPackageName}"`,
       );
+      //#endregion
+
+      //#region replace package/source
+      content = (content || '').replace(
+        new RegExp(
+          Utils.escapeStringForRegEx(
+            `${isomorphicPackageName}/${sourceLinkInNodeModules}'`,
+          ),
+          'g',
+        ),
+        `${isomorphicPackageName}'`,
+      );
+
+      content = (content || '').replace(
+        new RegExp(
+          Utils.escapeStringForRegEx(
+            `${isomorphicPackageName}/${sourceLinkInNodeModules}"`,
+          ),
+          'g',
+        ),
+        `${isomorphicPackageName}"`,
+      );
+      //#endregion
     }
     return content;
     //#endregion
@@ -69,14 +101,17 @@ export class TypescriptDtsFixer {
   /**
    * browserFolder = browser websql browser-prod websql-prod
    */
-  forContent(content: string, browserFolder: string) {
+  getBrowserDtsFileContentFor(content: string, browserFolder: string): string {
     //#region @backendFunc
     content = content ? content : '';
 
     // if(path.basename(filepath) === 'framework-context.d.ts') {
     //   debugger
     // }
-    const isomorphicPackages = this.copyManagerStandalone.isomorphicPackages;
+    const isomorphicPackages =
+      this.copyManagerStandalone.project.packagesRecognition
+        .allIsomorphicPackagesFromMemory;
+
     for (let index = 0; index < isomorphicPackages.length; index++) {
       const isomorphicPackageName = isomorphicPackages[index];
       content = (content || '').replace(
@@ -103,10 +138,10 @@ export class TypescriptDtsFixer {
    * @param absPathFolderLocationWithBrowserAdnWebsql usually dist
    * @param isTempLocalProj
    */
-  processFolderWithBrowserWebsqlFolders(
+  public processFolderWithBrowserWebsqlFolders(
     absPathFolderLocationWithBrowserAdnWebsql: string,
     browserwebsqlFolders: string[],
-  ) {
+  ): void {
     //#region @backendFunc
     // console.log({ absPathFolderLocation: absPathFolderLocationWithBrowserAdnWebsql })
 
@@ -118,21 +153,27 @@ export class TypescriptDtsFixer {
         absPathFolderLocationWithBrowserAdnWebsql,
         currentBrowserFolder,
       ]);
-      this.processFolder(sourceBrowser, currentBrowserFolder);
+      this.processBrowserCodeFolder(sourceBrowser, currentBrowserFolder);
       Helpers.log('Fixing .d.ts. files done.');
     }
     //#endregion
   }
 
-  processFolder(absPathLocation: string, currentBrowserFolder: string) {
+  private processBrowserCodeFolder(
+    absPathLocation: string,
+    currentBrowserFolder: string,
+  ): void {
     //#region @backendFunc
-    const browserDtsFiles = Helpers.filesFrom(absPathLocation, true).filter(f =>
-      f.endsWith('.d.ts'),
-    );
+    const browserDtsFiles = UtilsFilesFoldersSync.getFilesFrom(
+      absPathLocation,
+      {
+        recursive: true,
+      },
+    ).filter(f => f.endsWith('.d.ts'));
 
     for (let index = 0; index < browserDtsFiles.length; index++) {
       const dtsFileAbsolutePath = browserDtsFiles[index];
-      this.forFile(dtsFileAbsolutePath, currentBrowserFolder);
+      this.saveBrowserDtsContentFor(dtsFileAbsolutePath, currentBrowserFolder);
     }
     //#endregion
   }
@@ -140,24 +181,54 @@ export class TypescriptDtsFixer {
   //#endregion
 
   //#region write fixed version of dts file
-  forFile(dtsFileAbsolutePath: string, currentBrowserFolder: string) {
+  private saveBrowserDtsContentFor(
+    dtsFileAbsolutePath: string,
+    currentBrowserFolder: string,
+  ): void {
     //#region @backendFunc
     if (!dtsFileAbsolutePath.endsWith('.d.ts')) {
       return;
     }
     // console.log({ dtsFileAbsolutePath })
 
-    const dtsFileContent = Helpers.readFile(dtsFileAbsolutePath);
-    const dtsFixedContent = this.forContent(
+    const dtsFileContent = UtilsFilesFoldersSync.readFile(dtsFileAbsolutePath);
+    const dtsFixedContent = this.getBrowserDtsFileContentFor(
       dtsFileContent,
       // dtsFileAbsolutePath,
       currentBrowserFolder,
     );
     if (dtsFixedContent.trim() !== dtsFileContent.trim()) {
-      Helpers.writeFile(dtsFileAbsolutePath, dtsFixedContent);
+      UtilsFilesFoldersSync.writeFile(dtsFileAbsolutePath, dtsFixedContent);
     }
     //#endregion
   }
 
+  //#endregion
+
+  //#region fix d.ts import with wrong package names
+  public fixDtsImportsWithWronPackageName(
+    absOrgFilePathInDist: string,
+    destinationFilePath: string,
+    browserwebsqlFolders: string[],
+  ): void {
+    //#region @backendFunc
+    if (absOrgFilePathInDist.endsWith('.d.ts')) {
+      const contentToWriteInDestination =
+        UtilsFilesFoldersSync.readFile(absOrgFilePathInDist) || '';
+
+      for (let index = 0; index < browserwebsqlFolders.length; index++) {
+        const currentBrowserFolder = browserwebsqlFolders[index];
+        const newContent = this.getBrowserDtsFileContentFor(
+          contentToWriteInDestination,
+          // sourceFile,
+          currentBrowserFolder,
+        );
+        if (newContent !== contentToWriteInDestination) {
+          UtilsFilesFoldersSync.writeFile(destinationFilePath, newContent);
+        }
+      }
+    }
+    //#endregion
+  }
   //#endregion
 }
