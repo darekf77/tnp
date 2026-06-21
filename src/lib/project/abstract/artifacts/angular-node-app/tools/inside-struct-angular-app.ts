@@ -5,7 +5,11 @@ import { TAGS, Utils, UtilsFilesFoldersSync } from 'tnp-core/src';
 import { crossPlatformPath, path, _, CoreModels, fse } from 'tnp-core/src';
 import { BasePackageJson, Helpers, HelpersTaon } from 'tnp-helpers/src';
 
-import { templateFolderForArtifact } from '../../../../../app-utils';
+import {
+  replaceAssetsLinksForApp,
+  replaceImportToAssetsIMport,
+  templateFolderForArtifact,
+} from '../../../../../app-utils';
 import {
   AngularJsonAppOrElectronTaskName,
   AngularJsonTaskName,
@@ -19,6 +23,7 @@ import {
   externalLibsFromNgProject,
   generatedFromAssets,
   globalScssFromSrc,
+  importsHtmlFromSrc,
   indexJSElectronDist,
   libFromNgProject,
   libFromSrc,
@@ -871,6 +876,49 @@ ${isomorphicPackagesDevMode.map(packageName => `export * from './${packageName}/
               this.initOptions,
             );
             UtilsFilesFoldersSync.writeFile(tailWindFileNgProjAbsPath, content);
+          })();
+          //#endregion
+
+          //#region recreate index.html imports
+          (() => {
+            const indexHtmlNgProjAbsPAth = crossPlatformPath([
+              this.project.location,
+              replacement(tmpProjectsStandalone),
+              srcNgProxyProject,
+              CoreNgTemplateFiles.INDEX_HTML_NG_APP,
+            ]);
+
+            const currentContentIndexHtmlNgApp = UtilsFilesFoldersSync.readFile(
+              indexHtmlNgProjAbsPAth,
+            );
+
+            let importsHtmlFromMainSrc = this.project.readFile([
+              srcMainProject,
+              importsHtmlFromSrc,
+            ]);
+
+            importsHtmlFromMainSrc = replaceImportToAssetsIMport(
+              importsHtmlFromMainSrc,
+              this.project.nameForNpmPackage,
+            );
+
+            const currentContentImportsHtml = replaceAssetsLinksForApp(
+              importsHtmlFromMainSrc,
+              importsHtmlFromSrc,
+              this.project,
+              this.initOptions,
+            );
+
+            const newContentTailwindCss =
+              this.project.quickFixes.updateTaonImportMetaHead(
+                currentContentIndexHtmlNgApp,
+                currentContentImportsHtml,
+              );
+
+            UtilsFilesFoldersSync.writeFile(
+              indexHtmlNgProjAbsPAth,
+              newContentTailwindCss,
+            );
           })();
           //#endregion
 

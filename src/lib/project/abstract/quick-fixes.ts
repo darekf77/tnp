@@ -15,6 +15,7 @@ import {
   distMainProject,
   folder_shared_folder_info,
   globalScssFromSrc,
+  importsHtmlFromSrc,
   indexScssFromSrc,
   indexScssFromSrcLib,
   indexTsFromLibFromSrc,
@@ -616,4 +617,44 @@ ${allFoldersWithHtml.map(c => `@source "../${c}/**/*.html";`).join('\n')}
     //#endregion
   }
   //#endregion
+
+  //#region get taon index.html imports content
+  updateTaonImportMetaHead(
+    currentHtmlContent: string,
+    importsFileContent: string,
+  ): string {
+    //#region @backendFunc
+
+    return injectImportsHtml(
+      currentHtmlContent,
+      importsFileContent || '< nothing injected >',
+    );
+    //#endregion
+  }
+  //#endregion
 }
+
+const markerStart = '<!-- TAON_IMPORTS_HTML_START -->';
+const markerEnd = '<!-- TAON_IMPORTS_HTML_END -->';
+
+export const injectImportsHtml = (
+  indexHtml: string,
+  importsHtml: string,
+): string => {
+  const block = `${markerStart}\n${importsHtml.trim()}\n${markerEnd}`;
+
+  const existingBlockRegex = new RegExp(
+    `${escapeRegex(markerStart)}[\\s\\S]*?${escapeRegex(markerEnd)}`,
+    'm',
+  );
+
+  if (existingBlockRegex.test(indexHtml)) {
+    return indexHtml.replace(existingBlockRegex, block);
+  }
+
+  return indexHtml.replace('</head>', `${block}\n</head>`);
+};
+
+export const escapeRegex = (value: string): string => {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};

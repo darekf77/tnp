@@ -1,12 +1,18 @@
-import { config, crossPlatformPath, Helpers, Utils } from 'tnp-core/src';
+//#region imports
+import { config, crossPlatformPath, Helpers, Utils, _ } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 
 import {
+  assetsFor,
+  assetsFromNgProj,
+  assetsFromNpmPackage,
+  assetsFromSrc,
   browserFromImport,
   libFromImport,
   oldBuildModePrefix,
   oldBuildModePrefixShort,
   prodSuffix,
+  srcMainProject,
   TemplateFolder,
   tmpAppsForDist,
   tmpAppsForDistElectron,
@@ -14,11 +20,14 @@ import {
   tmpAppsForDistWebsql,
   tmpLibsForDist,
   tmpLibsForDistWebsql,
+  TO_REMOVE_TAG,
   websqlFromImport,
 } from './constants';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from './options';
 import type { Project } from './project/abstract/project';
+//#endregion
 
+//#region allowed to release map
 export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
 } = {
@@ -40,7 +49,9 @@ export const ALLOWED_TO_RELEASE: {
     ReleaseArtifactTaon.VSCODE_PLUGIN,
   ],
 };
+//#endregion
 
+//#region extract first level regions
 export const extractFirstLevelRegions = (
   content: string,
 ): { regionName: string; regionContent: string }[] => {
@@ -99,7 +110,9 @@ export const extractFirstLevelRegions = (
 
   return result;
 };
+//#endregion
 
+//#region angular projx project path
 /**
  * @returns relative path to proxy angular project build folder
  */
@@ -135,6 +148,7 @@ export const angularProjProxyPath = (options: {
   ]);
   //#endregion
 };
+//#endregion
 
 //#region get proxy ng projects
 export const getProxyNgProj = (
@@ -157,6 +171,7 @@ export const getProxyNgProj = (
 };
 //#endregion
 
+//#region template folder for artifact
 export const templateFolderForArtifact = (
   artifact: ReleaseArtifactTaon,
 ): TemplateFolder => {
@@ -184,16 +199,20 @@ export const templateFolderForArtifact = (
   Helpers.error(`Cannot Template folder for current artifact "${artifact}"`);
   //#endregion
 };
+//#endregion
 
+//#region get clean import
 export const getCleanImport = (importName: string): string | undefined => {
   return UtilsTypescript.getCleanImport(importName);
 };
+//#endregion
 
 export interface AiMdFile {
   filename: string;
   content: string;
 }
 
+//#region parse ai md content
 export function parseAiMdContent(input: string): AiMdFile[] {
   const results: AiMdFile[] = [];
 
@@ -225,7 +244,9 @@ export function parseAiMdContent(input: string): AiMdFile[] {
 
   return results;
 }
+//#endregion
 
+//#region error main worker communication
 export const errorMainWorkerCommunication = (): void => {
   Helpers.warn(`Not able to communicate with main worker or current build worker:
 - restart build (that is failing)
@@ -236,4 +257,180 @@ OR
 (add flag ${oldBuildModePrefix} or short version ${oldBuildModePrefixShort})
 
   `);
+};
+//#endregion
+
+//#region replace assets links for app
+export const replaceAssetsLinksForApp = (
+  rawContentForAPPONLYBrowser: string,
+  relativePath: string,
+  project: Project,
+  buildOptions: EnvOptions,
+): string => {
+  //#region @backendFunc
+
+  if (!rawContentForAPPONLYBrowser) {
+    return rawContentForAPPONLYBrowser;
+  }
+
+  rawContentForAPPONLYBrowser = rawContentForAPPONLYBrowser.replace(
+    new RegExp(Utils.escapeStringForRegEx(TO_REMOVE_TAG), 'g'),
+    '',
+  );
+
+  //#region prepare variables
+
+  // console.log(`[incremental-build-process processAssetsLinksForApp '${this.buildOptions.baseHref}'`)
+  const baseHref =
+    project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
+      buildOptions.clone(),
+    );
+  // console.log(`Fixing with basehref: '${baseHref}'`)
+
+  const howMuchBack = relativePath.split('/').length - 1;
+  const back =
+    howMuchBack === 0
+      ? './'
+      : _.times(howMuchBack)
+          .map(() => '../')
+          .join('');
+  //#endregion
+
+  //#region to replace fn
+  const toReplaceFn = (relativeAssetPathPart: string) => {
+    // console.log({ relativeAssetPathPart });
+    return [
+      {
+        from: `${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: `${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        makeSureSlashAtBegin: true,
+      },
+      {
+        from: ` '/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: ` '${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      {
+        from: ` "/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: ` "${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      {
+        from: `src="/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: `src="${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      {
+        from: `[src]="'/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: `[src]="'${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      {
+        from: `href="/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: `href="${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      {
+        from: `[href]="'/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: `[href]="'${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      {
+        from: `url(/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: `url(${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      {
+        from: `url('/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: `url('${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      {
+        from: `url("/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: `url("${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      {
+        from: `Taon.asset('/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: `Taon.asset('${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      {
+        from: `Taon.asset("/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: `Taon.asset("${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      /**
+         *
+
+  import * as json1 from '/shared/src/assets/hamsters/test.json';
+  console.log({ json1 }) -> WORKS NOW
+         */
+      {
+        from: ` from '/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: ` from '${back}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      {
+        from: ` from "/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+        to: ` from "${back}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
+      },
+      /**
+         * what can be done more
+         * import * as json2 from '@codete-rxjs-quick-start/shared/assets/shared//src';
+  console.log({ json2 })
+
+  declare module "*.json" {
+  const value: any;
+  export default value;
+  }
+
+         */
+    ] as {
+      from: string;
+      to: string;
+      makeSureSlashAtBegin?: boolean;
+    }[];
+  };
+  //#endregion
+
+  //#region process file content
+
+  const cases = toReplaceFn(project.nameForNpmPackage);
+  for (let index = 0; index < cases.length; index++) {
+    const { to, from, makeSureSlashAtBegin } = cases[index];
+    if (makeSureSlashAtBegin) {
+      rawContentForAPPONLYBrowser = rawContentForAPPONLYBrowser.replace(
+        new RegExp(Utils.escapeStringForRegEx(`/${from}`), 'g'),
+        `/${to}`,
+      );
+
+      rawContentForAPPONLYBrowser = rawContentForAPPONLYBrowser.replace(
+        new RegExp(Utils.escapeStringForRegEx(from), 'g'),
+        `/${to}`,
+      );
+    } else {
+      rawContentForAPPONLYBrowser = rawContentForAPPONLYBrowser.replace(
+        new RegExp(Utils.escapeStringForRegEx(from), 'g'),
+        to,
+      );
+    }
+  }
+
+  //#endregion
+
+  return rawContentForAPPONLYBrowser;
+  //#endregion
+};
+//#endregion
+
+export const replaceImportToAssetsIMport = (
+  rawContentForBrowser: string,
+  nameForNpmPackage: string,
+): string => {
+  if (!rawContentForBrowser) {
+    return rawContentForBrowser;
+  }
+  const from = `${srcMainProject}/${assetsFromSrc}/`;
+  const to =
+    `${TO_REMOVE_TAG}${assetsFromNgProj}/` +
+    `${assetsFor}/${nameForNpmPackage}/${assetsFromNpmPackage}/`;
+
+  rawContentForBrowser = rawContentForBrowser.replace(
+    new RegExp(Utils.escapeStringForRegEx(`/${from}`), 'g'),
+    to,
+  );
+  rawContentForBrowser = rawContentForBrowser.replace(
+    new RegExp(Utils.escapeStringForRegEx(from), 'g'),
+    to,
+  );
+  return rawContentForBrowser;
 };

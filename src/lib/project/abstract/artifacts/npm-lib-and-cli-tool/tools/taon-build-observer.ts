@@ -187,8 +187,9 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
         `Done notifying leader that build status changed ${toNotifyBuildType} (port=${this.toNotifyLeaderPort})`,
       );
     } catch (error) {
+      config.frameworkName === tnpPackageName && console.log(error)
       Helpers.error(
-        `Not able to notify build leader about status chagne of ${toNotifyBuildType}`,
+        `Not able to notify build leader about status change of ${toNotifyBuildType}`,
       );
     }
     //#endregion

@@ -14,7 +14,11 @@ import {
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
-import { getCleanImport } from '../../../../../../../app-utils';
+import {
+  getCleanImport,
+  replaceAssetsLinksForApp,
+  replaceImportToAssetsIMport,
+} from '../../../../../../../app-utils';
 import {
   appAutoGenDocsMd,
   appAutoGenJs,
@@ -27,8 +31,10 @@ import {
   assetsFromTempSrc,
   browserFromImport,
   browserTypeString,
+  CoreNgTemplateFiles,
   endingsStylesComponentsContainers,
   globalScssFromSrc,
+  importsHtmlFromSrc,
   indexTsFromLibFromSrc,
   libFromImport,
   libFromSrc,
@@ -598,7 +604,9 @@ export class BrowserCodeCut {
       let absFileSourcePathBrowserOrWebsqlAPPONLYNewContent =
         this.rawContentForAPPONLYBrowser;
 
+      //#region handle global.scss save
       if (this.relativePath === globalScssFromSrc) {
+        //#region replace tailwind import if exits
         if (
           tailwindScssImportRegex.test(
             absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
@@ -613,8 +621,10 @@ export class BrowserCodeCut {
         } else {
           Helpers.logInfo(`Does not include tailwind.css`);
         }
+        //#endregion
+
         //#region updatae tailwind .css
-        [
+        const placesWithGlobalScss = [
           tempAppForFolder({
             websql: this.buildOptions.build.websql,
             prod: this.buildOptions.build.prod,
@@ -625,7 +635,9 @@ export class BrowserCodeCut {
             prod: this.buildOptions.build.prod,
             electron: true,
           }),
-        ].forEach(tmpFolderAppsFor => {
+        ];
+
+        placesWithGlobalScss.forEach(tmpFolderAppsFor => {
           const tailWindFileNgProjAbsPath = crossPlatformPath([
             this.project.location,
             tmpFolderAppsFor,
@@ -644,7 +656,7 @@ export class BrowserCodeCut {
                 this.buildOptions,
               );
             if (currentContentTailwindCss !== newContentTailwindCss) {
-              Helpers.logInfo(`Updating empty tailwind.css`);
+              Helpers.logInfo(`Updating tailwind.css`);
               UtilsFilesFoldersSync.writeFile(
                 tailWindFileNgProjAbsPath,
                 newContentTailwindCss,
@@ -654,6 +666,53 @@ export class BrowserCodeCut {
         });
         //#endregion
       }
+      //#endregion
+
+      //#region handle imports.scss
+      if (this.relativePath === importsHtmlFromSrc) {
+        const tempPlaces = [
+          tempAppForFolder({
+            websql: this.buildOptions.build.websql,
+            prod: this.buildOptions.build.prod,
+            electron: false,
+          }),
+          tempAppForFolder({
+            websql: this.buildOptions.build.websql,
+            prod: this.buildOptions.build.prod,
+            electron: true,
+          }),
+        ];
+
+        tempPlaces.forEach(tmpFolderAppsFor => {
+          const indexHtmlNgProjAbsPAth = crossPlatformPath([
+            this.project.location,
+            tmpFolderAppsFor,
+            this.project.name,
+            srcNgProxyProject,
+            CoreNgTemplateFiles.INDEX_HTML_NG_APP,
+          ]);
+
+          if (Helpers.exists(indexHtmlNgProjAbsPAth)) {
+            const currentContentIndexHtmlNgApp = UtilsFilesFoldersSync.readFile(
+              indexHtmlNgProjAbsPAth,
+            );
+            const newContentTailwindCss =
+              this.project.quickFixes.updateTaonImportMetaHead(
+                currentContentIndexHtmlNgApp,
+                this.rawContentForAPPONLYBrowser,
+              );
+
+            if (currentContentIndexHtmlNgApp !== newContentTailwindCss) {
+              Helpers.logInfo(`Updating new index.html imports`);
+              UtilsFilesFoldersSync.writeFile(
+                indexHtmlNgProjAbsPAth,
+                newContentTailwindCss,
+              );
+            }
+          }
+        });
+      }
+      //#endregion
 
       if (
         absFileSourcePathBrowserOrWebsqlAPPONLYCurrent?.trimEnd() !==
@@ -831,20 +890,10 @@ export class BrowserCodeCut {
       }
     }
 
-    (() => {
-      const from = `${srcMainProject}/${assetsFromSrc}/`;
-      const to =
-        `${TO_REMOVE_TAG}${assetsFromNgProj}/` +
-        `${assetsFor}/${this.nameForNpmPackage}/${assetsFromNpmPackage}/`;
-      this.rawContentForBrowser = this.rawContentForBrowser.replace(
-        new RegExp(Utils.escapeStringForRegEx(`/${from}`), 'g'),
-        to,
-      );
-      this.rawContentForBrowser = this.rawContentForBrowser.replace(
-        new RegExp(Utils.escapeStringForRegEx(from), 'g'),
-        to,
-      );
-    })();
+    this.rawContentForBrowser = replaceImportToAssetsIMport(
+      this.rawContentForBrowser,
+      this.nameForNpmPackage,
+    );
 
     return this;
     //#endregion
@@ -854,134 +903,13 @@ export class BrowserCodeCut {
   //#region private / methods & getters / processing asset link for app
   private processAssetsLinksForApp(): void {
     //#region @backendFunc
-    this.rawContentForAPPONLYBrowser = this.rawContentForBrowser.replace(
-      new RegExp(Utils.escapeStringForRegEx(TO_REMOVE_TAG), 'g'),
-      '',
+
+    this.rawContentForAPPONLYBrowser = replaceAssetsLinksForApp(
+      this.rawContentForBrowser,
+      this.relativePath,
+      this.project,
+      this.buildOptions,
     );
-    // console.log(`[incremental-build-process processAssetsLinksForApp '${this.buildOptions.baseHref}'`)
-    const baseHref =
-      this.project.artifactsManager.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
-        this.buildOptions.clone(),
-      );
-    // console.log(`Fixing with basehref: '${baseHref}'`)
-
-    const howMuchBack = this.relativePath.split('/').length - 1;
-    const back =
-      howMuchBack === 0
-        ? './'
-        : _.times(howMuchBack)
-            .map(() => '../')
-            .join('');
-
-    const toReplaceFn = (relativeAssetPathPart: string) => {
-      // console.log({ relativeAssetPathPart });
-      return [
-        {
-          from: `${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: `${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          makeSureSlashAtBegin: true,
-        },
-        {
-          from: ` '/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: ` '${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        {
-          from: ` "/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: ` "${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        {
-          from: `src="/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: `src="${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        {
-          from: `[src]="'/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: `[src]="'${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        {
-          from: `href="/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: `href="${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        {
-          from: `[href]="'/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: `[href]="'${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        {
-          from: `url(/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: `url(${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        {
-          from: `url('/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: `url('${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        {
-          from: `url("/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: `url("${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        {
-          from: `Taon.asset('/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: `Taon.asset('${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        {
-          from: `Taon.asset("/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: `Taon.asset("${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        /**
-         *
-
-  import * as json1 from '/shared/src/assets/hamsters/test.json';
-  console.log({ json1 }) -> WORKS NOW
-         */
-        {
-          from: ` from '/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: ` from '${back}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        {
-          from: ` from "/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-          to: ` from "${back}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
-        },
-        /**
-         * what can be done more
-         * import * as json2 from '@codete-rxjs-quick-start/shared/assets/shared//src';
-  console.log({ json2 })
-
-  declare module "*.json" {
-  const value: any;
-  export default value;
-  }
-
-         */
-      ] as {
-        from: string;
-        to: string;
-        makeSureSlashAtBegin?: boolean;
-      }[];
-    };
-
-    (() => {
-      const cases = toReplaceFn(this.nameForNpmPackage);
-      for (let index = 0; index < cases.length; index++) {
-        const { to, from, makeSureSlashAtBegin } = cases[index];
-        if (makeSureSlashAtBegin) {
-          this.rawContentForAPPONLYBrowser =
-            this.rawContentForAPPONLYBrowser.replace(
-              new RegExp(Utils.escapeStringForRegEx(`/${from}`), 'g'),
-              `/${to}`,
-            );
-
-          this.rawContentForAPPONLYBrowser =
-            this.rawContentForAPPONLYBrowser.replace(
-              new RegExp(Utils.escapeStringForRegEx(from), 'g'),
-              `/${to}`,
-            );
-        } else {
-          this.rawContentForAPPONLYBrowser =
-            this.rawContentForAPPONLYBrowser.replace(
-              new RegExp(Utils.escapeStringForRegEx(from), 'g'),
-              to,
-            );
-        }
-      }
-    })();
 
     //#endregion
   }
@@ -1007,6 +935,7 @@ export class BrowserCodeCut {
       this.saveNormalBrowserFile(isTsFile);
     }
 
+    //#region backend file save
     if (backendFileSaveMode) {
       const isEmptyModuleBackendFile = this.isEmptyModuleBackendFile;
 
@@ -1052,6 +981,8 @@ export class BrowserCodeCut {
         );
       }
     }
+    //#endregion
+
     //#endregion
   }
   //#endregion

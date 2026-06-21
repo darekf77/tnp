@@ -237,7 +237,7 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
       //     `initing and skipping pool update (no body of new package)`,
       //   );
       // } else {
-      Helpers.info(
+      this.addMessage(
         `Starting update of ${poolProjectsBuilds.length} child(s) for "${frameworkVersion}"`,
       );
       for (const projBUild of poolProjectsBuilds) {

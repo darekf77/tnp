@@ -724,6 +724,7 @@ export const appJsBackend = 'app.js';
 export const appScssFromSrc = 'app.scss';
 
 export const globalScssFromSrc = 'global.scss';
+export const importsHtmlFromSrc = 'imports.html';
 
 export const ngProjectStylesScss = 'styles.scss';
 
