@@ -1,5 +1,12 @@
 //#region imports
-import { config, crossPlatformPath, Helpers, Utils, _ } from 'tnp-core/src';
+import {
+  config,
+  crossPlatformPath,
+  Helpers,
+  Utils,
+  _,
+  UtilsFilesFoldersSync,
+} from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 
 import {
@@ -349,6 +356,7 @@ export const replaceAssetsLinksForApp = (
         from: `Taon.asset("/${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
         to: `Taon.asset("${baseHref}${assetsFromSrc}/${assetsFor}/${relativeAssetPathPart}/`,
       },
+
       /**
          *
 
@@ -415,22 +423,67 @@ export const replaceAssetsLinksForApp = (
 export const replaceImportToAssetsIMport = (
   rawContentForBrowser: string,
   nameForNpmPackage: string,
+  relativeFilePath: string,
+  project: Project,
 ): string => {
   if (!rawContentForBrowser) {
     return rawContentForBrowser;
   }
-  const from = `${srcMainProject}/${assetsFromSrc}/`;
-  const to =
-    `${TO_REMOVE_TAG}${assetsFromNgProj}/` +
-    `${assetsFor}/${nameForNpmPackage}/${assetsFromNpmPackage}/`;
 
-  rawContentForBrowser = rawContentForBrowser.replace(
-    new RegExp(Utils.escapeStringForRegEx(`/${from}`), 'g'),
-    to,
-  );
-  rawContentForBrowser = rawContentForBrowser.replace(
-    new RegExp(Utils.escapeStringForRegEx(from), 'g'),
-    to,
-  );
+  if (relativeFilePath.endsWith('.ts') || relativeFilePath.endsWith('.tsx')) {
+    (() => {
+      const assetsFromRegex = /Taon\.assetsListFrom\s*\(\s*(['"])(.*?)\1\s*\)/g;
+      rawContentForBrowser = rawContentForBrowser.replace(
+        assetsFromRegex,
+        (_, quote, folder: string) => {
+          folder = folder.replace(/^\//, '').replace(/\/$/, '');
+          const files = UtilsFilesFoldersSync.getFilesFrom(
+            project.pathFor(folder),
+            {
+              recursive: true,
+              followSymlinks: false,
+            },
+          ).map(c => c.replace(project.location + '/' + folder + '/', ''));
+
+          return `[ ${files.map(f => `${quote}${f}${quote}`).join(',')} ]`;
+        },
+      );
+    })();
+
+    (() => {
+      const assetsFromRegex = /Taon\.assetsFrom\s*\(\s*(['"])(.*?)\1\s*\)/g;
+      rawContentForBrowser = rawContentForBrowser.replace(
+        assetsFromRegex,
+        (_, quote, folder: string) => {
+          const files = UtilsFilesFoldersSync.getFilesFrom(
+            project.pathFor(folder.replace(/^\//, '').replace(/\/$/, '')),
+            {
+              recursive: true,
+              followSymlinks: false,
+            },
+          ).map(c => c.replace(project.location + '/', ''));
+
+          return `[ ${files.map(f => `  Taon.asset(${quote}${f}${quote})`).join(',')} ]`;
+        },
+      );
+    })();
+  }
+
+  (() => {
+    const from = `${srcMainProject}/${assetsFromSrc}/`;
+    const to =
+      `${TO_REMOVE_TAG}${assetsFromNgProj}/` +
+      `${assetsFor}/${nameForNpmPackage}/${assetsFromNpmPackage}/`;
+
+    rawContentForBrowser = rawContentForBrowser.replace(
+      new RegExp(Utils.escapeStringForRegEx(`/${from}`), 'g'),
+      to,
+    );
+    rawContentForBrowser = rawContentForBrowser.replace(
+      new RegExp(Utils.escapeStringForRegEx(from), 'g'),
+      to,
+    );
+  })();
+
   return rawContentForBrowser;
 };

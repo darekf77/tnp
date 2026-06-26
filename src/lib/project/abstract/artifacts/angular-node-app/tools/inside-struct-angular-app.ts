@@ -900,6 +900,8 @@ ${isomorphicPackagesDevMode.map(packageName => `export * from './${packageName}/
             importsHtmlFromMainSrc = replaceImportToAssetsIMport(
               importsHtmlFromMainSrc,
               this.project.nameForNpmPackage,
+              (importsHtmlFromMainSrc || '').replace(this.project.location + '/', ''),
+              this.project,
             );
 
             const currentContentImportsHtml = replaceAssetsLinksForApp(

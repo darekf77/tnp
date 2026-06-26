@@ -59,7 +59,6 @@ import {
   tmpSrcAppDistWebsql,
   tmpSrcDist,
   tmpSrcDistWebsql,
-  TO_REMOVE_TAG,
   websqlFromImport,
   websqlTypeString,
 } from '../../../../../../../constants';
@@ -894,6 +893,8 @@ export class BrowserCodeCut {
     this.rawContentForBrowser = replaceImportToAssetsIMport(
       this.rawContentForBrowser,
       this.nameForNpmPackage,
+      this.relativePath,
+      this.project,
     );
 
     return this;
