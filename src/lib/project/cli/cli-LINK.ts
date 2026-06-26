@@ -1,36 +1,24 @@
 //#region imports
 import {
   config,
-  fileName,
   folderName,
-  taonPackageName,
   Utils,
 } from 'tnp-core/src';
-import { chalk, _, crossPlatformPath, glob, path, UtilsOs } from 'tnp-core/src';
+import { chalk, _, crossPlatformPath, path, UtilsOs } from 'tnp-core/src';
 import { UtilsTerminal } from 'tnp-core/src';
-import { BaseCommandLineFeature, Helpers, HelpersTaon } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import {
   binMainProject,
-  cliTsFromSrc,
-  distMainProject,
-  libFromImport,
   libFromNpmPackage,
   localReleaseMainProject,
-  nodeModulesMainProject,
-  srcMainProject,
   debugSuffix,
   debugBrkSuffix,
   suffixLatest,
   inspectSuffix,
   inspectBrkSuffix,
-  startJsFromBin,
-  libFromSrc,
-  startTsFromLib,
-  indexTsFromSrc,
 } from '../../constants';
-import { EnvOptions, ReleaseArtifactTaon } from '../../options';
-import type { Project } from '../abstract/project';
+import { ReleaseArtifactTaon } from '../../options';
 
 import { BaseCli } from './base-cli';
 //#endregion
@@ -126,23 +114,24 @@ export class $Link extends BaseCli {
   //#region api / global
   async global() {
     //#region @backendFunc
+    const tasks = Helpers.actionStarted('Linking globally');
     let project = this.project;
     // if (process.platform !== 'win32') {
     //   await Helpers.isElevated();
     // }
 
+    let whereInput: string = UtilsOs.whichOrWherePackageLocated(
+      config.frameworkName,
+    );
+
+    if (!whereInput) {
+      Helpers.error(
+        `Not able to link globally (fail to check here ${config.frameworkName} exits)`,
+      );
+    }
+
     let globalBinFolderPath = path.dirname(
-      (
-        (_.first(
-          Helpers.run(
-            `${UtilsOs.isRunningInWindowsPowerShell() ? 'where.exe' : 'which'} ${config.frameworkName}`,
-            { output: false },
-          )
-            .sync()
-            .toString()
-            .split('\n'),
-        ) || '') as string
-      ).trim(),
+      ((_.first(whereInput.toString().split('\n')) || '') as string).trim(),
     );
 
     // console.log(`globalBinFolderPath "${globalBinFolderPath}"`, );
@@ -171,15 +160,19 @@ export class $Link extends BaseCli {
     );
 
     // packageInGlobalNodeModules
+    Helpers.log('removing symlinks');
     Helpers.removeIfExists(packageInGlobalNodeModules);
+    Helpers.log(`linking destination ${packageInGlobalNodeModules}`);
     project.linkTo(packageInGlobalNodeModules);
 
+    Helpers.log(`recreating folders`);
     if (!Helpers.exists(project.pathFor(binMainProject))) {
       Helpers.mkdirp(project.pathFor(binMainProject));
     }
 
+    Helpers.log(`linking globallt`);
     this.createGlobalSystemLinks(globalBinFolderPath);
-
+    tasks.done();
     this._exit();
     //#endregion
   }
@@ -496,11 +489,13 @@ EXIT /b
   }
   //#endregion
 
+  //#region local detected
   localDetected() {
     const localClis = this._getDetectedLocalCLi();
     console.log({ localClis });
     this._exit();
   }
+  //#endregion
 }
 
 export default {
