@@ -65,6 +65,7 @@ export class BrowserCompilation extends BaseClientCompiler {
       notifyOnFileUnlink: true,
       followSymlinks: true,
       taskName: 'BrowserCompilation',
+      debounceEventsTime: 501,
     });
 
     this.project = project;
