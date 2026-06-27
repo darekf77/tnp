@@ -445,6 +445,12 @@ export const replaceImportToAssetsIMport = (
             },
           ).map(c => c.replace(project.location + '/' + folder + '/', ''));
 
+          if (files.length > 0) {
+            Helpers.info(
+              `Updating Taon.assetsListFrom(...) ${files.length} files in ${relativeFilePath}`,
+            );
+          }
+
           return `[ ${files.map(f => `${quote}${f}${quote}`).join(',')} ]`;
         },
       );
@@ -462,6 +468,12 @@ export const replaceImportToAssetsIMport = (
               followSymlinks: false,
             },
           ).map(c => c.replace(project.location + '/', ''));
+
+          if (files.length > 0) {
+            Helpers.info(
+              `Updating Taon.assetsFrom(...) ${files.length} files in ${relativeFilePath}`,
+            );
+          }
 
           return `[ ${files.map(f => `  Taon.asset(${quote}${f}${quote})`).join(',')} ]`;
         },
