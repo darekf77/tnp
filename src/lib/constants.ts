@@ -1061,3 +1061,4 @@ export const timestampPrefixComment = '// timestamp';
 
 export const markerStartImport = '<!-- TAON_IMPORTS_HTML_START -->';
 export const markerEndImport = '<!-- TAON_IMPORTS_HTML_END -->';
+export const removeAngularCacheBeforeCompilation = false;

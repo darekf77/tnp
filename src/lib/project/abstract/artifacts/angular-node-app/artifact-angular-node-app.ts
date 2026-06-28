@@ -66,6 +66,7 @@ import {
   packageJsonNpmLib,
   prodSuffix,
   readmeMdMainProject,
+  removeAngularCacheBeforeCompilation,
   routes,
   runJsMainProject,
   srcMainProject,
@@ -392,7 +393,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     );
 
     // remove angular cache to prevent weird issues
-    this.project.remove([tmpAppForDistRelativePath, '.angular']);
+    if (removeAngularCacheBeforeCompilation) {
+      // removing angular cache prevents weird issue BUT slows down ng serve a lot
+      this.project.remove([tmpAppForDistRelativePath, '.angular']);
+    }
 
     // quick fix for tsconfig pathing in ng proxy project
     Helpers.createSymLink(

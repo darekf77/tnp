@@ -65,6 +65,7 @@ import {
   packageJsonNpmLib,
   prodSuffix,
   reExportJson,
+  removeAngularCacheBeforeCompilation,
   sourceLinkInNodeModules,
   splitNamespacesJson,
   srcMainProject,
@@ -520,10 +521,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         AngularJsonLibTaskNameResolveFor(buildOptions),
       );
 
-      this.project.remove([tmpLibForDistNormalRelativePath, '.angular']);
-
-      this.project.remove([tmpLibForDistWebsqlRelativePath, '.angular']);
-
+      if (removeAngularCacheBeforeCompilation) {
+        // removing angular cache prevents weird issue BUT slows down ng serve a lot
+        this.project.remove([tmpLibForDistNormalRelativePath, '.angular']);
+        this.project.remove([tmpLibForDistWebsqlRelativePath, '.angular']);
+      }
       //#endregion
 
       //#region  handle watch & normal mode
