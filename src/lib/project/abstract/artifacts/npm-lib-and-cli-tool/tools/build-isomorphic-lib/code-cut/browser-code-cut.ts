@@ -150,6 +150,8 @@ export class BrowserCodeCut {
 
   private readonly nameForNpmPackage: string;
 
+  private readonly isTsFile: boolean;
+
   //#region @backend
   constructor(
     /**
@@ -232,6 +234,8 @@ export class BrowserCodeCut {
     this.isWebsqlMode = this.relativePath.startsWith(
       tmpSrcDistWebsql + (buildOptions.build.prod ? prodSuffix : ''),
     );
+
+    this.isTsFile = ['.ts', '.tsx'].includes(path.extname(this.relativePath));
   }
   //#endregion
 
@@ -418,7 +422,7 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / save empty file
-  private saveEmptyFile(isTsFile: boolean): void {
+  private saveEmptyFile(): void {
     //#region @backendFunc
     if (!fse.existsSync(path.dirname(this.absFileSourcePathBrowserOrWebsql))) {
       // write empty instead unlink
@@ -434,7 +438,7 @@ export class BrowserCodeCut {
         path.dirname(this.absFileSourcePathBrowserOrWebsqlAPPONLY),
       );
     }
-    if (isTsFile) {
+    if (this.isTsFile) {
       if (!this.relativePath.startsWith('app/')) {
         try {
           // QUICK_FIX remove directory when trying to save as file
@@ -470,7 +474,7 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / save normal file
-  private saveNormalBrowserFile(isTsFile: boolean): void {
+  private saveNormalBrowserFile(): void {
     //#region @backendFunc
     // console.log('SAVE NORMAL FILE')
     if (this.isAssetsFile) {
@@ -504,7 +508,7 @@ export class BrowserCodeCut {
       return;
     }
 
-    if (isTsFile) {
+    if (this.isTsFile) {
       //#region handle app.ts presentation files
       if (
         this.relativePath === appTsFromSrc &&
@@ -533,8 +537,12 @@ export class BrowserCodeCut {
             { isBrowser: true },
           );
         if (
-          absFileSourcePathBrowserOrWebsqlCurrent?.trimEnd() !==
-          absFileSourcePathBrowserOrWebsqlNewContent.trimEnd()
+          UtilsTypescript.removeCommentsFromTsContent(
+            absFileSourcePathBrowserOrWebsqlCurrent,
+          )?.trimEnd() !==
+          UtilsTypescript.removeCommentsFromTsContent(
+            absFileSourcePathBrowserOrWebsqlNewContent,
+          )?.trimEnd()
         ) {
           fse.writeFileSync(
             this.absFileSourcePathBrowserOrWebsql,
@@ -559,8 +567,12 @@ export class BrowserCodeCut {
         );
 
       if (
-        absFileSourcePathBrowserOrWebsqlAPPONLYCurrent?.trimEnd() !==
-        absFileSourcePathBrowserOrWebsqlAPPONLYNewContent.trimEnd()
+        UtilsTypescript.removeCommentsFromTsContent(
+          absFileSourcePathBrowserOrWebsqlAPPONLYCurrent,
+        )?.trimEnd() !==
+        UtilsTypescript.removeCommentsFromTsContent(
+          absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
+        )?.trimEnd()
       ) {
         fse.writeFileSync(
           this.absFileSourcePathBrowserOrWebsqlAPPONLY,
@@ -921,20 +933,17 @@ export class BrowserCodeCut {
   private save(): void {
     //#region @backendFunc
     if (this.isAssetsFile) {
-      this.saveNormalBrowserFile(false);
+      this.saveNormalBrowserFile();
       return;
     }
     // Helpers.log(`saving ismoprhic file: ${this.absoluteFilePath}`, 1)
 
-    const isTsFile = ['.ts', '.tsx'].includes(
-      path.extname(this.absFileSourcePathBrowserOrWebsql),
-    );
     const backendFileSaveMode = !this.isWebsqlMode; // websql does not do anything on be
 
     if (this.isEmptyBrowserFile) {
-      this.saveEmptyFile(isTsFile);
+      this.saveEmptyFile();
     } else {
-      this.saveNormalBrowserFile(isTsFile);
+      this.saveNormalBrowserFile();
     }
 
     //#region backend file save
@@ -961,7 +970,7 @@ export class BrowserCodeCut {
         : undefined;
 
       const absoluteBackendDestFilePathNewContent =
-        isEmptyModuleBackendFile && isTsFile
+        isEmptyModuleBackendFile && this.isTsFile
           ? `export function dummy${new Date().getTime()}() { }`
           : this.changeNpmNameToLocalLibNamePath(
               this.rawContentBackend,
@@ -972,8 +981,12 @@ export class BrowserCodeCut {
             );
 
       if (
-        absoluteBackendDestFilePathCurrent?.trimEnd() !==
-        absoluteBackendDestFilePathNewContent.trimEnd()
+        UtilsTypescript.removeCommentsFromTsContent(
+          absoluteBackendDestFilePathCurrent,
+        )?.trimEnd() !==
+        UtilsTypescript.removeCommentsFromTsContent(
+          absoluteBackendDestFilePathNewContent,
+        )?.trimEnd()
       ) {
         // SAVE BACKEND FILE
         fse.writeFileSync(
