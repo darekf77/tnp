@@ -62,10 +62,13 @@ import { EnvOptions } from '../../options';
 
 import type { Project } from './project';
 import { DevMode } from './taon-worker/dev-mode/dev-mode.models';
+import { TranslationI18n } from './translations-18n';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
 export class Framework extends BaseFeatureForProject<Project> {
+  private translationI18n = new TranslationI18n(this.project);
+
   //#region is unknown npm project
   get isUnknownNpmProject(): boolean {
     //#region @backendFunc
@@ -1186,6 +1189,18 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
   }
   //#endregion
 
+  //#region generate translations
+  async generateTranslations(): Promise<void> {
+    //#region @backendFunc
+    const task = Helpers.actionStarted('Genrating translations');
+    this.project.taonJson.setShouldGenerateTranslationsFiles(true);
+    await this.translationI18n.start();
+    task.done();
+    //#endregion
+  }
+  //#endregion
+
+  //#region filter verified builds
   filterVerfiedBuilds(packagesNames: string[]): string[] {
     return packagesNames.filter(f => {
       const pathToVerifyFile = this.project.nodeModules.pathFor([
@@ -1197,12 +1212,15 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
         ?.commitHash;
     });
   }
+  //#endregion
 
+  //#region get not verified isomophic build in node_modules
   get notVerifiedIsomorphicPackagesBuildsInNodeModules(): string[] {
     return this.filterVerfiedBuilds(
       this.project.framework.coreContainer.nodeModules.getIsomorphicPackagesNames(),
     );
   }
+  //#endregion
 
   //#region handle exit error
 

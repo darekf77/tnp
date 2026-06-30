@@ -5,6 +5,7 @@ import {
   crossPlatformPath,
   fileName,
   LibTypeEnum,
+  UtilsI18n,
   UtilsJson,
 } from 'tnp-core/src';
 import { CoreModels, os, path } from 'tnp-core/src';
@@ -575,10 +576,33 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  get generateTranslationsFor(): UtilsI18n.CommonLocaleCode[] {
+    //#region @backendFunc
+    const data = this.data as Models.TaonJsonStandalone;
+    return Array.isArray(data?.generateTranslationsFor)
+      ? data?.generateTranslationsFor
+      : [];
+    //#endregion
+  }
+
   setShouldGenerateAutogenIndexFile(value: boolean): void {
     const data = this.data as Models.TaonJsonStandalone;
     data.shouldGenerateAutogenIndexFile = value;
     this.saveToDisk('updating shouldGenerateAutogenIndexFile');
+  }
+
+  setShouldGenerateTranslationsFiles(value: boolean): void {
+    const data = this.data as Models.TaonJsonStandalone;
+    data.shouldGenerateTranslationFiles = value;
+
+    if (
+      !data.generateTranslationsFor ||
+      data.generateTranslationsFor.length === 0
+    ) {
+      data.generateTranslationsFor = ['en-US', 'pl-PL'];
+    }
+
+    this.saveToDisk('updating shouldGenerateTranslationFiles');
   }
 
   setShouldGenerateAutogenAppRoutes(value: boolean): void {

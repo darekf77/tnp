@@ -10,6 +10,7 @@ import DOCS from './cli-DOCS';
 import FILE_SYNC from './cli-FILE_SYNC';
 import GENERATE from './cli-GENERATE';
 import INIT from './cli-INIT';
+import LANG from './cli-LANG';
 import LINK from './cli-LINK';
 import MIGRATION from './cli-MIGRATION';
 import NEW from './cli-NEW';
@@ -30,6 +31,7 @@ export default [
   RELEASE,
   OPEN,
   CLOUD,
+  LANG,
   BRANDING,
   VSCODE,
   NEW,

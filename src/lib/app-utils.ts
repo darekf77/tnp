@@ -1,4 +1,6 @@
 //#region imports
+// import postcss from 'postcss';
+// import postcssScss from 'postcss-scss';
 import {
   config,
   crossPlatformPath,
@@ -6,6 +8,7 @@ import {
   Utils,
   _,
   UtilsFilesFoldersSync,
+  path,
 } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 
@@ -15,6 +18,8 @@ import {
   assetsFromNpmPackage,
   assetsFromSrc,
   browserFromImport,
+  i18nDataTsFileExt,
+  i18nFolder,
   libFromImport,
   oldBuildModePrefix,
   oldBuildModePrefixShort,
@@ -32,7 +37,21 @@ import {
 } from './constants';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from './options';
 import type { Project } from './project/abstract/project';
+import type { TaonTranslationsMapImport } from 'taon/src';
 //#endregion
+
+export function removeCommentsFromScssFile(scss: string): string {
+  //#region @backendFunc
+  return void 0 as string;
+  // const root = postcss.parse(scss, {
+  //   parser: postcssScss,
+  // });
+
+  // root.walkComments(comment => comment.remove());
+
+  // return root.toString(postcssScss);
+  //#endregion
+}
 
 //#region allowed to release map
 export const ALLOWED_TO_RELEASE: {
@@ -420,6 +439,7 @@ export const replaceAssetsLinksForApp = (
 };
 //#endregion
 
+//#region replace import to assets imports
 export const replaceImportToAssetsIMport = (
   rawContentForBrowser: string,
   nameForNpmPackage: string,
@@ -431,6 +451,7 @@ export const replaceImportToAssetsIMport = (
   }
 
   if (relativeFilePath.endsWith('.ts') || relativeFilePath.endsWith('.tsx')) {
+    //#region replace assets list from
     (() => {
       const assetsFromRegex = /Taon\.assetsListFrom\s*\(\s*(['"])(.*?)\1\s*\)/g;
       rawContentForBrowser = rawContentForBrowser.replace(
@@ -455,7 +476,9 @@ export const replaceImportToAssetsIMport = (
         },
       );
     })();
+    //#endregion
 
+    //#region replace assets from
     (() => {
       const assetsFromRegex = /Taon\.assetsFrom\s*\(\s*(['"])(.*?)\1\s*\)/g;
       rawContentForBrowser = rawContentForBrowser.replace(
@@ -479,6 +502,82 @@ export const replaceImportToAssetsIMport = (
         },
       );
     })();
+    //#endregion
+
+    //#region replace taon FILE RELATIVE PATH
+    (() => {
+      const assetsFromRegex = /Taon\.__FILE_RELATIVE_PATH/g;
+      rawContentForBrowser = rawContentForBrowser.replace(
+        assetsFromRegex,
+        (_, quote, folder: string) => {
+          return `'${crossPlatformPath([srcMainProject, relativeFilePath])}'`;
+        },
+      );
+    })();
+    //#endregion
+
+    //#region replace taon LANG IMPORT MAP)
+    (() => {
+      const assetsFromRegex = /Taon\.LANG_IMPORT_MAP/g;
+      rawContentForBrowser = rawContentForBrowser.replace(
+        assetsFromRegex,
+        (_, quote, folder: string) => {
+          const res = {
+            [crossPlatformPath([srcMainProject, relativeFilePath])]: {},
+          } as TaonTranslationsMapImport;
+
+          const langs = project.taonJson.generateTranslationsFor;
+
+          for (const lang of langs) {
+            const fileAbsPathReplacingLang = project.pathFor([
+              srcMainProject,
+              path.dirname(relativeFilePath),
+              i18nFolder,
+              `${path.basename(relativeFilePath)}.${lang}${i18nDataTsFileExt}`,
+            ]);
+            if (Helpers.exists(fileAbsPathReplacingLang)) {
+              res[crossPlatformPath([srcMainProject, relativeFilePath])][lang] =
+                `####async () => await (await import('./${i18nFolder}/${path.basename(
+                  relativeFilePath,
+                )}.${lang}${i18nDataTsFileExt.replace('.ts', '')}')).default####` as any;
+            }
+          }
+
+          if (
+            relativeFilePath.endsWith('.component.ts') ||
+            relativeFilePath.endsWith('.container.ts')
+          ) {
+            const htmlRelativeFilePath = relativeFilePath.replace(
+              /.ts$/,
+              '.html',
+            );
+            res[crossPlatformPath([srcMainProject, htmlRelativeFilePath])] = {};
+            for (const lang of langs) {
+              const fileAbsPathReplacingLang = project.pathFor([
+                srcMainProject,
+                path.dirname(htmlRelativeFilePath),
+                i18nFolder,
+                `${path.basename(htmlRelativeFilePath)}.${lang}${i18nDataTsFileExt}`,
+              ]);
+
+              if (Helpers.exists(fileAbsPathReplacingLang)) {
+                res[crossPlatformPath([srcMainProject, htmlRelativeFilePath])][
+                  lang
+                ] =
+                  `####async () => (await import('./${i18nFolder}/${path.basename(
+                    htmlRelativeFilePath,
+                  )}.${lang}${i18nDataTsFileExt.replace('.ts', '')}')).default####` as any;
+              }
+            }
+          }
+
+          return `${JSON.stringify(res)
+            .replace(/\"\#\#\#\#/g, '')
+            .replace(/\#\#\#\#\"/g, '')}`;
+        },
+      );
+    })();
+    //#endregion
   }
 
   (() => {
@@ -499,3 +598,4 @@ export const replaceImportToAssetsIMport = (
 
   return rawContentForBrowser;
 };
+//#endregion

@@ -215,6 +215,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         },
       );
       await this.creteBuildInfoFile(initOptions);
+      if (this.project.taonJson.setShouldGenerateTranslationsFiles) {
+        await this.project.framework.generateTranslations();
+      }
       if (this.project.taonJson.shouldGenerateAutogenIndexFile) {
         await this.indexAutogenProvider.runTask({
           // watch: initOptions.build.watch, // TODO watching sucks here

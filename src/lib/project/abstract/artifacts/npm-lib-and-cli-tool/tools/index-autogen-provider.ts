@@ -13,6 +13,7 @@ import { BaseFeatureForProject } from 'tnp-helpers/src';
 import {
   environmentsFolder,
   envTs,
+  i18nDataTsFileExt,
   indexScssFromSrcLib,
   indexTsFromLibFromSrc,
   libFromSrc,
@@ -59,6 +60,10 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
         '',
       );
       if (relativePath.startsWith(migrationsFromLib)) {
+        return;
+      }
+
+      if (relativePath.endsWith(i18nDataTsFileExt)) {
         return;
       }
       // TODO this is not watching files!

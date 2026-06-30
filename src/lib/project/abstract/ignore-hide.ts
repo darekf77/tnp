@@ -21,6 +21,7 @@ import {
   esLintCustomRulesMainProject,
   frameworkBuildFolders,
   generatedFromAssets,
+  i18nDataTsFileExt,
   indexDtsMainProject,
   indexJsMainProject,
   indexJsMapMainProject,
@@ -150,6 +151,7 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
 
   protected alwaysIgnoredHiddenPatterns(): string[] {
     const toIgnore = [
+      `*${i18nDataTsFileExt}`,
       ...super.alwaysIgnoredHiddenPatterns(),
       ...this.hideInProject,
       !this.project.framework.isCoreProject ? `*${dotFileTemplateExt}` : void 0,
@@ -177,6 +179,7 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
     return [
       ...super.alwaysUseRecursivePattern(),
       `*${dotFileTemplateExt}`,
+      `*${i18nDataTsFileExt}`,
       ...this.hideInProject,
     ];
   }

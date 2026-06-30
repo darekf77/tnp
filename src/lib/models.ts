@@ -1,4 +1,4 @@
-import { CoreModels, LibTypeEnum, _ } from 'tnp-core/src';
+import { CoreModels, LibTypeEnum, _, UtilsI18n } from 'tnp-core/src';
 import { PackageJson } from 'tnp-helpers/src';
 
 import type { ReleaseArtifactTaon, ReleaseType } from './options';
@@ -302,6 +302,11 @@ export namespace Models {
     additionalNpmNames?: string[];
 
     /**
+     * list of languages
+     */
+    generateTranslationsFor?: UtilsI18n.CommonLocaleCode[];
+
+    /**
      * (STANDALONE)  Project is using own node_modules instead of core container
      */
     isUsingOwnNodeModulesInsteadCoreContainer?: boolean;
@@ -317,6 +322,11 @@ export namespace Models {
      * from ./src/app/*.routes.ts (recursive)
      */
     shouldGenerateAutogenAppRoutesFile: boolean;
+
+    /**
+     * Should be generated translations files for i18n
+     */
+    shouldGenerateTranslationFiles: boolean;
 
     /**
      * (STANDALONE) Auto release helps with releasing multiple projects from a local machine.
