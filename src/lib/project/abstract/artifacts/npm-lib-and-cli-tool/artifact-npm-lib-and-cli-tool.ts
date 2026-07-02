@@ -215,7 +215,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         },
       );
       await this.creteBuildInfoFile(initOptions);
-      if (this.project.taonJson.setShouldGenerateTranslationsFiles) {
+      if (this.project.taonJson.shouldGenerateTranslationFiles) {
         await this.project.framework.generateTranslations();
       }
       if (this.project.taonJson.shouldGenerateAutogenIndexFile) {
