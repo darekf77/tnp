@@ -34,7 +34,7 @@ import { Project } from './project';
 
 // @ts-ignore TODO weird inheritance problem
 export class TranslationI18n extends BaseFeatureForProject<Project> {
-  async start() {
+  async start():Promise<void> {
     //#region @backendFunc
     const base = this.project.location;
 
@@ -84,6 +84,7 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
     // console.log(JSON.stringify(files, null, 2));
     // console.log({ langs });
 
+    //#region dirname data interface
     type DirnameData = {
       dirnameAbsPath: string;
       interfaces: {
@@ -94,16 +95,19 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
     const dirnames: {
       [dirname in string]: DirnameData;
     } = {};
+    //#endregion
 
     for (let index = 0; index < files.length; index++) {
       let file = files[index];
       const { fileAbsPath } = files[index];
 
+      //#region update dirname path
       const dirnamePath = crossPlatformPath(path.dirname(fileAbsPath));
       dirnames[dirnamePath] = dirnames[dirnamePath] || {
         dirnameAbsPath: dirnamePath,
         interfaces: [],
       };
+      //#endregion
 
       for (const lang of langs) {
         //#region save po
@@ -204,6 +208,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       c => dirnames[c] as DirnameData,
     );
 
+    //#region process main dirname
     for (const dirnameObj of dirnamesToProcess) {
       const i18joinFile = crossPlatformPath([
         dirnameObj.dirnameAbsPath,
@@ -211,6 +216,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         `${path.basename(dirnameObj.dirnameAbsPath)}.translation.ts`,
       ]);
 
+      //#region write .translation file with interfaces union
       UtilsFilesFoldersSync.writeFile(
         i18joinFile,
         `${THIS_IS_GENERATED_INFO_COMMENT}
@@ -230,7 +236,9 @@ export type ${_.upperFirst(
  ${THIS_IS_GENERATED_INFO_COMMENT}
         `,
       );
+      //#endregion
     }
+    //#endregion
 
     //#endregion
   }

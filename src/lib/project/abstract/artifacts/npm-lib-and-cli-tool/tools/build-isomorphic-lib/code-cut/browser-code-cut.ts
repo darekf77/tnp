@@ -1,4 +1,5 @@
 //#region imports
+import { UtilsI18nHtml } from '@taon-dev/i18n/src';
 import { RegionRemover } from 'isomorphic-region-loader/src';
 import { ReplaceOptionsExtended } from 'isomorphic-region-loader/src';
 import {
@@ -152,6 +153,8 @@ export class BrowserCodeCut {
 
   private readonly isTsFile: boolean;
 
+  private readonly isComponentHtmlFile: boolean;
+
   //#region @backend
   constructor(
     /**
@@ -236,6 +239,9 @@ export class BrowserCodeCut {
     );
 
     this.isTsFile = ['.ts', '.tsx'].includes(path.extname(this.relativePath));
+    this.isComponentHtmlFile = ['.component.html', '.container.html'].some(ext =>
+      this.relativePath.endsWith(ext),
+    );
   }
   //#endregion
 
@@ -581,7 +587,18 @@ export class BrowserCodeCut {
         );
       }
     } else {
-      // console.log(`handle ${this.relativePath}`);
+      if (this.isComponentHtmlFile) {
+        // console.log(`Fixing ${this.relativePath}`);
+        this.rawContentForAPPONLYBrowser =
+          UtilsI18nHtml.replaceTranslatePipieDirectiveTContext(
+            this.rawContentForAPPONLYBrowser,
+          );
+
+        this.rawContentForBrowser =
+          UtilsI18nHtml.replaceTranslatePipieDirectiveTContext(
+            this.rawContentForBrowser,
+          );
+      }
       if (!this.relativePath.startsWith(`${appFromSrc}/`)) {
         // NORMAL JSON, TXT (OR ANYTHING TEXT BASED) FOR BROWSER FILE FOR LIB
         const absFileSourcePathBrowserOrWebsqlCurrent = this.project.watcher
