@@ -88,7 +88,10 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
         return {
           isAppFile: !fileRelativePath.startsWith('lib/'),
           fileAbsPath: f,
-          fileRelativePath,
+          fileRelativePath: crossPlatformPath([
+            srcMainProject,
+            fileRelativePath,
+          ]),
           tags,
         } as UtilsI18n.GettextFile;
       })
