@@ -49,6 +49,7 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
     const files = filesPathes
       .map(f => {
         const fileRelativePath = f.replace(filesLocaiton + '/', '');
+        // console.log({ fileRelativePath });
         if (
           fileRelativePath.startsWith('lib/env/') ||
           fileRelativePath.startsWith('assets/')
@@ -57,7 +58,10 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
         }
 
         const content = UtilsFilesFoldersSync.readFile(f);
-        if (!content && content.includes('gettext')) {
+        if (
+          !content &&
+          (content.includes('gettext') || content.includes('translate'))
+        ) {
           return;
         }
 
@@ -68,10 +72,13 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
 
         if (['.html'].includes(path.extname(f))) {
           tags = UtilsI18nHtml.extractGettextTranslateFromHtml(content);
-          // console.log({
-          //   fileRelativePath,
-          //   tags,
-          // });
+          // if (path.basename(f) === 'simple-paywall-tw.component.html') {
+          //   console.log({
+          //     fileRelativePath,
+          //     tags,
+          //     content,
+          //   });
+          // }
         }
 
         if (tags.length === 0) {
