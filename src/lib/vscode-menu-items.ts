@@ -463,6 +463,31 @@ export const vscodeMenuItems = ({
           ),
           //#endregion
 
+          //#region items with actions / regenerate translation
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} lang:extract`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null as any,
+              project: CURRENT_PROJECT as any,
+              // skipReturnToMenu: true,
+              triggerActionOnClick: async (project, progress) => {
+                if (project) {
+                  progress?.report({
+                    message: 'Generating translation files',
+                  });
+                  await project.framework.generateLibIndex();
+                  // vscode.commands.executeCommand('workbench.view.explorer');
+                  progress?.report({
+                    message: 'Done generating translation filess',
+                    increment: 100,
+                  });
+                }
+              },
+            },
+          ),
+          //#endregion
+
           //#region items with actions / regenerate src/lib/index._auto-generated_.ts
           new ProjectItem(
             `$ ${FRAMEWORK_NAME} refactor:self:imports`,
