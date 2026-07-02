@@ -605,16 +605,16 @@ ${allFoldersWithHtml.map(c => `@source "../${c}/**/*.html";`).join('\n')}
       } else {
         //#region use tailwind development version
         Helpers.logInfo(
-          `Saving development tailwind ${tailWindFileNgProjAbsPath}`,
+          `Saving development tailwindcss ${tailWindFileNgProjAbsPath}`,
         );
-        return `${tailwindscsimport} /* tailwind development mode */
+        return `${tailwindscsimport} /* tailwindcss development mode */
 @source not "../${nodeModulesMainProject}";
 `;
         //#endregion
       }
     } else {
       Helpers.info(`Empty tailwind update ${tailWindFileNgProjAbsPath}`);
-      return `/* tailwind is not being use */ `;
+      return `/* tailwindcss is not being use */ `;
     }
     //#endregion
   }
