@@ -476,7 +476,7 @@ export const vscodeMenuItems = ({
                   progress?.report({
                     message: 'Generating translation files',
                   });
-                  await project.framework.generateLibIndex();
+                  await project.framework.generateTranslations();
                   // vscode.commands.executeCommand('workbench.view.explorer');
                   progress?.report({
                     message: 'Done generating translation filess',
