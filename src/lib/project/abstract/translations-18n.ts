@@ -1,4 +1,5 @@
 //#region imports
+import { UtilsI18nHtml, UtilsPoFile } from '@taon-dev/i18n/src';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import {
   chokidar,
@@ -7,14 +8,13 @@ import {
   UtilsFilesFoldersSync,
   fse,
   Utils,
+  UtilsI18n,
 } from 'tnp-core/src';
 import { crossPlatformPath, path } from 'tnp-core/src';
 import {
   BaseFeatureForProject,
   Helpers,
-  UtilsHtml,
   UtilsTypescript,
-  UtilsPoFile,
 } from 'tnp-helpers/src';
 
 import {
@@ -57,13 +57,13 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
           return;
         }
 
-        let tags: UtilsTypescript.GettextExtracted[] = [];
+        let tags: UtilsI18n.GettextExtracted[] = [];
         if (['.ts', '.tsx'].includes(path.extname(f))) {
           tags = UtilsTypescript.extractGettextFromTs(content);
         }
 
         if (['.html'].includes(path.extname(f))) {
-          tags = UtilsHtml.extractGettextTranslateFromHtml(content);
+          tags = UtilsI18nHtml.extractGettextTranslateFromHtml(content);
         }
 
         if (tags.length === 0) {
@@ -75,7 +75,7 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
           fileAbsPath: f,
           fileRelativePath,
           tags,
-        } as UtilsPoFile.GettextFile;
+        } as UtilsI18n.GettextFile;
       })
       .filter(f => !!f);
     //#endregion
@@ -184,10 +184,12 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
 
           delete file.fileAbsPath;
           const tsFile = `${THIS_IS_GENERATED_INFO_COMMENT}
-${'imp' + 'ort'} type { UtilsPoFile } from '${'tn' + 'p-hel' + 'pers'}/${srcMainProject}';
+${'imp' + 'ort'} type { UtilsPoFile } from '${'@tao' + 'n-dev/' + 'i18n'}/${srcMainProject}';
+${'imp' + 'ort'} type { UtilsI18n } from '${'tn' + 'p-core'}/${srcMainProject}';
+
 ${getInterface}
 ${THIS_IS_GENERATED_INFO_COMMENT}
-export default ${JSON.stringify(file, null, 2)} as UtilsPoFile.GettextFile;
+${'exp' + 'ort'} default ${JSON.stringify(file, null, 2)} as UtilsI18n.GettextFile;
 ${THIS_IS_GENERATED_INFO_COMMENT}
 `;
 
@@ -212,6 +214,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       UtilsFilesFoldersSync.writeFile(
         i18joinFile,
         `${THIS_IS_GENERATED_INFO_COMMENT}
+${'imp' + 'ort'} { CoreModels } from '${'tn' + 'p-co' + 're/src'}';
 
 // join interface type here
 ${dirnameObj.interfaces
@@ -222,7 +225,7 @@ ${dirnameObj.interfaces
   .join('\n')};
 export type ${_.upperFirst(
           _.camelCase(path.basename(dirnameObj.dirnameAbsPath)),
-        )}Override = ${dirnameObj.interfaces.map(c => `${c.interfaceName}`).join(' \n| ')};
+        )}Override = CoreModels.DeepPartial<${dirnameObj.interfaces.map(c => `${c.interfaceName}`).join(' \n| ')}>;
 
  ${THIS_IS_GENERATED_INFO_COMMENT}
         `,

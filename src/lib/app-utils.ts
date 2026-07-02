@@ -1,6 +1,7 @@
 //#region imports
 // import postcss from 'postcss';
 // import postcssScss from 'postcss-scss';
+import type { TaonTranslationsMapImport } from '@taon-dev/i18n/src';
 import {
   config,
   crossPlatformPath,
@@ -37,7 +38,6 @@ import {
 } from './constants';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from './options';
 import type { Project } from './project/abstract/project';
-import type { TaonTranslationsMapImport } from 'taon/src';
 //#endregion
 
 export function removeCommentsFromScssFile(scss: string): string {

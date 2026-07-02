@@ -50,8 +50,11 @@
     "tnp-helpers",
     "tnp-core",
   ],
+
+  "generateTranslationsFor": ["en-US", "pl-PL"],
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
   "resources": ["icon-menu-tnp.svg"],
+  "shouldGenerateTranslationFiles": false,
 
   //#region single bundle config
   "singleFileBundlingPackages": [
@@ -138,6 +141,7 @@
       "packageName": "mariadb",
     },
   ],
+
   //#endregion
 
   "storeLocalReleaseFilesInRepository": true,
@@ -200,5 +204,5 @@
       "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     },
     "sideEffects": false,
-  },
+  }
 }
