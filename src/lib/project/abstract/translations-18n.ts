@@ -34,20 +34,24 @@ import { Project } from './project';
 
 // @ts-ignore TODO weird inheritance problem
 export class TranslationI18n extends BaseFeatureForProject<Project> {
-  async start():Promise<void> {
+  async start(): Promise<void> {
     //#region @backendFunc
-    const base = this.project.location;
+    const filesLocaiton = this.project.pathFor(srcMainProject);
 
-    //#region find files
-    const files = UtilsFilesFoldersSync.getFilesFrom(base, {
+    const filesPathes = UtilsFilesFoldersSync.getFilesFrom(filesLocaiton, {
       followSymlinks: false,
       recursive: true,
-    })
+    });
+
+    // console.log({ filesLocaiton });
+
+    //#region find files
+    const files = filesPathes
       .map(f => {
-        const fileRelativePath = f.replace(base + '/', '');
+        const fileRelativePath = f.replace(filesLocaiton + '/', '');
         if (
-          fileRelativePath.startsWith('src/lib/env/') ||
-          fileRelativePath.startsWith('src/assets/')
+          fileRelativePath.startsWith('lib/env/') ||
+          fileRelativePath.startsWith('assets/')
         ) {
           return;
         }
@@ -64,6 +68,10 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
 
         if (['.html'].includes(path.extname(f))) {
           tags = UtilsI18nHtml.extractGettextTranslateFromHtml(content);
+          // console.log({
+          //   fileRelativePath,
+          //   tags,
+          // });
         }
 
         if (tags.length === 0) {
@@ -71,7 +79,7 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
         }
 
         return {
-          isAppFile: !fileRelativePath.startsWith('src/lib/'),
+          isAppFile: !fileRelativePath.startsWith('lib/'),
           fileAbsPath: f,
           fileRelativePath,
           tags,
