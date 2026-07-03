@@ -551,7 +551,7 @@ export class BrowserCodeCut {
         const newContentLib = UtilsTypescript.removeCommentsFromTsContent(
           absFileSourcePathBrowserOrWebsqlNewContent,
         )?.trimEnd();
-        if (orgContentLib !== newContentLib) {
+        if (!orgContentLib || orgContentLib !== newContentLib) {
           fse.writeFileSync(
             this.absFileSourcePathBrowserOrWebsql,
             absFileSourcePathBrowserOrWebsqlNewContent,
@@ -582,7 +582,7 @@ export class BrowserCodeCut {
         absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
       )?.trimEnd();
 
-      if (orgContentApp !== newContentApp) {
+      if (!orgContentApp || orgContentApp !== newContentApp) {
         fse.writeFileSync(
           this.absFileSourcePathBrowserOrWebsqlAPPONLY,
           absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
@@ -1005,14 +1005,14 @@ export class BrowserCodeCut {
               },
             );
 
-      if (
-        UtilsTypescript.removeCommentsFromTsContent(
-          absoluteBackendDestFilePathCurrent,
-        )?.trimEnd() !==
-        UtilsTypescript.removeCommentsFromTsContent(
-          absoluteBackendDestFilePathNewContent,
-        )?.trimEnd()
-      ) {
+      const currentBackendFile = UtilsTypescript.removeCommentsFromTsContent(
+        absoluteBackendDestFilePathCurrent,
+      )?.trimEnd();
+      const newBackendFile = UtilsTypescript.removeCommentsFromTsContent(
+        absoluteBackendDestFilePathNewContent,
+      )?.trimEnd();
+
+      if (!currentBackendFile || currentBackendFile !== newBackendFile) {
         // SAVE BACKEND FILE
         fse.writeFileSync(
           absoluteBackendDestFilePath,
