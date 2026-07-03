@@ -86,6 +86,7 @@ const notAllowedToPRocess = [appAutoGenDocsMd, appAutoGenJs];
 export class BrowserCodeCut {
   //#region constants
   public static debugFile = [
+    // 'app-utils.ts',
     // 'branding.ts'
     // 'lib/start-cli.ts',
     // 'rest-request.ts',
@@ -97,7 +98,7 @@ export class BrowserCodeCut {
     // 'helpers-process.ts'
     // 'base-compiler-for-project.ts',
     // 'helpers-check.container.ts',
-  ];
+  ] as string[];
 
   //#endregion
 
@@ -239,8 +240,8 @@ export class BrowserCodeCut {
     );
 
     this.isTsFile = ['.ts', '.tsx'].includes(path.extname(this.relativePath));
-    this.isComponentHtmlFile = ['.component.html', '.container.html'].some(ext =>
-      this.relativePath.endsWith(ext),
+    this.isComponentHtmlFile = ['.component.html', '.container.html'].some(
+      ext => this.relativePath.endsWith(ext),
     );
   }
   //#endregion
@@ -515,6 +516,8 @@ export class BrowserCodeCut {
     }
 
     if (this.isTsFile) {
+      //#region handle browser/websls ts files for app or lib
+
       //#region handle app.ts presentation files
       if (
         this.relativePath === appTsFromSrc &&
@@ -528,7 +531,7 @@ export class BrowserCodeCut {
         !this.relativePath.startsWith(`${appFromSrc}/`) &&
         !this.relativePath.startsWith(`${appFromSrc}.`)
       ) {
-        // NORMAL TS BROWSER FILE FOR LIB
+        // #region NORMAL TS BROWSER FILE FOR LIB
         const absFileSourcePathBrowserOrWebsqlCurrent = this.project.watcher
           .isTaonLightWatcherMode
           ? UtilsFilesFoldersSync.readFile(
@@ -542,22 +545,22 @@ export class BrowserCodeCut {
             this.absFileSourcePathBrowserOrWebsql,
             { isBrowser: true },
           );
-        if (
-          UtilsTypescript.removeCommentsFromTsContent(
-            absFileSourcePathBrowserOrWebsqlCurrent,
-          )?.trimEnd() !==
-          UtilsTypescript.removeCommentsFromTsContent(
-            absFileSourcePathBrowserOrWebsqlNewContent,
-          )?.trimEnd()
-        ) {
+        const orgContentLib = UtilsTypescript.removeCommentsFromTsContent(
+          absFileSourcePathBrowserOrWebsqlCurrent,
+        )?.trimEnd();
+        const newContentLib = UtilsTypescript.removeCommentsFromTsContent(
+          absFileSourcePathBrowserOrWebsqlNewContent,
+        )?.trimEnd();
+        if (orgContentLib !== newContentLib) {
           fse.writeFileSync(
             this.absFileSourcePathBrowserOrWebsql,
             absFileSourcePathBrowserOrWebsqlNewContent,
             'utf8',
           );
         }
+        //#endregion
       }
-      // NORMAL TS BROWSER FILE FOR APP
+      // #region NORMAL TS BROWSER FILE FOR APP
       const absFileSourcePathBrowserOrWebsqlAPPONLYCurrent = this.project
         .watcher.isTaonLightWatcherMode
         ? UtilsFilesFoldersSync.readFile(
@@ -571,22 +574,26 @@ export class BrowserCodeCut {
           this.absFileSourcePathBrowserOrWebsqlAPPONLY,
           { isBrowser: true, libForApp: true },
         );
+      const orgContentApp = UtilsTypescript.removeCommentsFromTsContent(
+        absFileSourcePathBrowserOrWebsqlAPPONLYCurrent,
+      )?.trimEnd();
 
-      if (
-        UtilsTypescript.removeCommentsFromTsContent(
-          absFileSourcePathBrowserOrWebsqlAPPONLYCurrent,
-        )?.trimEnd() !==
-        UtilsTypescript.removeCommentsFromTsContent(
-          absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
-        )?.trimEnd()
-      ) {
+      const newContentApp = UtilsTypescript.removeCommentsFromTsContent(
+        absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
+      )?.trimEnd();
+
+      if (orgContentApp !== newContentApp) {
         fse.writeFileSync(
           this.absFileSourcePathBrowserOrWebsqlAPPONLY,
           absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
           'utf8',
         );
       }
+      //#endregion
+
+      //#endregion
     } else {
+      //#region handle other files than ts
       if (this.isComponentHtmlFile) {
         // console.log(`Fixing ${this.relativePath}`);
         this.rawContentForAPPONLYBrowser =
@@ -755,6 +762,7 @@ export class BrowserCodeCut {
       }
 
       this.fixAngularNotWatchingScssOutsideComponents();
+      //#endregion
     }
     //#endregion
   }
@@ -1022,7 +1030,7 @@ export class BrowserCodeCut {
   //#region private / methods & getters / production namespaces split
   private static initialWarning = {};
 
-  get initialWarnings() {
+  get initialWarnings(): any {
     return BrowserCodeCut.initialWarning;
   }
 

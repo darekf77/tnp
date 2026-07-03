@@ -525,7 +525,7 @@ export const replaceImportToAssetsIMport = (
         assetsFromRegex,
         (_, quote, folder: string) => {
           // TODO @LAST REFACTOR this
-          // -automatically add import from './i18m/*.translation default export where will be stored default imports
+          // - automatically add import from './i18m/*.translation default export where will be stored default imports
           const res = {} as TaonTranslationsMapImport;
 
           const files = UtilsFilesFoldersSync.getFilesFrom(
@@ -541,7 +541,6 @@ export const replaceImportToAssetsIMport = (
           for (const lang of langs) {
             for (let index = 0; index < files.length; index++) {
               const fileAbsPath = files[index];
-
               const base = project.location;
               const relative = fileAbsPath.replace(base + '/', '');
               // console.log({ fileAbsPath, relative });
