@@ -67,7 +67,7 @@ import { TranslationI18n } from './translations-18n';
 
 // @ts-ignore TODO weird inheritance problem
 export class Framework extends BaseFeatureForProject<Project> {
-  private translationI18n = new TranslationI18n(this.project);
+  public translationI18n = new TranslationI18n(this.project);
 
   //#region is unknown npm project
   get isUnknownNpmProject(): boolean {

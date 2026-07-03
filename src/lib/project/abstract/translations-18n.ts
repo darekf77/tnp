@@ -32,6 +32,14 @@ import {
 import { Project } from './project';
 //#endregion
 
+type DirnameData = {
+  dirnameAbsPath: string;
+  interfaces: {
+    fileName: string;
+    interfaceName: string;
+  }[];
+};
+
 // @ts-ignore TODO weird inheritance problem
 export class TranslationI18n extends BaseFeatureForProject<Project> {
   async start(): Promise<void> {
@@ -86,7 +94,7 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
         }
 
         return {
-          isAppFile: !fileRelativePath.startsWith('lib/'),
+          // isAppFile: !fileRelativePath.startsWith('lib/'),
           fileAbsPath: f,
           fileRelativePath: crossPlatformPath([
             srcMainProject,
@@ -103,13 +111,7 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
     // console.log({ langs });
 
     //#region dirname data interface
-    type DirnameData = {
-      dirnameAbsPath: string;
-      interfaces: {
-        fileName: string;
-        interfaceName: string;
-      }[];
-    };
+
     const dirnames: {
       [dirname in string]: DirnameData;
     } = {};
@@ -174,50 +176,8 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
         //#endregion
 
         //#region save ts
-        (() => {
-          const interfaceDataFileName = `${path.basename(fileAbsPath)}.${lang}${i18nDataTsFileExt}`;
-          const i18TsAbsPath = crossPlatformPath([
-            path.dirname(fileAbsPath),
-            i18nFolder,
-            interfaceDataFileName,
-          ]);
-          if (Helpers.isFolder(i18TsAbsPath)) {
-            try {
-              fse.unlinkSync(i18TsAbsPath);
-            } catch (error) {
-              Helpers.removeFolderIfExists(i18TsAbsPath);
-            }
-          }
-
-          const interfaceName = `${_.upperFirst(
-            _.camelCase(lang),
-          )}TraslationOverride${_.upperFirst(_.camelCase(file.fileRelativePath))}`;
-
-          const getInterface = UtilsPoFile.generateTranslationOverrideInterface(
-            file,
-            interfaceName,
-            lang,
-          );
-
-          dirnames[dirnamePath].interfaces.push({
-            fileName: interfaceDataFileName,
-            interfaceName,
-          });
-
-          delete file.fileAbsPath;
-          const tsFile = `${THIS_IS_GENERATED_INFO_COMMENT}
-${'imp' + 'ort'} type { UtilsPoFile } from '${'@tao' + 'n-dev/' + 'i18n'}/${srcMainProject}';
-${'imp' + 'ort'} type { UtilsI18n } from '${'tn' + 'p-core'}/${srcMainProject}';
-
-${getInterface}
-${THIS_IS_GENERATED_INFO_COMMENT}
-${'exp' + 'ort'} default ${JSON.stringify(file, null, 2)} as UtilsI18n.GettextFile;
-${THIS_IS_GENERATED_INFO_COMMENT}
-`;
-
-          UtilsFilesFoldersSync.writeFile(i18TsAbsPath, tsFile);
-          // UtilsTypescript.formatFile(i18TsAbsPath);
-        })();
+        this.saveTsFileData(fileAbsPath, lang, file, dirnames);
+        // UtilsTypescript.formatFile(i18TsAbsPath);
         //#endregion
       }
     }
@@ -258,6 +218,71 @@ export type ${_.upperFirst(
     }
     //#endregion
 
+    //#endregion
+  }
+
+  saveTsFileData(
+    fileAbsPath: string,
+    lang: UtilsI18n.CommonLocaleCode,
+    file: UtilsI18n.GettextFile,
+    dirnames?: {
+      [dirname in string]: DirnameData;
+    },
+  ): boolean {
+    //#region @backendFunc
+    const dirnamePath = crossPlatformPath(path.dirname(fileAbsPath));
+    const interfaceDataFileName = `${path.basename(fileAbsPath)}.${lang}${i18nDataTsFileExt}`;
+    const i18TsAbsPath = crossPlatformPath([
+      path.dirname(fileAbsPath),
+      i18nFolder,
+      interfaceDataFileName,
+    ]);
+    if (Helpers.isFolder(i18TsAbsPath)) {
+      try {
+        fse.unlinkSync(i18TsAbsPath);
+      } catch (error) {
+        Helpers.removeFolderIfExists(i18TsAbsPath);
+      }
+    }
+
+    const interfaceName = `${_.upperFirst(
+      _.camelCase(lang),
+    )}TraslationOverride${_.upperFirst(_.camelCase(file.fileRelativePath))}`;
+
+    const getInterface = UtilsPoFile.generateTranslationOverrideInterface(
+      file,
+      interfaceName,
+      lang,
+    );
+
+    if (dirnames) {
+      dirnames[dirnamePath].interfaces.push({
+        fileName: interfaceDataFileName,
+        interfaceName,
+      });
+    }
+
+    delete file.fileAbsPath;
+    const sorted = Utils.sortKeys(file) as typeof file;
+    const newTsFileContent = `${THIS_IS_GENERATED_INFO_COMMENT}
+${'imp' + 'ort'} type { UtilsPoFile } from '${'@tao' + 'n-dev/' + 'i18n'}/${srcMainProject}';
+${'imp' + 'ort'} type { UtilsI18n } from '${'tn' + 'p-core'}/${srcMainProject}';
+
+${getInterface}
+${THIS_IS_GENERATED_INFO_COMMENT}
+${'exp' + 'ort'} default ${JSON.stringify(sorted, null, 2)} as UtilsI18n.GettextFile;
+${THIS_IS_GENERATED_INFO_COMMENT}
+`;
+    const orgTsDataFileContent = UtilsFilesFoldersSync.readFile(i18TsAbsPath);
+    if (
+      !orgTsDataFileContent ||
+      orgTsDataFileContent?.trim() !== newTsFileContent?.trim()
+    ) {
+      Helpers.info(`Writing ${i18TsAbsPath}`);
+      UtilsFilesFoldersSync.writeFile(i18TsAbsPath, newTsFileContent);
+      return true;
+    }
+    return false;
     //#endregion
   }
 }

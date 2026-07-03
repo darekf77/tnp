@@ -1,5 +1,5 @@
 //#region imports
-import { UtilsI18nHtml } from '@taon-dev/i18n/src';
+import { UtilsI18nHtml, UtilsPoFile } from '@taon-dev/i18n/src';
 import { RegionRemover } from 'isomorphic-region-loader/src';
 import { ReplaceOptionsExtended } from 'isomorphic-region-loader/src';
 import {
@@ -11,6 +11,7 @@ import {
   TAGS,
   Utils,
   UtilsFilesFoldersSync,
+  UtilsI18n,
 } from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
@@ -35,6 +36,7 @@ import {
   CoreNgTemplateFiles,
   endingsStylesComponentsContainers,
   globalScssFromSrc,
+  i18nDataTsFileExt,
   importsHtmlFromSrc,
   indexTsFromLibFromSrc,
   libFromImport,
@@ -337,6 +339,47 @@ export class BrowserCodeCut {
           `[taon][browser-code-cut] file not found ${this.absSourcePathFromSrc}`,
         );
       }
+
+      //#region handle po files
+
+      if (path.extname(this.absSourcePathFromSrc) === '.po') {
+        const lang = path
+          .extname(path.basename(this.absSourcePathFromSrc).replace(/.po$/, ''))
+          .replace(/^\./, '') as UtilsI18n.CommonLocaleCode;
+
+        const pathToTsData = crossPlatformPath([
+          path.dirname(path.dirname(this.absSourcePathFromSrc)),
+          path
+            .basename(this.absSourcePathFromSrc)
+            .replace(/.po$/, '')
+            .replace(`.${lang}`, ''),
+        ]);
+
+        // Helpers.info(`Processing ${pathToTsData}`);
+
+        const orgContent =
+          UtilsFilesFoldersSync.readFile(this.absSourcePathFromSrc) || '';
+
+        const tsFromPo = _.first(UtilsPoFile.extractPoToJson(orgContent));
+        tsFromPo.fileRelativePath = crossPlatformPath([
+          pathToTsData.replace(this.project.location + '/', ''),
+        ]);
+
+        // console.log({ tsFromPo: JSON.stringify(tsFromPo), lang });
+        if (
+          this.project.framework.translationI18n.saveTsFileData(
+            pathToTsData,
+            lang,
+            tsFromPo,
+          )
+        ) {
+          Helpers.info(
+            `Done rewriting ${path.basename(pathToTsData)} from .po file`,
+          );
+        }
+      }
+
+      //#endregion
     }
     //#endregion
   }

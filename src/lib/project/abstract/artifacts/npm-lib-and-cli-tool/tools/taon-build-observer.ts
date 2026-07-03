@@ -125,12 +125,12 @@ export class TaonBuildObserver extends BaseFeatureForProject<Project> {
         this.dirtyBuild.set(buildWatcherTypeKey, false);
 
         if (this.toNotifyLeaderPort) {
-          this.notifyLeaderAboutBuildDone(buildType);
+          void this.notifyLeaderAboutBuildDone(buildType);
         }
       }
       this.writeBuildStatus();
     }
-    this.debouceUpdate();
+    void this.debouceUpdate();
   };
   //#endregion
 
@@ -605,7 +605,7 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
     }
 
     chokidar.watch(this.project.taonJson.path).on('change', () => {
-      this.debouceUpdate();
+      void this.debouceUpdate();
     });
 
     //#endregion

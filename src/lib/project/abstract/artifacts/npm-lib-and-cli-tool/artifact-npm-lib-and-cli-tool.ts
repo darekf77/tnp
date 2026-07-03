@@ -8,6 +8,7 @@ import {
   taonActionFromParent,
   tnpPackageName,
   UtilsCli,
+  UtilsFilesFoldersSync,
   UtilsTime,
 } from 'tnp-core/src';
 import {
@@ -51,6 +52,7 @@ import {
   dotGitIgnoreMainProject,
   dotNpmIgnoreMainProject,
   dotNpmrcMainProject,
+  i18nDataTsFileExt,
   indexDtsNpmPackage,
   indexJSNpmPackage,
   indexProdJs,
@@ -306,7 +308,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     //#region handle envionment constant recreatino in watch mode
     if (buildOptions.build.watch) {
-      this.project.environmentConfig.watchAndRecreate(async () => {
+      await this.project.environmentConfig.watchAndRecreate(async () => {
         await this.project.environmentConfig.update(
           orgParams.clone({
             release: {
@@ -1020,14 +1022,29 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           rimraf.sync(this.project.pathFor(distMainProject) + '*');
         }
         rimraf.sync(this.project.pathFor(folderName.tmp) + '*');
-        return;
+        break;
       } catch (error) {
-        HelpersTaon.pressKeyAndContinue(
+        await HelpersTaon.pressKeyAndContinue(
           MESSAGES.SHUT_DOWN_FOLDERS_AND_DEBUGGERS,
         );
         continue;
       }
     }
+    const files = UtilsFilesFoldersSync.getFilesFrom(
+      this.project.pathFor(srcMainProject),
+      {
+        recursive: true,
+        followSymlinks: false,
+      },
+    ).filter(f => {
+      return f.endsWith(i18nDataTsFileExt);
+    });
+
+    files.forEach(f => {
+      try {
+        fse.unlinkSync(f);
+      } catch (error) {}
+    });
   }
 
   /**
@@ -1078,7 +1095,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         this.project.removeFile(fileName.tnpEnvironment_json);
         break;
       } catch (error) {
-        HelpersTaon.pressKeyAndContinue(
+        await HelpersTaon.pressKeyAndContinue(
           MESSAGES.SHUT_DOWN_FOLDERS_AND_DEBUGGERS,
         );
       }

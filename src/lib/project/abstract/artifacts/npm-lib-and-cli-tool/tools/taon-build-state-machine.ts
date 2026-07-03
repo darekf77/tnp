@@ -57,7 +57,7 @@ export class TaonStateMachine<T extends JsPrimitive = JsPrimitive> {
     return allowed.includes(nextState);
   }
 
-  async set(nextStateRaw: T): Promise<boolean> {
+  set(nextStateRaw: T): boolean {
     const previousState = this._currentValue;
 
     const nextState =
@@ -84,7 +84,7 @@ export class TaonStateMachine<T extends JsPrimitive = JsPrimitive> {
 
     this._currentValue = nextState;
 
-    await this.config.effect?.(nextState, previousState, this.debugMode);
+    void this.config.effect?.(nextState, previousState, this.debugMode);
 
     return true;
   }
