@@ -137,7 +137,7 @@
   ],
 
   "html.format.wrapAttributes": "force-aligned",
-  "workbench.colorTheme": "Default Light+",
+  "workbench.colorTheme": "Light+",
   "typescript.tsdk": "node_modules/typescript/lib",
 
   "[typescriptreact]": {

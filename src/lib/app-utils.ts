@@ -10,6 +10,7 @@ import {
   _,
   UtilsFilesFoldersSync,
   path,
+  UtilsI18n,
 } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 
@@ -446,6 +447,7 @@ export const replaceImportToAssetsIMport = (
   relativeFilePath: string,
   project: Project,
 ): string => {
+  //#region @backendFunc
   if (!rawContentForBrowser) {
     return rawContentForBrowser;
   }
@@ -522,50 +524,38 @@ export const replaceImportToAssetsIMport = (
       rawContentForBrowser = rawContentForBrowser.replace(
         assetsFromRegex,
         (_, quote, folder: string) => {
-          const res = {
-            [crossPlatformPath([srcMainProject, relativeFilePath])]: {},
-          } as TaonTranslationsMapImport;
+          // TODO @LAST REFACTOR this
+          // -automatically add import from './i18m/*.translation default export where will be stored default imports
+          const res = {} as TaonTranslationsMapImport;
+
+          const files = UtilsFilesFoldersSync.getFilesFrom(
+            project.pathFor([srcMainProject, path.dirname(relativeFilePath)]),
+            {
+              recursive: false,
+              followSymlinks: false,
+            },
+          );
 
           const langs = project.taonJson.generateTranslationsFor;
 
           for (const lang of langs) {
-            const fileAbsPathReplacingLang = project.pathFor([
-              srcMainProject,
-              path.dirname(relativeFilePath),
-              i18nFolder,
-              `${path.basename(relativeFilePath)}.${lang}${i18nDataTsFileExt}`,
-            ]);
-            if (Helpers.exists(fileAbsPathReplacingLang)) {
-              res[crossPlatformPath([srcMainProject, relativeFilePath])][lang] =
-                `####async () => await (await import('./${i18nFolder}/${path.basename(
-                  relativeFilePath,
-                )}.${lang}${i18nDataTsFileExt.replace('.ts', '')}')).default####` as any;
-            }
-          }
+            for (let index = 0; index < files.length; index++) {
+              const fileAbsPath = files[index];
 
-          if (
-            relativeFilePath.endsWith('.component.ts') ||
-            relativeFilePath.endsWith('.container.ts')
-          ) {
-            const htmlRelativeFilePath = relativeFilePath.replace(
-              /.ts$/,
-              '.html',
-            );
-            res[crossPlatformPath([srcMainProject, htmlRelativeFilePath])] = {};
-            for (const lang of langs) {
-              const fileAbsPathReplacingLang = project.pathFor([
-                srcMainProject,
-                path.dirname(htmlRelativeFilePath),
+              const base = project.location;
+              const relative = fileAbsPath.replace(base + '/', '');
+              // console.log({ fileAbsPath, relative });
+              const fileInI18PoFile = crossPlatformPath([
+                path.dirname(fileAbsPath),
                 i18nFolder,
-                `${path.basename(htmlRelativeFilePath)}.${lang}${i18nDataTsFileExt}`,
+                `${path.basename(fileAbsPath)}.${lang}.po`,
               ]);
 
-              if (Helpers.exists(fileAbsPathReplacingLang)) {
-                res[crossPlatformPath([srcMainProject, htmlRelativeFilePath])][
-                  lang
-                ] =
+              if (Helpers.exists(fileInI18PoFile)) {
+                res[relative] = res[relative] || {};
+                res[relative][lang] =
                   `####async () => (await import('./${i18nFolder}/${path.basename(
-                    htmlRelativeFilePath,
+                    fileAbsPath,
                   )}.${lang}${i18nDataTsFileExt.replace('.ts', '')}')).default####` as any;
               }
             }
@@ -597,5 +587,6 @@ export const replaceImportToAssetsIMport = (
   })();
 
   return rawContentForBrowser;
+  //#endregion
 };
 //#endregion
