@@ -562,7 +562,7 @@ export const replaceImportToAssetsIMport = (
 
           return `${JSON.stringify(res)
             .replace(/\"\#\#\#\#/g, '')
-            .replace(/\#\#\#\#\"/g, '')}`;
+            .replace(/\#\#\#\#\"/g, '')} as any`;
         },
       );
     })();
