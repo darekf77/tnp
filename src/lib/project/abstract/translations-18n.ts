@@ -264,13 +264,13 @@ export type ${_.upperFirst(
 
     delete file.fileAbsPath;
     const sorted = Utils.sortKeys(file) as typeof file;
+    //     ${'imp' + 'ort'} type { UtilsPoFile } from '${'@tao' + 'n-dev/' + 'i18n'}/${srcMainProject}';
+    // ${'imp' + 'ort'} type { UtilsI18n } from '${'tn' + 'p-core'}/${srcMainProject}';
     const newTsFileContent = `${THIS_IS_GENERATED_INFO_COMMENT}
-${'imp' + 'ort'} type { UtilsPoFile } from '${'@tao' + 'n-dev/' + 'i18n'}/${srcMainProject}';
-${'imp' + 'ort'} type { UtilsI18n } from '${'tn' + 'p-core'}/${srcMainProject}';
 
 ${getInterface}
 ${THIS_IS_GENERATED_INFO_COMMENT}
-${'exp' + 'ort'} default ${JSON.stringify(sorted, null, 2)} as UtilsI18n.GettextFile;
+${'exp' + 'ort'} default ${JSON.stringify(sorted, null, 2)};
 ${THIS_IS_GENERATED_INFO_COMMENT}
 `;
     const orgTsDataFileContent = UtilsFilesFoldersSync.readFile(i18TsAbsPath);
