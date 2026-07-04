@@ -7,6 +7,7 @@ import {
   browserFromCompiledDist,
   browserNpmPackage,
   distMainProject,
+  i18nDataTsFileExt,
   indexTsFromLibFromSrc,
   libFromCompiledDist,
   libFromNpmPackage,
@@ -382,22 +383,24 @@ export class ProductionBuild {
       //   );
       // }
 
-      Helpers.writeJson(
-        fileAbsPath
-          .replace('.tsx', `.${splitNamespacesJson}`)
-          .replace('.ts', `.${splitNamespacesJson}`),
-        {
-          namespacesMapObj: data.namespacesMapObj || {},
-          namespacesReplace: data.namespacesReplace || {},
-          // namespacesMapObj: isLib
-          //   ? data.namespacesMapObjJS
-          //   : data.namespacesMapObj,
-          // namespacesReplace: isLib
-          //   ? data.namespacesReplaceJS
-          //   : data.namespacesReplace,
-        } as typeof data,
-      );
-      UtilsFilesFoldersSync.writeFile(fileAbsPath, content);
+      if (!fileAbsPath.endsWith(i18nDataTsFileExt)) {
+        Helpers.writeJson(
+          fileAbsPath
+            .replace('.tsx', `.${splitNamespacesJson}`)
+            .replace('.ts', `.${splitNamespacesJson}`),
+          {
+            namespacesMapObj: data.namespacesMapObj || {},
+            namespacesReplace: data.namespacesReplace || {},
+            // namespacesMapObj: isLib
+            //   ? data.namespacesMapObjJS
+            //   : data.namespacesMapObj,
+            // namespacesReplace: isLib
+            //   ? data.namespacesReplaceJS
+            //   : data.namespacesReplace,
+          } as typeof data,
+        );
+        UtilsFilesFoldersSync.writeFile(fileAbsPath, content);
+      }
     }
     //#endregion
   }
@@ -415,7 +418,11 @@ export class ProductionBuild {
   ): void {
     //#region @backendFunc
     const data = files
-      .filter(f => f.endsWith('.ts') || f.endsWith('.tsx'))
+      .filter(
+        f =>
+          (f.endsWith('.ts') || f.endsWith('.tsx')) &&
+          !f.endsWith(i18nDataTsFileExt),
+      )
       .reduce((a, b) => {
         const jsonMap: UtilsTypescript.SplitNamespaceResult =
           UtilsJson.readJson(
