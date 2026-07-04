@@ -561,6 +561,28 @@ export class BrowserCodeCut {
     if (this.isTsFile) {
       //#region handle browser/websls ts files for app or lib
 
+      if (
+        UtilsI18nHtml.isAngularTsWithInlineHtml(
+          this.rawContentForAPPONLYBrowser,
+        )
+      ) {
+        // console.log(`is Angular ts inline template (app) ${this.relativePath}`);
+        this.rawContentForAPPONLYBrowser =
+          UtilsI18nHtml.replaceTranslatePipieDirectiveTContext(
+            this.rawContentForAPPONLYBrowser,
+            { angularTsWithInlineHtml: true },
+          );
+      }
+
+      if (UtilsI18nHtml.isAngularTsWithInlineHtml(this.rawContentForBrowser)) {
+        // console.log(`is Angular ts inline template (lib) ${this.relativePath}`);
+        this.rawContentForBrowser =
+          UtilsI18nHtml.replaceTranslatePipieDirectiveTContext(
+            this.rawContentForBrowser,
+            { angularTsWithInlineHtml: true },
+          );
+      }
+
       //#region handle app.ts presentation files
       if (
         this.relativePath === appTsFromSrc &&

@@ -75,7 +75,20 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
 
         let tags: UtilsI18n.GettextExtracted[] = [];
         if (['.ts', '.tsx'].includes(path.extname(f))) {
-          tags = UtilsTypescript.extractGettextFromTs(content);
+          tags = _.uniqBy(
+            [
+              ...UtilsTypescript.extractGettextFromTs(content),
+              ...UtilsI18nHtml.extractGettextTranslateFromHtml(content),
+            ],
+            tag =>
+              `${tag.lineNumber}|${tag.gettextString}|${tag.context ?? ''}`,
+          );
+
+          // console.log({
+          //   fileRelativePath,
+          //   tags,
+          //   // content,
+          // });
         }
 
         if (['.html'].includes(path.extname(f))) {
