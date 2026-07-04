@@ -484,6 +484,9 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
   //#endregion
 
   async triggerCopymanager(): Promise<void> {
+    if (!this.buildOptions.build.watch) {
+      return;
+    }
     await this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.runTask(
       {
         taskName: 'copyto manger leader build',
@@ -535,8 +538,11 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
   //#endregion
 
   //#region public methods / start
+  private buildOptions: EnvOptions;
+
   start(envOptions: EnvOptions): void {
     //#region @backendFunc
+    this.buildOptions = envOptions;
     Helpers.info(`
 
       USING TAON NEW BUILD MODE

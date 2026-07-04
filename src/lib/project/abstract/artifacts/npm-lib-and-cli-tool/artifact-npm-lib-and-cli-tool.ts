@@ -577,10 +577,16 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     //#region start copy manager
     this.copyNpmDistLibManager.init(buildOptions);
 
-    if (
-      !buildOptions.copyToManager.skip &&
-      !optionsBuildPartial?.normalBuildBeforeProd
-    ) {
+    const shouldUseCopyManager = !(
+      buildOptions.copyToManager.skip ||
+      optionsBuildPartial?.normalBuildBeforeProd
+    );
+
+    // console.log({
+    //   shouldUseCopyManager,
+    //   normalBuildBeforeProd: optionsBuildPartial?.normalBuildBeforeProd,
+    // });
+    if (shouldUseCopyManager) {
       if (_.isFunction(buildOptions.copyToManager.beforeCopyHook)) {
         await buildOptions.copyToManager.beforeCopyHook();
       }
@@ -701,24 +707,17 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         //#endregion
       }
 
-      // if (
-      //   buildOptions.build.watch &&
-      //   this.project.watcher.isTaonLightWatcherMode
-      // ) {
-
-      //   await this.copyNpmDistLibManager.runTask({
-      //     taskName: 'copyto manger',
-      //     watch: false,
-      //   });
-      // } else {
-      if (!this.project.watcher.isTaonLightWatcherMode) {
+      if (
+        !(
+          buildOptions.build.watch &&
+          this.project.watcher.isTaonLightWatcherMode
+        )
+      ) {
         await this.copyNpmDistLibManager.runTask({
           taskName: 'copyto manger',
           watch: buildOptions.build.watch,
         });
       }
-
-      // }
     }
     //#endregion
 
