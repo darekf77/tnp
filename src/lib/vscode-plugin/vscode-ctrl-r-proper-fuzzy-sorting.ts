@@ -1,4 +1,4 @@
-import { fse, os, path, Utils } from 'tnp-core/src';
+import { crossPlatformPath, fse, os, path, Utils } from 'tnp-core/src';
 import type { ExtensionContext, QuickPickItem } from 'vscode';
 
 type RecentWorkspace = {
@@ -11,6 +11,22 @@ type RecentWorkspace = {
 };
 
 const DB_FILE = 'recent-workspaces.json';
+
+const isAllowedAsRecent = (pathToFolder: string): boolean => {
+  if (!pathToFolder) {
+    return false;
+  }
+  const basename = path.basename(crossPlatformPath(pathToFolder));
+  if (
+    basename.startsWith('tmp-') ||
+    basename.startsWith('dist-') ||
+    basename === 'dist' ||
+    basename === 'node_modules'
+  ) {
+    return false;
+  }
+  return true;
+};
 
 export async function activateRecentWorkspaces(
   context: ExtensionContext,
@@ -50,6 +66,10 @@ export async function activateRecentWorkspaces(
     }
 
     const first = folders[0];
+
+    if (!isAllowedAsRecent(first)) {
+      return;
+    }
 
     return {
       id: normalizeId(first),
@@ -173,6 +193,10 @@ export async function activateRecentWorkspaces(
 
     for (const entry of folders) {
       const fsPath = uriToFsPath(entry?.folderUri);
+
+      if (!isAllowedAsRecent(fsPath)) {
+        continue;
+      }
 
       if (!fsPath) {
         continue;
