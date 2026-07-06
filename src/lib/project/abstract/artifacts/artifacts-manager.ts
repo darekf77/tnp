@@ -206,6 +206,8 @@ export class ArtifactManager {
     skipRecreatingTsFiles?: boolean;
   }): void {
     //#region @backendFunc
+
+    //#region prepare variables
     options = options || {};
     if (this.project.taonJson.type !== LibTypeEnum.ISOMORPHIC_LIB) {
       return;
@@ -217,18 +219,19 @@ export class ArtifactManager {
       .filter(f => {
         return (Helpers.readFile(f) || '').startsWith('#!/usr/bin/env');
       });
+    //#endregion
 
-    Helpers.removeFileIfExists(
-      this.project.pathFor([binMainProject, this.project.nameForCli]),
-    );
+    //#region handle bin/cli-name
+    // Helpers.removeFileIfExists(
+    //   this.project.pathFor([binMainProject, this.project.nameForCli]),
+    // );
 
-    // if (countLinkInPackageJsonBin.length === 0) {
     const pathNormalLink = this.project.pathFor([
       binMainProject,
       this.project.nameForCli,
     ]);
 
-    Helpers.writeFile(
+    UtilsFilesFoldersSync.writeFile(
       pathNormalLink,
       `#!/usr/bin/env -S node --no-deprecation
 //#${'reg' + 'ion'} @${'back' + 'end'}
@@ -236,22 +239,28 @@ export class ArtifactManager {
 ${'req' + 'uire'}('./start');
 //#${'endreg' + 'ion'}
 `,
+      {
+        overrideSameFile: false,
+      },
     );
     countLinkInPackageJsonBin.push(pathNormalLink);
+    //#endregion
 
-    Helpers.removeFileIfExists(
-      this.project.pathFor([
-        binMainProject,
-        `${this.project.nameForCli}${debugSuffix.replace('--', '-')}`,
-      ]),
-    );
+    //#region handle bin/cli-name-debug
+
+    // Helpers.removeFileIfExists(
+    //   this.project.pathFor([
+    //     binMainProject,
+    //     `${this.project.nameForCli}${debugSuffix.replace('--', '-')}`,
+    //   ]),
+    // );
 
     const pathDebugLink = this.project.pathFor([
       binMainProject,
       `${this.project.nameForCli}${debugSuffix.replace('--', '-')}`,
     ]);
 
-    Helpers.writeFile(
+    UtilsFilesFoldersSync.writeFile(
       pathDebugLink,
       `#!/usr/bin/env -S node --inspect --stack-trace-limit=10000 --no-deprecation
 //#${'reg' + 'ion'} @${'back' + 'end'}
@@ -259,31 +268,41 @@ ${'req' + 'uire'}('./start');
 ${'req' + 'uire'}('./start');
 //#${'endreg' + 'ion'}
 `,
+      {
+        overrideSameFile: false,
+      },
     );
     countLinkInPackageJsonBin.push(pathDebugLink);
+    //#endregion
 
-    Helpers.removeFileIfExists(
-      this.project.pathFor([
-        binMainProject,
-        `${this.project.nameForCli}${debugBrkSuffix.replace('--', '-')}`,
-      ]),
-    );
+    //#region handle bin/cli-name-debug-brk
+    // Helpers.removeFileIfExists(
+    //   this.project.pathFor([
+    //     binMainProject,
+    //     `${this.project.nameForCli}${debugBrkSuffix.replace('--', '-')}`,
+    //   ]),
+    // );
 
     const pathBrkDebugLink = this.project.pathFor([
       binMainProject,
       `${this.project.nameForCli}${debugBrkSuffix.replace('--', '-')}`,
     ]);
 
-    Helpers.writeFile(
+    UtilsFilesFoldersSync.writeFile(
       pathBrkDebugLink,
       `#!/usr/bin/env -S node --inspect-brk --stack-trace-limit=10000 --no-deprecation
 //#${'reg' + 'ion'} @${'back' + 'end'}
 ${'req' + 'uire'}('./start');
 //#${'endreg' + 'ion'}
 `,
+      {
+        overrideSameFile: false,
+      },
     );
     countLinkInPackageJsonBin.push(pathBrkDebugLink);
+    //#endregion
 
+    //#region recreate core files
     if (!options.skipRecreatingTsFiles) {
       if (this.project.nameForCli !== taonPackageName) {
         // QUICK_FIX For custom taon cli
@@ -320,12 +339,16 @@ ${'req' + 'uire'}('./start');
         });
       }
     }
+    //#endregion
 
+    //#region update package json bin
     const bin = {};
     countLinkInPackageJsonBin.forEach(p => {
       bin[path.basename(p)] = `${binMainProject}/${path.basename(p)}`;
     });
     this.project.packageJson.bin = bin;
+    //#endregion
+
     //#endregion
   }
   //#endregion
@@ -520,7 +543,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
       this.project.taonJson.isOrganization
     ) {
       for (const orgChild of this.project.children) {
-        orgChild.taonJson.setFrameworkVersion(
+        await orgChild.taonJson.setFrameworkVersion(
           this.project.taonJson.frameworkVersion,
         );
       }
@@ -764,7 +787,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
           this.project.taonJson.frameworkVersion !==
             this.project.parent.taonJson.frameworkVersion
         ) {
-          this.project.taonJson.setFrameworkVersion(
+          await this.project.taonJson.setFrameworkVersion(
             this.project.parent.taonJson.frameworkVersion,
           );
           continue;
