@@ -1,6 +1,6 @@
 {
   "name": "tnp",
-  "version": "21.0.207",
+  "version": "21.0.215",
   "scripts": {
     "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     "taon init": "taon init",
@@ -37,6 +37,10 @@
         "group": null,
         "icon": "$(new-folder)",
         "title": "Create New Folder"
+      },
+      {
+        "command": "tnp.openRecentWorkspace",
+        "title": "Taon: Open Recent Workspace"
       }
     ],
     "menus": {
