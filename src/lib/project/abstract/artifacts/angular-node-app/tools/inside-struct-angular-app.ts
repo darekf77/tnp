@@ -467,8 +467,8 @@ export class InsideStructAngularApp extends BaseInsideStruct {
           //#region link assets DONE
           (() => {
             let browserTsCode = this.initOptions.build.websql
-              ? tmpSrcDistWebsql
-              : tmpSrcDist;
+              ? tmpSrcAppDistWebsql
+              : tmpSrcAppDist;
 
             if (this.initOptions.build.prod) {
               browserTsCode = `${browserTsCode}${prodSuffix}`;
@@ -525,6 +525,8 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                   ),
                 ),
               });
+
+              // TODO @LAST why this is not sync
               packageJson.setName(this.project.name);
               if (this.initOptions.release.releaseType) {
                 packageJson.setMainProperty(

@@ -77,6 +77,8 @@ import {
   tempSourceFolder,
   THIS_IS_GENERATED_STRING,
   tmpBaseHrefOverwrite,
+  tmpSrcAppDist,
+  tmpSrcAppDistWebsql,
   tmpSrcDist,
   tmpSrcDistWebsql,
   tsconfigJsonIsomorphicMainProject,
@@ -189,18 +191,35 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           ),
       ]);
 
-      let browserTsCode = initOptions.build.websql
-        ? tmpSrcDistWebsql
-        : tmpSrcDist;
+      (() => {
+        let browserTsCodeLib = initOptions.build.websql
+          ? tmpSrcDistWebsql
+          : tmpSrcDist;
 
-      if (initOptions.build.prod) {
-        browserTsCode = `${browserTsCode}${prodSuffix}`;
-      }
+        if (initOptions.build.prod) {
+          browserTsCodeLib = `${browserTsCodeLib}${prodSuffix}`;
+        }
 
-      const tmpDest = this.project.pathFor(
-        `${browserTsCode}/${assetsFromNgProj}/${fileName}`,
-      );
-      HelpersTaon.copyFile(coreSource, tmpDest);
+        const tmpDest = this.project.pathFor(
+          `${browserTsCodeLib}/${assetsFromNgProj}/${fileName}`,
+        );
+        HelpersTaon.copyFile(coreSource, tmpDest);
+      })();
+
+      (() => {
+        let browserTsCodeApp = initOptions.build.websql
+          ? tmpSrcAppDistWebsql
+          : tmpSrcAppDist;
+
+        if (initOptions.build.prod) {
+          browserTsCodeApp = `${browserTsCodeApp}${prodSuffix}`;
+        }
+
+        const tmpDest = this.project.pathFor(
+          `${browserTsCodeApp}/${assetsFromNgProj}/${fileName}`,
+        );
+        HelpersTaon.copyFile(coreSource, tmpDest);
+      })();
     };
 
     copyFromCoreAssets(CoreAssets.sqlWasmFile);
@@ -631,6 +650,8 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   ): Promise<void> {
     //#region @backendFunc
     Helpers.remove(appDistOutBackendNodeAbsPath);
+
+    //#region bundle code into single file
     await HelpersTaon.bundleCodeIntoSingleFile(
       this.project.pathFor(`${distVscodeProj}/${appJsBackend}`),
       crossPlatformPath([
@@ -653,7 +674,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         ],
       },
     );
+    //#endregion
 
+    //#region copy specyfic backend files
     const copyToBackendBundle = [
       runJsMainProject,
       readmeMdMainProject,
@@ -669,7 +692,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         ]),
       );
     }
+    //#endregion
 
+    //#region handle native deps instalation
     const nodeJsAppNativeDeps = [
       ...this.project.taonJson.getNativeDepsFor(
         ReleaseArtifactTaon.ANGULAR_NODE_APP,
@@ -700,18 +725,24 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         );
       }
     }
+    //#endregion
 
+    //#region recreate package json
     Helpers.writeJson([appDistOutBackendNodeAbsPath, packageJsonNpmLib], {
       name: this.project.packageJson.name,
       version: this.project.packageJson.version,
       dependencies: dependenciesNodeJsApp,
     } as PackageJson);
+    //#endregion
 
+    //#region recreate dockerfile
     this.project.framework.recreateFileFromCoreProject({
       relativePathInCoreProject: 'docker-templates/backend-app-node/Dockerfile',
       customDestinationLocation: [appDistOutBackendNodeAbsPath, 'Dockerfile'],
     });
+    //#endregion
 
+    //#region copy sql wasm from core assets (needed on backend as well)
     this.project.framework.recreateFileFromCoreProject({
       relativePathInCoreProject: `${templateFolderForArtifact(
         buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
@@ -723,12 +754,14 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         `${distFromNgBuild}/${CoreAssets.sqlWasmFile}`,
       ],
     });
+    //#endregion
 
     //#endregion
   }
 
   //#endregion
 
+  //#region get browser env json
   async getBrowserENVJSON(releaseOptions: EnvOptions): Promise<any> {
     //#region @backendFunc
 
@@ -786,6 +819,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     return data;
     //#endregion
   }
+  //#endregion
 
   //#region release partial
   async releasePartial(
