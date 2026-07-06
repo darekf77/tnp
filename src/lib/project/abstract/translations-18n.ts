@@ -49,7 +49,13 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
     const filesPathes = UtilsFilesFoldersSync.getFilesFrom(filesLocaiton, {
       followSymlinks: false,
       recursive: true,
-    });
+    }).filter(
+      f =>
+        !f.endsWith('.spec.ts') &&
+        !f.endsWith('.test.ts') &&
+        !f.endsWith('.spec.tsx') &&
+        !f.endsWith('.test.tsx'),
+    );
 
     // console.log({ filesLocaiton });
 
