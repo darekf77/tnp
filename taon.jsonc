@@ -46,10 +46,7 @@
     },
   ],
 
-  "devModeDependenciesForNpmLib": [
-    "tnp-helpers",
-    "tnp-core",
-  ],
+  "devModeDependenciesForNpmLib": ["tnp-helpers", "tnp-core"],
 
   "generateTranslationsFor": ["en-US", "pl-PL"],
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
@@ -162,6 +159,10 @@
           "icon": "$(new-folder)",
           "title": "Create New Folder",
         },
+        {
+          "command": "tnp.openRecentWorkspace",
+          "title": "Taon: Open Recent Workspace",
+        },
       ],
       "menus": {
         "explorer/context": [
@@ -204,5 +205,5 @@
       "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     },
     "sideEffects": false,
-  }
+  },
 }

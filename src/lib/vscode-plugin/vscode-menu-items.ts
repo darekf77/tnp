@@ -1,6 +1,7 @@
 import { config, tnpPackageName } from 'tnp-core/src';
 
-import type { Project } from './project/abstract/project';
+import type { Project } from '../project/abstract/project';
+
 import type { activateMenuTnp } from './vscode-ext-menu';
 
 export const vscodeMenuItems = ({

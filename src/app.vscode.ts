@@ -7,7 +7,8 @@ import { executeCommand } from 'tnp-helpers/src'; // @backend
 import type { ExtensionContext } from 'vscode';
 
 const FRAMEWORK_NAME = 'tnp';
-import * as menu from './lib/vscode-ext-menu';
+import * as menu from './lib/vscode-plugin';
+import { activateRecentWorkspaces } from './lib/vscode-plugin';
 
 const commands = vscodeExtMethods(FRAMEWORK_NAME);
 export async function activate(context: ExtensionContext) {
@@ -15,6 +16,7 @@ export async function activate(context: ExtensionContext) {
 
   vscodePatchingCodium(context, vscode, FRAMEWORK_NAME);
   handleTaonRedirect(context, vscode);
+  await activateRecentWorkspaces(context, vscode, FRAMEWORK_NAME);
 
   menu.activateMenuTnp(context, vscode, FRAMEWORK_NAME);
 

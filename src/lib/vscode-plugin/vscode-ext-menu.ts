@@ -7,8 +7,9 @@ import type * as vscode from 'vscode';
 import {
   tmp_FRONTEND_NORMAL_APP_PORT,
   tmp_FRONTEND_WEBSQL_APP_PORT,
-} from './constants';
-import { Project } from './project/abstract/project';
+} from '../constants';
+import { Project } from '../project/abstract/project';
+
 import { vscodeMenuItems } from './vscode-menu-items';
 //#endregion
 
