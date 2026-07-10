@@ -9,10 +9,10 @@ import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
 import { BrowserCodeCut } from './browser-code-cut';
+import { firsTimeDone } from './constants-code-cut';
 //#endregion
 
 export class CodeCut {
-
   //#region constructor
 
   //#region @backend
@@ -35,7 +35,6 @@ export class CodeCut {
   //#region methods
 
   private isAllowedPathForSave(relativePath: string) {
-
     //#region @backendFunc
     // console.log({ relativePath })
     return (
@@ -44,14 +43,12 @@ export class CodeCut {
       !relativePath.replace(/^\\/, '').startsWith(`tests/`)
     );
     //#endregion
-
   }
 
   /**
    * ex: assets/file.png or my-app/component.ts
    */
   files(relativeFilesToProcess: string[], remove: boolean = false) {
-
     //#region @backendFunc
     for (let index = 0; index < relativeFilesToProcess.length; index++) {
       const relativeFilePath = relativeFilesToProcess[index];
@@ -59,7 +56,6 @@ export class CodeCut {
       this.file(relativeFilePath, remove);
     }
     //#endregion
-
   }
 
   file(relativePathToFile: string, remove: boolean = false): void {
@@ -86,7 +82,7 @@ export class CodeCut {
     // }
 
     if (!extAllowedToReplace.includes(path.extname(relativePathToFile))) {
-      return new BrowserCodeCut(
+      const codeCutNotCuttable = new BrowserCodeCut(
         absSourceFromSrc,
         absolutePathToFile,
         this.absPathTmpSrcDistFolder,
@@ -97,9 +93,11 @@ export class CodeCut {
         fileRemovedEvent: remove,
         regionReplaceOptions: this.options,
       });
+      firsTimeDone.set(codeCutNotCuttable.relativePath, true);
+      return;
     }
 
-    return new BrowserCodeCut(
+    const codeCutCuttable = new BrowserCodeCut(
       absSourceFromSrc,
       absolutePathToFile,
       this.absPathTmpSrcDistFolder,
@@ -110,10 +108,9 @@ export class CodeCut {
       fileRemovedEvent: remove,
       regionReplaceOptions: this.options,
     });
+    firsTimeDone.set(codeCutCuttable.relativePath, true);
     //#endregion
-
   }
 
   //#endregion
-
 }

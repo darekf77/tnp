@@ -12,6 +12,7 @@ import {
   Utils,
   UtilsFilesFoldersSync,
   UtilsI18n,
+  UtilsImports,
 } from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
@@ -68,6 +69,7 @@ import {
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
+import { firsTimeDone } from './constants-code-cut';
 import { SplitFileProcess } from './file-split-process';
 //#endregion
 
@@ -138,7 +140,7 @@ export class BrowserCodeCut {
    * ex. path/to/file-somewhere.ts or assets/something/here
    * in src or tmpSrcDist etc.
    */
-  private readonly relativePath: string;
+  public readonly relativePath: string;
 
   private readonly isWebsqlMode: boolean;
 
@@ -266,6 +268,7 @@ export class BrowserCodeCut {
     } else {
       this.initAndSaveAssetFile(fileRemovedEvent);
     }
+    return this;
     //#endregion
   }
   //#endregion
@@ -616,7 +619,11 @@ export class BrowserCodeCut {
         const newContentLib = UtilsTypescript.removeCommentsFromTsContent(
           absFileSourcePathBrowserOrWebsqlNewContent,
         )?.trimEnd();
-        if (!orgContentLib || orgContentLib !== newContentLib) {
+        if (
+          !firsTimeDone.get(this.relativePath) ||
+          !orgContentLib ||
+          orgContentLib !== newContentLib
+        ) {
           fse.writeFileSync(
             this.absFileSourcePathBrowserOrWebsql,
             absFileSourcePathBrowserOrWebsqlNewContent,
@@ -647,7 +654,11 @@ export class BrowserCodeCut {
         absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
       )?.trimEnd();
 
-      if (!orgContentApp || orgContentApp !== newContentApp) {
+      if (
+        !firsTimeDone.get(this.relativePath) ||
+        !orgContentApp ||
+        orgContentApp !== newContentApp
+      ) {
         fse.writeFileSync(
           this.absFileSourcePathBrowserOrWebsqlAPPONLY,
           absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
@@ -1059,7 +1070,7 @@ export class BrowserCodeCut {
         ? UtilsFilesFoldersSync.readFile(absoluteBackendDestFilePath)
         : undefined;
 
-      const absoluteBackendDestFilePathNewContent =
+      let absoluteBackendDestFilePathNewContent =
         isEmptyModuleBackendFile && this.isTsFile
           ? `export function dummy${new Date().getTime()}() { }`
           : this.changeNpmNameToLocalLibNamePath(
@@ -1077,7 +1088,11 @@ export class BrowserCodeCut {
         absoluteBackendDestFilePathNewContent,
       )?.trimEnd();
 
-      if (!currentBackendFile || currentBackendFile !== newBackendFile) {
+      if (
+        !firsTimeDone.get(this.relativePath) ||
+        !currentBackendFile ||
+        currentBackendFile !== newBackendFile
+      ) {
         // SAVE BACKEND FILE
         fse.writeFileSync(
           absoluteBackendDestFilePath,
