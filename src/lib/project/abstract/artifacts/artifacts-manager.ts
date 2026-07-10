@@ -459,6 +459,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
     });
 
     this.project.framework.recreateVarsScss(initOptions);
+    await this.project.framework.fixMissingCjsVersions();
     this.recreateCliBasicStructure({
       skipRecreatingTsFiles: true,
     });

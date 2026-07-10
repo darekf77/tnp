@@ -62,6 +62,7 @@ import {
   BaseProject,
   UtilsFileSync,
   HelpersTaon,
+  UtilsCjsPackage,
 } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartMode } from 'tnp-helpers/src';
 import {
@@ -166,8 +167,8 @@ export class $Global extends BaseGlobalCommandLine<
   //#region detect packages
   async detectPackages() {
     //#region @backendFunc
-    console.log('Isomorphic packages.. detecting.. ')
-    console.log(this.project.nodeModules.getIsomorphicPackagesNames())
+    console.log('Isomorphic packages.. detecting.. ');
+    console.log(this.project.nodeModules.getIsomorphicPackagesNames());
     // this.project.removeFile(tmpIsomorphicPackagesJson);
     // await this.project.packagesRecognition.start('detecting packages');
     // console.log(this.project.framework.a)
@@ -198,7 +199,7 @@ export class $Global extends BaseGlobalCommandLine<
   //#region kill all java
   async killAllJava() {
     //#region @backendFunc
-    debugger
+    debugger;
     Helpers.info('Killing all java processes...');
     await UtilsProcess.killAllJava();
     Helpers.info('DONE KILL ALL JAVA PROCESSES');
@@ -1120,6 +1121,13 @@ ${this.project.children
   }
   //#endregion
 
+  async cjscompile() {
+    //#region @backend
+    await this.project.framework.fixMissingCjsVersions();
+    this._exit();
+    //#endregion
+  }
+
   //#region not for npm / get trusted
   //#region @notForNpm
   getJsonCAttrs() {
@@ -1786,6 +1794,7 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
   }
   //#endregion
 
+  //#region tags for
   tagsFor() {
     //#region @backendFunc
     const taonJsonContent = this.project.readFile(taonJsonMainProject);
@@ -1798,7 +1807,9 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     this._exit();
     //#endregion
   }
+  //#endregion
 
+  //#region test glob
   testGlob() {
     //#region @backendFunc
     // Helpers.taskStarted('Testing glob...');
@@ -1845,13 +1856,17 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     // Helpers.taskDone(`Found entries: ${entries.length}`);
     //#endregion
   }
+  //#endregion
 
+  //#region kill others
   async killOthers() {
     //#region @backendFunc
     await UtilsProcess.killAllOtherNodeProcesses();
     //#endregion
   }
+  //#endregion
 
+  //#region copy image
   copyimage() {
     //#region @backendFunc
     // let source = this.args[0];
@@ -1872,6 +1887,7 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     // this._exit();
     //#endregion
   }
+  //#endregion
 
   setDefaultAutoConfigTaskName() {
     //#region @backendFunc
@@ -1954,7 +1970,10 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
 
   async devModeWorker() {
     //#region @backendFunc
-    await this.ins.notifyMainWorkerThatDevMode(this.project, EnvOptions.from({}));
+    await this.ins.notifyMainWorkerThatDevMode(
+      this.project,
+      EnvOptions.from({}),
+    );
     Helpers.info('waiting');
     await UtilsTerminal.pressAnyKeyToContinueAsync();
     this._exit();

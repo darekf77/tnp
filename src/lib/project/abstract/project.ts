@@ -1,8 +1,6 @@
 //#region imports
 import { Observable, Subject } from 'rxjs';
 import {
-  chokidar,
-  config,
   dotTaonFolder,
   LibTypeEnum,
   Utils,

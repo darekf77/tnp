@@ -177,7 +177,7 @@ export function startCli(argv, filename): void {
       handleSpinnerMessage(msg?.toString() || '', globalSpinner.instance),
     );
   } else {
-    run(argv, global.frameworkName);
+    void run(argv, global.frameworkName);
   }
   //#endregion
 

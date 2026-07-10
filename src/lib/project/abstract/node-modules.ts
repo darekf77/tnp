@@ -134,6 +134,7 @@ export class NodeModules extends BaseNodeModules {
       // this.project.quickFixes.unpackNodeModulesPackagesZipReplacements();
       this.project.quickFixes.createDummyEmptyLibsReplacements([]); // TODO
       this.project.quickFixes.removeBadTypesInNodeModules();
+      await this.project.framework.fixMissingCjsVersions();
       await this.project.packagesRecognition.start('after npm install');
       if (!options.generateYarnOrPackageJsonLock) {
         if (options.useYarn) {

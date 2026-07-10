@@ -1,4 +1,5 @@
 //#region imports
+import { walk } from 'lodash-walk-object/src';
 import {
   backendNodejsOnlyFiles,
   config,
@@ -9,6 +10,7 @@ import {
   TAGS,
   taonPackageName,
   UtilsFilesFoldersSync,
+  UtilsJson,
   UtilsTerminal,
 } from 'tnp-core/src';
 import {
@@ -25,6 +27,7 @@ import {
 import { fileName } from 'tnp-core/src';
 import {
   BaseFeatureForProject,
+  UtilsCjsPackage,
   UtilsNpm,
   UtilsTypescript,
 } from 'tnp-helpers/src';
@@ -1299,6 +1302,71 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
           );
         }
       }
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region get global esm only packages
+  get globalEsmToCjsPrecompilePackages(): Models.CjsCompileEsm[] {
+    //#region @backendFunc
+    const jsoncContent = this.project.readFile('taon.jsonc');
+
+    let found: Models.CjsCompileEsm[] = [];
+    walk.Object(Helpers.parse(jsoncContent, true)!, (value, jsonPath) => {
+      const attrs = UtilsJson.getAtrributiesFromJsonWithComments(
+        jsonPath,
+        jsoncContent,
+      );
+      const esmTag = attrs.find(c => c.name === '@cjsCompile' && c.value);
+      const packagesHasEsmTag = !_.isUndefined(esmTag);
+      if (packagesHasEsmTag) {
+        found.push({
+          packageName: _.last(jsonPath.split('.')),
+          overrideCjsFolder: _.isBoolean(esmTag?.value) ? 'cjs' : esmTag.value,
+        });
+      }
+    });
+
+    return found;
+    //#endregion
+  }
+  //#endregion
+
+  //#region fix missing cjs versions of packages
+  public async fixMissingCjsVersions(): Promise<void> {
+    //#region @backendFunc
+    const packages =
+      this.project.framework.coreContainer.framework
+        .globalEsmToCjsPrecompilePackages;
+    Helpers.info(
+      `Rebuilding cjs version for ${packages.map(c => c.packageName).join(',')}`,
+    );
+
+    const foldersToUpdate = [
+      this.project.framework.coreContainer.nodeModules.path,
+      ...(this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer
+        ? [this.project.nodeModules.path]
+        : []),
+    ];
+
+    for (const pkg of packages) {
+      const task = Helpers.actionStarted(
+        `Rebuilding cjs version for ${pkg.packageName}`,
+      );
+
+      for (const nodeMOdulesFolderAbsPAth of foldersToUpdate) {
+        Helpers.info(
+          `Fixing ${pkg.packageName} in node_modules of ${path.basename(path.dirname(nodeMOdulesFolderAbsPAth))}`,
+        );
+        await UtilsCjsPackage.buildCjsVersionFor(
+          pkg.packageName,
+          nodeMOdulesFolderAbsPAth,
+          pkg.overrideCjsFolder,
+        );
+      }
+
+      task.done();
     }
     //#endregion
   }
