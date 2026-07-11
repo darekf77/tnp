@@ -456,7 +456,9 @@ export const splitNamespacesJson = 'split-namespaces.json';
 
 export const reExportJson = 're-export.json';
 
-export const tailwindscsimport = `@${'imp' + 'ort'} "tailwindcss";`;
+// export const tailwindscsimport = `@${'imp' + 'ort'} "tailwindcss";`;
+
+export const tailwindscsimportSourceNone = `@${'imp' + 'ort'} "tailwindcss" source(none);`;
 
 export const tailwindScssImportRegex = /@import\s+["']tailwindcss["']\s*;?/;
 

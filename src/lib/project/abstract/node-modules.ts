@@ -473,9 +473,14 @@ export class NodeModules extends BaseNodeModules {
 
   getIsomorphicPackagesNames(): string[] {
     //#region @backendFunc
-    return this.getAllPackagesNames().filter(packageName =>
+    const task = Helpers.actionStarted(
+      `Detecing isomorphic pcakges for ${this.project.taonJson.frameworkVersion}`,
+    );
+    const all = this.getAllPackagesNames().filter(packageName =>
       this.checkIsomorphic(packageName),
     );
+    task.done();
+    return all;
     //#endregion
   }
 

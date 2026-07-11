@@ -27,7 +27,8 @@ import {
   sharedFromAssets,
   srcMainProject,
   srcNgProxyProject,
-  tailwindscsimport,
+  // tailwindscsimport,
+  tailwindscsimportSourceNone,
   tailwindScssImportRegex,
   TaonGeneratedFiles,
   tempSourceFolder,
@@ -573,45 +574,36 @@ ${THIS_IS_GENERATED_STRING}`,
       .replace(/\/\/.*$/gm, '');
 
     if (tailwindScssImportRegex.test(globalScssContentWithoutComments)) {
-      if (initOptions.release.releaseType) {
-        //#region add all possible tailwind html in packages
-        Helpers.logInfo(`Saving release tailwind ${tailWindFileNgProjAbsPath}`);
-        const allFoldersWithHtml =
-          this.project.packagesRecognition.allIsomorphicPackagesFromMemory
-            .map(c => {
-              return this.project.pathFor([
-                nodeModulesMainProject,
-                c,
-                'html',
-                libFromSrc,
-              ]);
-            })
-            .filter(f => Helpers.exists(f))
-            .map(c => c.replace(`${this.project.location}/`, ''));
+      //#region add all possible tailwind html in packages
+      const isomoprhicPackages =
+        this.project.packagesRecognition.allIsomorphicPackagesFromMemory;
 
-        Helpers.logInfo(
-          `Fixing tailwindcss import for release: ${tailWindFileNgProjAbsPath}`,
-        );
-        return `${tailwindscsimport}
+      Helpers.logInfo(`Saving release tailwind ${tailWindFileNgProjAbsPath}`);
+      const allFoldersWithHtml = isomoprhicPackages
+        .map(c => {
+          return this.project.pathFor([
+            nodeModulesMainProject,
+            c,
+            'html',
+            libFromSrc,
+          ]);
+        })
+        .filter(f => Helpers.exists(f))
+        .map(c => c.replace(`${this.project.location}/`, ''));
+
+      Helpers.logInfo(
+        `Fixing tailwindcss import for release: ${tailWindFileNgProjAbsPath}`,
+      );
+      return `${tailwindscsimportSourceNone}
+@source "./app/**/*.{html,ts}";
 
 /* source for tailwind from isomorphic packages (${allFoldersWithHtml.length}/${
-          this.project.packagesRecognition.allIsomorphicPackagesFromMemory
-            .length
-        }) has html separted. */
+        isomoprhicPackages.length
+      }) has html separted. */
 ${allFoldersWithHtml.map(c => `@source "../${c}/**/*.html";`).join('\n')}
         `;
 
-        //#endregion
-      } else {
-        //#region use tailwind development version
-        Helpers.logInfo(
-          `Saving development tailwindcss ${tailWindFileNgProjAbsPath}`,
-        );
-        return `${tailwindscsimport} /* tailwindcss development mode */
-@source not "../${nodeModulesMainProject}";
-`;
-        //#endregion
-      }
+      //#endregion
     } else {
       Helpers.info(`Empty tailwind update ${tailWindFileNgProjAbsPath}`);
       return `/* tailwindcss is not being use */ `;

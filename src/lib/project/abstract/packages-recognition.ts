@@ -304,11 +304,19 @@ export class PackagesRecognition extends BaseFeatureForProject<Project> {
   public get allIsomorphicPackagesFromMemory(): string[] {
     //#region @backendFunc
     if (this.project.watcher.isTaonLightWatcherMode) {
-      return (
-        this.project.ins.packagesFromWorker.get(
-          this.project.taonJson.frameworkVersion,
-        ) || []
-      );
+      const frameworkVersion = this.project.taonJson.frameworkVersion;
+      let dataFromWorker =
+        this.project.ins.packagesFromWorker.get(frameworkVersion);
+
+      if (_.isNil(dataFromWorker)) { // QUICK_FIX (taon an - does not have isomorpihic packages from worker yet...)
+        const detected = this.project.ins
+          .by('container', frameworkVersion)
+          .nodeModules.getIsomorphicPackagesNames();
+        this.project.ins.packagesFromWorker.set(frameworkVersion, detected);
+        dataFromWorker = detected;
+      }
+
+      return dataFromWorker;
     }
 
     //#region normal build mode
