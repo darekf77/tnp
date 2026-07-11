@@ -278,6 +278,8 @@ export class $New extends BaseCli {
     taonJson.overridePackageJsonManager.setIsPrivate(true);
     // taonJson.shouldGenerateAutogenAppRoutesFile = true;
     taonJson.setShouldGenerateAutogenIndexFile(true);
+    taonJson.setShouldGenerateTranslationsFiles(true);
+    taonJson.setShouldGenerateAutogenAppRoutes(true);
 
     taonJson.autoReleaseConfigAllowedItems =
       Project.ins.by('isomorphic-lib').taonJson.autoReleaseConfigAllowedItems;
