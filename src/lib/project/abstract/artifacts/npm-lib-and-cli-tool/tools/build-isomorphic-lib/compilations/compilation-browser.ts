@@ -88,9 +88,7 @@ export class BrowserCompilation extends BaseClientCompiler {
 
   //#endregion
 
-  //#region methods
-
-  //#region methods / sync action
+  //#region sync action
   async syncAction(absFilesFromSrc: string[]) {
     //#region @backendFunc
     const isProd = this.buildOptions.build.prod;
@@ -195,6 +193,7 @@ export class BrowserCompilation extends BaseClientCompiler {
   }
   //#endregion
 
+  //#region sass or html dest for releative path
   private sassOrHtmlDestFor(relativePath: string): string {
     //#region @backendFunc
     const destScss = this.project.pathFor(
@@ -205,8 +204,9 @@ export class BrowserCompilation extends BaseClientCompiler {
     return destScss;
     //#endregion
   }
+  //#endregion
 
-  //#region methods / async action
+  //#region async action
   async asyncAction(event: ChangeOfFile) {
     // console.log(`${event.eventName?.toUpperCase()}: ${event.fileAbsolutePath}`)
     if (!this.codecutWEBSQL || !this.codecutNORMAL) {
@@ -217,11 +217,13 @@ export class BrowserCompilation extends BaseClientCompiler {
     this.asyncActionFor(event, true);
     // PROD NOT ALLOWED IN WATCH MODE
   }
+  //#endregion
 
+  //#region async aciton for
   async asyncActionFor(event: ChangeOfFile, websql: boolean) {
     //#region @backendFunc
-    // console.log('ASYNC ACTION CODE CUT ', event.fileAbsolutePath);
 
+    const eventName = event.eventName;
     const absoluteFilePath = crossPlatformPath(event.fileAbsolutePath);
     const relativeFilePath = crossPlatformPath(
       absoluteFilePath.replace(
@@ -229,170 +231,268 @@ export class BrowserCompilation extends BaseClientCompiler {
         '',
       ),
     );
+
+    // console.log(
+    //   `(${websql ? 'websql' : 'normal'}) ASYNC ACTION CODE CUT ${event.eventName} ${absoluteFilePath}`,
+    // );
+
     if (path.basename(relativeFilePath) === DS_Store) {
       return;
     }
 
-    //#region handle backend & scss files
     if (!websql) {
-      //#region backend file
-      (() => {
-        const destinationFileBackendPath = crossPlatformPath([
-          this.project.location,
-          tmpSourceDist, // prod not need for async
-          relativeFilePath,
-        ]);
-
-        if (event.eventName === 'unlinkDir') {
-          Helpers.removeFolderIfExists(destinationFileBackendPath);
-        } else {
-          if (event.eventName === 'unlink') {
-            if (relativeFilePath.startsWith(`${assetsFromTempSrc}/`)) {
-              // nothing
-            } else {
-              try {
-                Helpers.removeFileIfExists(destinationFileBackendPath);
-              } catch (error) {
-                Helpers.warn(
-                  `Error during removing file ${destinationFileBackendPath}`,
-                );
-              }
-            }
-          } else {
-            if (fse.existsSync(absoluteFilePath)) {
-              //#region mkdirp basedir
-              if (!fse.existsSync(path.dirname(destinationFileBackendPath))) {
-                fse.mkdirpSync(path.dirname(destinationFileBackendPath));
-              }
-              //#endregion
-
-              //#region remove deist if directory
-              if (
-                fse.existsSync(destinationFileBackendPath) &&
-                fse.lstatSync(destinationFileBackendPath).isDirectory()
-              ) {
-                fse.removeSync(destinationFileBackendPath);
-              }
-              //#endregion
-            }
-          }
-        }
-      })();
-      //#endregion
-
-      //#region scss file
-      (() => {
-        const isScssOrSass = extForSassLikeFiles.includes(
-          path.extname(path.basename(relativeFilePath)),
-        );
-        if (!isScssOrSass) {
-          return;
-        }
-        const destinationFileScssPath =
-          this.sassOrHtmlDestFor(relativeFilePath);
-
-        if (event.eventName === 'unlinkDir') {
-          try {
-            Helpers.removeFolderIfExists(destinationFileScssPath);
-          } catch (error) {
-            Helpers.warn(
-              `Error during removing folder ${destinationFileScssPath}`,
-            );
-          }
-        } else {
-          if (event.eventName === 'unlink') {
-            if (relativeFilePath.startsWith(`${assetsFromTempSrc}/`)) {
-              // nothing
-            } else {
-              try {
-                Helpers.removeFileIfExists(destinationFileScssPath);
-              } catch (error) {
-                Helpers.warn(
-                  `Error during removing file ${destinationFileScssPath}`,
-                );
-              }
-            }
-          } else {
-            if (fse.existsSync(absoluteFilePath)) {
-              //#region mkdirp basedir
-              if (!fse.existsSync(path.dirname(destinationFileScssPath))) {
-                fse.mkdirpSync(path.dirname(destinationFileScssPath));
-              }
-              //#endregion
-
-              //#region remove deist if directory
-              if (
-                fse.existsSync(destinationFileScssPath) &&
-                fse.lstatSync(destinationFileScssPath).isDirectory()
-              ) {
-                fse.removeSync(destinationFileScssPath);
-              }
-              //#endregion
-
-              HelpersTaon.copyFile(absoluteFilePath, destinationFileScssPath);
-            }
-          }
-        }
-      })();
-      //#endregion
-    }
-    //#endregion
-
-    //#region browser file
-    (() => {
-      const destinationFilePath = crossPlatformPath(
-        path.join(
-          this.project.location,
-          websql ? tmpSrcDistWebsql : tmpSrcDist, // prod not need for async
-          relativeFilePath,
-        ),
+      this.asyncActionHandleBackend(
+        eventName,
+        relativeFilePath,
+        absoluteFilePath,
       );
 
-      if (event.eventName === 'unlinkDir') {
-        Helpers.removeFolderIfExists(destinationFilePath);
-      } else {
-        if (event.eventName === 'unlink') {
-          if (relativeFilePath.startsWith(`${assetsFromTempSrc}/`)) {
-            websql
-              ? this.codecutWEBSQL.files([relativeFilePath], true)
-              : this.codecutNORMAL.files([relativeFilePath], true);
-          } else {
-            try {
-              Helpers.removeFileIfExists(destinationFilePath);
-            } catch (error) {
-              Helpers.warn(`Error during removing file ${destinationFilePath}`);
-            }
-          }
-        } else {
-          if (fse.existsSync(absoluteFilePath)) {
-            //#region mkdirp basedir
-            if (!fse.existsSync(path.dirname(destinationFilePath))) {
-              fse.mkdirpSync(path.dirname(destinationFilePath));
-            }
-            //#endregion
+      this.asyncActionHandleScss(eventName, relativeFilePath, absoluteFilePath);
+    }
 
-            //#region remove deist if directory
-            if (
-              fse.existsSync(destinationFilePath) &&
-              fse.lstatSync(destinationFilePath).isDirectory()
-            ) {
-              fse.removeSync(destinationFilePath);
-            }
-            //#endregion
-            if (websql) {
-              this.codecutWEBSQL.files([relativeFilePath]);
-            } else {
-              this.codecutNORMAL.files([relativeFilePath]);
-            }
-          }
-        }
-      }
-    })();
-    //#endregion
+    this.asyncActionHandleBrowser(
+      eventName,
+      relativeFilePath,
+      absoluteFilePath,
+      websql,
+    );
 
     //#endregion
   }
   //#endregion
 
+  //#region handle backend
+  asyncActionHandleBackend(
+    eventName: ChangeOfFile['eventName'],
+    relativeFilePath: string,
+    absoluteFilePath: string,
+  ): void {
+    //#region @backendFunc
+
+    const destinationFileBackendPath = crossPlatformPath([
+      this.project.location,
+      tmpSourceDist, // prod not need for async
+      relativeFilePath,
+    ]);
+
+    if (eventName === 'unlinkDir') {
+      this.removeFolder({
+        context: 'backend',
+        destinationTempSrcFolder: destinationFileBackendPath,
+        orignalFolder: absoluteFilePath,
+      });
+    } else {
+      if (eventName === 'unlink') {
+        if (relativeFilePath.startsWith(`${assetsFromTempSrc}/`)) {
+          // nothing
+        } else {
+          this.removeFile({
+            destinationTempSrcFile: destinationFileBackendPath,
+            orignalFile: absoluteFilePath,
+            context: 'backend',
+          });
+          // QUICK_FIX for some kind weird git discard changes behavior
+        }
+      } else {
+        if (fse.existsSync(absoluteFilePath)) {
+          //#region mkdirp basedir
+          if (!fse.existsSync(path.dirname(destinationFileBackendPath))) {
+            fse.mkdirpSync(path.dirname(destinationFileBackendPath));
+          }
+          //#endregion
+
+          //#region remove deist if directory
+          if (
+            fse.existsSync(destinationFileBackendPath) &&
+            fse.lstatSync(destinationFileBackendPath).isDirectory()
+          ) {
+            fse.removeSync(destinationFileBackendPath);
+          }
+          //#endregion
+        }
+      }
+    }
+
+    //#endregion
+  }
+  //#endregion
+
+  //#region handle scss
+  asyncActionHandleScss(
+    eventName: ChangeOfFile['eventName'],
+    relativeFilePath: string,
+    absoluteFilePath: string,
+  ): void {
+    //#region @backendFunc
+    const isScssOrSass = extForSassLikeFiles.includes(
+      path.extname(path.basename(relativeFilePath)),
+    );
+    if (!isScssOrSass) {
+      return;
+    }
+    const destinationFileScssPath = this.sassOrHtmlDestFor(relativeFilePath);
+
+    if (eventName === 'unlinkDir') {
+      this.removeFolder({
+        context: 'scss',
+        destinationTempSrcFolder: destinationFileScssPath,
+        orignalFolder: absoluteFilePath,
+      });
+    } else {
+      if (eventName === 'unlink') {
+        if (relativeFilePath.startsWith(`${assetsFromTempSrc}/`)) {
+          // nothing
+        } else {
+          this.removeFile({
+            context: 'scss',
+            destinationTempSrcFile: destinationFileScssPath,
+            orignalFile: absoluteFilePath,
+          });
+        }
+      } else {
+        if (fse.existsSync(absoluteFilePath)) {
+          if (!fse.existsSync(path.dirname(destinationFileScssPath))) {
+            fse.mkdirpSync(path.dirname(destinationFileScssPath));
+          }
+
+          if (
+            fse.existsSync(destinationFileScssPath) &&
+            fse.lstatSync(destinationFileScssPath).isDirectory()
+          ) {
+            fse.removeSync(destinationFileScssPath);
+          }
+
+          HelpersTaon.copyFile(absoluteFilePath, destinationFileScssPath);
+        }
+      }
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region handle browser
+  asyncActionHandleBrowser(
+    eventName: ChangeOfFile['eventName'],
+    relativeFilePath: string,
+    absoluteFilePath: string,
+    websql: boolean,
+  ): void {
+    //#region @backendFunc
+    const destinationFilePath = crossPlatformPath(
+      path.join(
+        this.project.location,
+        websql ? tmpSrcDistWebsql : tmpSrcDist, // prod not need for async
+        relativeFilePath,
+      ),
+    );
+
+    if (eventName === 'unlinkDir') {
+      this.removeFolder({
+        context: 'browser',
+        destinationTempSrcFolder: destinationFilePath,
+        orignalFolder: absoluteFilePath,
+      });
+    } else {
+      if (eventName === 'unlink') {
+        if (relativeFilePath.startsWith(`${assetsFromTempSrc}/`)) {
+          websql
+            ? this.codecutWEBSQL.files([relativeFilePath], true)
+            : this.codecutNORMAL.files([relativeFilePath], true);
+        } else {
+          this.removeFile({
+            context: 'browser',
+            destinationTempSrcFile: destinationFilePath,
+            orignalFile: absoluteFilePath,
+          });
+        }
+      } else {
+        if (fse.existsSync(absoluteFilePath)) {
+          //#region mkdirp basedir
+          if (!fse.existsSync(path.dirname(destinationFilePath))) {
+            fse.mkdirpSync(path.dirname(destinationFilePath));
+          }
+          //#endregion
+
+          //#region remove deist if directory
+          if (
+            fse.existsSync(destinationFilePath) &&
+            fse.lstatSync(destinationFilePath).isDirectory()
+          ) {
+            fse.removeSync(destinationFilePath);
+          }
+          //#endregion
+          if (websql) {
+            this.codecutWEBSQL.files([relativeFilePath]);
+          } else {
+            this.codecutNORMAL.files([relativeFilePath]);
+          }
+        }
+      }
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region remove folder
+  private removeFolder({
+    orignalFolder,
+    context,
+    destinationTempSrcFolder,
+  }: {
+    orignalFolder: string;
+    destinationTempSrcFolder: string;
+    context: 'browser' | 'scss' | 'backend';
+  }): void {
+    //#region @backendFunc
+    if (Helpers.exists(orignalFolder)) {
+      Helpers.logWarn(
+        `(context=${context}) Folder exits, but event unlinkDir from watcher ${orignalFolder}`,
+      );
+    } else {
+      Helpers.logWarn(
+        `(context=${context}) Removing folder ${destinationTempSrcFolder}`,
+      );
+      try {
+        fse.removeSync(destinationTempSrcFolder);
+      } catch (error) {}
+      try {
+        Helpers.removeFolderIfExists(destinationTempSrcFolder);
+      } catch (error) {
+        Helpers.logWarn(
+          `(context=${context}) Error during removing folder ${destinationTempSrcFolder}`,
+        );
+      }
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region remove file
+  private removeFile({
+    orignalFile,
+    context,
+    destinationTempSrcFile,
+  }: {
+    orignalFile: string;
+    destinationTempSrcFile: string;
+    context: 'browser' | 'scss' | 'backend';
+  }): void {
+    //#region @backendFunc
+    if (Helpers.exists(orignalFile)) {
+      Helpers.logWarn(
+        `(context=${context}) File exits, but event unlink from watcher ${orignalFile}`,
+      );
+    } else {
+      Helpers.logWarn(`(context=${context}) Removing ${destinationTempSrcFile}`);
+      try {
+        Helpers.removeFileIfExists(destinationTempSrcFile);
+      } catch (error) {
+        Helpers.logWarn(
+          `(context=${context}) Error during removing file ${destinationTempSrcFile}`,
+        );
+      }
+    }
+    //#endregion
+  }
   //#endregion
 }
