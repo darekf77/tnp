@@ -534,7 +534,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       `Updating (${packagesFromWorker.length}) isomorpihic packages from worker ...
       framework version = ${frameworkVersion}   `,
     );
-    Helpers.logInfo(packagesFromWorker.join('\n'));
+    Helpers.logInfo(packagesFromWorker.join(','));
     this.packagesFromWorker.set(frameworkVersion, packagesFromWorker);
   }
 
