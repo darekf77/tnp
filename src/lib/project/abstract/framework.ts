@@ -1334,11 +1334,22 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
   //#endregion
 
   //#region fix missing cjs versions of packages
-  public async fixMissingCjsVersions(): Promise<void> {
+
+  public async fixMissingCjsVersionsFor(
+    packageToUpdate: Models.CjsCompileEsm,
+  ): Promise<void> {
+    await this.fixMissingCjsVersions([packageToUpdate]);
+  }
+
+  public async fixMissingCjsVersions(
+    packagesToUpdate?: Models.CjsCompileEsm[],
+  ): Promise<void> {
     //#region @backendFunc
-    const packages =
-      this.project.framework.coreContainer.framework
-        .globalEsmToCjsPrecompilePackages;
+    const packages = packagesToUpdate
+      ? packagesToUpdate
+      : this.project.framework.coreContainer.framework
+          .globalEsmToCjsPrecompilePackages;
+
     Helpers.info(
       `Rebuilding cjs version for ${packages.map(c => c.packageName).join(',')}`,
     );

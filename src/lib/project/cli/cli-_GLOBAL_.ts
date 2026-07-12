@@ -1128,6 +1128,16 @@ ${this.project.children
     //#endregion
   }
 
+  async compileToCjs() {
+    //#region @backend
+    await this.project.framework.fixMissingCjsVersionsFor({
+      packageName: this.firstArg,
+      overrideCjsFolder: this.secondArg,
+    });
+    this._exit();
+    //#endregion
+  }
+
   //#region not for npm / get trusted
   //#region @notForNpm
   getJsonCAttrs() {
