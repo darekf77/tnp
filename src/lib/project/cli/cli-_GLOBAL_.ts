@@ -2045,6 +2045,39 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     //#endregion
   }
 
+  //#region remove background from file
+  async rmbg() {
+    await this.removeBackground();
+  }
+
+  async removeBackground() {
+    //#region @backendFunc
+    const filePath = path.isAbsolute(this.firstArg)
+      ? crossPlatformPath(this.firstArg)
+      : crossPlatformPath([this.cwd, this.firstArg]);
+
+    const task = Helpers.actionStarted(
+      `Removing background from ${path.basename(filePath)}`,
+    );
+
+    const filePathOutput = crossPlatformPath([
+      path.dirname(filePath),
+      `${path.basename(filePath).replace(path.extname(filePath), '')}-output${path.extname(filePath)}`,
+    ]);
+    const importPkgName = '@imgly/background-removal-node';
+    const { removeBackground } = await import(importPkgName);
+    const { writeFile } = await import('fs/promises');
+
+    const blob = await removeBackground(filePath);
+
+    const buffer = Buffer.from(await blob.arrayBuffer());
+    await writeFile(filePathOutput, buffer);
+    task.done();
+    this._exit();
+    //#endregion
+  }
+  //#endregion
+
   // async tsc() {
   //#region @backendFunc
   // const rebuildOnChange = new Subject<{}>();

@@ -1,6 +1,6 @@
 {
   "name": "tnp",
-  "version": "21.0.219",
+  "version": "21.0.220",
   "scripts": {
     "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     "taon init": "taon init",
@@ -147,6 +147,7 @@
     "@fancyapps/ui": "~6.1.14",
     "@iconify/icons-fa-solid": "~1.2.4",
     "@iconify/icons-mdi": "~1.2.48",
+    "@imgly/background-removal-node": "~1.4.5",
     "@inquirer/prompts": "~5.3.8",
     "@ionic/pwa-elements": "^3.3.0",
     "@mdi/js": "~7.4.47",
