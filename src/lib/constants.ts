@@ -549,7 +549,7 @@ export const srcJSFromNpmPackage = 'src.js';
 
 export const myLibFromNgProject = 'my-lib';
 
-export const USE_LIB_ESM_INSTEAD_LIB = true;
+
 
 export const externalLibsFromNgProject = 'external-libs';
 

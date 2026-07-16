@@ -46,7 +46,6 @@ import {
   tmpSrcDist,
   tmpSrcDistWebsql,
   TO_REMOVE_TAG,
-  USE_LIB_ESM_INSTEAD_LIB,
   VERIFIED_BUILD_DATA,
   websqlMainProject,
   whatToLinkFromCore,
@@ -621,46 +620,46 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
   //#endregion
 
   //#region replace d.ts files in destination after copy
-  private addSrcJSToDestination(destination: Project): void {
+  public addSrcJSToDestination(destination: Project): void {
     //#region @backendFunc
-    const location = destination.nodeModules.pathFor([
+    const srcJsLocation = destination.nodeModules.pathFor([
       this.rootPackageName,
       srcJSFromNpmPackage,
     ]);
 
-    if (USE_LIB_ESM_INSTEAD_LIB) {
-      Helpers.writeFile(
-        location,
-        `export * from './${libEsm}';
+    // if (USE_LIB_ESM_INSTEAD_LIB) {
+    Helpers.writeFile(
+      srcJsLocation,
+      `export * from './${libEsm}';
 import def from './${libEsm}';
 export default def;
         `,
-      );
-    } else {
-      Helpers.writeFile(
-        location,
-        `"use strict";
-  var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-      if (k2 === undefined) k2 = k;
-      var desc = Object.getOwnPropertyDescriptor(m, k);
-      if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-        desc = { enumerable: true, get: function() { return m[k]; } };
-      }
-      Object.defineProperty(o, k2, desc);
-  }) : (function(o, m, k, k2) {
-      if (k2 === undefined) k2 = k;
-      o[k2] = m[k];
-  }));
-  var __exportStar = (this && this.__exportStar) || function(m, exports) {
-      for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
-  };
-  Object.defineProperty(exports, "__esModule", { value: true });
-  __exportStar(require("./lib"), exports);
-  //# sourceMappingURL=index.js.map
+    );
+    //   } else {
+    //     Helpers.writeFile(
+    //       location,
+    //       `"use strict";
+    // var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    //     if (k2 === undefined) k2 = k;
+    //     var desc = Object.getOwnPropertyDescriptor(m, k);
+    //     if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+    //       desc = { enumerable: true, get: function() { return m[k]; } };
+    //     }
+    //     Object.defineProperty(o, k2, desc);
+    // }) : (function(o, m, k, k2) {
+    //     if (k2 === undefined) k2 = k;
+    //     o[k2] = m[k];
+    // }));
+    // var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    //     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+    // };
+    // Object.defineProperty(exports, "__esModule", { value: true });
+    // __exportStar(require("./lib"), exports);
+    // //# sourceMappingURL=index.js.map
 
-        `,
-      );
-    }
+    //       `,
+    //     );
+    //   }
 
     //#endregion
   }

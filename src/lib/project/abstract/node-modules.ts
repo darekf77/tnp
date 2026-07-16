@@ -25,6 +25,7 @@ import {
   dotInstallDate,
   dotNpmIgnoreMainProject,
   dotNpmrcMainProject,
+  libEsm,
   libFromCompiledDist,
   notAllowedAsPacakge,
   packageJsonLockMainProject,
@@ -550,23 +551,13 @@ export class NodeModules extends BaseNodeModules {
       this.realPath,
       packageName,
     ]);
-    const browser = crossPlatformPath([
-      packageInNodeModulesPath,
-      browserMainProject,
-      packageJsonNpmLibAngular,
-    ]);
-    const websql = crossPlatformPath([
-      packageInNodeModulesPath,
-      websqlMainProject,
-      packageJsonNpmLibAngular,
-    ]);
-    const lib = crossPlatformPath([
-      packageInNodeModulesPath,
-      libFromCompiledDist,
-      'index.js',
-    ]);
+
+    const srcjs = crossPlatformPath([packageInNodeModulesPath, 'src.js']);
     isIsomorphic =
-      Helpers.exists(browser) && Helpers.exists(websql) && Helpers.exists(lib);
+      Helpers.exists(srcjs) &&
+      UtilsFilesFoldersSync.readFile(srcjs, {
+        defaultValueWhenNotExists: '',
+      }).includes(libEsm); // && Helpers.exists(websql) && Helpers.exists(lib);
 
     return isIsomorphic;
     //#endregion

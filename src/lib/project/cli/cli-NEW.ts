@@ -136,19 +136,41 @@ export class $New extends BaseCli {
     // debugger;
 
     //#region check if name is allowed
-    const notAllowedNameForApp = notAllowedProjectNames.find(
-      a => a === lastProjectFromArgName,
-    );
 
-    if (!!notAllowedNameForApp) {
+    const alreadyTaken = Project.ins
+      .by('container')
+      .nodeModules.getAllPackagesNames({
+        followSymlinks: false,
+      });
+
+    if (alreadyTaken.includes(lastProjectFromArgName)) {
       Helpers.error(
         `
 
-       Name ${chalk.bold(notAllowedNameForApp)} is not allowed.
+         Name ${chalk.bold(lastProjectFromArgName)} is already taken.
+
+         Use different name or add prefix: ${chalk.bold(
+           crossPlatformPath(allProjectFromArgs.join('/')).replace(
+             lastProjectFromArgName,
+             'my-app-or-something-else',
+           ),
+         )}
+
+         `,
+        false,
+        true,
+      );
+    }
+
+    if (notAllowedProjectNames.includes(lastProjectFromArgName)) {
+      Helpers.error(
+        `
+
+       Name ${chalk.bold(lastProjectFromArgName)} is not allowed.
 
        Use different name: ${chalk.bold(
          crossPlatformPath(allProjectFromArgs.join('/')).replace(
-           notAllowedNameForApp,
+          lastProjectFromArgName,
            'my-app-or-something-else',
          ),
        )}

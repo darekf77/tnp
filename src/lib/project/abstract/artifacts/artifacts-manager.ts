@@ -415,6 +415,15 @@ ${'req' + 'uire'}('./start');
 
       await this.project.nodeModules.makeSureInstalled();
     }
+    this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSrcJSToDestination(
+      this.project.framework.coreContainer,
+    );
+
+    if (this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
+      this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSrcJSToDestination(
+        this.project,
+      );
+    }
 
     await this.project.subProject?.repo.initAll();
 

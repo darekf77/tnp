@@ -15,6 +15,7 @@ import {
   tnpPackageName,
   UtilsExecProc,
   UtilsFilesFoldersSync,
+  UtilsTime,
 } from 'tnp-core/src';
 import {
   TAGS,
@@ -167,8 +168,17 @@ export class $Global extends BaseGlobalCommandLine<
   //#region detect packages
   async detectPackages() {
     //#region @backendFunc
-    console.log('Isomorphic packages.. detecting.. ');
-    console.log(this.project.nodeModules.getIsomorphicPackagesNames());
+
+    let packages = [];
+    UtilsTime.mesureExecutionTimeSync(
+      'Isomorphic packages.. detecting..',
+      () => {
+        packages =
+          this.project.framework.coreContainer.nodeModules.getIsomorphicPackagesNames();
+      },
+    );
+    console.log(`Found ${packages.length} packages. ${packages.join(',')}`);
+
     // this.project.removeFile(tmpIsomorphicPackagesJson);
     // await this.project.packagesRecognition.start('detecting packages');
     // console.log(this.project.framework.a)
