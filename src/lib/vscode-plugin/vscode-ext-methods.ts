@@ -367,6 +367,18 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+      //#region remove bacgrkound from image
+      // {
+      //   title: `remove background from image`,
+      //   exec: `${FRAMEWORK_NAME} remove:background %absolutePath%'`,
+      //   options: {
+      //     titleWhenProcessing: `taon is creating version of image without background..`,
+      //     cancellable: false,
+      //   },
+      // },
+      //#endregion
+
+      //#region Copy absolute Path (UNIX)
       {
         title: `Copy Absolute Path (UNIX)`,
         group: null,
@@ -380,7 +392,9 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
           showOutputDataOnSuccess: false,
         },
       },
+      //#endregion
 
+      //#region Copy relative Path (UNIX)
       {
         title: `Copy Relative Path (UNIX)`,
         group: null,
@@ -396,6 +410,9 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
           showOutputDataOnSuccess: false,
         },
       },
+      //#endregion
+
+      //#region Copy File Name
       {
         title: `Copy File Name`,
         group: null,
@@ -411,6 +428,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
           showOutputDataOnSuccess: false,
         },
       },
+      //#endregion
 
       //#region OPEN CORE CONTAINER
       {
@@ -736,8 +754,8 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-       //#region GENERATE taon entity file
-       {
+      //#region GENERATE taon entity file
+      {
         group: groupGENERATE,
         title: `taon .entity.ts file`,
         exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-entity_flat  %entity%`,

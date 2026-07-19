@@ -2070,29 +2070,83 @@ ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
     await this.removeBackground();
   }
 
-  async removeBackground() {
+  async removeBackground(): Promise<void> {
     //#region @backendFunc
-    const filePath = path.isAbsolute(this.firstArg)
-      ? crossPlatformPath(this.firstArg)
-      : crossPlatformPath([this.cwd, this.firstArg]);
+    const filePath = (
+      path.isAbsolute(this.firstArg)
+        ? crossPlatformPath(this.firstArg)
+        : crossPlatformPath([this.cwd, this.firstArg])
+    ).replace(/('|")/g, '');
+
+    if (!Helpers.exists(filePath)) {
+      Helpers.error(`Image does not exist, path="${filePath}"`, false, true);
+    }
 
     const task = Helpers.actionStarted(
       `Removing background from ${path.basename(filePath)}`,
     );
 
+    const extension = path.extname(filePath).toLowerCase();
+
     const filePathOutput = crossPlatformPath([
       path.dirname(filePath),
-      `${path.basename(filePath).replace(path.extname(filePath), '')}-output${path.extname(filePath)}`,
+      `${path.basename(filePath, extension)}-output.png`,
     ]);
-    const importPkgName = '@imgly/background-removal-node';
-    const { removeBackground } = await import(importPkgName);
-    const { writeFile } = await import('fs/promises');
 
-    const blob = await removeBackground(filePath);
+    const mimeTypeByExtension: Record<string, string> = {
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.webp': 'image/webp',
+    };
 
-    const buffer = Buffer.from(await blob.arrayBuffer());
-    await writeFile(filePathOutput, buffer);
-    task.done();
+    const mimeType = mimeTypeByExtension[extension];
+
+    if (!mimeType) {
+      Helpers.error(`Unsupported image extension: ${extension}`, false, true);
+    }
+
+    try {
+      const importPkgName = '@imgly/background-removal-node';
+      const { removeBackground } = await import(importPkgName);
+      const { readFile, writeFile } = await import('node:fs/promises');
+
+      const inputBuffer = await readFile(filePath);
+
+      const { pathToFileURL } = await import('node:url');
+      const packageEntryPath = require.resolve(importPkgName);
+      const packageDistPath = path.dirname(packageEntryPath);
+
+      const inputBlob = new Blob([inputBuffer], {
+        type: mimeType,
+      });
+      const publicPath = pathToFileURL(packageDistPath + path.sep).href;
+
+      const outputBlob = await removeBackground(inputBlob, {
+        publicPath,
+      });
+
+      const outputBuffer = Buffer.from(await outputBlob.arrayBuffer());
+
+      await writeFile(filePathOutput, outputBuffer);
+
+      task.done();
+
+      Helpers.success(`Background removed:
+
+${filePathOutput}`);
+    } catch (error) {
+      task.done();
+
+      Helpers.error(
+        `Unable to remove background from "${filePath}":
+
+${error instanceof Error ? error.stack || error.message : String(error)}`,
+        false,
+        true,
+      );
+    }
+
     this._exit();
     //#endregion
   }

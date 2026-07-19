@@ -326,6 +326,7 @@ export async function run(
           a.startsWith('cloud:') ||
           a.startsWith('link:') ||
           a.startsWith('copy:and:rename') ||
+          a.startsWith('remove:background') ||
           a.startsWith('generate') ||
           a.startsWith('shorten') ||
           a.startsWith('vscode') ||
