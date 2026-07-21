@@ -78,6 +78,11 @@ export class Vscode extends BaseVscodeHelpers<Project> {
       //   }
       // : {}),
     };
+
+    // @ts-ignore
+    if (this.currentSettingsValue['workbench.colorTheme'] === 'Light+') {
+      delete this.currentSettingsValue['workbench.colorTheme'];
+    }
     // console.log(
     //   chalk.yellow(`Saving vscode settings.json with content:`),
     //   this.currentSettingsValue['files.watcherExclude'],
