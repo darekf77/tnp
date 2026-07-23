@@ -1,6 +1,12 @@
 //#region imports
 import { dotVscodeMainProject, packageJsonMainProject } from '../../constants';
-import { CoreModels, dotTaonFolder, frameworkName, path } from 'tnp-core/src';
+import {
+  CoreModels,
+  dotTaonFolder,
+  frameworkName,
+  path,
+  UtilsStdinStdoutLogger,
+} from 'tnp-core/src';
 import {
   _,
   crossPlatformPath,
@@ -22,6 +28,8 @@ import { EnvOptions } from '../../options';
 
 import { BaseCli } from './base-cli';
 //#endregion
+
+const group = 'CloudApps';
 
 // @ts-ignore TODO weird inheritance problem
 
@@ -222,6 +230,7 @@ export class $Cloud extends BaseCli {
   //#region deployments
   @UtilsCliClassMethod.decoratorMethod('deployments')
   async deployments(): Promise<void> {
+    UtilsStdinStdoutLogger.registerFor(`deployment`, group);
     // UtilsTerminal.drawBigText('Deployments');
     // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
     const { Project } = await import('../abstract/project');
@@ -240,6 +249,7 @@ export class $Cloud extends BaseCli {
   //#region builds
   @UtilsCliClassMethod.decoratorMethod('builds')
   async builds(): Promise<void> {
+    UtilsStdinStdoutLogger.registerFor(`builds`, group);
     // UtilsTerminal.drawBigText('Deployments');
     // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
     const { Project } = await import('../abstract/project');
@@ -258,6 +268,7 @@ export class $Cloud extends BaseCli {
   //#region isomorphicPackages
   @UtilsCliClassMethod.decoratorMethod('isomorphicPackages')
   async isomorphicPackages(): Promise<void> {
+    UtilsStdinStdoutLogger.registerFor(`isomorphic-packages`, group);
     // UtilsTerminal.drawBigText('Deployments');
     // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
     const { Project } = await import('../abstract/project');
@@ -278,6 +289,7 @@ export class $Cloud extends BaseCli {
   //#region instances
   @UtilsCliClassMethod.decoratorMethod('instances')
   async instances(): Promise<void> {
+    UtilsStdinStdoutLogger.registerFor(`instances`, group);
     // UtilsTerminal.drawBigText('Deployments');
     const { Project } = await import('../abstract/project');
     await Project.ins.taonProjectsWorker.instancesWorker.cliStartProcedure({
@@ -295,6 +307,7 @@ export class $Cloud extends BaseCli {
   //#region processes
   @UtilsCliClassMethod.decoratorMethod('processes')
   async processes(): Promise<void> {
+    UtilsStdinStdoutLogger.registerFor(`processes`, group);
     // UtilsTerminal.drawBigText('Deployments');
     const { Project } = await import('../abstract/project');
     await Project.ins.taonProjectsWorker.processesWorker.cliStartProcedure({
