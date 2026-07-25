@@ -1877,6 +1877,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       minify,
       prod,
       additionalExternals: [
+        this.project.nameForNpmPackage,
         ...this.project.taonJson.additionalExternalsFor(
           ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
         ),
