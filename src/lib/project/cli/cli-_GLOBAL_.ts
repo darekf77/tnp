@@ -12,6 +12,7 @@ import {
   GlobalTaskManager,
   LibTypeEnum,
   taonContainers,
+  taonPackageName,
   tnpPackageName,
   UtilsExecProc,
   UtilsFilesFoldersSync,
@@ -1700,6 +1701,9 @@ ${this.project.children
   //#region local sync
   async localSync() {
     //#region @backendFunc
+    if (config.frameworkName !== taonPackageName) {
+      Helpers.error(`This command is only for taon cli.`, false, true);
+    }
     if (!this.project) {
       Helpers.error(`No project found in cwd: ${this.cwd}`, false, true);
     }
@@ -1733,80 +1737,93 @@ ${this.project.children
         c.name ===
         `${containerPrefix}${tnpProjectInTaonDev.taonJson.frameworkVersion}`,
     );
-    await tnpContainer.nodeModules.reinstall();
-    tnpContainer.nodeModules.copyToProject(tnpProjectInTaonDev as any);
-    // Helpers.info(`Done syncing node_modules from container to tnp...`);
 
-    let children = this.project.children.filter(c =>
-      c.typeIs(LibTypeEnum.ISOMORPHIC_LIB),
+    const task1 = Helpers.actionStarted(
+      `NPM reinstall for ${tnpContainer.location}`,
+    );
+    await tnpContainer.nodeModules.reinstall();
+    task1.done();
+
+    const task2 = Helpers.actionStarted(`Removing tnp node_modules`);
+    await tnpProjectInTaonDev.nodeModules.remove();
+    task2.done();
+    const task3 = Helpers.actionStarted(
+      `Copying package from core container to ${tnpProjectInTaonDev.location}`,
     );
 
-    for (const child of children) {
-      child.git.meltActionCommits();
-    }
+    tnpContainer.nodeModules.copyToProject(tnpProjectInTaonDev as any);
+    task3.done();
 
-    children = children.filter((c, i) => {
-      const lastCommitMessage = c?.git?.lastCommitMessage()?.trim();
-      return !lastCommitMessage?.startsWith('release: ');
-    });
+    //     let children = this.project.children.filter(c =>
+    //       c.typeIs(LibTypeEnum.ISOMORPHIC_LIB),
+    //     );
 
-    children = this.ins // @ts-ignore BaseProject inheritace compatiblity with Project problem
-      .sortGroupOfProject<Project>(
-        children,
-        proj => [
-          ...proj.taonJson.dependenciesNamesForNpmLib,
-          ...proj.taonJson.isomorphicDependenciesForNpmLib,
-          ...proj.taonJson.peerDependenciesNamesForNpmLib,
-        ],
-        proj => proj.nameForNpmPackage,
-        proj => proj.nameForNpmPackage,
-        this.project.taonJson.overridePackagesOrder,
-      )
-      .filter(d => d.framework.isStandaloneProject);
+    //     for (const child of children) {
+    //       child.git.meltActionCommits();
+    //     }
 
-    if (children.length > 0) {
-      Helpers.info(
-        `Found ${children.length} children isomorphic projects to rebuild...
+    //     children = children.filter((c, i) => {
+    //       const lastCommitMessage = c?.git?.lastCommitMessage()?.trim();
+    //       return !lastCommitMessage?.startsWith('release: ');
+    //     });
 
-${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
+    //     children = this.ins // @ts-ignore BaseProject inheritace compatiblity with Project problem
+    //       .sortGroupOfProject<Project>(
+    //         children,
+    //         proj => [
+    //           ...proj.taonJson.dependenciesNamesForNpmLib,
+    //           ...proj.taonJson.isomorphicDependenciesForNpmLib,
+    //           ...proj.taonJson.peerDependenciesNamesForNpmLib,
+    //         ],
+    //         proj => proj.nameForNpmPackage,
+    //         proj => proj.nameForNpmPackage,
+    //         this.project.taonJson.overridePackagesOrder,
+    //       )
+    //       .filter(d => d.framework.isStandaloneProject);
 
-        `,
-      );
-    }
+    //     if (children.length > 0) {
+    //       Helpers.info(
+    //         `Found ${children.length} children isomorphic projects to rebuild...
 
-    await Project.ins.taonProjectsWorker.cliStartProcedure({
-      methodOptions: {
-        cliParams: {
-          mode: BaseCLiWorkerStartMode.DETACHED_WINDOW,
-        },
-        calledFrom: 'start framework function',
-      },
-    });
+    // ${children.map((c, i) => `  ${i + 1}. ${c.name}`).join(',')}
 
-    const rebuildChildren = await UtilsTerminal.confirm({
-      message: `Rebuild ${children.length} children isomorphic projects ?`,
-      defaultValue: true,
-    });
+    //         `,
+    //       );
+    //     }
 
-    if (rebuildChildren) {
-      for (let index = 0; index < children.length; index++) {
-        const child = children[index];
-        Helpers.info(
-          `Rebuilding ${index + 1} / ${children.length}: ${child.name} ...`,
-        );
-        await child.build(
-          EnvOptions.from({
-            purpose: 'local-sync',
-            build: {
-              watch: false,
-            },
-            release: {
-              targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
-            },
-          }),
-        );
-      }
-    }
+    //     await Project.ins.taonProjectsWorker.cliStartProcedure({
+    //       methodOptions: {
+    //         cliParams: {
+    //           mode: BaseCLiWorkerStartMode.DETACHED_WINDOW,
+    //         },
+    //         calledFrom: 'start framework function',
+    //       },
+    //     });
+
+    //     const rebuildChildren = await UtilsTerminal.confirm({
+    //       message: `Rebuild ${children.length} children isomorphic projects ?`,
+    //       defaultValue: true,
+    //     });
+
+    //     if (rebuildChildren) {
+    //       for (let index = 0; index < children.length; index++) {
+    //         const child = children[index];
+    //         Helpers.info(
+    //           `Rebuilding ${index + 1} / ${children.length}: ${child.name} ...`,
+    //         );
+    //         await child.build(
+    //           EnvOptions.from({
+    //             purpose: 'local-sync',
+    //             build: {
+    //               watch: false,
+    //             },
+    //             release: {
+    //               targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
+    //             },
+    //           }),
+    //         );
+    //       }
+    //     }
 
     Helpers.info(`Dony local sync of taon-dev`);
     this._exit();
