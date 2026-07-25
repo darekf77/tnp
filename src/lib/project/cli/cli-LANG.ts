@@ -33,6 +33,16 @@ export class $Lang extends BaseCli {
     this._exit();
     //#endregion
   }
+
+  async translatePoPL() {
+
+  }
+
+  async translatePoDE() {
+    //#region @backendFunc
+
+  //#endregion
+  }
 }
 
 export default {
