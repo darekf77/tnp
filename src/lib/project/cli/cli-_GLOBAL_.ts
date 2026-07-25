@@ -2043,6 +2043,10 @@ ${this.project.children
     //#region @backendFunc
     const anwser = await UtilsTerminal.basicYesNo(`Approved ? `, true);
     console.log(`awnser: ${anwser}`);
+    const anwser1 = await UtilsTerminal.confirm({
+      message: `Confirmed ? `,
+    });
+    console.log(`awnser1: ${anwser1}`);
     this._exit();
     //#endregion
   }
