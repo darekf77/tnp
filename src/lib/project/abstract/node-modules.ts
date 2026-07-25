@@ -190,7 +190,6 @@ export class NodeModules extends BaseNodeModules {
         this.project.nodeModules.pathFor(
           '@huggingface/transformers/types/models/mgp_str/processing_mgp_str.d.ts',
         ),
-
       ]);
       this.project.quickFixes.fixSQLLiteModuleInNodeModules();
       //#endregion
@@ -455,7 +454,11 @@ export class NodeModules extends BaseNodeModules {
     actionwhenNotInNodeModules: () => {},
   ): Promise<void> {
     //#region @backendFunc
+
     const nodeModulesPath = this.project.nodeModules.path;
+    const task = Helpers.actionStarted(
+      `Removing own node_modules package ${nodeModulesPath}`,
+    );
     if (Helpers.exists(nodeModulesPath)) {
       const folderToMove = crossPlatformPath([
         crossPlatformPath(fse.realpathSync(nodeModulesPath)),
@@ -470,11 +473,15 @@ export class NodeModules extends BaseNodeModules {
       HelpersTaon.move(folderToMove, folderTemp, {
         purpose: `Moving own "${this.project.nameForNpmPackage}" package to temp location`,
       });
+
       await actionwhenNotInNodeModules();
+      Helpers.logInfo(`restoring package... `);
       HelpersTaon.move(folderTemp, folderToMove, {
         purpose: `Restoring own "${this.project.nameForNpmPackage}" package after action`,
       });
+      Helpers.logInfo(`restoring done... `);
     }
+    task.done();
     //#endregion
   }
   //#endregion
