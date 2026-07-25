@@ -2039,6 +2039,14 @@ ${this.project.children
   //   );
   // }
 
+  async quesitonTerminal() {
+    //#region @backendFunc
+    const anwser = await UtilsTerminal.basicYesNo(`Approved ? `, true);
+    console.log(`awnser: ${anwser}`);
+    this._exit();
+    //#endregion
+  }
+
   async notyficationTest() {
     //#region @backendFunc
     await UtilsOs.sendNotification({
