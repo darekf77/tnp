@@ -1,4 +1,6 @@
 //#region imports
+import { LocalTranslationService } from '@taon-dev/i18n/src';
+import { UtilsPoFile } from '@taon-dev/i18n/src';
 import { walk } from 'lodash-walk-object/src';
 import {
   backendNodejsOnlyFiles,
@@ -10,6 +12,7 @@ import {
   TAGS,
   taonPackageName,
   UtilsFilesFoldersSync,
+  UtilsI18n,
   UtilsJson,
   UtilsTerminal,
 } from 'tnp-core/src';
@@ -38,6 +41,7 @@ import {
   Node,
   forEachChild,
 } from 'typescript';
+import type { Progress } from 'vscode';
 
 import {
   AiMdFile,
@@ -1202,6 +1206,100 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
     //#endregion
   }
   //#endregion
+
+  async translatePoFile(
+    filePath: string,
+    progress?: Progress<{
+      message?: string;
+      increment?: number;
+    }>,
+  ): Promise<void> {
+    //#region @backendFunc
+    const localTranslationService = new LocalTranslationService();
+    let previousProgress = 0;
+    let previousMessage = void 0 as string;
+    const isRunningINVscode = UtilsOs.isRunningInVscodeExtension();
+    if (!localTranslationService.isAiReady()) {
+      await localTranslationService.makeSureAiDownloaded({
+        warmup: true,
+
+        onProgress: event => {
+          if (
+            event.status !== 'progress_total' ||
+            typeof event.progress !== 'number'
+          ) {
+            return;
+          }
+
+          const currentProgress = Math.max(
+            previousProgress,
+            Math.min(100, event.progress),
+          );
+
+          const progressMessage = `Checking/Downloading AI: ${currentProgress.toFixed(0)}%`;
+          if (progressMessage === previousMessage) {
+            return;
+          }
+
+          if (progress) {
+            progress.report({
+              increment: currentProgress - previousProgress,
+              message: progressMessage,
+            });
+          }
+
+          if (!isRunningINVscode) {
+            console.log(progressMessage);
+          }
+          previousMessage = progressMessage;
+
+          previousProgress = currentProgress;
+        },
+      });
+    }
+
+    const task = Helpers.actionStarted('Translating po file');
+    const fromLang: UtilsI18n.CommonLocaleCode = 'en-US';
+
+    const kebabBasebane = path.basename(filePath).replace(/\_/g, '-');
+    // console.log({ kebabBasebane });
+    const langTo = UtilsI18n.LangOptionArr.find(c =>
+      kebabBasebane.includes(c.code),
+    )?.code;
+    if (!langTo) {
+      Helpers.error(`Cannot detect destination language in ${filePath}`);
+    }
+    Helpers.info(`Translating from ${fromLang} to ${langTo} ...`);
+
+    const files = UtilsPoFile.extractPoToJson(
+      UtilsFilesFoldersSync.readFile(filePath),
+    );
+
+    for (let index = 0; index < files.length; index++) {
+      const getextData = files[index];
+      // if (getextData.translation) {
+      //   continue;
+      // }
+      for (const tag of getextData.tags) {
+        progress?.report({
+          message: `Translating: ${tag.gettextString}`,
+        });
+        Helpers.info(`Translating: ${tag.gettextString}`);
+        tag.translation = await localTranslationService.translate({
+          from: fromLang,
+          to: langTo,
+          text: tag.gettextString,
+          context: tag.context || '',
+        });
+      }
+    }
+
+    const poFile = UtilsPoFile.generatePoFileContent(files, langTo);
+    UtilsFilesFoldersSync.writeFile(filePath, poFile);
+
+    task.done();
+    //#endregion
+  }
 
   //#region filter verified builds
   filterVerfiedBuilds(packagesNames: string[]): string[] {

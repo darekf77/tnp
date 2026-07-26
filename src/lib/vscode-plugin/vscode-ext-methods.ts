@@ -7,6 +7,7 @@ import {
   UtilsOs,
   _,
   LibTypeEnum,
+  child_process,
 } from 'tnp-core/src';
 import { CommandType } from 'tnp-helpers/src';
 import type { Uri } from 'vscode';
@@ -535,6 +536,47 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         options: {
           titleWhenProcessing:
             'pasting from md/ai content to files and folders',
+          showSuccessMessage: false,
+        },
+      },
+
+      {
+        group: groupAI,
+        title: `translate po file`,
+        exec: async data => {
+          let { selectedUris, uri, vscode, progress } = data;
+          const arr = (Array.isArray(selectedUris) ? selectedUris : [uri])
+            .map(c => crossPlatformPath(c.path))
+            .filter(p => p.endsWith('.po'));
+          // console.log({ arr });
+          const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
+
+          const nearestProject = Project.ins.nearestTo(
+            WORKSPACE_MAIN_FOLDER_PATH,
+          );
+
+          for (const pofilePath of arr) {
+            try {
+              await nearestProject.framework.translatePoFile(
+                pofilePath,
+                progress,
+              );
+              // child_process.execSync(
+              //   `${FRAMEWORK_NAME} lang:translatePo ${pofilePath}`,
+              //   {
+              //     cwd: WORKSPACE_MAIN_FOLDER_PATH,
+              //   },
+              // );
+            } catch (error) {
+              console.log(error);
+              console.error(
+                `Not able to translate ${path.basename(pofilePath)}`,
+              );
+            }
+          }
+        },
+        options: {
+          titleWhenProcessing: 'translating po file(s)',
           showSuccessMessage: false,
         },
       },

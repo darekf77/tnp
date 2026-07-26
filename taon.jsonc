@@ -17,6 +17,7 @@
     "esbuild",
     "sharp",
     "favicons",
+    "@huggingface/transformers",
     "mariadb",
     "sql.js",
     "@parcel/watcher",
@@ -65,6 +66,27 @@
       "description": "OS notyfications",
       "isExternalFor": "*",
       "packageName": "node-notifier",
+    },
+    {
+      "description": "AI translations",
+      "includeInBundleNodeModules": ["vscode-plugin"],
+      "isExternalFor": "*",
+      "packageName": "@huggingface/transformers",
+    },
+    {
+      "description": "AI translations node",
+      "isExternalFor": "*",
+      "packageName": "onnxruntime-node",
+    },
+    {
+      "description": "AI translations node",
+      "isExternalFor": "*",
+      "packageName": "onnxruntime-web",
+    },
+    {
+      "description": "AI translations common",
+      "isExternalFor": "*",
+      "packageName": "onnxruntime-common",
     },
     {
       "description": "Linux notyfications without deps",

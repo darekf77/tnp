@@ -12,7 +12,17 @@ import { activateRecentWorkspaces } from './lib/vscode-plugin';
 
 const commands = vscodeExtMethods(FRAMEWORK_NAME);
 export async function activate(context: ExtensionContext) {
+
   const vscode = await import('vscode');
+
+  // const extension = vscode.extensions.getExtension(context.extension.id);
+
+  // console.log(JSON.stringify({
+  //   contextExtensionId: context.extension.id,
+  //   extensionId: extension?.id,
+  //   packageJSON: extension?.packageJSON,
+  //   extensionPath: context.extensionPath,
+  // }));
 
   vscodePatchingCodium(context, vscode, FRAMEWORK_NAME);
   handleTaonRedirect(context, vscode);

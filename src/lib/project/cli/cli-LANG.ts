@@ -1,5 +1,5 @@
 //#region imports
-import { CoreModels, Helpers } from 'tnp-core/src';
+import { CoreModels, crossPlatformPath, Helpers, path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { HelpersTaon } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartParams } from 'tnp-helpers/src';
@@ -34,14 +34,14 @@ export class $Lang extends BaseCli {
     //#endregion
   }
 
-  async translatePoPL() {
-
-  }
-
-  async translatePoDE() {
+  async translatePo() {
     //#region @backendFunc
-
-  //#endregion
+    const poFilePath = path.isAbsolute(this.firstArg)
+      ? crossPlatformPath(this.firstArg)
+      : crossPlatformPath([this.cwd, this.firstArg]);
+    await this.project.framework.translatePoFile(poFilePath);
+    this._exit();
+    //#endregion
   }
 }
 
