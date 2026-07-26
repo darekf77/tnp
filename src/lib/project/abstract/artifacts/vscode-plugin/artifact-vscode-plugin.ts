@@ -253,6 +253,13 @@ export class ArtifactVscodePlugin extends BaseArtifact<
             );
           } catch (error) {}
 
+          const licenseMDfile = 'LICENSE.md';
+          const license = this.project.readFile(licenseMDfile) || 'No License';
+          UtilsFilesFoldersSync.writeFile(
+            [tmpVscodeProjPath, licenseMDfile],
+            license,
+          );
+
           const vscodeNativeDeps = this.project.taonJson.getNativeDepsFor(
             ReleaseArtifactTaon.VSCODE_PLUGIN,
           );
