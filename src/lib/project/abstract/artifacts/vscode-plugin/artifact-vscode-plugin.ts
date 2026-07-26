@@ -257,6 +257,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
             ReleaseArtifactTaon.VSCODE_PLUGIN,
           );
 
+          const currentDeps = extProj.packageJson.dependencies || {};
           for (const nativeDepName of vscodeNativeDeps) {
             const version =
               this.project.packageJson.dependencies[nativeDepName];
@@ -264,20 +265,15 @@ export class ArtifactVscodePlugin extends BaseArtifact<
               Helpers.logInfo(
                 `Setting native dependency ${nativeDepName} to version ${version}`,
               );
-              HelpersTaon.setValueToJSON(
-                extProj.pathFor(`package.json`),
-                'dependencies',
-                {
-                  [nativeDepName]:
-                    this.project.packageJson.dependencies[nativeDepName],
-                },
-              );
+              currentDeps[nativeDepName] =
+                this.project.packageJson.dependencies[nativeDepName];
             } else {
               Helpers.warn(
                 `Native dependency ${nativeDepName} not found in taon package.json dependencies`,
               );
             }
           }
+          extProj.packageJson.setDependencies(currentDeps);
 
           extProj.run(`npm install`).sync();
           //#endregion
