@@ -296,6 +296,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
     if (!buildOptions.build.watch && buildOptions.release.releaseType) {
       try {
         const args = [
+          '--allow-star-activation',
           ...(this.project.taonJson.baseContentUrl
             ? [`--baseContentUrl "${this.project.taonJson.baseContentUrl}"`]
             : []),
@@ -304,7 +305,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
             : []),
         ];
 
-        extProj.run(`npx --yes @vscode/vsce package ${args.join(' ')}`).sync();
+        extProj.run(`npx --yes @vscode/vsce package ${args.join(' ')} `).sync();
       } catch (error) {
         throw 'Problem with vscode package metadata';
       }
