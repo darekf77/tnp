@@ -304,7 +304,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
             : []),
         ];
 
-        extProj.run(`taon-vsce package ${args.join(' ')}`).sync();
+        extProj.run(`npx --yes @vscode/vsce package ${args.join(' ')}`).sync();
       } catch (error) {
         throw 'Problem with vscode package metadata';
       }
