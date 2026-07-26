@@ -663,6 +663,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         minify: buildOptions.release.nodeBackendApp.minify,
         strategy: 'node-app',
         additionalExternals: [
+          this.project.nameForNpmPackage,
           ...this.project.taonJson.additionalExternalsFor(
             ReleaseArtifactTaon.ANGULAR_NODE_APP,
           ),

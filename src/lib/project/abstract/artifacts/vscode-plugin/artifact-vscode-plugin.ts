@@ -228,6 +228,7 @@ export class ArtifactVscodePlugin extends BaseArtifact<
               prod: buildOptions.build.prod,
               strategy: 'vscode-ext',
               additionalExternals: [
+                this.project.nameForNpmPackage,
                 ...this.project.taonJson.additionalExternalsFor(
                   ReleaseArtifactTaon.VSCODE_PLUGIN,
                 ),
@@ -239,6 +240,47 @@ export class ArtifactVscodePlugin extends BaseArtifact<
               ],
             },
           );
+
+          //#region add native deps
+          try {
+            fse.unlinkSync(
+              crossPlatformPath([tmpVscodeProjPath, nodeModulesMainProject]),
+            );
+          } catch (error) {}
+          try {
+            fse.unlinkSync(
+              crossPlatformPath([tmpVscodeProjPath, distMainProject]),
+            );
+          } catch (error) {}
+
+          const vscodeNativeDeps = this.project.taonJson.getNativeDepsFor(
+            ReleaseArtifactTaon.VSCODE_PLUGIN,
+          );
+
+          for (const nativeDepName of vscodeNativeDeps) {
+            const version =
+              this.project.packageJson.dependencies[nativeDepName];
+            if (version) {
+              Helpers.logInfo(
+                `Setting native dependency ${nativeDepName} to version ${version}`,
+              );
+              HelpersTaon.setValueToJSON(
+                extProj.pathFor(`package.json`),
+                'dependencies',
+                {
+                  [nativeDepName]:
+                    this.project.packageJson.dependencies[nativeDepName],
+                },
+              );
+            } else {
+              Helpers.warn(
+                `Native dependency ${nativeDepName} not found in taon package.json dependencies`,
+              );
+            }
+          }
+
+          extProj.run(`npm install`).sync();
+          //#endregion
         }
       }
 
@@ -314,7 +356,7 @@ local VSCode instance.
       );
 
       projectsReposToPushAndTag.push(...releaseData.projectsReposToPushAndTag);
-      projectsReposToPush.push(...releaseData.projectsReposToPush)
+      projectsReposToPush.push(...releaseData.projectsReposToPush);
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
     }

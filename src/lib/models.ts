@@ -290,7 +290,10 @@ export namespace Models {
       replaceWithNothing?: TaonArtifactInclude;
 
       /**
-       * ! FOR NOW ONLY FOR: 'electron-app' and 'angular-node-app'
+       * ! FOR NOW ONLY FOR:
+       *  - 'electron-app'
+       *  - 'angular-node-app'
+       *  - 'vscode-plugin'
        *
        * Native stuff that can't be minified and needs to be included in bundle.
        * Taon will perform npm install for all packages marked with this

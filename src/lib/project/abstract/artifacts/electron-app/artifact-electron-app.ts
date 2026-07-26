@@ -151,6 +151,7 @@ export class ArtifactElectronApp extends BaseArtifact<
       {
         prod: releaseOptions.build.prod,
         additionalExternals: [
+          this.project.nameForNpmPackage,
           ...electronNativeDeps,
           ...this.project.taonJson.additionalExternalsFor(
             ReleaseArtifactTaon.ELECTRON_APP,
