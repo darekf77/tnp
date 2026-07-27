@@ -29,13 +29,13 @@ declare global {
        * when showing deps in other projects
        */
       actionShowingDepsForContainer?: boolean;
-      tnpShowProgress?: boolean;
+
       /**
        * Application will automaticly choose parameters
        * usefull for calling in global tool mode
        * when vscode plugin is running
        */
-      tnpNonInteractive?: boolean;
+      taonNonInteractive?: boolean;
 
       taonBuildingFromParentName?: string;
       /**

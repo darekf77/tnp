@@ -199,6 +199,7 @@ export const argsToClear = [
 export const watcherPrefix = '-watcher';
 
 export const verbosePrefix = '-verbose';
+export const taonNonInteractiveModePrefix = '-taonNonInteractive';
 export const spinnerPrefix = '-spinner';
 export const oldBuildModePrefix = '-oldBuildMode';
 export const oldBuildModePrefixShort = '-obm';
@@ -548,8 +549,6 @@ export const srcDtsFromNpmPackage = 'src.d.ts';
 export const srcJSFromNpmPackage = 'src.js';
 
 export const myLibFromNgProject = 'my-lib';
-
-
 
 export const externalLibsFromNgProject = 'external-libs';
 

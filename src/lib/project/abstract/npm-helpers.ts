@@ -1,19 +1,6 @@
 //#region imports
-import { config } from 'tnp-core/src';
-import {
-  chalk,
-  CoreModels,
-  Helpers,
-  PROGRESS_DATA,
-  _,
-  dateformat,
-  fse,
-} from 'tnp-core/src';
-import {
-  BaseNodeModules,
-  BaseNpmHelpers,
-  BasePackageJson,
-} from 'tnp-helpers/src';
+import { Helpers, _ } from 'tnp-core/src';
+import { BaseNpmHelpers } from 'tnp-helpers/src';
 
 import { NodeModules } from './node-modules';
 import { PackageJSON } from './package-json';
@@ -23,9 +10,12 @@ import type { Project } from './project';
 // @ts-ignore TODO weird inheritance problem
 export class NpmHelpers extends BaseNpmHelpers<Project> {
   public _nodeModulesType = NodeModules as any;
+
   public _packageJsonType = PackageJSON as any;
+
   // @ts-ignore TODO weird inheritance problem
   public readonly packageJson: PackageJSON;
+
   // @ts-ignore TODO weird inheritance problem
   public readonly nodeModules: NodeModules;
 

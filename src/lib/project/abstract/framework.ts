@@ -76,6 +76,8 @@ import { TranslationI18n } from './translations-18n';
 export class Framework extends BaseFeatureForProject<Project> {
   public translationI18n = new TranslationI18n(this.project);
 
+  private localTranslationService = new LocalTranslationService();
+
   //#region is unknown npm project
   get isUnknownNpmProject(): boolean {
     //#region @backendFunc
@@ -1215,12 +1217,12 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
     }>,
   ): Promise<void> {
     //#region @backendFunc
-    const localTranslationService = new LocalTranslationService();
+
     let previousProgress = 0;
     let previousMessage = void 0 as string;
     const isRunningINVscode = UtilsOs.isRunningInVscodeExtension();
-    if (!localTranslationService.isAiReady()) {
-      await localTranslationService.makeSureAiDownloaded({
+    if (!this.localTranslationService.isAiReady()) {
+      await this.localTranslationService.makeSureAiDownloaded({
         warmup: true,
 
         onProgress: event => {
@@ -1249,7 +1251,7 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
           }
 
           if (!isRunningINVscode) {
-            console.log(progressMessage);
+            Helpers.info(progressMessage);
           }
           previousMessage = progressMessage;
 
@@ -1285,7 +1287,7 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
           message: `Translating: ${tag.gettextString}`,
         });
         Helpers.info(`Translating: ${tag.gettextString}`);
-        tag.translation = await localTranslationService.translate({
+        tag.translation = await this.localTranslationService.translate({
           from: fromLang,
           to: langTo,
           text: tag.gettextString,

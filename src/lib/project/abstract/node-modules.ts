@@ -11,7 +11,7 @@ import {
   crossPlatformPath,
   fse,
   CoreModels,
-  PROGRESS_DATA,
+  UtilsProgress,
   dateformat,
 } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
@@ -98,13 +98,11 @@ export class NodeModules extends BaseNodeModules {
       return;
     }
 
-    if (global.tnpNonInteractive) {
-      PROGRESS_DATA.log({
-        msg:
-          `${this.npmHelpers.useLinkAsNodeModules ? 'SMART ' : ''} ` +
-          `npm installation for "${this.project.genericName}" started..`,
-      });
-    }
+    UtilsProgress.emitProgress({
+      message:
+        `${this.npmHelpers.useLinkAsNodeModules ? 'SMART ' : ''} ` +
+        `npm installation for "${this.project.genericName}" started..`,
+    });
 
     Helpers.log(`Packages full installation for ${this.project.genericName}`);
 
@@ -195,9 +193,8 @@ export class NodeModules extends BaseNodeModules {
       //#endregion
     }
 
-    if (global.tnpNonInteractive) {
-      PROGRESS_DATA.log({ msg: `npm installation finish ok` });
-    }
+    UtilsProgress.emitProgress({ message: `npm installation finish ok` });
+
     //#endregion
   }
   //#endregion

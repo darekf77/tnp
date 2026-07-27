@@ -35,8 +35,7 @@ export namespace Models {
   //#region cli root args
   // TODO make it more visible
   export type RootArgsType = {
-    tnpNonInteractive: boolean;
-    tnpShowProgress: boolean;
+    taonNonInteractive: boolean;
     tnpNoColorsMode: boolean;
     findNearestProject: boolean;
     findNearestProjectWithGitRoot: boolean;

@@ -36,10 +36,16 @@ export class $Lang extends BaseCli {
 
   async translatePo() {
     //#region @backendFunc
-    const poFilePath = path.isAbsolute(this.firstArg)
-      ? crossPlatformPath(this.firstArg)
-      : crossPlatformPath([this.cwd, this.firstArg]);
-    await this.project.framework.translatePoFile(poFilePath);
+    for (const arg of this.args) {
+      // console.log({ arg, isAbsolute: path.isAbsolute(arg) });
+      const poFilePath = path.isAbsolute(arg)
+        ? crossPlatformPath(arg)
+        : crossPlatformPath([this.cwd, arg]);
+
+      if (Helpers.exists(poFilePath)) {
+        await this.project.framework.translatePoFile(poFilePath);
+      }
+    }
     this._exit();
     //#endregion
   }

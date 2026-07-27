@@ -340,7 +340,7 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       this.copyBuildedDistributionTo(projectToCopy, {
         outDir: distFromNgBuild,
       });
-      // if (this.buildOptions.buildForRelease && !global.tnpNonInteractive) {
+      // if (this.buildOptions.buildForRelease && !global.taonNonInteractive) {
       //   Helpers.info('Things copied to :' + projectToCopy?.name);
       //   if (!(await Helpers.consoleGui.question.yesNo('Is there everywthing ok with build ?'))) {
       //     process.exit(0)

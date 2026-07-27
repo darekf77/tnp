@@ -9,6 +9,7 @@ import {
   child_process,
   Utils,
   tnpPackageName,
+  UtilsProgress,
 } from 'tnp-core/src';
 import { chalk, Helpers, UtilsNetwork, UtilsTerminal } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
@@ -28,6 +29,7 @@ import {
   startSpinner,
   stopSpinner,
   succeedSpinner,
+  taonNonInteractiveModePrefix,
   verbosePrefix,
   websqlPrefix,
 } from './constants';
@@ -68,11 +70,13 @@ export function startCli(argv, filename): void {
 
   const orgArgv = [...argv];
 
-  global.tnpNonInteractive = argv.some(a =>
-    a.startsWith('--tnpNonInteractive'),
+  global.taonNonInteractive = argv.some(
+    a =>
+      a.startsWith(`-${taonNonInteractiveModePrefix}`) ||
+      a.startsWith(taonNonInteractiveModePrefix),
   );
 
-  const spinnerIsDefault = !global.tnpNonInteractive;
+  const spinnerIsDefault = !global.taonNonInteractive;
 
   const verboseInArgs = !global.hideLog;
   global.skipCoreCheck = argv.some(a => a.startsWith(skipCoreCheck));
@@ -95,6 +99,12 @@ export function startCli(argv, filename): void {
   //#region clean argv
   argv = argv
     .filter(a => !a.startsWith(spinnerPrefix))
+    .filter(
+      a =>
+        !a.startsWith(`-${taonNonInteractiveModePrefix}`) &&
+        !a.startsWith(taonNonInteractiveModePrefix),
+    )
+
     .filter(a => !a.startsWith(oldBuildModePrefix))
     .filter(a => a !== childprocsecretarg)
     .filter(a => a !== skipCoreCheck)
@@ -156,6 +166,7 @@ export function startCli(argv, filename): void {
       global.skipCoreCheck ? skipCoreCheck : '',
       spinnerOnInArgs ? spinnerPrefix : '',
       oldBuildModeInArgs ? oldBuildModePrefix : '',
+      global.taonNonInteractive ? taonNonInteractiveModePrefix : '',
       childprocsecretarg,
     ].filter(Boolean);
 

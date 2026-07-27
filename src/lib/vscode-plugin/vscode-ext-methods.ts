@@ -1,3 +1,6 @@
+import { exec } from 'node:child_process'; // @backend
+import { promisify } from 'node:util'; // @backend
+
 import {
   Utils,
   Helpers,
@@ -8,11 +11,19 @@ import {
   _,
   LibTypeEnum,
   child_process,
+  UtilsProcess,
+  startAsync,
+  UtilsExecProc,
+  execAsyncVscode,
 } from 'tnp-core/src';
 import { CommandType } from 'tnp-helpers/src';
 import type { Uri } from 'vscode';
 
-import { dirnameFromSourceToProject, whatToLinkFromCore } from '../constants';
+import {
+  dirnameFromSourceToProject,
+  taonNonInteractiveModePrefix,
+  whatToLinkFromCore,
+} from '../constants';
 import { FrameworkUtils } from '../framework-utils';
 import { Project } from '../project/abstract/project';
 
@@ -545,6 +556,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         title: `translate po file`,
         exec: async data => {
           let { selectedUris, uri, vscode, progress } = data;
+          // vscode.window.showInformationMessage(`Started AI translation..`);
           const arr = (Array.isArray(selectedUris) ? selectedUris : [uri])
             .map(c => crossPlatformPath(c.path))
             .filter(p => p.endsWith('.po'));
@@ -555,24 +567,20 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
             WORKSPACE_MAIN_FOLDER_PATH,
           );
 
-          for (const pofilePath of arr) {
-            try {
-              await nearestProject.framework.translatePoFile(
-                pofilePath,
-                progress,
-              );
-              // child_process.execSync(
-              //   `${FRAMEWORK_NAME} lang:translatePo ${pofilePath}`,
-              //   {
-              //     cwd: WORKSPACE_MAIN_FOLDER_PATH,
-              //   },
-              // );
-            } catch (error) {
-              console.log(error);
-              console.error(
-                `Not able to translate ${path.basename(pofilePath)}`,
-              );
-            }
+          const parmas = arr.map(c =>
+            c.replace(nearestProject.location + '/', ''),
+          );
+
+          try {
+            const command = `${FRAMEWORK_NAME} lang:translatePo ${parmas.join(' ')} ${taonNonInteractiveModePrefix}`;
+            const { stdout, stderr } = await execAsyncVscode({
+              command,
+              cwd: nearestProject.location,
+              progress,
+            });
+          } catch (error) {
+            console.log(error);
+            console.error(`Not able to translate files`);
           }
         },
         options: {

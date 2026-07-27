@@ -43,7 +43,7 @@ import {
   crossPlatformPath,
   path,
   _,
-  PROGRESS_DATA,
+  UtilsProgress,
   chalk,
   glob,
   os,
@@ -500,7 +500,7 @@ export class $Global extends BaseGlobalCommandLine<
   //#region show messages
   ASYNC_PROC = async args => {
     //#region @backendFunc
-    global.tnpShowProgress = true;
+
     let p = Helpers.run(`${config.frameworkName} show:loop ${args}`, {
       output: false,
       cwd: this.cwd,
@@ -517,7 +517,7 @@ export class $Global extends BaseGlobalCommandLine<
 
   SYNC_PROC = async args => {
     //#region @backendFunc
-    global.tnpShowProgress = true;
+
     try {
       let p = Helpers.run(`${config.frameworkName} show:loop ${args}`, {
         output: false,
@@ -568,7 +568,7 @@ export class $Global extends BaseGlobalCommandLine<
     terminal: ${UtilsProcess.getBashOrShellName()}
 
     `);
-    global.tnpShowProgress = true;
+
     console.log('process pid', process.pid);
     console.log('process ppid', process.ppid);
     // process.on('SIGTERM', () => {
@@ -632,7 +632,7 @@ export class $Global extends BaseGlobalCommandLine<
       this._exit();
     }
     console.log(`counter: ${c}`);
-    PROGRESS_DATA.log({ msg: `counter: ${c}`, value: c * 7 });
+    UtilsProgress.emitProgress({ message: `counter: ${c}`, value: c * 7 });
     setTimeout(() => {
       this._SHOW_LOOP_MESSAGES(++c, maximum, errExit, throwErr);
     }, 2000);
