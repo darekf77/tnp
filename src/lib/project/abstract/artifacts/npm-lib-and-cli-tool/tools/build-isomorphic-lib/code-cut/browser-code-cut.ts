@@ -39,6 +39,7 @@ import {
   i18nDataTsFileExt,
   importsHtmlFromSrc,
   indexTsFromLibFromSrc,
+  libEsm,
   libFromImport,
   libFromSrc,
   libTypeString,
@@ -58,6 +59,7 @@ import {
   tmpAppsForDistElectronWebsql,
   tmpAppsForDistWebsql,
   tmpSourceDist,
+  tmpSourceEsmDist,
   tmpSrcAppDist,
   tmpSrcAppDistWebsql,
   tmpSrcDist,
@@ -117,6 +119,8 @@ export class BrowserCodeCut {
 
   private rawContentBackend: string;
 
+  private rawContentEsmBackend: string;
+
   //#region recreate app ts presentation files
   static recreateAppTsPresentationFiles: () => void;
 
@@ -146,6 +150,8 @@ export class BrowserCodeCut {
   private readonly isAssetsFile: boolean = false;
 
   private readonly absoluteBackendDestFilePath: string;
+
+  private readonly absoluteBackendEsmDestFilePath: string;
 
   private readonly debug: boolean = false;
 
@@ -236,6 +242,12 @@ export class BrowserCodeCut {
       this.relativePath,
     ]);
 
+    this.absoluteBackendEsmDestFilePath = crossPlatformPath([
+      this.project.location,
+      tmpSourceEsmDist + (buildOptions.build.prod ? prodSuffix : ''),
+      this.relativePath,
+    ]);
+
     // console.log('RELATIVE ', this.relativePath)
 
     this.isWebsqlMode = this.relativePath.startsWith(
@@ -305,6 +317,9 @@ export class BrowserCodeCut {
       Helpers.removeIfExists(
         this.replaceAssetsPath(this.absoluteBackendDestFilePath),
       );
+      Helpers.removeIfExists(
+        this.replaceAssetsPath(this.absoluteBackendEsmDestFilePath),
+      );
     } else {
       // this is needed for json in src/lib or something
       // if (this.absFileSourcePathBrowserOrWebsql.endsWith(debugFiles[0])) {
@@ -335,6 +350,10 @@ export class BrowserCodeCut {
         HelpersTaon.copyFile(
           this.absSourcePathFromSrc,
           this.replaceAssetsPath(this.absoluteBackendDestFilePath),
+        );
+        HelpersTaon.copyFile(
+          this.absSourcePathFromSrc,
+          this.replaceAssetsPath(this.absoluteBackendEsmDestFilePath),
         );
       } catch (error) {
         Helpers.warn(
@@ -440,6 +459,7 @@ export class BrowserCodeCut {
     this.rawContentForBrowser = orgContent;
     this.rawContentForAPPONLYBrowser = this.rawContentForBrowser; // TODO not needed ?
     this.rawContentBackend = this.rawContentForBrowser; // at the beginning those are normal files from src
+    this.rawContentEsmBackend = this.rawContentForBrowser;
     return this;
     //#endregion
   }
@@ -467,6 +487,15 @@ export class BrowserCodeCut {
     //#region @backendFunc
     return (
       (this.rawContentBackend || '').replace(/\/\*\ \*\//g, '').trim()
+        .length === 0
+    );
+    //#endregion
+  }
+
+  private get isEmptyModuleEsmBackendFile(): boolean {
+    //#region @backendFunc
+    return (
+      (this.rawContentEsmBackend || '').replace(/\/\*\ \*\//g, '').trim()
         .length === 0
     );
     //#endregion
@@ -953,6 +982,26 @@ export class BrowserCodeCut {
       );
     }
 
+    if (_.isString(this.rawContentEsmBackend)) {
+      const toReplace = this.importExportsFromOrgContent.filter(imp => {
+        imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+          imp.cleanEmbeddedPathToFile.replace(
+            `/${srcFromTaonImport}`,
+            `/${libEsm + prodPart}`,
+          ),
+        );
+        return imp.isIsomorphic;
+      });
+
+      this.rawContentEsmBackend = this.splitFileProcess.replaceInFile(
+        this.rawContentEsmBackend,
+        toReplace,
+      );
+      this.importExportsFromOrgContent.forEach(
+        imp => delete imp.embeddedPathToFileResult,
+      );
+    }
+
     return this;
     //#endregion
   }
@@ -983,8 +1032,6 @@ export class BrowserCodeCut {
       if (this.project.framework.isStandaloneProject && !this.isWebsqlMode) {
         const regionsToRemove = [TAGS.BROWSER, TAGS.WEBSQL_ONLY];
 
-        const orgContentBackend = this.rawContentBackend;
-
         // const debug =  this.relativePath.endsWith('layout-simple-small-app.component.ts');
         // if (debug ) {
         //   console.log(this.relativePath);
@@ -994,7 +1041,15 @@ export class BrowserCodeCut {
 
         this.rawContentBackend = RegionRemover.from(
           this.absoluteBackendDestFilePath,
-          orgContentBackend,
+          this.rawContentBackend,
+          regionsToRemove,
+          this.project,
+          // debug
+        ).output;
+
+        this.rawContentEsmBackend = RegionRemover.from(
+          this.absoluteBackendEsmDestFilePath,
+          this.rawContentEsmBackend,
           regionsToRemove,
           this.project,
           // debug
@@ -1048,57 +1103,113 @@ export class BrowserCodeCut {
 
     //#region backend file save
     if (backendFileSaveMode) {
-      const isEmptyModuleBackendFile = this.isEmptyModuleBackendFile;
-
-      const absoluteBackendDestFilePath = this.absoluteBackendDestFilePath;
-
-      if (!fse.existsSync(path.dirname(absoluteBackendDestFilePath))) {
-        fse.mkdirpSync(path.dirname(absoluteBackendDestFilePath));
-      }
-      const isFrontendFile = !_.isUndefined(
-        frontEndOnly.find(f => absoluteBackendDestFilePath.endsWith(f)),
-      );
-
-      if (isFrontendFile) {
-        // console.log(`Ommiting for backend: ${absoluteBackendDestFilePath} `)
-        return;
-      }
-
-      const absoluteBackendDestFilePathCurrent = this.project.watcher
-        .isTaonLightWatcherMode
-        ? UtilsFilesFoldersSync.readFile(absoluteBackendDestFilePath)
-        : undefined;
-
-      let absoluteBackendDestFilePathNewContent =
-        isEmptyModuleBackendFile && this.isTsFile
-          ? `export function dummy${new Date().getTime()}() { }`
-          : this.changeNpmNameToLocalLibNamePath(
-              this.rawContentBackend,
-              absoluteBackendDestFilePath,
-              {
-                isBrowser: false,
-              },
-            );
-
-      const currentBackendFile = UtilsTypescript.removeCommentsFromTsContent(
-        absoluteBackendDestFilePathCurrent,
-      )?.trimEnd();
-      const newBackendFile = UtilsTypescript.removeCommentsFromTsContent(
-        absoluteBackendDestFilePathNewContent,
-      )?.trimEnd();
-
-      if (
-        !firsTimeDone.get(this.relativePath) ||
-        !currentBackendFile ||
-        currentBackendFile !== newBackendFile
-      ) {
-        // SAVE BACKEND FILE
-        fse.writeFileSync(
-          absoluteBackendDestFilePath,
-          absoluteBackendDestFilePathNewContent,
-          'utf8',
+      //#region save cjs backend
+      (() => {
+        if (!fse.existsSync(path.dirname(this.absoluteBackendDestFilePath))) {
+          fse.mkdirpSync(path.dirname(this.absoluteBackendDestFilePath));
+        }
+        const isFrontendFile = !_.isUndefined(
+          frontEndOnly.find(f => this.absoluteBackendDestFilePath.endsWith(f)),
         );
-      }
+
+        if (isFrontendFile) {
+          // console.log(`Ommiting for backend: ${absoluteBackendDestFilePath} `)
+          return;
+        }
+
+        const absoluteBackendDestFilePathCurrent = this.project.watcher
+          .isTaonLightWatcherMode
+          ? UtilsFilesFoldersSync.readFile(this.absoluteBackendDestFilePath)
+          : undefined;
+
+        let absoluteBackendDestFilePathNewContent =
+          this.isEmptyModuleBackendFile && this.isTsFile
+            ? `export function dummy${new Date().getTime()}() { }`
+            : this.changeNpmNameToLocalLibNamePath(
+                this.rawContentBackend,
+                this.absoluteBackendDestFilePath,
+                {
+                  isBrowser: false,
+                },
+              );
+
+        const currentBackendFile = UtilsTypescript.removeCommentsFromTsContent(
+          absoluteBackendDestFilePathCurrent,
+        )?.trimEnd();
+        const newBackendFile = UtilsTypescript.removeCommentsFromTsContent(
+          absoluteBackendDestFilePathNewContent,
+        )?.trimEnd();
+
+        if (
+          !firsTimeDone.get(this.relativePath) ||
+          !currentBackendFile ||
+          currentBackendFile !== newBackendFile
+        ) {
+          // SAVE BACKEND FILE
+          fse.writeFileSync(
+            this.absoluteBackendDestFilePath,
+            absoluteBackendDestFilePathNewContent,
+            'utf8',
+          );
+        }
+      })();
+      //#endregion
+
+      //#region save esm backend
+      (() => {
+        if (
+          !fse.existsSync(path.dirname(this.absoluteBackendEsmDestFilePath))
+        ) {
+          fse.mkdirpSync(path.dirname(this.absoluteBackendEsmDestFilePath));
+        }
+        const isFrontendFile = !_.isUndefined(
+          frontEndOnly.find(f =>
+            this.absoluteBackendEsmDestFilePath.endsWith(f),
+          ),
+        );
+
+        if (isFrontendFile) {
+          // console.log(`Ommiting for backend: ${absoluteBackendDestFilePath} `)
+          return;
+        }
+
+        const absoluteBackendEsmDestFilePathCurrent = this.project.watcher
+          .isTaonLightWatcherMode
+          ? UtilsFilesFoldersSync.readFile(this.absoluteBackendEsmDestFilePath)
+          : undefined;
+
+        let absoluteBackendEsmDestFilePathNewContent =
+          this.isEmptyModuleEsmBackendFile && this.isTsFile
+            ? `export function dummy${new Date().getTime()}() { }`
+            : this.changeNpmNameToLocalLibNamePath(
+                this.rawContentEsmBackend,
+                this.absoluteBackendEsmDestFilePath,
+                {
+                  isBrowser: false,
+                },
+              );
+
+        const currentBackendFile = UtilsTypescript.removeCommentsFromTsContent(
+          absoluteBackendEsmDestFilePathCurrent,
+        )?.trimEnd();
+        const newBackendFile = UtilsTypescript.removeCommentsFromTsContent(
+          absoluteBackendEsmDestFilePathNewContent,
+        )?.trimEnd();
+
+        if (
+          !firsTimeDone.get(this.relativePath) ||
+          !currentBackendFile ||
+          currentBackendFile !== newBackendFile
+        ) {
+          // SAVE BACKEND FILE
+          fse.writeFileSync(
+            this.absoluteBackendEsmDestFilePath,
+            absoluteBackendEsmDestFilePathNewContent,
+            'utf8',
+          );
+        }
+      })();
+      //#endregion
     }
     //#endregion
 

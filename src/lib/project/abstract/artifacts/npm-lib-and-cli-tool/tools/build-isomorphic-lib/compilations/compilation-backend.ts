@@ -15,7 +15,6 @@ import {
   COMPILATION_WATCHING_STARTED,
   distMainProject,
   distNoCutSrcMainProject,
-  libEsm,
   prodSuffix,
   skipLightWeightWatcherFor_CjsESM,
   skipLightWeightWatcherFor_jsMaps,

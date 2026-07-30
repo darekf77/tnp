@@ -305,6 +305,9 @@ export const tmpVscodeProj = `tmp-vscode-proj`;
  * Taon code transformed for backend
  */
 export const tmpSourceDist = 'tmp-source-dist'; // ok for prod
+
+export const tmpSourceEsmDist = 'tmp-source-esm-dist'; // ok for prod
+
 /**
  * Taon code transformed for backend in websql mode
  * (this code is probably never used)
@@ -339,33 +342,33 @@ export enum TempalteSubprojectType {
   TAON_STRIPE_CLOUDFLARE_WORKER = 'taon-stripe-cloudflare-worker',
   TAON_YT_CLOUDFLARE_WORKER = 'taon-yt-cloudflare-worker',
   TAON_EMAIL_CLOUDFLARE_WORKER = 'taon-email-cloudflare-worker',
-TAON_CUSTOM_CLOUDFLARE_WORKER = 'taon-custom-worker',
+  TAON_CUSTOM_CLOUDFLARE_WORKER = 'taon-custom-worker',
 }
 
 export const TempalteSubprojectTypeArr: TempalteSubprojectType[] = [
   TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER,
   TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER,
   TempalteSubprojectType.TAON_EMAIL_CLOUDFLARE_WORKER,
-TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER,
+  TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER,
 ];
 
 export const TemplateSubprojectWorkerPrefix = {
   [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]: 'stripe',
   [TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER]: 'yt',
   [TempalteSubprojectType.TAON_EMAIL_CLOUDFLARE_WORKER]: 'email',
-[TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER]: 'custom',
+  [TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER]: 'custom',
 };
 
 export const TemplateSubprojectDbPrefix = {
   [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]: 'STRIPE_SALES_KV',
   [TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER]: 'YT_DATA_KV',
   [TempalteSubprojectType.TAON_EMAIL_CLOUDFLARE_WORKER]: 'EMAIL_DATA_KV',
-[TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER]: 'CUSTOM_DATA_KV',
+  [TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER]: 'CUSTOM_DATA_KV',
 };
 
 export enum TempalteSubprojectGroup {
   KEY_VALUE_FAST_WORKER_DATABASE = 'key-value-fast-worker-database',
-CUSTOM_WORKERS = 'custom-workers',
+  CUSTOM_WORKERS = 'custom-workers',
 }
 
 export const TempalteSubprojectTypeGroup = {
@@ -375,7 +378,7 @@ export const TempalteSubprojectTypeGroup = {
     TempalteSubprojectGroup.KEY_VALUE_FAST_WORKER_DATABASE,
   [TempalteSubprojectType.TAON_EMAIL_CLOUDFLARE_WORKER]:
     TempalteSubprojectGroup.KEY_VALUE_FAST_WORKER_DATABASE,
-[TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER]:
+  [TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER]:
     TempalteSubprojectGroup.CUSTOM_WORKERS,
 };
 
