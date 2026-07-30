@@ -20,8 +20,14 @@ export class $SubProject extends BaseCli {
       info: {
         name: 'Get info about subproject embeded in this taon project',
       },
-      add: {
+      dev: {
+        name: 'Start in dev mode',
+      },
+      addDeploy: {
         name: 'Add new subproject to this project (with deployment)',
+      },
+      add: {
+        name: 'Add new subproject to this project (skip deployment)',
       },
       teststripe: {
         name: 'Test stripe worker subproject',
@@ -68,9 +74,16 @@ export class $SubProject extends BaseCli {
 
       if (select === 'info') {
         await this.project.subProject.getInfo();
-      } else if (select === 'add') {
+      } else if (select === 'addDeploy') {
         await this.project.subProject.addAndConfigure();
         await this.project.init();
+      } else if (select === 'add') {
+        await this.project.subProject.addAndConfigure({
+          skipDeployment: true,
+        });
+        await this.project.init();
+      } else if (select === 'dev') {
+        await this.project.subProject.startInDevMode();
       } else if (select === 'teststripe') {
         await this.project.subProject.testStripeProjectWithExampleData();
       } else if (select === 'mode') {

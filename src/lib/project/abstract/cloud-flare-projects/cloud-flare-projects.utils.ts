@@ -23,10 +23,11 @@ import {
 } from '../../../constants';
 import type { Project } from '../project';
 
+import { CloudCustomWorkerProject } from './cloud-flare-custom-worker';
+import { CloudFlareEmailWorkerPorject } from './cloud-flare-email-worker-project';
 import { CloudFlareProject } from './cloud-flare-project';
 import { CloudFlareStripeWorkerPorject } from './cloud-flare-stripe-worker-project';
 import { CloudFlareYtWorkerPorject } from './cloud-flare-yt-worker-project';
-import { CloudFlareEmailWorkerPorject } from './cloud-flare-email-worker-project';
 
 export namespace CloudFlarePorjectsUtils {
   //#region extract worker account name
@@ -134,6 +135,7 @@ export namespace CloudFlarePorjectsUtils {
     | CloudFlareProject
     | CloudFlareStripeWorkerPorject
     | CloudFlareYtWorkerPorject
+    | CloudCustomWorkerProject
     | CloudFlareEmailWorkerPorject => {
     const proj = new CloudFlareProject(absLocation, parentProject);
 
@@ -148,6 +150,13 @@ export namespace CloudFlarePorjectsUtils {
       proj.selectedTempalte === TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER
     ) {
       return new CloudFlareYtWorkerPorject(absLocation, parentProject);
+    }
+
+    if (
+      proj.selectedTempalte ===
+      TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
+    ) {
+      return new CloudCustomWorkerProject(absLocation, parentProject);
     }
 
     if (
@@ -193,6 +202,11 @@ export namespace CloudFlarePorjectsUtils {
         packageJsonSubProject,
         tsconfigSubProject,
         indexTsInSrcForWorker,
+        // ...(coreCloudFlareProject.name ===
+        //   TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER &&
+        // Helpers.exists([cwdWorker, indexTsInSrcForWorker])
+        //   ? []
+        //   : [indexTsInSrcForWorker]),
       ];
 
       workerCore.copy(filesForBranding).to([cwdWorker]);
@@ -224,6 +238,7 @@ export namespace CloudFlarePorjectsUtils {
               [cwdWorker, wranglerJsonC],
               'kv_namespaces[0].binding',
             );
+
             UtilsFilesFoldersSync.writeFile(
               filePath,
               content.replace(

@@ -8,11 +8,11 @@ import {
   UtilsFilesFoldersSync,
   UtilsTerminal,
   _,
+  CoreModels,
 } from 'tnp-core/src';
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
-  indexTsInSrcForWorker,
   KV_DATABASE_ONLINE_NAME,
   packageJsonSubProject,
   TempalteSubprojectGroup,
@@ -31,6 +31,8 @@ export class CloudFlareProject {
   protected readonly cwdWorker: string;
 
   public readonly selectedTempalte: TempalteSubprojectType;
+
+  public readonly environment: CoreModels.EnvironmentName | undefined;
 
   get displayName(): string {
     return `${path.basename(this.absLocationPath)} (${this.selectedTempalte})`;
@@ -70,7 +72,11 @@ export class CloudFlareProject {
       absLocationPath,
       path.basename(absLocationPath),
     ]);
-    this.selectedTempalte = path.basename(path.dirname(absLocationPath)) as any;
+    const [firstPart, secondPart] = path
+      .basename(path.dirname(absLocationPath))
+      .split('__');
+    this.selectedTempalte = firstPart as any;
+    this.environment === secondPart;
   }
 
   //#region init
@@ -88,9 +94,16 @@ export class CloudFlareProject {
   //#endregion
 
   //#region after creation
-  public async afterCreation(): Promise<void> {
+  public async afterCreation(opt?: {
+    skipDeployment?: boolean;
+  }): Promise<void> {
     //#region @backendFunc
+    opt = opt || {};
     await this.npmInstall();
+
+    if (opt.skipDeployment) {
+      return;
+    }
 
     await CloudFlarePorjectsUtils.loginCliCloudFlare();
 
@@ -110,6 +123,18 @@ export class CloudFlareProject {
         await this.setApiSecreats(secretsData);
       }
     }
+    //#endregion
+  }
+  //#endregion
+
+  //#region start in dev mode
+  async startInDevMode(): Promise<void> {
+    //#region @backendFunc
+    await UtilsExecProc.spawnAsync(`npm run start`, {
+      cwd: this.cwdWorker,
+      showOutput: true,
+      showOutputColor: true,
+    }).waitUntilDoneOrThrow();
     //#endregion
   }
   //#endregion

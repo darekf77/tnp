@@ -1,6 +1,6 @@
 //#region imports
 import { TaonStripeCloudflareWorker } from '@taon-dev/api-workers/src';
-import { MagicRenamer, RenameRule } from 'magic-renamer/src';
+import { MagicRenamer } from 'magic-renamer/src';
 import {
   path,
   UtilsFilesFoldersSync,
@@ -8,36 +8,15 @@ import {
   _,
   crossPlatformPath,
   Helpers,
-  UtilsExecProc,
-  UtilsOs,
-  fse,
-  Utils,
-  chalk,
 } from 'tnp-core/src';
-import {
-  BaseFeatureForProject,
-  BaseQuickFixes,
-  HelpersTaon,
-  UtilsTypescript,
-} from 'tnp-helpers/src';
+import { BaseFeatureForProject } from 'tnp-helpers/src';
 
 import {
-  indexTsInSrcForWorker,
-  KV_DATABASE_ONLINE_NAME,
-  mainProjectSubProjects,
-  nodeModulesSubPorject,
-  packageJsonLockSubProject,
-  packageJsonSubProject,
-  TempalteSubprojectGroup,
   TempalteSubprojectType,
   TempalteSubprojectTypeArr,
-  TempalteSubprojectTypeGroup,
-  TemplateFolder,
-  TemplateSubprojectDbPrefix,
   TemplateSubprojectWorkerPrefix,
-  tsconfigSubProject,
-  wranglerJsonC,
 } from '../../constants';
+import { ReleaseArtifactTaon } from '../../options';
 
 import { CloudFlareProject } from './cloud-flare-projects/cloud-flare-project';
 import { CloudFlareProjectsRepository } from './cloud-flare-projects/cloud-flare-projects.repository';
@@ -78,8 +57,23 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region PUBLIC API / add new and configure
-  public async addAndConfigure(): Promise<void> {
+  public async startInDevMode(opt?: { projectName?: string }): Promise<void> {
     //#region @backendFunc
+    opt = opt || {};
+    await this.repo.initAll();
+    const chosenProject = await this.selectAnyProject();
+    await chosenProject.startInDevMode();
+
+    //#endregion
+  }
+  //#endregion
+
+  //#region PUBLIC API / add new and configure
+  public async addAndConfigure(opt?: {
+    skipDeployment?: boolean;
+  }): Promise<void> {
+    //#region @backendFunc
+    opt = opt || {};
     await this.repo.initAll();
 
     const choices = TempalteSubprojectTypeArr.reduce((a, b) => {
@@ -138,8 +132,32 @@ export class SubProject extends BaseFeatureForProject<Project> {
     const ins = MagicRenamer.Instance(localTempPath);
     ins.start(magicRenameRules, []);
 
+    const environments = this.project.releaseProcess.getEnvNamesByArtifact(
+      ReleaseArtifactTaon.ANGULAR_NODE_APP,
+    );
+
+    let selectedEnv;
+    if (
+      selectedTemplate === TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
+    ) {
+      selectedEnv = await UtilsTerminal.select({
+        choices: environments
+          .filter(e => {
+            return e.envName !== '__';
+          }) // filter out default env from selection
+          .map(e => {
+            return {
+              name: e.envName === '__' ? '__ ( default )' : e.envName,
+              value: e.envName,
+            };
+          }),
+        question: `Select environment for worker`,
+        autocomplete: true,
+      });
+    }
+
     const absLocationPath = crossPlatformPath([
-      this.repo.pathToTempalteInCurrentProject(selectedTemplate),
+      this.repo.pathToTempalteInCurrentProject(selectedTemplate, selectedEnv),
       generatedWorkerName,
     ]);
 
@@ -159,7 +177,7 @@ export class SubProject extends BaseFeatureForProject<Project> {
       absLocationPath,
       this.project,
     );
-    await newWorker.afterCreation();
+    await newWorker.afterCreation(opt);
 
     //#endregion
   }

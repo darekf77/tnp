@@ -28,6 +28,7 @@ import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
 import {
+  appCloudflareTsFromSrc,
   appElectronTsFromSrc,
   appTsFromSrc,
   binMainProject,
@@ -1303,6 +1304,10 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
     ) {
       project.framework.recreateFileFromCoreProject({
         fileRelativePath: [srcMainProject, appTsFromSrc],
+      });
+
+      project.framework.recreateFileFromCoreProject({
+        fileRelativePath: [srcMainProject, appCloudflareTsFromSrc],
       });
 
       _.times(this.project.taonJson.numOfAdditionalEntrypointsForAppTs, n => {
