@@ -1,7 +1,6 @@
 //#region imports
 import 'reflect-metadata';
-import axios from 'axios';
-import type * as ora from 'ora';
+import { axios } from 'tnp-core/src';
 import {
   config,
   crossPlatformPath,

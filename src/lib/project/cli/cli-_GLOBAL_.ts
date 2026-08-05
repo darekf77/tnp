@@ -1141,10 +1141,11 @@ ${this.project.children
 
   async compileToCjs() {
     //#region @backend
-    await this.project.framework.fixMissingCjsVersionsFor({
-      packageName: this.firstArg,
-      overrideCjsFolder: this.secondArg,
-    });
+    await this.project.framework.fixMissingCjsVersionsFor(
+      this.args.map(c => {
+        return { packageName: c };
+      }),
+    );
     this._exit();
     //#endregion
   }
@@ -2138,9 +2139,8 @@ ${this.project.children
     try {
       const importPkgName = '@imgly/background-removal-node';
       const { removeBackground } = await import(importPkgName);
-      const { readFile, writeFile } = await import('node:fs/promises');
 
-      const inputBuffer = await readFile(filePath);
+      const inputBuffer = await fse.readFile(filePath);
 
       const { pathToFileURL } = await import('node:url');
       const packageEntryPath = require.resolve(importPkgName);
@@ -2157,7 +2157,7 @@ ${this.project.children
 
       const outputBuffer = Buffer.from(await outputBlob.arrayBuffer());
 
-      await writeFile(filePathOutput, outputBuffer);
+      await fse.writeFile(filePathOutput, outputBuffer);
 
       task.done();
 

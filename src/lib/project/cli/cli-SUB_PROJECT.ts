@@ -4,9 +4,9 @@ import { CoreModels, UtilsTerminal } from 'tnp-core/src';
 import { BaseCLiWorkerStartParams, HelpersTaon } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../options';
+import { CloudFlarePorjectsUtils } from '../abstract/cloud-flare-projects/cloud-flare-projects.utils';
 
 import { BaseCli } from './base-cli';
-import { CloudFlarePorjectsUtils } from '../abstract/cloud-flare-projects/cloud-flare-projects.utils';
 
 export class $SubProject extends BaseCli {
   declare params: EnvOptions & Partial<BaseCLiWorkerStartParams>;
@@ -21,8 +21,11 @@ export class $SubProject extends BaseCli {
         name: 'Get info about subproject embeded in this taon project',
       },
       dev: {
-        name: 'Start in dev mode',
+        name: 'Local dev watch mode',
       },
+      // build: {
+      //   name: 'Local dev single build',
+      // },
       addDeploy: {
         name: 'Add new subproject to this project (with deployment)',
       },
@@ -83,7 +86,13 @@ export class $SubProject extends BaseCli {
         });
         await this.project.init();
       } else if (select === 'dev') {
-        await this.project.subProject.startInDevMode();
+        await this.project.subProject.startInDevMode({
+          projectName: this.secondArg?.trim(),
+        });
+      // } else if (select === 'build') {
+      //   await this.project.subProject.buildInDevMode({
+      //     projectName: this.secondArg?.trim(),
+      //   });
       } else if (select === 'teststripe') {
         await this.project.subProject.testStripeProjectWithExampleData();
       } else if (select === 'mode') {

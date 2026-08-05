@@ -1,5 +1,5 @@
 //#region imports
-import * as crypto from 'crypto';
+
 
 import { _, CoreModels, path, UtilsFilesFoldersSync } from 'tnp-core/src';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
@@ -57,8 +57,8 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
   //#region worker name for
   public workerNameFor(description: string): string {
     //#region @backendFunc
+    const crypto = require('crypto');
     const base = _.kebabCase(description);
-
     const hash = crypto
       .createHash('sha256')
       .update(description)

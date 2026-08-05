@@ -21,6 +21,7 @@ import {
   srcMainProject,
   TaonCommands,
   tmpSourceDist,
+  tmpSourceEsmDist,
   tsconfigBackendDistJson,
   tsconfigBackendDistJson_PROD,
   tsconfigBackendEsmDistJson,
@@ -182,9 +183,24 @@ export class BackendCompilation {
           );
         }
 
+        if (line.startsWith(`${tmpSourceEsmDist + prodSuffix}/`)) {
+          return additionalReplace(
+            line.replace(
+              `${tmpSourceEsmDist + prodSuffix}/`,
+              `./${srcMainProject}/`,
+            ),
+          );
+        }
+
         if (line.startsWith(`${tmpSourceDist}/`)) {
           return additionalReplace(
             line.replace(`${tmpSourceDist}/`, `./${srcMainProject}/`),
+          );
+        }
+
+        if (line.startsWith(`${tmpSourceEsmDist}/`)) {
+          return additionalReplace(
+            line.replace(`${tmpSourceEsmDist}/`, `./${srcMainProject}/`),
           );
         }
 
@@ -194,7 +210,12 @@ export class BackendCompilation {
               `../${tmpSourceDist + prodSuffix}/`,
               `./${srcMainProject}/`,
             )
-            .replace(`../${tmpSourceDist}/`, `./${srcMainProject}/`),
+            .replace(`../${tmpSourceDist}/`, `./${srcMainProject}/`)
+            .replace(
+              `../${tmpSourceEsmDist + prodSuffix}/`,
+              `./${srcMainProject}/`,
+            )
+            .replace(`../${tmpSourceEsmDist}/`, `./${srcMainProject}/`),
         );
         //#endregion
       };

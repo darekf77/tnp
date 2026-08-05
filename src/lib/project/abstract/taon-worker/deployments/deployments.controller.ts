@@ -1,5 +1,5 @@
 //#region imports
-import * as FormData from 'form-data'; // @backend
+import type * as FormData from 'form-data'; // @backend
 import { Ng2RestAxiosRequestConfig } from 'ng2-rest/src';
 import {
   Taon,

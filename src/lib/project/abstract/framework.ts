@@ -1436,13 +1436,22 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
   //#region fix missing cjs versions of packages
 
   public async fixMissingCjsVersionsFor(
-    packageToUpdate: Models.CjsCompileEsm,
+    packagesToUpdate: Models.CjsCompileEsm[],
   ): Promise<void> {
-    await this.fixMissingCjsVersions([packageToUpdate]);
+    const packages =
+      packagesToUpdate && packagesToUpdate.length > 0
+        ? packagesToUpdate
+        : this.project.framework.coreContainer.framework
+            .globalEsmToCjsPrecompilePackages;
+    Helpers.info(
+      `Force Rebuilding cjs version for ${packages.map(c => c.packageName).join(',')}`,
+    );
+    await this.fixMissingCjsVersions(packages, true);
   }
 
   public async fixMissingCjsVersions(
     packagesToUpdate?: Models.CjsCompileEsm[],
+    force = false,
   ): Promise<void> {
     //#region @backendFunc
     const packages = packagesToUpdate
@@ -1466,14 +1475,17 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
         `Rebuilding cjs version for ${pkg.packageName}`,
       );
 
-      for (const nodeMOdulesFolderAbsPAth of foldersToUpdate) {
+      for (const nodeModulesFolderAbsPath of foldersToUpdate) {
         Helpers.info(
-          `Fixing ${pkg.packageName} in node_modules of ${path.basename(path.dirname(nodeMOdulesFolderAbsPAth))}`,
+          `Fixing ${pkg.packageName} in node_modules of ${path.basename(path.dirname(nodeModulesFolderAbsPath))}`,
         );
         await UtilsCjsPackage.buildCjsVersionFor(
           pkg.packageName,
-          nodeMOdulesFolderAbsPAth,
+          nodeModulesFolderAbsPath,
           pkg.overrideCjsFolder,
+          {
+            force,
+          },
         );
       }
 

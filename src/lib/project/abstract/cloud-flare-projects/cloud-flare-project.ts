@@ -139,6 +139,18 @@ export class CloudFlareProject {
   }
   //#endregion
 
+  //#region buld in dev mode
+  async buildInDevMode(): Promise<void> {
+    //#region @backendFunc
+    // await UtilsExecProc.spawnAsync(`npm run start`, {
+    //   cwd: this.cwdWorker,
+    //   showOutput: true,
+    //   showOutputColor: true,
+    // }).waitUntilDoneOrThrow();
+    //#endregion
+  }
+  //#endregion
+
   //#region npm install
   public async npmInstall(): Promise<void> {
     //#region npm install

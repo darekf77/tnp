@@ -1030,7 +1030,16 @@ export class BrowserCodeCut {
       ).output;
 
       if (this.project.framework.isStandaloneProject && !this.isWebsqlMode) {
-        const regionsToRemove = [TAGS.BROWSER, TAGS.WEBSQL_ONLY];
+        const regionsToRemoveCjs = [
+          TAGS.BROWSER,
+          TAGS.WEBSQL_ONLY,
+          TAGS.CJS_REMOVE,
+        ];
+        const regionsToRemoveEsm = [
+          TAGS.BROWSER,
+          TAGS.WEBSQL_ONLY,
+          TAGS.ESM_REMOVE,
+        ];
 
         // const debug =  this.relativePath.endsWith('layout-simple-small-app.component.ts');
         // if (debug ) {
@@ -1042,7 +1051,7 @@ export class BrowserCodeCut {
         this.rawContentBackend = RegionRemover.from(
           this.absoluteBackendDestFilePath,
           this.rawContentBackend,
-          regionsToRemove,
+          regionsToRemoveCjs,
           this.project,
           // debug
         ).output;
@@ -1050,7 +1059,7 @@ export class BrowserCodeCut {
         this.rawContentEsmBackend = RegionRemover.from(
           this.absoluteBackendEsmDestFilePath,
           this.rawContentEsmBackend,
-          regionsToRemove,
+          regionsToRemoveEsm,
           this.project,
           // debug
         ).output;

@@ -1,7 +1,6 @@
-import * as fs from 'node:fs/promises';
-
 import {
   crossPlatformPath,
+  fse,
   Helpers,
   path,
   UtilsFilesFoldersSync,
@@ -121,7 +120,7 @@ Use ONE OUTPUT MARKDOWN CODE BOX FIELD for the whole response.
   }
 
   async function pathIsFileOrDir(p: string): Promise<'file' | 'dir'> {
-    const st = await fs.lstat(p);
+    const st = await fse.lstat(p);
     return st.isDirectory() ? 'dir' : 'file';
   }
 
@@ -148,7 +147,7 @@ Use ONE OUTPUT MARKDOWN CODE BOX FIELD for the whole response.
     async function walk(dirAbs: string, depth: number) {
       if (depth > maxDepth) return;
 
-      let entries = await fs.readdir(dirAbs, { withFileTypes: true });
+      let entries = await fse.readdir(dirAbs, { withFileTypes: true });
 
       // filter omitted
       entries = entries.filter(e => !shouldOmit(e.name, omitPatterns));
@@ -178,7 +177,7 @@ Use ONE OUTPUT MARKDOWN CODE BOX FIELD for the whole response.
             continue;
           }
           // follow symlink target
-          const st = await fs.stat(abs).catch(() => null);
+          const st = await fse.stat(abs).catch(() => null);
           if (!st) continue;
           if (st.isDirectory()) {
             if (includeDirs) lines.push(`|${rel}/`);

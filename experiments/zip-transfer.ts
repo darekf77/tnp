@@ -7,7 +7,7 @@ import path from 'path';
 import crypto from 'crypto';
 import express, { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
-import axios from 'axios';
+import { axios } from 'tnp-core/src';
 import FormData from 'form-data';
 
 //#region helpers
