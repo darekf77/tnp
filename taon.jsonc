@@ -21,6 +21,7 @@
     "mariadb",
     "sql.js",
     "@parcel/watcher",
+    "jsonc-parser",
     // "rxjs",
     // "tslib",
     // "magic-renamer",
@@ -73,6 +74,12 @@
       "includeInBundleNodeModules": [],
       "isExternalFor": "*",
       "packageName": "@huggingface/transformers",
+    },
+    {
+      "description": "Json c parser",
+      "includeInBundleNodeModules": [],
+      "isExternalFor": "*",
+      "packageName": "jsonc-parser",
     },
     // {
     //   "description": "AI translations node",
