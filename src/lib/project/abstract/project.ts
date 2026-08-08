@@ -1,10 +1,6 @@
 //#region imports
 import { Observable, Subject } from 'rxjs';
-import {
-  dotTaonFolder,
-  LibTypeEnum,
-  Utils,
-} from 'tnp-core/src';
+import { dotTaonFolder, LibTypeEnum, Utils } from 'tnp-core/src';
 import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
@@ -639,6 +635,14 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
       }
     }
     return path.basename(this.location);
+    //#endregion
+  }
+  //#endregion
+
+  //#region short name
+  public get shortName(): string {
+    //#region @backendFunc
+    return this.taonJson.shortName;
     //#endregion
   }
   //#endregion

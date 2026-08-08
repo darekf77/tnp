@@ -1,10 +1,10 @@
 //#region imports
 
-
 import { _, CoreModels, path, UtilsFilesFoldersSync } from 'tnp-core/src';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
 import {
+  groupsFolder,
   mainProjectSubProjects,
   packageJsonSubProject,
   TempalteSubprojectType,
@@ -37,9 +37,12 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
 
   //#region core project path template type
   public pathToTempalteInCore(templateType: TempalteSubprojectType): string {
-    return this.project.framework.coreProject.pathFor(
-      `${TemplateFolder.templatesSubprojects}/${templateType}`,
-    );
+    return this.project.framework.coreProject.pathFor([
+      TemplateFolder.templatesSubprojects,
+      groupsFolder,
+      TempalteSubprojectTypeGroup[templateType],
+      templateType,
+    ]);
   }
   //#endregion
 
@@ -202,13 +205,10 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
     for (const absProjPath of allFolder) {
       const selectedTempalte = _.first(
         path.basename(path.dirname(absProjPath)).split('__'),
-      );
-      console.log({ selectedTempalte });
+      ) as TempalteSubprojectType;
+
       const coreProj = this.project.ins.From(
-        this.project.framework.coreProject.pathFor([
-          TemplateFolder.templatesSubprojects,
-          selectedTempalte,
-        ]),
+        this.pathToTempalteInCore(selectedTempalte),
       );
 
       if (coreProj) {

@@ -719,6 +719,12 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     //#endregion
   }
 
+  get shortName(): string {
+    //#region @backendFunc
+    return (this.data as Models.TaonJsonStandalone)?.shortName;
+    //#endregion
+  }
+
   set appId(value: string) {
     //#region @backend
     const data = this.data as Models.TaonJsonStandalone;

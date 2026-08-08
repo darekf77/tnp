@@ -13,13 +13,12 @@ import {
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
+  groupsFolder,
   KV_DATABASE_ONLINE_NAME,
-  packageJsonSubProject,
   TempalteSubprojectGroup,
   TempalteSubprojectType,
   TempalteSubprojectTypeGroup,
   TemplateFolder,
-  TemplateSubprojectDbPrefix,
   tsconfigSubProject,
   wranglerJsonC,
 } from '../../../constants';
@@ -54,6 +53,8 @@ export class CloudFlareProject {
     return this.taonParentProject.ins.From(
       this.taonParentProject.framework.coreProject.pathFor([
         TemplateFolder.templatesSubprojects,
+        groupsFolder,
+        TempalteSubprojectTypeGroup[this.selectedTempalte],
         this.selectedTempalte,
       ]),
     );
@@ -260,9 +261,10 @@ export class CloudFlareProject {
     while (true) {
       const KV_DB_NAME = await UtilsTerminal.input({
         question: `Provide cloudflare KV database name to create`,
-        defaultValue: `${TemplateSubprojectDbPrefix[this.selectedTempalte]}_${_.snakeCase(
-          this.taonParentProject.name,
-        ).toUpperCase()}`,
+        defaultValue: CloudFlarePorjectsUtils.getKVDatabasePrefixFromTemplate(
+          this.selectedTempalte,
+          this.taonParentProject.shortName,
+        ),
         validate: value => {
           return /^[A-Z0-9]+(?:_[A-Z0-9]+)*$/.test(value);
         },

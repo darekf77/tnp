@@ -14,7 +14,6 @@ import { BaseFeatureForProject } from 'tnp-helpers/src';
 import {
   TempalteSubprojectType,
   TempalteSubprojectTypeArr,
-  TemplateSubprojectWorkerPrefix,
 } from '../../constants';
 import { ReleaseArtifactTaon } from '../../options';
 
@@ -110,7 +109,10 @@ export class SubProject extends BaseFeatureForProject<Project> {
     while (true) {
       nameForProject = await UtilsTerminal.input({
         required: true,
-        defaultValue: `kv-worker-${this.project.name}-${TemplateSubprojectWorkerPrefix[selectedTemplate]}`,
+        defaultValue: CloudFlarePorjectsUtils.getWorkerPrefixFromTemplate(
+          selectedTemplate,
+          this.project.shortName,
+        ),
         question: `Name for worker`,
       });
       if (alreadyAdded.includes(nameForProject)) {

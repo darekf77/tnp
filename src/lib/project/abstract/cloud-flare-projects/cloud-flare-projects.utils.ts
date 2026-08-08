@@ -1,8 +1,7 @@
+//#region imports
 import { execSync, spawn } from 'child_process';
-import * as crypto from 'crypto';
 
 import { RenameRule } from 'magic-renamer/src';
-import { TempalteSubprojectType } from 'tnp/src';
 import {
   crossPlatformPath,
   Helpers,
@@ -11,6 +10,7 @@ import {
   UtilsExecProc,
   UtilsFilesFoldersSync,
   UtilsTerminal,
+  _,
 } from 'tnp-core/src';
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
@@ -18,6 +18,7 @@ import {
   indexTsInSrcForWorker,
   KV_DATABASE_ONLINE_NAME,
   packageJsonSubProject,
+  TempalteSubprojectType,
   tsconfigSubProject,
   wranglerJsonC,
 } from '../../../constants';
@@ -28,8 +29,36 @@ import { CloudFlareEmailWorkerPorject } from './cloud-flare-email-worker-project
 import { CloudFlareProject } from './cloud-flare-project';
 import { CloudFlareStripeWorkerPorject } from './cloud-flare-stripe-worker-project';
 import { CloudFlareYtWorkerPorject } from './cloud-flare-yt-worker-project';
+//#endregion
 
 export namespace CloudFlarePorjectsUtils {
+  /**
+   * examples:
+   */
+  export const getKVDatabasePrefixFromTemplate = (
+    templateType: TempalteSubprojectType,
+    taonParentProjectName: string,
+  ): string => {
+    return `${getPrefixFromGroup(templateType).replace(
+      /\_/g,
+      '_',
+    )}_KV_${_.snakeCase(taonParentProjectName).toUpperCase()}`;
+  };
+
+  export const getWorkerPrefixFromTemplate = (
+    templateType: TempalteSubprojectType,
+    taonParentProjectName: string,
+  ): string => {
+    return `kv-worker-${getPrefixFromGroup(templateType)}_${taonParentProjectName}`;
+  };
+
+  export const getPrefixFromGroup = (templateType: TempalteSubprojectType): string => {
+    return templateType // TemplateSubprojectDbPrefix
+      .replace('taon-', '')
+      .replace('-cloudflare-worker', '')
+      .replace('-worker', '');
+  };
+
   //#region extract worker account name
   export const extractWorkersDevInfo = (text: string) => {
     const match = text.match(/https:\/\/([^\.]+)\.([^\.]+)\.workers\.dev/);
@@ -287,9 +316,11 @@ export namespace CloudFlarePorjectsUtils {
   };
   //#endregion
 
+  //#region secret key data
   export interface SecretKeyData {
     key: string;
     description: string;
     afterAddedFn?: () => void | Promise<void>;
   }
+  //#endregion
 }

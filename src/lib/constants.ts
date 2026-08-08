@@ -352,19 +352,7 @@ export const TempalteSubprojectTypeArr: TempalteSubprojectType[] = [
   TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER,
 ];
 
-export const TemplateSubprojectWorkerPrefix = {
-  [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]: 'stripe',
-  [TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER]: 'yt',
-  [TempalteSubprojectType.TAON_EMAIL_CLOUDFLARE_WORKER]: 'email',
-  [TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER]: 'custom',
-};
-
-export const TemplateSubprojectDbPrefix = {
-  [TempalteSubprojectType.TAON_STRIPE_CLOUDFLARE_WORKER]: 'STRIPE_SALES_KV',
-  [TempalteSubprojectType.TAON_YT_CLOUDFLARE_WORKER]: 'YT_DATA_KV',
-  [TempalteSubprojectType.TAON_EMAIL_CLOUDFLARE_WORKER]: 'EMAIL_DATA_KV',
-  [TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER]: 'CUSTOM_DATA_KV',
-};
+export const groupsFolder = 'groups';
 
 export enum TempalteSubprojectGroup {
   KEY_VALUE_FAST_WORKER_DATABASE = 'key-value-fast-worker-database',
