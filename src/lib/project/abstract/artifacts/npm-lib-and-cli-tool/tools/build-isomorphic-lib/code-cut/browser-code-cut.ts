@@ -18,6 +18,7 @@ import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
   getCleanImport,
+  isTestFile,
   replaceAssetsLinksForApp,
   replaceImportToAssetsIMport,
 } from '../../../../../../../app-utils';
@@ -1369,10 +1370,12 @@ export class BrowserCodeCut {
           // console.log(
           //   `isBrowser: ${!!isBrowser}, libForApp: ${!!libForApp},ab ${absFilePath}, rel: ${this.relativePath}`,
           // );
-          Helpers.warn(
-            `(illegal import ${chalk.bold(`${cleanName}/${srcFromTaonImport}`)})` +
-              ` Use relative path: ./${crossPlatformPath([srcMainProject, this.relativePath])}:${indexInIfile + 1}`,
-          );
+          if (!isTestFile(this.relativePath)) {
+            Helpers.warn(
+              `(illegal import ${chalk.bold(`${cleanName}/${srcFromTaonImport}`)})` +
+                ` Use relative path: ./${crossPlatformPath([srcMainProject, this.relativePath])}:${indexInIfile + 1}`,
+            );
+          }
 
           this.initialWarnings[key] = true;
         }

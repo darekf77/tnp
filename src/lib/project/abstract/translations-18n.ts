@@ -17,6 +17,7 @@ import {
   UtilsTypescript,
 } from 'tnp-helpers/src';
 
+import { isTestFile } from '../../app-utils';
 import {
   assetsFromTempSrc,
   i18nDataTsFileExt,
@@ -49,13 +50,7 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
     const filesPathes = UtilsFilesFoldersSync.getFilesFrom(filesLocaiton, {
       followSymlinks: false,
       recursive: true,
-    }).filter(
-      f =>
-        !f.endsWith('.spec.ts') &&
-        !f.endsWith('.test.ts') &&
-        !f.endsWith('.spec.tsx') &&
-        !f.endsWith('.test.tsx'),
-    );
+    }).filter(f => !isTestFile(f));
 
     // console.log({ filesLocaiton });
 

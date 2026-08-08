@@ -78,6 +78,139 @@ export const ALLOWED_TO_RELEASE: {
 };
 //#endregion
 
+//#region is test file
+export const isTestFile = (filePath: string): boolean => {
+  if (!filePath) {
+    Helpers.warn(`[isTestFile] Checking empty path`, true);
+    return false;
+  }
+  return (
+    filePath.endsWith('.test.ts') ||
+    filePath.endsWith('.test.tsx') ||
+    filePath.endsWith('.spec.ts') ||
+    filePath.endsWith('.spec.tsx') ||
+    filePath.endsWith('.e2e.ts') ||
+    filePath.endsWith('.e2e.tsx')
+  );
+};
+//#endregion
+
+//#region create short name
+export function createShortName(
+  taonProjectName: string,
+  opt?: {
+    optionalParentProjectName?: string;
+  },
+): string {
+  const MAX_LENGTH = 6;
+
+  const name = taonProjectName.toLowerCase();
+
+  if (name.length <= MAX_LENGTH) {
+    return name;
+  }
+
+  const parts = name.split('-').filter(Boolean);
+
+  /**
+   * Prefer consonants because they usually carry more
+   * recognizable information than vowels.
+   */
+  const compactWord = (word: string, maxLength: number): string => {
+    if (word.length <= maxLength) {
+      return word;
+    }
+
+    if (maxLength <= 1) {
+      return word[0];
+    }
+
+    const first = word[0];
+    const last = word[word.length - 1];
+
+    const middle = word.slice(1, -1).replace(/[aeiou]/g, '');
+
+    const result = first + middle.slice(0, Math.max(0, maxLength - 2)) + last;
+
+    return result.slice(0, maxLength);
+  };
+
+  /**
+   * Names containing "-" should preferably keep one dash.
+   *
+   * mattbachat-pl
+   * -> mtb-pl
+   *
+   * application-quiz
+   * -> app-qz
+   */
+  if (parts.length >= 2) {
+    const lastPart = parts[parts.length - 1];
+    const leftPart = parts.slice(0, -1).join('');
+
+    // Reserve:
+    //   1 char for "-"
+    //   up to 2 chars for right side
+    const rightLength = Math.min(2, lastPart.length);
+    const leftLength = MAX_LENGTH - 1 - rightLength;
+
+    const left = compactWord(leftPart, leftLength);
+    const right = compactWord(lastPart, rightLength);
+
+    return `${left}-${right}`;
+  }
+
+  /**
+   * Single-word project.
+   *
+   * kloniebachatowepl
+   * -> klbpl / similar recognizable shortening
+   *
+   * myprojecttest
+   * -> mypst
+   */
+  const word = parts[0];
+
+  const consonants = word.slice(1, -2).replace(/[aeiou]/g, '');
+
+  let result = word.slice(0, 2) + consonants.slice(0, 2) + word.slice(-2);
+
+  result = [...new Set(result)].join('');
+
+  /**
+   * Deduplication can make it shorter than desired.
+   * Fill deterministically from the original name.
+   */
+  for (const char of word) {
+    if (result.length >= MAX_LENGTH) {
+      break;
+    }
+
+    if (!result.includes(char)) {
+      result += char;
+    }
+  }
+
+  /**
+   * Parent can provide deterministic uniqueness if the
+   * generated name is unusually short.
+   */
+  if (result.length < 4 && opt?.optionalParentProjectName) {
+    for (const char of opt.optionalParentProjectName) {
+      if (/[a-z0-9]/.test(char) && !result.includes(char)) {
+        result += char;
+      }
+
+      if (result.length >= MAX_LENGTH) {
+        break;
+      }
+    }
+  }
+
+  return result.slice(0, MAX_LENGTH);
+}
+//#endregion
+
 //#region extract first level regions
 export const extractFirstLevelRegions = (
   content: string,

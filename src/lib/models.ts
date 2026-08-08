@@ -388,6 +388,7 @@ export namespace Models {
   }
 
   interface TaonJsonCommon {
+    shortName?: string;
     type: LibTypeEnum;
     /**
      * version of taon framework for project

@@ -20,6 +20,7 @@ import {
 } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
+import { createShortName } from '../../app-utils';
 import {
   OVERRIDE_FROM_TNP,
   packageJsonMainProject,
@@ -236,11 +237,17 @@ export class TaonJson extends BaseFeatureForProject<Project> {
         packageJsonOverride,
       };
 
+
+
       scriptsCommands.forEach(command => {
         delete ((destinationObject.packageJsonOverride || {}).scripts || {})[
           command
         ];
       });
+
+      if(!destinationObject.shortName) {
+        destinationObject.shortName = createShortName(this.project.name)
+      }
 
       this.project.writeJsonC(taonJsonMainProject, destinationObject);
     }
