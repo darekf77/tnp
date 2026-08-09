@@ -1,6 +1,6 @@
 import os from 'os';
 
-import { CoreModels, UtilsTerminal } from 'tnp-core/src';
+import { CoreModels, path, UtilsTerminal } from 'tnp-core/src';
 import { BaseCLiWorkerStartParams, HelpersTaon } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../options';
@@ -87,12 +87,12 @@ export class $SubProject extends BaseCli {
         await this.project.init();
       } else if (select === 'dev') {
         await this.project.subProject.startInDevMode({
-          projectName: this.secondArg?.trim(),
+          projectName: path.basename(this.secondArg?.trim()),
         });
-      // } else if (select === 'build') {
-      //   await this.project.subProject.buildInDevMode({
-      //     projectName: this.secondArg?.trim(),
-      //   });
+        // } else if (select === 'build') {
+        //   await this.project.subProject.buildInDevMode({
+        //     projectName: this.secondArg?.trim(),
+        //   });
       } else if (select === 'teststripe') {
         await this.project.subProject.testStripeProjectWithExampleData();
       } else if (select === 'mode') {

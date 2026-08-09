@@ -615,6 +615,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       `# CURRENT BUILD INFO
 
 Project name: **${this.project.name}** <br>
+Project short name: **${this.project.shortName}** <br>
 Project npm name: **${this.project.nameForNpmPackage}**
 
 Current build:

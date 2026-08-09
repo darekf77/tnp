@@ -216,13 +216,13 @@ export namespace Models {
      * Also.. this dependencies are going to be included in released npm lib
      * as dependencies.
      */
-    dependenciesNamesForNpmLib: string[];
+    dependenciesNamesForNpmLib?: string[];
 
     /**
      * (STANDALONE) Same as dependenciesNamesForNpmLib but these dependencies
      * are isomorphic (can be used in browser and node)
      */
-    isomorphicDependenciesForNpmLib: string[];
+    isomorphicDependenciesForNpmLib?: string[];
 
     /**
      * (STANDALONE) If not defined:
@@ -231,7 +231,7 @@ export namespace Models {
      * building locally projects in watch mode `taon build:lib:watch`
      * or normal mode `taon build:lib`
      */
-    devModeDependenciesForNpmLib: string[];
+    devModeDependenciesForNpmLib?: string[];
 
     /**
      * (STANDALONE) At beginning after node_modules installation taon is checking is
@@ -239,7 +239,7 @@ export namespace Models {
      * Also.. this peerDependencies are going to be included in released npm lib
      * as peerDependencies.
      */
-    peerDependenciesNamesForNpmLib: string[];
+    peerDependenciesNamesForNpmLib?: string[];
 
     /**
      * (STANDALONE) At beginning after node_modules installation taon is checking is
@@ -247,7 +247,7 @@ export namespace Models {
      * Also.. this peerDependencies are going to be included in released npm lib
      * as peerDependencies.
      */
-    devDependenciesNamesForNpmLib: string[];
+    devDependenciesNamesForNpmLib?: string[];
 
     /**
      * (STANDALONE) At beginning after node_modules installation taon is checking is
@@ -255,13 +255,13 @@ export namespace Models {
      * Also.. this optionalDependencies are going to be included in released npm lib
      * as optionalDependencies.
      */
-    optionalDependenciesNamesForNpmLib: string[];
+    optionalDependenciesNamesForNpmLib?: string[];
 
     /**
      * (STANDALONE) Provide information about external packages for single file
      * bundling process
      */
-    singleFileBundlingPackages: {
+    singleFileBundlingPackages?: {
       /**
        * Description of external package
        * - why it is external
@@ -322,18 +322,18 @@ export namespace Models {
      * (STANDALONE) generate src/lib/index._auto-generated_.ts with
      * all exports from lib ts files
      */
-    shouldGenerateAutogenIndexFile: boolean;
+    shouldGenerateAutogenIndexFile?: boolean;
 
     /**
      * (STANDALONE) generate src/app.ts routes, imports and context initializations
      * from ./src/app/*.routes.ts (recursive)
      */
-    shouldGenerateAutogenAppRoutesFile: boolean;
+    shouldGenerateAutogenAppRoutesFile?: boolean;
 
     /**
      * Should be generated translations files for i18n
      */
-    shouldGenerateTranslationFiles: boolean;
+    shouldGenerateTranslationFiles?: boolean;
 
     /**
      * (STANDALONE) Auto release helps with releasing multiple projects from a local machine.
@@ -360,7 +360,7 @@ export namespace Models {
      * so dependencies are released first. Use projects names (or basename)
      * and not npm names.
      */
-    overridePackagesOrder: string[];
+    overridePackagesOrder?: string[];
 
     /**
      * (CONTAINER) Don't release inside children -> only tag the version
@@ -388,7 +388,8 @@ export namespace Models {
   }
 
   interface TaonJsonCommon {
-    shortName?: string;
+    overrideShortName?: string;
+
     type: LibTypeEnum;
     /**
      * version of taon framework for project
@@ -398,8 +399,8 @@ export namespace Models {
     /**
      * project is template for other project
      */
-    isCoreProject: boolean;
-    packageJsonOverride: Partial<PackageJson>;
+    isCoreProject?: boolean;
+    packageJsonOverride?: Partial<PackageJson>;
     /**
      * Folders to remove after pulling from git.
      * Usefull when you have some folders that are

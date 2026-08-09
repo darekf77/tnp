@@ -12,6 +12,7 @@ import {
   HelpersTaon,
 } from 'tnp-helpers/src';
 
+import { createShortName } from '../../app-utils';
 import {
   assetsFromTempSrc,
   binMainProject,
@@ -642,7 +643,16 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   //#region short name
   public get shortName(): string {
     //#region @backendFunc
-    return this.taonJson.shortName;
+    const key = 'shortName';
+    if (this.taonJson.overrideShortName) {
+      return this.taonJson.overrideShortName;
+    }
+    if (!this.cache[key]) {
+      this.cache[key] = createShortName(this.name, {
+        optionalParentProjectName: this.parent?.name,
+      });
+    }
+    return this.cache[key];
     //#endregion
   }
   //#endregion

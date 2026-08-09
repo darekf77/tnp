@@ -53,9 +53,12 @@
   "generateTranslationsFor": ["en-US", "pl-PL"],
   "isUsingOwnNodeModulesInsteadCoreContainer": true,
   "resources": ["icon-menu-tnp.svg"],
+  "shortName": "tnp",
+
   "shouldGenerateTranslationFiles": false,
 
   //#region single bundle config
+
   "singleFileBundlingPackages": [
     // electron is replaced by default
     // {
@@ -77,8 +80,8 @@
     },
     {
       "description": "Json c parser",
-      "includeInBundleNodeModules": [],
-      "isExternalFor": "*",
+      "includeInBundleNodeModules": ["vscode-plugin"],
+      "isExternalFor": ["npm-lib-and-cli-tool","vscode-plugin"],
       "packageName": "jsonc-parser",
     },
     // {
@@ -175,7 +178,6 @@
   //#endregion
 
   "storeLocalReleaseFilesInRepository": true,
-
   "packageJsonOverride": {
     "author": "Dariusz Filipiak",
     "contributes": {
@@ -239,5 +241,4 @@
     },
     "sideEffects": false,
   },
-  "shortName": "tnp",
 }

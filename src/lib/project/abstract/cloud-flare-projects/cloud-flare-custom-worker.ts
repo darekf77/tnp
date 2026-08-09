@@ -1,4 +1,4 @@
-import { UtilsExecProc } from 'tnp-core/src';
+import { Helpers, UtilsExecProc } from 'tnp-core/src';
 
 import { CloudFlareProject } from './cloud-flare-project';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
@@ -14,11 +14,12 @@ export class CloudCustomWorkerProject extends CloudFlareProject {
     }).waitUntilDoneOrThrow({
       successOutputMessage: 'Compilation Done',
     });
-    await UtilsExecProc.spawnAsync(`npm run start`, {
+    Helpers.run(`npm run start`, {
       cwd: this.cwdWorker,
-      showOutput: true,
-      showOutputColor: true,
-    }).waitUntilDoneOrThrow({});
+      biggerBuffer: true,
+      output: true,
+      silence: false,
+    }).sync();
     //#endregion
   }
   //#endregion

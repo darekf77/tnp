@@ -59,17 +59,7 @@ export class SubProject extends BaseFeatureForProject<Project> {
   public async startInDevMode(opt?: { projectName?: string }): Promise<void> {
     //#region @backendFunc
     opt = opt || {};
-    await this.repo.initAll();
-    const chosenProject = await this.selectAnyProject();
-    await chosenProject.startInDevMode();
-    //#endregion
-  }
-  //#endregion
-
-  //#region PUBLIC API / add new and configure
-  public async buildInDevMode(opt?: { projectName?: string }): Promise<void> {
-    //#region @backendFunc
-    opt = opt || {};
+    // console.log(`opt`, opt);
     await this.repo.initAll();
     const chosenProject = await this.selectAnyProject(opt.projectName);
     await chosenProject.startInDevMode();
@@ -435,6 +425,9 @@ export class SubProject extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     const subprojects = this.repo.getAll();
     const projeFromArgs = subprojects.find(c => c.name === projectName);
+    // console.log('projectName', projectName);
+    // console.log(`subprojects`, subprojects.map(c => c.name));
+    // console.log(`projeFromArgs`, projeFromArgs);
     const chosenProject = projeFromArgs
       ? projeFromArgs
       : await this.selectLocation(subprojects);

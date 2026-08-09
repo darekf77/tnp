@@ -512,6 +512,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
       this.project.removeFile('.eslintrc.json');
       this.project.removeFile('eslint.config.js');
       this.project.removeFile('tslint.json');
+      this.project.removeFile(`${srcMainProject}/${appCloudflareTsFromSrc}`);
       this.project.removeFile(
         `${dotVscodeMainProject}/${TaonGeneratedFiles.LAUNCH_BACKUP_JSON}`,
       );
@@ -1306,9 +1307,9 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
         fileRelativePath: [srcMainProject, appTsFromSrc],
       });
 
-      project.framework.recreateFileFromCoreProject({
-        fileRelativePath: [srcMainProject, appCloudflareTsFromSrc],
-      });
+      // project.framework.recreateFileFromCoreProject({
+      //   fileRelativePath: [srcMainProject, appCloudflareTsFromSrc],
+      // });
 
       _.times(this.project.taonJson.numOfAdditionalEntrypointsForAppTs, n => {
         const entrypointArgId = n + 1;

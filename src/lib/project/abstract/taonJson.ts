@@ -237,17 +237,11 @@ export class TaonJson extends BaseFeatureForProject<Project> {
         packageJsonOverride,
       };
 
-
-
       scriptsCommands.forEach(command => {
         delete ((destinationObject.packageJsonOverride || {}).scripts || {})[
           command
         ];
       });
-
-      if(!destinationObject.shortName) {
-        destinationObject.shortName = createShortName(this.project.name)
-      }
 
       this.project.writeJsonC(taonJsonMainProject, destinationObject);
     }
@@ -719,9 +713,17 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     //#endregion
   }
 
-  get shortName(): string {
+  get overrideShortName(): string {
     //#region @backendFunc
-    return (this.data as Models.TaonJsonStandalone)?.shortName;
+    return (this.data as Models.TaonJsonStandalone)?.overrideShortName;
+    //#endregion
+  }
+
+  set overrideShortName(value: string) {
+    //#region @backend
+    const data = this.data as Models.TaonJsonStandalone;
+    data.overrideNameForCli = value;
+    this.saveToDisk('updating overrideNameForClis');
     //#endregion
   }
 
