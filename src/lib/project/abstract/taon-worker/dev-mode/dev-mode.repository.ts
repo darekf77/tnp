@@ -21,6 +21,7 @@ import {
   UtilsOs,
   UtilsProcess,
   UtilsProjects,
+  UtilsStdinStdoutLogger,
   UtilsTerminal,
   UtilsWaitNotifier,
 } from 'tnp-core/src';
@@ -699,7 +700,9 @@ export class DevModeRepository extends TaonBaseKvRepository<{
   //#region API /  private methods / add message
   private addMessage(msg: string): void {
     //#region @backendFunc
-
+    if (UtilsStdinStdoutLogger.startedRegistering()) {
+      console.log(msg);
+    }
     this.logMessages.push(msg);
     this.logMessages = this.logMessages.slice(-100);
     this.debouceWriteLog();

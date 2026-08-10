@@ -14,6 +14,7 @@ import {
   taonPackageName,
   Utils,
   UtilsOs,
+  UtilsStdinStdoutLogger,
   UtilsTerminal,
 } from 'tnp-core/src';
 
@@ -75,7 +76,9 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
   //#region API /  private methods / add message
   private addMessage(msg: string): void {
     //#region @backendFunc
-
+    if (UtilsStdinStdoutLogger.startedRegistering()) {
+      console.log(msg);
+    }
     this.logMessages.push(msg);
     this.logMessages = this.logMessages.slice(-100);
     this.debouceWriteLog();
