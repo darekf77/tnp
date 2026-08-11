@@ -130,7 +130,7 @@ export class TaonBuildObserver extends BaseFeatureForProject<Project> {
       }
       this.writeBuildStatus();
     }
-    void this.debouceUpdate();
+    void this.debouceUpdate('after effect');
   };
   //#endregion
 
@@ -252,8 +252,10 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
   //#endregion
 
   //#region fields & getters / debouce update
-  private debouceUpdate = _.debounce(async () => {
-    await this.updateAction();
+  private debouceUpdate = _.debounce(async (reason: string) => {
+    await this.updateAction({
+      reason: `debounce update: ${reason}`,
+    });
   }, DEBOUNCE_debouceUpdate);
   //#endregion
 
@@ -501,12 +503,15 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
   /**
    * errors or non-watch mode needs to for instant predictable updates
    */
-  public async updateAction(info?: DevMode.BuildStatusInfo): Promise<void> {
+  public async updateAction(opt: {
+    info?: DevMode.BuildStatusInfo;
+    reason: string;
+  }): Promise<void> {
     //#region @backendFunc
     if (!this.project.watcher.isTaonLightWatcherMode) {
       return;
     }
-    this.mergeStatus(info);
+    this.mergeStatus(opt.info);
 
     if (this.allStatusesOK) {
       if (!this.alreadyDoneCopyMangerForThisTick) {
@@ -520,6 +525,7 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
     try {
       await this.project.ins.devBuildRepository.updatePool({
         buildStatusInfo: this.buildStatusInfo,
+        reason: opt.reason,
       });
     } catch (error) {
       config.frameworkName === tnpPackageName &&
@@ -610,8 +616,9 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
       }
     }
 
+    let lastTaonJSON: string;
     chokidar.watch(this.project.taonJson.path).on('change', () => {
-      void this.debouceUpdate();
+      void this.debouceUpdate(`chokiar taon.json change`);
     });
 
     //#endregion

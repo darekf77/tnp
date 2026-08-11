@@ -92,11 +92,12 @@ export class DevModeController extends TaonBaseCliWorkerController {
   @POST()
   updatePool(
     @Body() body: DevMode.ProjectBuildNotificaiton,
+    @Query('reason') reason: string,
   ): Taon.Response<DevMode.ProjectBuildNotificaiton[]> {
     //#region @backendFunc
     return async (req, res) => {
       body = DevMode.ProjectBuildNotificaiton.from(body);
-      return this.devModeRepository.updatePool(body);
+      return this.devModeRepository.updatePool(body, reason);
     };
     //#endregion
   }

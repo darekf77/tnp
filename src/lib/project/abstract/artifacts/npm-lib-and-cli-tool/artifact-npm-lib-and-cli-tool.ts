@@ -282,6 +282,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         await this.project.ins.notifyMainWorkerThatDevMode(
           this.project,
           buildOptions,
+          `build partial init`
         );
 
         await this.project.packagesRecognition.startFromServer();
@@ -747,16 +748,19 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     if (!buildOptions.build.watch) {
       if (this.project.watcher.isTaonLightWatcherMode) {
         await this.taonBuildObserver.updateAction({
-          // isomorphic: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-          'backend-cjs': DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-          'backend-esm': DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-          'backend-js-maps': DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-          browser: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-          websql: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-          // 'copy-manager': DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
-          'backend-watcher-error': '',
-          'browser-watcher-error': '',
-          'websql-watcher-error': '',
+          info: {
+            // isomorphic: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+            'backend-cjs': DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+            'backend-esm': DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+            'backend-js-maps': DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+            browser: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+            websql: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+            // 'copy-manager': DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
+            'backend-watcher-error': '',
+            'browser-watcher-error': '',
+            'websql-watcher-error': '',
+          },
+          reason: 'trigger build observer npm lib'
         });
       }
     }

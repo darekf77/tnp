@@ -54,6 +54,33 @@ export class QuickFixes extends BaseQuickFixes<Project> {
     //#endregion
   }
 
+  public fixDtsTypesForContainer() {
+    this.excludeNodeModulesDtsFromTypescriptCheck([
+      this.project.nodeModules.pathFor('@types/glob/index.d.ts'),
+      this.project.nodeModules.pathFor('@types/lodash-es/debounce.d.ts'),
+      this.project.nodeModules.pathFor('chokidar/types/index.d.ts'),
+      this.project.nodeModules.pathFor(
+        '@angular/core/types/_discovery-chunk.d.ts',
+      ),
+      this.project.nodeModules.pathFor('@types/node/process.d.ts'),
+      this.project.nodeModules.pathFor('electron/electron.d.ts'),
+      this.project.nodeModules.pathFor(
+        '@angular/platform-browser/types/platform-browser.d.ts',
+      ),
+      this.project.nodeModules.pathFor('undici/types/formdata.d.ts'),
+      this.project.nodeModules.pathFor(
+        '@sweetalert2/ngx-sweetalert2/index.d.ts',
+      ),
+      this.project.nodeModules.pathFor(
+        '@huggingface/transformers/types/models/lfm2_vl/image_processing_lfm2_vl.d.ts',
+      ),
+      this.project.nodeModules.pathFor(
+        '@huggingface/transformers/types/models/mgp_str/processing_mgp_str.d.ts',
+      ),
+      this.project.nodeModules.pathFor(`@huggingface/tokenizers/types`),
+    ]);
+  }
+
   fixPrettierCreatingConfigInNodeModules(): void {
     //#region @backendFunc
     const node_modules_path = this.project.nodeModules.path;

@@ -1353,7 +1353,9 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
         .set(DevMode.ProjectBuildStatus.COMPILATION_ERROR);
       this.project.taonBuildObserver.errorBackend.set(errorMesssage);
     }
-    await this.project.taonBuildObserver.updateAction();
+    await this.project.taonBuildObserver.updateAction({
+      reason: `notify observer for ${buildtype}`
+    });
     //#endregion
   }
 

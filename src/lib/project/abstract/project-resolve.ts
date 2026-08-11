@@ -546,6 +546,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   async notifyMainWorkerThatDevMode(
     project: Project,
     envOptions: EnvOptions,
+    reason: string,
   ): Promise<void> {
     //#region @backendFunc
     const obj = await DevBuildUtils.startAcionWorker(project);
@@ -571,16 +572,19 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     }
 
     await project.taonBuildObserver.updateAction({
-      // isomorphic: DevMode.ProjectBuildStatus.BUILDING,
-      // 'copy-manager': DevMode.ProjectBuildStatus.BUILDING,
-      'backend-cjs': DevMode.ProjectBuildStatus.BUILDING,
-      'backend-esm': DevMode.ProjectBuildStatus.BUILDING,
-      'backend-js-maps': DevMode.ProjectBuildStatus.BUILDING,
-      browser: DevMode.ProjectBuildStatus.BUILDING,
-      websql: DevMode.ProjectBuildStatus.BUILDING,
-      'backend-watcher-error': '',
-      'browser-watcher-error': '',
-      'websql-watcher-error': '',
+      info: {
+        // isomorphic: DevMode.ProjectBuildStatus.BUILDING,
+        // 'copy-manager': DevMode.ProjectBuildStatus.BUILDING,
+        'backend-cjs': DevMode.ProjectBuildStatus.BUILDING,
+        'backend-esm': DevMode.ProjectBuildStatus.BUILDING,
+        'backend-js-maps': DevMode.ProjectBuildStatus.BUILDING,
+        browser: DevMode.ProjectBuildStatus.BUILDING,
+        websql: DevMode.ProjectBuildStatus.BUILDING,
+        'backend-watcher-error': '',
+        'browser-watcher-error': '',
+        'websql-watcher-error': '',
+      },
+      reason,
     });
     //#endregion
   }

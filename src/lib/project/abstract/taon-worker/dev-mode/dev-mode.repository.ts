@@ -269,6 +269,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     changedProjects?: DevMode.ProjectBuildNotificaiton[];
     deletedProjects?: DevMode.ProjectBuildNotificaiton[];
     frameworkVersion: CoreModels.FrameworkVersion;
+    reason: string;
   }): Promise<void> {
     //#region @backendFunc
 
@@ -281,6 +282,9 @@ export class DevModeRepository extends TaonBaseKvRepository<{
       projUniqueKeyToCompare: proj => proj.uniqueKey,
     });
 
+    this.addMessage(
+      `saving reason: ${_.isObject(opt.reason) ? JSON.stringify(opt.reason) : opt.reason}`,
+    );
     this.addMessage(
       `saving pool (${sortedPoolOfDevModeProjects.length}) ${sortedPoolOfDevModeProjects.map(c => `(${c.port})${c.nameForNpmPackage}`).join(',')}`,
     );
@@ -416,6 +420,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
         oldListOfProjects,
         deletedProjects,
         frameworkVersion,
+        reason: `saving after delete:  ${poolOfDevModeProjects}`,
       });
 
       this.addMessage(
@@ -537,6 +542,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
   //#region API/ public methods / update pool
   public async updatePool(
     body: DevMode.ProjectBuildNotificaiton,
+    reason: string,
   ): Promise<DevMode.ProjectBuildNotificaiton[]> {
     //#region @backendFunc
     if (this.deletingNow.has(body.uniqueKey)) {
@@ -577,6 +583,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
       changedProjects,
       addedProjects,
       frameworkVersion,
+      reason,
     });
 
     this.addMessage(
@@ -768,6 +775,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
             frameworkVersion,
             newListOfPorjects,
             oldListOfProjects,
+            reason: `scan and add exiting processes`,
           });
           Helpers.info(
             `Added existed porject build from port ${newProjBuild.port}`,

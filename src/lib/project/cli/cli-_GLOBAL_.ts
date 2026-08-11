@@ -295,6 +295,11 @@ export class $Global extends BaseGlobalCommandLine<
   }
   //#endregion
 
+  fixDtsTypes() {
+    this.project.quickFixes.fixDtsTypesForContainer();
+    this._exit();
+  }
+
   //#region proper watcher test
   async PROPERWATCHERTEST(engine: string) {
     //#region @backendFunc
@@ -2011,6 +2016,7 @@ ${this.project.children
     await this.ins.notifyMainWorkerThatDevMode(
       this.project,
       EnvOptions.from({}),
+      `global devModeWorker`
     );
     Helpers.info('waiting');
     await UtilsTerminal.pressAnyKeyToContinueAsync();

@@ -63,8 +63,13 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     const defaultValue = this.defaultValue;
     try {
+      const newData = Helpers.readJson5(pathToTaonJson);
+      if (newData && this.data && _.isEqual(newData, this.data)) {
+        return;
+      }
+
       // @ts-expect-error
-      this.data = Helpers.readJson5(pathToTaonJson);
+      this.data = newData;
       if (!this.data && defaultValue) {
         // @ts-expect-error
         this.data = _.cloneDeep(defaultValue as any);
@@ -76,7 +81,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
         reloadInMemoryCallback: data => {
           if (this.data && this.overridePackageJsonManager) {
             this.data.packageJsonOverride = data;
-            this.saveToDisk();
+            this.saveToDisk(`intial callback`);
           }
         },
       });
@@ -208,9 +213,9 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     });
   }
 
-  public saveToDisk(purpose?: string): void {
+  public saveToDisk(purpose: string): void {
     //#region @backend
-    Helpers.log(`Saving taon.jsonc ${purpose ? `(${purpose})` : ''}`);
+    Helpers.logInfo(`Saving taon.jsonc ${purpose ? `(${purpose})` : ''}`);
     if (this.isCoreProject && this.project.framework.isContainer) {
       this.project.writeJsonC(taonJsonMainProject, this.data);
     } else {
@@ -722,7 +727,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   set overrideShortName(value: string) {
     //#region @backend
     const data = this.data as Models.TaonJsonStandalone;
-    data.overrideNameForCli = value;
+    data.overrideShortName = value;
     this.saveToDisk('updating overrideNameForClis');
     //#endregion
   }

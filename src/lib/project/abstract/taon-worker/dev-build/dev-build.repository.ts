@@ -83,12 +83,16 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
   //#region public methods / update pool
   async updatePool(opt: {
     buildStatusInfo: DevMode.BuildStatusInfo;
+    reason: string,
   }): Promise<void> {
     //#region @backendFunc
     const devModeControllerMainWorker = await this.getMainWorkerController();
     const dataToRequest = this.dataToRequest(opt);
 
-    await devModeControllerMainWorker.updatePool(dataToRequest).request!();
+    await devModeControllerMainWorker.updatePool(
+      dataToRequest,
+      `update from update action: ${opt.reason}`,
+    ).request!();
     //#endregion
   }
   //#endregion\
