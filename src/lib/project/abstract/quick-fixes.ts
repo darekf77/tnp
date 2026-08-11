@@ -71,12 +71,7 @@ export class QuickFixes extends BaseQuickFixes<Project> {
       this.project.nodeModules.pathFor(
         '@sweetalert2/ngx-sweetalert2/index.d.ts',
       ),
-      this.project.nodeModules.pathFor(
-        '@huggingface/transformers/types/models/lfm2_vl/image_processing_lfm2_vl.d.ts',
-      ),
-      this.project.nodeModules.pathFor(
-        '@huggingface/transformers/types/models/mgp_str/processing_mgp_str.d.ts',
-      ),
+      this.project.nodeModules.pathFor('@huggingface/transformers/types'),
       this.project.nodeModules.pathFor(`@huggingface/tokenizers/types`),
     ]);
   }
