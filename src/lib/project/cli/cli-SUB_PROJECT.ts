@@ -1,20 +1,31 @@
-import os from 'os';
-
-import { CoreModels, path, UtilsTerminal } from 'tnp-core/src';
+//#region imports
+import { CoreModels, Helpers, path, UtilsTerminal } from 'tnp-core/src';
 import { BaseCLiWorkerStartParams, HelpersTaon } from 'tnp-helpers/src';
 
 import { EnvOptions } from '../../options';
 import { CloudFlarePorjectsUtils } from '../abstract/cloud-flare-projects/cloud-flare-projects.utils';
 
 import { BaseCli } from './base-cli';
+import { Project } from '../abstract/project';
+//#endregion
 
 export class $SubProject extends BaseCli {
   declare params: EnvOptions & Partial<BaseCLiWorkerStartParams>;
+
+  // @ts-ignore
+  declare project: Project;
 
   static [CoreModels.ClassNameStaticProperty] = '$SubProject';
 
   async _() {
     //#region @backend
+    if (!this.project.typeIs('isomorphic-lib')) {
+      Helpers.error(
+        `Command only for taon isomorphic-lib project`,
+        false,
+        true,
+      );
+    }
 
     const choices = {
       info: {
@@ -87,7 +98,9 @@ export class $SubProject extends BaseCli {
         await this.project.init();
       } else if (select === 'dev') {
         await this.project.subProject.startInDevMode({
-          projectName: path.basename(this.secondArg?.trim()),
+          projectName: this.secondArg
+            ? path.basename(this.secondArg?.trim())
+            : void 0,
         });
         // } else if (select === 'build') {
         //   await this.project.subProject.buildInDevMode({

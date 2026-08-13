@@ -875,6 +875,10 @@ export const dotVscodeMainProject = '.vscode';
 
 export const indexTsInSrcForWorker = `src/index.ts`;
 
+export const externalJs = `external.js`;
+export const buildJS = `build.js`;
+export const buildJSprod = `build.prod.js`;
+
 export const wranglerJsonC = `wrangler.jsonc`;
 
 export const packageJsonLockMainProject = fileName.package_lock_json;

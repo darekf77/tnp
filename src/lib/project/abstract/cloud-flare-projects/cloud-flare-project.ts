@@ -129,7 +129,7 @@ export class CloudFlareProject {
   //#endregion
 
   //#region start in dev mode
-  async startInDevMode(): Promise<void> {
+  async startInDevMode(opt?:{ prod?: boolean }): Promise<void> {
     //#region @backendFunc
     await UtilsExecProc.spawnAsync(`npm run start`, {
       cwd: this.cwdWorker,

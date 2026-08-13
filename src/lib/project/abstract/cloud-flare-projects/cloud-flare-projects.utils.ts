@@ -15,6 +15,9 @@ import {
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
+  buildJS,
+  buildJSprod,
+  externalJs,
   indexTsInSrcForWorker,
   KV_DATABASE_ONLINE_NAME,
   packageJsonSubProject,
@@ -231,6 +234,9 @@ export namespace CloudFlarePorjectsUtils {
         packageJsonSubProject,
         tsconfigSubProject,
         indexTsInSrcForWorker,
+        buildJS,
+        buildJSprod,
+        externalJs,
         // ...(coreCloudFlareProject.name ===
         //   TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER &&
         // Helpers.exists([cwdWorker, indexTsInSrcForWorker])

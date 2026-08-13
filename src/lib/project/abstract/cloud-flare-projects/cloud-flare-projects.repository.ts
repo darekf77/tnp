@@ -85,14 +85,16 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
           : [void 0];
 
       const available = availableEnvs
-        .map(env =>
-          UtilsFilesFoldersSync.getFoldersFrom(
-            this.pathToTempalteInCurrentProject(tempalteType, env),
-            {
-              omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
-            },
-          ),
-        )
+        .map(env => {
+          const foldersPath = this.pathToTempalteInCurrentProject(
+            tempalteType,
+            env,
+          );
+
+          return UtilsFilesFoldersSync.getFoldersFrom(foldersPath, {
+            omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
+          });
+        })
         .reduce((a, b) => {
           return a.concat(b);
         }, [] as string[]);
@@ -118,6 +120,7 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
   //#region get all cloud flare projects
   public getAll(): CloudFlareProject[] {
     const allFolders = this.getAllSubProjects();
+    // console.log({ allFolders });
     return allFolders.map(c => {
       return CloudFlarePorjectsUtils.cloudFlareProjectFrom(
         c.location,
