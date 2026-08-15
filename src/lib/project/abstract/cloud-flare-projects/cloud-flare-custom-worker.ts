@@ -1,4 +1,4 @@
-import { Helpers, startAsync, UtilsExecProc } from 'tnp-core/src';
+import { Helpers, startAsync, UtilsExecProc, UtilsOs } from 'tnp-core/src';
 
 import { buildJS, buildJSprod } from '../../../constants';
 import { EnvOptions, ReleaseArtifactTaon } from '../../../options';
@@ -32,7 +32,11 @@ export class CloudCustomWorkerProject extends CloudFlareProject {
       );
 
     await startAsync(
-      `npm run start -- --port ${ngCloudflareWorkerPort} ${Helpers.getIsVerboseMode() ? '--log-level debug' : ''} `,
+      `npm run start -- --port ${ngCloudflareWorkerPort} ` +
+        `${Helpers.getIsVerboseMode() ? '--log-level debug' : ''} ` +
+        ` --persist-to ${UtilsOs.getTempFolder({
+          prefix: 'temp-cloudflare',
+        })} `,
       this.cwdWorker,
       {
         uniqueName: `cloudflare`,
