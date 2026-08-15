@@ -66,20 +66,46 @@ export enum ReleaseType {
    * Trigger cloud release (happen on cloud server)
    * Cloud release actually start "Manual" release process on cloud server
    */
-  CLOUD = 'cloud',
+  CLOUD_CI = 'cloud-ci',
   /**
    * Trigger cloud release (happen on cloud server)
    * Cloud release actually start "Manual" release process on cloud server
    */
-  STATIC_PAGES = 'static-pages',
+  MANUAL_STATIC_PAGES = 'manual-static-pages',
+  /**
+   * Trigger cloud release (happen on cloud server)
+   * Cloud release actually start "Manual" release process on cloud server
+   */
+  CLOUD_CI_STATIC_PAGES = 'cloud-ci-static-pages',
+  /**
+   * Manuall release cloudflare
+   */
+  MANUAL_CLOUDFLARE = 'manual-cloudflare',
+  /**
+   * Manuall release cloudflare
+   */
+  CLOUD_CI_CLOUDFLARE = 'cloud-ci-cloudflare',
 }
 
 export const ReleaseTypeArr: ReleaseType[] = [
   ReleaseType.MANUAL,
+  ReleaseType.CLOUD_CI,
+  ReleaseType.MANUAL_CLOUDFLARE,
+  ReleaseType.CLOUD_CI_CLOUDFLARE,
+  ReleaseType.MANUAL_STATIC_PAGES,
+  ReleaseType.CLOUD_CI_STATIC_PAGES,
   ReleaseType.LOCAL,
-  ReleaseType.CLOUD,
-  ReleaseType.STATIC_PAGES,
 ];
+
+export const ReleaseTypeLabels = {
+  [ReleaseType.MANUAL]: 'Manual (Taon Cloud)',
+  [ReleaseType.CLOUD_CI]: 'Cloud CI (Taon Cloud)',
+  [ReleaseType.MANUAL_CLOUDFLARE]: 'Manual (Cloudflare)',
+  [ReleaseType.CLOUD_CI_CLOUDFLARE]: 'Cloud CI (Cloudflare)',
+  [ReleaseType.MANUAL_STATIC_PAGES]: 'Manual (Static Pages)',
+  [ReleaseType.CLOUD_CI_STATIC_PAGES]: 'Cloud CI (Static Pages)',
+  [ReleaseType.LOCAL]: 'Local',
+};
 
 export const Development = 'development';
 export const ReleaseTypeWithDevelopmentArr: (ReleaseType | 'development')[] = [
@@ -192,6 +218,8 @@ class EnvOptionsBuild {
   declare baseHref: string;
 
   declare websql: boolean;
+
+  declare cloudflare: boolean;
 
   /**
    * Taon production release mode:
@@ -485,6 +513,11 @@ class EnvOptionsRelease {
   declare askUserBeforeFinalAction: boolean;
 
   /**
+   * ask before deployment to taon cloud
+   */
+  declare workerName: string;
+
+  /**
    * Task of auto release from config
    */
   declare autoReleaseTaskName: string;
@@ -694,10 +727,6 @@ export class EnvOptions<
     }
     if (optionsToSet.includes('skipResolvingGitChanges')) {
       options.release.skipResolvingGitChanges = true;
-    }
-
-    if (optionsToSet.includes('askUserBeforeFinalAction')) {
-      options.release.askUserBeforeFinalAction = true;
     }
 
     options.release.skipBuildingArtifacts =

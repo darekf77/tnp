@@ -77,7 +77,7 @@ class $Release extends BaseCli {
 
   //#region cloud
   async cloud(): Promise<void> {
-    await this._releaseProcess(this.params, ReleaseType.CLOUD);
+    await this._releaseProcess(this.params, ReleaseType.CLOUD_CI);
   }
   //#endregion
 
@@ -89,7 +89,7 @@ class $Release extends BaseCli {
 
   //#region static pages
   async staticPages(): Promise<void> {
-    await this._releaseProcess(this.params, ReleaseType.STATIC_PAGES);
+    await this._releaseProcess(this.params, ReleaseType.MANUAL_STATIC_PAGES);
   }
   //#endregion
 

@@ -19,6 +19,7 @@ import {
   ReleaseArtifactTaonNamesArr,
   EnvOptions,
   ReleaseType,
+  ReleaseTypeLabels,
 } from '../../../options';
 import type { Project } from '../project';
 
@@ -41,7 +42,6 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
   public async displayReleaseProcessMenu(
     envOptions: EnvOptions,
   ): Promise<void> {
-
     //#region @backendFunc
     while (true) {
       UtilsTerminal.clearConsole();
@@ -61,10 +61,6 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
       }
       //#endregion
 
-      const manual = 'manual' as ReleaseType;
-      const cloud = 'cloud' as ReleaseType;
-      const local = 'local' as ReleaseType;
-      const staticPages = 'static-pages' as ReleaseType;
       const priovider =
         _.upperFirst(_.first(this.project.git.remoteProvider?.split('.'))) ||
         'unknow';
@@ -80,16 +76,14 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
               //#region info
               console.info(
                 `
-${chalk.bold.green('Manual release')} => for everything whats Taon supports
-        - everything is done here manually, you have to provide options
-        - config saved during release process can be use for 'Cloud release' later
-${chalk.bold.blue('Cloud release')} => trigger remote release action on server (local or remote)
-        - trigger release base on config stored inside cloud
-        - use local Taon Cloud or login to remote Taon Cloud
+${chalk.bold.green('Manual release')} => release build is done manuall on this
+        computer and the pushed to target cloud, app store - anything.
+
+${chalk.bold.blue('Cloud release')} => release build is done on serve. This
+        command only triggers release process on Taon Cloud instance.
 ${chalk.bold.gray('Local release')} => use current git repo for storing release data
         - for anything that you want to backup inside your git repository
-${chalk.bold.yellow('Static Pages release')} => use specific branch for storing release data
-        - perfect for github pages, gitlab pages and similar solutions
+
         `.trimStart(),
               );
               //#endregion
@@ -97,51 +91,108 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
               await UtilsTerminal.pressAnyKeyToContinueAsync({});
             },
           },
-          [manual]: {
-
+          [ReleaseType.MANUAL]: {
             //#region manual
-            name: `${this.getColoredTextItem(manual)} Taon release + create config for Cloud`,
+            name: `${this.getColoredTextItem(ReleaseType.MANUAL)} Taon release to Taon Cloud`,
             action: async () => {
-              if (await this.releaseByType(manual, envOptions)) {
+              if (await this.releaseByType(ReleaseType.MANUAL, envOptions)) {
                 process.exit(0);
               }
             },
             //#endregion
           },
-          [cloud]: {
-
+          [ReleaseType.CLOUD_CI]: {
             //#region cloud
-            name: `${this.getColoredTextItem(cloud)} release tirgger for Taon Cloud`,
+            name: `${this.getColoredTextItem(ReleaseType.CLOUD_CI)} release tirgger for Taon Cloud`,
             action: async () => {
-              if (await this.releaseByType(cloud, envOptions)) {
+              if (await this.releaseByType(ReleaseType.CLOUD_CI, envOptions)) {
                 process.exit(0);
               }
             },
             //#endregion
           },
-          [local]: {
-
-            //#region local
-            name: `${this.getColoredTextItem(local)} release to current git repository`,
+          [ReleaseType.MANUAL_CLOUDFLARE]: {
+            //#region manual
+            name:
+              `${this.getColoredTextItem(ReleaseType.MANUAL_CLOUDFLARE)} ` +
+              `Taon release to ${chalk.bold.magenta('Cloudflare')}`,
             action: async () => {
-              if (await this.releaseByType(local, envOptions)) {
+              if (
+                await this.releaseByType(
+                  ReleaseType.MANUAL_CLOUDFLARE,
+                  envOptions,
+                )
+              ) {
                 process.exit(0);
               }
             },
             //#endregion
           },
-          [staticPages]: {
-
-            //#region local
-            name: `${this.getColoredTextItem(staticPages)} release for ${priovider} pages`,
+          [ReleaseType.CLOUD_CI_CLOUDFLARE]: {
+            //#region cloud
+            name:
+              `${this.getColoredTextItem(ReleaseType.CLOUD_CI_CLOUDFLARE)} ` +
+              ` release tirgger on Taon Cloud (for ${chalk.bold.magenta('Cloudflare')})`,
             action: async () => {
-              if (await this.releaseByType(staticPages, envOptions)) {
+              if (
+                await this.releaseByType(
+                  ReleaseType.CLOUD_CI_CLOUDFLARE,
+                  envOptions,
+                )
+              ) {
+                process.exit(0);
+              }
+            },
+            //#endregion
+          },
+
+          [ReleaseType.MANUAL_STATIC_PAGES]: {
+            //#region local
+            name:
+              `${this.getColoredTextItem(ReleaseType.MANUAL_STATIC_PAGES)}` +
+              ` release for ${chalk.bold(priovider + ' Pages')}`,
+            action: async () => {
+              if (
+                await this.releaseByType(
+                  ReleaseType.MANUAL_STATIC_PAGES,
+                  envOptions,
+                )
+              ) {
+                process.exit(0);
+              }
+            },
+            //#endregion
+          },
+
+          [ReleaseType.CLOUD_CI_STATIC_PAGES]: {
+            //#region local
+            name:
+              `${this.getColoredTextItem(ReleaseType.CLOUD_CI_STATIC_PAGES)} ` +
+              `release tirgger on Taon Cloud (for ${chalk.bold(priovider + ' Pages')})`,
+            action: async () => {
+              if (
+                await this.releaseByType(
+                  ReleaseType.CLOUD_CI_STATIC_PAGES,
+                  envOptions,
+                )
+              ) {
+                process.exit(0);
+              }
+            },
+            //#endregion
+          },
+          [ReleaseType.LOCAL]: {
+            //#region local
+            name: `${this.getColoredTextItem(ReleaseType.LOCAL)} release to current git repository`,
+            action: async () => {
+              if (await this.releaseByType(ReleaseType.LOCAL, envOptions)) {
                 process.exit(0);
               }
             },
             //#endregion
           },
         },
+
         {
           autocomplete: false,
           question:
@@ -151,7 +202,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       );
     }
     //#endregion
-
   }
   //#endregion
 
@@ -160,7 +210,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     releaseType: ReleaseType,
     envOptions: EnvOptions,
   ): Promise<boolean> {
-
     //#region @backendFunc
 
     envOptions.release.releaseType = releaseType;
@@ -205,7 +254,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       envOptions,
     );
     //#endregion
-
   }
   //#endregion
 
@@ -214,7 +262,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     envName: CoreModels.EnvironmentNameTaon;
     envNumber?: number | undefined;
   }[] {
-
     //#region @backendFunc
     if (!artifact) {
       throw new Error('Artifact is required');
@@ -252,7 +299,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
         return 0;
       });
     //#endregion
-
   }
   //#endregion
 
@@ -260,7 +306,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
   async displayProjectsSelectionMenu(
     envOptions: EnvOptions,
   ): Promise<Project[]> {
-
     //#region @backendFunc
     const selectedProjects: Project[] = [this.project];
     if (this.project.framework.isStandaloneProject) {
@@ -297,7 +342,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
       }
     }
     //#endregion
-
   }
   //#endregion
 
@@ -307,7 +351,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     selectedProjects: Project[],
     allowedArtifacts?: ReleaseArtifactTaon[] | undefined,
   ): Promise<ReleaseArtifactTaon[]> {
-
     //#region @backendFunc
 
     while (true) {
@@ -360,14 +403,12 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     }
 
     //#endregion
-
   }
   //#endregion
 
   //#region public methods / start release
   // @ts-ignore TODO weird inheritance problem
   async startRelease(envOptions?: EnvOptions): Promise<void> {
-
     //#region @backendFunc
     if (!envOptions.release.envName) {
       if (!envOptions.release.autoReleaseUsingConfig) {
@@ -416,7 +457,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
 
     await this.project.release(envOptions);
     //#endregion
-
   }
   //#endregion
 
@@ -431,7 +471,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     selectedProjects: Project[],
     envOptions: EnvOptions,
   ): Promise<boolean> {
-
     //#region @backendFunc
 
     for (const project of selectedProjects) {
@@ -451,7 +490,6 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     await this.pushReleaseCommits();
     return true;
     //#endregion
-
   }
   //#endregion
 
@@ -461,17 +499,14 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
    * or organization packages -> release commit is pushed
    */
   async pushReleaseCommits() {
-
     //#region @backend
     return void 0; // TODO implement
     //#endregion
-
   }
   //#endregion
 
   //#region private methods / get release header
   private getReleaseHeader(releaseProcessType: ReleaseType) {
-
     //#region @backendFunc
     // if (this.project.framework.isContainer) {
     //   return (
@@ -489,29 +524,20 @@ ${chalk.bold.yellow('Static Pages release')} => use specific branch for storing 
     //         `
     // );
     //#endregion
-
   }
   //#endregion
 
   //#region private methods / get colored text item
   private getColoredTextItem(releaseProcessType: ReleaseType): string {
-
     //#region @backendFunc
-    if (releaseProcessType === 'manual') {
-      return _.upperFirst(chalk.bold.green('Manual'));
+    if (ReleaseTypeLabels[releaseProcessType].startsWith('Cloud')) {
+      return chalk.bold.blue(ReleaseTypeLabels[releaseProcessType]);
     }
-    if (releaseProcessType === 'cloud') {
-      return _.upperFirst(chalk.bold.blue('Cloud'));
+    if (ReleaseTypeLabels[releaseProcessType].startsWith('Manual')) {
+      return chalk.bold.yellow(ReleaseTypeLabels[releaseProcessType]);
     }
-    if (releaseProcessType === 'local') {
-      return _.upperFirst(chalk.bold.gray('Local'));
-    }
-    if (releaseProcessType === 'static-pages') {
-      return _.upperFirst(chalk.bold.yellow('Static Pages'));
-    }
+    return chalk.bold.green(ReleaseTypeLabels[releaseProcessType]);
     //#endregion
-
   }
   //#endregion
-
 }

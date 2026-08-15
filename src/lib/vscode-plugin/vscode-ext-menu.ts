@@ -7,6 +7,7 @@ import type * as vscode from 'vscode';
 import {
   tmp_FRONTEND_NORMAL_APP_PORT,
   tmp_FRONTEND_WEBSQL_APP_PORT,
+  tmp_FRONTEND_CLOUDFLARE_APP_PORT,
 } from '../constants';
 import { Project } from '../project/abstract/project';
 
@@ -30,7 +31,7 @@ export function activateMenuTnp(
   vscode: typeof import('vscode'),
   FRAMEWORK_NAME: string,
 ) {
-  function runInTerminal(command: string, inNewTerminal  = false) {
+  function runInTerminal(command: string, inNewTerminal = false) {
     let terminal = vscode.window.activeTerminal;
 
     if (inNewTerminal || !terminal) {
@@ -359,6 +360,7 @@ export function activateMenuTnp(
             ProjectItem,
             tmp_FRONTEND_NORMAL_APP_PORT,
             tmp_FRONTEND_WEBSQL_APP_PORT,
+            tmp_FRONTEND_CLOUDFLARE_APP_PORT,
             skipTaonItems: true,
           }),
           // children
@@ -394,6 +396,7 @@ export function activateMenuTnp(
           ProjectItem,
           tmp_FRONTEND_NORMAL_APP_PORT,
           tmp_FRONTEND_WEBSQL_APP_PORT,
+          tmp_FRONTEND_CLOUDFLARE_APP_PORT,
         }),
         parentForParentChildren.length > 0 && this.empty,
         parentForParentChildren.length > 0 &&

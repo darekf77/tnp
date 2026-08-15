@@ -991,6 +991,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
             taonInstanceIp: item.taonInstanceIp,
             askUserBeforeFinalAction: item.askUserBeforeFinalAction,
             staticPagesCustomRepoUrl: item.staticPagesCustomRepoUrl,
+            workerName: item.workerName,
           },
         });
 
@@ -1053,7 +1054,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
       releaseOptions.release.targetArtifact ===
         ReleaseArtifactTaon.ANGULAR_NODE_APP
     ) {
-      if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
+      if (releaseOptions.release.releaseType === ReleaseType.MANUAL_STATIC_PAGES) {
         releaseOptions.build.baseHref =
           this.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
             releaseOptions,

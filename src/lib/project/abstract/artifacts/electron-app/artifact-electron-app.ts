@@ -268,7 +268,7 @@ export class ArtifactElectronApp extends BaseArtifact<
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
     }
-    if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
+    if (releaseOptions.release.releaseType === ReleaseType.MANUAL_STATIC_PAGES) {
       //#region static pages release
       const releaseData = await this.staticPagesDeploy(
         electronDistOutAppPath,

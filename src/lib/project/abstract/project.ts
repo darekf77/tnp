@@ -277,8 +277,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
     await this.npmHelpers.checkProjectReadyForNpmRelease();
     if (
       releaseOptions.release.targetArtifact === 'npm-lib-and-cli-tool' &&
-      releaseOptions.release.releaseType !== 'local' &&
-      releaseOptions.release.releaseType !== 'static-pages'
+      releaseOptions.release.releaseType !== ReleaseType.LOCAL &&
+      releaseOptions.release.releaseType !== ReleaseType.MANUAL_STATIC_PAGES
     ) {
       await this.npmHelpers.makeSureLoggedInToNpmRegistry();
     }
@@ -422,7 +422,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     //#region resolve taon instances
     if (
-      ([ReleaseType.MANUAL, ReleaseType.CLOUD] as ReleaseType[]).includes(
+      ([ReleaseType.MANUAL, ReleaseType.CLOUD_CI] as ReleaseType[]).includes(
         releaseOptions.release.releaseType,
       ) &&
       releaseOptions.release.targetArtifact === 'angular-node-app'

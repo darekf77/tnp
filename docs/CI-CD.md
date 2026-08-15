@@ -7,13 +7,13 @@
     <td><b>Manual</b></td>
     <td> 
       Locally build/test and then publish to remote server
-      ( npm or app store or taon cloud ).
+      ( npm or app store or Taon Cloud ).
     </td>
   </tr>
   <tr>
     <td><b>Cloud</b></td>
     <td> 
-     Everything that <strong>Manual</strong> does, but triggered on remote server.
+     Everything that <strong>Manual</strong> does, but triggered on remote Taon Cloud Server.
     </td>
   </tr>
   <tr>
@@ -26,6 +26,12 @@
     <td><b>Static pages</b></td>
     <td> 
       Perfect for publishing stuff to github pages (or similar solutions)
+    </td>
+  </tr>
+  <tr>
+    <td><b>Cloudflare</b></td>
+    <td> 
+      Wraper for wrangler: FULL backend/frontend deployment (with KV,D1,R2 databases)
     </td>
   </tr>
 </table>

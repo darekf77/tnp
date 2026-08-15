@@ -103,6 +103,10 @@ export namespace Models {
      */
     description?: string;
     /**
+     * Cloudflare worker name
+     */
+    workerName?: string;
+    /**
      * Ask for confirmation before deployement to taon cloud
      */
     askUserBeforeFinalAction?: boolean;

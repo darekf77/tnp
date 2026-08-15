@@ -24,6 +24,9 @@ export class $App extends BaseCli {
       startElectronWatch: {
         name: 'Start ng serve app for watch ELECTRON mode',
       },
+      startCloudflare: {
+        name: 'Start ng serve app for watch CLOUDFLARE mode',
+      },
     };
 
     const chosen = this.params['websql']
@@ -36,6 +39,7 @@ export class $App extends BaseCli {
     await this._build({
       websql: chosen === 'startAppWatchWebsql',
       electron: chosen === 'startElectronWatch',
+      cloudflare: chosen === 'startCloudflare',
     });
     //#endregion
   }
@@ -43,9 +47,11 @@ export class $App extends BaseCli {
   private async _build({
     websql,
     electron,
+    cloudflare,
   }: {
-    websql: boolean;
+    websql?: boolean;
     electron?: boolean;
+    cloudflare?: boolean;
   }): Promise<void> {
     Helpers.info(
       `Starting ${websql ? 'WEBSQL' : 'NORMAL'} APP in watch mode...`,
@@ -60,6 +66,7 @@ export class $App extends BaseCli {
         build: {
           watch: true,
           websql,
+          cloudflare,
         },
       }),
     );
@@ -73,12 +80,20 @@ export class $App extends BaseCli {
     await this.electron();
   }
 
+  async cf() {
+    await this.cloudflare();
+  }
+
   async electronWebsql() {
     await this._build({ websql: true, electron: true });
   }
 
   async websql() {
     await this._build({ websql: true });
+  }
+
+  async cloudflare() {
+    await this._build({ cloudflare: true });
   }
 
   async normal() {

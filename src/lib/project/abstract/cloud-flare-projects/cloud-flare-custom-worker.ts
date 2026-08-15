@@ -1,17 +1,18 @@
 import { Helpers, startAsync, UtilsExecProc } from 'tnp-core/src';
 
 import { buildJS, buildJSprod } from '../../../constants';
+import { EnvOptions, ReleaseArtifactTaon } from '../../../options';
 
 import { CloudFlareProject } from './cloud-flare-project';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
 
 export class CloudCustomWorkerProject extends CloudFlareProject {
   //#region start in dev mode
-  async startInDevMode(opt?: { prod?: boolean }): Promise<void> {
+  async startInDevMode(envOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
-    opt = opt || {};
+
     await UtilsExecProc.spawnAsync(
-      `npm-run bun run ${opt.prod ? buildJSprod : buildJS}`,
+      `npm-run bun run ${envOptions.build.prod ? buildJSprod : buildJS}`,
       {
         cwd: this.cwdWorker,
         showOutput: true,
@@ -21,21 +22,34 @@ export class CloudCustomWorkerProject extends CloudFlareProject {
       successOutputMessage: 'Compilation Done',
     });
 
-    await startAsync(`npm run start`, this.cwdWorker, {
-      uniqueName: `cloudflare`,
-      prefix: true,
-      outputLineReplace: line => {
-        // console.log({ line });
-        if (line.includes('Ready on')) {
-          const url = extractWranglerReadyUrl(line);
-          if (url) {
-            console.log(`PINGING FOR INIT "${url}"`);
-            fetch(url);
+    const ngCloudflareWorkerPort =
+      await this.taonParentProject.artifactsManager.artifact.angularNodeApp.appHostsRecreateHelper.NODE_BACKEND_PORT_UNIQ_KEY(
+        envOptions.clone({
+          build: {
+            cloudflare: true,
+          },
+        }),
+      );
+
+    await startAsync(
+      `npm run start -- --port ${ngCloudflareWorkerPort} ${Helpers.getIsVerboseMode() ? '--log-level debug' : ''} `,
+      this.cwdWorker,
+      {
+        uniqueName: `cloudflare`,
+        prefix: true,
+        outputLineReplace: line => {
+          // console.log({ line });
+          if (line.includes('Ready on')) {
+            const url = extractWranglerReadyUrl(line);
+            if (url) {
+              console.log(`PINGING FOR INIT "${url}"`);
+              fetch(url);
+            }
           }
-        }
-        return line;
+          return line;
+        },
       },
-    });
+    );
     //#endregion
   }
   //#endregion

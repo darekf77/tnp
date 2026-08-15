@@ -364,7 +364,7 @@ local VSCode instance.
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
     }
-    if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
+    if (releaseOptions.release.releaseType === ReleaseType.MANUAL_STATIC_PAGES) {
       //#region local release
       const releaseData = await this.staticPagesDeploy(
         path.dirname(vscodeVsixOutPath),
@@ -381,7 +381,7 @@ local VSCode instance.
     if (releaseOptions.release.releaseType === ReleaseType.MANUAL) {
       // TODO release to microsoft store or serve with place to put assets
     }
-    if (releaseOptions.release.releaseType === ReleaseType.CLOUD) {
+    if (releaseOptions.release.releaseType === ReleaseType.CLOUD_CI) {
       // TODO trigger cloud release (it will actually be manual on remote server)
     }
 

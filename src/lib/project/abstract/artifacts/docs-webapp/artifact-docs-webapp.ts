@@ -116,7 +116,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
       ? releaseOptions.release.overrideStaticPagesReleaseType
       : 'major';
 
-    if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
+    if (releaseOptions.release.releaseType === ReleaseType.MANUAL_STATIC_PAGES) {
       //#region static-pages release
       const releaseData = await this.staticPagesDeploy(
         docsWebappDistOutPath,

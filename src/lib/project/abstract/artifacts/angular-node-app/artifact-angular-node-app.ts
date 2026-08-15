@@ -344,6 +344,17 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     }
 
     //#region serve command
+
+    const ngCloudflareWorkerPort =
+      await this.appHostsRecreateHelper.NODE_BACKEND_PORT_UNIQ_KEY(
+        buildOptions.clone({
+          build: {
+            cloudflare: true,
+          },
+        }),
+      );
+    const cloudflareHost = `\\"http://localhost:${ngCloudflareWorkerPort}\\"`;
+
     const serveCommand =
       `${TaonCommands.NPM_RUN_NG} serve ${
         buildOptions.release.targetArtifact === ReleaseArtifactTaon.ELECTRON_APP
@@ -351,6 +362,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           : AngularJsonTaskName.ANGULAR_APP
       } ` +
       ` ${`--port=${portAssignedToAppBuild}`} ` +
+      ` ${`--define TAON_CLOUDFLARE_BACKEND_HOST=${buildOptions.build.cloudflare ? cloudflareHost : '\\"undefined\\"'}`} ` +
       ` --host 0.0.0.0`; // make it accessible in network for development
     //#endregion
 
@@ -385,13 +397,15 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       `Setting angular.json default config for ${angularJsonSelectedTask}  `,
     );
 
-    if (!buildOptions.build.watch) {
+    const indexHtmlAbsPath = crossPlatformPath([
+      tmpAppForDistRelativePath,
+      srcNgProxyProject,
+      CoreNgTemplateFiles.INDEX_HTML_NG_APP,
+    ]);
+
+    if (buildOptions.build.watch) {
       // not needed for watch - watch uses app.hosts.ts
-      const indexHtmlAbsPath = crossPlatformPath([
-        tmpAppForDistRelativePath,
-        srcNgProxyProject,
-        CoreNgTemplateFiles.INDEX_HTML_NG_APP,
-      ]);
+    } else {
       let contentIndexHtml = Helpers.readFile(indexHtmlAbsPath);
       const ENV_DATA_JSON = await this.getBrowserENVJSON(buildOptions);
       contentIndexHtml = contentIndexHtml.replace(
@@ -769,6 +783,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     // TODO handle when domain is ip address
 
     const data = {};
+
     const contextsNames = this.project.framework.getAllDetectedTaonContexts({
       skipLibFolder: true,
     });
@@ -852,7 +867,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       : releaseOptions.release.skipStaticPagesVersioning;
     //#endregion
 
-    if (releaseOptions.release.releaseType === ReleaseType.STATIC_PAGES) {
+    if (
+      releaseOptions.release.releaseType === ReleaseType.MANUAL_STATIC_PAGES
+    ) {
       //#region static pages release
       if (!releaseOptions.build.ssr) {
         appDistOutBrowserAngularAbsPath = crossPlatformPath([

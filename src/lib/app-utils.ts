@@ -62,18 +62,23 @@ export const ALLOWED_TO_RELEASE: {
     ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
     ReleaseArtifactTaon.ANGULAR_NODE_APP,
   ],
+  'cloud-ci': [],
+  'cloud-ci-cloudflare': [],
+  'manual-cloudflare': [
+    // ReleaseArtifactTaon.ANGULAR_NODE_APP, TODO @UNCOMMENT
+  ],
+  'manual-static-pages': [
+    ReleaseArtifactTaon.ANGULAR_NODE_APP,
+    ReleaseArtifactTaon.DOCS_DOCS_WEBAPP,
+    ReleaseArtifactTaon.ELECTRON_APP,
+    ReleaseArtifactTaon.VSCODE_PLUGIN,
+  ],
+  'cloud-ci-static-pages': [],
   local: [
     ReleaseArtifactTaon.ELECTRON_APP,
     ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
     ReleaseArtifactTaon.VSCODE_PLUGIN,
     ReleaseArtifactTaon.ANGULAR_NODE_APP,
-  ],
-  cloud: [],
-  'static-pages': [
-    ReleaseArtifactTaon.ANGULAR_NODE_APP,
-    ReleaseArtifactTaon.DOCS_DOCS_WEBAPP,
-    ReleaseArtifactTaon.ELECTRON_APP,
-    ReleaseArtifactTaon.VSCODE_PLUGIN,
   ],
 };
 //#endregion

@@ -13,6 +13,7 @@ export const vscodeMenuItems = ({
   runInTerminal,
   tmp_FRONTEND_NORMAL_APP_PORT,
   tmp_FRONTEND_WEBSQL_APP_PORT,
+  tmp_FRONTEND_CLOUDFLARE_APP_PORT,
   skipTaonItems,
 }: {
   vscode: typeof import('vscode');
@@ -23,6 +24,7 @@ export const vscodeMenuItems = ({
   runInTerminal: (command: string, inNewTerminal?: boolean) => void;
   tmp_FRONTEND_NORMAL_APP_PORT: string;
   tmp_FRONTEND_WEBSQL_APP_PORT: string;
+  tmp_FRONTEND_CLOUDFLARE_APP_PORT: string;
   skipTaonItems?: boolean;
 }) => {
   return [
@@ -396,6 +398,45 @@ export const vscodeMenuItems = ({
                         message: `Copying websql app URL to clipboard...`,
                       });
                       const websqlAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_WEBSQL_APP_PORT + '_1')}`;
+                      vscode.env.clipboard.writeText(websqlAppUrl);
+
+                      progress.report({
+                        message: `Done`,
+                        increment: 100,
+                      });
+                      return Promise.resolve();
+                    },
+                  );
+                }
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
+          //#endregion
+
+          //#region items with actions /  copy cloudflare app url to clipboard
+          new ProjectItem(
+            `$ COPY cloudflare app url to clipboard`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                if (project?.location) {
+                  vscode.window.withProgress(
+                    {
+                      location: vscode.ProgressLocation.Notification,
+                      title: `Copying cloudflare app URL to clipboard...`,
+                      cancellable: false,
+                    },
+                    progress => {
+                      progress.report({
+                        increment: 0,
+                        message: `Copying cloudflare app URL to clipboard...`,
+                      });
+                      const websqlAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_CLOUDFLARE_APP_PORT + '_1')}`;
                       vscode.env.clipboard.writeText(websqlAppUrl);
 
                       progress.report({

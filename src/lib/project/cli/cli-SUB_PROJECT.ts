@@ -101,6 +101,12 @@ export class $SubProject extends BaseCli {
           projectName: this.secondArg
             ? path.basename(this.secondArg?.trim())
             : void 0,
+          envOptions: this.params.clone({
+            build: {
+              ...this.params.build,
+              cloudflare: true,
+            },
+          }),
         });
         // } else if (select === 'build') {
         //   await this.project.subProject.buildInDevMode({

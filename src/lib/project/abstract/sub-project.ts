@@ -15,7 +15,7 @@ import {
   TempalteSubprojectType,
   TempalteSubprojectTypeArr,
 } from '../../constants';
-import { ReleaseArtifactTaon } from '../../options';
+import { EnvOptions, ReleaseArtifactTaon } from '../../options';
 
 import { CloudFlareProject } from './cloud-flare-projects/cloud-flare-project';
 import { CloudFlareProjectsRepository } from './cloud-flare-projects/cloud-flare-projects.repository';
@@ -56,13 +56,16 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region PUBLIC API / add new and configure
-  public async startInDevMode(opt?: { projectName?: string }): Promise<void> {
+  public async startInDevMode(opt?: {
+    projectName?: string;
+    envOptions?: EnvOptions;
+  }): Promise<void> {
     //#region @backendFunc
     opt = opt || {};
     // console.log(`opt`, opt);
     await this.repo.initAll();
     const chosenProject = await this.selectAnyProject(opt.projectName);
-    await chosenProject.startInDevMode();
+    await chosenProject.startInDevMode(opt.envOptions);
     //#endregion
   }
   //#endregion

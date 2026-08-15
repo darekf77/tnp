@@ -39,6 +39,7 @@ import {
   srcMainProject,
   srcNgProxyProject,
   TaonGeneratedFolders,
+  tmp_FRONTEND_CLOUDFLARE_APP_PORT,
   tmp_FRONTEND_NORMAL_APP_PORT,
   tmp_FRONTEND_WEBSQL_APP_PORT,
   tmpAppsForDist,
@@ -687,12 +688,17 @@ export class InsideStructAngularApp extends BaseInsideStruct {
 
             if (this.initOptions.build.watch) {
               const project = this.project;
-              if (this.initOptions.build.websql) {
-                const websqlAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_WEBSQL_APP_PORT + '_1')}`;
+              if (this.initOptions.build.cloudflare) {
+                const websqlAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_CLOUDFLARE_APP_PORT + '_1')}`;
                 manifestJson.start_url = websqlAppUrl;
               } else {
-                const normalAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_NORMAL_APP_PORT + '_1')}`;
-                manifestJson.start_url = normalAppUrl;
+                if (this.initOptions.build.websql) {
+                  const websqlAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_WEBSQL_APP_PORT + '_1')}`;
+                  manifestJson.start_url = websqlAppUrl;
+                } else {
+                  const normalAppUrl = `http://localhost:${project.readFile(tmp_FRONTEND_NORMAL_APP_PORT + '_1')}`;
+                  manifestJson.start_url = normalAppUrl;
+                }
               }
             } else {
               if (this.initOptions.build.pwa.start_url) {
@@ -902,7 +908,10 @@ ${isomorphicPackagesDevMode.map(packageName => `export * from './${packageName}/
             importsHtmlFromMainSrc = replaceImportToAssetsIMport(
               importsHtmlFromMainSrc,
               this.project.nameForNpmPackage,
-              (importsHtmlFromMainSrc || '').replace(this.project.location + '/', ''),
+              (importsHtmlFromMainSrc || '').replace(
+                this.project.location + '/',
+                '',
+              ),
               this.project,
             );
 

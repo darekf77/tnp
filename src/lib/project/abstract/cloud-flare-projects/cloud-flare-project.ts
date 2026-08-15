@@ -22,6 +22,7 @@ import {
   tsconfigSubProject,
   wranglerJsonC,
 } from '../../../constants';
+import { EnvOptions } from '../../../options';
 import type { Project } from '../project';
 
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
@@ -129,7 +130,7 @@ export class CloudFlareProject {
   //#endregion
 
   //#region start in dev mode
-  async startInDevMode(opt?:{ prod?: boolean }): Promise<void> {
+  async startInDevMode(envOptions:EnvOptions): Promise<void> {
     //#region @backendFunc
     await UtilsExecProc.spawnAsync(`npm run start`, {
       cwd: this.cwdWorker,

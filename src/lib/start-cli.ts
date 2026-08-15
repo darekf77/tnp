@@ -422,6 +422,7 @@ export async function run(
       an: 'app:normal',
       aw: 'app:websql',
       ae: 'app:electron',
+      ac: 'app:cloudflare',
       ba: 'build:app',
       b: 'build',
       bl: 'build:lib',
