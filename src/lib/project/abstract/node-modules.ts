@@ -386,6 +386,7 @@ export class NodeModules extends BaseNodeModules {
       'ts-node',
       'tslint',
       'prettier',
+      'wrangler',
       '@types/node',
       // [
       //   'core-js',
