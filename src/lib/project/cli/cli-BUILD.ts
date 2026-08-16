@@ -294,7 +294,7 @@ class $Build extends BaseCli {
           skipTagGitPush: true,
           skipReleaseQuestion: true,
           targetArtifact: ReleaseArtifactTaon.ANGULAR_NODE_APP,
-          releaseType: ReleaseType.MANUAL,
+          releaseType: ReleaseType.MANUAL_TAON,
         },
         build: {
           watch: false,

@@ -17,8 +17,8 @@ import {
 } from '../../constants';
 import { EnvOptions, ReleaseArtifactTaon } from '../../options';
 
-import { CloudFlareProject } from './cloud-flare-projects/cloud-flare-project';
-import { CloudFlareProjectsRepository } from './cloud-flare-projects/cloud-flare-projects.repository';
+import { CloudFlareSubProject } from './cloud-flare-projects/cloud-flare-project';
+import { CloudFlareSubProjectsRepository } from './cloud-flare-projects/cloud-flare-projects.repository';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects/cloud-flare-projects.utils';
 import { CloudFlareStripeWorkerPorject } from './cloud-flare-projects/cloud-flare-stripe-worker-project';
 import { CloudFlareYtWorkerPorject } from './cloud-flare-projects/cloud-flare-yt-worker-project';
@@ -27,18 +27,18 @@ import { Project } from './project';
 
 // @ts-ignore TODO weird inheritance problem
 export class SubProject extends BaseFeatureForProject<Project> {
-  public readonly repo: CloudFlareProjectsRepository;
+  public readonly repo: CloudFlareSubProjectsRepository;
 
   constructor(project: Project) {
     super(project);
-    this.repo = new CloudFlareProjectsRepository(project);
+    this.repo = new CloudFlareSubProjectsRepository(project);
   }
 
   //#region PUBLIC API / set mode for worker
   public async getInfo(): Promise<void> {
     //#region @backendFunc
-    await this.repo.initAll();
     const chosenProject = await this.selectAnyProject();
+    await chosenProject.init();
 
     Helpers.info(`
 
@@ -63,21 +63,20 @@ export class SubProject extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     opt = opt || {};
     // console.log(`opt`, opt);
-    await this.repo.initAll();
+
     const chosenProject = await this.selectAnyProject(opt.projectName);
+    await chosenProject.init();
     await chosenProject.startInDevMode(opt.envOptions);
     //#endregion
   }
   //#endregion
 
   //#region PUBLIC API / add new and configure
-  public async addAndConfigure(opt?: {
-    skipDeployment?: boolean;
-  }): Promise<void> {
+  public async addAndConfigure(
+    opt?: CloudFlarePorjectsUtils.AddProjectOptions,
+  ): Promise<void> {
     //#region @backendFunc
     opt = opt || {};
-    await this.repo.initAll();
-
     const choices = TempalteSubprojectTypeArr.reduce((a, b) => {
       return {
         ...a,
@@ -87,12 +86,12 @@ export class SubProject extends BaseFeatureForProject<Project> {
       };
     }, {});
 
-    const selectedTemplate: TempalteSubprojectType = await UtilsTerminal.select(
-      {
-        choices,
-        question: `Select cloud flare subproject that you want to add`,
-      },
-    );
+    const selectedTemplate: TempalteSubprojectType = opt.projectType
+      ? opt.projectType
+      : await UtilsTerminal.select({
+          choices,
+          question: `Select cloud flare subproject that you want to add`,
+        });
 
     let nameForProject: string;
     const alreadyAdded = this.repo
@@ -123,13 +122,18 @@ export class SubProject extends BaseFeatureForProject<Project> {
       path.basename(coreProjTemplatePath),
     ]);
 
+    const generatedWorkerName = this.repo.workerNameFor(nameForProject);
+
+    const localTempPathAfterMagicRename = crossPlatformPath([
+      this.repo.tempSubProjectFolder,
+      generatedWorkerName,
+    ]);
+
     Helpers.remove(localTempPath);
 
     UtilsFilesFoldersSync.copy(coreProjTemplatePath, localTempPath, {
       recursive: true,
     });
-
-    const generatedWorkerName = this.repo.workerNameFor(nameForProject);
 
     const magicRenameRules =
       `${path.basename(coreProjTemplatePath)}` + ` -> ${generatedWorkerName}`;
@@ -141,8 +145,9 @@ export class SubProject extends BaseFeatureForProject<Project> {
       ReleaseArtifactTaon.ANGULAR_NODE_APP,
     );
 
-    let selectedEnv;
+    let selectedEnv = opt.projectEnvironmentNameWithNumber;
     if (
+      !opt.projectEnvironmentNameWithNumber &&
       selectedTemplate === TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
     ) {
       selectedEnv = await UtilsTerminal.select({
@@ -168,20 +173,15 @@ export class SubProject extends BaseFeatureForProject<Project> {
 
     Helpers.remove(absLocationPath);
 
-    UtilsFilesFoldersSync.copy(
-      [this.repo.tempSubProjectFolder, generatedWorkerName],
-      absLocationPath,
-      {
-        recursive: true,
-      },
-    );
+    UtilsFilesFoldersSync.copy(localTempPathAfterMagicRename, absLocationPath, {
+      recursive: true,
+    });
 
     Helpers.remove(localTempPath);
     Helpers.remove([this.repo.tempSubProjectFolder, generatedWorkerName]);
-    const newWorker = CloudFlarePorjectsUtils.cloudFlareProjectFrom(
-      absLocationPath,
-      this.project,
-    );
+    const newWorker =
+      CloudFlarePorjectsUtils.cloudFlareProjectFrom(absLocationPath);
+
     await newWorker.afterCreation(opt);
 
     //#endregion
@@ -191,8 +191,9 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#region PUBLIC API / test with example data
   public async testStripeProjectWithExampleData(): Promise<void> {
     //#region @backendFunc
-    await this.repo.initAll();
+
     const chosenProject = await this.selectStripeProject();
+    await chosenProject.init();
 
     const prouctChoices = {
       movieProduct: {
@@ -320,8 +321,9 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#region PUBLIC API / set mode for worker
   public async setModeForWorker(): Promise<void> {
     //#region @backendFunc
-    await this.repo.initAll();
+
     const chosenProject = await this.selectAnyProject();
+    await chosenProject.init();
 
     const setModeChoices = {
       production: {
@@ -354,8 +356,8 @@ export class SubProject extends BaseFeatureForProject<Project> {
   public async setWorkerSecrets(): Promise<void> {
     //#region @backendFunc
     while (true) {
-      await this.repo.initAll();
       const chosenProject = await this.selectAnyProject();
+      await chosenProject.init();
       await chosenProject.setApiSecreats();
       const again = await UtilsTerminal.confirm({
         message: `Would you like to set secret again to project ?`,
@@ -373,7 +375,6 @@ export class SubProject extends BaseFeatureForProject<Project> {
   public async deployWorker(): Promise<void> {
     //#region @backendFunc
     while (true) {
-      await this.repo.initAll();
       const chosenProject = await this.selectAnyProject();
       await chosenProject.deployment();
       const again = await UtilsTerminal.confirm({
@@ -391,9 +392,9 @@ export class SubProject extends BaseFeatureForProject<Project> {
 
   //#region private methods / select location
   private async selectLocation(
-    subprojects: CloudFlareProject[],
+    subprojects: CloudFlareSubProject[],
   ): Promise<
-    | CloudFlareProject
+    | CloudFlareSubProject
     | CloudFlareStripeWorkerPorject
     | CloudFlareYtWorkerPorject
   > {
@@ -424,7 +425,7 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#region private methods / select any location
   private async selectAnyProject(
     projectName?: string,
-  ): Promise<CloudFlareProject> {
+  ): Promise<CloudFlareSubProject> {
     //#region @backendFunc
     const subprojects = this.repo.getAll();
     const projeFromArgs = subprojects.find(c => c.name === projectName);

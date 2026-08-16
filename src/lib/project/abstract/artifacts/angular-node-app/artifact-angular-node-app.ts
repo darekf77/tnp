@@ -7,6 +7,7 @@ import {
   fse,
   GlobalStorage,
   taonActionFromParent,
+  UtilsFilesFoldersSync,
 } from 'tnp-core/src';
 import {
   crossPlatformPath,
@@ -301,7 +302,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     if (
       buildOptions.release.releaseType === ReleaseType.LOCAL ||
-      buildOptions.release.releaseType === ReleaseType.MANUAL
+      buildOptions.release.releaseType === ReleaseType.MANUAL_TAON
     ) {
       await this.buildBackend(buildOptions, appDistOutBackendNodeAbsPath);
     }
@@ -380,6 +381,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
         //   ? 'ssr'
       }` +
       ` ${buildOptions.build.watch ? '--watch' : ''}` +
+      ` ${`--define TAON_CLOUDFLARE_BACKEND_HOST=${'\\"undefined\\"'}`} ` +
       ` ${outPutPathCommand} ${baseHrefCommand}`;
     //#endregion
 
@@ -788,9 +790,14 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       skipLibFolder: true,
     });
 
+    const worker = this.project.subProject.repo
+      .getAll()
+      .find(c => c.name === releaseOptions.release.workerName);
+
     // TODO maybe this compute property based
     const useDomain = releaseOptions.website.useDomain;
     const domain = releaseOptions.website.domain;
+    const workerUrl = worker?.workerUrl;
 
     // create one env file for all docker containers
     for (let i = 0; i < contextsNames.length; i++) {
@@ -813,11 +820,15 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
       const domainForContextFE = useDomain
         ? domain
-        : `http://localhost:${portFrontendRelease}`;
+        : releaseOptions.release.releaseType === ReleaseType.MANUAL_CLOUDFLARE
+          ? workerUrl
+          : `http://localhost:${portFrontendRelease}`;
 
       const domainForContextBE = useDomain
         ? domain
-        : `http://localhost:${portBackendRelease}`;
+        : releaseOptions.release.releaseType === ReleaseType.MANUAL_CLOUDFLARE
+          ? workerUrl
+          : `http://localhost:${portBackendRelease}`;
 
       // data[`HOST_BACKEND_PORT_${contextRealIndex}`] = portBackendRelease;
       data[`HOST_URL_${contextRealIndex}`] = domainForContextBE;
@@ -841,7 +852,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   async releasePartial(
     releaseOptions: EnvOptions,
   ): Promise<ReleasePartialOutput> {
-    //#region @backendFunc
+    //#region @backendFunc\
+    // console.log({ releaseOptions });
+
     let deploymentFunction: () => Promise<void> = void 0;
 
     //#region update resolved variables
@@ -857,6 +870,11 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
           },
         }),
       );
+
+    // console.log({
+    //   appDistOutBackendNodeAbsPath,
+    //   appDistOutBrowserAngularAbsPath,
+    // });
 
     let releaseProjPath: string = appDistOutBrowserAngularAbsPath;
 
@@ -887,9 +905,10 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
       //#endregion
     } else if (
       releaseOptions.release.releaseType === ReleaseType.LOCAL ||
-      releaseOptions.release.releaseType === ReleaseType.MANUAL
+      releaseOptions.release.releaseType === ReleaseType.MANUAL_TAON ||
+      releaseOptions.release.releaseType === ReleaseType.MANUAL_CLOUDFLARE
     ) {
-      //#region copy to local release folder
+      //#region prepare variables
       const localReleaseOutputBasePath =
         releaseOptions.release.releaseType === ReleaseType.LOCAL
           ? this.project.pathFor([
@@ -899,351 +918,397 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
             ])
           : this.project.pathFor([
               `.${config.frameworkName}`,
-              'release-manual',
+              `release-${releaseOptions.release.releaseType}`,
               this.currentArtifactName,
             ]);
 
-      HelpersTaon.copy(appDistOutBrowserAngularAbsPath, [
-        localReleaseOutputBasePath,
-        path.basename(appDistOutBrowserAngularAbsPath),
-      ]);
-      HelpersTaon.copy(appDistOutBackendNodeAbsPath, [
-        localReleaseOutputBasePath,
-        path.basename(appDistOutBackendNodeAbsPath),
-      ]);
-      releaseProjPath = localReleaseOutputBasePath;
       //#endregion
 
-      //#region update package.json in backend app
-      HelpersTaon.setValueToJSON(
-        [
-          localReleaseOutputBasePath,
-          path.basename(appDistOutBackendNodeAbsPath),
-          packageJsonNpmLib,
-        ],
-        'name',
-        path.basename(appDistOutBackendNodeAbsPath),
-      );
+      if (
+        releaseOptions.release.releaseType === ReleaseType.MANUAL_CLOUDFLARE
+      ) {
+        const worker = this.project.subProject.repo
+          .getAll()
+          .find(c => c.name === releaseOptions.release.workerName);
 
-      HelpersTaon.setValueToJSON(
-        [
-          localReleaseOutputBasePath,
-          path.basename(appDistOutBackendNodeAbsPath),
-          packageJsonNpmLib,
-        ],
-        'version',
-        releaseOptions.release.resolvedNewVersion,
-      );
-      //#endregion
-
-      //#region update docker-compose files
-
-      const dockerComposeRelativePath = 'docker-templates/docker-compose.yml';
-      const dockerComposeYmlDestPath = crossPlatformPath([
-        localReleaseOutputBasePath,
-        path.basename(dockerComposeRelativePath),
-      ]);
-
-      this.project.framework.recreateFileFromCoreProject({
-        relativePathInCoreProject: dockerComposeRelativePath,
-        customDestinationLocation: dockerComposeYmlDestPath,
-      });
-
-      //#endregion
-
-      const contextsNames = this.project.framework.getAllDetectedTaonContexts({
-        skipLibFolder: true,
-      });
-
-      const useDomain = releaseOptions.website.useDomain;
-      const domain = releaseOptions.website.domain;
-
-      //#region create one env file for all docker containers
-      for (let i = 0; i < contextsNames.length; i++) {
-        const contextRealIndex = i + 1; // start from 1
-        const contextName = contextsNames[i].contextName;
-        const taskNameBackendReleasePort =
-          `docker release ${domain} ${releaseOptions.release.releaseType} ` +
-          `backend port for ${contextName} (n=${contextRealIndex})`;
-        const portBackendRelease = await this.project.registerAndAssignPort(
-          taskNameBackendReleasePort,
-        );
-
-        const taskNameFrontendreleasePort =
-          `docker release ${domain} ${releaseOptions.release.releaseType} ` +
-          `frontend port for ${contextName} (n=${contextRealIndex})`;
-        const portFrontendRelease = await this.project.registerAndAssignPort(
-          taskNameFrontendreleasePort,
-        );
-
-        // const unknownProtocol = `https://`;
-
-        // const domainForContextFE = useDomain
-        //   ? domain.startsWith('http')
-        //     ? domain
-        //     : `${unknownProtocol}${domain}`
-        //   : `http://localhost:${portFrontendRelease}`;
-
-        const domainForContextFE = useDomain
-          ? domain
-          : `http://localhost:${portFrontendRelease}`;
-
-        // const domainForContextBE = useDomain
-        //   ? domain.startsWith('http')
-        //     ? domain
-        //     : `${unknownProtocol}${domain}`
-        //   : `http://localhost:${portBackendRelease}`;
-
-        const domainForContextBE = useDomain
-          ? domain
-          : `http://localhost:${portBackendRelease}`;
-
-        UtilsDotFile.setValuesKeysFromObject(
-          [localReleaseOutputBasePath, dotEnvFile],
+        Helpers.remove([worker.cwdWorker, browserNgBuild]);
+        HelpersTaon.copy(
+          [appDistOutBrowserAngularAbsPath, browserNgBuild],
+          [worker.cwdWorker, browserNgBuild],
           {
-            [`HOST_BACKEND_PORT_${contextRealIndex}`]: portBackendRelease,
-            [`HOST_URL_${contextRealIndex}`]: domainForContextBE,
-            [`FRONTEND_NORMAL_APP_PORT_${contextRealIndex}`]:
-              portFrontendRelease,
-            [`FRONTEND_HOST_URL_${contextRealIndex}`]: domainForContextFE,
+            recursive: true,
+            overwrite: true,
+          },
+        );
+        releaseProjPath = crossPlatformPath([
+          worker.absLocationPath,
+          browserNgBuild,
+        ]);
+      } else {
+        //#region manual taon release
 
-            ...(i === 0 // fallback to old taon app.hosts values
-              ? {
-                  [`HOST_BACKEND_PORT`]: portBackendRelease,
-                  [`HOST_URL`]: domainForContextBE,
-                  [`FRONTEND_NORMAL_APP_PORT`]: portFrontendRelease,
-                  [`FRONTEND_HOST_URL`]: domainForContextFE,
-                }
-              : {}),
+        //#region copy to local release folder
+        HelpersTaon.copy(appDistOutBrowserAngularAbsPath, [
+          localReleaseOutputBasePath,
+          path.basename(appDistOutBrowserAngularAbsPath),
+        ]);
+        HelpersTaon.copy(appDistOutBackendNodeAbsPath, [
+          localReleaseOutputBasePath,
+          path.basename(appDistOutBackendNodeAbsPath),
+        ]);
+        releaseProjPath = localReleaseOutputBasePath;
+        //#endregion
+
+        //#region update package.json in backend app
+        HelpersTaon.setValueToJSON(
+          [
+            localReleaseOutputBasePath,
+            path.basename(appDistOutBackendNodeAbsPath),
+            packageJsonNpmLib,
+          ],
+          'name',
+          path.basename(appDistOutBackendNodeAbsPath),
+        );
+
+        HelpersTaon.setValueToJSON(
+          [
+            localReleaseOutputBasePath,
+            path.basename(appDistOutBackendNodeAbsPath),
+            packageJsonNpmLib,
+          ],
+          'version',
+          releaseOptions.release.resolvedNewVersion,
+        );
+        //#endregion
+
+        //#region update docker-compose files
+
+        const dockerComposeRelativePath = 'docker-templates/docker-compose.yml';
+        const dockerComposeYmlDestPath = crossPlatformPath([
+          localReleaseOutputBasePath,
+          path.basename(dockerComposeRelativePath),
+        ]);
+
+        this.project.framework.recreateFileFromCoreProject({
+          relativePathInCoreProject: dockerComposeRelativePath,
+          customDestinationLocation: dockerComposeYmlDestPath,
+        });
+
+        //#endregion
+
+        const contextsNames = this.project.framework.getAllDetectedTaonContexts(
+          {
+            skipLibFolder: true,
           },
         );
 
-        UtilsDotFile.setCommentToKeyInDotFile(
-          [localReleaseOutputBasePath, dotEnvFile],
-          `HOST_BACKEND_PORT_${contextRealIndex}`,
-          `${CoreModels.tagForTaskName}="${taskNameBackendReleasePort}"`,
-        );
-        if (i === 0) {
+        const useDomain = releaseOptions.website.useDomain;
+        const domain = releaseOptions.website.domain;
+
+        //#region create one env file for all docker containers
+        for (let i = 0; i < contextsNames.length; i++) {
+          const contextRealIndex = i + 1; // start from 1
+          const contextName = contextsNames[i].contextName;
+          const taskNameBackendReleasePort =
+            `docker release ${domain} ${releaseOptions.release.releaseType} ` +
+            `backend port for ${contextName} (n=${contextRealIndex})`;
+          const portBackendRelease = await this.project.registerAndAssignPort(
+            taskNameBackendReleasePort,
+          );
+
+          const taskNameFrontendreleasePort =
+            `docker release ${domain} ${releaseOptions.release.releaseType} ` +
+            `frontend port for ${contextName} (n=${contextRealIndex})`;
+          const portFrontendRelease = await this.project.registerAndAssignPort(
+            taskNameFrontendreleasePort,
+          );
+
+          // const unknownProtocol = `https://`;
+
+          // const domainForContextFE = useDomain
+          //   ? domain.startsWith('http')
+          //     ? domain
+          //     : `${unknownProtocol}${domain}`
+          //   : `http://localhost:${portFrontendRelease}`;
+
+          const domainForContextFE = useDomain
+            ? domain
+            : `http://localhost:${portFrontendRelease}`;
+
+          // const domainForContextBE = useDomain
+          //   ? domain.startsWith('http')
+          //     ? domain
+          //     : `${unknownProtocol}${domain}`
+          //   : `http://localhost:${portBackendRelease}`;
+
+          const domainForContextBE = useDomain
+            ? domain
+            : `http://localhost:${portBackendRelease}`;
+
+          UtilsDotFile.setValuesKeysFromObject(
+            [localReleaseOutputBasePath, dotEnvFile],
+            {
+              [`HOST_BACKEND_PORT_${contextRealIndex}`]: portBackendRelease,
+              [`HOST_URL_${contextRealIndex}`]: domainForContextBE,
+              [`FRONTEND_NORMAL_APP_PORT_${contextRealIndex}`]:
+                portFrontendRelease,
+              [`FRONTEND_HOST_URL_${contextRealIndex}`]: domainForContextFE,
+
+              ...(i === 0 // fallback to old taon app.hosts values
+                ? {
+                    [`HOST_BACKEND_PORT`]: portBackendRelease,
+                    [`HOST_URL`]: domainForContextBE,
+                    [`FRONTEND_NORMAL_APP_PORT`]: portFrontendRelease,
+                    [`FRONTEND_HOST_URL`]: domainForContextFE,
+                  }
+                : {}),
+            },
+          );
+
           UtilsDotFile.setCommentToKeyInDotFile(
             [localReleaseOutputBasePath, dotEnvFile],
-            `HOST_BACKEND_PORT`,
+            `HOST_BACKEND_PORT_${contextRealIndex}`,
             `${CoreModels.tagForTaskName}="${taskNameBackendReleasePort}"`,
           );
+
+          if (i === 0) {
+            UtilsDotFile.setCommentToKeyInDotFile(
+              [localReleaseOutputBasePath, dotEnvFile],
+              `HOST_BACKEND_PORT`,
+              `${CoreModels.tagForTaskName}="${taskNameBackendReleasePort}"`,
+            );
+          }
+          UtilsDotFile.setCommentToKeyInDotFile(
+            [localReleaseOutputBasePath, dotEnvFile],
+            `FRONTEND_NORMAL_APP_PORT_${contextRealIndex}`,
+            `${CoreModels.tagForTaskName}="${taskNameFrontendreleasePort}"`,
+          );
         }
-        UtilsDotFile.setCommentToKeyInDotFile(
-          [localReleaseOutputBasePath, dotEnvFile],
-          `FRONTEND_NORMAL_APP_PORT_${contextRealIndex}`,
-          `${CoreModels.tagForTaskName}="${taskNameFrontendreleasePort}"`,
+
+        if (!useDomain) {
+          UtilsDotFile.addCommentAtTheBeginningOfDotFile(
+            [localReleaseOutputBasePath, dotEnvFile],
+            `HINT! IF YOU NEED DOMAIN USE userDomain=true in env.ts`,
+          );
+        }
+
+        UtilsDotFile.setValueToDotFile(
+          [localReleaseOutputBasePath, '.env'],
+          'COMPOSE_PROJECT_NAME',
+          (
+            'TaonDeployment__' +
+            _.camelCase(releaseOptions.website.domain) +
+            '__' +
+            `v${_.kebabCase(this.project.packageJson.version)}` +
+            '__' +
+            `release-type-${releaseOptions.release.releaseType}` +
+            `--env--${
+              !releaseOptions.release.envName ||
+              releaseOptions.release.envName === '__'
+                ? 'default'
+                : releaseOptions.release.envName
+            }${releaseOptions.release.envNumber || ''}`
+          ).toLowerCase(),
         );
-      }
 
-      if (!useDomain) {
-        UtilsDotFile.addCommentAtTheBeginningOfDotFile(
+        UtilsDotFile.setValueToDotFile(
           [localReleaseOutputBasePath, dotEnvFile],
-          `HINT! IF YOU NEED DOMAIN USE userDomain=true in env.ts`,
+          'BUILD_DATE',
+          `${dateformat(new Date(), 'dd-mm-yyyy_HH:MM:ss')}`,
         );
-      }
 
-      UtilsDotFile.setValueToDotFile(
-        [localReleaseOutputBasePath, '.env'],
-        'COMPOSE_PROJECT_NAME',
-        (
-          'TaonDeployment__' +
-          _.camelCase(releaseOptions.website.domain) +
-          '__' +
-          `v${_.kebabCase(this.project.packageJson.version)}` +
-          '__' +
-          `release-type-${releaseOptions.release.releaseType}` +
-          `--env--${
-            !releaseOptions.release.envName ||
-            releaseOptions.release.envName === '__'
-              ? 'default'
-              : releaseOptions.release.envName
-          }${releaseOptions.release.envNumber || ''}`
-        ).toLowerCase(),
-      );
+        UtilsDotFile.setValueToDotFile(
+          [localReleaseOutputBasePath, dotEnvFile],
+          'NODE_ENV',
+          `production`,
+        );
+        //#endregion
 
-      UtilsDotFile.setValueToDotFile(
-        [localReleaseOutputBasePath, dotEnvFile],
-        'BUILD_DATE',
-        `${dateformat(new Date(), 'dd-mm-yyyy_HH:MM:ss')}`,
-      );
+        const allValuesDotEnv = UtilsDotFile.getValuesKeysAsJsonObject([
+          localReleaseOutputBasePath,
+          dotEnvFile,
+        ]);
 
-      UtilsDotFile.setValueToDotFile(
-        [localReleaseOutputBasePath, dotEnvFile],
-        'NODE_ENV',
-        `production`,
-      );
-      //#endregion
+        //#region update docker-compose file with env variables
+        const dockerComposeFile = UtilsYaml.readYamlAsJson<DockerComposeFile>(
+          dockerComposeYmlDestPath,
+        );
 
-      const allValuesDotEnv = UtilsDotFile.getValuesKeysAsJsonObject([
-        localReleaseOutputBasePath,
-        dotEnvFile,
-      ]);
+        //#region prepare backend containers
+        const backendTemplapteObj =
+          dockerComposeFile.services['backend-app-node'];
 
-      //#region update docker-compose file with env variables
-      const dockerComposeFile = UtilsYaml.readYamlAsJson<DockerComposeFile>(
-        dockerComposeYmlDestPath,
-      );
+        delete dockerComposeFile.services['backend-app-node'];
 
-      //#region prepare backend containers
-      const backendTemplapteObj =
-        dockerComposeFile.services['backend-app-node'];
+        const containerLabel = `${UtilsDocker.DOCKER_LABEL_KEY}="\${COMPOSE_PROJECT_NAME}"`;
 
-      delete dockerComposeFile.services['backend-app-node'];
+        for (let i = 0; i < contextsNames.length; i++) {
+          const contextRealIndex = i + 1; // start from 1
+          const contextName = contextsNames[i].contextName;
+          const ctxBackend = _.cloneDeep(backendTemplapteObj);
 
-      const containerLabel = `${UtilsDocker.DOCKER_LABEL_KEY}="\${COMPOSE_PROJECT_NAME}"`;
+          //  `backend-app-node--${_.kebabCase(releaseOptions.website.domain)}--` +
+          const containerIdentifierBackendNOde =
+            `be--${_.kebabCase(releaseOptions.website.domain)}--` +
+            `v${_.kebabCase(this.project.packageJson.version)}--${
+              contextName
+            }--ctx${contextRealIndex}`.toLowerCase();
 
-      for (let i = 0; i < contextsNames.length; i++) {
-        const contextRealIndex = i + 1; // start from 1
-        const contextName = contextsNames[i].contextName;
-        const ctxBackend = _.cloneDeep(backendTemplapteObj);
+          //#region updating cloned backend template
+          const traefikKeyBackend =
+            `${containerIdentifierBackendNOde}--env` +
+            `${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
 
-        //  `backend-app-node--${_.kebabCase(releaseOptions.website.domain)}--` +
-        const containerIdentifierBackendNOde =
-          `be--${_.kebabCase(releaseOptions.website.domain)}--` +
-          `v${_.kebabCase(this.project.packageJson.version)}--${
-            contextName
-          }--ctx${contextRealIndex}`.toLowerCase();
+          const traefikLabelsBE = [
+            `traefik.enable=true`,
+            `traefik.http.routers.${traefikKeyBackend}.rule=Host(\`${releaseOptions.website.domain}\`) && PathPrefix(\`/api/${contextName}/\`)`,
+            `traefik.http.routers.${traefikKeyBackend}.entrypoints=websecure`,
+            // `traefik.http.routers.${traefikKeyBackend}.tls.certresolver=myresolver`,
+            `traefik.http.services.${traefikKeyBackend}.loadbalancer.server.port=$\{HOST_BACKEND_PORT_${contextRealIndex}\}`,
 
-        //#region updating cloned backend template
-        const traefikKeyBackend =
-          `${containerIdentifierBackendNOde}--env` +
-          `${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
+            containerLabel,
+            UtilsDocker.DOCKER_TAON_PROJECT_LABEL,
+            // only when sripping prefix
+            // 'traefik.http.middlewares.strip-api.stripprefix.prefixes=/api',
+            // 'traefik.http.routers.backend.middlewares=strip-api',
+          ];
+          const traefikLabelsBEObject: Record<string, string> = {};
+          traefikLabelsBE.forEach(label => {
+            const [key, value] = label.split('=');
+            traefikLabelsBEObject[key] = value;
+          });
+          ctxBackend.labels = {
+            ...ctxBackend.labels,
+            ...traefikLabelsBEObject,
+          };
+          ctxBackend.container_name = containerIdentifierBackendNOde;
+          ctxBackend.ports[0] = `$\{HOST_BACKEND_PORT_${contextRealIndex}\}:$\{HOST_BACKEND_PORT_${contextRealIndex}\}`;
+          const all = _.cloneDeep(allValuesDotEnv) as Record<string, string>;
+          for (const key of Object.keys(all)) {
+            all[key] = `\${${key}}`;
+          }
+          ctxBackend.environment = all;
+          ctxBackend.environment[ACTIVE_CONTEXT] = contextName;
 
-        const traefikLabelsBE = [
-          `traefik.enable=true`,
-          `traefik.http.routers.${traefikKeyBackend}.rule=Host(\`${releaseOptions.website.domain}\`) && PathPrefix(\`/api/${contextName}/\`)`,
-          `traefik.http.routers.${traefikKeyBackend}.entrypoints=websecure`,
-          // `traefik.http.routers.${traefikKeyBackend}.tls.certresolver=myresolver`,
-          `traefik.http.services.${traefikKeyBackend}.loadbalancer.server.port=$\{HOST_BACKEND_PORT_${contextRealIndex}\}`,
+          const specificForProjectSQliteDbLocation = crossPlatformPath([
+            UtilsOs.getRealHomeDir(),
+            dotTaonFolder,
+            'cloud/docker-backend-databases',
+            releaseOptions.website.domain,
+            this.project.packageJson.version,
+            contextName,
+            databases,
+          ]);
 
-          containerLabel,
-          UtilsDocker.DOCKER_TAON_PROJECT_LABEL,
-          // only when sripping prefix
-          // 'traefik.http.middlewares.strip-api.stripprefix.prefixes=/api',
-          // 'traefik.http.routers.backend.middlewares=strip-api',
-        ];
-        const traefikLabelsBEObject: Record<string, string> = {};
-        traefikLabelsBE.forEach(label => {
-          const [key, value] = label.split('=');
-          traefikLabelsBEObject[key] = value;
-        });
-        ctxBackend.labels = { ...ctxBackend.labels, ...traefikLabelsBEObject };
-        ctxBackend.container_name = containerIdentifierBackendNOde;
-        ctxBackend.ports[0] = `$\{HOST_BACKEND_PORT_${contextRealIndex}\}:$\{HOST_BACKEND_PORT_${contextRealIndex}\}`;
+          ctxBackend.volumes = [
+            `${specificForProjectSQliteDbLocation}:/app/${databases}`,
+          ];
+          //#endregion
+
+          dockerComposeFile.services[containerIdentifierBackendNOde] =
+            ctxBackend;
+        }
+        //#endregion
+
+        //#region prepare frontend container
+        const frontendTemplapteObj =
+          dockerComposeFile.services['angular-app-node'];
+
+        delete dockerComposeFile.services['angular-app-node'];
+
+        const ctxFrontend = _.cloneDeep(frontendTemplapteObj);
+
+        //  `angular-app-node--${_.kebabCase(releaseOptions.website.domain)}` +
+        const newKeyForContainerFrontendAngular = (
+          `fe--${_.kebabCase(releaseOptions.website.domain)}` +
+          `--v${_.kebabCase(this.project.packageJson.version)}`
+        ).toLowerCase();
+
+        //#region set traefik labels for frontend app
+
         const all = _.cloneDeep(allValuesDotEnv) as Record<string, string>;
         for (const key of Object.keys(all)) {
           all[key] = `\${${key}}`;
         }
-        ctxBackend.environment = all;
-        ctxBackend.environment[ACTIVE_CONTEXT] = contextName;
+        ctxFrontend.environment = all;
 
-        const specificForProjectSQliteDbLocation = crossPlatformPath([
-          UtilsOs.getRealHomeDir(),
-          dotTaonFolder,
-          'cloud/docker-backend-databases',
-          releaseOptions.website.domain,
-          this.project.packageJson.version,
-          contextName,
-          databases,
-        ]);
+        const traefikKeyFrontend =
+          `${newKeyForContainerFrontendAngular}--` +
+          `${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
 
-        ctxBackend.volumes = [
-          `${specificForProjectSQliteDbLocation}:/app/${databases}`,
+        const traefikLabelsFE = [
+          `traefik.enable=true`,
+          `traefik.http.routers.${traefikKeyFrontend}.rule=Host(\`${releaseOptions.website.domain}\`)`,
+          `traefik.http.routers.${traefikKeyFrontend}.entrypoints=websecure`,
+          // `traefik.http.routers.${traefikKeyFronend}.tls.certresolver=myresolver`,
+          `traefik.http.services.${traefikKeyFrontend}.loadbalancer.server.port=80`,
+          containerLabel,
         ];
+        const traefikLabelsFEObject: Record<string, string> = {};
+        traefikLabelsFE.forEach(label => {
+          const [key, value] = label.split('=');
+          traefikLabelsFEObject[key] = value;
+        });
+        ctxFrontend.labels = traefikLabelsFEObject;
         //#endregion
 
-        dockerComposeFile.services[containerIdentifierBackendNOde] = ctxBackend;
-      }
-      //#endregion
+        ctxFrontend.container_name = newKeyForContainerFrontendAngular;
 
-      //#region prepare frontend container
-      const frontendTemplapteObj =
-        dockerComposeFile.services['angular-app-node'];
+        dockerComposeFile.services[newKeyForContainerFrontendAngular] =
+          ctxFrontend;
+        //#endregion
 
-      delete dockerComposeFile.services['angular-app-node'];
+        UtilsYaml.writeJsonToYaml(dockerComposeYmlDestPath, dockerComposeFile);
 
-      const ctxFrontend = _.cloneDeep(frontendTemplapteObj);
+        //#region add info comment to docker-compose.yml file
+        const dockerComposeYmlFileContent = Helpers.readFile(
+          dockerComposeYmlDestPath,
+        );
 
-      //  `angular-app-node--${_.kebabCase(releaseOptions.website.domain)}` +
-      const newKeyForContainerFrontendAngular = (
-        `fe--${_.kebabCase(releaseOptions.website.domain)}` +
-        `--v${_.kebabCase(this.project.packageJson.version)}`
-      ).toLowerCase();
-
-      //#region set traefik labels for frontend app
-
-      const all = _.cloneDeep(allValuesDotEnv) as Record<string, string>;
-      for (const key of Object.keys(all)) {
-        all[key] = `\${${key}}`;
-      }
-      ctxFrontend.environment = all;
-
-      const traefikKeyFrontend =
-        `${newKeyForContainerFrontendAngular}--` +
-        `${releaseOptions.release.envName}${releaseOptions.release.envNumber || ''}`;
-
-      const traefikLabelsFE = [
-        `traefik.enable=true`,
-        `traefik.http.routers.${traefikKeyFrontend}.rule=Host(\`${releaseOptions.website.domain}\`)`,
-        `traefik.http.routers.${traefikKeyFrontend}.entrypoints=websecure`,
-        // `traefik.http.routers.${traefikKeyFronend}.tls.certresolver=myresolver`,
-        `traefik.http.services.${traefikKeyFrontend}.loadbalancer.server.port=80`,
-        containerLabel,
-      ];
-      const traefikLabelsFEObject: Record<string, string> = {};
-      traefikLabelsFE.forEach(label => {
-        const [key, value] = label.split('=');
-        traefikLabelsFEObject[key] = value;
-      });
-      ctxFrontend.labels = traefikLabelsFEObject;
-      //#endregion
-
-      ctxFrontend.container_name = newKeyForContainerFrontendAngular;
-
-      dockerComposeFile.services[newKeyForContainerFrontendAngular] =
-        ctxFrontend;
-      //#endregion
-
-      UtilsYaml.writeJsonToYaml(dockerComposeYmlDestPath, dockerComposeFile);
-
-      //#region add info comment to docker-compose.yml file
-      const dockerComposeYmlFileContent = Helpers.readFile(
-        dockerComposeYmlDestPath,
-      );
-
-      Helpers.writeFile(
-        dockerComposeYmlDestPath,
-        `# ${THIS_IS_GENERATED_STRING}
+        Helpers.writeFile(
+          dockerComposeYmlDestPath,
+          `# ${THIS_IS_GENERATED_STRING}
 # FRONTEND APP can ONLY READ VARIABLES THAT START WITH "FRONTEND_", "PUIBLIC_" or "HOST_"
 ${dockerComposeYmlFileContent}
 # ${THIS_IS_GENERATED_STRING}`,
-      );
-      //#endregion
+        );
+        //#endregion
 
-      //#endregion
+        //#endregion
 
-      //#region create package.json with start script for whole build
-      HelpersTaon.copyFile(this.project.pathFor(packageJsonMainProject), [
-        localReleaseOutputBasePath,
-        packageJsonNpmLib,
-      ]);
-      HelpersTaon.setValueToJSON(
-        [localReleaseOutputBasePath, packageJsonNpmLib],
-        'scripts',
-        {},
-      );
+        //#region create package.json with start script for whole build
+        HelpersTaon.copyFile(this.project.pathFor(packageJsonMainProject), [
+          localReleaseOutputBasePath,
+          packageJsonNpmLib,
+        ]);
+        HelpersTaon.setValueToJSON(
+          [localReleaseOutputBasePath, packageJsonNpmLib],
+          'scripts',
+          {},
+        );
 
-      HelpersTaon.setValueToJSON(
-        [localReleaseOutputBasePath, packageJsonNpmLib],
-        'scripts.start',
-        `taon preview ./docker-compose.yml`,
-      );
-      //#endregion
+        HelpersTaon.setValueToJSON(
+          [localReleaseOutputBasePath, packageJsonNpmLib],
+          'scripts.start',
+          `taon preview ./docker-compose.yml`,
+        );
+        //#endregion
+
+        //#endregion
+      }
 
       //#region display final build info
-      Helpers.info(`
+      if (
+        releaseOptions.release.releaseType === ReleaseType.MANUAL_CLOUDFLARE
+      ) {
+        Helpers.info(`
+
+      Bundled version of your app is ready for cloudflare worker.
+      Check it here ${localReleaseOutputBasePath}
+
+      `);
+      } else {
+        Helpers.info(`
 
       Dockerized version of your app is ready.
       you can run: ${chalk.bold('docker compose up -d')}
@@ -1253,12 +1318,17 @@ ${dockerComposeYmlFileContent}
       taon preview ./docker-compose.yml
 
       `);
+      }
+
       //#endregion
 
+      //#region release end deployment function
       if (releaseOptions.release.releaseType === ReleaseType.LOCAL) {
         Helpers.taskDone(`Local release done!`);
         // TODO
-      } else if (releaseOptions.release.releaseType === ReleaseType.MANUAL) {
+      } else if (
+        releaseOptions.release.releaseType === ReleaseType.MANUAL_TAON
+      ) {
         Helpers.taskDone(`Manual release prepared!`);
         deploymentFunction = async () => {
           await this.deployToTaonCloud({
@@ -1266,7 +1336,18 @@ ${dockerComposeYmlFileContent}
             localReleaseOutputBasePath,
           });
         };
+      } else if (
+        releaseOptions.release.releaseType === ReleaseType.MANUAL_CLOUDFLARE
+      ) {
+        Helpers.taskDone(`Manual cloudflare worker release prepared!`);
+        deploymentFunction = async () => {
+          await this.deployToCloudflare({
+            releaseOptions,
+            localReleaseOutputBasePath,
+          });
+        };
       }
+      //#endregion
     }
 
     return {
@@ -1277,6 +1358,31 @@ ${dockerComposeYmlFileContent}
       projectsReposToPush,
       deploymentFunction,
     };
+    //#endregion
+  }
+  //#endregion
+
+  //#region deploy to cloudflare
+  private async deployToCloudflare({
+    releaseOptions,
+    localReleaseOutputBasePath,
+  }: {
+    releaseOptions: EnvOptions;
+    localReleaseOutputBasePath?: string;
+  }): Promise<void> {
+    //#region @backendFunc
+
+    const worker = this.project.subProject.repo
+      .getAll()
+      .find(c => c.name === releaseOptions.release.workerName);
+
+    if (releaseOptions.release.askUserBeforeFinalAction) {
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: 'Press any key to start deployment to cloudflare',
+      });
+    }
+
+    await worker.deployment();
     //#endregion
   }
   //#endregion

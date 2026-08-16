@@ -75,6 +75,8 @@ export class $SubProject extends BaseCli {
     while (true) {
       UtilsTerminal.clearConsole();
 
+      const exitAfterDone = !!overrideSelect;
+
       let select = overrideSelect
         ? overrideSelect
         : await UtilsTerminal.select<keyof typeof choices>({
@@ -125,6 +127,9 @@ export class $SubProject extends BaseCli {
       } else if (select === 'login') {
         await CloudFlarePorjectsUtils.loginCliCloudFlare();
       } else if (select === 'exit') {
+        this._exit();
+      }
+      if (exitAfterDone) {
         this._exit();
       }
       await UtilsTerminal.pressAnyKeyToContinueAsync({

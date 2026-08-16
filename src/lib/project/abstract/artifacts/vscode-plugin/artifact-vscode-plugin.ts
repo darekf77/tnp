@@ -378,10 +378,10 @@ local VSCode instance.
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
     }
-    if (releaseOptions.release.releaseType === ReleaseType.MANUAL) {
+    if (releaseOptions.release.releaseType === ReleaseType.MANUAL_TAON) {
       // TODO release to microsoft store or serve with place to put assets
     }
-    if (releaseOptions.release.releaseType === ReleaseType.CLOUD_CI) {
+    if (releaseOptions.release.releaseType === ReleaseType.CLOUD_CI_TAON) {
       // TODO trigger cloud release (it will actually be manual on remote server)
     }
 

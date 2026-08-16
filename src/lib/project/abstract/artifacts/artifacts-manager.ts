@@ -52,6 +52,7 @@ import {
   startTsFromLib,
   TaonGeneratedFiles,
   taonJsonMainProject,
+  TempalteSubprojectType,
 } from '../../../constants';
 import { ReleaseArtifactTaon, EnvOptions, ReleaseType } from '../../../options';
 import { EXPORT_TEMPLATE } from '../../../templates';
@@ -982,11 +983,48 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
         });
 
       for (const item of artifactsToRelease) {
+        let allCustomWorkers =
+          this.project.subProject.repo.getAll_Custom_Projects();
+
+        if (
+          allCustomWorkers.length === 0 &&
+          item.releaseType === ReleaseType.MANUAL_CLOUDFLARE
+        ) {
+          await this.project.subProject.addAndConfigure({
+            skipDeployment: true,
+            projectType: TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER,
+            projectEnvironmentNameWithNumber: item.envName
+              ? `${item.envName}${item.envNumber ?? ''}`
+              : void 0,
+          });
+        }
+
+        if (
+          item.releaseType === ReleaseType.MANUAL_CLOUDFLARE &&
+          !item.workerName
+        ) {
+          allCustomWorkers =
+            this.project.subProject.repo.getAll_Custom_Projects();
+          item.workerName = _.first(allCustomWorkers).name;
+        }
+
+        const worker = this.project.subProject.repo
+          .getAll()
+          .find(c => c.name === item.workerName);
+
+        if (!worker && item.releaseType === ReleaseType.MANUAL_CLOUDFLARE) {
+          Helpers.error(
+            `Worker "${item.workerName}" is not proper cloudflare worker name in taon.json`,
+            false,
+            true,
+          );
+        }
+
         const clonedOptions = releaseOptions.clone({
           release: {
             targetArtifact: item.artifactName,
-            envName: item.envName || '__',
-            envNumber: item.envNumber,
+            envName: worker ? worker.envName : item.envName || '__',
+            envNumber: worker ? worker.envNumber : item.envNumber,
             releaseType: item.releaseType || releaseOptions.release.releaseType,
             taonInstanceIp: item.taonInstanceIp,
             askUserBeforeFinalAction: item.askUserBeforeFinalAction,
@@ -1054,7 +1092,9 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
       releaseOptions.release.targetArtifact ===
         ReleaseArtifactTaon.ANGULAR_NODE_APP
     ) {
-      if (releaseOptions.release.releaseType === ReleaseType.MANUAL_STATIC_PAGES) {
+      if (
+        releaseOptions.release.releaseType === ReleaseType.MANUAL_STATIC_PAGES
+      ) {
         releaseOptions.build.baseHref =
           this.artifact.angularNodeApp.angularFeBasenameManager.getBaseHref(
             releaseOptions,

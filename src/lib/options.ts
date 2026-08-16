@@ -57,7 +57,7 @@ export enum ReleaseType {
   /**
    * Manual release (happen physically on local machine)
    */
-  MANUAL = 'manual',
+  MANUAL_TAON = 'manual-taon',
   /**
    * Releases artifact to local repository <project-location>/local_release/<artifact-name>/<release build files>
    */
@@ -66,7 +66,7 @@ export enum ReleaseType {
    * Trigger cloud release (happen on cloud server)
    * Cloud release actually start "Manual" release process on cloud server
    */
-  CLOUD_CI = 'cloud-ci',
+  CLOUD_CI_TAON = 'cloud-ci-taon',
   /**
    * Trigger cloud release (happen on cloud server)
    * Cloud release actually start "Manual" release process on cloud server
@@ -88,8 +88,8 @@ export enum ReleaseType {
 }
 
 export const ReleaseTypeArr: ReleaseType[] = [
-  ReleaseType.MANUAL,
-  ReleaseType.CLOUD_CI,
+  ReleaseType.MANUAL_TAON,
+  ReleaseType.CLOUD_CI_TAON,
   ReleaseType.MANUAL_CLOUDFLARE,
   ReleaseType.CLOUD_CI_CLOUDFLARE,
   ReleaseType.MANUAL_STATIC_PAGES,
@@ -98,8 +98,8 @@ export const ReleaseTypeArr: ReleaseType[] = [
 ];
 
 export const ReleaseTypeLabels = {
-  [ReleaseType.MANUAL]: 'Manual (Taon Cloud)',
-  [ReleaseType.CLOUD_CI]: 'Cloud CI (Taon Cloud)',
+  [ReleaseType.MANUAL_TAON]: 'Manual (Taon Cloud)',
+  [ReleaseType.CLOUD_CI_TAON]: 'Cloud CI (Taon Cloud)',
   [ReleaseType.MANUAL_CLOUDFLARE]: 'Manual (Cloudflare)',
   [ReleaseType.CLOUD_CI_CLOUDFLARE]: 'Cloud CI (Cloudflare)',
   [ReleaseType.MANUAL_STATIC_PAGES]: 'Manual (Static Pages)',

@@ -259,6 +259,9 @@ ${migrationExported
   )
   .join('\n')}
 //#${'reg' + 'ion'} @${'bro' + 'wser'}
+/**
+ * only for ng server cloudflare (command: taon ac )
+ */
 declare const TAON_CLOUDFLARE_BACKEND_HOST: string;
 //#${'endreg' + 'ion'}
 let isWebSQLMode: boolean = false;

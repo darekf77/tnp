@@ -146,7 +146,7 @@ export class $Core extends BaseCli {
           autoReleaseUsingConfig: true,
           autoReleaseTaskName: 'npm',
           releaseVersionBumpType: 'patch',
-          releaseType: ReleaseType.MANUAL,
+          releaseType: ReleaseType.MANUAL_TAON,
         },
       }),
     );

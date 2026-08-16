@@ -1,9 +1,9 @@
 import { TaonEmailContactEnv } from '@taon-dev/api-workers/src';
 
-import { CloudFlareProject } from './cloud-flare-project';
+import { CloudFlareSubProject } from './cloud-flare-project';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
 
-export class CloudFlareEmailWorkerPorject extends CloudFlareProject {
+export class CloudFlareEmailWorkerPorject extends CloudFlareSubProject {
   //#region api secreate keys data
   protected apiSecretsKeyData(): CloudFlarePorjectsUtils.SecretKeyData[] {
     return [

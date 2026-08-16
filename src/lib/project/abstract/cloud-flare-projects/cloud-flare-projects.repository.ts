@@ -16,17 +16,17 @@ import { ReleaseArtifactTaon, ReleaseType } from '../../../options';
 import type { Project } from '../project';
 
 import { CloudFlareEmailWorkerPorject } from './cloud-flare-email-worker-project';
-import { CloudFlareProject } from './cloud-flare-project';
+import { CloudFlareSubProject } from './cloud-flare-project';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
 import { CloudFlareStripeWorkerPorject } from './cloud-flare-stripe-worker-project';
 import { CloudFlareYtWorkerPorject } from './cloud-flare-yt-worker-project';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
-export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project> {
+export class CloudFlareSubProjectsRepository extends BaseFeatureForProject<Project> {
   constructor(project: Project) {
     super(project);
-    //  this.repo = new CloudFlareProjectsRepository(this);
+    //  this.repo = new CloudFlareSubProjectsRepository(this);
   }
 
   //#region this project temp sub project folder
@@ -49,10 +49,13 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
   //#region this project path template type
   public pathToTempalteInCurrentProject(
     templateType: TempalteSubprojectType,
-    environmentName?: CoreModels.EnvironmentNameTaon,
+    environmentNameWithNumber?: string,
   ): string {
     return this.project.pathFor(
-      `${mainProjectSubProjects}/${TempalteSubprojectTypeGroup[templateType]}/${templateType}${environmentName ? `__${environmentName}` : ''}`,
+      `${mainProjectSubProjects}/${TempalteSubprojectTypeGroup[templateType]}/` +
+        `${templateType}${
+          environmentNameWithNumber ? `__${environmentNameWithNumber}` : ''
+        }`,
     );
   }
   //#endregion
@@ -76,19 +79,21 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
   //#region get all
   public getAllFoldersWithProjects(): string[] {
     //#region @backendFunc
-    const environments = CoreModels.EnvironmentNameArr;
+    const environments = this.project.releaseProcess
+      .getEnvNamesByArtifact(ReleaseArtifactTaon.ANGULAR_NODE_APP)
+      .map(c => `${c.envName}${c.envNumber ?? ''}`);
 
     const all = TempalteSubprojectTypeArr.reduce((allFolders, tempalteType) => {
-      const availableEnvs: readonly CoreModels.EnvironmentNameTaon[] =
+      const availableEnvs: readonly string[] =
         tempalteType === TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
           ? environments
           : [void 0];
 
       const available = availableEnvs
-        .map(env => {
+        .map(envWithNameAndNum => {
           const foldersPath = this.pathToTempalteInCurrentProject(
             tempalteType,
-            env,
+            envWithNameAndNum,
           );
 
           return UtilsFilesFoldersSync.getFoldersFrom(foldersPath, {
@@ -118,14 +123,11 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
   //#endregion
 
   //#region get all cloud flare projects
-  public getAll(): CloudFlareProject[] {
+  public getAll(): CloudFlareSubProject[] {
     const allFolders = this.getAllSubProjects();
     // console.log({ allFolders });
     return allFolders.map(c => {
-      return CloudFlarePorjectsUtils.cloudFlareProjectFrom(
-        c.location,
-        this.project,
-      );
+      return CloudFlarePorjectsUtils.cloudFlareProjectFrom(c.location);
     });
   }
   //#endregion
@@ -162,19 +164,32 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
   }
   //#endregion
 
+  //#region get all cloud flare stripe projects
+  public getAll_Custom_Projects(): CloudFlareStripeWorkerPorject[] {
+    return this.getAll().filter(f => {
+      return (
+        f.selectedTempalte ===
+        TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
+      );
+    }) as CloudFlareStripeWorkerPorject[];
+  }
+  //#endregion
+
   //#region get all by type
   protected getAllByTypePaths(tempalteType: TempalteSubprojectType): string[] {
-    const environments = CoreModels.EnvironmentNameArr;
+    const environments = this.project.releaseProcess
+      .getEnvNamesByArtifact(ReleaseArtifactTaon.ANGULAR_NODE_APP)
+      .map(c => `${c.envName}${c.envNumber ?? ''}`);
 
-    const availableEnvs: readonly CoreModels.EnvironmentNameTaon[] =
+    const availableEnvs: readonly string[] =
       tempalteType === TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
         ? environments
         : [void 0];
 
     const available = availableEnvs
-      .map(env =>
+      .map(envNameWithNum =>
         UtilsFilesFoldersSync.getFoldersFrom(
-          this.pathToTempalteInCurrentProject(tempalteType, env),
+          this.pathToTempalteInCurrentProject(tempalteType, envNameWithNum),
           {
             omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
           },
@@ -203,25 +218,6 @@ export class CloudFlareProjectsRepository extends BaseFeatureForProject<Project>
   //#region recreate all
   async initAll(): Promise<void> {
     //#region backendFunc
-    const allFolder = this.getAllFoldersWithProjects();
-
-    for (const absProjPath of allFolder) {
-      const selectedTempalte = _.first(
-        path.basename(path.dirname(absProjPath)).split('__'),
-      ) as TempalteSubprojectType;
-
-      const coreProj = this.project.ins.From(
-        this.pathToTempalteInCore(selectedTempalte),
-      );
-
-      if (coreProj) {
-        CloudFlarePorjectsUtils.initProjectFilesAndAssets(
-          coreProj!,
-          absProjPath,
-        );
-      }
-    }
-
     const allProjects = this.getAll();
 
     for (const proj of allProjects) {

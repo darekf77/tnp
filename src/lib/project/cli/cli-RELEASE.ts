@@ -77,13 +77,19 @@ class $Release extends BaseCli {
 
   //#region cloud
   async cloud(): Promise<void> {
-    await this._releaseProcess(this.params, ReleaseType.CLOUD_CI);
+    await this._releaseProcess(this.params, ReleaseType.CLOUD_CI_TAON);
+  }
+  //#endregion
+
+  //#region cloud
+  async cloudflare(): Promise<void> {
+    await this._releaseProcess(this.params, ReleaseType.CLOUD_CI_CLOUDFLARE);
   }
   //#endregion
 
   //#region manual
   async manual(): Promise<void> {
-    await this._releaseProcess(this.params, ReleaseType.MANUAL);
+    await this._releaseProcess(this.params, ReleaseType.MANUAL_TAON);
   }
   //#endregion
 
@@ -103,7 +109,7 @@ class $Release extends BaseCli {
           autoReleaseUsingConfig: true,
           autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'patch',
-          releaseType: ReleaseType.MANUAL,
+          releaseType: ReleaseType.MANUAL_TAON,
         },
       }),
     );
@@ -120,7 +126,7 @@ class $Release extends BaseCli {
           autoReleaseUsingConfig: true,
           autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'patch',
-          releaseType: ReleaseType.MANUAL,
+          releaseType: ReleaseType.MANUAL_TAON,
         },
       }),
     );
@@ -136,7 +142,7 @@ class $Release extends BaseCli {
           autoReleaseUsingConfig: true,
           autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'major',
-          releaseType: ReleaseType.MANUAL,
+          releaseType: ReleaseType.MANUAL_TAON,
         },
       }),
     );
@@ -152,7 +158,7 @@ class $Release extends BaseCli {
           autoReleaseUsingConfig: true,
           autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'minor',
-          releaseType: ReleaseType.MANUAL,
+          releaseType: ReleaseType.MANUAL_TAON,
         },
       }),
     );
@@ -168,7 +174,7 @@ class $Release extends BaseCli {
           autoReleaseUsingConfig: true,
           autoReleaseTaskName: this.firstArg,
           releaseVersionBumpType: 'patch',
-          releaseType: ReleaseType.MANUAL,
+          releaseType: ReleaseType.MANUAL_TAON,
         },
       }),
     );

@@ -13,8 +13,13 @@ import {
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
+  buildJS,
+  buildJSprod,
+  externalJs,
   groupsFolder,
+  indexTsInSrcForWorker,
   KV_DATABASE_ONLINE_NAME,
+  packageJsonSubProject,
   TempalteSubprojectGroup,
   TempalteSubprojectType,
   TempalteSubprojectTypeGroup,
@@ -27,12 +32,18 @@ import type { Project } from '../project';
 
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
 
-export class CloudFlareProject {
-  protected readonly cwdWorker: string;
+export class CloudFlareSubProject {
+  //#region fields & getters
+  /**
+   * worker abs path
+   */
+  public readonly cwdWorker: string;
 
   public readonly selectedTempalte: TempalteSubprojectType;
 
-  public readonly environment: CoreModels.EnvironmentName | undefined;
+  public readonly envName: CoreModels.EnvironmentName | undefined;
+
+  public readonly envNumber: number | undefined;
 
   get displayName(): string {
     return `${path.basename(this.absLocationPath)} (${this.selectedTempalte})`;
@@ -61,15 +72,50 @@ export class CloudFlareProject {
     );
   }
 
-  get workerCore() {
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  get wranglerJsonC() {
+    return {
+      setDevMode: () => {
+        if (
+          this.selectedTempalte ===
+          TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
+        ) {
+          HelpersTaon.setValueToJSONC(
+            [this.cwdWorker, wranglerJsonC],
+            'build',
+            void 0,
+          );
+        }
+      },
+      setDeployMode: () => {
+        if (
+          this.selectedTempalte ===
+          TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
+        ) {
+          HelpersTaon.setValueToJSONC(
+            [this.cwdWorker, wranglerJsonC],
+            'build',
+            {
+              command: `npm-run bun run ${buildJSprod}`,
+            },
+          );
+        }
+      },
+    };
+  }
+
+  get workerCore(): Project {
     const core = this.coreProject;
     return this.taonParentProject.ins.From(core.pathFor(core.name));
   }
+  //#endregion
 
+  //#region constructor
   constructor(
     public readonly absLocationPath: string,
     public readonly taonParentProject: Project,
   ) {
+    //#region @backend
     this.cwdWorker = crossPlatformPath([
       absLocationPath,
       path.basename(absLocationPath),
@@ -78,30 +124,171 @@ export class CloudFlareProject {
       .basename(path.dirname(absLocationPath))
       .split('__');
     this.selectedTempalte = firstPart as any;
-    this.environment === secondPart;
+    const { envName, envNumber } = CoreModels.splitEnv(secondPart);
+    this.envName = envName as any;
+    this.envNumber = envNumber;
+    //#endregion
   }
+  //#endregion
+
+  //#region get files for branding worker
+  public getFilesForBrandingWorker(): CloudFlarePorjectsUtils.FilesForSubProjectBranding[] {
+    //#region @backendFunc
+    const filesForBranding: CloudFlarePorjectsUtils.FilesForSubProjectBranding[] =
+      [
+        { relativePath: packageJsonSubProject },
+        { relativePath: tsconfigSubProject },
+        { relativePath: tsconfigSubProject },
+        {
+          relativePath: indexTsInSrcForWorker,
+          beforeSave: (
+            content,
+            fileRelativePath,
+            absDestinationPath,
+            cwdWorker,
+          ) => {
+            const dbName = HelpersTaon.getValueFromJSONC(
+              [cwdWorker, wranglerJsonC],
+              'kv_namespaces[0].binding',
+            );
+
+            content = content.replace(
+              new RegExp(
+                Utils.escapeStringForRegEx(KV_DATABASE_ONLINE_NAME),
+                'g',
+              ),
+              dbName,
+            );
+
+            return content;
+          },
+        },
+      ];
+    return filesForBranding;
+    //#endregion
+  }
+  //#endregion
 
   //#region init
   public async init(): Promise<void> {
     //#region @backendFunc
     Helpers.logInfo(`Linking subproject: ${this.displayName}`);
-    const coreProject = this.coreProject;
-    CloudFlarePorjectsUtils.initProjectFilesAndAssets(
-      coreProject!,
-      this.absLocationPath,
-    );
+    this.filesAssetsBranding();
     await this.npmInstall();
     //#endregion
   }
   //#endregion
 
+  //#region files assets branding
+  private filesAssetsBranding(): void {
+    //#region @backendFunc
+    const coreCloudFlareSubProject = this.coreProject;
+    const subProjAbsPath = this.absLocationPath;
+    const filesForBrandingWorker = this.getFilesForBrandingWorker();
+
+    const cwdWorker = crossPlatformPath([
+      subProjAbsPath,
+      path.basename(subProjAbsPath),
+    ]);
+
+    const name = path.basename(subProjAbsPath);
+    Helpers.writeJson([subProjAbsPath, packageJsonSubProject], {
+      name,
+    });
+
+    Helpers.writeJson([cwdWorker, packageJsonSubProject], {
+      name,
+    });
+
+    const workerCore = coreCloudFlareSubProject.ins.From(
+      coreCloudFlareSubProject.pathFor(coreCloudFlareSubProject.name),
+    );
+
+    //#region handle woker data
+    (() => {
+      workerCore
+        .copy(filesForBrandingWorker.map(c => c.relativePath))
+        .to([cwdWorker]);
+
+      const magicRenameRules = `${coreCloudFlareSubProject.name} -> ${name}`;
+      // console.log({ magicRenameRules });
+
+      for (const filelForBranding of filesForBrandingWorker) {
+        const absDestinationPath = crossPlatformPath([
+          cwdWorker,
+          filelForBranding.relativePath,
+        ]);
+
+        if (!Helpers.isFolder(absDestinationPath)) {
+          let content =
+            UtilsFilesFoldersSync.readFile(absDestinationPath) || '';
+          const rules = RenameRule.from(magicRenameRules);
+          for (const rule of rules) {
+            // console.log({ rule });
+            content = content
+              .split('\n')
+              .map(line => {
+                if (
+                  (line || '').trim().startsWith('imp' + 'ort') ||
+                  (line || '').trim().startsWith('exp' + 'ort') ||
+                  (line || '').trim().includes('@skip' + 'ReplaceTaon')
+                ) {
+                  return line;
+                }
+                return rule.replaceInString(line);
+              })
+              .join('\n');
+          }
+          if (filelForBranding.beforeSave) {
+            content = filelForBranding.beforeSave(
+              content,
+              filelForBranding.relativePath,
+              absDestinationPath,
+              cwdWorker,
+            );
+          }
+          UtilsFilesFoldersSync.writeFile(absDestinationPath, content);
+        }
+      }
+    })();
+    //#endregion
+
+    //#region handle parent data
+    (() => {
+      const filesForBranding = [packageJsonSubProject, 'README.md', 'images'];
+
+      coreCloudFlareSubProject.copy(filesForBranding).to([subProjAbsPath]);
+
+      const magicRenameRules = `${coreCloudFlareSubProject.name} -> ${name}`;
+
+      for (const relativePath of filesForBranding) {
+        const filePath = crossPlatformPath([subProjAbsPath, relativePath]);
+        // console.log(`isFile ${!Helpers.isFolder(filePath)} ${filePath}`)
+        if (!Helpers.isFolder(filePath)) {
+          let content = UtilsFilesFoldersSync.readFile(filePath);
+          if (content) {
+            const rules = RenameRule.from(magicRenameRules);
+            for (const rule of rules) {
+              content = rule.replaceInString(content);
+            }
+            UtilsFilesFoldersSync.writeFile(filePath, content);
+          }
+        }
+      }
+    })();
+    //#endregion
+
+    //#endregion
+  }
+  //#endregion
+
   //#region after creation
-  public async afterCreation(opt?: {
-    skipDeployment?: boolean;
-  }): Promise<void> {
+  public async afterCreation(
+    opt?: CloudFlarePorjectsUtils.AddProjectOptions,
+  ): Promise<void> {
     //#region @backendFunc
     opt = opt || {};
-    await this.npmInstall();
+    await this.init();
 
     if (opt.skipDeployment) {
       return;
@@ -130,8 +317,9 @@ export class CloudFlareProject {
   //#endregion
 
   //#region start in dev mode
-  async startInDevMode(envOptions:EnvOptions): Promise<void> {
+  async startInDevMode(envOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
+    this.wranglerJsonC.setDevMode();
     await UtilsExecProc.spawnAsync(`npm run start`, {
       cwd: this.cwdWorker,
       showOutput: true,
@@ -195,10 +383,13 @@ export class CloudFlareProject {
   //#region deplyment to cloud flare
   async deployment(): Promise<void> {
     //#region @backendFunc
+    await this.init();
+
     await CloudFlarePorjectsUtils.loginCliCloudFlare();
     Helpers.taskStarted(`STARTING DEPLOYMENT OF WORKER ${this.cwdWorker}`);
     while (true) {
       try {
+        this.wranglerJsonC.setDeployMode();
         Helpers.taskStarted(`Deploying worker to cloud flare...`);
         const data = await UtilsExecProc.spawnAsync(`npm run deploy`, {
           cwd: this.cwdWorker,
@@ -212,15 +403,15 @@ export class CloudFlareProject {
         );
         break;
       } catch (error) {
+        this.wranglerJsonC.setDevMode();
         if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
           break;
         } else {
           continue;
         }
       }
-
-      break;
     }
+
     //#endregion
   }
   //#endregion
@@ -256,7 +447,7 @@ export class CloudFlareProject {
   //#endregion
 
   //#region add kv db
-  public async addKVDb() {
+  public async addKVDb(): Promise<void> {
     //#region @backendFunc
     Helpers.info(`KV DB CREATION`);
     while (true) {

@@ -1,12 +1,23 @@
-import { Helpers, startAsync, UtilsExecProc, UtilsOs } from 'tnp-core/src';
+import {
+  fileName,
+  Helpers,
+  startAsync,
+  UtilsExecProc,
+  UtilsOs,
+} from 'tnp-core/src';
 
-import { buildJS, buildJSprod } from '../../../constants';
+import {
+  buildJS,
+  buildJSprod,
+  externalJs,
+  wranglerJsonC,
+} from '../../../constants';
 import { EnvOptions, ReleaseArtifactTaon } from '../../../options';
 
-import { CloudFlareProject } from './cloud-flare-project';
+import { CloudFlareSubProject } from './cloud-flare-project';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
 
-export class CloudCustomWorkerProject extends CloudFlareProject {
+export class CloudCustomWorkerProject extends CloudFlareSubProject {
   //#region start in dev mode
   async startInDevMode(envOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
@@ -44,8 +55,9 @@ export class CloudCustomWorkerProject extends CloudFlareProject {
         outputLineReplace: line => {
           // console.log({ line });
           if (line.includes('Ready on')) {
-            const url = extractWranglerReadyUrl(line);
+            let url = extractWranglerReadyUrl(line);
             if (url) {
+              url = `${url}/api/`;
               console.log(`PINGING FOR INIT "${url}"`);
               fetch(url);
             }
@@ -57,6 +69,28 @@ export class CloudCustomWorkerProject extends CloudFlareProject {
     //#endregion
   }
   //#endregion
+
+  public getFilesForBrandingWorker(): CloudFlarePorjectsUtils.FilesForSubProjectBranding[] {
+    const filesForBranding: CloudFlarePorjectsUtils.FilesForSubProjectBranding[] =
+      [
+        ...super.getFilesForBrandingWorker(),
+        { relativePath: buildJS },
+        { relativePath: buildJSprod },
+        { relativePath: externalJs },
+        { relativePath: wranglerJsonC },
+        {
+          relativePath: fileName._gitignore,
+          beforeSave: (content: string) => {
+            if (!content.startsWith(wranglerJsonC)) {
+              content = `${wranglerJsonC}\n${content}`;
+            }
+            content = content.replace('!/browser', '');
+            return content;
+          },
+        },
+      ];
+    return filesForBranding;
+  }
 }
 
 export function stripAnsi(input: string): string {

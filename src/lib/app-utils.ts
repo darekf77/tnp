@@ -58,15 +58,13 @@ export function removeCommentsFromScssFile(scss: string): string {
 export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
 } = {
-  manual: [
+  'manual-taon': [
     ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
     ReleaseArtifactTaon.ANGULAR_NODE_APP,
   ],
-  'cloud-ci': [],
+  'cloud-ci-taon': [],
   'cloud-ci-cloudflare': [],
-  'manual-cloudflare': [
-    // ReleaseArtifactTaon.ANGULAR_NODE_APP, TODO @UNCOMMENT
-  ],
+  'manual-cloudflare': [ReleaseArtifactTaon.ANGULAR_NODE_APP],
   'manual-static-pages': [
     ReleaseArtifactTaon.ANGULAR_NODE_APP,
     ReleaseArtifactTaon.DOCS_DOCS_WEBAPP,

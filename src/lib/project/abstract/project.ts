@@ -422,7 +422,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     //#region resolve taon instances
     if (
-      ([ReleaseType.MANUAL, ReleaseType.CLOUD_CI] as ReleaseType[]).includes(
+      ([ReleaseType.MANUAL_TAON, ReleaseType.CLOUD_CI_TAON] as ReleaseType[]).includes(
         releaseOptions.release.releaseType,
       ) &&
       releaseOptions.release.targetArtifact === 'angular-node-app'

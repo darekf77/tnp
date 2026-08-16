@@ -833,8 +833,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
     );
 
     const allowedToNpmReleases: ReleaseType[] = [
-      ReleaseType.MANUAL,
-      ReleaseType.CLOUD_CI,
+      ReleaseType.MANUAL_TAON,
+      ReleaseType.CLOUD_CI_TAON,
     ];
 
     // console.log(`

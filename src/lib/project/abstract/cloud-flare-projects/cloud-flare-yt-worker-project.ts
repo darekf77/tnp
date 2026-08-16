@@ -1,7 +1,7 @@
-import { CloudFlareProject } from './cloud-flare-project';
+import { CloudFlareSubProject } from './cloud-flare-project';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
 
-export class CloudFlareYtWorkerPorject extends CloudFlareProject {
+export class CloudFlareYtWorkerPorject extends CloudFlareSubProject {
   //#region api secreate keys data
   protected apiSecretsKeyData(): CloudFlarePorjectsUtils.SecretKeyData[] {
     return [

@@ -13,7 +13,11 @@ import { BaseReleaseProcess } from 'tnp-helpers/src';
 import { PackageJson } from 'type-fest';
 
 import { ALLOWED_TO_RELEASE } from '../../../app-utils';
-import { environmentsFolder, releaseSuffix } from '../../../constants';
+import {
+  environmentsFolder,
+  releaseSuffix,
+  TempalteSubprojectType,
+} from '../../../constants';
 import {
   ReleaseArtifactTaon,
   ReleaseArtifactTaonNamesArr,
@@ -76,12 +80,13 @@ export class ReleaseProcess extends BaseReleaseProcess<Project> {
               //#region info
               console.info(
                 `
-${chalk.bold.green('Manual release')} => release build is done manuall on this
+${chalk.bold.red('Manual release')} => release build is done manuall on this
         computer and the pushed to target cloud, app store - anything.
 
 ${chalk.bold.blue('Cloud release')} => release build is done on serve. This
         command only triggers release process on Taon Cloud instance.
-${chalk.bold.gray('Local release')} => use current git repo for storing release data
+
+${chalk.bold.green('Local release')} => use current git repo for storing release data
         - for anything that you want to backup inside your git repository
 
         `.trimStart(),
@@ -91,52 +96,28 @@ ${chalk.bold.gray('Local release')} => use current git repo for storing release 
               await UtilsTerminal.pressAnyKeyToContinueAsync({});
             },
           },
-          [ReleaseType.MANUAL]: {
+          [ReleaseType.MANUAL_TAON]: {
             //#region manual
-            name: `${this.getColoredTextItem(ReleaseType.MANUAL)} Taon release to Taon Cloud`,
-            action: async () => {
-              if (await this.releaseByType(ReleaseType.MANUAL, envOptions)) {
-                process.exit(0);
-              }
-            },
-            //#endregion
-          },
-          [ReleaseType.CLOUD_CI]: {
-            //#region cloud
-            name: `${this.getColoredTextItem(ReleaseType.CLOUD_CI)} release tirgger for Taon Cloud`,
-            action: async () => {
-              if (await this.releaseByType(ReleaseType.CLOUD_CI, envOptions)) {
-                process.exit(0);
-              }
-            },
-            //#endregion
-          },
-          [ReleaseType.MANUAL_CLOUDFLARE]: {
-            //#region manual
-            name:
-              `${this.getColoredTextItem(ReleaseType.MANUAL_CLOUDFLARE)} ` +
-              `Taon release to ${chalk.bold.magenta('Cloudflare')}`,
+            name: `${this.getColoredTextItem(ReleaseType.MANUAL_TAON)} release Taon Project to ${chalk.bold.magenta('Taon Cloud')}`,
             action: async () => {
               if (
-                await this.releaseByType(
-                  ReleaseType.MANUAL_CLOUDFLARE,
-                  envOptions,
-                )
+                await this.releaseByType(ReleaseType.MANUAL_TAON, envOptions)
               ) {
                 process.exit(0);
               }
             },
             //#endregion
           },
-          [ReleaseType.CLOUD_CI_CLOUDFLARE]: {
-            //#region cloud
+
+          [ReleaseType.MANUAL_CLOUDFLARE]: {
+            //#region manual
             name:
-              `${this.getColoredTextItem(ReleaseType.CLOUD_CI_CLOUDFLARE)} ` +
-              ` release tirgger on Taon Cloud (for ${chalk.bold.magenta('Cloudflare')})`,
+              `${this.getColoredTextItem(ReleaseType.MANUAL_CLOUDFLARE)} ` +
+              `release Taon Project to ${chalk.bold.yellowBright('Cloudflare Worker')}`,
             action: async () => {
               if (
                 await this.releaseByType(
-                  ReleaseType.CLOUD_CI_CLOUDFLARE,
+                  ReleaseType.MANUAL_CLOUDFLARE,
                   envOptions,
                 )
               ) {
@@ -150,7 +131,7 @@ ${chalk.bold.gray('Local release')} => use current git repo for storing release 
             //#region local
             name:
               `${this.getColoredTextItem(ReleaseType.MANUAL_STATIC_PAGES)}` +
-              ` release for ${chalk.bold(priovider + ' Pages')}`,
+              ` release Taon Project for ${chalk.bold(priovider + ' Pages')}`,
             action: async () => {
               if (
                 await this.releaseByType(
@@ -164,6 +145,45 @@ ${chalk.bold.gray('Local release')} => use current git repo for storing release 
             //#endregion
           },
 
+          [ReleaseType.LOCAL]: {
+            //#region local
+            name: `${this.getColoredTextItem(ReleaseType.LOCAL)} release to current git repository`,
+            action: async () => {
+              if (await this.releaseByType(ReleaseType.LOCAL, envOptions)) {
+                process.exit(0);
+              }
+            },
+            //#endregion
+          },
+          [ReleaseType.CLOUD_CI_TAON]: {
+            //#region cloud
+            name: `${this.getColoredTextItem(ReleaseType.CLOUD_CI_TAON)} release tirgger on Taon Cloud (for ${chalk.bold.magenta('Taon Project')})`,
+            action: async () => {
+              if (
+                await this.releaseByType(ReleaseType.CLOUD_CI_TAON, envOptions)
+              ) {
+                process.exit(0);
+              }
+            },
+            //#endregion
+          },
+          [ReleaseType.CLOUD_CI_CLOUDFLARE]: {
+            //#region cloud
+            name:
+              `${this.getColoredTextItem(ReleaseType.CLOUD_CI_CLOUDFLARE)} ` +
+              ` release tirgger on Taon Cloud (for ${chalk.bold.yellowBright('Cloudflare Worker')})`,
+            action: async () => {
+              if (
+                await this.releaseByType(
+                  ReleaseType.CLOUD_CI_CLOUDFLARE,
+                  envOptions,
+                )
+              ) {
+                process.exit(0);
+              }
+            },
+            //#endregion
+          },
           [ReleaseType.CLOUD_CI_STATIC_PAGES]: {
             //#region local
             name:
@@ -176,16 +196,6 @@ ${chalk.bold.gray('Local release')} => use current git repo for storing release 
                   envOptions,
                 )
               ) {
-                process.exit(0);
-              }
-            },
-            //#endregion
-          },
-          [ReleaseType.LOCAL]: {
-            //#region local
-            name: `${this.getColoredTextItem(ReleaseType.LOCAL)} release to current git repository`,
-            action: async () => {
-              if (await this.releaseByType(ReleaseType.LOCAL, envOptions)) {
                 process.exit(0);
               }
             },
@@ -419,35 +429,74 @@ ${chalk.bold.gray('Local release')} => use current git repo for storing release 
         Helpers.info(
           `Release environment for ${chalk.bold(envOptions.release.targetArtifact)}`,
         );
-        if (environments.length == 0) {
-          this.project.environmentConfig.createForArtifact(
-            envOptions.release.targetArtifact,
-          );
-          selected = {
-            envName: '__',
-          };
-        } else if (environments.length === 1) {
-          selected = environments[0];
-        } else {
-          const selectedEnv = await UtilsTerminal.select({
-            choices: environments
-              .filter(e => {
-                if (envOptions.release.targetArtifact !== 'angular-node-app') {
-                  return true;
-                }
 
-                return e.envName !== '__';
-              }) // filter out default env from selection
-              .map(e => {
-                return {
-                  name: e.envName === '__' ? '__ ( default )' : e.envName,
-                  value: e.envName,
-                };
-              }),
-            question: `[${envOptions?.release.releaseType}-release] Select environment`,
+        if (envOptions?.release.releaseType === ReleaseType.MANUAL_CLOUDFLARE) {
+          let allCustomWorkers =
+            this.project.subProject.repo.getAll_Custom_Projects();
+
+          if (allCustomWorkers.length === 0) {
+            await this.project.subProject.addAndConfigure({
+              skipDeployment: true,
+              projectType: TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER,
+            });
+          }
+
+          allCustomWorkers =
+            this.project.subProject.repo.getAll_Custom_Projects();
+
+          const selectedProjLocation = await UtilsTerminal.select({
+            choices: allCustomWorkers.map(c => ({
+              name: c.name,
+              value: c.absLocationPath,
+            })),
+            question: `[${envOptions?.release.releaseType}-release] Select worker for release`,
             autocomplete: true,
           });
-          selected = environments.find(e => e.envName === selectedEnv);
+          const selectedProj = allCustomWorkers.find(
+            c => c.absLocationPath === selectedProjLocation,
+          );
+          selected = {
+            envName: selectedProj.envName,
+            envNumber: selectedProj.envNumber,
+          };
+          envOptions.release.workerName = selectedProj.name;
+          // console.log({ selected });
+          await UtilsTerminal.pressAnyKeyToContinueAsync();
+        } else {
+          //#region non-cloudflare release
+          if (environments.length == 0) {
+            await this.project.environmentConfig.createForArtifact(
+              envOptions.release.targetArtifact,
+            );
+            selected = {
+              envName: '__',
+            };
+          } else if (environments.length === 1) {
+            selected = environments[0];
+          } else {
+            const selectedEnv = await UtilsTerminal.select({
+              choices: environments
+                .filter(e => {
+                  if (
+                    envOptions.release.targetArtifact !== 'angular-node-app'
+                  ) {
+                    return true;
+                  }
+
+                  return e.envName !== '__';
+                }) // filter out default env from selection
+                .map(e => {
+                  return {
+                    name: e.envName === '__' ? '__ ( default )' : e.envName,
+                    value: e.envName,
+                  };
+                }),
+              question: `[${envOptions?.release.releaseType}-release] Select environment`,
+              autocomplete: true,
+            });
+            selected = environments.find(e => e.envName === selectedEnv);
+          }
+          //#endregion
         }
 
         envOptions.release.envName = selected.envName;
@@ -534,7 +583,7 @@ ${chalk.bold.gray('Local release')} => use current git repo for storing release 
       return chalk.bold.blue(ReleaseTypeLabels[releaseProcessType]);
     }
     if (ReleaseTypeLabels[releaseProcessType].startsWith('Manual')) {
-      return chalk.bold.yellow(ReleaseTypeLabels[releaseProcessType]);
+      return chalk.bold.red(ReleaseTypeLabels[releaseProcessType]);
     }
     return chalk.bold.green(ReleaseTypeLabels[releaseProcessType]);
     //#endregion

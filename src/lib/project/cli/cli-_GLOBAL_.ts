@@ -1202,7 +1202,7 @@ ${this.project.children
           artifactName: ReleaseArtifactTaon.ANGULAR_NODE_APP,
           envName: CoreModels.EnvironmentName.DEV,
           taskName: 'localhost-manual-dev-release',
-          releaseType: ReleaseType.MANUAL,
+          releaseType: ReleaseType.MANUAL_TAON,
           taonInstanceIp: '127.0.0.1',
         },
       ];

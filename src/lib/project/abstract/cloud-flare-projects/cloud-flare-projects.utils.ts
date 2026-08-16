@@ -1,6 +1,4 @@
 //#region imports
-import { execSync, spawn } from 'child_process';
-
 import { RenameRule } from 'magic-renamer/src';
 import {
   crossPlatformPath,
@@ -11,6 +9,9 @@ import {
   UtilsFilesFoldersSync,
   UtilsTerminal,
   _,
+  CoreModels,
+  LibTypeEnum,
+  child_process,
 } from 'tnp-core/src';
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
@@ -29,12 +30,29 @@ import type { Project } from '../project';
 
 import { CloudCustomWorkerProject } from './cloud-flare-custom-worker';
 import { CloudFlareEmailWorkerPorject } from './cloud-flare-email-worker-project';
-import { CloudFlareProject } from './cloud-flare-project';
+import { CloudFlareSubProject } from './cloud-flare-project';
 import { CloudFlareStripeWorkerPorject } from './cloud-flare-stripe-worker-project';
 import { CloudFlareYtWorkerPorject } from './cloud-flare-yt-worker-project';
 //#endregion
 
 export namespace CloudFlarePorjectsUtils {
+  export interface AddProjectOptions {
+    skipDeployment?: boolean;
+    projectType?: TempalteSubprojectType;
+    projectEnvironmentNameWithNumber?: string;
+  }
+
+  export interface FilesForSubProjectBranding {
+    relativePath: string;
+
+    beforeSave?: (
+      content: string,
+      fileRelativePath: string,
+      absDestinationPath?: string,
+      cwdWorker?: string,
+    ) => string;
+  }
+
   /**
    * examples:
    */
@@ -52,10 +70,12 @@ export namespace CloudFlarePorjectsUtils {
     templateType: TempalteSubprojectType,
     taonParentProjectName: string,
   ): string => {
-    return `kv-worker-${getPrefixFromGroup(templateType)}_${taonParentProjectName}`;
+    return `cw-${getPrefixFromGroup(templateType)}_${taonParentProjectName}`;
   };
 
-  export const getPrefixFromGroup = (templateType: TempalteSubprojectType): string => {
+  export const getPrefixFromGroup = (
+    templateType: TempalteSubprojectType,
+  ): string => {
     return templateType // TemplateSubprojectDbPrefix
       .replace('taon-', '')
       .replace('-cloudflare-worker', '')
@@ -73,6 +93,59 @@ export namespace CloudFlarePorjectsUtils {
     return match[2];
   };
   //#endregion
+
+  // type WranglerWhoami = {
+  //   accounts: Array<{
+  //     id: string;
+  //     name: string;
+  //   }>;
+  // };
+
+  //#region extract worker account name from system
+  export const extractWorkerAccountInfoFromSystem =
+    async (): Promise<string> => {
+      return void 0;
+      //#region @backendFunc
+      // const output = child_process
+      //   .execSync('npx wrangler whoami --json', {
+      //     encoding: 'utf8',
+      //     stdio: ['ignore', 'pipe', 'pipe'],
+      //   })
+      //   .toString();
+      // const whoami = JSON.parse(output) as WranglerWhoami;
+      // console.log(JSON.stringify(whoami));
+      // if (!whoami.accounts?.length) {
+      //   throw new Error('No Cloudflare account found. Run: npx wrangler login');
+      // }
+      // if (whoami.accounts.length > 1) {
+      //   throw new Error(
+      //     `Multiple Cloudflare accounts found: ${whoami.accounts
+      //       .map(a => `${a.name} (${a.id})`)
+      //       .join(', ')}`,
+      //   );
+      // }
+      // const accountId = whoami.accounts[0].id;
+      // // See note below about authentication/token.
+      // const response = await fetch(
+      //   `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/subdomain`,
+      //   {
+      //     headers: {
+      //       Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
+      //     },
+      //   },
+      // );
+      // const data = (await response.json()) as {
+      //   success: boolean;
+      //   result?: {
+      //     subdomain: string;
+      //   };
+      // };
+      // if (!data.success || !data.result?.subdomain) {
+      //   throw new Error('Unable to determine Cloudflare workers.dev subdomain');
+      // }
+      // return data.result.subdomain;
+      //#endregion
+    };
 
   //#region is wrangelr logged in
   export async function isWranglerLoggedIn(): Promise<boolean> {
@@ -129,6 +202,10 @@ export namespace CloudFlarePorjectsUtils {
         }
       }
     }
+    // const accountName =
+    //   await CloudFlarePorjectsUtils.extractWorkerAccountInfoFromSystem();
+    // console.log(`account name: ${accountName}`);
+
     //#endregion
   };
   //#endregion
@@ -141,11 +218,15 @@ export namespace CloudFlarePorjectsUtils {
   ): Promise<boolean> {
     //#region @backendFunc
     return new Promise<boolean>((resolve, reject) => {
-      const proc = spawn('npx', ['wrangler', 'secret', 'put', name], {
-        stdio: ['pipe', 'inherit', 'inherit'],
-        cwd: cwdWorker,
-        shell: true,
-      });
+      const proc = child_process.spawn(
+        'npx',
+        ['wrangler', 'secret', 'put', name],
+        {
+          stdio: ['pipe', 'inherit', 'inherit'],
+          cwd: cwdWorker,
+          shell: true,
+        },
+      );
 
       proc.stdin.write(value);
       proc.stdin.end();
@@ -162,14 +243,21 @@ export namespace CloudFlarePorjectsUtils {
   //#region cloud flare project from
   export const cloudFlareProjectFrom = (
     absLocation: string,
-    parentProject: Project,
   ):
-    | CloudFlareProject
+    | CloudFlareSubProject
     | CloudFlareStripeWorkerPorject
     | CloudFlareYtWorkerPorject
     | CloudCustomWorkerProject
-    | CloudFlareEmailWorkerPorject => {
-    const proj = new CloudFlareProject(absLocation, parentProject);
+    | CloudFlareEmailWorkerPorject
+    | undefined => {
+    //#region @backendFunc
+    const ProjectClass = require('../project').Project as typeof Project;
+    const parentProject = ProjectClass.ins.nearestTo(absLocation, {
+      type: LibTypeEnum.ISOMORPHIC_LIB,
+    });
+    // console.log({ parentProject: parentProject?.location });
+
+    const proj = new CloudFlareSubProject(absLocation, parentProject);
 
     if (
       proj.selectedTempalte ===
@@ -198,126 +286,7 @@ export namespace CloudFlarePorjectsUtils {
       return new CloudFlareEmailWorkerPorject(absLocation, parentProject);
     }
 
-    return proj;
-  };
-  //#endregion
-
-  //#region init project file and assets
-  export const initProjectFilesAndAssets = (
-    coreCloudFlareProject: Project,
-    cloudFlareProjectLocation: string,
-  ) => {
-    //#region @backendFunc
-    const absLocationPath = cloudFlareProjectLocation;
-
-    const cwdWorker = crossPlatformPath([
-      absLocationPath,
-      path.basename(absLocationPath),
-    ]);
-
-    const name = path.basename(absLocationPath);
-    Helpers.writeJson([absLocationPath, packageJsonSubProject], {
-      name,
-    });
-
-    Helpers.writeJson([cwdWorker, packageJsonSubProject], {
-      name,
-    });
-
-    const workerCore = coreCloudFlareProject.ins.From(
-      coreCloudFlareProject.pathFor(coreCloudFlareProject.name),
-    );
-
-    //#region handle woker data
-    (() => {
-      const filesForBranding = [
-        packageJsonSubProject,
-        tsconfigSubProject,
-        indexTsInSrcForWorker,
-        buildJS,
-        buildJSprod,
-        externalJs,
-        // ...(coreCloudFlareProject.name ===
-        //   TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER &&
-        // Helpers.exists([cwdWorker, indexTsInSrcForWorker])
-        //   ? []
-        //   : [indexTsInSrcForWorker]),
-      ];
-
-      workerCore.copy(filesForBranding).to([cwdWorker]);
-
-      const magicRenameRules = `${coreCloudFlareProject.name} -> ${name}`;
-
-      for (const relativePath of filesForBranding) {
-        const filePath = crossPlatformPath([cwdWorker, relativePath]);
-        if (!Helpers.isFolder(filePath)) {
-          let content = UtilsFilesFoldersSync.readFile(filePath) || '';
-          const rules = RenameRule.from(magicRenameRules);
-          for (const rule of rules) {
-            content = content
-              .split('\n')
-              .map(line => {
-                if (
-                  (line || '').trim().startsWith('imp' + 'ort') ||
-                  (line || '').trim().startsWith('exp' + 'ort') ||
-                  (line || '').trim().includes('@skip' + 'ReplaceTaon')
-                ) {
-                  return line;
-                }
-                return rule.replaceInString(line);
-              })
-              .join('\n');
-          }
-          if (relativePath === indexTsInSrcForWorker) {
-            const dbName = HelpersTaon.getValueFromJSONC(
-              [cwdWorker, wranglerJsonC],
-              'kv_namespaces[0].binding',
-            );
-
-            UtilsFilesFoldersSync.writeFile(
-              filePath,
-              content.replace(
-                new RegExp(
-                  Utils.escapeStringForRegEx(KV_DATABASE_ONLINE_NAME),
-                  'g',
-                ),
-                dbName,
-              ),
-            );
-            UtilsTypescript.formatFile(filePath);
-          } else {
-            UtilsFilesFoldersSync.writeFile(filePath, content);
-          }
-        }
-      }
-    })();
-    //#endregion
-
-    //#region handle parent data
-    (() => {
-      const filesForBranding = [packageJsonSubProject, 'README.md', 'images'];
-
-      coreCloudFlareProject.copy(filesForBranding).to([absLocationPath]);
-
-      const magicRenameRules = `${coreCloudFlareProject.name} -> ${name}`;
-
-      for (const relativePath of filesForBranding) {
-        const filePath = crossPlatformPath([absLocationPath, relativePath]);
-        // console.log(`isFile ${!Helpers.isFolder(filePath)} ${filePath}`)
-        if (!Helpers.isFolder(filePath)) {
-          let content = UtilsFilesFoldersSync.readFile(filePath);
-          if (content) {
-            const rules = RenameRule.from(magicRenameRules);
-            for (const rule of rules) {
-              content = rule.replaceInString(content);
-            }
-            UtilsFilesFoldersSync.writeFile(filePath, content);
-          }
-        }
-      }
-    })();
-    //#endregion
-
+    return void 0;
     //#endregion
   };
   //#endregion
