@@ -447,7 +447,7 @@ local VSCode instance.
     );
     const editor = await this.project.ins.editor();
     Helpers.run(
-      `${editor} --install-extension --force ${path.basename(pathToVsixFile)}`,
+      `${editor} --install-extension ${path.basename(pathToVsixFile)} --force`,
       {
         cwd: crossPlatformPath(path.dirname(pathToVsixFile)),
       },
