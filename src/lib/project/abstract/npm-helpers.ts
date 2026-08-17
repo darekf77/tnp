@@ -57,8 +57,9 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
   public checkProjectReadyForNpmRelease(): void {
     //#region @backendFunc
 
-    const standaloneAndNotCore =
-      !this.project.framework.isCoreProject && this.project.framework;
+    if (this.project.typeIs('isomorphic-lib')) {
+      return;
+    }
 
     const containerNotCore =
       (this.project.framework.isContainer &&
@@ -67,7 +68,7 @@ export class NpmHelpers extends BaseNpmHelpers<Project> {
         this.project.framework.isCoreProject &&
         this.project.taonJson.createOnlyTagWhenRelease);
 
-    if (standaloneAndNotCore || containerNotCore) {
+    if (containerNotCore) {
       return;
     }
 
