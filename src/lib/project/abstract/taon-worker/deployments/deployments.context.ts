@@ -19,5 +19,5 @@ export const DeploymentsContext = Taon.createContextTemplate(() => ({
   entities: { Deployments },
   middlewares: { DeploymentsMiddleware },
   controllers: { DeploymentsController },
-  ...getBaseCliWorkerDatabaseConfig(appId, 'DROP_DB+MIGRATIONS'),
+  ...getBaseCliWorkerDatabaseConfig(appId, 'DROP_DB__RUN_MIGRATIONS'),
 }));

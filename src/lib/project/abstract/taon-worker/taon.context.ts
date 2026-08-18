@@ -23,7 +23,7 @@ export const TaonProjectsContextTemplate = Taon.createContextTemplate(() => ({
   skipWritingServerRoutes: taonPackageName === config.frameworkName,
   ...getBaseCliWorkerDatabaseConfig(
     'taon-projects-worker',
-    'DROP_DB+MIGRATIONS',
+    'DROP_DB__RUN_MIGRATIONS',
   ),
   logs: {
     // framework: true,

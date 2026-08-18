@@ -15,5 +15,5 @@ export const IsomorphicPackagesContext = createContextTemplate(() => ({
   contexts: { TaonBaseContext },
   repositories: { IsomorphicPackagesRepository },
   controllers: { IsomorphicPackagesController },
-  ...getBaseCliWorkerDatabaseConfig(appId, 'DROP_DB+MIGRATIONS'),
+  ...getBaseCliWorkerDatabaseConfig(appId, 'DROP_DB__RUN_MIGRATIONS'),
 }));
