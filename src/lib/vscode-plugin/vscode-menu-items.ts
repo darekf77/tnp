@@ -254,6 +254,23 @@ export const vscodeMenuItems = ({
           ),
           //#endregion
 
+          //#region items with actions /  app cloudflare
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} app:cloudflare`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              triggerActionOnClick: project => {
+                runInTerminal(`${FRAMEWORK_NAME} app:cloudflare`);
+                if (project?.location) {
+                  focustFirstElement();
+                }
+              },
+            },
+          ),
+          //#endregion
+
           //#region items with actions /  start
           new ProjectItem(
             `$ ${FRAMEWORK_NAME} release:auto npm`,
