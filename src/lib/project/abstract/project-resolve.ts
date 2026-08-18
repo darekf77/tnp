@@ -10,6 +10,7 @@ import {
   tnpPackageName,
   urlRepoTaonContainers,
   Utils,
+  UtilsString,
   UtilsWaitNotifier,
 } from 'tnp-core/src';
 import { LibTypeArr } from 'tnp-core/src';
@@ -530,11 +531,16 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     packagesFromWorker: string[],
     frameworkVersion: CoreModels.FrameworkVersion,
   ): void {
+    const current = this.packagesFromWorker.get(frameworkVersion) || [];
+    const info = UtilsString.listDiff(current, packagesFromWorker);
+
     Helpers.info(
       `Updating (${packagesFromWorker.length}) isomorpihic packages from worker ...
-      framework version = ${frameworkVersion}   `,
+      framework version = ${frameworkVersion}
+      `,
     );
-    Helpers.logInfo(packagesFromWorker.join(','));
+    info.infoMessage();
+    Helpers.logInfo(`From backend: ` + packagesFromWorker.join(','));
     this.packagesFromWorker.set(frameworkVersion, packagesFromWorker);
   }
 

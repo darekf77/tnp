@@ -8,6 +8,7 @@ import {
   _,
   crossPlatformPath,
   Helpers,
+  config,
 } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
@@ -37,6 +38,12 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#region PUBLIC API / set mode for worker
   public async getInfo(): Promise<void> {
     //#region @backendFunc
+    if (this.repo.getAll().length === 0) {
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: `Please use ${config.frameworkName} sub add # to add woker.. Press any key to return.`,
+      });
+      return;
+    }
     const chosenProject = await this.selectAnyProject();
     await chosenProject.init();
 
@@ -63,7 +70,12 @@ export class SubProject extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     opt = opt || {};
     // console.log(`opt`, opt);
-
+    if (this.repo.getAll().length === 0) {
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: `Please use ${config.frameworkName} sub add # to add woker.. Press any key to return.`,
+      });
+      return;
+    }
     const chosenProject = await this.selectAnyProject(opt.projectName);
     await chosenProject.init();
     await chosenProject.startInDevMode(opt.envOptions);
@@ -191,7 +203,12 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#region PUBLIC API / test with example data
   public async testStripeProjectWithExampleData(): Promise<void> {
     //#region @backendFunc
-
+    if (this.repo.getAll().length === 0) {
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: `Please use ${config.frameworkName} sub add # to add woker.. Press any key to return.`,
+      });
+      return;
+    }
     const chosenProject = await this.selectStripeProject();
     await chosenProject.init();
 
@@ -321,7 +338,12 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#region PUBLIC API / set mode for worker
   public async setModeForWorker(): Promise<void> {
     //#region @backendFunc
-
+    if (this.repo.getAll().length === 0) {
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: `Please use ${config.frameworkName} sub add # to add woker.. Press any key to return.`,
+      });
+      return;
+    }
     const chosenProject = await this.selectAnyProject();
     await chosenProject.init();
 
@@ -355,6 +377,12 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#region PUBLIC API / set secrets for worker
   public async setWorkerSecrets(): Promise<void> {
     //#region @backendFunc
+    if (this.repo.getAll().length === 0) {
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: `Please use ${config.frameworkName} sub add # to add woker.. Press any key to return.`,
+      });
+      return;
+    }
     while (true) {
       const chosenProject = await this.selectAnyProject();
       await chosenProject.init();

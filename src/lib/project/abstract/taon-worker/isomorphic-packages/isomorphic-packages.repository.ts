@@ -107,6 +107,40 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
   }
   //#endregion
 
+  //#region API / public methods / delete package
+  public async deletePackage(
+    packageName: string,
+    frameworkVersion: CoreModels.FrameworkVersion,
+  ): Promise<boolean> {
+    //#region @backendFunc
+    const poolOfDevModeProjectsData = (await this.get(
+      'isomorphicPackages',
+    )) || {
+      [frameworkVersion]: [],
+    };
+    poolOfDevModeProjectsData[frameworkVersion] =
+      poolOfDevModeProjectsData[frameworkVersion] || [];
+
+    let isomorphicPackages = poolOfDevModeProjectsData[frameworkVersion];
+
+    if (!isomorphicPackages.includes(packageName)) {
+      return false;
+    }
+
+    isomorphicPackages = isomorphicPackages.filter(f => f !== packageName);
+
+    await this.merge('isomorphicPackages', {
+      [frameworkVersion]: isomorphicPackages,
+    });
+
+    this.addMessage(
+      `saving after delete for "${frameworkVersion}" ${isomorphicPackages.join(',')}`,
+    );
+    return true;
+    //#endregion
+  }
+  //#endregion
+
   //#region API / public methods / update isomorphic pcakges throttle
 
   private updateIsomorphicPackagesThrottleMap = new Map<
@@ -119,6 +153,8 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
     DevMode.ProjectBuildNotificaiton[]
   >();
 
+  private previous: Promise<any> = Promise.resolve();
+
   public updateIsomorphicArrayThrothle(
     body: DevMode.ProjectBuildNotificaiton,
   ): void {
@@ -126,19 +162,24 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
     this.addMessage(
       `notify that update needed of framework ${frameworkVersion}`,
     );
-    if (!this.packgesQueueForUpdate.get(frameworkVersion)) {
+    if (!this.packgesQueueForUpdate.has(frameworkVersion)) {
       this.packgesQueueForUpdate.set(frameworkVersion, []);
     }
 
-    this.packgesQueueForUpdate.get(frameworkVersion).push(body);
+    this.packgesQueueForUpdate.get(frameworkVersion)!.push(body);
 
     if (!this.updateIsomorphicPackagesThrottleMap.has(frameworkVersion)) {
       this.updateIsomorphicPackagesThrottleMap.set(
         frameworkVersion,
-        _.throttle(() => this.updateIsomoprhicFor(), 1000),
+        _.throttle(() => {
+          this.previous = this.previous
+            .catch(() => {})
+            .then(() => this.updateIsomoprhicFor([frameworkVersion]));
+        }, 1000),
       );
     }
-    this.updateIsomorphicPackagesThrottleMap.get(frameworkVersion)();
+
+    this.updateIsomorphicPackagesThrottleMap.get(frameworkVersion)!();
   }
 
   //#endregion
@@ -205,6 +246,7 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
       const projectsInQueue = (
         this.packgesQueueForUpdate.get(frameworkVersion) || []
       ).map(c => DevMode.ProjectBuildNotificaiton.from(c));
+      this.packgesQueueForUpdate.set(frameworkVersion, []);
 
       if (projectsInQueue.length > 0) {
         poolProjectsBuilds.push(...projectsInQueue);
@@ -243,6 +285,12 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
       this.addMessage(
         `Starting update of ${poolProjectsBuilds.length} child(s) for "${frameworkVersion}"`,
       );
+      if (poolProjectsBuilds.length > 0) {
+        this.addMessage(
+          `projects in dev pool "${frameworkVersion}" ${poolProjectsBuilds.map(c => c.nameForNpmPackage).join(',')} `,
+        );
+      }
+
       for (const projBUild of poolProjectsBuilds) {
         this.addMessage(`updating  ${projBUild.nameForNpmPackage}`);
         const ctrl = await this.getDevBuildControllerForPort(projBUild.port);
@@ -256,7 +304,7 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
         }
       }
       // }
-      this.packgesQueueForUpdate.set(frameworkVersion, []);
+
       this.addMessage(
         `Done update of isomorphic packages for "${frameworkVersion}`,
       );

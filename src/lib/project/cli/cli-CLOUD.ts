@@ -1,5 +1,4 @@
 //#region imports
-import { dotVscodeMainProject, packageJsonMainProject } from '../../constants';
 import {
   CoreModels,
   dotTaonFolder,
@@ -23,6 +22,7 @@ import {
 } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartParams } from 'tnp-helpers/src';
 
+import { dotVscodeMainProject, packageJsonMainProject } from '../../constants';
 import { EnvOptions } from '../../options';
 // import { ProcessWorker } from '../abstract/taon-worker/processes/process/process.worker';
 

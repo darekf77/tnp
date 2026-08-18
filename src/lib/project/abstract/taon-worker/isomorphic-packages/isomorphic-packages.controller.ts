@@ -7,6 +7,7 @@ import {
   POST,
   Query,
   Body,
+  DELETE,
 } from 'taon/src';
 import { _, CoreModels } from 'tnp-core/src';
 import { TaonBaseCliWorkerController } from 'tnp-helpers/src';
@@ -47,6 +48,23 @@ export class IsomorphicPackagesController extends TaonBaseCliWorkerController {
       body = DevMode.ProjectBuildNotificaiton.from(body);
       this.isomorphicPackagesRepository.updateIsomorphicArrayThrothle(body);
       return true;
+    };
+    //#endregion
+  }
+  //#endregion
+
+  //#region update isomorphic packages for framework version
+  @DELETE()
+  deletePackage(
+    @Query('packageName') packageName: string,
+    @Query('frameworkVersion') frameworkVersion: CoreModels.FrameworkVersion,
+  ): Taon.Response<boolean> {
+    //#region @backendFunc
+    return async (req, res) => {
+      return await this.isomorphicPackagesRepository.deletePackage(
+        packageName,
+        frameworkVersion,
+      );
     };
     //#endregion
   }
