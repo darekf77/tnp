@@ -63,7 +63,7 @@ export class $Link extends BaseCli {
       if (res === 'global') {
         await this.global();
       } else if (res === 'release') {
-        await this.global();
+        await this.release();
       } else {
         await this.local(res as any);
       }

@@ -4,6 +4,7 @@ import { config, PREFIXES } from 'tnp-core/src';
 import { extAllowedToReplace } from 'tnp-core/src';
 import { crossPlatformPath, fse, path, _ } from 'tnp-core/src';
 
+import { isTestFile } from '../../../../../../../app-utils';
 import { srcMainProject } from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
@@ -36,11 +37,15 @@ export class CodeCut {
 
   private isAllowedPathForSave(relativePath: string) {
     //#region @backendFunc
+    if (this.buildOptions.release.releaseType && isTestFile(relativePath)) {
+      return false;
+    }
+
     // console.log({ relativePath })
     return (
       path.basename(relativePath).search(PREFIXES.BASELINE) === -1 &&
       path.basename(relativePath).search(PREFIXES.DELETED) === -1 &&
-      !relativePath.replace(/^\\/, '').startsWith(`tests/`)
+      !relativePath.replace(/^\\/, '').startsWith(`tests/`) // tests folder not allowed
     );
     //#endregion
   }

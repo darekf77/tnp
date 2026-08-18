@@ -20,7 +20,7 @@ Supported artifacts by tnp cli:
 - fe/be angular/node app  (entrypoint **./src/app.ts**)
 - electron app  (entrypoint **./src/app.electron.ts**)
 - vscode plugin (entrypoint **./src/app.vscode.ts**)
-- mobile cordova app (entrypoint **./src/app.mobile.ts**)
+- mobile app (entrypoint **./src/app.mobile.ts**)
 - docs (mkdocs, storybook, compodoc) **\*\*/\*.md, \*\*/\*.story.ts**
 
 
@@ -48,6 +48,9 @@ tnp app # terminal menu
 
 tnp app:normal # "ng serve" for website apps
 tnp an
+
+tnp app:cloudflare # "ng serve" for cloudflare local dev backend
+tnp ac
 
 tnp app:websql # "ng serve" for website apps in websql mode
 tnp aw
@@ -110,8 +113,9 @@ Similar command to npm link for tnp projects
 # - link local repo cli as global cli tools
 tnp link
 
-tnp link:local
-tnp link:global
+tnp link:local # link locally created in current repo cli
+tnp link:global # global npm link for current project in dev mode
+tnp link:release # link released to different/release branch cli
 ```
 
 ## Migrations (for databases)
@@ -138,17 +142,10 @@ tnp mr timestamp                # server and it will stop after contexts
 ## Testing
 
 ```bash
-# Unit/Integration tests (jest)
+# Vite unit tests (single run - use vscode task for watch mode)
 tnp test
 tnp t
-
-tnp test:watch
-tnp tw
-
-# recreate jest snapshots
-tnp test:up:snapshots
-tnp tu
-
+ 
 # E2e testing (playwright)
 tnp e2e
 tnp e2e:watch
@@ -182,24 +179,30 @@ Add subproject (stripe + cloudflare work )
 
 
 ```bash
-tnp subproject add
+tnp sub add
 ```
 
 Test worker with example data (only in development mode)
 
 ```bash
-tnp subproject test
+tnp sub test
 ```
 
 Set worker production/development mode
 
 ```bash
-tnp subproject mode
+tnp sub mode
 ```
 
 
 Deploy worker
 
 ```bash
-tnp subproject deploy
+tnp sub deploy
+```
+
+Local development mode (use: tnp ac # for ng serve )
+
+```bash
+tnp sub dev # < optional worker name >
 ```

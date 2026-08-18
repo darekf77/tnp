@@ -482,7 +482,6 @@ export async function run(
       e: 'electron',
       sub: 'subproject',
       ekill: 'electron:kill',
-      car: 'release:auto:clear',
       autorelease: 'release:auto',
       ar: 'release:auto',
       ard: 'release:auto:docs',

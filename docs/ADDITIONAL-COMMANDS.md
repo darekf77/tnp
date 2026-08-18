@@ -10,18 +10,10 @@ tnp run
 
 ## Tnp extension for Visual Studio Code 
  Install essential vscode plugins from project workspace recommended
+ or to apply best global config for VScode
 
 ```bash
-tnp vscode:ext
-tnp ext
-```
-
-## Tnp global config for Visual Studio Code 
-
-Apply best global config for VScode
-
-```bash
-tnp vscode:global
+tnp vscode
 ```
 
 ## Pause
