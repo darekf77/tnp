@@ -478,14 +478,13 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
           );
         },
         options: {
-          titleWhenProcessing:
-            'copying files and folders to clipboard MD/AI ready format',
+          titleWhenProcessing: 'copying files and folders tree to clipboard',
           showSuccessMessage: false,
         },
       },
       {
         group: groupAI,
-        title: `copy to clipboard all files/folders as single MD/AI ready format`,
+        title: `copy to clipboard all files with names and content`,
         exec: async data => {
           let { selectedUris, uri, vscode } = data;
           const arr = (selectedUris || []).map(c => crossPlatformPath(c.path));
@@ -502,13 +501,13 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         },
         options: {
           titleWhenProcessing:
-            'copying files and folders to clipboard MD/AI ready format',
+            'copying to clipboard all files with names and content',
           showSuccessMessage: false,
         },
       },
       {
         group: groupAI,
-        title: `paste from clipboard MD/AI ready format to files and folders`,
+        title: `paste from clipboard files (files with content and names)`,
         exec: async ({ selectedUris, uri, vscode }) => {
           const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
           // vscode.window.showInformationMessage(WORKSPACE_MAIN_FOLDER_PATH);
@@ -586,6 +585,45 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
         },
       },
       //#endregion
+
+      {
+        group: groupAI,
+        title: `remove background from image`,
+        exec: async data => {
+          let { selectedUris, uri, vscode, progress } = data;
+          // vscode.window.showInformationMessage(`Started AI translation..`);
+          const arr = (Array.isArray(selectedUris) ? selectedUris : [uri]).map(
+            c => crossPlatformPath(c.path),
+          );
+
+          // console.log({ arr });
+          const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
+
+          const nearestProject = Project.ins.nearestTo(
+            WORKSPACE_MAIN_FOLDER_PATH,
+          );
+
+          const parmas = arr.map(c =>
+            c.replace(nearestProject.location + '/', ''),
+          );
+
+          try {
+            const command = `${FRAMEWORK_NAME} removeBackground ${parmas.join(' ')} ${taonNonInteractiveModePrefix}`;
+            const { stdout, stderr } = await execAsyncVscode({
+              command,
+              cwd: nearestProject.location,
+              progress,
+            });
+          } catch (error) {
+            console.log(error);
+            console.error(`Not able to remove background from image`);
+          }
+        },
+        options: {
+          titleWhenProcessing: 'removing background from image(s)',
+          showSuccessMessage: false,
+        },
+      },
 
       //#region GENERATE index.ts in selected folder
       {

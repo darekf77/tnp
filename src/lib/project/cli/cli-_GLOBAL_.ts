@@ -2016,7 +2016,7 @@ ${this.project.children
     await this.ins.notifyMainWorkerThatDevMode(
       this.project,
       EnvOptions.from({}),
-      `global devModeWorker`
+      `global devModeWorker`,
     );
     Helpers.info('waiting');
     await UtilsTerminal.pressAnyKeyToContinueAsync();
@@ -2108,78 +2108,81 @@ ${this.project.children
 
   async removeBackground(): Promise<void> {
     //#region @backendFunc
-    const filePath = (
-      path.isAbsolute(this.firstArg)
-        ? crossPlatformPath(this.firstArg)
-        : crossPlatformPath([this.cwd, this.firstArg])
-    ).replace(/('|")/g, '');
 
-    if (!Helpers.exists(filePath)) {
-      Helpers.error(`Image does not exist, path="${filePath}"`, false, true);
-    }
+    for (const param of this.args) {
+      const filePath = (
+        path.isAbsolute(param)
+          ? crossPlatformPath(param)
+          : crossPlatformPath([this.cwd, param])
+      ).replace(/('|")/g, '');
 
-    const task = Helpers.actionStarted(
-      `Removing background from ${path.basename(filePath)}`,
-    );
+      if (!Helpers.exists(filePath)) {
+        Helpers.error(`Image does not exist, path="${filePath}"`, false, true);
+      }
 
-    const extension = path.extname(filePath).toLowerCase();
+      const task = Helpers.actionStarted(
+        `Removing background from ${path.basename(filePath)}`,
+      );
 
-    const filePathOutput = crossPlatformPath([
-      path.dirname(filePath),
-      `${path.basename(filePath, extension)}-output.png`,
-    ]);
+      const extension = path.extname(filePath).toLowerCase();
 
-    const mimeTypeByExtension: Record<string, string> = {
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.webp': 'image/webp',
-    };
+      const filePathOutput = crossPlatformPath([
+        path.dirname(filePath),
+        `${path.basename(filePath, extension)}-output.png`,
+      ]);
 
-    const mimeType = mimeTypeByExtension[extension];
+      const mimeTypeByExtension: Record<string, string> = {
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.webp': 'image/webp',
+      };
 
-    if (!mimeType) {
-      Helpers.error(`Unsupported image extension: ${extension}`, false, true);
-    }
+      const mimeType = mimeTypeByExtension[extension];
 
-    try {
-      const importPkgName = '@imgly/background-removal-node';
-      const { removeBackground } = await import(importPkgName);
+      if (!mimeType) {
+        Helpers.error(`Unsupported image extension: ${extension}`, false, true);
+      }
 
-      const inputBuffer = await fse.readFile(filePath);
+      try {
+        const importPkgName = '@imgly/background-removal-node';
+        const { removeBackground } = await import(importPkgName);
 
-      const { pathToFileURL } = await import('node:url');
-      const packageEntryPath = require.resolve(importPkgName);
-      const packageDistPath = path.dirname(packageEntryPath);
+        const inputBuffer = await fse.readFile(filePath);
 
-      const inputBlob = new Blob([inputBuffer], {
-        type: mimeType,
-      });
-      const publicPath = pathToFileURL(packageDistPath + path.sep).href;
+        const { pathToFileURL } = await import('node:url');
+        const packageEntryPath = require.resolve(importPkgName);
+        const packageDistPath = path.dirname(packageEntryPath);
 
-      const outputBlob = await removeBackground(inputBlob, {
-        publicPath,
-      });
+        const inputBlob = new Blob([inputBuffer], {
+          type: mimeType,
+        });
+        const publicPath = pathToFileURL(packageDistPath + path.sep).href;
 
-      const outputBuffer = Buffer.from(await outputBlob.arrayBuffer());
+        const outputBlob = await removeBackground(inputBlob, {
+          publicPath,
+        });
 
-      await fse.writeFile(filePathOutput, outputBuffer);
+        const outputBuffer = Buffer.from(await outputBlob.arrayBuffer());
 
-      task.done();
+        await fse.writeFile(filePathOutput, outputBuffer);
 
-      Helpers.success(`Background removed:
+        task.done();
+
+        Helpers.success(`Background removed:
 
 ${filePathOutput}`);
-    } catch (error) {
-      task.done();
+      } catch (error) {
+        task.done();
 
-      Helpers.error(
-        `Unable to remove background from "${filePath}":
+        Helpers.error(
+          `Unable to remove background from "${filePath}":
 
 ${error instanceof Error ? error.stack || error.message : String(error)}`,
-        false,
-        true,
-      );
+          false,
+          true,
+        );
+      }
     }
 
     this._exit();
