@@ -175,25 +175,30 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
     Helpers.log(
       `Notifying leader that build status changed ${toNotifyBuildType}`,
     );
-    try {
-      const devBuildControllerForProj =
-        await this.project.ins.taonProjectsWorker.getDevBuildControllerForPort(
-          this.toNotifyLeaderPort,
-        );
+    while (true) {
+      try {
+        const devBuildControllerForProj =
+          await this.project.ins.taonProjectsWorker.getDevBuildControllerForPort(
+            this.toNotifyLeaderPort,
+          );
 
-      await devBuildControllerForProj.unlockLeaderQueue(toNotifyBuildType)
-        .request!();
-      Helpers.log(
-        `Done notifying leader that build status changed ${toNotifyBuildType} (port=${this.toNotifyLeaderPort})`,
-      );
-    } catch (error) {
-      config.frameworkName === tnpPackageName && console.log(error);
-      Helpers.error(
-        `Not able to notify build leader about status change of ${toNotifyBuildType}`,
-        false,
-        true,
-      );
+        await devBuildControllerForProj.unlockLeaderQueue(toNotifyBuildType)
+          .request!();
+        Helpers.log(
+          `Done notifying leader that build status changed ${toNotifyBuildType} (port=${this.toNotifyLeaderPort})`,
+        );
+        return;
+      } catch (error) {
+        config.frameworkName === tnpPackageName && console.log(error);
+        Helpers.error(
+          `Not able to notify build leader about status change of ${toNotifyBuildType}`,
+          true,
+          true,
+        );
+        await Utils.wait(2);
+      }
     }
+
     //#endregion
   }
   //#endregion
