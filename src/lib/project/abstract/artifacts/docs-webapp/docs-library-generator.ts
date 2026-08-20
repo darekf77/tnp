@@ -8,6 +8,7 @@ import {
   fse,
   crossPlatformPath,
   config,
+  tnpPackageName,
 } from 'tnp-core/src';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
@@ -22,6 +23,7 @@ import {
 import { Project } from '../../project';
 //#endregion
 
+//#region util md to html
 export class UtilsMdToHtml {
   //#region @backend
   private static readonly md = new MarkdownIt({
@@ -45,11 +47,14 @@ export class UtilsMdToHtml {
       .replace(/^\s*\/\/\s*@render\s+(['"])(.*?)\1(?:\s+\{.*\})?\s*$/gm, '');
   }
 }
+//#endregion
 
+//#region index data
 export interface IndexedData {
   orgMdFilesName: string;
   content: string;
 }
+//#endregion
 
 // @ts-ignore TODO weird inheritance problem
 export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
@@ -140,6 +145,9 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
     alreadyAnalyzed: string[] = [],
   ): string[] {
     const project = this.getProjectFromPackage(packageName);
+    if (!project) {
+      return alreadyAnalyzed;
+    }
     const allMdFiles =
       project.artifactsManager.artifact.docsWebapp.docsGen.allMdFilesAbsPaths;
     const newPackages = [] as string[];
@@ -181,7 +189,12 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
       ]);
 
     if (!Helpers.exists(pathToSourceLInk)) {
-      Helpers.error(`Please build project: ${packageName}`);
+      Helpers.error(
+        `Please build project: ${packageName}`,
+        config.frameworkName === tnpPackageName,
+        true,
+      );
+      return;
     }
 
     const pathToProjectReal = crossPlatformPath(
@@ -202,6 +215,9 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     for (const packageName of packages) {
       const proj = this.getProjectFromPackage(packageName);
+      if (!proj) {
+        continue;
+      }
       const allMdFiles =
         proj.artifactsManager.artifact.docsWebapp.docsGen.allMdFilesAbsPaths;
 
@@ -327,6 +343,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
     content: string;
   }): string {
     //#region @backendFunc
+    const howMuchBack = opt.relativePath.split('/').length;
     const cmpName = this.getComponentNameFromFilePath(opt.relativePath);
     const html = this.transformToHtml(opt.content);
 
@@ -334,19 +351,20 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
 //#region imports
 ${'imp' + 'ort'} { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 ${'imp' + 'ort'} { RouterOutlet } from '@angular/router';
+${'imp' + 'ort'} { TaonDocsPageComponent } from '${_.times(howMuchBack)
+      .map(() => '../')
+      .join('')}ui';
+
 //#endregion
 
 @Component({
   selector: 'app-my-entity',
   template: \`
-    <article
-      class="taon-md-doc"
-      [innerHTML]="html">
-    </article>
+     <taon-docs-page [html]="html" />
   \`,
   styles: '',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [],
+  imports: [TaonDocsPageComponent],
 })
 ${'exp' + 'ort'} class ${cmpName} {
   @Input() context: any;
