@@ -232,6 +232,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           // watch: initOptions.build.watch, // TODO watching sucks here
         });
       }
+      if (this.project.taonJson.shouldGenerateDocsComponents) {
+        await this.project.artifactsManager.artifact.docsWebapp.docsGen.start();
+      }
     }
 
     initTask.done();
@@ -282,7 +285,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         await this.project.ins.notifyMainWorkerThatDevMode(
           this.project,
           buildOptions,
-          `build partial init`
+          `build partial init`,
         );
 
         await this.project.packagesRecognition.startFromServer();
@@ -760,7 +763,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
             'browser-watcher-error': '',
             'websql-watcher-error': '',
           },
-          reason: 'trigger build observer npm lib'
+          reason: 'trigger build observer npm lib',
         });
       }
     }

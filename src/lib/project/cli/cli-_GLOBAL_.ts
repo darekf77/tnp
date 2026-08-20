@@ -1251,7 +1251,7 @@ ${this.project.children
         relativePathToTsFile: fileToWatch,
       });
       Helpers.writeFile(
-        this.project.artifactsManager.artifact.docsWebapp.docs
+        this.project.artifactsManager.artifact.docsWebapp.mkddocs
           .docsConfigSchemaPath,
         schema,
       );

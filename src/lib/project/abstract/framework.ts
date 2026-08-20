@@ -1189,6 +1189,16 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
   }
   //#endregion
 
+  //#region generate lib index
+  async generateDocsComponents(): Promise<void> {
+    //#region @backendFunc
+    this.project.taonJson.setShouldGenerateDocsComponents(true);
+    await this.project.artifactsManager.artifact.docsWebapp.docsGen.start();
+    Helpers.info(`Ts Docs regenerated`);
+    //#endregion
+  }
+  //#endregion
+
   //#region generate app routes
   async generateAppRoutes(): Promise<void> {
     //#region @backendFunc
@@ -1354,7 +1364,7 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
       this.project.taonBuildObserver.errorBackend.set(errorMesssage);
     }
     await this.project.taonBuildObserver.updateAction({
-      reason: `notify observer for ${buildtype}`
+      reason: `notify observer for ${buildtype}`,
     });
     //#endregion
   }

@@ -341,6 +341,8 @@ export const defaultConfiguration = 'defaultConfiguration';
 
 export const mainProjectSubProjects = 'sub-projects';
 
+export const taonCutSkipComment = '// @taon' + 'Skip' + 'Cut';
+
 export enum TempalteSubprojectType {
   TAON_STRIPE_CLOUDFLARE_WORKER = 'taon-stripe-cloudflare-worker',
   TAON_YT_CLOUDFLARE_WORKER = 'taon-yt-cloudflare-worker',
@@ -643,6 +645,8 @@ export const sharedFromAssets = folderName.shared;
  * Generated folder in assets from /src/assets/generated folder
  */
 export const generatedFromAssets = folderName.generated;
+
+export const generatedDocsFromMd = 'generated-docs-from-md-files';
 
 /**
  * Generated pwa assets from /src/assets/generated/pwa folder

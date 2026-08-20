@@ -583,6 +583,16 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region should generate src/lib/index file
+  get shouldGenerateDocsComponents(): boolean {
+    const data = this.data as Models.TaonJsonStandalone;
+
+    //#region @backendFunc
+    return !!data?.shouldGenerateDocsComponents;
+    //#endregion
+  }
+  //#endregion
+
+  //#region should generate src/lib/index file
   get shouldGenerateTranslationFiles(): boolean {
     const data = this.data as Models.TaonJsonStandalone;
 
@@ -605,6 +615,12 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     const data = this.data as Models.TaonJsonStandalone;
     data.shouldGenerateAutogenIndexFile = value;
     this.saveToDisk('updating shouldGenerateAutogenIndexFile');
+  }
+
+  setShouldGenerateDocsComponents(value: boolean): void {
+    const data = this.data as Models.TaonJsonStandalone;
+    data.shouldGenerateDocsComponents = value;
+    this.saveToDisk('updating shouldGenerateDocsComponents');
   }
 
   setShouldGenerateTranslationsFiles(value: boolean): void {

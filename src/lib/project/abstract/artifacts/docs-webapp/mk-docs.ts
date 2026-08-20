@@ -44,7 +44,7 @@ type EntrypointFile = {
 };
 //#endregion
 
-export class Docs extends BaseDebounceCompilerForProject<
+export class MkDocs extends BaseDebounceCompilerForProject<
   {
     disableMkdocsCompilation?: boolean;
     /**

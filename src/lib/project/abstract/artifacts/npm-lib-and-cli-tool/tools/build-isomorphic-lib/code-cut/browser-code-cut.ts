@@ -52,6 +52,7 @@ import {
   srcNgProxyProject,
   tailwindScssImportRegex,
   tailwindScssImportRegexGlobal,
+  taonCutSkipComment,
   tempAppForFolder,
   tempSourceFolder,
   timestampPrefixComment,
@@ -928,7 +929,10 @@ export class BrowserCodeCut {
   //#region private / methods & getters / replace regions from ts import export
   private REPLACERegionsFromTsImportExport(): BrowserCodeCut {
     //#region @backendFunc
-    if (this.isAssetsFile) {
+    if (
+      this.isAssetsFile ||
+      this.rawOrginalContent?.trim().startsWith(taonCutSkipComment)
+    ) {
       return this;
     }
     if (!this.relativePath.endsWith('.ts')) {
@@ -1013,7 +1017,10 @@ export class BrowserCodeCut {
     options: ReplaceOptionsExtended,
   ): BrowserCodeCut {
     //#region @backendFunc
-    if (this.isAssetsFile) {
+    if (
+      this.isAssetsFile ||
+      this.rawOrginalContent?.trim().startsWith(taonCutSkipComment)
+    ) {
       return this;
     }
     options = _.clone(options);

@@ -14,7 +14,8 @@ import {
 import type { Project } from '../../project';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 
-import { Docs } from './docs';
+import { DocsLibraryGenrator } from './docs-library-generator';
+import { MkDocs } from './mk-docs';
 //#endregion
 
 export class ArtifactDocsWebapp extends BaseArtifact<
@@ -24,11 +25,14 @@ export class ArtifactDocsWebapp extends BaseArtifact<
   },
   ReleasePartialOutput
 > {
-  public docs: Docs;
+  public mkddocs: MkDocs;
+
+  public docsGen: DocsLibraryGenrator;
 
   constructor(protected readonly project: Project) {
     super(project, ReleaseArtifactTaon.DOCS_DOCS_WEBAPP);
-    this.docs = new Docs(this.project);
+    this.mkddocs = new MkDocs(this.project);
+    this.docsGen = new DocsLibraryGenrator(this.project);
   }
 
   //#region clear partial
@@ -47,8 +51,8 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     if (!initOptions.release.targetArtifact) {
       initOptions.release.targetArtifact = ReleaseArtifactTaon.DOCS_DOCS_WEBAPP;
     }
-    await this.docs.initializeWatchers(initOptions);
-    await this.docs.init();
+    await this.mkddocs.initializeWatchers(initOptions);
+    await this.mkddocs.init();
     return initOptions;
   }
   //#endregion
@@ -72,7 +76,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     const port = await this.DOCS_ARTIFACT_PORT_UNIQ_KEY(buildOptions);
 
     if (!shouldSkipBuild) {
-      await this.docs.runTask({
+      await this.mkddocs.runTask({
         watch: buildOptions.build.watch,
         initialParams: {
           docsOutFolder: docsWebappDistOutPath.replace(
@@ -116,7 +120,9 @@ export class ArtifactDocsWebapp extends BaseArtifact<
       ? releaseOptions.release.overrideStaticPagesReleaseType
       : 'major';
 
-    if (releaseOptions.release.releaseType === ReleaseType.MANUAL_STATIC_PAGES) {
+    if (
+      releaseOptions.release.releaseType === ReleaseType.MANUAL_STATIC_PAGES
+    ) {
       //#region static-pages release
       const releaseData = await this.staticPagesDeploy(
         docsWebappDistOutPath,

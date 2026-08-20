@@ -323,6 +323,12 @@ export namespace Models {
     isUsingOwnNodeModulesInsteadCoreContainer?: boolean;
 
     /**
+     * (STANDALONE) generate src/lib/generated-docs
+     * for all .md fiels
+     */
+    shouldGenerateDocsComponents?: boolean;
+
+    /**
      * (STANDALONE) generate src/lib/index._auto-generated_.ts with
      * all exports from lib ts files
      */

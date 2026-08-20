@@ -410,8 +410,9 @@ export async function run(
       blp: 'build:lib:prod',
       bpl: 'build:lib:prod',
       bvscode: 'build:vscode',
-      d: 'docs',
-      dw: 'docs:watch',
+      d: 'docs', // @deprecated
+      dw: 'docs:watch', // @deprecated
+      dg: 'docs:generate',
       cb: 'build:clean:build',
       cbuild: 'build:clean:build',
       baw: 'build:watchApp',
