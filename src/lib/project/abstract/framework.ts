@@ -1190,10 +1190,16 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
   //#endregion
 
   //#region generate lib index
-  async generateDocsComponents(envOptions: EnvOptions): Promise<void> {
+  async generateDocsComponents(
+    envOptions: EnvOptions,
+    force = false,
+  ): Promise<void> {
     //#region @backendFunc
     this.project.taonJson.setShouldGenerateDocsComponents(true);
-    await this.project.artifactsManager.artifact.docsWebapp.docsGen.start(envOptions);
+    await this.project.artifactsManager.artifact.docsWebapp.docsGen.start(
+      envOptions,
+      force,
+    );
     Helpers.info(`Ts Docs regenerated`);
     //#endregion
   }

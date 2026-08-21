@@ -527,21 +527,34 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
       this.alreadyDoneCopyMangerForThisTick = false;
     }
 
-    try {
-      await this.project.ins.devBuildRepository.updatePool({
-        buildStatusInfo: this.buildStatusInfo,
-        reason: opt.reason,
-      });
-    } catch (error) {
-      config.frameworkName === tnpPackageName &&
-        console.error('update action', error);
+    let retrying = false;
+    while (true) {
+      try {
+        await this.project.ins.devBuildRepository.updatePool({
+          buildStatusInfo: this.buildStatusInfo,
+          reason: opt.reason,
+        });
+        if (retrying) {
+          Helpers.taskDone('Retrying OK.');
+        }
+        break;
+      } catch (error) {
+        if (retrying) {
+          config.frameworkName === tnpPackageName &&
+            console.error('update action', error);
 
-      if (error instanceof HttpResponseError) {
-        const err = error as HttpResponseError<RestErrorResponseWrapper>;
-        Helpers.error(err.body.json.message || err.body.text, true, true);
+          if (error instanceof HttpResponseError) {
+            const err = error as HttpResponseError<RestErrorResponseWrapper>;
+            Helpers.error(err.body.json.message || err.body.text, true, true);
+          }
+
+          Helpers.warn(`ERORRO: Not able to connect to main worker...`);
+        }
+
+        await UtilsTerminal.wait(2);
+        Helpers.taskStarted('Retrying request...');
+        retrying = true;
       }
-
-      Helpers.warn(`ERORRO: Not able to connect to main worker...`);
     }
 
     //#endregion

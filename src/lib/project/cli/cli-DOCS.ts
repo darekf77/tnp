@@ -86,7 +86,10 @@ class $Docs extends BaseCli {
 
   async generate() {
     //#region @backendFunc
-    await this.project.framework.generateDocsComponents(this.params);
+    await this.project.framework.generateDocsComponents(
+      this.params,
+      this.args.includes('--force'),
+    );
     this._exit();
     //#endregion
   }

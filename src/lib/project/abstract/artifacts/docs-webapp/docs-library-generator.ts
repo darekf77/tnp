@@ -1,5 +1,5 @@
 //#region imports
-import * as MarkdownIt from 'markdown-it'; // @backend
+import type { DocsHeading } from 'taon/src';
 import {
   UtilsFilesFoldersSync,
   path,
@@ -17,6 +17,7 @@ import {
 } from 'tnp-core/src';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
+// import type { DocsHeading } from 'taon/src';
 import {
   replaceAssetsLinksForApp,
   // replaceSrcAssetsWithRemoveTag,
@@ -28,6 +29,7 @@ import {
   assetsFromSrc,
   assetsFromTempSrc,
   docsMainProject,
+  docsRoutes,
   generatedDocsFromMd,
   libFromSrc,
   sharedFromAssets,
@@ -36,51 +38,24 @@ import {
 } from '../../../../constants';
 import { EnvOptions } from '../../../../options';
 import { Project } from '../../project';
-//#endregion
 
-//#region util md to html
-export class UtilsMdToHtml {
-  //#region @backend
-  private static readonly md = new MarkdownIt({
-    html: true,
-    linkify: true,
-    typographer: false,
-    breaks: false,
-  });
-  //#endregion
-
-  static transform(content: string): string {
-    //#region @backendFunc
-    // content = this.removeRenderDirectives(content);
-    return this.md.render(content);
-    //#endregion
-  }
-
-  private static removeRenderDirectives(content: string): string {
-    return content
-      .replace(/<!--\s*@render\s+(['"])(.*?)\1(?:\s+\{[\s\S]*?\})?\s*-->/g, '')
-      .replace(/^\s*\/\/\s*@render\s+(['"])(.*?)\1(?:\s+\{.*\})?\s*$/gm, '');
-  }
-}
-//#endregion
-
-//#region index data
-export interface IndexedData {
-  orgMdFilesName: string;
-  content: string;
-}
+import { UtilsMdToHtml } from './utils-md-to-html';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
 export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
-  //#region temporary md docs folder
-  get temporaryMdDocsFolderAbsPath(): string {
+  //#region fields & getters
+
+  buildOptions: EnvOptions;
+
+  //#region fields & getters / temporary md docs folder
+  private get temporaryMdDocsFolderAbsPath(): string {
     return this.project.pathFor(`.${config.frameworkName}/tmp-temp-docs`);
   }
   //#endregion
 
-  //#region temporary md docs folder
-  get sharedMdDocsAssetsFolderAbsPath(): string {
+  //#region fields & getters / temporary md docs folder
+  private get sharedMdDocsAssetsFolderAbsPath(): string {
     return this.project.pathFor([
       srcMainProject,
       assetsFromSrc,
@@ -90,7 +65,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region all md files abs path
+  //#region fields & getters / all md files abs path
   private get allMdFilesAbsPathsFromTemporaryPath(): string[] {
     //#region @backendFunc
     return UtilsFilesFoldersSync.getFilesFrom(
@@ -104,47 +79,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region get unifedied name from package
-  protected getUnifiedNameFromPackage(packageName: string): string {
-    const [org, name] = packageName.split('/');
-    return packageName.startsWith('@')
-      ? `${_.upperFirst(_.camelCase(org))}__${_.upperFirst(_.camelCase(name))}`
-      : _.upperFirst(_.camelCase(packageName));
-  }
-  //#endregion
-
-  //#region get route name from package
-  protected getRoutesNameFromPackage(packageName: string): string {
-    const routesName =
-      this.getUnifiedNameFromPackage(packageName) + 'DocsRoutes';
-    return routesName;
-  }
-  //#endregion
-
-  //#region get route name from package
-  protected getRoutesNameFromFilePath(relativeFilePath: string): string {
-    const routesName = _.upperFirst(_.camelCase(relativeFilePath)) + 'Routes';
-    return routesName;
-  }
-  //#endregion
-
-  //#region get component name from package
-  protected getComponentNameFromPackage(packageName: string): string {
-    const ComponentNameFromPackage =
-      this.getUnifiedNameFromPackage(packageName) + 'Component';
-    return ComponentNameFromPackage;
-  }
-  //#endregion
-
-  //#region get component name from relative file path
-  protected getComponentNameFromFilePath(relativeFilePath: string): string {
-    const ComponentNameFromFilePath =
-      _.upperFirst(_.camelCase(relativeFilePath)) + 'Component';
-    return ComponentNameFromFilePath;
-  }
-  //#endregion
-
-  //#region all md files abs path
+  //#region fields & getters /all md files abs path
   private get allMdFilesAbsPaths(): string[] {
     //#region @backendFunc
     return [
@@ -165,7 +100,97 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region analyz what packages requred
+  //#endregion
+
+  //#region api / remove temp folders
+  public removeTempFolders(): void {
+    //#region @backendFunc
+    Helpers.remove(this.temporaryMdDocsFolderAbsPath);
+    Helpers.tryRemoveDir(
+      this.project.pathFor([srcMainProject, libFromSrc, generatedDocsFromMd]),
+    );
+    Helpers.tryRemoveDir(
+      this.project.pathFor([
+        srcMainProject,
+        assetsFromSrc,
+        sharedFromAssets,
+        generatedDocsFromMd,
+      ]),
+    );
+    //#endregion
+  }
+  //#endregion
+
+  //#region api / start
+  public async start(buildOptions: EnvOptions, force = false): Promise<void> {
+    //#region @backendFunc
+    this.buildOptions = buildOptions;
+    if (force) {
+      this.removeTempFolders();
+    }
+
+    const requiredPackages = this.analyzeAndGetWhatDocsPackagesRequired(
+      this.project.nameForNpmPackage,
+    );
+    Helpers.info(`
+
+      Creating docs.. using packages ${requiredPackages.join(',')}
+
+      `);
+    // const indexData: IndexedData[] = []; // I wonder how to index stuff
+
+    this.copyAllMdFilesToTemporaryPath(requiredPackages);
+    this.recreateMdFilesComponents();
+
+    this.recreateMainRoutesWithAllLinks();
+    this.recreateIndexingFile();
+    //#endregion
+  }
+  //#endregion
+
+  //#region methods
+
+  //#region methods / get unifedied name from package
+  protected getUnifiedNameFromPackage(packageName: string): string {
+    const [org, name] = packageName.split('/');
+    return packageName.startsWith('@')
+      ? `${_.upperFirst(_.camelCase(org))}__${_.upperFirst(_.camelCase(name))}`
+      : _.upperFirst(_.camelCase(packageName));
+  }
+  //#endregion
+
+  //#region methods / get  get route name from package
+  protected getRoutesNameFromPackage(packageName: string): string {
+    const routesName =
+      this.getUnifiedNameFromPackage(packageName) + 'DocsRoutes';
+    return routesName;
+  }
+  //#endregion
+
+  //#region methods / get route name from package
+  protected getRoutesNameFromFilePath(relativeFilePath: string): string {
+    const routesName = _.upperFirst(_.camelCase(relativeFilePath)) + 'Routes';
+    return routesName;
+  }
+  //#endregion
+
+  //#region methods / get component name from package
+  protected getComponentNameFromPackage(packageName: string): string {
+    const ComponentNameFromPackage =
+      this.getUnifiedNameFromPackage(packageName) + 'Component';
+    return ComponentNameFromPackage;
+  }
+  //#endregion
+
+  //#region methods / get component name from relative file path
+  protected getComponentNameFromFilePath(relativeFilePath: string): string {
+    const ComponentNameFromFilePath =
+      _.upperFirst(_.camelCase(relativeFilePath)) + 'Component';
+    return ComponentNameFromFilePath;
+  }
+  //#endregion
+
+  //#region methods / analyz what packages requred
   public analyzeAndGetWhatDocsPackagesRequired(
     packageName: string,
     alreadyAnalyzed: string[] = [],
@@ -205,7 +230,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region get project from package
+  //#region methods / get project from package
   protected getProjectFromPackage(packageName): Project {
     //#region @backendFunc
     const pathToSourceLInk =
@@ -236,7 +261,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region copy all md file to temporary path
+  //#region methods / copy all md file to temporary path
   protected copyAllMdFilesToTemporaryPath(packages: string[]): void {
     //#region @backendFunc
     for (const packageName of packages) {
@@ -320,7 +345,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region recreaste libraries ts files from md files
+  //#region methods / recreaste libraries ts files from md files
   protected recreateMdFilesComponents(): void {
     //#region @backendFunc
 
@@ -338,6 +363,13 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
         relativePath.replace('.md', '.component.ts'),
       ]);
 
+      const newPathToComponentHtml = this.project.pathFor([
+        srcMainProject,
+        libFromSrc,
+        generatedDocsFromMd,
+        relativePath.replace('.md', '.component.html'),
+      ]);
+
       const newPathToComponentRoutesTs = this.project.pathFor([
         srcMainProject,
         libFromSrc,
@@ -347,14 +379,22 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
 
       const content = UtilsFilesFoldersSync.readFile(mdFileAbsPAth) || '';
 
+      const { headings, resultContent, codeblocks } =
+        UtilsMdToHtml.transform(content);
+
       UtilsFilesFoldersSync.writeFile(
         newPathToComponentTs,
         this.tempateForAngularComponent({
           absPath: mdFileAbsPAth,
-          newAbsPath: newPathToComponentTs,
           relativePath,
-          content,
+          headings,
+          codeblocks,
         }),
+      );
+
+      UtilsFilesFoldersSync.writeFile(
+        newPathToComponentHtml,
+        `<article  class="taon-md-doc">${resultContent}</article>`,
       );
 
       UtilsFilesFoldersSync.writeFile(
@@ -366,45 +406,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region start
-
-  protected buildOptions: EnvOptions;
-
-  async start(buildOptions: EnvOptions): Promise<void> {
-    //#region @backendFunc
-    this.buildOptions = buildOptions;
-    Helpers.remove(this.temporaryMdDocsFolderAbsPath);
-    Helpers.tryRemoveDir(
-      this.project.pathFor([srcMainProject, libFromSrc, generatedDocsFromMd]),
-    );
-    Helpers.tryRemoveDir(
-      this.project.pathFor([
-        srcMainProject,
-        assetsFromSrc,
-        sharedFromAssets,
-        generatedDocsFromMd,
-      ]),
-    );
-
-    const requiredPackages = this.analyzeAndGetWhatDocsPackagesRequired(
-      this.project.nameForNpmPackage,
-    );
-    Helpers.info(`
-
-      Creating docs.. using packages ${requiredPackages.join(',')}
-
-      `);
-    const indexData: IndexedData[] = []; // I wonder how to index stuff
-
-    this.copyAllMdFilesToTemporaryPath(requiredPackages);
-    this.recreateMdFilesComponents();
-
-    this.recreateMainRoutesWithAllLinks();
-    //#endregion
-  }
-  //#endregion
-
-  //#region recreate main route
+  //#region methods / recreate main route
   protected recreateMainRoutesWithAllLinks(): void {
     //#region @backendFunc
     const baseMdGen = this.project.pathFor([
@@ -416,7 +418,8 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
       recursive: true,
     })
       .filter(f => f.endsWith('.routes.ts'))
-      .map(c => c.replace(baseMdGen + '/', ''));
+      .map(c => c.replace(baseMdGen + '/', ''))
+      .filter(c => path.basename(c) !== docsRoutes);
 
     const mainRouteContent =
       this.getMainRoutesFileForRelativePaths(relativePaths);
@@ -426,7 +429,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
         srcMainProject,
         libFromSrc,
         generatedDocsFromMd,
-        'docs.routes.ts',
+        docsRoutes,
       ]),
       mainRouteContent,
     );
@@ -434,85 +437,94 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region template for angular component
-  tempateForAngularComponent(opt: {
-    newAbsPath: string;
+  //#region methods / recreate main route
+  protected recreateIndexingFile(): void {
+    //#region @backendFunc
+    // TODO
+    // const baseMdGen = this.project.pathFor([
+    //   srcMainProject,
+    //   libFromSrc,
+    //   generatedDocsFromMd,
+    // ]);
+    // const relativePaths = UtilsFilesFoldersSync.getFilesFrom(baseMdGen, {
+    //   recursive: true,
+    // })
+    //   .filter(f => f.endsWith('.routes.ts'))
+    //   .map(c => c.replace(baseMdGen + '/', ''))
+    //   .filter(c => path.basename(c) !== docsRoutes);
+
+    // const mainRouteContent =
+    //   this.getMainRoutesFileForRelativePaths(relativePaths);
+
+    // UtilsFilesFoldersSync.writeFile(
+    //   this.project.pathFor([
+    //     srcMainProject,
+    //     libFromSrc,
+    //     generatedDocsFromMd,
+    //     'indexing',
+    //   ]),
+    //   mainRouteContent,
+    // );
+    //#endregion
+  }
+  //#endregion
+
+  //#region methods / template for angular component
+  private tempateForAngularComponent({
+    absPath,
+    relativePath,
+    headings,
+    codeblocks,
+  }: {
     absPath: string;
     relativePath: string;
-    content: string;
+    headings: DocsHeading[];
+    codeblocks: UtilsMdToHtml.CodeBlock[];
   }): string {
     //#region @backendFunc
-    const howMuchBack = opt.relativePath.split('/').length;
-    const cmpName = this.getComponentNameFromFilePath(opt.relativePath);
+    const howMuchBack = relativePath.split('/').length;
+    const cmpName = this.getComponentNameFromFilePath(relativePath);
 
-    let orgContent = opt.content;
-    const assetsFromMd = UtilsMdDocs.getAssets(opt.content)
-      .map((c, index) => {
-        const assetIndex = `context.asset${index}`;
-        orgContent = orgContent.replace(c, assetIndex);
-        orgContent = orgContent.replace(`"./${assetIndex}"`, `"${assetIndex}"`);
-        orgContent = orgContent.replace(`'./${assetIndex}'`, `'${assetIndex}'`);
-        return ` asset${index} : Taon.asset('/${c}')`;
-      })
-      .join(',\n');
-
-    let html = this.transformToHtml(orgContent);
-
-    let htmlForTs = JSON.stringify(html);
-
-    return `//#${'reg' + 'ion'} @${'bro' + 'wser'}
-//#region imports
+    return `//#${'reg' + 'ion'} imports
+${'imp' + 'ort'} { BehaviorSubject } from 'rxjs';
 ${'imp' + 'ort'} { Taon } from '${_.times(howMuchBack)
       .map(() => '../')
       .join('')}index';
-${'imp' + 'ort'} { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+${'imp' + 'ort'} { ChangeDetectionStrategy, Component, Input, ViewChild } from '@angular/core';
 ${'imp' + 'ort'} { RouterOutlet } from '@angular/router';
-${'imp' + 'ort'} { TaonDocsPageComponent } from '${_.times(howMuchBack)
+${'imp' + 'ort'} { TaonDocsPageComponent, DocsHeading } from '${_.times(
+      howMuchBack,
+    )
       .map(() => '../')
       .join('')}ui';
 
-//#endregion
+//#${'end' + 'reg' + 'ion'}
 
 @Component({
-  selector: 'app-my-entity',
-  template: \`
-     <taon-docs-page [html]="resolvedHtml" />
-  \`,
+  selector: 'app-my-docs-page-${_.kebabCase(path.basename(absPath))}',
+  templateUrl: './${path.basename(absPath).replace('.md', '.component.html')}',
   styles: '',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TaonDocsPageComponent],
 })
-${'exp' + 'ort'} class ${cmpName} {
+${'exp' + 'ort'} class ${cmpName} extends TaonDocsPageComponent {
   @Input() context: any = {
-  ${assetsFromMd}
+${codeblocks
+  .map(c => {
+    return `${taonCutNextLineCut}\n${c.name}: ${JSON.stringify(c.codeContent)}`;
+  })
+  .join(',\n')}
+  };
 
-  }
-
-  public get resolvedHtml(): string {
-    return this.htmlTemplate.replace(
-      /context\\.([a-zA-Z0-9_$]+)/g,
-      (_, key) => this.context?.[key] ?? '',
-    );
-  }
-
-${taonCutNextLineCut}
-  private readonly htmlTemplate = ${htmlForTs};
-
+  headings: DocsHeading[] = ${JSON.stringify(headings, null, 2)};
 
 }
-//#${'endr' + 'egion'}
+
     `;
     //#endregion
   }
   //#endregion
 
-  //#region transform md to html
-  transformToHtml(content: string): string {
-    return UtilsMdToHtml.transform(content);
-  }
-  //#endregion
-
-  //#region get template for default routes
+  //#region methods / get template for default routes
   protected getTemplateForDefaultRoutes(relativePath: string): string {
     return `
 //#region imports
@@ -531,7 +543,7 @@ export const ${this.getRoutesNameFromFilePath(relativePath)}: Routes = [
   }
   //#endregion
 
-  //#region get lazy route template for package
+  //#region methods / get lazy route template for package
   protected getLazyRouteTemplateForRelativePath(relativePath: string): string {
     const RoutesForRelativePathComponentName = this.getRoutesNameFromFilePath(
       relativePath.replace('.routes.ts', '.md'),
@@ -549,7 +561,7 @@ export const ${this.getRoutesNameFromFilePath(relativePath)}: Routes = [
   }
   //#endregion
 
-  //#region get main routes files for packages
+  //#region methods / get main routes files for packages
   protected getMainRoutesFileForRelativePaths(relativePaths: string[]): string {
     const RoutesForComponentName = this.getRoutesNameFromPackage(
       this.project.nameForNpmPackage,
@@ -574,5 +586,7 @@ ${lazyRoutes}
 ${'exp' + 'ort'} default ${RoutesForComponentName};
     `;
   }
+  //#endregion
+
   //#endregion
 }

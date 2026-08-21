@@ -238,6 +238,7 @@ export const DEFAULT_PORT = {
   DEBUGGING_ELECTRON: 9888,
 };
 
+export const docsRoutes = 'docs.routes.ts';
 export const docsConfigJsonFileName = 'docs-config.jsonc';
 export const docsConfigSchema = 'docs-config.schema.json';
 export const customDefaultCss = 'custom-default.css';
