@@ -288,7 +288,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
             continue;
           }
 
-          const assetSourcetAbsPath = this.project.pathFor(relativeAssetPath);
+          const assetSourcetAbsPath = proj.pathFor(relativeAssetPath);
 
           const assetDestLocationAbsPath = crossPlatformPath([
             this.sharedMdDocsAssetsFolderAbsPath,
@@ -298,8 +298,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
 
           Helpers.logInfo(
             `Copy asset
-          "${assetRelativePathFromFile}"
-          "${chalk.bold(relativeAssetPath)}"
+          "${assetSourcetAbsPath}"
           to "${assetDestLocationAbsPath}"
           `,
           );

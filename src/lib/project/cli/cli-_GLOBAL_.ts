@@ -16,6 +16,7 @@ import {
   tnpPackageName,
   UtilsExecProc,
   UtilsFilesFoldersSync,
+  UtilsMdDocs,
   UtilsTime,
 } from 'tnp-core/src';
 import {
@@ -2099,6 +2100,16 @@ ${this.project.children
     console.log(await UtilsOs.getInotifyWatchCount());
     this._exit();
     //#endregion
+  }
+
+  async assetsFromMd() {
+    const mdFileAbsPath = path.isAbsolute(this.firstArg)
+      ? crossPlatformPath(this.firstArg)
+      : crossPlatformPath([this.cwd, this.firstArg]);
+
+    const assetsFromMd = UtilsMdDocs.getAssetsFromFile(mdFileAbsPath);
+    console.log({ assetsFromMd });
+    this._exit();
   }
 
   //#region remove background from file
