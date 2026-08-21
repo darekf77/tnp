@@ -233,7 +233,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         });
       }
       if (this.project.taonJson.shouldGenerateDocsComponents) {
-        await this.project.artifactsManager.artifact.docsWebapp.docsGen.start();
+        await this.project.artifactsManager.artifact.docsWebapp.docsGen.start(
+          initOptions,
+        );
       }
     }
 

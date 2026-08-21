@@ -1370,7 +1370,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
                 destPath,
                 content,
                 regionsToRemove,
-                this.project,
+                () => this.project.environmentConfig.getEnvMain(),
                 // debug
               ).output;
               return content

@@ -12,6 +12,7 @@ import {
   Utils,
   UtilsFilesFoldersSync,
   UtilsI18n,
+  taonSkipCut,
 } from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
@@ -52,7 +53,6 @@ import {
   srcNgProxyProject,
   tailwindScssImportRegex,
   tailwindScssImportRegexGlobal,
-  taonCutSkipComment,
   tempAppForFolder,
   tempSourceFolder,
   timestampPrefixComment,
@@ -931,7 +931,7 @@ export class BrowserCodeCut {
     //#region @backendFunc
     if (
       this.isAssetsFile ||
-      this.rawOrginalContent?.trim().startsWith(taonCutSkipComment)
+      this.rawOrginalContent?.trim().startsWith(taonSkipCut)
     ) {
       return this;
     }
@@ -1019,7 +1019,7 @@ export class BrowserCodeCut {
     //#region @backendFunc
     if (
       this.isAssetsFile ||
-      this.rawOrginalContent?.trim().startsWith(taonCutSkipComment)
+      this.rawOrginalContent?.trim().startsWith(taonSkipCut)
     ) {
       return this;
     }
@@ -1034,7 +1034,7 @@ export class BrowserCodeCut {
         this.relativePath,
         orgContent,
         options.replacements,
-        this.project,
+        () => this.project.environmentConfig.getEnvMain(),
       ).output;
 
       if (this.project.framework.isStandaloneProject && !this.isWebsqlMode) {
@@ -1060,7 +1060,7 @@ export class BrowserCodeCut {
           this.absoluteBackendDestFilePath,
           this.rawContentBackend,
           regionsToRemoveCjs,
-          this.project,
+          () => this.project.environmentConfig.getEnvMain(),
           // debug
         ).output;
 
@@ -1068,7 +1068,7 @@ export class BrowserCodeCut {
           this.absoluteBackendEsmDestFilePath,
           this.rawContentEsmBackend,
           regionsToRemoveEsm,
-          this.project,
+          () => this.project.environmentConfig.getEnvMain(),
           // debug
         ).output;
       }

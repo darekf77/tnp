@@ -9,17 +9,32 @@ import {
   crossPlatformPath,
   config,
   tnpPackageName,
+  UtilsStringRegex,
+  chalk,
+  TAGS,
+  taonCutNextLineCut,
+  taonSkipCut,
 } from 'tnp-core/src';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
 import {
+  replaceAssetsLinksForApp,
+  // replaceSrcAssetsWithRemoveTag,
+} from '../../../../app-utils';
+import {
+  assetsFor,
+  assetsFromNgProj,
+  assetsFromNpmPackage,
+  assetsFromSrc,
+  assetsFromTempSrc,
   docsMainProject,
   generatedDocsFromMd,
   libFromSrc,
+  sharedFromAssets,
   sourceLinkInNodeModules,
   srcMainProject,
-  taonCutSkipComment,
 } from '../../../../constants';
+import { EnvOptions } from '../../../../options';
 import { Project } from '../../project';
 //#endregion
 
@@ -61,6 +76,17 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   //#region temporary md docs folder
   get temporaryMdDocsFolderAbsPath(): string {
     return this.project.pathFor(`.${config.frameworkName}/tmp-temp-docs`);
+  }
+  //#endregion
+
+  //#region temporary md docs folder
+  get sharedMdDocsAssetsFolderAbsPath(): string {
+    return this.project.pathFor([
+      srcMainProject,
+      assetsFromSrc,
+      sharedFromAssets,
+      generatedDocsFromMd,
+    ]);
   }
   //#endregion
 
@@ -223,12 +249,72 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
 
       for (const mdFileAbsPath of allMdFiles) {
         const relativePath = mdFileAbsPath.replace(proj.location + '/', '');
-        const destinationInTempFolder = crossPlatformPath([
+        const destinationInTempFolderAbsPath = crossPlatformPath([
           this.temporaryMdDocsFolderAbsPath,
           this.getUnifiedNameFromPackage(packageName),
           relativePath,
         ]);
-        UtilsFilesFoldersSync.copyFile(mdFileAbsPath, destinationInTempFolder);
+        let content = UtilsFilesFoldersSync.readFile(mdFileAbsPath) || '';
+
+        const assetsFromMd = UtilsMdDocs.getAssetsFromFile(mdFileAbsPath);
+
+        for (const assetRelativePathFromFile of assetsFromMd) {
+          const hasSlash = relativePath.includes('/');
+          const slash = hasSlash ? '/' : '';
+
+          const relativeAssetPath = relativePath.replace(
+            slash + path.basename(relativePath),
+            slash + assetRelativePathFromFile,
+          );
+
+          // console.log({ relativeAssetPath });
+
+          content = content.replace(
+            relativeAssetPath,
+            crossPlatformPath([
+              srcMainProject,
+              assetsFromSrc,
+              sharedFromAssets,
+              generatedDocsFromMd,
+              this.getUnifiedNameFromPackage(packageName),
+              relativeAssetPath,
+            ]),
+          );
+
+          if (UtilsStringRegex.containsNonAscii(relativeAssetPath)) {
+            Helpers.warn(
+              `Omitting file with non-ascii characters in path: ${relativeAssetPath}`,
+            );
+            continue;
+          }
+
+          const assetSourcetAbsPath = this.project.pathFor(relativeAssetPath);
+
+          const assetDestLocationAbsPath = crossPlatformPath([
+            this.sharedMdDocsAssetsFolderAbsPath,
+            this.getUnifiedNameFromPackage(packageName),
+            relativeAssetPath,
+          ]);
+
+          Helpers.logInfo(
+            `Copy asset
+          "${assetRelativePathFromFile}"
+          "${chalk.bold(relativeAssetPath)}"
+          to "${assetDestLocationAbsPath}"
+          `,
+          );
+
+          UtilsFilesFoldersSync.copyFile(
+            assetSourcetAbsPath,
+            assetDestLocationAbsPath,
+          );
+        }
+
+        UtilsFilesFoldersSync.writeFile(
+          destinationInTempFolderAbsPath,
+          content,
+        );
+        // UtilsFilesFoldersSync.copyFile(mdFileAbsPath, destinationInTempFolder);
       }
     }
     //#endregion
@@ -238,9 +324,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   //#region recreaste libraries ts files from md files
   protected recreateMdFilesComponents(): void {
     //#region @backendFunc
-    Helpers.tryRemoveDir(
-      this.project.pathFor([srcMainProject, libFromSrc, generatedDocsFromMd]),
-    );
+
     const allMdFiles = this.allMdFilesAbsPathsFromTemporaryPath;
     for (const mdFileAbsPAth of allMdFiles) {
       const relativePath = mdFileAbsPAth.replace(
@@ -284,9 +368,25 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region start
-  async start(): Promise<void> {
+
+  protected buildOptions: EnvOptions;
+
+  async start(buildOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
+    this.buildOptions = buildOptions;
     Helpers.remove(this.temporaryMdDocsFolderAbsPath);
+    Helpers.tryRemoveDir(
+      this.project.pathFor([srcMainProject, libFromSrc, generatedDocsFromMd]),
+    );
+    Helpers.tryRemoveDir(
+      this.project.pathFor([
+        srcMainProject,
+        assetsFromSrc,
+        sharedFromAssets,
+        generatedDocsFromMd,
+      ]),
+    );
+
     const requiredPackages = this.analyzeAndGetWhatDocsPackagesRequired(
       this.project.nameForNpmPackage,
     );
@@ -345,10 +445,27 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     const howMuchBack = opt.relativePath.split('/').length;
     const cmpName = this.getComponentNameFromFilePath(opt.relativePath);
-    const html = this.transformToHtml(opt.content);
 
-    return `${taonCutSkipComment}
+    let orgContent = opt.content;
+    const assetsFromMd = UtilsMdDocs.getAssets(opt.content)
+      .map((c, index) => {
+        const assetIndex = `context.asset${index}`;
+        orgContent = orgContent.replace(c, assetIndex);
+        orgContent = orgContent.replace(`"./${assetIndex}"`, `"${assetIndex}"`);
+        orgContent = orgContent.replace(`'./${assetIndex}'`, `'${assetIndex}'`);
+        return ` asset${index} : Taon.asset('/${c}')`;
+      })
+      .join(',\n');
+
+    let html = this.transformToHtml(orgContent);
+
+    let htmlForTs = JSON.stringify(html);
+
+    return `//#${'reg' + 'ion'} @${'bro' + 'wser'}
 //#region imports
+${'imp' + 'ort'} { Taon } from '${_.times(howMuchBack)
+      .map(() => '../')
+      .join('')}index';
 ${'imp' + 'ort'} { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 ${'imp' + 'ort'} { RouterOutlet } from '@angular/router';
 ${'imp' + 'ort'} { TaonDocsPageComponent } from '${_.times(howMuchBack)
@@ -360,17 +477,31 @@ ${'imp' + 'ort'} { TaonDocsPageComponent } from '${_.times(howMuchBack)
 @Component({
   selector: 'app-my-entity',
   template: \`
-     <taon-docs-page [html]="html" />
+     <taon-docs-page [html]="resolvedHtml" />
   \`,
   styles: '',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TaonDocsPageComponent],
 })
 ${'exp' + 'ort'} class ${cmpName} {
-  @Input() context: any;
+  @Input() context: any = {
+  ${assetsFromMd}
 
-  readonly html = ${JSON.stringify(html)};
+  }
+
+  public get resolvedHtml(): string {
+    return this.htmlTemplate.replace(
+      /context\\.([a-zA-Z0-9_$]+)/g,
+      (_, key) => this.context?.[key] ?? '',
+    );
+  }
+
+${taonCutNextLineCut}
+  private readonly htmlTemplate = ${htmlForTs};
+
+
 }
+//#${'endr' + 'egion'}
     `;
     //#endregion
   }

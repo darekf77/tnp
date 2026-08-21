@@ -341,8 +341,6 @@ export const defaultConfiguration = 'defaultConfiguration';
 
 export const mainProjectSubProjects = 'sub-projects';
 
-export const taonCutSkipComment = '// @taon' + 'Skip' + 'Cut';
-
 export enum TempalteSubprojectType {
   TAON_STRIPE_CLOUDFLARE_WORKER = 'taon-stripe-cloudflare-worker',
   TAON_YT_CLOUDFLARE_WORKER = 'taon-yt-cloudflare-worker',

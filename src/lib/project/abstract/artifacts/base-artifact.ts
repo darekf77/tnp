@@ -283,7 +283,7 @@ export abstract class BaseArtifact<
           absolutePath,
           rawContent,
           [TAGS.NOT_FOR_NPM],
-          this,
+          () => this.project.environmentConfig.getEnvMain(),
         ).output;
         // rawContent = this.replaceRegionsWith(rawContent, ['@notFor'+'Npm']);
         Helpers.writeFile(absolutePath, rawContent);

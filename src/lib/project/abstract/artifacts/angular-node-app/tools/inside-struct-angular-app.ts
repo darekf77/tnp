@@ -187,7 +187,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                   destinationAbsPath,
                   content,
                   regionsToRemove,
-                  this.project,
+                  () => this.project.environmentConfig.getEnvMain(),
                 ).output;
               }
 
