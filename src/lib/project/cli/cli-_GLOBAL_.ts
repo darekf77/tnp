@@ -17,6 +17,7 @@ import {
   UtilsExecProc,
   UtilsFilesFoldersSync,
   UtilsMdDocs,
+  UtilsProjects,
   UtilsTime,
 } from 'tnp-core/src';
 import {
@@ -97,6 +98,7 @@ import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
 import { Project } from '../abstract/project';
 import type { TaonProjectResolve } from '../abstract/project-resolve';
 import { Subject } from 'rxjs';
+import { DevModeUtils } from '../abstract/taon-worker/dev-mode/dev-mode.utils';
 //#endregion
 
 export class $Global extends BaseGlobalCommandLine<
@@ -2091,6 +2093,32 @@ ${this.project.children
       this.project.framework.notVerifiedIsomorphicPackagesBuildsInNodeModules;
     Helpers.info(`Found ${pkgs.length} `);
     console.log(pkgs);
+    this._exit();
+    //#endregion
+  }
+
+  depsTree() {
+    //#region @backendFunc
+    Helpers.info(`Deps tree`);
+    const allNotVerified =
+      this.project.framework.notVerifiedIsomorphicPackagesBuildsInNodeModules;
+
+    const deps = UtilsProjects.sortGroupOfProject<Project>({
+      projects: this.project.nodeModules.getIsomorphicProjectsInDevMode(),
+      resoveDepsArray: proj => proj.taonJson.devModeDependenciesForNpmLib,
+      projNameToCompare: proj => proj.nameForNpmPackage,
+      projUniqueKeyToCompare: proj => proj.location,
+    });
+    const notVerfiedDeps = deps.filter(f =>
+      allNotVerified.includes(f.nameForNpmPackage),
+    );
+    Helpers.info(
+      `Deps of ${this.project.nameForNpmPackage}: ${deps.map(c => c.nameForNpmPackage).join(',')} `,
+    );
+
+    Helpers.warn(
+      `NOT VERIFIED Deps of ${this.project.nameForNpmPackage}: ${notVerfiedDeps.map(c => c.nameForNpmPackage).join(',')} `,
+    );
     this._exit();
     //#endregion
   }

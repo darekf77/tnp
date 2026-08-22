@@ -479,6 +479,29 @@ export class NodeModules extends BaseNodeModules {
     //#endregion
   }
 
+  getIsomorphicProjectsInDevMode(): Project[] {
+    //#region @backendFunc
+    const task = Helpers.actionStarted(
+      `Detecing isomorphic pcakges for ${this.project.taonJson.frameworkVersion}`,
+    );
+    const all = this.getAllPackagesNames()
+      .filter(packageName => this.checkIsomorphic(packageName))
+      .map(packageName => {
+        const p = this.pathFor([packageName, sourceLinkInNodeModules]);
+        try {
+          const realPathToProj = fse.realpathSync(p);
+          return this.project.ins.nearestTo(realPathToProj);
+        } catch (error) {
+          return void 0;
+        }
+        // this.project.ins.From(c)
+      })
+      .filter(f => !!f);
+    task.done();
+    return all;
+    //#endregion
+  }
+
   getIsomorphicPackagesNamesInDevMode(): string[] {
     //#region @backendFunc
     return this.getAllPackagesNames().filter(

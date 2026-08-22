@@ -840,6 +840,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
         this.project.framework.isStandaloneProject
       ) {
         await this.project.clear();
+        this.project.warnAboutNotVerifiedWhenProdBuild(buildOptions);
       }
 
       if (
@@ -1051,6 +1052,8 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
 
     releaseOptions =
       await this.project.environmentConfig.update(releaseOptions);
+
+    this.project.warnAboutNotVerifiedWhenProdBuild(releaseOptions);
 
     let releaseOutput: ReleasePartialOutput;
 

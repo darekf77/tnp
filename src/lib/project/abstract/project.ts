@@ -1,6 +1,6 @@
 //#region imports
 import { Observable, Subject } from 'rxjs';
-import { dotTaonFolder, LibTypeEnum, Utils } from 'tnp-core/src';
+import { dotTaonFolder, LibTypeEnum, Utils, UtilsProjects } from 'tnp-core/src';
 import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
@@ -56,6 +56,7 @@ import { DevBuildModels } from './taon-worker/dev-build/dev-build.models';
 import { DevMode } from './taon-worker/dev-mode/dev-mode.models';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
+import { DevModeUtils } from './taon-worker/dev-mode/dev-mode.utils';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -227,8 +228,54 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   }
   //#endregion
 
+  //#region warn about not verified
+  warnAboutNotVerifiedWhenProdBuild(buildOptions?: EnvOptions): void {
+    //#region @backendFunc
+
+    return; // TODO @UNCOMMENT make this relliable
+    if (!buildOptions.build.prod) {
+      return;
+    }
+    const allNotVerified =
+      this.framework.notVerifiedIsomorphicPackagesBuildsInNodeModules;
+
+    const deps = UtilsProjects.sortGroupOfProject<Project>({
+      projects: this.nodeModules.getIsomorphicProjectsInDevMode(),
+      resoveDepsArray: proj => proj.taonJson.devModeDependenciesForNpmLib,
+      projNameToCompare: proj => proj.nameForNpmPackage,
+      projUniqueKeyToCompare: proj => proj.location,
+    });
+    const notVerfiedDeps = deps.filter(f =>
+      allNotVerified.includes(f.nameForNpmPackage),
+    );
+
+    if (notVerfiedDeps.length > 0) {
+      Helpers.error(
+        `Please release/prod-build this dependency projects before
+       building this project in production mode:
+
+${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
+
+
+      `,
+        false,
+        true,
+      );
+    } else {
+      Helpers.info(`
+
+        ALL DEPENDENCY PROJECT VERIFIED/READY FOR PROD BUILD
+
+        `)
+    }
+
+    //#endregion
+  }
+  //#endregion
+
   //#region api / build
   async build(buildOptions?: EnvOptions): Promise<void> {
+    this.warnAboutNotVerifiedWhenProdBuild(buildOptions);
     buildOptions = EnvOptions.from(buildOptions);
 
     let skipProjectsNames = [] as string[];
@@ -422,9 +469,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     //#region resolve taon instances
     if (
-      ([ReleaseType.MANUAL_TAON, ReleaseType.CLOUD_CI_TAON] as ReleaseType[]).includes(
-        releaseOptions.release.releaseType,
-      ) &&
+      (
+        [ReleaseType.MANUAL_TAON, ReleaseType.CLOUD_CI_TAON] as ReleaseType[]
+      ).includes(releaseOptions.release.releaseType) &&
       releaseOptions.release.targetArtifact === 'angular-node-app'
     ) {
       if (releaseOptions.release.autoReleaseUsingConfig) {
