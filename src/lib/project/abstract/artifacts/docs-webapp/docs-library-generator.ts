@@ -354,9 +354,14 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
         relativeAssetPath,
       ]);
 
-      // console.log({ relativePath, relativeAssetPath, properPathInMd });
+      // console.log({
+      //   relativePath,
+      //   relativeAssetPath,
+      //   properPathInMd,
+      //   assetRelativePathFromFile,
+      // });
 
-      content = content.replace(relativeAssetPath, properPathInMd);
+      content = content.replace(assetRelativePathFromFile, properPathInMd);
       content = content.replace(`./${properPathInMd}`, `/${properPathInMd}`);
 
       if (UtilsStringRegex.containsNonAscii(relativeAssetPath)) {
