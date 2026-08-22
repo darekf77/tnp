@@ -50,13 +50,13 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
 
   buildOptions: EnvOptions;
 
-  //#region fields & getters / temporary md docs folder
+  //#region fields & getters / temporary md docs folder abs path
   private get temporaryMdDocsFolderAbsPath(): string {
     return this.project.pathFor(`.${config.frameworkName}/tmp-temp-docs`);
   }
   //#endregion
 
-  //#region fields & getters / temporary md docs folder
+  //#region fields & getters / shared md docs assets folder abs path
   private get sharedMdDocsAssetsFolderAbsPath(): string {
     return this.project.pathFor([
       srcMainProject,
@@ -67,7 +67,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region fields & getters / all md files abs path
+  //#region fields & getters / all md files abs paths from temporary folder
   private get allMdFilesAbsPathsFromTemporaryPath(): string[] {
     //#region @backendFunc
     return UtilsFilesFoldersSync.getFilesFrom(
@@ -81,7 +81,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region fields & getters /all md files abs path
+  //#region fields & getters / all md files abs path
   private get allMdFilesAbsPaths(): string[] {
     //#region @backendFunc
     return [
@@ -315,9 +315,10 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
         const relativePath = mdFileAbsPath.replace(proj.location + '/', '');
         const destinationInTempFolderAbsPath = crossPlatformPath([
           this.temporaryMdDocsFolderAbsPath,
-          this.getUnifiedNameFromPackage(packageName),
+          packageName,
           relativePath,
         ]);
+
         let content = UtilsFilesFoldersSync.readFile(mdFileAbsPath) || '';
 
         const assetsFromMd = UtilsMdDocs.getAssetsFromFile(mdFileAbsPath);
@@ -359,7 +360,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
 
           const assetDestLocationAbsPath = crossPlatformPath([
             this.sharedMdDocsAssetsFolderAbsPath,
-            this.getUnifiedNameFromPackage(packageName),
+            packageName,
             relativeAssetPath,
           ]);
 

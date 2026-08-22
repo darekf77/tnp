@@ -52,6 +52,7 @@ import {
   dotGitIgnoreMainProject,
   dotNpmIgnoreMainProject,
   dotNpmrcMainProject,
+  generatedDocsFromMd,
   i18nDataTsFileExt,
   indexDtsNpmPackage,
   indexJSNpmPackage,
@@ -1032,6 +1033,13 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           rimraf.sync(this.project.pathFor(distMainProject) + '*');
         }
         rimraf.sync(this.project.pathFor(folderName.tmp) + '*');
+        rimraf.sync(
+          this.project.pathFor([
+            srcMainProject,
+            libFromSrc,
+            generatedDocsFromMd,
+          ]),
+        );
         break;
       } catch (error) {
         await HelpersTaon.pressKeyAndContinue(
