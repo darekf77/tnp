@@ -16,6 +16,7 @@ import {
   taonCutNextLineCut,
   taonSkipCut,
   taonPackageName,
+  Utils,
 } from 'tnp-core/src';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
@@ -175,9 +176,13 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
       this.removeTempFolders();
     }
 
-    const requiredPackages = this.analyzeAndGetWhatDocsPackagesRequired(
-      this.project.nameForNpmPackage,
-    );
+    const requiredPackages = Utils.uniqArray([
+      ...this.analyzeAndGetWhatDocsPackagesRequired(
+        this.project.nameForNpmPackage,
+      ),
+      ...this.project.taonJson.genTsDocsInclude,
+    ]);
+
     Helpers.info(`
 
       Creating docs.. using packages ${requiredPackages.join(',')}

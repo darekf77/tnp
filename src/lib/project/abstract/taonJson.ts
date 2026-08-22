@@ -305,6 +305,12 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  get genTsDocsInclude(): string[] {
+    //#region @backendFunc
+    return (this.data as Models.TaonJsonStandalone)?.genTsDocsInclude || [];
+    //#endregion
+  }
+
   //#region store generated assets in repo
   get storeGeneratedAssetsInRepository(): boolean {
     //#region @backendFunc

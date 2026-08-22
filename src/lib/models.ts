@@ -199,6 +199,11 @@ export namespace Models {
     baseImagesUrl?: string;
 
     /**
+     * what projects should be included for genrated docs
+     */
+    genTsDocsInclude?: string[];
+
+    /**
      * (STANDALONE)
      * By default generated assets from logo.png are not stored
      * in repository
