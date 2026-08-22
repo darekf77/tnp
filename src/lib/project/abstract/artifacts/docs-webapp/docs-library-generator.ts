@@ -15,6 +15,7 @@ import {
   TAGS,
   taonCutNextLineCut,
   taonSkipCut,
+  taonPackageName,
 } from 'tnp-core/src';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
@@ -651,16 +652,22 @@ ${'exp' + 'ort'} default ${this.getUnifiedNameFromPackage(this.project.nameForNp
 
     return `//#${'reg' + 'ion'} imports
 ${'imp' + 'ort'} { BehaviorSubject } from 'rxjs';
-${'imp' + 'ort'} { Taon } from '${_.times(howMuchBack)
-      .map(() => '../')
-      .join('')}index';
+${'imp' + 'ort'} { Taon } from '${
+      this.project.nameForNpmPackage === taonPackageName
+        ? `${_.times(howMuchBack)
+            .map(() => '../')
+            .join('')}index`
+        : `${taonPackageName}/src`
+    }';
 ${'imp' + 'ort'} { ChangeDetectionStrategy, Component, Input, ViewChild } from '@angular/core';
 ${'imp' + 'ort'} { RouterOutlet } from '@angular/router';
-${'imp' + 'ort'} { TaonDocsPageComponent, DocsHeading } from '${_.times(
-      howMuchBack,
-    )
-      .map(() => '../')
-      .join('')}ui';
+${'imp' + 'ort'} { TaonDocsPageComponent, DocsHeading } from '${
+      this.project.nameForNpmPackage === taonPackageName
+        ? `${_.times(howMuchBack)
+            .map(() => '../')
+            .join('')}ui`
+        : `${taonPackageName}/src`
+    }';
 
 //#${'end' + 'reg' + 'ion'}
 
