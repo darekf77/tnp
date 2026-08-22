@@ -23,6 +23,7 @@ import {
   // replaceSrcAssetsWithRemoveTag,
 } from '../../../../app-utils';
 import {
+  appFromSrc,
   assetsFor,
   assetsFromNgProj,
   assetsFromNpmPackage,
@@ -35,6 +36,7 @@ import {
   sharedFromAssets,
   sourceLinkInNodeModules,
   srcMainProject,
+  TaonGeneratedFiles,
 } from '../../../../constants';
 import { EnvOptions } from '../../../../options';
 import { Project } from '../../project';
@@ -90,6 +92,36 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
       }).filter(f => f.toLowerCase().endsWith('.md')),
       ...UtilsFilesFoldersSync.getFilesFrom(
         this.project.pathFor(docsMainProject),
+        {
+          recursive: true,
+          followSymlinks: false,
+        },
+      ).filter(f => f.toLowerCase().endsWith('.md')),
+
+      ...UtilsFilesFoldersSync.getFilesFrom(
+        this.project.pathFor(srcMainProject),
+        {
+          recursive: false,
+          followSymlinks: false,
+        },
+      ).filter(
+        f =>
+          f.toLowerCase().endsWith('.md') &&
+          [TaonGeneratedFiles.APP_FOLDER_INFO_MD].includes(
+            path.basename(f) as any,
+          ),
+      ),
+
+      ...UtilsFilesFoldersSync.getFilesFrom(
+        this.project.pathFor([srcMainProject, appFromSrc]),
+        {
+          recursive: true,
+          followSymlinks: false,
+        },
+      ).filter(f => f.toLowerCase().endsWith('.md')),
+
+      ...UtilsFilesFoldersSync.getFilesFrom(
+        this.project.pathFor([srcMainProject, libFromSrc]),
         {
           recursive: true,
           followSymlinks: false,
@@ -231,7 +263,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region methods / get project from package
-  protected getProjectFromPackage(packageName): Project {
+  protected getProjectFromPackage(packageName: string): Project {
     //#region @backendFunc
     const pathToSourceLInk =
       this.project.framework.coreContainer.nodeModules.pathFor([
@@ -240,6 +272,13 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
       ]);
 
     if (!Helpers.exists(pathToSourceLInk)) {
+      const parentChildren = this.project.parent?.children || [];
+      const found = parentChildren.find(
+        c => c.nameForNpmPackage === packageName,
+      );
+      if (found) {
+        return found;
+      }
       Helpers.error(
         `Please build project: ${packageName}`,
         config.frameworkName === tnpPackageName,
@@ -292,18 +331,21 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
             slash + assetRelativePathFromFile,
           );
 
-          // console.log({ relativeAssetPath });
-
-          content = content.replace(
+          const properPathInMd = crossPlatformPath([
+            srcMainProject,
+            assetsFromSrc,
+            sharedFromAssets,
+            generatedDocsFromMd,
+            this.getUnifiedNameFromPackage(packageName),
             relativeAssetPath,
-            crossPlatformPath([
-              srcMainProject,
-              assetsFromSrc,
-              sharedFromAssets,
-              generatedDocsFromMd,
-              this.getUnifiedNameFromPackage(packageName),
-              relativeAssetPath,
-            ]),
+          ]);
+
+          // console.log({ relativePath, relativeAssetPath, properPathInMd });
+
+          content = content.replace(relativeAssetPath, properPathInMd);
+          content = content.replace(
+            `./${properPathInMd}`,
+            `/${properPathInMd}`,
           );
 
           if (UtilsStringRegex.containsNonAscii(relativeAssetPath)) {
@@ -452,10 +494,8 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
     //   .filter(f => f.endsWith('.routes.ts'))
     //   .map(c => c.replace(baseMdGen + '/', ''))
     //   .filter(c => path.basename(c) !== docsRoutes);
-
     // const mainRouteContent =
     //   this.getMainRoutesFileForRelativePaths(relativePaths);
-
     // UtilsFilesFoldersSync.writeFile(
     //   this.project.pathFor([
     //     srcMainProject,
