@@ -59,24 +59,24 @@ export const vscodeMenuItems = ({
     //#endregion
 
     //#region items with actions / taon push
-    new ProjectItem(
-      `$ ${FRAMEWORK_NAME} push`,
-      vscode.TreeItemCollapsibleState.None,
-      {
-        iconPath: null,
-        project: CURRENT_PROJECT,
-        progressLocation: vscode.ProgressLocation.Notification,
-        triggerActionOnClick: async (project, progress, token) => {
-          focustFirstElement();
-          if (project?.location) {
-            // runInTerminal(`${FRAMEWORK_NAME} push`, true);
-            progress?.report({ message: 'Pushing changes...' });
-            await project.git.pushProcess();
-            progress?.report({ message: 'Done', increment: 100 });
-          }
-        },
-      },
-    ),
+    // new ProjectItem(
+    //   `$ ${FRAMEWORK_NAME} push`,
+    //   vscode.TreeItemCollapsibleState.None,
+    //   {
+    //     iconPath: null,
+    //     project: CURRENT_PROJECT,
+    //     progressLocation: vscode.ProgressLocation.Notification,
+    //     triggerActionOnClick: async (project, progress, token) => {
+    //       focustFirstElement();
+    //       if (project?.location) {
+    //         // runInTerminal(`${FRAMEWORK_NAME} push`, true);
+    //         progress?.report({ message: 'Pushing changes...' });
+    //         runInTerminal(`${FRAMEWORK_NAME} push`, true);
+    //         progress?.report({ message: 'Done', increment: 100 });
+    //       }
+    //     },
+    //   },
+    // ),
     //#endregion
 
     //#region items with actions / hide temp files
