@@ -175,6 +175,7 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
     Helpers.log(
       `Notifying leader that build status changed ${toNotifyBuildType}`,
     );
+    let trys = 0;
     while (true) {
       try {
         const devBuildControllerForProj =
@@ -191,7 +192,7 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
       } catch (error) {
         config.frameworkName === tnpPackageName && console.log(error);
         Helpers.error(
-          `Not able to notify build leader about status change of ${toNotifyBuildType}`,
+          `Not able to notify build leader about status change of ${toNotifyBuildType} (trys=${++trys})`,
           true,
           true,
         );
