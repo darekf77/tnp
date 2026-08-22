@@ -59,16 +59,16 @@ each release type may suit you better than the others.
 
 Taon cli support following release artifacts:
 
-⭐ <b>npm lib and cli tool </b> - Shared npm library with global cli tool. <br>
+✅  <b>npm lib and cli tool </b> - Shared npm library with global cli tool. <br>
 The library code is shared across all other artifacts except docs webapp.
 
-⭐ <b>angular node app </b> - Backend/frontend NodeJs/Angular app shared across<br>
+✅  <b>angular node app </b> - Backend/frontend NodeJs/Angular app shared across<br>
  artifacts (In websql mode -> there is only frontend with backend inside browser).
 
-⭐ <b>vscode plugin </b> - Visual Studio Code extension/plugin with backend from *npm lib and cli tool*
+✅  <b>vscode plugin </b> - Visual Studio Code extension/plugin with backend from *npm lib and cli tool*
 
-⭐ <b>electron app   </b> - Electron app with *angular node app* as IPC  `dfrontend/backend 
+✅  <b>electron app   </b> - Electron app with *angular node app* as IPC  `dfrontend/backend 
 
-⭐ <b>mobile app  </b> - Capacitor framework based mobile app with *angular node app* as frontend/backend.
+⌛ <b>mobile app  </b> - Capacitor framework based mobile app with *angular node app* as frontend/backend.
 
-⭐ <b>docs webapp  </b> - Combined documentation: *MkDocs* + *Compodoc*  + *Storybook* .
+✅  <b>docs webapp  </b> - Combined documentation: *MkDocs* + *Compodoc*  + *Storybook* .
