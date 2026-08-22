@@ -513,6 +513,8 @@ export const electronNgProj = 'electron';
 
 export const combinedDocsAllMdFilesFolder = `allmdfiles`;
 
+export const allDocsIndexDataFileTs = 'all-docs-index-data.ts';
+
 /**
  * Vscode project dist folder
  */

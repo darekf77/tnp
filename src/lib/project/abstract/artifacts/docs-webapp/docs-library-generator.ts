@@ -1,6 +1,6 @@
 //#region imports
 import { RenameRule } from 'magic-renamer/src';
-import type { DocsHeading } from 'taon/src';
+import type { DocsHeading, IndexData } from 'taon/src';
 import {
   UtilsFilesFoldersSync,
   path,
@@ -24,6 +24,7 @@ import {
   // replaceSrcAssetsWithRemoveTag,
 } from '../../../../app-utils';
 import {
+  allDocsIndexDataFileTs,
   appFromSrc,
   assetsFor,
   assetsFromNgProj,
@@ -39,6 +40,7 @@ import {
   sourceLinkInNodeModules,
   srcMainProject,
   TaonGeneratedFiles,
+  THIS_IS_GENERATED_STRING,
 } from '../../../../constants';
 import { EnvOptions } from '../../../../options';
 import { Project } from '../../project';
@@ -78,7 +80,16 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
         recursive: true,
         followSymlinks: false,
       },
-    ).filter(f => f.toLowerCase().endsWith('.md'));
+    ).filter(
+      f =>
+        f.toLowerCase().endsWith('.md') &&
+        ![
+          TaonGeneratedFiles.BUILD_INFO_MD,
+          TaonGeneratedFiles.APP_FOLDER_INFO_MD,
+          TaonGeneratedFiles.LIB_INFO_MD,
+          TaonGeneratedFiles.MIGRATIONS_INFO_MD,
+        ].includes(path.basename(f) as any),
+    );
     //#endregion
   }
   //#endregion
@@ -419,7 +430,6 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
       // TODO RECRUSIVE MODIFY RENDER TAGS CONTENT
       // TODO RECRUSIVE RENDER ASSETS
 
-
       content = content.replace(tag.rawRenderTagString, mdFromOtherFile);
     }
     return content;
@@ -478,7 +488,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   //#region methods / recreaste libraries ts files from md files
   protected recreateMdFilesComponents(): void {
     //#region @backendFunc
-
+    let allIndexData: IndexData[] = [];
     const allMdFiles = this.allMdFilesAbsPathsFromTemporaryPath;
     for (const mdFileAbsPAth of allMdFiles) {
       const relativePath = mdFileAbsPAth.replace(
@@ -515,10 +525,10 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
 
       const content = UtilsFilesFoldersSync.readFile(mdFileAbsPAth) || '';
 
-      const { headings, resultContent, codeblocks } = UtilsMdToHtml.transform(
-        content,
-        packageName,
-      );
+      const { headings, resultContent, codeblocks, indexData } =
+        UtilsMdToHtml.transform(content, relativePath, packageName);
+
+      allIndexData = allIndexData.concat(indexData);
 
       UtilsFilesFoldersSync.writeFile(
         newPathToComponentTs,
@@ -540,6 +550,24 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
         this.getTemplateForDefaultRoutes(relativePath),
       );
     }
+
+    const pathAllIndexData = this.project.pathFor([
+      srcMainProject,
+      libFromSrc,
+      generatedDocsFromMd,
+      allDocsIndexDataFileTs,
+    ]);
+
+    UtilsFilesFoldersSync.writeFile(
+      pathAllIndexData,
+      `${taonSkipCut}
+      // ${THIS_IS_GENERATED_STRING}
+export const ${this.getUnifiedNameFromPackage(this.project.nameForNpmPackage)}DocsIndexData = ${JSON.stringify(allIndexData, null, 2)};
+
+${'exp' + 'ort'} default ${this.getUnifiedNameFromPackage(this.project.nameForNpmPackage)}DocsIndexData;
+`,
+    );
+
     //#endregion
   }
   //#endregion
@@ -664,12 +692,12 @@ ${codeblocks
   //#region methods / get template for default routes
   protected getTemplateForDefaultRoutes(relativePath: string): string {
     return `
-//#region imports
+//#${'reg' + 'ion'} imports
 import { Routes } from '@angular/router';
 import { ${this.getComponentNameFromFilePath(relativePath)} } from './${path.basename(relativePath).replace('.md', '.component')}';
-//#endregion
+//#${'end' + 'reg' + 'ion'}
 
-export const ${this.getRoutesNameFromFilePath(relativePath)}: Routes = [
+${'exp' + 'ort'} const ${this.getRoutesNameFromFilePath(relativePath)}: Routes = [
   {
     path: '',
     component: ${this.getComponentNameFromFilePath(relativePath)},

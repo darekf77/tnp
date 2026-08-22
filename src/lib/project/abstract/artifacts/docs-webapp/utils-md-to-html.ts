@@ -1,5 +1,5 @@
 import * as MarkdownIt from 'markdown-it'; // @backend
-import type { DocsHeading } from 'taon/src';
+import type { DocsHeading, IndexData } from 'taon/src';
 
 import { baseHrefDocsGen } from '../../../../constants';
 
@@ -23,12 +23,13 @@ export namespace UtilsMdToHtml {
   //#region transform
   export const transform = (
     content: string,
+    filePath: string,
     packageName: string,
   ): ReturnType<typeof modifyAndGetHeadings> => {
     //#region @backendFunc
     content = md.render(content);
 
-    const res = modifyAndGetHeadings(content);
+    const res = modifyAndGetHeadings(content, filePath);
     res.resultContent = replaceHrefsWithAngularBaseHref(
       res.resultContent,
       packageName,
@@ -39,10 +40,14 @@ export namespace UtilsMdToHtml {
   //#endregion
 
   //#region modify and get headings
-  function modifyAndGetHeadings(content: string): {
+  function modifyAndGetHeadings(
+    content: string,
+    filePath: string,
+  ): {
     resultContent: string;
     headings: DocsHeading[];
     codeblocks: CodeBlock[];
+    indexData: IndexData[];
   } {
     //#region @backendFunc
     const cheerio = require('cheerio');
@@ -52,22 +57,21 @@ export namespace UtilsMdToHtml {
     const usedIds = new Map<string, number>();
     const headings: DocsHeading[] = [];
     const codeblocks: CodeBlock[] = [];
+    const indexData: IndexData[] = [];
 
     // ---------------------------------------------------------
-    // Headings
+    // Headings + IDs
     // ---------------------------------------------------------
 
     $('h1, h2, h3').each((_, element) => {
       const heading = $(element);
 
       const title = heading.text().trim();
-
       const level = Number(element.tagName.slice(1)) as 1 | 2 | 3;
 
       const baseId = slugify(title) || 'section';
 
       const currentCount = usedIds.get(baseId) ?? 0;
-
       usedIds.set(baseId, currentCount + 1);
 
       const id = currentCount === 0 ? baseId : `${baseId}-${currentCount + 1}`;
@@ -78,6 +82,52 @@ export namespace UtilsMdToHtml {
         id,
         title,
         level,
+      });
+    });
+
+    // ---------------------------------------------------------
+    // Search index
+    //
+    // IMPORTANT:
+    // Do this BEFORE replacing <code> contents.
+    // ---------------------------------------------------------
+
+    $('h1, h2, h3').each((_, element) => {
+      const heading = $(element);
+
+      const headingId = heading.attr('id')!;
+      const headingTitle = heading.text().trim();
+
+      const contentParts: string[] = [];
+
+      let current = heading.next();
+
+      while (current.length) {
+        const tagName = current[0]?.tagName?.toLowerCase();
+
+        // Next searchable section starts here.
+        if (tagName === 'h1' || tagName === 'h2' || tagName === 'h3') {
+          break;
+        }
+
+        const text = current.text().trim();
+
+        if (text) {
+          contentParts.push(text);
+        }
+
+        current = current.next();
+      }
+
+      const sectionText = normalizeSearchText(
+        [headingTitle, ...contentParts].join(' '),
+      );
+
+      indexData.push({
+        filePath,
+        headingId,
+        headingTitle,
+        text: sectionText,
       });
     });
 
@@ -114,6 +164,7 @@ export namespace UtilsMdToHtml {
       // would escape braces in some serializers / transformations.
       //
       // We deliberately want Angular template syntax here.
+
       codeElement.html(`{{ context.${name} }}`);
     });
 
@@ -121,11 +172,16 @@ export namespace UtilsMdToHtml {
       resultContent: $.html(),
       headings,
       codeblocks,
+      indexData,
     };
     //#endregion
   }
 
   //#endregion
+
+  function normalizeSearchText(value: string): string {
+    return value.replace(/\s+/g, ' ').trim();
+  }
 
   //#region slugify
   function slugify(value: string): string {
@@ -174,7 +230,10 @@ export namespace UtilsMdToHtml {
           `${baseHrefDocsGen} + '/${packageName}/' + ${JSON.stringify(href.replace(/^\.\//, ''))}`,
         );
       } else {
-        $(el).attr('[href]', `${baseHrefDocsGen} + ${JSON.stringify(`/${href}`)}`);
+        $(el).attr(
+          '[href]',
+          `${baseHrefDocsGen} + ${JSON.stringify(`/${href}`)}`,
+        );
       }
     });
 
