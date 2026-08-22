@@ -20,6 +20,7 @@ import { BaseNodeModules, Helpers, HelpersTaon } from 'tnp-helpers/src';
 import {
   assetsFromNgProj,
   binMainProject,
+  browserFromImport,
   browserMainProject,
   dotGitIgnoreMainProject,
   dotInstallDate,
@@ -27,6 +28,8 @@ import {
   dotNpmrcMainProject,
   libEsm,
   libFromCompiledDist,
+  libFromImport,
+  libFromSrc,
   notAllowedAsPacakge,
   packageJsonLockMainProject,
   packageJsonMainProject,
@@ -35,6 +38,7 @@ import {
   sourceLinkInNodeModules,
   srcDtsFromNpmPackage,
   taonJsonMainProject,
+  websqlFromImport,
   websqlMainProject,
   yarnLockMainProject,
 } from '../../constants';
@@ -549,7 +553,25 @@ export class NodeModules extends BaseNodeModules {
         defaultValueWhenNotExists: '',
       }).includes(libEsm); // && Helpers.exists(websql) && Helpers.exists(lib);
 
-    return isIsomorphic;
+    const browserFolder = crossPlatformPath([
+      packageInNodeModulesPath,
+      browserFromImport,
+    ]);
+    const websqlFolder = crossPlatformPath([
+      packageInNodeModulesPath,
+      websqlFromImport,
+    ]);
+    const libFolder = crossPlatformPath([
+      packageInNodeModulesPath,
+      libFromImport,
+    ]);
+
+    return (
+      isIsomorphic ||
+      (Helpers.exists(browserFolder) &&
+        Helpers.exists(websqlFolder) &&
+        Helpers.exists(libFolder))
+    );
     //#endregion
   }
 }
