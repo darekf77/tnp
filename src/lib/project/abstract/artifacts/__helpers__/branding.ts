@@ -162,7 +162,7 @@ export class Branding extends BaseFeatureForProject<Project> {
     };
 
     // TODO implement for sharp for taon branding
-    //#region @notForNpm
+
     try {
       const favicons = require('favicons');
       const response = await favicons.favicons(sourceLogoPng, configuration);
@@ -191,7 +191,6 @@ export class Branding extends BaseFeatureForProject<Project> {
       const errMsg = error instanceof Error ? error.message : error;
       console.error(errMsg); // Error description e.g. "An unknownn error has occurred"
     }
-    //#endregion
 
     Helpers.log(`Project ${proj.genericName} branding ended`);
     //#endregion
