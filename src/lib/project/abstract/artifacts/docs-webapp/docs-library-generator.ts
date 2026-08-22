@@ -1,4 +1,5 @@
 //#region imports
+import { RenameRule } from 'magic-renamer/src';
 import type { DocsHeading } from 'taon/src';
 import {
   UtilsFilesFoldersSync,
@@ -301,6 +302,131 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region methods / handle replace assets
+  private handleReplaceAssets({
+    proj,
+    mdFileAbsPath,
+    relativePath,
+    packageName,
+    content,
+  }: {
+    proj: Project;
+    mdFileAbsPath: string;
+    relativePath: string;
+    packageName: string;
+    content: string;
+  }): string {
+    //#region @backendFunc
+    const assetsFromMd = UtilsMdDocs.getAssetsFromFile(mdFileAbsPath);
+
+    for (const assetRelativePathFromFile of assetsFromMd) {
+      const hasSlash = relativePath.includes('/');
+      const slash = hasSlash ? '/' : '';
+
+      const relativeAssetPath = relativePath.replace(
+        slash + path.basename(relativePath),
+        slash + assetRelativePathFromFile,
+      );
+
+      const properPathInMd = crossPlatformPath([
+        srcMainProject,
+        assetsFromSrc,
+        sharedFromAssets,
+        generatedDocsFromMd,
+        this.getUnifiedNameFromPackage(packageName),
+        relativeAssetPath,
+      ]);
+
+      // console.log({ relativePath, relativeAssetPath, properPathInMd });
+
+      content = content.replace(relativeAssetPath, properPathInMd);
+      content = content.replace(`./${properPathInMd}`, `/${properPathInMd}`);
+
+      if (UtilsStringRegex.containsNonAscii(relativeAssetPath)) {
+        Helpers.warn(
+          `Omitting file with non-ascii characters in path: ${relativeAssetPath}`,
+        );
+        continue;
+      }
+
+      const assetSourcetAbsPath = proj.pathFor(relativeAssetPath);
+
+      const assetDestLocationAbsPath = crossPlatformPath([
+        this.sharedMdDocsAssetsFolderAbsPath,
+        packageName,
+        relativeAssetPath,
+      ]);
+
+      Helpers.logInfo(
+        `Copy asset
+          "${assetSourcetAbsPath}"
+          to "${assetDestLocationAbsPath}"
+          `,
+      );
+
+      UtilsFilesFoldersSync.copyFile(
+        assetSourcetAbsPath,
+        assetDestLocationAbsPath,
+      );
+    }
+    return content;
+    //#endregion
+  }
+  //#endregion
+
+  //#region  methods / handle replace links
+  private handleReplaceLinks({
+    proj,
+    mdFileAbsPath,
+    relativePath,
+    packageName,
+    content,
+  }: {
+    proj: Project;
+    mdFileAbsPath: string;
+    relativePath: string;
+    packageName: string;
+    content: string;
+  }): string {
+    //#region @backendFunc
+    const renderTags = UtilsMdDocs.getRenderImports(content);
+
+    for (const tag of renderTags) {
+      const projForLink = tag.isLocal
+        ? proj
+        : this.getProjectFromPackage(tag.packageName);
+
+      let mdFromOtherFile =
+        (projForLink &&
+          UtilsFilesFoldersSync.readFile(
+            projForLink.pathFor(tag.relativePath),
+          )) ||
+        ` <h2> NOT ABLE TO RESOLVE @render "${tag.packageName}/${tag.relativePath}" </h2> `;
+
+      if (tag.magicRenameRules) {
+        const rules = RenameRule.from(tag.magicRenameRules);
+        for (const rule of rules) {
+          // console.log({ rule });
+          mdFromOtherFile = mdFromOtherFile
+            .split('\n')
+            .map(line => {
+              return rule.replaceInString(line);
+            })
+            .join('\n');
+        }
+      }
+
+      // TODO RECRUSIVE MODIFY RENDER TAGS CONTENT
+      // TODO RECRUSIVE RENDER ASSETS
+
+
+      content = content.replace(tag.rawRenderTagString, mdFromOtherFile);
+    }
+    return content;
+    //#endregion
+  }
+  //#endregion
+
   //#region methods / copy all md file to temporary path
   protected copyAllMdFilesToTemporaryPath(packages: string[]): void {
     //#region @backendFunc
@@ -322,61 +448,21 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
 
         let content = UtilsFilesFoldersSync.readFile(mdFileAbsPath) || '';
 
-        const assetsFromMd = UtilsMdDocs.getAssetsFromFile(mdFileAbsPath);
+        content = this.handleReplaceAssets({
+          proj,
+          mdFileAbsPath,
+          relativePath,
+          packageName,
+          content,
+        });
 
-        for (const assetRelativePathFromFile of assetsFromMd) {
-          const hasSlash = relativePath.includes('/');
-          const slash = hasSlash ? '/' : '';
-
-          const relativeAssetPath = relativePath.replace(
-            slash + path.basename(relativePath),
-            slash + assetRelativePathFromFile,
-          );
-
-          const properPathInMd = crossPlatformPath([
-            srcMainProject,
-            assetsFromSrc,
-            sharedFromAssets,
-            generatedDocsFromMd,
-            this.getUnifiedNameFromPackage(packageName),
-            relativeAssetPath,
-          ]);
-
-          // console.log({ relativePath, relativeAssetPath, properPathInMd });
-
-          content = content.replace(relativeAssetPath, properPathInMd);
-          content = content.replace(
-            `./${properPathInMd}`,
-            `/${properPathInMd}`,
-          );
-
-          if (UtilsStringRegex.containsNonAscii(relativeAssetPath)) {
-            Helpers.warn(
-              `Omitting file with non-ascii characters in path: ${relativeAssetPath}`,
-            );
-            continue;
-          }
-
-          const assetSourcetAbsPath = proj.pathFor(relativeAssetPath);
-
-          const assetDestLocationAbsPath = crossPlatformPath([
-            this.sharedMdDocsAssetsFolderAbsPath,
-            packageName,
-            relativeAssetPath,
-          ]);
-
-          Helpers.logInfo(
-            `Copy asset
-          "${assetSourcetAbsPath}"
-          to "${assetDestLocationAbsPath}"
-          `,
-          );
-
-          UtilsFilesFoldersSync.copyFile(
-            assetSourcetAbsPath,
-            assetDestLocationAbsPath,
-          );
-        }
+        content = this.handleReplaceLinks({
+          proj,
+          mdFileAbsPath,
+          relativePath,
+          packageName,
+          content,
+        });
 
         UtilsFilesFoldersSync.writeFile(
           destinationInTempFolderAbsPath,
