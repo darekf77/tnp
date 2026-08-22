@@ -85,8 +85,12 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       `/${TaonTempDatabasesFolder}/**/*.json`,
       `/${TaonTempRoutesFolder}/*.rest`,
       `/${srcMainProject}/${TaonGeneratedFiles.build_info_generated_ts}`,
-      `/${srcMainProject}/${assetsFromSrc}/${sharedFromAssets}/${generatedDocsFromMd}/`,
-      `/${srcMainProject}/${libFromSrc}/${generatedDocsFromMd}/`,
+      ...(this.project.taonJson.gitignoreGenDocsFiles
+        ? [
+            `/${srcMainProject}/${assetsFromSrc}/${sharedFromAssets}/${generatedDocsFromMd}/`,
+            `/${srcMainProject}/${libFromSrc}/${generatedDocsFromMd}/`,
+          ]
+        : []),
       `/${srcMainProject}/${libFromSrc}/${TaonGeneratedFiles.LIB_INFO_MD}`,
       `/${srcMainProject}/${libFromSrc}/${TaonGeneratedFolders.ENV_FOLDER}/**/*.*`,
       `/${srcMainProject}/${libFromSrc}/${migrationsFromLib}/${TaonGeneratedFiles.MIGRATIONS_INFO_MD}`,

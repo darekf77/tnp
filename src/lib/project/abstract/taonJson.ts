@@ -311,6 +311,12 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     //#endregion
   }
 
+  get gitignoreGenDocsFiles(): boolean {
+    //#region @backendFunc
+    return !!(this.data as Models.TaonJsonStandalone)?.gitignoreGenDocsFiles;
+    //#endregion
+  }
+
   //#region store generated assets in repo
   get storeGeneratedAssetsInRepository(): boolean {
     //#region @backendFunc

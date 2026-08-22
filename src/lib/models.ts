@@ -203,6 +203,8 @@ export namespace Models {
      */
     genTsDocsInclude?: string[];
 
+    gitignoreGenDocsFiles?: boolean;
+
     /**
      * (STANDALONE)
      * By default generated assets from logo.png are not stored
