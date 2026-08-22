@@ -345,7 +345,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
         assetsFromSrc,
         sharedFromAssets,
         generatedDocsFromMd,
-        this.getUnifiedNameFromPackage(packageName),
+        packageName,
         relativeAssetPath,
       ]);
 
