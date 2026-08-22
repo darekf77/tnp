@@ -1,6 +1,8 @@
 import * as MarkdownIt from 'markdown-it'; // @backend
 import type { DocsHeading } from 'taon/src';
 
+import { baseHrefDocsGen } from '../../../../constants';
+
 export namespace UtilsMdToHtml {
   //#region @backend
   const md = new MarkdownIt({
@@ -11,21 +13,32 @@ export namespace UtilsMdToHtml {
   });
   //#endregion
 
+  //#region code block
   export interface CodeBlock {
     codeContent: string;
     name: string; // codeblock0, codeblock1...
   }
+  //#endregion
 
+  //#region transform
   export const transform = (
     content: string,
+    packageName: string,
   ): ReturnType<typeof modifyAndGetHeadings> => {
     //#region @backendFunc
     content = md.render(content);
 
-    return modifyAndGetHeadings(content);
+    const res = modifyAndGetHeadings(content);
+    res.resultContent = replaceHrefsWithAngularBaseHref(
+      res.resultContent,
+      packageName,
+    );
+    return res;
     //#endregion
   };
+  //#endregion
 
+  //#region modify and get headings
   function modifyAndGetHeadings(content: string): {
     resultContent: string;
     headings: DocsHeading[];
@@ -112,6 +125,9 @@ export namespace UtilsMdToHtml {
     //#endregion
   }
 
+  //#endregion
+
+  //#region slugify
   function slugify(value: string): string {
     return value
       .toLowerCase()
@@ -120,4 +136,50 @@ export namespace UtilsMdToHtml {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
   }
+  //#endregion
+
+  //#region replace href with angular base href
+  export function replaceHrefsWithAngularBaseHref(
+    html: string,
+    packageName: string,
+  ): string {
+    //#region @backendFunc
+    const cheerio = require('cheerio');
+    const $ = cheerio.load(html, null, false);
+
+    $('a[href]').each((_, el) => {
+      const href = $(el).attr('href') as string;
+
+      if (!href) {
+        return;
+      }
+
+      // Leave external/special links untouched
+      if (
+        href.startsWith('http://') ||
+        href.startsWith('https://') ||
+        href.startsWith('//') ||
+        href.startsWith('#') ||
+        href.startsWith('mailto:') ||
+        href.startsWith('tel:')
+      ) {
+        return;
+      }
+
+      $(el).removeAttr('href');
+
+      if (href.startsWith('./') || href.startsWith('./')) {
+        $(el).attr(
+          '[href]',
+          `${baseHrefDocsGen} + '/${packageName}/' + ${JSON.stringify(href.replace(/^\.\//, ''))}`,
+        );
+      } else {
+        $(el).attr('[href]', `${baseHrefDocsGen} + ${JSON.stringify(`/${href}`)}`);
+      }
+    });
+
+    return $.html();
+    //#endregion
+  }
+  //#endregion
 }

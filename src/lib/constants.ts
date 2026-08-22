@@ -989,6 +989,8 @@ export interface TaonVerifiedBuild {
   commitDate: string | Date;
 }
 
+export const baseHrefDocsGen = 'baseHref';
+
 export const routes = TaonTempRoutesFolder;
 
 export const databases = TaonTempDatabasesFolder;

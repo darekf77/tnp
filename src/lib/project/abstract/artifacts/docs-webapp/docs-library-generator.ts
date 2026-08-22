@@ -29,6 +29,7 @@ import {
   assetsFromNpmPackage,
   assetsFromSrc,
   assetsFromTempSrc,
+  baseHrefDocsGen,
   docsMainProject,
   docsRoutes,
   generatedDocsFromMd,
@@ -399,6 +400,12 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
         '',
       );
 
+      const packageName = relativePath.startsWith('@')
+        ? relativePath.split('/').slice(0, 2).join('/')
+        : relativePath.split('/').slice(0, 1).join('/');
+
+      // console.log({ relativePath, packageName });
+
       const newPathToComponentTs = this.project.pathFor([
         srcMainProject,
         libFromSrc,
@@ -422,8 +429,10 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
 
       const content = UtilsFilesFoldersSync.readFile(mdFileAbsPAth) || '';
 
-      const { headings, resultContent, codeblocks } =
-        UtilsMdToHtml.transform(content);
+      const { headings, resultContent, codeblocks } = UtilsMdToHtml.transform(
+        content,
+        packageName,
+      );
 
       UtilsFilesFoldersSync.writeFile(
         newPathToComponentTs,
@@ -548,6 +557,7 @@ ${'imp' + 'ort'} { TaonDocsPageComponent, DocsHeading } from '${_.times(
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 ${'exp' + 'ort'} class ${cmpName} extends TaonDocsPageComponent {
+  @Input() ${baseHrefDocsGen}: string = '/';
   @Input() context: any = {
 ${codeblocks
   .map(c => {
