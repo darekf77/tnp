@@ -635,6 +635,7 @@ import def from './${libEsm}';
 export default def;
         `,
     );
+    //#region cjs version
     //   } else {
     //     Helpers.writeFile(
     //       location,
@@ -660,6 +661,7 @@ export default def;
     //       `,
     //     );
     //   }
+    //#endregion
 
     //#endregion
   }
@@ -1064,27 +1066,31 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       VERIFIED_BUILD_DATA,
     ]);
 
-    if (
-      this.buildOptions.build.watch ||
-      (!this.buildOptions.build.watch && !this.buildOptions.build.prod)
-    ) {
-      Helpers.removeFileIfExists(verifyBuild);
-    } else {
+    if (this.buildOptions) {
       if (
-        this.buildOptions.build.prod ||
-        this.buildOptions.release.releaseType
+        this.buildOptions.build.watch ||
+        (!this.buildOptions.build.watch && !this.buildOptions.build.prod)
       ) {
-        try {
-          const lastCommitDate = this.project.git.lastCommitDate();
-          Helpers.writeJsonC(verifyBuild, {
-            commitHash: this.project.git.lastCommitHash() || '',
-            commitName: this.project.git.lastCommitMessage() || '',
-            commitDate: lastCommitDate
-              ? dateformat(lastCommitDate, 'dd-mm-yyyy HH:MM:ss')
-              : void 0,
-          } as TaonVerifiedBuild);
-        } catch (error) {}
+        Helpers.removeFileIfExists(verifyBuild);
+      } else {
+        if (
+          this.buildOptions.build.prod ||
+          this.buildOptions.release.releaseType
+        ) {
+          try {
+            const lastCommitDate = this.project.git.lastCommitDate();
+            Helpers.writeJsonC(verifyBuild, {
+              commitHash: this.project.git.lastCommitHash() || '',
+              commitName: this.project.git.lastCommitMessage() || '',
+              commitDate: lastCommitDate
+                ? dateformat(lastCommitDate, 'dd-mm-yyyy HH:MM:ss')
+                : void 0,
+            } as TaonVerifiedBuild);
+          } catch (error) {}
+        }
       }
+    } else {
+      // just initing
     }
 
     //#endregion

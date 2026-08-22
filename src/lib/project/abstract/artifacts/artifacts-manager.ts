@@ -421,8 +421,15 @@ ${'req' + 'uire'}('./start');
       this.project.framework.coreContainer,
     );
 
+    this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSourceSymlinks(
+      this.project.framework.coreContainer,
+    );
+
     if (this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
       this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSrcJSToDestination(
+        this.project,
+      );
+      this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSourceSymlinks(
         this.project,
       );
     }
