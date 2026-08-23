@@ -10,7 +10,7 @@ import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
 import { BrowserCodeCut } from './browser-code-cut';
-import { firsTimeDone } from './constants-code-cut';
+import { setDoneFirstTimeCompilation } from './constants-code-cut';
 //#endregion
 
 export class CodeCut {
@@ -98,7 +98,10 @@ export class CodeCut {
         fileRemovedEvent: remove,
         regionReplaceOptions: this.options,
       });
-      firsTimeDone.set(codeCutNotCuttable.relativePath, true);
+      setDoneFirstTimeCompilation(
+        codeCutNotCuttable.relativePath,
+        this.buildOptions,
+      );
       return;
     }
 
@@ -113,7 +116,10 @@ export class CodeCut {
       fileRemovedEvent: remove,
       regionReplaceOptions: this.options,
     });
-    firsTimeDone.set(codeCutCuttable.relativePath, true);
+    setDoneFirstTimeCompilation(
+      codeCutCuttable.relativePath,
+      this.buildOptions,
+    );
     //#endregion
   }
 

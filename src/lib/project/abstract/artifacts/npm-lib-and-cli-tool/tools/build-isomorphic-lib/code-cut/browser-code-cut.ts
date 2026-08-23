@@ -72,7 +72,7 @@ import {
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
-import { firsTimeDone } from './constants-code-cut';
+import { isFirstTimeCompilation } from './constants-code-cut';
 import { SplitFileProcess } from './file-split-process';
 //#endregion
 
@@ -650,7 +650,7 @@ export class BrowserCodeCut {
           absFileSourcePathBrowserOrWebsqlNewContent,
         )?.trimEnd();
         if (
-          !firsTimeDone.get(this.relativePath) ||
+          !isFirstTimeCompilation(this.relativePath, this.buildOptions) ||
           !orgContentLib ||
           orgContentLib !== newContentLib
         ) {
@@ -685,7 +685,7 @@ export class BrowserCodeCut {
       )?.trimEnd();
 
       if (
-        !firsTimeDone.get(this.relativePath) ||
+        !isFirstTimeCompilation(this.relativePath, this.buildOptions) ||
         !orgContentApp ||
         orgContentApp !== newContentApp
       ) {
@@ -1158,7 +1158,7 @@ export class BrowserCodeCut {
         )?.trimEnd();
 
         if (
-          !firsTimeDone.get(this.relativePath) ||
+          !isFirstTimeCompilation(this.relativePath, this.buildOptions) ||
           !currentBackendFile ||
           currentBackendFile !== newBackendFile
         ) {
@@ -1214,7 +1214,7 @@ export class BrowserCodeCut {
         )?.trimEnd();
 
         if (
-          !firsTimeDone.get(this.relativePath) ||
+          !isFirstTimeCompilation(this.relativePath, this.buildOptions) ||
           !currentBackendFile ||
           currentBackendFile !== newBackendFile
         ) {
