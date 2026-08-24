@@ -1,6 +1,7 @@
 //#region imports
 import {
   config,
+  tnpPackageName,
   UtilsFilesFolders,
   UtilsFilesFoldersSync,
   UtilsOs,
@@ -228,7 +229,11 @@ export class ArtifactVscodePlugin extends BaseArtifact<
               prod: buildOptions.build.prod,
               strategy: 'vscode-ext',
               additionalExternals: [
-                this.project.nameForNpmPackage,
+                // TODO QUICK_FIX tnp is not includded in any project
+                // but normal other packages should be included
+                ...(this.project.nameForNpmPackage == tnpPackageName
+                  ? [this.project.nameForNpmPackage]
+                  : []),
                 ...this.project.taonJson.additionalExternalsFor(
                   ReleaseArtifactTaon.VSCODE_PLUGIN,
                 ),
@@ -364,7 +369,9 @@ local VSCode instance.
       releaseProjPath = releaseData.releaseProjPath;
       //#endregion
     }
-    if (releaseOptions.release.releaseType === ReleaseType.MANUAL_STATIC_PAGES) {
+    if (
+      releaseOptions.release.releaseType === ReleaseType.MANUAL_STATIC_PAGES
+    ) {
       //#region local release
       const releaseData = await this.staticPagesDeploy(
         path.dirname(vscodeVsixOutPath),
