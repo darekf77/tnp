@@ -41,7 +41,7 @@ import { DevMode } from '../../../../abstract/taon-worker/dev-mode/dev-mode.mode
 import { Project } from '../../../project';
 
 import { BuildLeader } from './build-leader-process';
-import { TaonStateMachine } from './taon-build-state-machine';
+import { TaonStateMachine } from 'tnp-core/src';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
