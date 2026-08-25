@@ -99,12 +99,16 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   //#region fields & getters / all md files abs path
   private get allMdFilesAbsPaths(): string[] {
     //#region @backendFunc
+
+    // root
     return [
       ...UtilsFilesFoldersSync.getFilesFrom(this.project.location, {
         recursive: false,
         omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
         followSymlinks: true,
       }).filter(f => f.toLowerCase().endsWith('.md')),
+
+      // /docs
       ...UtilsFilesFoldersSync.getFilesFrom(
         this.project.pathFor(docsMainProject),
         {
@@ -113,20 +117,16 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
         },
       ).filter(f => f.toLowerCase().endsWith('.md')),
 
+      // src/*
       ...UtilsFilesFoldersSync.getFilesFrom(
         this.project.pathFor(srcMainProject),
         {
           recursive: false,
           followSymlinks: false,
         },
-      ).filter(
-        f =>
-          f.toLowerCase().endsWith('.md') &&
-          [TaonGeneratedFiles.APP_FOLDER_INFO_MD].includes(
-            path.basename(f) as any,
-          ),
-      ),
+      ).filter(f => f.toLowerCase().endsWith('.md')),
 
+      // src/app/**
       ...UtilsFilesFoldersSync.getFilesFrom(
         this.project.pathFor([srcMainProject, appFromSrc]),
         {
@@ -135,6 +135,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
         },
       ).filter(f => f.toLowerCase().endsWith('.md')),
 
+      // src/lib/**
       ...UtilsFilesFoldersSync.getFilesFrom(
         this.project.pathFor([srcMainProject, libFromSrc]),
         {
