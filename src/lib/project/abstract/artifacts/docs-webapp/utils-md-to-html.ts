@@ -1,5 +1,16 @@
+// import * as hljs from 'highlight.js/lib/core';
+// import * as bash from 'highlight.js/lib/languages/bash';
+// import * as javascript from 'highlight.js/lib/languages/javascript';
+// import * as scss from 'highlight.js/lib/languages/scss';
+// import * as typescript from 'highlight.js/lib/languages/typescript';
 import * as MarkdownIt from 'markdown-it'; // @backend
 import type { DocsHeading, IndexData } from 'taon/src';
+
+// hljs.registerLanguage('javascript', javascript);
+// hljs.registerLanguage('typescript', typescript);
+// hljs.registerLanguage('ts', typescript);
+// hljs.registerLanguage('bash', bash);
+// hljs.registerLanguage('scss', scss);
 
 import { baseHrefDocsGen } from '../../../../constants';
 
@@ -149,12 +160,31 @@ export namespace UtilsMdToHtml {
       // <div>
       //
       // which is exactly what we want inside context.codeblockX.
+
       const codeContent = codeElement.text();
 
       codeblocks.push({
         name,
         codeContent,
       });
+
+      // const className = codeElement.attr('class') ?? '';
+      // const languageMatch = className.match(/language-([a-zA-Z0-9_-]+)/);
+
+      // const lang = languageMatch?.[1];
+
+      // let highlightedCode = codeContent;
+
+      // if (lang && hljs.getLanguage(lang)) {
+      //   highlightedCode = hljs.highlight(codeContent, {
+      //     language: lang,
+      //   }).value;
+      // }
+
+      // codeblocks.push({
+      //   name,
+      //   codeContent: highlightedCode,
+      // });
 
       // IMPORTANT:
       //

@@ -42,6 +42,7 @@ import {
   importsHtmlFromSrc,
   indexTsFromLibFromSrc,
   libEsm,
+  libEsmFromImport,
   libFromImport,
   libFromSrc,
   libTypeString,
@@ -74,6 +75,7 @@ import type { Project } from '../../../../../project';
 
 import { isFirstTimeCompilation } from './constants-code-cut';
 import { SplitFileProcess } from './file-split-process';
+import { UtilsCodeCut } from './utils-code-cut';
 //#endregion
 
 const notAllowedToPRocess = [appAutoGenDocsMd, appAutoGenJs];
@@ -93,6 +95,7 @@ const notAllowedToPRocess = [appAutoGenDocsMd, appAutoGenJs];
 export class BrowserCodeCut {
   //#region constants
   public static debugFile = [
+    // 'app.ts',
     // 'app-utils.ts',
     // 'branding.ts'
     // 'lib/start-cli.ts',
@@ -234,8 +237,8 @@ export class BrowserCodeCut {
       this.absFileSourcePathBrowserOrWebsql,
     ).replace(`${this.absPathTmpSrcDistFolder}/`, '');
 
-    this.debug = BrowserCodeCut.debugFile.some(d =>
-      this.relativePath.endsWith(d),
+    this.debug = BrowserCodeCut.debugFile.some(
+      d => path.basename(this.relativePath) === d,
     );
 
     this.absoluteBackendDestFilePath = crossPlatformPath([
@@ -958,7 +961,7 @@ export class BrowserCodeCut {
         return imp.isIsomorphic;
       });
 
-      this.rawContentForBrowser = this.splitFileProcess.replaceInFile(
+      this.rawContentForBrowser = UtilsCodeCut.replaceInFile(
         this.rawContentForBrowser,
         toReplace,
       );
@@ -978,7 +981,7 @@ export class BrowserCodeCut {
         return imp.isIsomorphic;
       });
 
-      this.rawContentBackend = this.splitFileProcess.replaceInFile(
+      this.rawContentBackend = UtilsCodeCut.replaceInFile(
         this.rawContentBackend,
         toReplace,
       );
@@ -998,7 +1001,7 @@ export class BrowserCodeCut {
         return imp.isIsomorphic;
       });
 
-      this.rawContentEsmBackend = this.splitFileProcess.replaceInFile(
+      this.rawContentEsmBackend = UtilsCodeCut.replaceInFile(
         this.rawContentEsmBackend,
         toReplace,
       );
@@ -1120,6 +1123,11 @@ export class BrowserCodeCut {
 
     //#region backend file save
     if (backendFileSaveMode) {
+      const isFirstTimeBackendCompilation = isFirstTimeCompilation(
+        this.relativePath,
+        this.buildOptions,
+      );
+
       //#region save cjs backend
       (() => {
         if (!fse.existsSync(path.dirname(this.absoluteBackendDestFilePath))) {
@@ -1158,11 +1166,15 @@ export class BrowserCodeCut {
         )?.trimEnd();
 
         if (
-          !isFirstTimeCompilation(this.relativePath, this.buildOptions) ||
+          !isFirstTimeBackendCompilation ||
           !currentBackendFile ||
           currentBackendFile !== newBackendFile
         ) {
           // SAVE BACKEND FILE
+          // this.debug &&
+          //   console.log(
+          //     `WRING CJS BACKEND ${this.absFileSourcePathBrowserOrWebsql}`,
+          //   );
           fse.writeFileSync(
             this.absoluteBackendDestFilePath,
             absoluteBackendDestFilePathNewContent,
@@ -1174,6 +1186,9 @@ export class BrowserCodeCut {
 
       //#region save esm backend
       (() => {
+        if (isTestFile(this.relativePath)) {
+          return;
+        }
         if (
           !fse.existsSync(path.dirname(this.absoluteBackendEsmDestFilePath))
         ) {
@@ -1203,21 +1218,27 @@ export class BrowserCodeCut {
                 this.absoluteBackendEsmDestFilePath,
                 {
                   isBrowser: false,
+                  isForEsm: true,
                 },
               );
 
-        const currentBackendFile = UtilsTypescript.removeCommentsFromTsContent(
-          absoluteBackendEsmDestFilePathCurrent,
-        )?.trimEnd();
-        const newBackendFile = UtilsTypescript.removeCommentsFromTsContent(
+        const currentBackendEsmFile =
+          UtilsTypescript.removeCommentsFromTsContent(
+            absoluteBackendEsmDestFilePathCurrent,
+          )?.trimEnd();
+        const newBackendEsmFile = UtilsTypescript.removeCommentsFromTsContent(
           absoluteBackendEsmDestFilePathNewContent,
         )?.trimEnd();
 
         if (
-          !isFirstTimeCompilation(this.relativePath, this.buildOptions) ||
-          !currentBackendFile ||
-          currentBackendFile !== newBackendFile
+          !isFirstTimeBackendCompilation ||
+          !currentBackendEsmFile ||
+          currentBackendEsmFile !== newBackendEsmFile
         ) {
+          // this.debug &&
+          //   console.log(
+          //     `WRING ESM BACKEND ${this.absFileSourcePathBrowserOrWebsql}`,
+          //   );
           // SAVE BACKEND FILE
           fse.writeFileSync(
             this.absoluteBackendEsmDestFilePath,
@@ -1250,6 +1271,7 @@ export class BrowserCodeCut {
     options: {
       isBrowser: boolean;
       libForApp?: boolean;
+      isForEsm?: boolean;
     },
   ): string {
     //#region @backendFunc
@@ -1264,18 +1286,24 @@ export class BrowserCodeCut {
       }
     }
 
-    const typeOfOp = options.isBrowser
-      ? this.buildOptions.build.websql
-        ? websqlTypeString
-        : browserTypeString
-      : libTypeString;
+    // this.debug && console.log('-------------START----------------');
+    // const typeOfOp = options.isBrowser
+    //   ? this.buildOptions.build.websql
+    //     ? 'WEBSQL CODE TRANSFORM'
+    //     : 'BROWSER CODE TRANSFORM'
+    //   : 'BACKEND CODE TRANSFORM';
+
+    // this.debug &&
+    //   console.log({
+    //     ...options,
+    //     typeOfOp,
+    //   });
 
     // this.debug &&
     //   console.log(`
 
     //   relativePath: ${this.relativePath}
     //   isLibFile: ${isLibFile}
-    //   type of operation: ${typeOfOp}
 
     //   `);
 
@@ -1285,7 +1313,7 @@ export class BrowserCodeCut {
     // }
 
     const projectOwnSmartPackages = this.projectOwnSmartPackages;
-    const { isBrowser, libForApp } = options;
+    const { isBrowser } = options;
 
     const howMuchBack = this.relativePath.split('/').length - 1;
     const howMuchBackIndex = howMuchBack - 1;
@@ -1306,6 +1334,7 @@ export class BrowserCodeCut {
     let toReplace: UtilsTypescript.TsImportExport[] = [];
 
     if (isBrowser) {
+      //#region handle browser
       toReplace = UtilsTypescript.recognizeImportsFromContent(
         this.rawContentForBrowser,
       ).filter(f => {
@@ -1339,15 +1368,33 @@ export class BrowserCodeCut {
         // this.debug && console.log({ fPkgBrowser });
         return projectOwnSmartPackages.includes(fPkgBrowser);
       });
+      //#endregion
     } else {
+      //#region handle backend
       toReplace = UtilsTypescript.recognizeImportsFromContent(
-        this.rawContentBackend,
+        options.isForEsm ? this.rawContentEsmBackend : this.rawContentBackend,
       ).filter(f => {
+        // this.debug &&
+        //   console.log('f.cleanEmbeddedPathToFile', f.cleanEmbeddedPathToFile);
+
         const fpkgBackend = f.cleanEmbeddedPathToFile
           .replace(
             new RegExp(
               Utils.escapeStringForRegEx(`/${libFromImport + prodSuffix}`) +
                 '$',
+            ),
+            '',
+          )
+          .replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(`/${libEsmFromImport + prodSuffix}`) +
+                '$',
+            ),
+            '',
+          )
+          .replace(
+            new RegExp(
+              Utils.escapeStringForRegEx(`/${libEsmFromImport}`) + '$',
             ),
             '',
           )
@@ -1358,7 +1405,36 @@ export class BrowserCodeCut {
         // this.debug && console.log({ fpkgBackend });
         return projectOwnSmartPackages.includes(fpkgBackend);
       });
+      //#endregion
     }
+
+    this.handleIllegalImports({
+      backAppLibIndex,
+      backLibIndex,
+      isLibFile,
+      toReplace,
+    });
+    content = UtilsCodeCut.replaceInFile(content, toReplace);
+    // this.debug && console.log('-------------END----------------');
+    return content;
+    //#endregion
+  }
+  //#endregion
+
+  //#region private / methods & getters / handle illegal imports
+  private handleIllegalImports({
+    toReplace,
+    backAppLibIndex,
+    backLibIndex,
+    isLibFile,
+  }: {
+    toReplace: UtilsTypescript.TsImportExport[];
+    backLibIndex: string;
+    backAppLibIndex: string;
+    isLibFile: boolean;
+  }) {
+    //#region @backendFunc
+    // this.debug && console.log('to replace ', JSON.stringify(toReplace));
 
     for (const imp of toReplace) {
       //#region handle stuff from /src/lib
@@ -1372,6 +1448,7 @@ export class BrowserCodeCut {
           .findIndex(line => {
             return line.includes(`${cleanName}/${srcFromTaonImport}`);
           });
+
         const key = `${cleanName}:${indexInIfile}:${this.relativePath}`;
         if (!this.initialWarnings[key]) {
           // console.log(
@@ -1388,14 +1465,13 @@ export class BrowserCodeCut {
         }
       }
 
-      imp.embeddedPathToFileResult = imp.wrapInParenthesis(
-        `${isLibFile ? backLibIndex : backAppLibIndex}${indexTsFromLibFromSrc.replace('.tsx', '').replace('.ts', '')}`,
-      );
+      const resultToReplace = `${isLibFile ? backLibIndex : backAppLibIndex}${indexTsFromLibFromSrc.replace('.tsx', '').replace('.ts', '')}`;
+      const wrapperResultToReplace = imp.wrapInParenthesis(resultToReplace);
+      // console.log({ resultToReplace, wrapperResultToReplace });
+
+      imp.embeddedPathToFileResult = wrapperResultToReplace;
       //#endregion
     }
-    content = this.splitFileProcess.replaceInFile(content, toReplace);
-
-    return content;
     //#endregion
   }
   //#endregion

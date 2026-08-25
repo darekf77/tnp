@@ -595,6 +595,8 @@ export const libFromSrc = folderName.lib;
  */
 export const libFromImport = folderName.lib;
 
+export const libEsmFromImport = `lib-esm`;
+
 /**
  * Lib from dist/lib
  */
