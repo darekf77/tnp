@@ -283,7 +283,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     buildOptions = await this.project.artifactsManager.init(buildOptions);
 
-    if (this.project.watcher.isTaonLightWatcherMode) {
+    if (
+      this.project.watcher.isTaonLightWatcherMode &&
+      !buildOptions.release.installLocally
+    ) {
       if (!optionsBuildPartial || !optionsBuildPartial.normalBuildBeforeProd) {
         Helpers.info(`Creating server for project build.`);
         await this.project.assignActionPort();
@@ -754,7 +757,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
     //#region trigger build observer
     if (!buildOptions.build.watch) {
-      if (this.project.watcher.isTaonLightWatcherMode) {
+      if (
+        this.project.watcher.isTaonLightWatcherMode &&
+        !buildOptions.release.installLocally
+      ) {
         await this.taonBuildObserver.updateAction({
           info: {
             // isomorphic: DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,

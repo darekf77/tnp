@@ -200,6 +200,9 @@ export const watcherPrefix = '-watcher';
 
 export const verbosePrefix = '-verbose';
 export const taonNonInteractiveModePrefix = '-taonNonInteractive';
+
+export const taonSkipEmitTerminalProgressPrefix = '-taonSkipEmitTerminalProgress';
+
 export const spinnerPrefix = '-spinner';
 export const oldBuildModePrefix = '-oldBuildMode';
 export const oldBuildModePrefixShort = '-obm';

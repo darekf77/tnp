@@ -1,5 +1,9 @@
 import { config, tnpPackageName } from 'tnp-core/src';
 
+import {
+  taonNonInteractiveModePrefix,
+  taonSkipEmitTerminalProgressPrefix,
+} from '../constants';
 import type { Project } from '../project/abstract/project';
 
 import type { activateMenuTnp } from './vscode-ext-menu';
@@ -127,7 +131,10 @@ export const vscodeMenuItems = ({
               iconPath: null,
               project: CURRENT_PROJECT,
               triggerActionOnClick: project => {
-                runInTerminal(`${FRAMEWORK_NAME} build:lib`);
+                runInTerminal(
+                  `${FRAMEWORK_NAME} build:lib` +
+                    ` ${taonNonInteractiveModePrefix} ${taonSkipEmitTerminalProgressPrefix}`,
+                );
                 if (project?.location) {
                   focustFirstElement();
                 }
@@ -159,7 +166,10 @@ export const vscodeMenuItems = ({
               iconPath: null,
               project: CURRENT_PROJECT,
               triggerActionOnClick: project => {
-                runInTerminal(`${FRAMEWORK_NAME} build:lib:prod`);
+                runInTerminal(
+                  `${FRAMEWORK_NAME} build:lib:prod ` +
+                    ` ${taonNonInteractiveModePrefix}  ${taonSkipEmitTerminalProgressPrefix}`,
+                );
                 if (project?.location) {
                   focustFirstElement();
                 }
@@ -171,30 +181,13 @@ export const vscodeMenuItems = ({
 
           //#region items with actions / build docs
           new ProjectItem(
-            `$ ${FRAMEWORK_NAME} docs`,
+            `$ ${FRAMEWORK_NAME} docs:generate`,
             vscode.TreeItemCollapsibleState.None,
             {
               iconPath: null,
               project: CURRENT_PROJECT,
               triggerActionOnClick: project => {
-                runInTerminal(`${FRAMEWORK_NAME} docs`);
-                if (project?.location) {
-                  focustFirstElement();
-                }
-              },
-            },
-          ),
-          //#endregion
-
-          //#region items with actions / build lib watch
-          new ProjectItem(
-            `$ ${FRAMEWORK_NAME} docs:watch`,
-            vscode.TreeItemCollapsibleState.None,
-            {
-              iconPath: null,
-              project: CURRENT_PROJECT,
-              triggerActionOnClick: project => {
-                runInTerminal(`${FRAMEWORK_NAME} docs:watch`);
+                runInTerminal(`${FRAMEWORK_NAME} dg`);
                 if (project?.location) {
                   focustFirstElement();
                 }
@@ -323,37 +316,37 @@ export const vscodeMenuItems = ({
           //#endregion
 
           //#region items with actions /  melt
-          new ProjectItem(
-            `$ ${FRAMEWORK_NAME} melt`,
-            vscode.TreeItemCollapsibleState.None,
-            {
-              iconPath: null,
-              project: CURRENT_PROJECT,
-              triggerActionOnClick: project => {
-                if (project?.location) {
-                  vscode.window.withProgress(
-                    {
-                      location: vscode.ProgressLocation.Notification,
-                      title: `Melting ${FRAMEWORK_NAME} action commits...`,
-                      cancellable: false,
-                    },
-                    progress => {
-                      progress.report({
-                        increment: 0,
-                        message: 'Melting action commits...',
-                      });
-                      project.git.meltActionCommits();
-                      progress.report({ message: 'Done', increment: 100 });
-                      return Promise.resolve();
-                    },
-                  );
-                }
-                if (project?.location) {
-                  focustFirstElement();
-                }
-              },
-            },
-          ),
+          // new ProjectItem(
+          //   `$ ${FRAMEWORK_NAME} melt`,
+          //   vscode.TreeItemCollapsibleState.None,
+          //   {
+          //     iconPath: null,
+          //     project: CURRENT_PROJECT,
+          //     triggerActionOnClick: project => {
+          //       if (project?.location) {
+          //         vscode.window.withProgress(
+          //           {
+          //             location: vscode.ProgressLocation.Notification,
+          //             title: `Melting ${FRAMEWORK_NAME} action commits...`,
+          //             cancellable: false,
+          //           },
+          //           progress => {
+          //             progress.report({
+          //               increment: 0,
+          //               message: 'Melting action commits...',
+          //             });
+          //             project.git.meltActionCommits();
+          //             progress.report({ message: 'Done', increment: 100 });
+          //             return Promise.resolve();
+          //           },
+          //         );
+          //       }
+          //       if (project?.location) {
+          //         focustFirstElement();
+          //       }
+          //     },
+          //   },
+          // ),
           //#endregion
 
           //#region items with actions /  copy normal app url to clipboard

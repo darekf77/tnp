@@ -29,6 +29,7 @@ import {
   stopSpinner,
   succeedSpinner,
   taonNonInteractiveModePrefix,
+  taonSkipEmitTerminalProgressPrefix,
   verbosePrefix,
   websqlPrefix,
 } from './constants';
@@ -75,6 +76,12 @@ export function startCli(argv, filename): void {
       a.startsWith(taonNonInteractiveModePrefix),
   );
 
+  global.taonSkipEmitTerminalProgress = argv.some(
+    a =>
+      a.startsWith(`-${taonSkipEmitTerminalProgressPrefix}`) ||
+      a.startsWith(taonSkipEmitTerminalProgressPrefix),
+  );
+
   const spinnerIsDefault = !global.taonNonInteractive;
 
   const verboseInArgs = !global.hideLog;
@@ -102,6 +109,11 @@ export function startCli(argv, filename): void {
       a =>
         !a.startsWith(`-${taonNonInteractiveModePrefix}`) &&
         !a.startsWith(taonNonInteractiveModePrefix),
+    )
+    .filter(
+      a =>
+        !a.startsWith(`-${taonSkipEmitTerminalProgressPrefix}`) &&
+        !a.startsWith(taonSkipEmitTerminalProgressPrefix),
     )
 
     .filter(a => !a.startsWith(oldBuildModePrefix))
@@ -166,6 +178,10 @@ export function startCli(argv, filename): void {
       spinnerOnInArgs ? spinnerPrefix : '',
       oldBuildModeInArgs ? oldBuildModePrefix : '',
       global.taonNonInteractive ? taonNonInteractiveModePrefix : '',
+      global.taonSkipEmitTerminalProgress
+        ? taonSkipEmitTerminalProgressPrefix
+        : '',
+
       childprocsecretarg,
     ].filter(Boolean);
 
