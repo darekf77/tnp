@@ -1,6 +1,7 @@
 //#region imports
 import { Taon, TaonBaseContext } from 'taon/src';
 import {
+  chalk,
   config,
   dotTaonFolder,
   LibTypeEnum,
@@ -571,7 +572,12 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     if (alreadyINPool) {
       Helpers.error(
-        `Build already in progress for ${this.devBuildRepository.dataToRequest().uniqueKey}`,
+        `Build already in progress for ${this.devBuildRepository.dataToRequest().uniqueKey} try:
+
+      ${chalk.bold(`${config.frameworkName} build:lib`)} # to kill other build
+      ${chalk.bold(`${config.frameworkName} bl`)} # to kill other build
+
+        `,
         false,
         true,
       );
