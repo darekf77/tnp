@@ -13,12 +13,14 @@ import {
   UtilsFilesFoldersSync,
   UtilsI18n,
   taonSkipCut,
+  stateServiceSuffix,
 } from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
   getCleanImport,
+  isBrowserFilePath,
   isTestFile,
   replaceAssetsLinksForApp,
   replaceImportToAssetsIMport,
@@ -1167,9 +1169,9 @@ export class BrowserCodeCut {
         if (!fse.existsSync(path.dirname(this.absoluteBackendDestFilePath))) {
           fse.mkdirpSync(path.dirname(this.absoluteBackendDestFilePath));
         }
-        const isFrontendFile = !_.isUndefined(
-          frontEndOnly.find(f => this.absoluteBackendDestFilePath.endsWith(f)),
-        );
+        const isFrontendFile = isBrowserFilePath(this.absoluteBackendDestFilePath, {
+          skipStateService: true,
+        });
 
         if (isFrontendFile) {
           // console.log(`Ommiting for backend: ${absoluteBackendDestFilePath} `)
@@ -1228,10 +1230,12 @@ export class BrowserCodeCut {
         ) {
           fse.mkdirpSync(path.dirname(this.absoluteBackendEsmDestFilePath));
         }
-        const isFrontendFile = !_.isUndefined(
-          frontEndOnly.find(f =>
-            this.absoluteBackendEsmDestFilePath.endsWith(f),
-          ),
+
+        const isFrontendFile = isBrowserFilePath(
+          this.absoluteBackendEsmDestFilePath,
+          {
+            skipStateService: true,
+          },
         );
 
         if (isFrontendFile) {

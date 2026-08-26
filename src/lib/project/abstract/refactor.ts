@@ -11,6 +11,7 @@ import { _, CoreModels, crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers, UtilsTypescript } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
+import { isBrowserFilePath } from '../../app-utils';
 import { libFromSrc, srcMainProject } from '../../constants';
 import type { Project } from '../abstract/project';
 //#endregion
@@ -205,16 +206,13 @@ export class Refactor extends BaseFeatureForProject<Project> {
       return lines.join('\n').trim();
     };
 
-    Helpers.getFilesFrom(this.project.pathFor(srcMainProject), {
+    UtilsFilesFoldersSync.getFilesFrom(this.project.pathFor(srcMainProject), {
       recursive: true,
       // followSymlinks: false TODO ? maybe ?
     })
       .filter(f => {
         return (
-          f.endsWith('.ts') &&
-          !_.isUndefined(
-            frontendFiles.find(ff => path.basename(f).endsWith(ff)),
-          )
+          (f.endsWith('.ts') || f.endsWith('.tsx')) && isBrowserFilePath(f)
         );
       })
       .forEach(f => {
@@ -565,7 +563,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
     //#endregion
 
     allFiles.forEach(f => {
-      if(!f.endsWith('.ts')) {
+      if (!f.endsWith('.ts')) {
         return;
       }
       if (options.fixSpecificFile && f !== options.fixSpecificFile) {

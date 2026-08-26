@@ -11,6 +11,8 @@ import {
   UtilsFilesFoldersSync,
   path,
   UtilsI18n,
+  frontEndOnly,
+  stateServiceSuffix,
 } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 
@@ -80,6 +82,29 @@ export const ALLOWED_TO_RELEASE: {
   ],
 };
 //#endregion
+
+export const isBrowserFilePath = (
+  pathToFile: string,
+  options?: {
+    skipStateService?: boolean;
+  },
+): boolean => {
+  if (!pathToFile) {
+    Helpers.warn(`[app-utils][isBrowserFilePath] Wrong path "${pathToFile}"`);
+    return false;
+  }
+  options = options || {};
+  const isFrontendFile = !_.isUndefined(
+    frontEndOnly.find(
+      f =>
+        pathToFile.endsWith(f) &&
+        (options.skipStateService
+          ? !pathToFile.endsWith(stateServiceSuffix)
+          : true),
+    ),
+  );
+  return isFrontendFile;
+};
 
 //#region is test file
 export const isTestFile = (filePath: string): boolean => {

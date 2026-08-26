@@ -8,38 +8,21 @@ import * as semver from 'semver';
 import {
   config,
   dotTaonFolder,
-  fg,
-  GlobalTaskManager,
   LibTypeEnum,
   taonContainers,
   taonPackageName,
   tnpPackageName,
-  UtilsExecProc,
   UtilsFilesFoldersSync,
   UtilsMdDocs,
   UtilsProjects,
   UtilsTime,
 } from 'tnp-core/src';
-import {
-  TAGS,
-  backendNodejsOnlyFiles,
-  extAllowedToExportAndReplaceTSJSCodeFiles,
-  frontendFiles,
-  notNeededForExportFiles,
-} from 'tnp-core/src';
-import {
-  psList,
-  UtilsEtcHosts,
-  UtilsJson,
-  UtilsOs,
-  UtilsProcessLogger,
-} from 'tnp-core/src';
+import { psList, UtilsEtcHosts, UtilsJson, UtilsOs } from 'tnp-core/src';
 import {
   chokidar,
   dateformat,
   requiredForDev,
   UtilsProcess,
-  UtilsString,
 } from 'tnp-core/src';
 import {
   crossPlatformPath,
@@ -47,7 +30,6 @@ import {
   _,
   UtilsProgress,
   chalk,
-  glob,
   os,
   fse,
   CoreModels,
@@ -63,10 +45,7 @@ import {
   BaseGlobalCommandLine,
   UtilsNpm,
   UtilsTypescript,
-  BaseProject,
-  UtilsFileSync,
   HelpersTaon,
-  UtilsCjsPackage,
 } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartMode } from 'tnp-helpers/src';
 import {
@@ -77,9 +56,7 @@ import {
 
 import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
 import {
-  COMPILATION_COMPLETE_TSC,
   containerPrefix,
-  DEFAULT_FRAMEWORK_VERSION,
   globalSpinner,
   keysMap,
   nodeModulesMainProject,
@@ -97,8 +74,6 @@ import { Models } from '../../models';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
 import { Project } from '../abstract/project';
 import type { TaonProjectResolve } from '../abstract/project-resolve';
-import { Subject } from 'rxjs';
-import { DevModeUtils } from '../abstract/taon-worker/dev-mode/dev-mode.utils';
 //#endregion
 
 export class $Global extends BaseGlobalCommandLine<

@@ -1,18 +1,9 @@
 //#region imports
-import { config, frontendFiles } from 'tnp-core/src';
-import { CoreModels, _, crossPlatformPath, os, path } from 'tnp-core/src';
+import { _ } from 'tnp-core/src';
 import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
-import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import {
-  appTsFromSrc,
-  MESSAGES,
-  srcMainProject,
-  TEMP_DOCS,
-} from '../../constants';
-import { Models } from '../../models';
+import { appTsFromSrc, srcMainProject } from '../../constants';
 import { EnvOptions } from '../../options';
-import type { Project } from '../abstract/project';
 
 import { BaseCli } from './base-cli';
 //#endregion
