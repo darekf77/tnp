@@ -35,12 +35,14 @@ import {
   assetsFromTempSrc,
   browserFromImport,
   browserTypeString,
+  cliTsFromSrc,
   CoreNgTemplateFiles,
   endingsStylesComponentsContainers,
   globalScssFromSrc,
   i18nDataTsFileExt,
   importsHtmlFromSrc,
   indexTsFromLibFromSrc,
+  indexTsFromSrc,
   libEsm,
   libEsmFromImport,
   libFromImport,
@@ -70,7 +72,11 @@ import {
   websqlFromImport,
   websqlTypeString,
 } from '../../../../../../../constants';
-import { EnvOptions } from '../../../../../../../options';
+import {
+  EnvOptions,
+  ReleaseArtifactTaon,
+  ReleaseType,
+} from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
 import { isFirstTimeCompilation } from './constants-code-cut';
@@ -118,6 +124,7 @@ export class BrowserCodeCut {
    */
   protected absFileSourcePathBrowserOrWebsqlAPPONLY: string;
 
+  //#region fields & getters / raw content
   private rawContentForBrowser: string;
 
   private rawContentForAPPONLYBrowser: string;
@@ -125,6 +132,7 @@ export class BrowserCodeCut {
   private rawContentBackend: string;
 
   private rawContentEsmBackend: string;
+  //#endregion
 
   //#region recreate app ts presentation files
   static recreateAppTsPresentationFiles: () => void;
@@ -1111,6 +1119,32 @@ export class BrowserCodeCut {
       this.saveNormalBrowserFile();
       return;
     }
+
+    if (
+      !this.buildOptions.build.watch &&
+      this.buildOptions.release.releaseType &&
+      this.buildOptions.release.targetArtifact ===
+        ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL &&
+      !this.relativePath.startsWith(`${libFromSrc}/`) &&
+      ![cliTsFromSrc, indexTsFromSrc].includes(this.relativePath) &&
+      (this.relativePath.endsWith('.ts') || this.relativePath.endsWith('.tsx'))
+    ) {
+      // skip app files for release
+      UtilsFilesFoldersSync.writeFile(this.absoluteBackendEsmDestFilePath, '');
+      UtilsFilesFoldersSync.writeFile(this.absoluteBackendDestFilePath, '');
+      UtilsFilesFoldersSync.writeFile(
+        this.absFileSourcePathBrowserOrWebsql,
+        '',
+      );
+
+      UtilsFilesFoldersSync.writeFile(
+        this.absFileSourcePathBrowserOrWebsqlAPPONLY,
+        '',
+      );
+
+      return;
+    }
+
     // Helpers.log(`saving ismoprhic file: ${this.absoluteFilePath}`, 1)
 
     const backendFileSaveMode = !this.isWebsqlMode; // websql does not do anything on be
