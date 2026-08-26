@@ -325,7 +325,7 @@ ${THIS_IS_GENERATED_STRING}
         const shared_folder_info = this.project.pathFor([
           srcMainProject,
           testsFromSrc,
-          TaonGeneratedFiles.MOCHA_TESTS_INFO_MD,
+          TaonGeneratedFiles.TESTS_FOLDER_INFO_MD,
         ]);
 
         Helpers.writeFile(

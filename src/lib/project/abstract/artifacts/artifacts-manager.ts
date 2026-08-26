@@ -525,6 +525,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
         `${dotVscodeMainProject}/${TaonGeneratedFiles.LAUNCH_BACKUP_JSON}`,
       );
       this.project.removeFile('run-org.js');
+      this.project.removeFile('src/tests/mocha-tests-info.md');
       if (this.project.typeIs(LibTypeEnum.CONTAINER)) {
         this.project.removeFile(
           `${srcMainProject}/${TaonGeneratedFiles.VARS_SCSS}`,

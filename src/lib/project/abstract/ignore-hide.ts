@@ -94,7 +94,7 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       `/${srcMainProject}/${libFromSrc}/${TaonGeneratedFiles.LIB_INFO_MD}`,
       `/${srcMainProject}/${libFromSrc}/${TaonGeneratedFolders.ENV_FOLDER}/**/*.*`,
       `/${srcMainProject}/${libFromSrc}/${migrationsFromLib}/${TaonGeneratedFiles.MIGRATIONS_INFO_MD}`,
-      `/${srcMainProject}/${testsFromSrc}/${TaonGeneratedFiles.MOCHA_TESTS_INFO_MD}`,
+      `/${srcMainProject}/${testsFromSrc}/${TaonGeneratedFiles.TESTS_FOLDER_INFO_MD}`,
       `/${srcMainProject}/${assetsFromSrc}/${sharedFromAssets}/${TaonGeneratedFiles.SHARED_FOLDER_INFO_TXT}`,
       `/${srcMainProject}/${appAutoGenDocsMd}`,
       `/${srcMainProject}/${appAutoGenJs}`,

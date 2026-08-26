@@ -441,7 +441,7 @@ export enum TaonGeneratedFiles {
   index_generated_ts = 'index._auto-generated_.ts',
   BUILD_INFO_AUTO_GENERATED_JS = 'build-info._auto-generated_.js',
   MIGRATIONS_INFO_MD = 'migrations-info.md',
-  MOCHA_TESTS_INFO_MD = 'mocha-tests-info.md',
+  TESTS_FOLDER_INFO_MD = 'tests-folder-info.md',
   SHARED_FOLDER_INFO_TXT = 'shared_folder_info.txt',
   APP_HOSTS_TS = 'app.hosts.ts',
   LAUNCH_JSON = 'launch.json',
