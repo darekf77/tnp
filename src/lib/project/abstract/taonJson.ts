@@ -305,17 +305,21 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region get ts docs include
   get genTsDocsInclude(): string[] {
     //#region @backendFunc
     return (this.data as Models.TaonJsonStandalone)?.genTsDocsInclude || [];
     //#endregion
   }
+  //#endregion
 
+  //#region git ignore gen docs
   get gitignoreGenDocsFiles(): boolean {
     //#region @backendFunc
     return !!(this.data as Models.TaonJsonStandalone)?.gitignoreGenDocsFiles;
     //#endregion
   }
+  //#endregion
 
   //#region store generated assets in repo
   get storeGeneratedAssetsInRepository(): boolean {
@@ -364,6 +368,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region set dependencies names for npm
   private setDependenciesNamesForNpmLib(dependencies: string[]): void {
     //#region @backendFunc
     const data = this.data as Models.TaonJsonStandalone;
@@ -371,6 +376,7 @@ export class TaonJson extends BaseFeatureForProject<Project> {
     this.saveToDisk('updating dependencies for npm lib');
     //#endregion
   }
+  //#endregion
 
   //#region isomorphic dependencies names for npm lib
   /**

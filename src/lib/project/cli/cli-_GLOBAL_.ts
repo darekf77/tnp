@@ -273,10 +273,12 @@ export class $Global extends BaseGlobalCommandLine<
   }
   //#endregion
 
+  //#region fix dts type for
   fixDtsTypes() {
     this.project.quickFixes.fixDtsTypesForContainer();
     this._exit();
   }
+  //#endregion
 
   //#region proper watcher test
   async PROPERWATCHERTEST(engine: string) {
@@ -1115,6 +1117,7 @@ ${this.project.children
   }
   //#endregion
 
+  //#region cjs compile for esm only
   async cjscompile() {
     //#region @backend
     await this.project.framework.fixMissingCjsVersions();
@@ -1132,6 +1135,7 @@ ${this.project.children
     this._exit();
     //#endregion
   }
+  //#endregion
 
   //#region not for npm / get trusted
   //#region @notForNpm
@@ -1910,6 +1914,7 @@ ${this.project.children
   }
   //#endregion
 
+  //#region set default autoconfig task name
   setDefaultAutoConfigTaskName() {
     //#region @backendFunc
     Helpers.taskStarted(`Setting default autoReleaseConfig task names...`);
@@ -1926,7 +1931,9 @@ ${this.project.children
     this._exit();
     //#endregion
   }
+  //#endregion
 
+  //#region set ts not chec for app.ts
   setTsNoCheckForAppTs() {
     //#region @backendFunc
     Helpers.taskStarted(`Setting default autoReleaseConfig task names...`);
@@ -1946,7 +1953,9 @@ ${this.project.children
     this._exit();
     //#endregion
   }
+  //#endregion
 
+  //#region get files/folders from
   getFilesFrom() {
     //#region @backendFunc
     const pathForFiles = crossPlatformPath([this.cwd, this.firstArg]);
@@ -1988,7 +1997,10 @@ ${this.project.children
     this._exit();
     //#endregion
   }
+  //#endregion
 
+  //#region dev mode worker
+  // TODO REMOVE THIS
   async devModeWorker() {
     //#region @backendFunc
     await this.ins.notifyMainWorkerThatDevMode(
@@ -2001,29 +2013,9 @@ ${this.project.children
     this._exit();
     //#endregion
   }
+  //#endregion
 
-  // async aaaaa() {
-  //   GlobalTaskManager.start('aaa');
-  //   GlobalTaskManager.addProgress('aaa');
-  //   GlobalTaskManager.addProgress('aaa');
-  //   console.info('GLOBAL COMMAND WORKS!');
-  //   GlobalTaskManager.stop('aaa', () => {
-  //     this._exit();
-  //   });
-  // }
-
-  // async bbbbb() {
-  //   Helpers.error(
-  //     `
-
-  //       Not able to publish to npm registry project in ${this.project.location}
-
-  //       `,
-  //     true,
-  //     true,
-  //   );
-  // }
-
+  //#region question terminal
   async quesitonTerminal() {
     //#region @backendFunc
     const anwser = await UtilsTerminal.basicYesNo(`Approved ? `, true);
@@ -2035,7 +2027,9 @@ ${this.project.children
     this._exit();
     //#endregion
   }
+  //#endregion
 
+  //#region notyfication test
   async notyficationTest() {
     //#region @backendFunc
     await UtilsOs.sendNotification({
@@ -2047,7 +2041,9 @@ ${this.project.children
     this._exit();
     //#endregion
   }
+  //#endregion
 
+  //#region spinner
   async spinner() {
     //#region @backend
     console.info('starting spinner');
@@ -2060,7 +2056,9 @@ ${this.project.children
     this._exit();
     //#endregion
   }
+  //#endregion
 
+  //#region not verfied build
   notVerifiedBuilds() {
     //#region @backendFunc
     Helpers.info(`Not verified isomorphic builds:`);
@@ -2071,7 +2069,9 @@ ${this.project.children
     this._exit();
     //#endregion
   }
+  //#endregion
 
+  //#region deps tree
   depsTree() {
     //#region @backendFunc
     Helpers.info(`Deps tree`);
@@ -2097,14 +2097,18 @@ ${this.project.children
     this._exit();
     //#endregion
   }
+  //#endregion
 
+  //#region count watchers linux
   async countWatchersLinux() {
     //#region @backendFunc
     console.log(await UtilsOs.getInotifyWatchCount());
     this._exit();
     //#endregion
   }
+  //#endregion
 
+  //#region assets from md
   async assetsFromMd() {
     const mdFileAbsPath = path.isAbsolute(this.firstArg)
       ? crossPlatformPath(this.firstArg)
@@ -2114,6 +2118,7 @@ ${this.project.children
     console.log({ assetsFromMd });
     this._exit();
   }
+  //#endregion
 
   //#region remove background from file
   async rmbg() {
@@ -2204,6 +2209,7 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
   }
   //#endregion
 
+  //#region tsc
   // async tsc() {
   //#region @backendFunc
   // const rebuildOnChange = new Subject<{}>();
@@ -2252,6 +2258,9 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
   // );
   //#endregion
   // }
+  //#endregion
+
+
 }
 
 export default {

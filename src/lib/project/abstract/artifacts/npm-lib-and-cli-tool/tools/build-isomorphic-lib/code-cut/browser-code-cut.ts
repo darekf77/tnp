@@ -810,7 +810,7 @@ export class BrowserCodeCut {
                 tailWindFileNgProjAbsPath,
                 this.buildOptions,
               );
-            if (currentContentTailwindCss !== newContentTailwindCss) {
+            if (!currentContentTailwindCss || currentContentTailwindCss !== newContentTailwindCss) {
               Helpers.logInfo(`Updating tailwind.css`);
               UtilsFilesFoldersSync.writeFile(
                 tailWindFileNgProjAbsPath,
