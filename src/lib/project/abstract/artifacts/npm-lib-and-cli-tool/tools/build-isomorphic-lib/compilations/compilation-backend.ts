@@ -16,8 +16,7 @@ import {
   distMainProject,
   distNoCutSrcMainProject,
   prodSuffix,
-  skipLightWeightWatcherFor_CjsESM,
-  skipLightWeightWatcherFor_jsMaps,
+  skipLightWeightWatcherFor_Cjs,
   srcMainProject,
   TaonCommands,
   tmpSourceDist,
@@ -90,17 +89,18 @@ export class BackendCompilation {
     //   ? TaonCommands.NPM_RUN_TSCGO
     //   : TaonCommands.NPM_RUN_TSC;
 
-    let watchModeCjsESM =
+    let watchModeCjs =
       buildOptions.build.watch && !this.project.watcher.isTaonLightWatcherMode;
-    if (skipLightWeightWatcherFor_CjsESM) {
-      watchModeCjsESM = buildOptions.build.watch;
+
+    let watchModeESM =
+      buildOptions.build.watch && !this.project.watcher.isTaonLightWatcherMode;
+
+    if (skipLightWeightWatcherFor_Cjs) {
+      watchModeCjs = buildOptions.build.watch;
     }
 
     let watchModeJsMaps =
       buildOptions.build.watch && !this.project.watcher.isTaonLightWatcherMode;
-    if (skipLightWeightWatcherFor_jsMaps) {
-      watchModeCjsESM = buildOptions.build.watch;
-    }
 
     const tsconfigBackendCjsPath = crossPlatformPath(
       this.project.pathFor(
@@ -121,12 +121,14 @@ export class BackendCompilation {
     const common = ` --preserveWatchOutput  `;
     const commandCjs =
       `${tscTool} --outDir ${distMainProject + (buildOptions.build.prod ? prodSuffix : '')}  ` +
-      ` --project ${tsconfigBackendCjsPath}  ${watchModeCjsESM ? '-w' : ''}  ${common}  ` +
+      ` --project ${tsconfigBackendCjsPath}  ${watchModeCjs ? '-w' : ''}  ${common}  ` +
       ` --mapRoot ${nocutsrcFolder} `;
+
     const commandJsEsm =
       `${tscTool}  ` +
-      `  --project ${tsconfigBackendEsmPath}  ${watchModeCjsESM ? '-w' : ''}  ${common} ` +
+      `  --project ${tsconfigBackendEsmPath}  ${watchModeESM ? '-w' : ''}  ${common} ` +
       ` --mapRoot ${nocutsrcFolder} `;
+
     const commandMaps =
       `${tscTool} --outDir ${nocutsrcFolder} ${watchModeJsMaps ? '-w' : ''}   ` +
       `   ${common} `;
@@ -136,7 +138,8 @@ export class BackendCompilation {
     Helpers.getIsVerboseMode() &&
       console.log({
         'buildOptions.build.watch': buildOptions.build.watch,
-        watchModeCjsESM,
+        watchModeCjs,
+        watchModeESM,
         watchModeJsMaps,
         commandCjs,
         commandMaps,
@@ -247,7 +250,7 @@ export class BackendCompilation {
       resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
       rebuildOnChange:
         this.project.watcher.isTaonLightWatcherMode &&
-        !skipLightWeightWatcherFor_CjsESM &&
+        !skipLightWeightWatcherFor_Cjs &&
         this.project.watcher.rebuildTriggerWatcher('backend-cjs'),
     });
     taskCjs.done();
@@ -282,7 +285,6 @@ export class BackendCompilation {
         resolvePromiseMsg_stdout: [COMPILATION_COMPLETE_TSC],
         rebuildOnChange:
           this.project.watcher.isTaonLightWatcherMode &&
-          !skipLightWeightWatcherFor_CjsESM &&
           this.project.watcher.rebuildTriggerWatcher('backend-esm'),
       });
       taskJsEsm.done();
@@ -311,7 +313,6 @@ export class BackendCompilation {
       resolvePromiseMsg_stdout: [COMPILATION_WATCHING_STARTED],
       rebuildOnChange:
         this.project.watcher.isTaonLightWatcherMode &&
-        !skipLightWeightWatcherFor_jsMaps &&
         this.project.watcher.rebuildTriggerWatcher('backend-js-maps'),
     });
     //#endregion

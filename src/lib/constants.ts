@@ -201,7 +201,8 @@ export const watcherPrefix = '-watcher';
 export const verbosePrefix = '-verbose';
 export const taonNonInteractiveModePrefix = '-taonNonInteractive';
 
-export const taonSkipEmitTerminalProgressPrefix = '-taonSkipEmitTerminalProgress';
+export const taonSkipEmitTerminalProgressPrefix =
+  '-taonSkipEmitTerminalProgress';
 
 export const spinnerPrefix = '-spinner';
 export const oldBuildModePrefix = '-oldBuildMode';
@@ -1070,8 +1071,7 @@ export const OBSERVER_PARALLELS = true;
 export const isMacOSorWindows =
   process.platform === 'darwin' || process.platform === 'win32';
 
-export const skipLightWeightWatcherFor_CjsESM = isMacOSorWindows;
-export const skipLightWeightWatcherFor_jsMaps = false;
+export const skipLightWeightWatcherFor_Cjs = isMacOSorWindows;
 
 export const endingsStylesComponentsContainers = extForStyles
   .map(c => [`.component${c}`, `.container${c}`])

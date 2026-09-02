@@ -16,7 +16,7 @@ import {
   DEBOUNCE_trigerLeadBuilding,
   ERR_MESSAGE_PROJECT_ALREADY_PART_OF_BUILD,
   OBSERVER_PARALLELS,
-  skipLightWeightWatcherFor_CjsESM,
+  skipLightWeightWatcherFor_Cjs,
 } from '../../../../../constants';
 import type { Project } from '../../../../abstract/project';
 import { DevBuildController } from '../../../../abstract/taon-worker/dev-build/dev-build.controller';
@@ -300,9 +300,9 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
         errorMainWorkerCommunication();
       }
 
-      if (skipLightWeightWatcherFor_CjsESM) {
+      if (skipLightWeightWatcherFor_Cjs) {
         shouldBeRebuildArr = shouldBeRebuildArr.filter(
-          f => f !== 'backend-cjs' && f !== 'backend-esm',
+          f => f !== 'backend-cjs',
         );
       }
 

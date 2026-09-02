@@ -32,7 +32,7 @@ import {
   OBSERVER_PARALLELS,
   oldBuildModePrefix,
   oldBuildModePrefixShort,
-  skipLightWeightWatcherFor_CjsESM,
+  skipLightWeightWatcherFor_Cjs,
   TaonGeneratedFiles,
   watcherPrefix,
 } from '../../../../../constants';
@@ -94,7 +94,7 @@ export class TaonBuildObserver extends BaseFeatureForProject<Project> {
       DevMode.ProjectBuildStatus.DONE_BUILDING_SUCCESS,
       [
         DevMode.ProjectBuildStatus.BUILDING,
-        ...(skipLightWeightWatcherFor_CjsESM
+        ...(skipLightWeightWatcherFor_Cjs
           ? [DevMode.ProjectBuildStatus.COMPILATION_ERROR]
           : []),
       ],
