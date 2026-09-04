@@ -266,7 +266,7 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
 
         ALL DEPENDENCY PROJECT VERIFIED/READY FOR PROD BUILD
 
-        `)
+        `);
     }
 
     //#endregion
@@ -447,6 +447,14 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
     if (!releaseOptions.isCiProcess) {
       Helpers.clearConsole();
     }
+
+    //#region save package json before release check
+    this.packageJson.saveToDisk('saving before release');
+    for (const child of children) {
+      child.packageJson.saveToDisk('saving before container release');
+    }
+    //#endregion
+
     if (
       !(await this.npmHelpers.shouldReleaseMessage({
         releaseVersionBumpType: releaseOptions.release.releaseVersionBumpType,
