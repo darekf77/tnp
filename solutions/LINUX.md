@@ -120,3 +120,42 @@ rimraf ../tnp/node_modules/`basename \`pwd\`` && cp -R `pwd`/dist ../tnp/node_mo
 
 check command: cat /proc/sys/fs/inotify/max_user_watches
 ```
+
+
+# wachers
+check how many taken currently
+```basg
+find /proc/[0-9]*/fdinfo -type f -readable 2>/dev/null \
+  -exec grep -h '^inotify wd:' {} + | wc -l
+```
+
+check what is taking watchers
+```bash
+for pid in /proc/[0-9]*; do
+  n=$(grep -h '^inotify wd:' "$pid"/fdinfo/* 2>/dev/null | wc -l)
+  if (( n > 0 )); then
+    printf "%8d  %-25s %s\n" \
+      "$n" \
+      "$(cat "$pid/comm" 2>/dev/null)" \
+      "${pid##*/}"
+  fi
+done | sort -nr
+```
+count watchers
+```bash
+cat /proc/sys/fs/inotify/max_user_watches
+cat /proc/sys/fs/inotify/max_user_instances
+cat /proc/sys/fs/inotify/max_queued_events
+```
+
+
+set resonable amount of watchers
+```bash
+sudo tee /etc/sysctl.d/99-inotify.conf > /dev/null <<'EOF'
+fs.inotify.max_user_watches=1048576
+fs.inotify.max_user_instances=1024
+fs.inotify.max_queued_events=32768
+EOF
+
+sudo sysctl --system
+```
