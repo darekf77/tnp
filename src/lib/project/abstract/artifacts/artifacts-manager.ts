@@ -417,27 +417,28 @@ ${'req' + 'uire'}('./start');
 
       await this.project.nodeModules.makeSureInstalled();
     }
-    this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSrcJSToDestination(
-      this.project.framework.coreContainer,
-    );
-
-    this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSourceSymlinks(
-      this.project.framework.coreContainer,
-    );
-
-    if (this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
-      this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSrcJSToDestination(
-        this.project,
-      );
-      this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSourceSymlinks(
-        this.project,
-      );
-    }
-
-    await this.project.subProject?.repo.initAll();
 
     //#region check isomorphic dependencies for npm lib
     if (this.project.framework.isStandaloneProject) {
+      this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSrcJSToDestination(
+        this.project.framework.coreContainer,
+      );
+
+      this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSourceSymlinks(
+        this.project.framework.coreContainer,
+      );
+
+      if (this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
+        this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSrcJSToDestination(
+          this.project,
+        );
+        this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSourceSymlinks(
+          this.project,
+        );
+      }
+
+      await this.project.subProject?.repo.initAll();
+
       let missingDependencies: string[] = [];
       const isomorphicDependenciesForNpmLib =
         this.project.taonJson.isomorphicDependenciesForNpmLib;

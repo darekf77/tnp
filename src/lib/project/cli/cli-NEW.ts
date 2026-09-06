@@ -1,5 +1,5 @@
 //#region imports
-import { config, LibTypeEnum } from 'tnp-core/src';
+import { config, LibTypeEnum, UtilsTerminal } from 'tnp-core/src';
 import { notAllowedProjectNames } from 'tnp-core/src';
 import {
   CoreModels,
@@ -13,6 +13,7 @@ import {
   BasePackageJson,
   Helpers,
   HelpersTaon,
+  UtilsNpm,
   UtilsVSCode,
 } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
@@ -137,29 +138,70 @@ export class $New extends BaseCli {
 
     //#region check if name is allowed
 
-    const alreadyTaken = Project.ins
-      .by('container')
-      .nodeModules.getAllPackagesNames({
-        followSymlinks: false,
-      });
+    const coreContainer = Project.ins.by('container');
+    const alreadyTaken = coreContainer.nodeModules.getAllPackagesNames({
+      followSymlinks: false,
+    });
 
     if (alreadyTaken.includes(lastProjectFromArgName)) {
-      Helpers.error(
-        `
-
-         Name ${chalk.bold(lastProjectFromArgName)} is already taken.
-
-         Use different name or add prefix: ${chalk.bold(
-           crossPlatformPath(allProjectFromArgs.join('/')).replace(
-             lastProjectFromArgName,
-             'my-app-or-something-else',
-           ),
-         )}
-
-         `,
-        false,
-        true,
+      const versionInNpm = await UtilsNpm.getLastMajorVersions(
+        lastProjectFromArgName,
       );
+      const isIsomorphic = coreContainer.nodeModules.checkIsomorphic(
+        lastProjectFromArgName,
+      );
+
+      const displayErrorMesage = () => {
+        Helpers.error(
+          `
+
+           Name ${chalk.bold(lastProjectFromArgName)} is already taken.
+
+           ${'- ' + coreContainer.nodeModules.pathFor(lastProjectFromArgName)}
+           ${
+             this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer
+               ? '- ' + this.project.nodeModules.pathFor(lastProjectFromArgName)
+               : ''
+           }
+
+           Use different name or add prefix: ${chalk.bold(
+             crossPlatformPath(allProjectFromArgs.join('/')).replace(
+               lastProjectFromArgName,
+               'my-app-or-something-else',
+             ),
+           )}
+
+           `,
+          false,
+          true,
+        );
+      };
+
+      if (versionInNpm.length === 0 && !isIsomorphic) {
+        //#region ask user to remove faulty package
+        Helpers.info(`
+          Package ${chalk.bold(lastProjectFromArgName)} does not look like proper pacakge.
+          - is not isomorphic
+          - is not in public npm
+
+          `);
+        const removePackage = await UtilsTerminal.confirm({
+          message: `Would you like to remove it from core container(s) and use it name?`,
+          defaultValue: true,
+        });
+        //#endregion
+
+        if (removePackage) {
+          coreContainer.nodeModules.removePackage(lastProjectFromArgName);
+          if (this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
+            this.project.nodeModules.removePackage(lastProjectFromArgName);
+          }
+        } else {
+          displayErrorMesage();
+        }
+      } else {
+        displayErrorMesage();
+      }
     }
 
     if (notAllowedProjectNames.includes(lastProjectFromArgName)) {
@@ -170,7 +212,7 @@ export class $New extends BaseCli {
 
        Use different name: ${chalk.bold(
          crossPlatformPath(allProjectFromArgs.join('/')).replace(
-          lastProjectFromArgName,
+           lastProjectFromArgName,
            'my-app-or-something-else',
          ),
        )}
