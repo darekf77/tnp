@@ -128,6 +128,15 @@ export class $Refactor extends BaseCli {
   }
   //#endregion
 
+  //#region add websql to entites
+  async entitesAddWebsqlClassRegions() {
+    await this.project.refactor.entitesAddWebsqlClassRegions({
+      fixSpecificFile: this.firstArg,
+    });
+    this._exit();
+  }
+  //#endregion
+
   //#region ng21 update
   async ng21() {
     //#region @backendFunc

@@ -4,6 +4,7 @@ import {
   config,
   fileName,
   frontendFiles,
+  TAGS,
   Utils,
   UtilsFilesFoldersSync,
 } from 'tnp-core/src';
@@ -421,6 +422,39 @@ export class Refactor extends BaseFeatureForProject<Project> {
       }
     });
     Helpers.taskDone(`Done fixing taon class names...`);
+    //#endregion
+  }
+
+  async entitesAddWebsqlClassRegions(options: { fixSpecificFile?: string }) {
+    //#region @backendFunc
+
+    options = this.prepareOptions(options);
+    const task = Helpers.actionStarted(
+      `Adding websql regions for entites class decorators..`,
+    );
+    UtilsFilesFoldersSync.getFilesFrom(this.project.pathFor(srcMainProject), {
+      recursive: true,
+      followSymlinks: false,
+    })
+      .filter(f => f.endsWith('.entity.ts'))
+      .forEach(f => {
+        if (options.fixSpecificFile && f !== options.fixSpecificFile) {
+          return;
+        }
+
+        let content = UtilsFilesFoldersSync.readFile(f);
+        const fixedRegions =
+          UtilsTypescript.wrapContentClassMembersDecoratorsWithRegion(
+            content,
+            `${TAGS.WEBSQL}`,
+          );
+
+        if (fixedRegions.trim() !== content.trim()) {
+          Helpers.info(`Fixing wrapping entity decorators ${f}`);
+          UtilsFilesFoldersSync.writeFile(f, fixedRegions);
+        }
+      });
+    task.done();
     //#endregion
   }
 

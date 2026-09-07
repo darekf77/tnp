@@ -564,6 +564,31 @@ export const vscodeMenuItems = ({
           //#endregion
 
           //#region items with actions / regenerate src/lib/index._auto-generated_.ts
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} refactor:entites:add:websql:class:regions`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              // skipReturnToMenu: true,
+              triggerActionOnClick: async (project, progress) => {
+                if (project) {
+                  progress?.report({
+                    message: 'Refactoring: adding websql regions...',
+                  });
+                  await project.refactor.entitesAddWebsqlClassRegions({});
+                  progress?.report({
+                    message: 'Done adding websql regions to entites ',
+                    increment: 100,
+                  });
+                  // vscode.commands.executeCommand('workbench.view.explorer');
+                }
+              },
+            },
+          ),
+          //#endregion
+
+          //#region items with actions / regenerate src/lib/index._auto-generated_.ts
           //           new ProjectItem(
           //             `$ ${FRAMEWORK_NAME} genreate:new:component:structure:ai:info`,
           //             vscode.TreeItemCollapsibleState.None,
