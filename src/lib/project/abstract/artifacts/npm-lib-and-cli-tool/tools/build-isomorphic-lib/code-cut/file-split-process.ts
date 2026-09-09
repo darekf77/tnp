@@ -1,3 +1,4 @@
+//#region imports
 import { extAllowedToExportAndReplaceTSJSCodeFiles } from 'tnp-core/src';
 import { path, _, Utils } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
@@ -5,9 +6,11 @@ import { UtilsTypescript } from 'tnp-helpers/src';
 
 import { DUMMY_LIB, taonIgnore } from '../../../../../../../constants';
 
+import type { BrowserCodeCut } from './browser-code-cut';
 import { CodeSplitProcess } from './code-split-process.enum';
 import type { CallBackProcess } from './code-split-process.enum';
 import { UtilsCodeCut } from './utils-code-cut';
+//#endregion
 
 export class SplitFileProcess {
   declare _importExports: UtilsTypescript.TsImportExport[];
@@ -24,6 +27,8 @@ export class SplitFileProcess {
     private readonly isomorphicLibraries: string[],
     private readonly currentProjectName: string,
     private readonly currentProjectNpmName: string,
+    private readonly browserCodeCut: BrowserCodeCut,
+    private readonly relativeFilesToProcess: Map<string, boolean>,
   ) {
     this._importExports =
       UtilsTypescript.recognizeImportsFromContent(fileContent);
@@ -31,7 +36,10 @@ export class SplitFileProcess {
   }
 
   //#region get content
-  get content(): { modifiedContent: string; rewriteFile: boolean } {
+  get content(): {
+    modifiedContent: string;
+    rewriteFile: boolean;
+  } {
     //#region @backendFunc
     if (
       _.isUndefined(
@@ -41,16 +49,22 @@ export class SplitFileProcess {
       )
     ) {
       // console.error(`Not allowed to export and replace file: ${this.filePath}`);
-      return { modifiedContent: this.fileContent, rewriteFile: false };
+      return {
+        modifiedContent: this.fileContent,
+        rewriteFile: false,
+        // importsToAppend: [],
+      };
     }
 
     const BEFORE_PROCESSES = Object.values(
       CodeSplitProcess.Before.Split.ImportExport,
     );
+    const importsToAppend: Pick<
+      UtilsTypescript.TsImportExport,
+      'cleanEmbeddedPathToFile' | 'importElements'
+    >[] = [];
+
     for (const imp of this._importExports) {
-      if (!imp.isIsomorphic) {
-        continue;
-      }
       for (const processFun of BEFORE_PROCESSES) {
         if (_.isFunction(processFun)) {
           const rewrite = (processFun as ReturnType<typeof CallBackProcess>)(
@@ -58,8 +72,13 @@ export class SplitFileProcess {
             this.isomorphicLibraries,
             this.currentProjectName,
             this.currentProjectNpmName,
+            this.browserCodeCut,
+            this.relativeFilesToProcess,
+            importToAppend => {
+              importsToAppend.push(importToAppend);
+            },
           );
-          if (!this.rewriteFile && rewrite) {
+          if (!this.rewriteFile && (rewrite || importsToAppend.length > 0)) {
             this.rewriteFile = true;
             break;
           }
@@ -67,13 +86,125 @@ export class SplitFileProcess {
       }
     }
 
-    const result = UtilsCodeCut.replaceInFile(this.fileContent, this._importExports);
-    return { modifiedContent: result, rewriteFile: this.rewriteFile };
+    let tsFileContent = UtilsCodeCut.replaceInFile(
+      this.fileContent,
+      this._importExports,
+    );
+
+    tsFileContent = this.deleteMarkedForDeletion(tsFileContent);
+
+    tsFileContent = this.deleteMarkedImportElements(tsFileContent);
+
+    for (const imp of importsToAppend) {
+      tsFileContent = UtilsTypescript.addOrUpdateImportIfNotExists(
+        tsFileContent,
+        imp.importElements,
+        imp.cleanEmbeddedPathToFile,
+      );
+    }
+
+    return {
+      modifiedContent: tsFileContent,
+      rewriteFile: this.rewriteFile,
+      // importsToAppend,
+    };
     //#endregion
   }
   //#endregion
 
+  private deleteMarkedImportElements(tsFileContent: string): string {
+    //#region @backendFunc
+    let contentLines = tsFileContent.split('\n');
+
+    const importsToModify = this._importExports
+      .filter(f => f.markForDeletionImportElems?.length > 0)
+      .sort((a, b) => b.startRow - a.startRow);
+
+    for (const imp of importsToModify) {
+      const startLineIdx = imp.startRow - 1;
+      const endLineIdx = imp.endRow - 1;
+
+      if (
+        startLineIdx >= contentLines.length ||
+        endLineIdx >= contentLines.length ||
+        startLineIdx > endLineIdx
+      ) {
+        continue;
+      }
+
+      const importContent = contentLines
+        .slice(startLineIdx, endLineIdx + 1)
+        .join('\n');
+
+      const updatedImportContent = importContent.replace(
+        /\{([\s\S]*?)\}/,
+        (_, importsInside: string) => {
+          const importElements = importsInside
+            .split(',')
+            .map(elem => elem.trim())
+            .filter(Boolean);
+
+          const remainingImportElements = importElements.filter(elem => {
+            return !imp.markForDeletionImportElems.some(toDelete => {
+              const importedName = elem
+                .replace(/^type\s+/, '')
+                .split(/\s+as\s+/)[0]
+                .trim();
+
+              return importedName === toDelete;
+            });
+          });
+
+          if (remainingImportElements.length === 0) {
+            return `{ /* nothing here */ }`;
+          }
+
+          return `{ ${remainingImportElements.join(', ')} }`;
+        },
+      );
+
+      contentLines.splice(
+        startLineIdx,
+        endLineIdx - startLineIdx + 1,
+        ...updatedImportContent.split('\n'),
+      );
+    }
+
+    tsFileContent = contentLines.join('\n');
+    return tsFileContent;
+    //#endregion
+  }
+
+  private deleteMarkedForDeletion(tsFileContent: string): string {
+    //#region @backendFunc
+    let contentLines = tsFileContent.split('\n');
+
+    const toDelete = this._importExports
+      .filter(f => f.markForDeletion)
+      .sort((a, b) => b.startRow - a.startRow);
+
+    for (const imp of toDelete) {
+      const startLineIdx = imp.startRow - 1;
+      const endLineIdx = imp.endRow - 1;
+
+      if (
+        startLineIdx >= contentLines.length ||
+        endLineIdx >= contentLines.length ||
+        startLineIdx > endLineIdx
+      ) {
+        continue;
+      }
+
+      contentLines.splice(startLineIdx, endLineIdx - startLineIdx + 1);
+    }
+
+    tsFileContent = contentLines.join('\n');
+    return tsFileContent;
+    //#endregion
+  }
+
   private processImportsExports(): void {
+    //#region @backendFunc
     for (const imp of this._importExports) {
       // TODO better detect deep isomorphic packages
       const matchRegex = new RegExp(
@@ -111,6 +242,6 @@ export class SplitFileProcess {
         // );
       }
     }
+    //#endregion
   }
-
 }

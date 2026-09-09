@@ -14,6 +14,8 @@ import {
   UtilsI18n,
   taonSkipCut,
   stateServiceSuffix,
+  config,
+  tnpPackageName,
 } from 'tnp-core/src';
 import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
@@ -58,6 +60,7 @@ import {
   srcNgProxyProject,
   tailwindScssImportRegex,
   tailwindScssImportRegexGlobal,
+  TaonGeneratedFiles,
   tempAppForFolder,
   tempSourceFolder,
   timestampPrefixComment,
@@ -102,7 +105,9 @@ const notAllowedToPRocess = [appAutoGenDocsMd, appAutoGenJs];
  */
 export class BrowserCodeCut {
   //#region constants
-  public static debugFile = [
+  public static debugFiles = [
+    'taon-notification-recipient.entity.ts',
+    // 'taon-auth-context.entity.ts',
     // 'app.ts',
     // 'app-utils.ts',
     // 'branding.ts'
@@ -148,6 +153,45 @@ export class BrowserCodeCut {
   }
   //#endregion
 
+  public readonly isLibFile: boolean;
+
+  public readonly isAppFile: boolean;
+
+  /**
+   * from "isAppFile" file to src/lib/index.ts
+   *
+   * @returns something like this:  ../../../
+   */
+  public readonly backFromAppCode_ToSrcLibIndex: string;
+
+  /**
+   * from "isLibFile" file to src/lib/index.ts
+   *
+   * @returns something like this:  ../../../
+   *
+   */
+  public readonly backFromLibCode_ToSrcLibIndex: string;
+
+  /**
+   * from "isAppFile" file to src/index.ts
+   *
+   * @returns something like this:  ../../../..
+   *
+   */
+  public get backFromAppCode_ToSrcIndex(): string {
+    return `${this.backFromAppCode_ToSrcLibIndex}..`;
+  }
+
+  /**
+   * from "isLibFile" file to lib/index.ts
+   *
+   * @returns something like this:  ../../../..
+   *
+   */
+  public get backFromLibCode_ToSrcIndex(): string {
+    return `${this.backFromLibCode_ToSrcLibIndex}..`;
+  }
+
   public get importExportsFromOrgContent(): UtilsTypescript.TsImportExport[] {
     return this.splitFileProcess?._importExports || [];
   }
@@ -168,17 +212,17 @@ export class BrowserCodeCut {
 
   private readonly absoluteBackendEsmDestFilePath: string;
 
-  private readonly debug: boolean = false;
-
-  //#endregion
-
-  //#region constructor
+  public readonly debug: boolean = false;
 
   private readonly nameForNpmPackage: string;
 
   private readonly isTsFile: boolean;
 
   private readonly isComponentHtmlFile: boolean;
+
+  //#endregion
+
+  //#region constructor
 
   //#region @backend
   constructor(
@@ -194,9 +238,10 @@ export class BrowserCodeCut {
      * ex. < project location >/tmpSrcDist
      */
     protected absPathTmpSrcDistFolder: string,
-    private project: Project,
+    public project: Project,
     private buildOptions: EnvOptions,
   ) {
+    //#region assign initial values
     if (buildOptions.build.watch) {
       if (!this.recreateAppTsPresentationFiles) {
         this.recreateAppTsPresentationFiles = _.debounce(() => {
@@ -205,10 +250,7 @@ export class BrowserCodeCut {
       }
     }
 
-    //#region recognize namespaces for isomorphic packages
     this.nameForNpmPackage = project.nameForNpmPackage;
-
-    //#endregion
 
     // console.log(`[incremental-build-process INSIDE BROWSER!!! '${this.buildOptions.baseHref}'`)
 
@@ -247,9 +289,36 @@ export class BrowserCodeCut {
       this.absFileSourcePathBrowserOrWebsql,
     ).replace(`${this.absPathTmpSrcDistFolder}/`, '');
 
-    this.debug = BrowserCodeCut.debugFile.some(
+    this.isLibFile = this.relativePath.startsWith(`${libFromSrc}/`);
+    this.isAppFile = !this.isLibFile;
+
+    const howMuchBack = this.relativePath.split('/').length - 1;
+    const howMuchBackIndex = howMuchBack - 1;
+    this.backFromAppCode_ToSrcLibIndex =
+      howMuchBack === 0
+        ? './'
+        : _.times(howMuchBack)
+            .map(() => '../')
+            .join('');
+
+    this.backFromLibCode_ToSrcLibIndex =
+      howMuchBackIndex === 0
+        ? './'
+        : _.times(howMuchBackIndex)
+            .map(() => '../')
+            .join('');
+
+    this.debug = BrowserCodeCut.debugFiles.some(
       d => path.basename(this.relativePath) === d,
     );
+
+    this.debug &&
+      console.log({
+        backFromLibCode_ToSrcLibIndex: this.backFromLibCode_ToSrcLibIndex,
+        backFromAppCode_ToSrcLibIndex: this.backFromAppCode_ToSrcLibIndex,
+        backFromAppCode_ToSrcIndex: this.backFromAppCode_ToSrcIndex,
+        backFromLibCode_ToSrcIndex: this.backFromLibCode_ToSrcIndex,
+      });
 
     this.absoluteBackendDestFilePath = crossPlatformPath([
       this.project.location,
@@ -273,6 +342,7 @@ export class BrowserCodeCut {
     this.isComponentHtmlFile = ['.component.html', '.container.html'].some(
       ext => this.relativePath.endsWith(ext),
     );
+    //#endregion
   }
   //#endregion
 
@@ -283,14 +353,19 @@ export class BrowserCodeCut {
     fileRemovedEvent,
     regionReplaceOptions,
     isCuttableFile,
+    relativeFilesToProcess,
   }: {
     fileRemovedEvent?: boolean;
     isCuttableFile: boolean;
     regionReplaceOptions: ReplaceOptionsExtended;
+    relativeFilesToProcess: Map<string, boolean>;
   }) {
     //#region @backendFunc
     if (isCuttableFile) {
-      this.initAndSaveCuttableFile(regionReplaceOptions);
+      this.initAndSaveCuttableFile(
+        regionReplaceOptions,
+        relativeFilesToProcess,
+      );
     } else {
       this.initAndSaveAssetFile(fileRemovedEvent);
     }
@@ -300,12 +375,15 @@ export class BrowserCodeCut {
   //#endregion
 
   //#region private / methods & getters / init and save cuttabl file
-  private initAndSaveCuttableFile(options: ReplaceOptionsExtended): void {
+  private initAndSaveCuttableFile(
+    options: ReplaceOptionsExtended,
+    relativeFilesToProcess: Map<string, boolean>,
+  ): void {
     //#region @backendFunc
     if (notAllowedToPRocess.includes(this.relativePath)) {
       return;
     }
-    return this.init()
+    return this.init(relativeFilesToProcess)
       .REPLACERegionsForIsomorphicLib(_.cloneDeep(options) as any)
       .REPLACERegionsFromTsImportExport()
       .save();
@@ -424,57 +502,94 @@ export class BrowserCodeCut {
   //#region private / methods & getters / init
   rawOrginalContent: string;
 
-  private init(): BrowserCodeCut {
+  private readonly filesWithoutProcessing: string[] = [
+    TaonGeneratedFiles.APP_HOSTS_TS,
+  ];
+
+  private init(relativeFilesToProcess: Map<string, boolean>): BrowserCodeCut {
     //#region @backendFunc
-    const orgContent =
-      Helpers.readFile(this.absSourcePathFromSrc, void 0, true) || '';
-    this.rawOrginalContent = orgContent;
 
-    const allIsomorphicPackagesFromMemory =
-      this.project.packagesRecognition.allIsomorphicPackagesFromMemory;
+    while (true) {
+      const orgContent =
+        Helpers.readFile(this.absSourcePathFromSrc, void 0, true) || '';
+      this.rawOrginalContent = orgContent;
 
-    // this.debug &&
-    //   console.log({
-    //     allIsomorphicPackagesFromMemory,
-    //   });
+      if (!this.filesWithoutProcessing.includes(this.relativePath)) {
+        const allIsomorphicPackagesFromMemory =
+          this.project.packagesRecognition.allIsomorphicPackagesFromMemory;
 
-    this.splitFileProcess = new SplitFileProcess(
-      orgContent,
-      this.absSourcePathFromSrc,
-      allIsomorphicPackagesFromMemory,
-      this.project.name,
-      this.nameForNpmPackage,
-    );
-    const { modifiedContent: firstPass, rewriteFile: firstTimeRewriteFile } =
-      this.splitFileProcess.content;
+        // this.debug &&
+        //   console.log({
+        //     allIsomorphicPackagesFromMemory,
+        //   });
 
-    const { modifiedContent: secondPass, rewriteFile: secondTimeRewriteFile } =
-      new SplitFileProcess(
-        firstPass,
-        this.absSourcePathFromSrc,
-        allIsomorphicPackagesFromMemory,
-        this.project.name,
-        this.nameForNpmPackage,
-      ).content;
-
-    if ((orgContent || '').trim() !== (firstPass || '')?.trim()) {
-      if (
-        firstTimeRewriteFile &&
-        (firstPass || '').trim() === (secondPass || '').trim() // it means it is stable
-      ) {
-        Helpers.logInfo(`Rewrite file ${this.absSourcePathFromSrc}`);
-        Helpers.writeFile(this.absSourcePathFromSrc, firstPass);
-      } else {
-        Helpers.logWarn(
-          `Unstable file modification ${this.absSourcePathFromSrc}`,
+        this.splitFileProcess = new SplitFileProcess(
+          orgContent,
+          this.absSourcePathFromSrc,
+          allIsomorphicPackagesFromMemory,
+          this.project.name,
+          this.nameForNpmPackage,
+          this,
+          relativeFilesToProcess,
         );
-      }
-    }
+        const {
+          modifiedContent: firstPassContent,
+          rewriteFile: firstTimeRewriteFileFlag,
+        } = this.splitFileProcess.content;
 
-    this.rawContentForBrowser = orgContent;
-    this.rawContentForAPPONLYBrowser = this.rawContentForBrowser; // TODO not needed ?
-    this.rawContentBackend = this.rawContentForBrowser; // at the beginning those are normal files from src
-    this.rawContentEsmBackend = this.rawContentForBrowser;
+        //#region deep check if files modyfications are correct
+        if (
+          config.frameworkName === tnpPackageName ||
+          Helpers.getIsVerboseMode()
+        ) {
+          const {
+            modifiedContent: secondPassContent,
+            // rewriteFile: secondTimeRewriteFile,
+            // importsToAppend: importsToAppendSecond,
+          } = new SplitFileProcess(
+            firstPassContent,
+            this.absSourcePathFromSrc,
+            allIsomorphicPackagesFromMemory,
+            this.project.name,
+            this.nameForNpmPackage,
+            this,
+            relativeFilesToProcess,
+          ).content;
+
+          if ((orgContent || '').trim() !== (firstPassContent || '')?.trim()) {
+            if (
+              firstTimeRewriteFileFlag &&
+              (firstPassContent || '').trim() ===
+                (secondPassContent || '').trim() // it means it is stable
+            ) {
+              Helpers.logInfo(`Rewrite file ${this.absSourcePathFromSrc}`);
+              Helpers.writeFile(this.absSourcePathFromSrc, firstPassContent);
+              continue;
+            } else {
+              Helpers.logError(
+                `
+
+            FRAMEWORK BUILDIER ERROR
+
+
+            [${config.frameworkName}]] Unstable file modification ${this.absSourcePathFromSrc}
+
+
+
+            `,
+              );
+            }
+          }
+        }
+        //#endregion
+      }
+
+      this.rawContentForBrowser = orgContent;
+      this.rawContentForAPPONLYBrowser = this.rawContentForBrowser; // TODO not needed ?
+      this.rawContentBackend = this.rawContentForBrowser; // at the beginning those are normal files from src
+      this.rawContentEsmBackend = this.rawContentForBrowser;
+      break;
+    }
     return this;
     //#endregion
   }
@@ -810,7 +925,10 @@ export class BrowserCodeCut {
                 tailWindFileNgProjAbsPath,
                 this.buildOptions,
               );
-            if (!currentContentTailwindCss || currentContentTailwindCss !== newContentTailwindCss) {
+            if (
+              !currentContentTailwindCss ||
+              currentContentTailwindCss !== newContentTailwindCss
+            ) {
               Helpers.logInfo(`Updating tailwind.css`);
               UtilsFilesFoldersSync.writeFile(
                 tailWindFileNgProjAbsPath,
@@ -1169,9 +1287,12 @@ export class BrowserCodeCut {
         if (!fse.existsSync(path.dirname(this.absoluteBackendDestFilePath))) {
           fse.mkdirpSync(path.dirname(this.absoluteBackendDestFilePath));
         }
-        const isFrontendFile = isBrowserFilePath(this.absoluteBackendDestFilePath, {
-          skipStateService: true,
-        });
+        const isFrontendFile = isBrowserFilePath(
+          this.absoluteBackendDestFilePath,
+          {
+            skipStateService: true,
+          },
+        );
 
         if (isFrontendFile) {
           // console.log(`Ommiting for backend: ${absoluteBackendDestFilePath} `)
@@ -1314,7 +1435,6 @@ export class BrowserCodeCut {
   ): string {
     //#region @backendFunc
 
-    const isLibFile = this.relativePath.startsWith(`${libFromSrc}/`);
     if (!absFilePath.endsWith('.ts')) {
       if (absFilePath.endsWith('.tsx')) {
         // ok
@@ -1352,22 +1472,6 @@ export class BrowserCodeCut {
 
     const projectOwnSmartPackages = this.projectOwnSmartPackages;
     const { isBrowser } = options;
-
-    const howMuchBack = this.relativePath.split('/').length - 1;
-    const howMuchBackIndex = howMuchBack - 1;
-    const backAppLibIndex =
-      howMuchBack === 0
-        ? './'
-        : _.times(howMuchBack)
-            .map(() => '../')
-            .join('');
-
-    const backLibIndex =
-      howMuchBackIndex === 0
-        ? './'
-        : _.times(howMuchBackIndex)
-            .map(() => '../')
-            .join('');
 
     let toReplace: UtilsTypescript.TsImportExport[] = [];
 
@@ -1447,9 +1551,6 @@ export class BrowserCodeCut {
     }
 
     this.handleIllegalImports({
-      backAppLibIndex,
-      backLibIndex,
-      isLibFile,
       toReplace,
     });
     content = UtilsCodeCut.replaceInFile(content, toReplace);
@@ -1462,14 +1563,8 @@ export class BrowserCodeCut {
   //#region private / methods & getters / handle illegal imports
   private handleIllegalImports({
     toReplace,
-    backAppLibIndex,
-    backLibIndex,
-    isLibFile,
   }: {
     toReplace: UtilsTypescript.TsImportExport[];
-    backLibIndex: string;
-    backAppLibIndex: string;
-    isLibFile: boolean;
   }) {
     //#region @backendFunc
     // this.debug && console.log('to replace ', JSON.stringify(toReplace));
@@ -1480,7 +1575,7 @@ export class BrowserCodeCut {
 
       // this.debug && console.log({ cleanName });
 
-      if (isLibFile) {
+      if (this.isLibFile) {
         const indexInIfile = (this.rawOrginalContent || '')
           .split('\n')
           .findIndex(line => {
@@ -1503,7 +1598,11 @@ export class BrowserCodeCut {
         }
       }
 
-      const resultToReplace = `${isLibFile ? backLibIndex : backAppLibIndex}${indexTsFromLibFromSrc.replace('.tsx', '').replace('.ts', '')}`;
+      const resultToReplace = `${
+        this.isLibFile
+          ? this.backFromLibCode_ToSrcLibIndex
+          : this.backFromAppCode_ToSrcLibIndex
+      }${indexTsFromLibFromSrc.replace('.tsx', '').replace('.ts', '')}`;
       const wrapperResultToReplace = imp.wrapInParenthesis(resultToReplace);
       // console.log({ resultToReplace, wrapperResultToReplace });
 

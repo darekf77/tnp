@@ -5,7 +5,10 @@ import { extAllowedToReplace } from 'tnp-core/src';
 import { crossPlatformPath, fse, path, _ } from 'tnp-core/src';
 
 import { isTestFile } from '../../../../../../../app-utils';
-import { srcMainProject } from '../../../../../../../constants';
+import {
+  srcMainProject,
+  TaonGeneratedFiles,
+} from '../../../../../../../constants';
 import { EnvOptions } from '../../../../../../../options';
 import type { Project } from '../../../../../project';
 
@@ -50,20 +53,35 @@ export class CodeCut {
     //#endregion
   }
 
+  public allFilesRelative = new Map<string, boolean>();
+
   /**
    * ex: assets/file.png or my-app/component.ts
    */
   files(relativeFilesToProcess: string[], remove: boolean = false) {
     //#region @backendFunc
+
     for (let index = 0; index < relativeFilesToProcess.length; index++) {
       const relativeFilePath = relativeFilesToProcess[index];
-      // console.log(`CUT: ${relativeFilePath}`)
-      this.file(relativeFilePath, remove);
+      if (remove) {
+        this.allFilesRelative.delete(relativeFilePath);
+      } else {
+        this.allFilesRelative.set(relativeFilePath, true);
+      }
+
+      // console.log(
+      //   `CUT: ${this.project.pathFor([srcMainProject, relativeFilePath])}`,
+      // );
+      this.file(relativeFilePath, this.allFilesRelative, remove);
     }
     //#endregion
   }
 
-  file(relativePathToFile: string, remove: boolean = false): void {
+  file(
+    relativePathToFile: string,
+    relativeFilesToProcess: Map<string, boolean>,
+    remove: boolean = false,
+  ): void {
     // console.log('CUT: ', relativePathToFile);
 
     //#region @backendFunc
@@ -97,6 +115,7 @@ export class CodeCut {
         isCuttableFile: false,
         fileRemovedEvent: remove,
         regionReplaceOptions: this.options,
+        relativeFilesToProcess,
       });
       setDoneFirstTimeCompilation(
         codeCutNotCuttable.relativePath,
@@ -115,6 +134,7 @@ export class CodeCut {
       isCuttableFile: true,
       fileRemovedEvent: remove,
       regionReplaceOptions: this.options,
+      relativeFilesToProcess,
     });
     setDoneFirstTimeCompilation(
       codeCutCuttable.relativePath,

@@ -185,6 +185,16 @@ export class BrowserCompilation extends BaseClientCompiler {
       return relativePath;
     });
 
+    this.codecutNORMAL.allFilesRelative = new Map<string, boolean>(
+      relativePathesToProcess
+        .filter(f => f.endsWith('.ts') || f.endsWith('.tsx'))
+        .map(c => [c, true]),
+    );
+    this.codecutWEBSQL.allFilesRelative = new Map<string, boolean>(
+      relativePathesToProcess
+        .filter(f => f.endsWith('.ts') || f.endsWith('.tsx'))
+        .map(c => [c, true]),
+    );
     this.codecutNORMAL.files(relativePathesToProcess);
     this.codecutWEBSQL.files(relativePathesToProcess);
 
@@ -483,7 +493,9 @@ export class BrowserCompilation extends BaseClientCompiler {
         `(context=${context}) File exits, but event unlink from watcher ${orignalFile}`,
       );
     } else {
-      Helpers.logWarn(`(context=${context}) Removing ${destinationTempSrcFile}`);
+      Helpers.logWarn(
+        `(context=${context}) Removing ${destinationTempSrcFile}`,
+      );
       try {
         Helpers.removeFileIfExists(destinationTempSrcFile);
       } catch (error) {
