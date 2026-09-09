@@ -19,6 +19,7 @@ export class $SubProject extends BaseCli {
 
   async _() {
     //#region @backend
+    let firstTime = true;
     if (!this.project.typeIs('isomorphic-lib')) {
       Helpers.error(
         `Command only for taon isomorphic-lib project`,
@@ -73,7 +74,10 @@ export class $SubProject extends BaseCli {
       : void 0;
 
     while (true) {
-      UtilsTerminal.clearConsole();
+      if (!this.firstArg?.toLowerCase() && firstTime) {
+        firstTime = false;
+        UtilsTerminal.clearConsole();
+      }
 
       const exitAfterDone = !!overrideSelect;
 

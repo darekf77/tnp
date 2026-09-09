@@ -1,6 +1,12 @@
 //#region imports
 
-import { _, CoreModels, path, UtilsFilesFoldersSync } from 'tnp-core/src';
+import {
+  _,
+  CoreModels,
+  path,
+  UtilsFilesFoldersSync,
+  UtilsJson,
+} from 'tnp-core/src';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
 import {
@@ -82,11 +88,12 @@ export class CloudFlareSubProjectsRepository extends BaseFeatureForProject<Proje
     const environments = this.project.releaseProcess
       .getEnvNamesByArtifact(ReleaseArtifactTaon.ANGULAR_NODE_APP)
       .map(c => `${c.envName}${c.envNumber ?? ''}`);
+    // console.log({ environments });
 
     const all = TempalteSubprojectTypeArr.reduce((allFolders, tempalteType) => {
       const availableEnvs: readonly string[] =
         tempalteType === TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
-          ? environments
+          ? environments.concat([void 0])
           : [void 0];
 
       const available = availableEnvs
@@ -96,9 +103,27 @@ export class CloudFlareSubProjectsRepository extends BaseFeatureForProject<Proje
             envWithNameAndNum,
           );
 
-          return UtilsFilesFoldersSync.getFoldersFrom(foldersPath, {
-            omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
-          });
+          // console.log({ foldersPath });
+
+          const foundFolders = UtilsFilesFoldersSync.getFoldersFrom(
+            foldersPath,
+            {
+              omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
+            },
+          );
+
+          for (const foundAbsPath of foundFolders) {
+            // TODO QUICK_FIX when I ignore to many package.jsons
+            if (!Helpers.exists([foundAbsPath, packageJsonSubProject])) {
+              UtilsJson.setValue(
+                [foundAbsPath, packageJsonSubProject],
+                'name',
+                path.basename(foundAbsPath),
+              );
+            }
+          }
+
+          return foundFolders;
         })
         .reduce((a, b) => {
           return a.concat(b);
@@ -176,43 +201,58 @@ export class CloudFlareSubProjectsRepository extends BaseFeatureForProject<Proje
   //#endregion
 
   //#region get all by type
-  protected getAllByTypePaths(tempalteType: TempalteSubprojectType): string[] {
-    const environments = this.project.releaseProcess
-      .getEnvNamesByArtifact(ReleaseArtifactTaon.ANGULAR_NODE_APP)
-      .map(c => `${c.envName}${c.envNumber ?? ''}`);
+  // protected getAllByTypePaths(tempalteType: TempalteSubprojectType): string[] {
+  //   const environments = this.project.releaseProcess
+  //     .getEnvNamesByArtifact(ReleaseArtifactTaon.ANGULAR_NODE_APP)
+  //     .map(c => `${c.envName}${c.envNumber ?? ''}`);
 
-    const availableEnvs: readonly string[] =
-      tempalteType === TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
-        ? environments
-        : [void 0];
+  //   const availableEnvs: readonly string[] =
+  //     tempalteType === TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
+  //       ? environments.concat([void 0])
+  //       : [void 0];
 
-    const available = availableEnvs
-      .map(envNameWithNum =>
-        UtilsFilesFoldersSync.getFoldersFrom(
-          this.pathToTempalteInCurrentProject(tempalteType, envNameWithNum),
-          {
-            omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
-          },
-        ),
-      )
-      .reduce((a, b) => {
-        return a.concat(b);
-      }, [] as string[])
-      .filter(f => {
-        return Helpers.exists([f, path.basename(f), packageJsonSubProject]);
-      });
+  //   const available = availableEnvs
+  //     .map(envNameWithNum => {
+  //       const foundFolders = UtilsFilesFoldersSync.getFoldersFrom(
+  //         this.pathToTempalteInCurrentProject(tempalteType, envNameWithNum),
+  //         {
+  //           omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
+  //         },
+  //       );
 
-    return available;
-  }
+  //       for (const foundAbsPath of foundFolders) {
+  //         // QUCK_FIX
+  //         if (!Helpers.exists([foundAbsPath, packageJsonSubProject])) {
+  //           UtilsJson.setValue(
+  //             [foundAbsPath, packageJsonSubProject],
+  //             'name',
+  //             path.basename(foundAbsPath),
+  //           );
+  //         }
+  //       }
+
+  //       // console.log({ foundFolders });
+  //       return foundFolders;
+  //     })
+  //     .reduce((a, folder) => {
+  //       console.log({ folder });
+  //       return a.concat(folder);
+  //     }, [] as string[])
+  //     .filter(f => {
+  //       return Helpers.exists([f, path.basename(f), packageJsonSubProject]);
+  //     });
+
+  //   return available;
+  // }
   //#endregion
 
   //#region get all project by type
-  public getAllByType(tempalteType: TempalteSubprojectType): Project[] {
-    const allPaths = this.getAllByTypePaths(tempalteType);
-    const byType = allPaths.map(c => this.project.ins.From(c)).filter(f => !!f);
+  // public getAllByType(tempalteType: TempalteSubprojectType): Project[] {
+  //   const allPaths = this.getAllByTypePaths(tempalteType);
+  //   const byType = allPaths.map(c => this.project.ins.From(c)).filter(f => !!f);
 
-    return byType;
-  }
+  //   return byType;
+  // }
   //#endregion
 
   //#region recreate all
