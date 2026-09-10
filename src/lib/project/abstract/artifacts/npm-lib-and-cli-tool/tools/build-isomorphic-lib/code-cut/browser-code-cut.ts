@@ -1242,6 +1242,7 @@ export class BrowserCodeCut {
 
     if (
       !this.buildOptions.build.watch &&
+      !this.buildOptions.release.skipCodeCutting &&
       this.buildOptions.release.releaseType &&
       this.buildOptions.release.targetArtifact ===
         ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL &&
@@ -1250,16 +1251,20 @@ export class BrowserCodeCut {
       (this.relativePath.endsWith('.ts') || this.relativePath.endsWith('.tsx'))
     ) {
       // skip app files for release
-      UtilsFilesFoldersSync.writeFile(this.absoluteBackendEsmDestFilePath, '');
-      UtilsFilesFoldersSync.writeFile(this.absoluteBackendDestFilePath, '');
+      const info = `/* skipping app files for release build */`;
+      UtilsFilesFoldersSync.writeFile(
+        this.absoluteBackendEsmDestFilePath,
+        info,
+      );
+      UtilsFilesFoldersSync.writeFile(this.absoluteBackendDestFilePath, info);
       UtilsFilesFoldersSync.writeFile(
         this.absFileSourcePathBrowserOrWebsql,
-        '',
+        info,
       );
 
       UtilsFilesFoldersSync.writeFile(
         this.absFileSourcePathBrowserOrWebsqlAPPONLY,
-        '',
+        info,
       );
 
       return;
