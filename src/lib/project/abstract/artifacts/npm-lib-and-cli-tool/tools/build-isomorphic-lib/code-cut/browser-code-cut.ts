@@ -106,7 +106,7 @@ const notAllowedToPRocess = [appAutoGenDocsMd, appAutoGenJs];
 export class BrowserCodeCut {
   //#region constants
   public static debugFiles = [
-    'taon-notification-recipient.entity.ts',
+    // 'taon-notification-recipient.entity.ts',
     // 'taon-auth-context.entity.ts',
     // 'app.ts',
     // 'app-utils.ts',
@@ -312,13 +312,13 @@ export class BrowserCodeCut {
       d => path.basename(this.relativePath) === d,
     );
 
-    this.debug &&
-      console.log({
-        backFromLibCode_ToSrcLibIndex: this.backFromLibCode_ToSrcLibIndex,
-        backFromAppCode_ToSrcLibIndex: this.backFromAppCode_ToSrcLibIndex,
-        backFromAppCode_ToSrcIndex: this.backFromAppCode_ToSrcIndex,
-        backFromLibCode_ToSrcIndex: this.backFromLibCode_ToSrcIndex,
-      });
+    // this.debug &&
+    //   console.log({
+    //     backFromLibCode_ToSrcLibIndex: this.backFromLibCode_ToSrcLibIndex,
+    //     backFromAppCode_ToSrcLibIndex: this.backFromAppCode_ToSrcLibIndex,
+    //     backFromAppCode_ToSrcIndex: this.backFromAppCode_ToSrcIndex,
+    //     backFromLibCode_ToSrcIndex: this.backFromLibCode_ToSrcIndex,
+    //   });
 
     this.absoluteBackendDestFilePath = crossPlatformPath([
       this.project.location,

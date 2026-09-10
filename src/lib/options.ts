@@ -1,6 +1,6 @@
 import type axiosType from 'axios';
 import { walk } from 'lodash-walk-object/src';
-import { chalk, config, LibTypeEnum, UtilsTerminal } from 'tnp-core/src';
+import { chalk, config, LibTypeEnum, UtilsEnv, UtilsTerminal } from 'tnp-core/src';
 import { Helpers } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
 
@@ -536,7 +536,7 @@ class EnvOptionsRelease {
    */
   declare staticPagesCustomRepoUrl?: string;
 
-  declare envName: CoreModels.EnvironmentNameTaon;
+  declare envName: UtilsEnv.EnvironmentNameTaon;
 
   /**
    * undefined - prod
@@ -925,7 +925,7 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
   declare website: Partial<EnvOptionsWebsite>;
 
   //#region generated fields
-  declare readonly name?: CoreModels.EnvironmentNameTaon; // generated
+  declare readonly name?: UtilsEnv.EnvironmentNameTaon; // generated
 
   declare readonly currentProjectName?: string;
 

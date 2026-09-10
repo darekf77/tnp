@@ -10,6 +10,7 @@ import {
   folderName,
   taonContainers,
   tnpPackageName,
+  UtilsEnv,
 } from 'tnp-core/src';
 import { CoreModels, fse } from 'tnp-core/src';
 import { _, UtilsOs } from 'tnp-core/src';
@@ -264,7 +265,7 @@ export const environmentsFolder = 'environments';
 export const coreRequiredEnvironments = [
   '__',
   'prod',
-] as CoreModels.EnvironmentNameTaon[];
+] as UtilsEnv.EnvironmentNameTaon[];
 
 /**
  * @deprecated not needed probably

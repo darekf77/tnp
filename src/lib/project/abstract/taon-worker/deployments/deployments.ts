@@ -11,7 +11,7 @@ import {
   NumberColumn,
   VersionColumn,
 } from 'taon/src';
-import { _, chalk, CoreModels, dateformat, path } from 'tnp-core/src';
+import { _, chalk, CoreModels, dateformat, path, UtilsEnv } from 'tnp-core/src';
 import { FilePathMetaData } from 'tnp-core/src';
 
 import { keysMap } from '../../../../constants';
@@ -79,7 +79,7 @@ export class Deployments
   //#region @websql
   @String100Column()
   //#endregion
-  envName: CoreModels.EnvironmentNameTaon;
+  envName: UtilsEnv.EnvironmentNameTaon;
   //#endregion
 
   //#region environment number

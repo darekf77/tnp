@@ -2,7 +2,7 @@
 import { incrementalWatcher } from 'incremental-compiler/src';
 import { walk } from 'lodash-walk-object/src';
 import { from } from 'rxjs';
-import { config, LibTypeEnum, tnpPackageName } from 'tnp-core/src';
+import { config, LibTypeEnum, tnpPackageName, UtilsEnv } from 'tnp-core/src';
 import { chalk, CoreModels, crossPlatformPath, fse, Utils } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
@@ -59,14 +59,19 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   //#region api / create artifact
   public async createForArtifact(
     artifactName: ReleaseArtifactTaon,
-    envName: CoreModels.EnvironmentNameTaon = CoreModels.EnvironmentName.__,
-    envNumber: number = undefined,
+    envName: UtilsEnv.EnvironmentNameTaon = UtilsEnv.EnvironmentName.__,
+    envNumber: string | number = undefined,
   ): Promise<void> {
     //#region @backendFunc
     const environmentsAbsPath = this.project.pathFor([
       environmentsFolder,
       artifactName,
-      `env.${artifactName}.${envName}${envNumber ?? ''}.ts`,
+      UtilsEnv.getTsFileName({
+        artifactName,
+        envName,
+        envNumber,
+      }),
+      // `env.${artifactName}.${envName}${envNumber ?? ''}.ts`,
     ]);
 
     Helpers.writeFile(environmentsAbsPath, this.getBaseEnvTemplate());
@@ -203,7 +208,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   //#region private methods / get env for
   private getEnvFor(
     artifactName: ReleaseArtifactTaon,
-    environmentName: CoreModels.EnvironmentNameTaon,
+    environmentName: UtilsEnv.EnvironmentNameTaon,
     envNum: number = undefined,
     fromWatcher = false,
   ): Partial<EnvOptions> {
@@ -225,7 +230,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
         HelpersTaon.copyFile(
           crossPlatformPath([
             path.dirname(pathToEnvTs),
-            `env.${artifactName}.${CoreModels.EnvironmentName.__}.ts`,
+            `env.${artifactName}.${UtilsEnv.EnvironmentName.__}.ts`,
           ]),
           pathToEnvTs,
         );

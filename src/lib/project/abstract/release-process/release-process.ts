@@ -1,5 +1,5 @@
 //#region imports
-import { config, LibTypeEnum } from 'tnp-core/src';
+import { config, LibTypeEnum, UtilsEnv } from 'tnp-core/src';
 import {
   chalk,
   CoreModels,
@@ -269,7 +269,7 @@ ${chalk.bold.green('Local release')} => use current git repo for storing release
 
   //#region get environment names by artifact
   public getEnvNamesByArtifact(artifact: ReleaseArtifactTaon): {
-    envName: CoreModels.EnvironmentNameTaon;
+    envName: UtilsEnv.EnvironmentNameTaon;
     envNumber?: number | undefined;
   }[] {
     //#region @backendFunc
@@ -288,12 +288,18 @@ ${chalk.bold.green('Local release')} => use current git repo for storing release
       .map(f => path.basename(f))
       .filter(f => f.startsWith('env.') && f.endsWith('.ts'))
       .map(f => {
-        const env = f.replace(`env.${artifact}.`, '').replace('.ts', '');
-        const envRemovedNumbers = env.replace(/\d/g, '');
-        const envNumber = parseInt(env.replace(envRemovedNumbers, ''));
+        // const env = f.replace(`env.${artifact}.`, '').replace('.ts', '');
+        // const envRemovedNumbers = env.replace(/\d/g, '');
+        // const envNumber = parseInt(env.replace(envRemovedNumbers, ''));
+        // return {
+        //   envName: envRemovedNumbers as UtilsEnv.EnvironmentNameTaon,
+        //   envNumber: !isNaN(envNumber) ? envNumber : undefined,
+        // };
+        const { envName, envNumber } = UtilsEnv.splitEnv(f);
+
         return {
-          envName: envRemovedNumbers as CoreModels.EnvironmentNameTaon,
-          envNumber: !isNaN(envNumber) ? envNumber : undefined,
+          envName: envName as UtilsEnv.EnvironmentNameTaon,
+          envNumber,
         };
       })
       .sort((a, b) => {

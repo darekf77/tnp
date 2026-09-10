@@ -9,10 +9,13 @@ import {
   crossPlatformPath,
   Helpers,
   config,
+  CoreModels,
+  UtilsEnv,
 } from 'tnp-core/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
 import {
+  environmentsFolder,
   TempalteSubprojectType,
   TempalteSubprojectTypeArr,
 } from '../../constants';
@@ -156,6 +159,51 @@ export class SubProject extends BaseFeatureForProject<Project> {
     const environments = this.project.releaseProcess.getEnvNamesByArtifact(
       ReleaseArtifactTaon.ANGULAR_NODE_APP,
     );
+
+    //#region recreate env file is does not exits in user folder
+    const envAsString = environments.map(
+      c => `${c.envName}${!_.isNil(c.envNumber) ? c.envName : ''}`,
+    );
+    if (
+      opt.projectEnvironmentNameWithNumber &&
+      !envAsString.includes(opt.projectEnvironmentNameWithNumber)
+    ) {
+      const env = UtilsEnv.splitEnv(opt.projectEnvironmentNameWithNumber);
+      const templateFileSource = this.project.framework.coreProject.pathFor([
+        environmentsFolder,
+        ReleaseArtifactTaon.ANGULAR_NODE_APP,
+        UtilsEnv.getTsFileName({
+          artifactName: ReleaseArtifactTaon.ANGULAR_NODE_APP,
+          envName: env.envName,
+          envNumber: env.envNumber,
+        }),
+      ]);
+
+      if (!Helpers.exists(templateFileSource)) {
+        Helpers.error(
+          `
+
+          Environment name: ${opt.projectEnvironmentNameWithNumber} is not allowed
+          name for environment.
+
+          `,
+          false,
+          true,
+        );
+      }
+
+      const templateFileDest = this.project.pathFor([
+        environmentsFolder,
+        ReleaseArtifactTaon.ANGULAR_NODE_APP,
+        UtilsEnv.getTsFileName({
+          artifactName: ReleaseArtifactTaon.ANGULAR_NODE_APP,
+          envName: env.envName,
+          envNumber: env.envNumber,
+        }),
+      ]);
+      UtilsFilesFoldersSync.copyFile(templateFileSource, templateFileDest);
+    }
+    //#endregion
 
     let selectedEnv = opt.projectEnvironmentNameWithNumber;
     if (

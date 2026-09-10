@@ -1,4 +1,4 @@
-import { CoreModels, LibTypeEnum, _, UtilsI18n } from 'tnp-core/src';
+import { CoreModels, LibTypeEnum, _, UtilsI18n, UtilsEnv } from 'tnp-core/src';
 import { PackageJson } from 'tnp-helpers/src';
 
 import type { ReleaseArtifactTaon, ReleaseType } from './options';
@@ -77,7 +77,7 @@ export namespace Models {
     /**
      * if not proviede default  env.<artifact-name>.__.ts will be in use
      */
-    envName?: CoreModels.EnvironmentName;
+    envName?: UtilsEnv.EnvironmentName;
     /**
      * example for dev environtment
      * > undefined - env.<artifact-name>.dev.ts

@@ -1,6 +1,6 @@
 import { Taon, TaonEntity } from 'taon/src';
 import { TaonBaseAbstractEntity, StringColumn } from 'taon/src';
-import { CoreModels } from 'tnp-core/src';
+import { CoreModels, UtilsEnv } from 'tnp-core/src';
 
 @TaonEntity({
   className: 'TaonEnv',
@@ -8,7 +8,7 @@ import { CoreModels } from 'tnp-core/src';
 export class TaonEnv extends TaonBaseAbstractEntity {
   static from(obj: {
     name: string;
-    type: CoreModels.EnvironmentNameTaon;
+    type: UtilsEnv.EnvironmentNameTaon;
   }): TaonEnv {
     return new TaonEnv().clone(obj);
   }
@@ -19,7 +19,7 @@ export class TaonEnv extends TaonBaseAbstractEntity {
   @StringColumn()
   //#endregion
 
-  type: CoreModels.EnvironmentNameTaon;
+  type: UtilsEnv.EnvironmentNameTaon;
   //#endregion
 
   //#region fields / name

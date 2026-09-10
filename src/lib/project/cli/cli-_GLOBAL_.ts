@@ -12,6 +12,7 @@ import {
   taonContainers,
   taonPackageName,
   tnpPackageName,
+  UtilsEnv,
   UtilsFilesFoldersSync,
   UtilsMdDocs,
   UtilsProjects,
@@ -1182,7 +1183,7 @@ ${this.project.children
         },
         {
           artifactName: ReleaseArtifactTaon.ANGULAR_NODE_APP,
-          envName: CoreModels.EnvironmentName.DEV,
+          envName: UtilsEnv.EnvironmentName.DEV,
           taskName: 'localhost-manual-dev-release',
           releaseType: ReleaseType.MANUAL_TAON,
           taonInstanceIp: '127.0.0.1',
@@ -2260,7 +2261,13 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
   // }
   //#endregion
 
-
+  envs() {
+    const environments = this.project.releaseProcess.getEnvNamesByArtifact(
+      this.firstArg as any,
+    );
+    console.log({ environments });
+    this._exit(0);
+  }
 }
 
 export default {

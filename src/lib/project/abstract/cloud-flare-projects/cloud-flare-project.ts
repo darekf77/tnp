@@ -9,6 +9,7 @@ import {
   UtilsTerminal,
   _,
   CoreModels,
+  UtilsEnv,
 } from 'tnp-core/src';
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
@@ -41,7 +42,7 @@ export class CloudFlareSubProject {
 
   public readonly selectedTempalte: TempalteSubprojectType;
 
-  public readonly envName: CoreModels.EnvironmentName | undefined;
+  public readonly envName: UtilsEnv.EnvironmentName | undefined;
 
   public readonly envNumber: number | undefined;
 
@@ -124,7 +125,7 @@ export class CloudFlareSubProject {
       .basename(path.dirname(absLocationPath))
       .split('__');
     this.selectedTempalte = firstPart as any;
-    const { envName, envNumber } = CoreModels.splitEnv(secondPart);
+    const { envName, envNumber } = UtilsEnv.splitEnv(secondPart);
     this.envName = envName as any;
     this.envNumber = envNumber;
     //#endregion

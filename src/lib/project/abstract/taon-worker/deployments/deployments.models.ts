@@ -1,4 +1,4 @@
-import { CoreModels } from 'tnp-core/src';
+import { CoreModels, UtilsEnv } from 'tnp-core/src';
 
 import { ReleaseArtifactTaon, ReleaseType } from '../../../../options';
 
@@ -11,7 +11,7 @@ export interface DeploymentReleaseData {
   destinationDomain: string;
   releaseType: ReleaseType;
   version: string;
-  envName: CoreModels.EnvironmentNameTaon;
+  envName: UtilsEnv.EnvironmentNameTaon;
   envNumber?: string;
   targetArtifact: ReleaseArtifactTaon;
 }
