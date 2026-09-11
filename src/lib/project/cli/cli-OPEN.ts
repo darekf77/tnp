@@ -39,6 +39,16 @@ export class $Open extends BaseCli {
     this._exit();
   }
 
+  async temp() {
+    //#region @backendFunc
+    const editor = await this.ins.editor();
+    Helpers.run(`${editor} .`, {
+      cwd: UtilsOs.getTempFolder(),
+    }).sync();
+    this._exit();
+    //#endregion
+  }
+
   async CORE_CONTAINER() {
     if (!this.project?.framework?.coreContainer) {
       Helpers.error(`This is not taon project`);
