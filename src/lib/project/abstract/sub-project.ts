@@ -55,7 +55,12 @@ export class SubProject extends BaseFeatureForProject<Project> {
       name: ${chosenProject.name}
       location: ${chosenProject.absLocationPath}
       template type: ${chosenProject.selectedTempalte}
-
+      ${
+        chosenProject.selectedTempalte ===
+        TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
+          ? `environment: ${chosenProject.envName}${chosenProject.envNumber ?? ''}`
+          : ''
+      }
 
       `);
 

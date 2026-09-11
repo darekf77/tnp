@@ -504,6 +504,7 @@ export const distElectronProj = folderName.dist;
  * Normal angular app build
  */
 export const distFromNgBuild = folderName.dist;
+export const distFromWorkerBuild = folderName.dist;
 
 export const distEsm = 'dist-esm';
 

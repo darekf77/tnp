@@ -1,7 +1,9 @@
 import {
   fileName,
+  GlobalStorage,
   Helpers,
   startAsync,
+  taonActionFromParent,
   UtilsExecProc,
   UtilsOs,
 } from 'tnp-core/src';
@@ -9,6 +11,7 @@ import {
 import {
   buildJS,
   buildJSprod,
+  distFromWorkerBuild,
   externalJs,
   wranglerJsonC,
 } from '../../../constants';
@@ -42,30 +45,43 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
         }),
       );
 
-    await startAsync(
+    // const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
+    const command =
       `npm run start -- --port ${ngCloudflareWorkerPort} ` +
-        `${Helpers.getIsVerboseMode() ? '--log-level debug' : ''} ` +
-        ` --persist-to ${UtilsOs.getTempFolder({
-          prefix: 'temp-cloudflare',
-        })} `,
-      this.cwdWorker,
-      {
-        uniqueName: `cloudflare`,
-        prefix: true,
-        outputLineReplace: line => {
-          // console.log({ line });
-          if (line.includes('Ready on')) {
-            let url = extractWranglerReadyUrl(line);
-            if (url) {
-              url = `${url}/api/`;
-              console.log(`PINGING FOR INIT "${url}"`);
-              fetch(url);
-            }
+      `${Helpers.getIsVerboseMode() ? '--log-level debug' : ''} ` +
+      ` --persist-to ${UtilsOs.getTempFolder({
+        prefix: 'temp-cloudflare',
+      })} `;
+
+    Helpers.info(`Executing command:
+
+      ${command}
+
+      `);
+
+    await startAsync(command, this.cwdWorker, {
+      uniqueName: `cloudflare`,
+      prefix: true,
+      outputLineReplace: line => {
+        // console.log({ line });
+        if (line.includes('Ready on')) {
+          let url = extractWranglerReadyUrl(line);
+          if (url) {
+            url = `${url}/api/`;
+            console.log(`PINGING FOR INIT "${url}"`);
+            fetch(url);
           }
-          return line;
-        },
+        }
+        const errorPath = 'at null.<anonymous> (';
+        if (line.includes(errorPath)) {
+          line = line.replace(
+            errorPath,
+            `(${this.cwdWorker}/${distFromWorkerBuild}/`,
+          );
+        }
+        return line;
       },
-    );
+    });
     //#endregion
   }
   //#endregion

@@ -1,3 +1,4 @@
+//#region imports
 import { RenameRule } from 'magic-renamer/src';
 import {
   crossPlatformPath,
@@ -32,6 +33,7 @@ import { EnvOptions } from '../../../options';
 import type { Project } from '../project';
 
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
+//#endregion
 
 export class CloudFlareSubProject {
   //#region fields & getters
