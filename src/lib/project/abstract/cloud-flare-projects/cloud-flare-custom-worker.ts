@@ -1,4 +1,5 @@
 import {
+  crossPlatformPath,
   fileName,
   GlobalStorage,
   Helpers,
@@ -9,6 +10,7 @@ import {
 } from 'tnp-core/src';
 
 import {
+  browserWorkerBuild,
   buildJS,
   buildJSprod,
   distFromWorkerBuild,
@@ -21,6 +23,19 @@ import { CloudFlareSubProject } from './cloud-flare-project';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
 
 export class CloudCustomWorkerProject extends CloudFlareSubProject {
+  constructor(...args) {
+    // @ts-ignore
+    super(...args);
+
+    const browserFolder = crossPlatformPath([
+      this.cwdWorker,
+      browserWorkerBuild,
+    ]);
+    if (!Helpers.exists(browserFolder)) {
+      Helpers.mkdirp(browserFolder);
+    }
+  }
+
   //#region start in dev mode
   async startInDevMode(envOptions: EnvOptions): Promise<void> {
     //#region @backendFunc

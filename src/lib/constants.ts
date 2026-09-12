@@ -863,6 +863,7 @@ export const isomorphicPackagesJsonKey = 'isomorphicPackages';
 export const browserMainProject = folderName.browser;
 export const browserFromCompiledDist = folderName.browser;
 export const browserNgBuild = folderName.browser;
+export const browserWorkerBuild = folderName.browser;
 export const browserFromImport = folderName.browser;
 export const browserNpmPackage = folderName.browser;
 export const websqlMainProject = folderName.websql;
