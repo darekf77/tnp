@@ -61,12 +61,16 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
       );
 
     // const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
+    const tempFolder = UtilsOs.getTempFolder({
+      prefix: 'temp-cloudflare',
+    });
+
+    Helpers.logInfo(`Using temp folder ${tempFolder}`);
+
     const command =
       `npm run start -- --port ${ngCloudflareWorkerPort} ` +
       `${Helpers.getIsVerboseMode() ? '--log-level debug' : ''} ` +
-      ` --persist-to ${UtilsOs.getTempFolder({
-        prefix: 'temp-cloudflare',
-      })} `;
+      ` --persist-to ${tempFolder} `;
 
     Helpers.info(`Executing command:
 
