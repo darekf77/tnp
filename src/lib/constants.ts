@@ -447,7 +447,11 @@ export enum TaonGeneratedFiles {
   SHARED_FOLDER_INFO_TXT = 'shared_folder_info.txt',
   APP_HOSTS_TS = 'app.hosts.ts',
   LAUNCH_JSON = 'launch.json',
+  /**
+   * @deprecated use LAUNCH_BACKUP_JSONC
+   */
   LAUNCH_BACKUP_JSON = 'launch-backup.json',
+  LAUNCH_BACKUP_JSONC = 'launch-backup.jsonc',
   VARS_SCSS = 'vars.scss',
   LIB_INFO_MD = 'lib-info.md',
   APP_FOLDER_INFO_MD = 'app-folder-info.md',

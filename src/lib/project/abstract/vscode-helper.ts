@@ -27,6 +27,7 @@ import {
   srcMainProject,
   appAutoGenDocsMd,
   appAutoGenJs,
+  TaonGeneratedFiles,
 } from '../../constants';
 import { Models } from '../../models';
 import { Development, EnvOptions } from '../../options';
@@ -39,6 +40,21 @@ import type { Project } from './project';
  * support for launch.json, settings.json etc
  */ // @ts-ignore TODO weird inheritance problem
 export class Vscode extends BaseVscodeHelpers<Project> {
+  //#region @backend
+  private readonly commonProps = {};
+
+  constructor(...args) {
+    // @ts-ignore
+    super(...args);
+
+    if (UtilsOs.isRunningInLinuxDistro('arch')) {
+      this.commonProps = {
+        runtimeExecutable: UtilsOs.whichOrWherePackageLocated('node'),
+      };
+    }
+  }
+  //#endregion
+
   //#region init
   async init(options?: { skipHiddingTempFiles?: boolean }): Promise<void> {
     options = options || {};
@@ -335,6 +351,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
       debuggingPort: number = DEFAULT_PORT.DEBUGGING_CLI_TOOL,
     ) => ({
       type: 'node',
+      ...this.commonProps,
       request: 'attach',
       name: 'Attach to global cli tool',
       autoAttachChildProcesses: false, // TODO probably no need for now
@@ -359,6 +376,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
         {
           name: `${DEBUG_WORD} Vitest (all *.test.ts files)`,
           type: 'node',
+          ...this.commonProps,
           request: 'launch',
           program: '${workspaceFolder}/node_modules/vitest/vitest.mjs',
           args: ['run', '--environment', 'node', '--testTimeout', '60000'],
@@ -372,6 +390,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
         {
           name: `${DEBUG_WORD} Vitest (editor active test file)`,
           type: 'node',
+          ...this.commonProps,
           request: 'launch',
           program: '${workspaceFolder}/node_modules/vitest/vitest.mjs',
           args: [
@@ -402,6 +421,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
 
       const startServerTemplate = {
         type: 'node',
+        ...this.commonProps,
         request: 'launch',
         name: `${DEBUG_WORD} ${
           additionalEntrypointId
@@ -456,6 +476,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
       return {
         name: `${DEBUG_WORD} Electron`,
         type: 'node',
+        ...this.commonProps,
         request: 'launch',
         protocol: 'inspector',
         cwd: '${workspaceFolder}',
@@ -541,6 +562,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
     configurations.forEach(c => {
       // c.outFiles = ['${workspaceFolder}/dist/**/*.js', '!**/node_modules/**'];
       delete c.outFiles;
+      delete c.runtimeExecutable;
       delete c.sourceMapPathOverrides;
       if (c.name === `${DEBUG_WORD} Electron`) {
         c.runtimeArgs[2] = `--remote-debugging-port=${DEFAULT_PORT.DEBUGGING_ELECTRON}`; // 9876
@@ -550,8 +572,10 @@ export class Vscode extends BaseVscodeHelpers<Project> {
       }
     });
 
+
+
     this.project.writeFile(
-      '.vscode/launch-backup.jsonc',
+      `.vscode/${TaonGeneratedFiles.LAUNCH_BACKUP_JSONC}`,
       `${THIS_IS_GENERATED_INFO_COMMENT}\n` +
         `${JSON.stringify(
           {
