@@ -57,6 +57,7 @@ import { DevMode } from './taon-worker/dev-mode/dev-mode.models';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
 import { DevModeUtils } from './taon-worker/dev-mode/dev-mode.utils';
+import { CloudFlarePorjectsUtils } from './cloud-flare-projects/cloud-flare-projects.utils';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem

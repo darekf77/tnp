@@ -65,6 +65,7 @@ import type {
   ReleasePartialOutput,
 } from './base-artifact';
 import { FilesRecreator } from './npm-lib-and-cli-tool/tools/files-recreation';
+import { CloudFlarePorjectsUtils } from '../cloud-flare-projects/cloud-flare-projects.utils';
 //#endregion
 
 /**
@@ -973,6 +974,14 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
     autoReleaseProcess = false,
   ): Promise<void> {
     //#region @backendFunc
+
+    if (
+      !this.project.taonJson.cloudFlareAccountSubdomain &&
+      (releaseOptions.release.releaseType === ReleaseType.CLOUD_CI_CLOUDFLARE ||
+        releaseOptions.release.releaseType === ReleaseType.MANUAL_CLOUDFLARE)
+    ) {
+      await CloudFlarePorjectsUtils.loginCliCloudFlare(this.project);
+    }
 
     //#region handle autorelease
     if (!autoReleaseProcess && releaseOptions.release.autoReleaseUsingConfig) {

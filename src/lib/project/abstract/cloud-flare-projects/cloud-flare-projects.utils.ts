@@ -12,6 +12,8 @@ import {
   CoreModels,
   LibTypeEnum,
   child_process,
+  fse,
+  chalk,
 } from 'tnp-core/src';
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
@@ -36,12 +38,15 @@ import { CloudFlareYtWorkerPorject } from './cloud-flare-yt-worker-project';
 //#endregion
 
 export namespace CloudFlarePorjectsUtils {
+  //#region add project options
   export interface AddProjectOptions {
     skipDeployment?: boolean;
     projectType?: TempalteSubprojectType;
     projectEnvironmentNameWithNumber?: string;
   }
+  //#endregion
 
+  //#region files for sub project branding
   export interface FilesForSubProjectBranding {
     relativePath: string;
 
@@ -52,7 +57,9 @@ export namespace CloudFlarePorjectsUtils {
       cwdWorker?: string,
     ) => string;
   }
+  //#endregion
 
+  //#region  get kv database prefix from template
   /**
    * examples:
    */
@@ -65,14 +72,18 @@ export namespace CloudFlarePorjectsUtils {
       '_',
     )}_KV_${_.snakeCase(taonParentProjectName).toUpperCase()}`;
   };
+  //#endregion
 
+  //#region get worker prefix from template
   export const getWorkerPrefixFromTemplate = (
     templateType: TempalteSubprojectType,
     taonParentProjectName: string,
   ): string => {
     return `cw-${getPrefixFromGroup(templateType)}_${taonParentProjectName}`;
   };
+  //#endregion
 
+  //#region get prefix group
   export const getPrefixFromGroup = (
     templateType: TempalteSubprojectType,
   ): string => {
@@ -81,6 +92,7 @@ export namespace CloudFlarePorjectsUtils {
       .replace('-cloudflare-worker', '')
       .replace('-worker', '');
   };
+  //#endregion
 
   //#region extract worker account name
   export const extractWorkersDevInfo = (text: string) => {
@@ -94,58 +106,71 @@ export namespace CloudFlarePorjectsUtils {
   };
   //#endregion
 
-  // type WranglerWhoami = {
-  //   accounts: Array<{
-  //     id: string;
-  //     name: string;
-  //   }>;
-  // };
+  //#region select account for currrent project
+  export type WranglerWhoAmI = {
+    email?: string;
+    accounts?: Array<{
+      id: string;
+      name: string;
+    }>;
+  };
 
-  //#region extract worker account name from system
-  export const extractWorkerAccountInfoFromSystem =
-    async (): Promise<string> => {
-      return void 0;
-      //#region @backendFunc
-      // const output = child_process
-      //   .execSync('npx wrangler whoami --json', {
-      //     encoding: 'utf8',
-      //     stdio: ['ignore', 'pipe', 'pipe'],
-      //   })
-      //   .toString();
-      // const whoami = JSON.parse(output) as WranglerWhoami;
-      // console.log(JSON.stringify(whoami));
-      // if (!whoami.accounts?.length) {
-      //   throw new Error('No Cloudflare account found. Run: npx wrangler login');
-      // }
-      // if (whoami.accounts.length > 1) {
-      //   throw new Error(
-      //     `Multiple Cloudflare accounts found: ${whoami.accounts
-      //       .map(a => `${a.name} (${a.id})`)
-      //       .join(', ')}`,
-      //   );
-      // }
-      // const accountId = whoami.accounts[0].id;
-      // // See note below about authentication/token.
-      // const response = await fetch(
-      //   `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/subdomain`,
-      //   {
-      //     headers: {
-      //       Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}`,
-      //     },
-      //   },
-      // );
-      // const data = (await response.json()) as {
-      //   success: boolean;
-      //   result?: {
-      //     subdomain: string;
-      //   };
-      // };
-      // if (!data.success || !data.result?.subdomain) {
-      //   throw new Error('Unable to determine Cloudflare workers.dev subdomain');
-      // }
-      // return data.result.subdomain;
-      //#endregion
+  export function getWranglerWhoAmI(): WranglerWhoAmI | undefined {
+    //#region @backendFunc
+    try {
+      const stdout = child_process.execFileSync(
+        'npx',
+        ['wrangler', 'whoami', '--json'],
+        {
+          encoding: 'utf8',
+          stdio: ['ignore', 'pipe', 'pipe'],
+        },
+      );
+
+      return JSON.parse(stdout);
+    } catch {
+      return undefined;
+    }
+    //#endregion
+  }
+
+  export async function getCloudflareWorkersSubdomain(
+    accountId: string,
+    apiToken: string,
+  ): Promise<string> {
+    //#region @backendFunc
+    const res = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/workers/subdomain`,
+      {
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+        },
+      },
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        `Cloudflare API error ${res.status}: ${await res.text()}`,
+      );
+    }
+
+    const json = (await res.json()) as {
+      success: boolean;
+      result?: {
+        subdomain: string;
+      };
+      errors?: unknown[];
     };
+
+    if (!json.success || !json.result?.subdomain) {
+      throw new Error(`Cannot resolve Cloudflare workers.dev subdomain.`);
+    }
+
+    return json.result.subdomain;
+    //#endregion
+  }
+
+  //#endregion
 
   //#region is wrangelr logged in
   export async function isWranglerLoggedIn(): Promise<boolean> {
@@ -170,8 +195,60 @@ export namespace CloudFlarePorjectsUtils {
   }
   //#endregion
 
+  const selectSubdomain = async (project: Project): Promise<void> => {
+    //#region @backendFunc
+    const whoami = getWranglerWhoAmI();
+
+    if (!whoami) {
+      Helpers.error(
+        'Unable to read Cloudflare account information from `wrangler whoami --json`.',
+        false,
+        true,
+      );
+    }
+
+    if (!whoami.accounts?.length) {
+      Helpers.error(
+        'No Cloudflare accounts are associated with the current Wrangler login.',
+        false,
+        true,
+      );
+    }
+
+    Helpers.info(`
+
+    Select your Cloudflare workers.dev subdomain for project ${chalk.bold(
+      project.name,
+    )}.
+
+    Example:
+    some-worker-name.${chalk.bold('your-subdomain')}.workers.dev
+
+  `);
+
+    const defaultSubdomain = (whoami.email ?? '')
+      .split('@')[0]
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-');
+
+    const accountSubdomain = await UtilsTerminal.input({
+      question: 'Enter subdomain:',
+      defaultValue: defaultSubdomain,
+      required: true,
+    });
+
+    project.taonJson.setCloudFlareAccountSubdomain(accountSubdomain);
+
+    Helpers.info(
+      `Cloudflare subdomain "${accountSubdomain}" set for project "${project.name}".`,
+    );
+    //#endregion
+  };
+
   //#region login to cloud flare
-  export const loginCliCloudFlare = async (): Promise<void> => {
+  export const loginCliCloudFlare = async (
+    project?: Project,
+  ): Promise<void> => {
     //#region @backendFunc
     let trysLogin = 0;
     Helpers.info(`CHECKING CLI CLOUDFLARE LOGIN`);
@@ -196,15 +273,24 @@ export namespace CloudFlarePorjectsUtils {
           await Utils.wait(2);
           Helpers.taskDone(`Login done.`);
         }
+
+        // const selectAccountId = await UtilsTerminal.select({
+        //   question: `Select cloudfalre account for this project (${chalk.bold(project.name)})`,
+        //   choices: whoami.accounts.map(c => ({
+        //     name: `${c.name} (${c.id})`,
+        //     value: c.id,
+        //   })),
+        // });
       } catch (error) {
         if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
           break;
         }
       }
     }
-    // const accountName =
-    //   await CloudFlarePorjectsUtils.extractWorkerAccountInfoFromSystem();
-    // console.log(`account name: ${accountName}`);
+
+    if (!!project && !project.taonJson.cloudFlareAccountSubdomain) {
+      await selectSubdomain(project);
+    }
 
     //#endregion
   };

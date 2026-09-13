@@ -129,7 +129,7 @@ export class $SubProject extends BaseCli {
       } else if (select === 'initall') {
         await this.project.subProject.repo.initAll();
       } else if (select === 'login') {
-        await CloudFlarePorjectsUtils.loginCliCloudFlare();
+        await CloudFlarePorjectsUtils.loginCliCloudFlare(this.project);
       } else if (select === 'exit') {
         this._exit();
       }

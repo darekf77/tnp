@@ -26,6 +26,7 @@ import {
   ReleaseTypeLabels,
 } from '../../../options';
 import type { Project } from '../project';
+import { CloudFlarePorjectsUtils } from '../cloud-flare-projects/cloud-flare-projects.utils';
 
 // import { ReleaseConfig } from './release-config';
 //#endregion
@@ -426,6 +427,7 @@ ${chalk.bold.green('Local release')} => use current git repo for storing release
   // @ts-ignore TODO weird inheritance problem
   async startRelease(envOptions?: EnvOptions): Promise<void> {
     //#region @backendFunc
+
     if (!envOptions.release.envName) {
       if (!envOptions.release.autoReleaseUsingConfig) {
         const environments = this.getEnvNamesByArtifact(
