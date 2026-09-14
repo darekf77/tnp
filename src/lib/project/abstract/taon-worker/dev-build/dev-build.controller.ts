@@ -12,7 +12,14 @@ import {
   Body,
   Symbols,
 } from 'taon/src';
-import { _, chalk, CoreModels, Helpers, UtilsTerminal } from 'tnp-core/src';
+import {
+  _,
+  chalk,
+  CoreModels,
+  Helpers,
+  UtilsProcess,
+  UtilsTerminal,
+} from 'tnp-core/src';
 
 import type { EnvOptions } from '../../../../options';
 import { Project } from '../../project';
@@ -49,9 +56,10 @@ export class DevBuildController extends TaonBaseController {
 <html>
 <head><title>Action on project Info</title></head>
 <body>
-    <h1>Project path: "${project?.location}" is</h1>
+    <h1>Project path: "${project?.location}"</h1>
     <h1>command name: ${currentCommand} </h1>
     <h1>command status: ${commandStatus} </h1>
+    <h1>is healty: ${UtilsProcess.isCurrentProcessAttachedToTerminal()} </h1>
     <h4>version: ${project?.packageJson?.version}</h4>
     <h4>pid: ${process.pid}</h4><br>
     <script>
@@ -119,11 +127,11 @@ export class DevBuildController extends TaonBaseController {
   //#endregion
 
   //#region API / health heck
-  @POST()
+  @GET()
   healthCheck(): Taon.Response<boolean> {
     //#region @backenFunc
     return async (req, res) => {
-      return true;
+      return UtilsProcess.isCurrentProcessAttachedToTerminal();
     };
     //#endregion
   }

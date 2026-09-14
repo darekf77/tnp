@@ -1,5 +1,12 @@
 //#region imports
-import { CoreModels, Helpers, UtilsTerminal, _, config } from 'tnp-core/src';
+import {
+  CoreModels,
+  Helpers,
+  UtilsTerminal,
+  _,
+  chalk,
+  config,
+} from 'tnp-core/src';
 import {
   BaseCliWorkerTerminalUI,
   BaseWorkerTerminalActionReturnType,
@@ -221,18 +228,24 @@ export class DevModeTerminalUI extends BaseCliWorkerTerminalUI<DevModeWorker> {
               Helpers.info(
                 `Checking health of build (port=${currentActionBuild.port}})${currentActionBuild.location}`,
               );
+              let buildIsOK: boolean = false;
               try {
-                await DevModeUtils.healthCheck(devBuildController);
-                console.log('BUILD IS OK');
+                buildIsOK = await DevModeUtils.healthCheck(devBuildController);
               } catch (error) {
                 config.frameworkName === 'tnp' && console.log(error);
-
-                console.log('BUILD IS NOT OK');
-                await UtilsTerminal.pressAnyKeyToContinueAsync({
-                  message:
-                    'Not able to perform action.. Press any key to continue.',
-                });
               }
+
+              if (buildIsOK) {
+                console.log(chalk.green('BUILD OK/ACTIVE '));
+              } else {
+                console.log(chalk.red('BUILD IS NOT ACTIVE'));
+              }
+
+              await UtilsTerminal.pressAnyKeyToContinueAsync({
+                message:
+                  'Not able to perform action.. Press any key to continue.',
+              });
+
               //#endregion
             }
           }

@@ -745,10 +745,19 @@ export class DevModeRepository extends TaonBaseKvRepository<{
       const portToCheck = DevBuildModels.START_PORT_BUID_PROCESS + index;
       const possibleDevBuildController =
         await this.getDevBuildControllerForPort(portToCheck);
+
+      let buildIsOK: boolean = false;
       try {
-        await possibleDevBuildController.healthCheck()!.request({
-          timeout: 500,
-        });
+        buildIsOK = (
+          await possibleDevBuildController.healthCheck()!.request({
+            timeout: 500,
+          })
+        ).body.booleanValue;
+
+        if (!buildIsOK) {
+          continue;
+        }
+
         const statusData = await possibleDevBuildController
           .getProjectInfo()!
           .request({

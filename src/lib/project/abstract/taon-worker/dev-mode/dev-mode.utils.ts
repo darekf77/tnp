@@ -1,4 +1,4 @@
-import { UtilsProjects } from 'tnp-core/src';
+import { Helpers, UtilsProjects } from 'tnp-core/src';
 
 import type { DevBuildController } from '../dev-build/dev-build.controller';
 
@@ -26,11 +26,17 @@ export namespace DevModeUtils {
     let maxTrys = 3;
     do {
       try {
-        await devBuildController.healthCheck().request!({
+        Helpers.logInfo(`Checkin health... `);
+        const data = await devBuildController.healthCheck().request!({
           timeout: 500,
         });
-        return true;
-      } catch (error) {}
+        const isOK = data.body.booleanValue;
+        Helpers.logInfo(`is ok = "${isOK}"`);
+
+        return isOK;
+      } catch (error) {
+        Helpers.logInfo(`is ok = ERROR `);
+      }
     } while (--maxTrys > 0);
     return false;
     //#endregion

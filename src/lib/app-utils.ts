@@ -776,6 +776,7 @@ export const compareAndSave = ({
     UtilsTypescript.removeCommentsFromTsContent(newContent)?.trimEnd();
 
   if (isFirstTime || !oldContent || oldContent !== newContent) {
+    // console.info(`Writing: ${fileAbsPath}`);
     fse.writeFileSync(fileAbsPath, newContent, 'utf8');
   }
   //#endregion
