@@ -1,8 +1,9 @@
 import { GlobalStorage } from 'tnp-core/src';
+
 import { EnvOptions } from '../../../../../../../options';
 
 const getKey = (relativePath: string, envOptiosn: EnvOptions): string => {
-  return `taon:first:time:compilation:${envOptiosn.build.websql ? 'websql' : 'normal'}:${relativePath}`;
+  return `taon:first:time:already:compiled:${envOptiosn.build.websql ? 'websql' : 'normal'}:${relativePath}`;
 };
 
 export function setDoneFirstTimeCompilation(
@@ -16,5 +17,5 @@ export function isFirstTimeCompilation(
   relativePath: string,
   envOptions: EnvOptions,
 ): boolean {
-  return !!GlobalStorage.get(getKey(relativePath, envOptions));
+  return !GlobalStorage.get(getKey(relativePath, envOptions));
 }

@@ -13,6 +13,7 @@ import {
   UtilsI18n,
   frontEndOnly,
   stateServiceSuffix,
+  fse,
 } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 
@@ -83,6 +84,7 @@ export const ALLOWED_TO_RELEASE: {
 };
 //#endregion
 
+//#region is browser file path
 export const isBrowserFilePath = (
   pathToFile: string,
   options?: {
@@ -105,6 +107,7 @@ export const isBrowserFilePath = (
   );
   return isFrontendFile;
 };
+//#endregion
 
 //#region is test file
 export const isTestFile = (filePath: string): boolean => {
@@ -395,10 +398,12 @@ export const getCleanImport = (importName: string): string | undefined => {
 };
 //#endregion
 
+//#region ai md file
 export interface AiMdFile {
   filename: string;
   content: string;
 }
+//#endregion
 
 //#region parse ai md content
 export function parseAiMdContent(input: string): AiMdFile[] {
@@ -750,3 +755,28 @@ export const replaceImportToAssetsIMport = (
   //#endregion
 };
 //#endregion
+
+export const compareAndSave = ({
+  fileAbsPath,
+  isFirstTime,
+  newContent,
+  oldContent,
+}: {
+  isFirstTime: boolean;
+  newContent: string | undefined;
+  oldContent: string;
+  fileAbsPath: string;
+}): void => {
+  //#region @backendFunc
+
+  oldContent =
+    UtilsTypescript.removeCommentsFromTsContent(oldContent)?.trimEnd();
+
+  newContent =
+    UtilsTypescript.removeCommentsFromTsContent(newContent)?.trimEnd();
+
+  if (isFirstTime || !oldContent || oldContent !== newContent) {
+    fse.writeFileSync(fileAbsPath, newContent, 'utf8');
+  }
+  //#endregion
+};

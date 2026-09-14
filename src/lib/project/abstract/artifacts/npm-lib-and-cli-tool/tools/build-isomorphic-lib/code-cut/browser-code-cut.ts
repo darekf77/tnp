@@ -21,6 +21,7 @@ import { _, path, fse, crossPlatformPath } from 'tnp-core/src';
 import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
+  compareAndSave,
   getCleanImport,
   isBrowserFilePath,
   isTestFile,
@@ -758,71 +759,57 @@ export class BrowserCodeCut {
         !this.relativePath.startsWith(`${appFromSrc}.`)
       ) {
         // #region NORMAL TS BROWSER FILE FOR LIB
-        const absFileSourcePathBrowserOrWebsqlCurrent = this.project.watcher
+        const absFileSourceBrowserOrWebsqlCurrent = this.project.watcher
           .isTaonLightWatcherMode
           ? UtilsFilesFoldersSync.readFile(
               this.absFileSourcePathBrowserOrWebsql,
             )
           : undefined;
 
-        const absFileSourcePathBrowserOrWebsqlNewContent =
+        const absFileSourceBrowserOrWebsqlNewContent =
           this.changeNpmNameToLocalLibNamePath(
             this.rawContentForBrowser,
             this.absFileSourcePathBrowserOrWebsql,
             { isBrowser: true },
           );
-        const orgContentLib = UtilsTypescript.removeCommentsFromTsContent(
-          absFileSourcePathBrowserOrWebsqlCurrent,
-        )?.trimEnd();
-        const newContentLib = UtilsTypescript.removeCommentsFromTsContent(
-          absFileSourcePathBrowserOrWebsqlNewContent,
-        )?.trimEnd();
-        if (
-          !isFirstTimeCompilation(this.relativePath, this.buildOptions) ||
-          !orgContentLib ||
-          orgContentLib !== newContentLib
-        ) {
-          fse.writeFileSync(
-            this.absFileSourcePathBrowserOrWebsql,
-            absFileSourcePathBrowserOrWebsqlNewContent,
-            'utf8',
-          );
-        }
+
+        compareAndSave({
+          isFirstTime: isFirstTimeCompilation(
+            this.relativePath,
+            this.buildOptions,
+          ),
+          fileAbsPath: this.absFileSourcePathBrowserOrWebsql,
+          newContent: absFileSourceBrowserOrWebsqlNewContent,
+          oldContent: absFileSourceBrowserOrWebsqlCurrent,
+        });
+
         //#endregion
       }
       // #region NORMAL TS BROWSER FILE FOR APP
-      const absFileSourcePathBrowserOrWebsqlAPPONLYCurrent = this.project
+      const absFileSourceBrowserOrWebsqlAPPONLYCurrent = this.project
         .watcher.isTaonLightWatcherMode
         ? UtilsFilesFoldersSync.readFile(
             this.absFileSourcePathBrowserOrWebsqlAPPONLY,
           )
         : undefined;
 
-      const absFileSourcePathBrowserOrWebsqlAPPONLYNewContent =
+      const absFileSourceBrowserOrWebsqlAPPONLYNewContent =
         this.changeNpmNameToLocalLibNamePath(
           this.rawContentForAPPONLYBrowser,
           this.absFileSourcePathBrowserOrWebsqlAPPONLY,
           { isBrowser: true, libForApp: true },
         );
-      const orgContentApp = UtilsTypescript.removeCommentsFromTsContent(
-        absFileSourcePathBrowserOrWebsqlAPPONLYCurrent,
-      )?.trimEnd();
 
-      const newContentApp = UtilsTypescript.removeCommentsFromTsContent(
-        absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
-      )?.trimEnd();
+      compareAndSave({
+        isFirstTime: isFirstTimeCompilation(
+          this.relativePath,
+          this.buildOptions,
+        ),
+        fileAbsPath: this.absFileSourcePathBrowserOrWebsqlAPPONLY,
+        newContent: absFileSourceBrowserOrWebsqlAPPONLYNewContent,
+        oldContent: absFileSourceBrowserOrWebsqlAPPONLYCurrent,
+      });
 
-      if (
-        !isFirstTimeCompilation(this.relativePath, this.buildOptions) ||
-        !orgContentApp ||
-        orgContentApp !== newContentApp
-      ) {
-        fse.writeFileSync(
-          this.absFileSourcePathBrowserOrWebsqlAPPONLY,
-          absFileSourcePathBrowserOrWebsqlAPPONLYNewContent,
-          'utf8',
-        );
-      }
       //#endregion
 
       //#endregion
@@ -1304,12 +1291,12 @@ export class BrowserCodeCut {
           return;
         }
 
-        const absoluteBackendDestFilePathCurrent = this.project.watcher
+        const backendDestFileCurrentContent = this.project.watcher
           .isTaonLightWatcherMode
           ? UtilsFilesFoldersSync.readFile(this.absoluteBackendDestFilePath)
           : undefined;
 
-        let absoluteBackendDestFilePathNewContent =
+        let backendDestFileNewContent =
           this.isEmptyModuleBackendFile && this.isTsFile
             ? `export function dummy${new Date().getTime()}() { }`
             : this.changeNpmNameToLocalLibNamePath(
@@ -1320,29 +1307,12 @@ export class BrowserCodeCut {
                 },
               );
 
-        const currentBackendFile = UtilsTypescript.removeCommentsFromTsContent(
-          absoluteBackendDestFilePathCurrent,
-        )?.trimEnd();
-        const newBackendFile = UtilsTypescript.removeCommentsFromTsContent(
-          absoluteBackendDestFilePathNewContent,
-        )?.trimEnd();
-
-        if (
-          !isFirstTimeBackendCompilation ||
-          !currentBackendFile ||
-          currentBackendFile !== newBackendFile
-        ) {
-          // SAVE BACKEND FILE
-          // this.debug &&
-          //   console.log(
-          //     `WRING CJS BACKEND ${this.absFileSourcePathBrowserOrWebsql}`,
-          //   );
-          fse.writeFileSync(
-            this.absoluteBackendDestFilePath,
-            absoluteBackendDestFilePathNewContent,
-            'utf8',
-          );
-        }
+        compareAndSave({
+          fileAbsPath: this.absoluteBackendDestFilePath,
+          isFirstTime: isFirstTimeBackendCompilation,
+          newContent: backendDestFileNewContent,
+          oldContent: backendDestFileCurrentContent,
+        });
       })();
       //#endregion
 
@@ -1369,12 +1339,12 @@ export class BrowserCodeCut {
           return;
         }
 
-        const absoluteBackendEsmDestFilePathCurrent = this.project.watcher
+        const backendEsmDestFileCurrentContent = this.project.watcher
           .isTaonLightWatcherMode
           ? UtilsFilesFoldersSync.readFile(this.absoluteBackendEsmDestFilePath)
           : undefined;
 
-        let absoluteBackendEsmDestFilePathNewContent =
+        let backendEsmDestFileNewContent =
           this.isEmptyModuleEsmBackendFile && this.isTsFile
             ? `export function dummy${new Date().getTime()}() { }`
             : this.changeNpmNameToLocalLibNamePath(
@@ -1386,30 +1356,12 @@ export class BrowserCodeCut {
                 },
               );
 
-        const currentBackendEsmFile =
-          UtilsTypescript.removeCommentsFromTsContent(
-            absoluteBackendEsmDestFilePathCurrent,
-          )?.trimEnd();
-        const newBackendEsmFile = UtilsTypescript.removeCommentsFromTsContent(
-          absoluteBackendEsmDestFilePathNewContent,
-        )?.trimEnd();
-
-        if (
-          !isFirstTimeBackendCompilation ||
-          !currentBackendEsmFile ||
-          currentBackendEsmFile !== newBackendEsmFile
-        ) {
-          // this.debug &&
-          //   console.log(
-          //     `WRING ESM BACKEND ${this.absFileSourcePathBrowserOrWebsql}`,
-          //   );
-          // SAVE BACKEND FILE
-          fse.writeFileSync(
-            this.absoluteBackendEsmDestFilePath,
-            absoluteBackendEsmDestFilePathNewContent,
-            'utf8',
-          );
-        }
+        compareAndSave({
+          fileAbsPath: this.absoluteBackendEsmDestFilePath,
+          isFirstTime: isFirstTimeBackendCompilation,
+          newContent: backendEsmDestFileNewContent,
+          oldContent: backendEsmDestFileCurrentContent,
+        });
       })();
       //#endregion
     }
