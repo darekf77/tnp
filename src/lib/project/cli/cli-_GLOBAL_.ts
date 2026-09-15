@@ -1734,7 +1734,9 @@ ${this.project.children
     task1.done();
 
     const task2 = Helpers.actionStarted(`Removing tnp node_modules`);
-    await tnpProjectInTaonDev.nodeModules.remove();
+    await tnpProjectInTaonDev.nodeModules.remove({
+      skipQuestion: true,
+    });
     task2.done();
     const task3 = Helpers.actionStarted(
       `Copying package from core container to ${tnpProjectInTaonDev.location}`,
@@ -1814,7 +1816,7 @@ ${this.project.children
     //       }
     //     }
 
-    Helpers.info(`Dony local sync of taon-dev`);
+    Helpers.info(`Done local sync of taon-dev`);
     this._exit();
     //#endregion
   }
