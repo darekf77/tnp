@@ -768,16 +768,16 @@ export const compareAndSave = ({
   fileAbsPath: string;
 }): void => {
   //#region @backendFunc
-
-  oldContent =
+  const orgNewContent = newContent;
+  const oldContentTrim =
     UtilsTypescript.removeCommentsFromTsContent(oldContent)?.trimEnd();
 
-  newContent =
+  const newContentTrim =
     UtilsTypescript.removeCommentsFromTsContent(newContent)?.trimEnd();
 
-  if (isFirstTime || !oldContent || oldContent !== newContent) {
+  if (isFirstTime || !oldContentTrim || oldContentTrim !== newContentTrim) {
     // console.info(`Writing: ${fileAbsPath}`);
-    fse.writeFileSync(fileAbsPath, newContent, 'utf8');
+    fse.writeFileSync(fileAbsPath, orgNewContent, 'utf8');
   }
   //#endregion
 };
