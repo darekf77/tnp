@@ -68,7 +68,7 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
     Helpers.logInfo(`Using temp folder ${tempFolder}`);
 
     const command =
-      `npm run start -- --port ${ngCloudflareWorkerPort} ` +
+      `npm run start -- --var TAON_LOCAL_DEV:true  --port ${ngCloudflareWorkerPort} ` +
       `${Helpers.getIsVerboseMode() ? '--log-level debug' : ''} ` +
       ` --persist-to ${tempFolder} `;
 
