@@ -92,7 +92,7 @@ export class $Generate extends BaseCli {
       myEntity,
     ]);
 
-    const newEntityName = UtilsString.kebabCaseNoSplitNumbers(entityName);
+    const newEntityName = UtilsString.kebabCaseNoSplitNumbers(entityName?.trim());
     const generatedCodeAbsLoc = crossPlatformPath([
       container.location,
       `gen-examples-${container.framework.frameworkVersion}`,
