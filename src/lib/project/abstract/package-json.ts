@@ -1,3 +1,4 @@
+//#region imports
 import { gt, gte, valid } from 'semver';
 import { config, LibTypeEnum } from 'tnp-core/src';
 import {
@@ -18,10 +19,12 @@ import {
 } from 'tnp-helpers/src';
 import { PackageJson, PackageJson as PackageJsonType } from 'type-fest';
 
+import { CURRENT_PACKAGE_TAON_VERSION } from '../../build-info._auto-generated_';
 import { binMainProject, scriptsCommands } from '../../constants';
 import { EnvOptions } from '../../options';
 
-import type { Project } from './project';
+import { Project } from './project';
+//#endregion
 
 export class PackageJSON extends BasePackageJson {
   KEY_TNP_PACKAGE_JSON = 'tnp';
@@ -112,7 +115,11 @@ export class PackageJSON extends BasePackageJson {
         } catch (error) {}
       }
       if (!this.data.version) {
-        this.data.version = '0.0.0';
+        const coreContainer = Project.ins.by(
+          'container',
+          CURRENT_PACKAGE_TAON_VERSION,
+        );
+        this.data.version = `${coreContainer.taonJson.frameworkVersion.replace('v', '')}.0.0`;
       }
       this.data.main = 'dist/app.electron.js'; // fix for electron
       const showFirst = [
@@ -176,7 +183,8 @@ export class PackageJSON extends BasePackageJson {
     });
 
     const lastTagVersion =
-      this.project.git.lastTagVersionName.trim().replace('v', '') || '0.0.0';
+      this.project.git.lastTagVersionName.trim().replace('v', '') ||
+      `${Project.ins.by('container', CURRENT_PACKAGE_TAON_VERSION).taonJson.frameworkVersion.replace('v', '')}.0.0`;
 
     if (valid(lastTagVersion) === null) {
       Helpers.warn(

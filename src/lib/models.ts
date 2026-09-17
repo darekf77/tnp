@@ -29,6 +29,7 @@ export namespace Models {
   export type NewSiteOptions = {
     name?: string;
     cwd?: string;
+    force?: boolean
   };
   //#endregion
 

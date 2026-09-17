@@ -136,7 +136,7 @@ export abstract class BaseArtifact<
 
   //#region update resolved version
   protected updateResolvedVersion(releaseOptions: EnvOptions): EnvOptions {
-    // @ts-ignore
+    // @ts-expect-error
     releaseOptions.release.resolvedNewVersion =
       this.project.packageJson.resolvePossibleNewVersion(
         releaseOptions.release.releaseVersionBumpType,

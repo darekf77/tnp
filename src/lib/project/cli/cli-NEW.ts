@@ -40,6 +40,7 @@ export class $New extends BaseCli {
     await this._createContainersOrStandalone({
       name: this.firstArg,
       cwd: this.cwd,
+      force: !!this.params['force'],
     });
 
     this._exit();
@@ -49,6 +50,7 @@ export class $New extends BaseCli {
     const appName = await this._createContainersOrStandalone({
       name: this.firstArg,
       cwd: this.cwd,
+      force: !!this.params['force'],
     });
     UtilsVSCode.openFolder(crossPlatformPath([this.cwd, appName]));
     this._exit();
@@ -58,6 +60,7 @@ export class $New extends BaseCli {
   private async _initContainersAndApps(
     cwd: string,
     nameFromArgs: string,
+    force = false,
   ): Promise<{
     containers: Project[];
     firstContainer: Project;
@@ -139,11 +142,12 @@ export class $New extends BaseCli {
     //#region check if name is allowed
 
     const coreContainer = Project.ins.by('container');
+    // console.log({ force });
     const alreadyTaken = coreContainer.nodeModules.getAllPackagesNames({
       followSymlinks: false,
     });
 
-    if (alreadyTaken.includes(lastProjectFromArgName)) {
+    if (alreadyTaken.includes(lastProjectFromArgName) && !force) {
       const versionInNpm = await UtilsNpm.getLastMajorVersions(
         lastProjectFromArgName,
       );
@@ -151,6 +155,7 @@ export class $New extends BaseCli {
         lastProjectFromArgName,
       );
 
+      //#region error message
       const displayErrorMesage = () => {
         Helpers.error(
           `
@@ -176,6 +181,7 @@ export class $New extends BaseCli {
           true,
         );
       };
+      //#endregion
 
       if (versionInNpm.length === 0 && !isIsomorphic) {
         //#region ask user to remove faulty package
@@ -204,7 +210,7 @@ export class $New extends BaseCli {
       }
     }
 
-    if (notAllowedProjectNames.includes(lastProjectFromArgName)) {
+    if (notAllowedProjectNames.includes(lastProjectFromArgName) && !force) {
       Helpers.error(
         `
 
@@ -262,7 +268,7 @@ export class $New extends BaseCli {
         if (!Helpers.exists(packageJsonPath)) {
           Helpers.writeJson(packageJsonPath, {
             name: path.basename(currentContainerPath),
-            version: '0.0.0',
+            version: `${coreContainer.taonJson.frameworkVersion.replace('v', '')}.0.0`,
           } as PackageJson);
 
           Helpers.writeJson(taonJsoncPath, {
@@ -333,12 +339,14 @@ export class $New extends BaseCli {
     });
 
     packageJson.setIsPrivate(true);
-    packageJson.setVersion('0.0.0');
-    packageJson.setName(path.basename(lastProjectFromArgName));
+    packageJson.setVersion(
+      `${coreContainer.taonJson.frameworkVersion.replace('v', '')}.0.0`,
+    );
+    await packageJson.setName(path.basename(lastProjectFromArgName));
 
     const taonJson = new TaonJson(Project.ins.From(packageJson.cwd), {});
     taonJson.setType(LibTypeEnum.ISOMORPHIC_LIB);
-    taonJson.setFrameworkVersion(DEFAULT_FRAMEWORK_VERSION);
+    await taonJson.setFrameworkVersion(DEFAULT_FRAMEWORK_VERSION);
     taonJson.overridePackageJsonManager.setIsPrivate(true);
     // taonJson.shouldGenerateAutogenAppRoutesFile = true;
     taonJson.setShouldGenerateAutogenIndexFile(true);
@@ -487,9 +495,9 @@ export class $New extends BaseCli {
   public async _createContainersOrStandalone(
     options: Models.NewSiteOptions,
   ): Promise<string> {
-    let { name: nameFromArgs, cwd } = options;
+    let { name: nameFromArgs, cwd, force } = options;
     const { appProj, containers, lastContainer, lastIsBrandNew, initGit } =
-      await this._initContainersAndApps(cwd, nameFromArgs);
+      await this._initContainersAndApps(cwd, nameFromArgs, force);
 
     Helpers.writeFile(
       [appProj.location, readmeMdMainProject],

@@ -9,6 +9,7 @@ import {
 import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
+import { CURRENT_PACKAGE_TAON_VERSION } from '../../build-info._auto-generated_';
 import {
   DEFAULT_FRAMEWORK_VERSION,
   MESSAGES,
@@ -108,6 +109,11 @@ export class $Init extends BaseCli {
         );
       let organization = false;
       let monorepo = false;
+      const { Project: ProjectClass } = await import('../abstract/project');
+      const coreContainer = ProjectClass.ins.by(
+        'container',
+        CURRENT_PACKAGE_TAON_VERSION,
+      );
       if (responseProjectType === LibTypeEnum.CONTAINER) {
         organization = await UtilsTerminal.confirm({
           message:
@@ -122,7 +128,7 @@ export class $Init extends BaseCli {
           [crossPlatformPath(this.cwd), packageJsonMainProject],
           {
             name: crossPlatformPath(path.basename(crossPlatformPath(this.cwd))),
-            version: '0.0.0',
+            version: `${coreContainer.taonJson.frameworkVersion.replace('v', '')}.0.0`,
           },
         );
 
@@ -137,7 +143,7 @@ export class $Init extends BaseCli {
           [crossPlatformPath(this.cwd), packageJsonMainProject],
           {
             name: crossPlatformPath(path.basename(crossPlatformPath(this.cwd))),
-            version: '0.0.0',
+            version: `${coreContainer.taonJson.frameworkVersion.replace('v', '')}.0.0`,
             tnp: {
               type: responseProjectType,
               version: DEFAULT_FRAMEWORK_VERSION, // OK
