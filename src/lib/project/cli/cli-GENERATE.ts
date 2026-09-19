@@ -53,13 +53,13 @@ export class $Generate extends BaseCli {
     //#region @backendFunc
 
     //#region prepare params
-    let [absPath, moduleName, entityName] = this.args;
-    if (!Helpers.exists(absPath)) {
-      Helpers.mkdirp(absPath);
+    let [absDirnameFolderPath, moduleName, entityName] = this.args;
+    if (!Helpers.exists(absDirnameFolderPath)) {
+      Helpers.mkdirp(absDirnameFolderPath);
     }
-    const absFilePath = crossPlatformPath(absPath);
-    if (!Helpers.isFolder(absPath)) {
-      absPath = crossPlatformPath(path.dirname(absPath));
+    const absFilePath = crossPlatformPath(absDirnameFolderPath);
+    if (!Helpers.isFolder(absDirnameFolderPath)) {
+      absDirnameFolderPath = crossPlatformPath(path.dirname(absDirnameFolderPath));
     }
     entityName = decodeURIComponent(entityName);
     const nearestProj = this.ins.nearestTo(this.cwd) as Project;
@@ -185,7 +185,7 @@ export class $Generate extends BaseCli {
     }
 
     Helpers.remove(generatedCodeAbsLoc, true);
-    let destination = crossPlatformPath([absPath, newEntityName]);
+    let destination = crossPlatformPath([absDirnameFolderPath, newEntityName]);
     if (isFlat) {
       destination = crossPlatformPath(path.dirname(destination));
     }
@@ -194,7 +194,11 @@ export class $Generate extends BaseCli {
     if (isCustom) {
       //#region handle custom cases
       if (moduleName === 'generated-index-exports') {
-        this.project.framework.generateIndexTs(absPath);
+        this.project.framework.generateIndexTs(absDirnameFolderPath);
+      }
+
+      if (moduleName === 'generated-index-abstract-contexts') {
+        this.project.framework.generateAbstractContexts(absDirnameFolderPath, entityName);
       }
       if (moduleName === 'wrap-with-browser-regions') {
         if (!Helpers.isFolder(absFilePath)) {

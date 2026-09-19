@@ -733,6 +733,61 @@ export class Framework extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  generateAbstractContexts(absFolderDirname: string = '', entityName: string) {
+    //#region @backendFunc
+    const absPath = this.resolveAbsPath(absFolderDirname);
+
+    const folders = UtilsFilesFoldersSync.getFilesFrom(absPath, {
+      followSymlinks: false,
+      recursive: true,
+      omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
+    })
+      .filter(absFilePath => absFilePath.endsWith('.abstract.context.ts'))
+      .map(absFilePath => {
+        const relativePath = absFilePath.replace(absFolderDirname + '/', '');
+        // const contextName = TODO @LAST
+        return {
+          absFilePath,
+          relativePath,
+        };
+      });
+
+    // Helpers.writeFile(
+    //   crossPlatformPath([
+    //     absPath,
+    //     `${_.kebabCase(entityName)}.abstract.context`,
+    //   ]),
+    //   folders
+    //     .map(f => {
+    //       if (
+    //         !_.isUndefined(frontendFiles.find(bigExt => f.endsWith(bigExt)))
+    //       ) {
+    //         // `${TAGS.COMMENT_REGION} ${TAGS.BROWSER}\n` +
+    //         return `export * from './${f.replace(path.extname(f), '')}'; // ${
+    //           TAGS.BROWSER
+    //         }`;
+    //         // +`\n${TAGS.COMMENT_END_REGION}\n`;
+    //       }
+    //       if (
+    //         !_.isUndefined(
+    //           backendNodejsOnlyFiles.find(bigExt => f.endsWith(bigExt)),
+    //         )
+    //       ) {
+    //         return (
+    //           // `${TAGS.COMMENT_REGION} ${TAGS.BACKEND}\n` +
+    //           `export * from './${f.replace(path.extname(f), '')}'; // ${
+    //             TAGS.BACKEND
+    //           }`
+    //           // +`\n${TAGS.COMMENT_END_REGION}\n`
+    //         );
+    //       }
+    //       return `export * from './${f.replace(path.extname(f), '')}';`;
+    //     })
+    //     .join('\n') + '\n',
+    // );
+    //#endregion
+  }
+
   //#region global
   async global(globalPackageName: string, packageOnly = false) {
     //#region @backendFunc
