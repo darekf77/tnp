@@ -1961,7 +1961,10 @@ ${this.project.children
   //#region get files/folders from
   getFilesFrom() {
     //#region @backendFunc
-    const pathForFiles = crossPlatformPath([this.cwd, this.firstArg]);
+    const pathForFiles = path.isAbsolute(this.firstArg)
+      ? crossPlatformPath(this.firstArg)
+      : crossPlatformPath([this.cwd, this.firstArg]);
+
     Helpers.taskStarted(`Getting files from path...
 
       ${pathForFiles}
@@ -1970,8 +1973,17 @@ ${this.project.children
     const files = UtilsFilesFoldersSync.getFilesFrom(pathForFiles, {
       recursive: true,
       followSymlinks: false,
-      omitPatterns: UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
+      omitPatterns: [
+        ...UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
+        // 'placeholder',
+        '**/placeholder_exclude*'
+      ],
     });
+
+    for (let index = 0; index < files.length; index++) {
+      const fileAbsPath = files[index];
+      console.log(`${index + 1}. ${path.basename(fileAbsPath)}`);
+    }
 
     Helpers.taskDone(`Files found: ${files.length}`);
     this._exit();

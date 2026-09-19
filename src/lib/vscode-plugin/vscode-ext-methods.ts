@@ -779,6 +779,21 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+       //#region GENERATE taon backend kv repository file
+      {
+        group: groupGENERATE,
+        title: `taon .kv.repository.ts file`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% taon-kv-repo_flat  %entity%`,
+        options: {
+          titleWhenProcessing: 'generating taon backend kv repository file',
+          showSuccessMessage: false,
+          resolveVariables: [
+            { variable: 'entity', placeholder: `my-entity`, encode: true },
+          ],
+        },
+      },
+      //#endregion
+
       //#region GENERATE taon controller file
       {
         group: groupGENERATE,

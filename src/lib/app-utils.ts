@@ -109,6 +109,11 @@ export const isBrowserFilePath = (
 };
 //#endregion
 
+export const isTsFile = (pathToFile: string): boolean =>
+  ['.ts', '.tsx'].includes(
+    _.isString(pathToFile) ? path.extname(pathToFile) : '',
+  );
+
 //#region is test file
 export const isTestFile = (filePath: string): boolean => {
   if (!filePath) {
