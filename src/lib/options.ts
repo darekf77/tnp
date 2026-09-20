@@ -1,6 +1,12 @@
 import type axiosType from 'axios';
 import { walk } from 'lodash-walk-object/src';
-import { chalk, config, LibTypeEnum, UtilsEnv, UtilsTerminal } from 'tnp-core/src';
+import {
+  chalk,
+  config,
+  LibTypeEnum,
+  UtilsEnv,
+  UtilsTerminal,
+} from 'tnp-core/src';
 import { Helpers } from 'tnp-core/src';
 import { CoreModels, _, crossPlatformPath } from 'tnp-core/src';
 
@@ -659,7 +665,10 @@ class EnvOptionsContainer {
 //#endregion
 
 export class EnvOptions<
-  ENV_CONFIG = Record<string, string | number | boolean | null>,
+  ENV_CONFIG = Record<
+    string,
+    string | number | boolean | null | (() => string)
+  >,
 > {
   //#region static / from
 
@@ -821,7 +830,7 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
     walk.Object(
       override || {},
       (value, lodashPath) => {
-        if (_.isNil(value) || _.isFunction(value) || _.isObject(value)) {
+        if (_.isNil(value) || (_.isObject(value) && !_.isFunction(value))) {
           // skipping
         } else {
           _.set(destination, lodashPath, value);
@@ -829,6 +838,7 @@ ${chalk.bold(options.toStringCommand(args.join(' ')))}
       },
       {
         walkGetters: false,
+        walkPropsWithFunction: true,
       },
     );
     return destination;

@@ -11,6 +11,7 @@ import {
   _,
   CoreModels,
   UtilsEnv,
+  UtilsSecretEnv,
 } from 'tnp-core/src';
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
@@ -394,12 +395,34 @@ export class CloudFlareSubProject {
       try {
         this.wranglerJsonC.setDeployMode();
         Helpers.taskStarted(`Deploying worker to cloud flare...`);
-        const data = await UtilsExecProc.spawnAsync(`npm run deploy`, {
-          cwd: this.cwdWorker,
-        }).getOutput();
+        const ctrl =
+          await this.taonParentProject.ins.taonProjectsWorker.secretsKeychainPackagesWorker.getRemoteControllerFor(
+            {
+              methodOptions: {
+                calledFrom: 'cloudflare deployment',
+              },
+            },
+          );
+        const masterKey = (
+          await ctrl
+            .getMasterPassword(this.taonParentProject.location)
+            .request()
+        ).body.text;
+
+        UtilsFilesFoldersSync.writeFile(
+          [this.cwdWorker, '.env'],
+          `${UtilsSecretEnv.MASTER_PASS_KEY}="${masterKey}"`,
+        );
+        const data = await UtilsExecProc.spawnAsync(
+          `npm-run wrangler deploy --secrets-file .env`,
+          {
+            cwd: this.cwdWorker,
+          },
+        ).getOutput();
         const accountName = CloudFlarePorjectsUtils.extractWorkersDevInfo(
           data.stdout + data.stderr,
         );
+        Helpers.removeFileIfExists([this.cwdWorker, '.env']);
         Helpers.taskDone(`DONE DEPLOYMENT on acccount name "${accountName}"`);
         this.taonParentProject.taonJson.setCloudFlareAccountSubdomain(
           accountName,

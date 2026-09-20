@@ -286,6 +286,27 @@ export class $Cloud extends BaseCli {
   }
   //#endregion
 
+  //#region isomorphicPackages
+  @UtilsCliClassMethod.decoratorMethod('secretsKeychain')
+  async secretsKeychain(): Promise<void> {
+    UtilsStdinStdoutLogger.registerFor(`secrets-keychain`, group);
+    // UtilsTerminal.drawBigText('Deployments');
+    // await this.project.ins.taonProjectsWorker.deploymentsWorker.startNormallyInCurrentProcess();
+    const { Project } = await import('../abstract/project');
+    await Project.ins.taonProjectsWorker.secretsKeychainPackagesWorker.cliStartProcedure(
+      {
+        methodOptions: {
+          cliParams: {
+            ...this.params,
+            mode: BaseCLiWorkerStartMode.IN_CURRENT_PROCESS,
+          },
+          calledFrom: 'cli-CLOUD/$Cloud.secretsKeychain',
+        },
+      },
+    );
+  }
+  //#endregion
+
   //#region instances
   @UtilsCliClassMethod.decoratorMethod('instances')
   async instances(): Promise<void> {

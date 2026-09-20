@@ -374,18 +374,33 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
       walk.Object(
         projectEnvConfig,
         (val, lodashPath, newValue) => {
-          if (!_.isObject(val)) {
+          // console.log({ lodashPath });
+          const isOK = !_.isObject(val) || _.isFunction(val);
+          // console.log(`isok:${isOK} ${lodashPath} `);
+          // if (lodashPath === 'config.microsoftClientId') {
+
+          // }
+          if (isOK) {
             pathsWithValues.push(lodashPath);
             backendConstants.push(
               `// ${lodashPath}
 export const ENV_` +
                 `${_.snakeCase(projectEnvConfig.release.targetArtifact).toUpperCase()}_` +
                 `${_.snakeCase(lodashPath).replace(/\ /g, '_').toUpperCase()} ` +
-                `= ${_.isString(val) ? `'${val}'` : val};`,
+                `= ${
+                  _.isString(val)
+                    ? `'${val}'`
+                    : _.isFunction(val)
+                      ? val
+                          ?.toString()
+                          .replace('()', '():Promise<string>')
+                          .replace('=> ', '=> decodeEnv(') + ')'
+                      : val
+                };`,
             );
           }
         },
-        { walkGetters: false },
+        { walkGetters: false, walkPropsWithFunction: true },
       );
 
       // console.log({ allPathsEnvConfig, pathsWithValues });
@@ -404,6 +419,7 @@ export const ENV_` +
       this.project.writeFile(
         `${srcMainProject}/${libFromImport}/${TaonGeneratedFolders.ENV_FOLDER}/${backendConfigFileName}`,
         `${THIS_IS_GENERATED_INFO_COMMENT}
+${'imp' + 'ort'} { decodeEnv } from 'tnp-${'core'}/${'src'}';
 ${backendConstants.join('\n')}
 ${THIS_IS_GENERATED_INFO_COMMENT}`,
       );

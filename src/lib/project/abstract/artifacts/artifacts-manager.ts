@@ -471,6 +471,10 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
 
     this.recreateAndFixCoreFiles();
 
+    while (!(await this.project.secretEnv.canBeInitedLocally())) {
+      await this.project.secretEnv.decode();
+    }
+
     initOptions = await this.project.environmentConfig.update(initOptions, {
       saveEnvToLibEnv:
         initOptions.release.targetArtifact ===
@@ -671,27 +675,27 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
   /**
    * @deprecated
    */
-  private buildWatchCmdForArtifact = (
-    artifact: ReleaseArtifactTaon,
-    options?: Partial<EnvOptions>,
-  ): string => {
-    options = EnvOptions.from(options);
-    let params = '';
+  // private buildWatchCmdForArtifact = (
+  //   artifact: ReleaseArtifactTaon,
+  //   options?: Partial<EnvOptions>,
+  // ): string => {
+  //   options = EnvOptions.from(options);
+  //   let params = '';
 
-    // try {
-    params = EnvOptions.getParamsString({
-      ...options,
-      release: { targetArtifact: artifact },
-    });
-    // } catch (error) {
-    //   Helpers.error(error, true, true);
-    //   Helpers.throwError(
-    //     `Error while creating params for ${artifact} build command`,
-    //   );
-    // }
+  //   // try {
+  //   params = EnvOptions.getParamsString({
+  //     ...options,
+  //     release: { targetArtifact: artifact },
+  //   });
+  //   // } catch (error) {
+  //   //   Helpers.error(error, true, true);
+  //   //   Helpers.throwError(
+  //   //     `Error while creating params for ${artifact} build command`,
+  //   //   );
+  //   // }
 
-    return `${config.frameworkName} build${options.build.watch ? ':watch' : ''} ${params}`;
-  };
+  //   return `${config.frameworkName} build${options.build.watch ? ':watch' : ''} ${params}`;
+  // };
   //#endregion
 
   //#region public methods / build standalone
@@ -1178,6 +1182,11 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
     //#endregion
 
     //#region final actopm tag/push/release/deploy
+
+    while (!(await this.project.secretEnv.canChangesBePush())) {
+      Helpers.info(` Encoding secrets before tags `);
+      await this.project.secretEnv.encode();
+    }
 
     let shouldAskQuestions = !releaseOptions.release.autoReleaseUsingConfig;
 

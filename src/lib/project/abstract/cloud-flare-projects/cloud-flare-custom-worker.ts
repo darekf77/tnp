@@ -6,7 +6,9 @@ import {
   startAsync,
   taonActionFromParent,
   UtilsExecProc,
+  UtilsFilesFoldersSync,
   UtilsOs,
+  UtilsSecretEnv,
 } from 'tnp-core/src';
 
 import {
@@ -39,7 +41,19 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
   //#region start in dev mode
   async startInDevMode(envOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
+    const ctrl =
+      await this.taonParentProject.ins.taonProjectsWorker.secretsKeychainPackagesWorker.getRemoteControllerFor(
+        {
+          methodOptions: {
+            calledFrom: 'cloudflare deployment',
+          },
+        },
+      );
+    const masterKey = (
+      await ctrl.getMasterPassword(this.taonParentProject.location).request()
+    ).body.text;
 
+    Helpers.removeFileIfExists([this.cwdWorker, '.env']);
     await UtilsExecProc.spawnAsync(
       `npm-run bun run ${envOptions.build.prod ? buildJSprod : buildJS}`,
       {
@@ -68,7 +82,10 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
     Helpers.logInfo(`Using temp folder ${tempFolder}`);
 
     const command =
-      `npm run start -- --var TAON_LOCAL_DEV:true  --port ${ngCloudflareWorkerPort} ` +
+      `npm run start -- ` +
+      `--var TAON_LOCAL_DEV:true  ` +
+      `--var ${UtilsSecretEnv.MASTER_PASS_KEY}:"${masterKey}" ` +
+      `--port ${ngCloudflareWorkerPort} ` +
       `${Helpers.getIsVerboseMode() ? '--log-level debug' : ''} ` +
       ` --persist-to ${tempFolder} `;
 

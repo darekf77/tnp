@@ -230,6 +230,19 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       },
       //#endregion
 
+      //#region instances
+      secrets: {
+        name: 'Manage Secret Variables',
+        action: async () => {
+          await this.worker.secretsKeychainPackagesWorker.terminalUI.infoScreen(
+            {
+              exitIsOnlyReturn: true,
+            },
+          );
+        },
+      },
+      //#endregion
+
       //#region environments
       environments: {
         name: 'Manage Environments',
@@ -273,7 +286,7 @@ export class TaonTerminalUI extends BaseCliWorkerTerminalUI<TaonProjectsWorker> 
       },
       //#endregion
 
-       //#region processes
+      //#region processes
       packages: {
         name: 'Manage Packages',
         action: async () => {

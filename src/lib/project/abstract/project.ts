@@ -58,6 +58,7 @@ import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
 import { DevModeUtils } from './taon-worker/dev-mode/dev-mode.utils';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects/cloud-flare-projects.utils';
+import type { SecretEnv } from './secret-env';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -90,6 +91,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   public readonly subProject: SubProject;
 
   public readonly watcher: LightWeightWatcher;
+
+  public readonly secretEnv: SecretEnv;
 
   get taonBuildObserver() {
     return this.artifactsManager.artifact.npmLibAndCliTool.taonBuildObserver;
@@ -171,6 +174,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     this.subProject = new (require('./sub-project')
       .SubProject as typeof SubProject)(this);
+
+    this.secretEnv = new (require('./secret-env')
+      .SecretEnv as typeof SecretEnv)(this);
 
     this.watcher = new (require('./lightweight-watcher')
       .LightWeightWatcher as typeof LightWeightWatcher)(this);
@@ -357,6 +363,8 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
             `No releases will be done inside children projects.`,
         );
         this.packageJson.setVersion(newVersion);
+
+        // not need to encode env
         await HelpersTaon.git.tagAndPushToGitRepo(this.location, {
           newVersion,
           skipAskingQuestionBeforePush:

@@ -25,6 +25,7 @@ import { IsomorphicPackagesWorker } from './isomorphic-packages/isomorphic-packa
 import { TaonTerminalUI } from './taon-terminal-ui';
 import { TaonProjectsContextTemplate } from './taon.context';
 import { TaonProjectsController } from './taon.controller';
+import { SecretsKeychainWorker } from './secrets-keychain/secrets-keychain.worker';
 
 //#endregion
 
@@ -51,6 +52,8 @@ export class TaonProjectsWorker extends BaseCliWorker<
   public readonly buildsWorker: DevModeWorker;
 
   public readonly isomorphicPackagesWorker: IsomorphicPackagesWorker;
+
+  public readonly secretsKeychainPackagesWorker: SecretsKeychainWorker;
   //#endregion
 
   //#region constructor
@@ -101,6 +104,11 @@ export class TaonProjectsWorker extends BaseCliWorker<
       () => `${config.frameworkName} cloud:isomorphicPackages ${skipCoreCheck}`,
     );
 
+    this.secretsKeychainPackagesWorker = new SecretsKeychainWorker(
+      'taon-project-secrets-keychain-pacakges-worker',
+      () => `${config.frameworkName} cloud:secretsKeychain ${skipCoreCheck}`,
+    );
+
     // this.deploymentsWorker = new DeploymentsWorker(
     //   'taon-project-deployments-worker',
     //   `${global.frameworkName} ${UtilsCliClassMethod.getFrom($Cloud.prototype.deployments)}`,
@@ -142,6 +150,11 @@ export class TaonProjectsWorker extends BaseCliWorker<
     this.dependencyWorkers.set(
       this.isomorphicPackagesWorker.serviceID,
       this.isomorphicPackagesWorker as any,
+    );
+
+    this.dependencyWorkers.set(
+      this.secretsKeychainPackagesWorker.serviceID,
+      this.secretsKeychainPackagesWorker as any,
     );
 
     //#endregion
@@ -237,6 +250,18 @@ export class TaonProjectsWorker extends BaseCliWorker<
           mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
         },
         calledFrom: 'taon development worker start',
+      },
+    });
+
+    Helpers.taskStarted(
+      `Waiting for taon secrets vars manager to be started...`,
+    );
+    await this.secretsKeychainPackagesWorker.cliStartProcedure({
+      methodOptions: {
+        cliParams: {
+          mode: BaseCLiWorkerStartMode.CHILD_PROCESS,
+        },
+        calledFrom: 'taon secrets vars worker start',
       },
     });
 

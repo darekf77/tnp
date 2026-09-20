@@ -637,6 +637,25 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+      //#region GENERATE index.ts in selected folder
+      {
+        group: groupGENERATE,
+        title: `generate ./<name>.abstract-context.ts with detected abstract contexts`,
+        exec: `${FRAMEWORK_NAME} generate %absolutePath% generated-index-abstract-contexts_custom %name%`,
+        options: {
+          titleWhenProcessing: 'generating ./<name>.abstract-context.ts',
+          showSuccessMessage: false,
+          resolveVariables: [
+            {
+              variable: 'name',
+              placeholder: `lib-context-name`,
+              encode: true,
+            },
+          ],
+        },
+      },
+      //#endregion
+
       //#region GENERATE @websql regions for entity
       {
         group: groupRefactor,
@@ -779,7 +798,7 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
-       //#region GENERATE taon backend kv repository file
+      //#region GENERATE taon backend kv repository file
       {
         group: groupGENERATE,
         title: `taon .kv.repository.ts file`,

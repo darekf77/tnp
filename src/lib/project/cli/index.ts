@@ -7,6 +7,7 @@ import CLOUD from './cli-CLOUD';
 import CORE from './cli-CORE';
 import DOCKER from './cli-DOCKER';
 import DOCS from './cli-DOCS';
+import ENV from './cli-ENV';
 import FILE_SYNC from './cli-FILE_SYNC';
 import GENERATE from './cli-GENERATE';
 import INIT from './cli-INIT';
@@ -45,6 +46,7 @@ export default [
   CORE,
   TEST,
   SUB_PROJECT,
+  ENV,
 ];
 
 //#endregion
