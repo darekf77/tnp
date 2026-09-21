@@ -7,8 +7,8 @@ import { UtilsTypescript } from 'tnp-helpers/src';
 import { DUMMY_LIB, taonIgnore } from '../../../../../../../constants';
 
 import type { BrowserCodeCut } from './browser-code-cut';
-import { CodeSplitProcess } from './code-split-process.enum';
-import type { CallBackProcess } from './code-split-process.enum';
+import { CodeSplitProcess } from './code-split-process';
+import type { CallBackProcess } from './code-split-process';
 import { UtilsCodeCut } from './utils-code-cut';
 //#endregion
 
