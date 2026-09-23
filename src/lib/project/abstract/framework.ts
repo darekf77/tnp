@@ -61,6 +61,7 @@ import {
   TaonFileExtension,
   TaonVerifiedBuild,
   THIS_IS_GENERATED_INFO_COMMENT,
+  THIS_IS_GENERATED_STRING,
   tmpLocalCopytoProjDist,
   VERIFIED_BUILD_DATA,
 } from '../../constants';
@@ -752,39 +753,43 @@ export class Framework extends BaseFeatureForProject<Project> {
         };
       });
 
-    // Helpers.writeFile(
-    //   crossPlatformPath([
-    //     absPath,
-    //     `${_.kebabCase(entityName)}.abstract.context`,
-    //   ]),
-    //   folders
-    //     .map(f => {
-    //       if (
-    //         !_.isUndefined(frontendFiles.find(bigExt => f.endsWith(bigExt)))
-    //       ) {
-    //         // `${TAGS.COMMENT_REGION} ${TAGS.BROWSER}\n` +
-    //         return `export * from './${f.replace(path.extname(f), '')}'; // ${
-    //           TAGS.BROWSER
-    //         }`;
-    //         // +`\n${TAGS.COMMENT_END_REGION}\n`;
-    //       }
-    //       if (
-    //         !_.isUndefined(
-    //           backendNodejsOnlyFiles.find(bigExt => f.endsWith(bigExt)),
-    //         )
-    //       ) {
-    //         return (
-    //           // `${TAGS.COMMENT_REGION} ${TAGS.BACKEND}\n` +
-    //           `export * from './${f.replace(path.extname(f), '')}'; // ${
-    //             TAGS.BACKEND
-    //           }`
-    //           // +`\n${TAGS.COMMENT_END_REGION}\n`
-    //         );
-    //       }
-    //       return `export * from './${f.replace(path.extname(f), '')}';`;
-    //     })
-    //     .join('\n') + '\n',
-    // );
+    const fileContextName = `${_.upperFirst(_.camelCase(entityName))}AbstractContext`;
+    const allContexts = folders.map(f => {
+      const contextName = _.upperFirst(
+        _.camelCase(path.basename(f.relativePath).replace('.ts', '')),
+      );
+      return contextName;
+    });
+
+    const fileDestPath = crossPlatformPath([
+      absPath,
+      `${_.kebabCase(entityName)}.abstract.context.ts`,
+    ]);
+
+    UtilsFilesFoldersSync.writeFile(
+      fileDestPath,
+      `${THIS_IS_GENERATED_INFO_COMMENT}
+${'imp' + 'ort'} { createContext, TaonBaseContext } from '${'ta' + 'on'}/${'src'}';
+${folders
+  .map(f => {
+    const contextName = _.upperFirst(
+      _.camelCase(path.basename(f.relativePath).replace('.ts', '')),
+    );
+    return `import { ${contextName} } from './${f.relativePath.replace(path.extname(f.relativePath), '')}';`;
+  })
+  .join('\n')}
+
+${'exp' + 'ort'} const ${fileContextName} = createContext(() => ({
+  contextName: '${fileContextName}',
+  abstract: true,
+  contexts: {
+${allContexts.join(',\n')}
+  },
+}));
+
+${THIS_IS_GENERATED_INFO_COMMENT}`,
+    );
+    UtilsTypescript.formatFile(fileDestPath);
     //#endregion
   }
 
