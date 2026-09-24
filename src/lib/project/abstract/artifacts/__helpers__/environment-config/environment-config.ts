@@ -2,7 +2,14 @@
 import { incrementalWatcher } from 'incremental-compiler/src';
 import { walk } from 'lodash-walk-object/src';
 import { from } from 'rxjs';
-import { config, LibTypeEnum, tnpPackageName, UtilsEnv } from 'tnp-core/src';
+import {
+  config,
+  LibTypeEnum,
+  tnpPackageName,
+  UtilsEnv,
+  UtilsFilesFoldersSync,
+  UtilsTerminal,
+} from 'tnp-core/src';
 import { chalk, CoreModels, crossPlatformPath, fse, Utils } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
@@ -26,6 +33,7 @@ import {
   TaonGeneratedFolders,
   THIS_IS_GENERATED_INFO_COMMENT,
   THIS_IS_GENERATED_STRING,
+  tmpEnvFolder,
 } from '../../../../../constants';
 import {
   allPathsEnvConfig,
@@ -82,6 +90,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   }
   //#endregion
 
+  //#region api / watch and recreate
   async watchAndRecreate(onChange: () => any): Promise<void> {
     //#region @backendFunc
     if (this.project.framework.isStandaloneProject) {
@@ -103,6 +112,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
 
     //#endregion
   }
+  //#endregion
 
   //#region api / update
   public async update(
@@ -119,7 +129,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     );
     envConfigFromParams = EnvOptions.from(envConfigFromParams);
 
-    this.makeSureEnvironmentExists();
+    await this.makeSureEnvironmentExists();
 
     if (options.saveEnvToLibEnv) {
       if (!options.fromWatcher) {
@@ -166,13 +176,11 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
 
   //#endregion
 
-  //#region private methods
-
   //#region private methods / env options resolve
-  private envOptionsResolve(
+  private async envOptionsResolve(
     envOptions: EnvOptions,
     fromWatcher = false,
-  ): EnvOptions {
+  ): Promise<EnvOptions> {
     //#region @backendFunc
     if (!envOptions.release.envName) {
       envOptions.release.envName = '__';
@@ -220,10 +228,11 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     //     `${artifactName}/${environmentName}/${envNum || ''}`,
     // );
 
-    var pathToEnvTs = this.project.pathFor(
+    var pathToEnvTs = this.project.pathFor([
+      tmpEnvFolder,
       `${environmentsFolder}/${artifactName}/` +
         `env.${artifactName}.${environmentName}${envNum === undefined ? '' : envNum}.ts`,
-    );
+    ]);
 
     try {
       // TODO QUICK_FIX
@@ -271,8 +280,8 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     // Helpers.taskStarted(`Reading environment config for ${this.project.name}`);
     let configStandaloneEnv: EnvOptions;
     try {
-      UtilsTypescript.clearRequireCacheRecursive(this.absPathToEnvTs);
-      configStandaloneEnv = require(this.absPathToEnvTs)?.default;
+      UtilsTypescript.clearRequireCacheRecursive(this.absPathToEnvTsInEnvTemp);
+      configStandaloneEnv = require(this.absPathToEnvTsInEnvTemp)?.default;
     } catch (error) {
       // TODO QUICK_FIX @UNCOMMENT
       if (this.project.framework.isCoreProject) {
@@ -432,7 +441,8 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
   }
   //#endregion
 
-  makeSureEnvironmentExists(): void {
+  //#region private methods / make sure environment exists
+  async makeSureEnvironmentExists(): Promise<void> {
     //#region @backendFunc
     if (!this.project.hasFolder(environmentsFolder)) {
       const coreEnv = this.project.ins
@@ -489,12 +499,57 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
       }
     }
 
+    Helpers.remove(this.project.pathFor(tmpEnvFolder));
+    Helpers.mkdirp(this.project.pathFor(tmpEnvFolder));
+    while (true) {
+      UtilsFilesFoldersSync.copyFile(
+        this.absPathToEnvTs,
+        this.absPathToEnvTsInEnvTemp,
+      );
+
+      UtilsFilesFoldersSync.copy(
+        this.project.pathFor([environmentsFolder]),
+        this.project.pathFor([tmpEnvFolder, environmentsFolder]),
+        {
+          recursive: true,
+        },
+      );
+
+      const anyOrgFileWithSecretFn =
+        await this.project.secretEnv.anyOrgFileWithSecretFn();
+
+      if (!anyOrgFileWithSecretFn) {
+        break;
+      }
+
+      await this.project.secretEnv.decodeTempEnv();
+
+      const everythingDecoded =
+        await this.project.secretEnv.everyTempVariableDecoded();
+
+      if (!everythingDecoded) {
+        const tryAgain = UtilsTerminal.confirm({
+          message: `Something went wrong with encoding... try again ? (or skip) `,
+          defaultValue: false,
+        });
+        if (tryAgain) {
+          continue;
+        }
+      }
+      break;
+    }
+
     //#endregion
   }
+  //#endregion
 
+  //#region private methods  / abs path to env ts
   private get absPathToEnvTs(): string {
     return crossPlatformPath([this.project.location, envTs]);
   }
 
+  private get absPathToEnvTsInEnvTemp(): string {
+    return crossPlatformPath([this.project.location, tmpEnvFolder, envTs]);
+  }
   //#endregion
 }

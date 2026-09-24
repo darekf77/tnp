@@ -262,6 +262,8 @@ export const envTs = 'env.ts';
 
 export const environmentsFolder = 'environments';
 
+export const tmpEnvFolder = 'tmp-env';
+
 export const coreRequiredEnvironments = [
   '__',
   'prod',

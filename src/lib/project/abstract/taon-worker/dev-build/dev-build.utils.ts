@@ -11,6 +11,7 @@ import {
   tnpPackageName,
 } from 'tnp-core/src';
 
+import { tmpEnvFolder } from '../../../../constants';
 import { EnvOptions } from '../../../../options';
 import { Project } from '../../project';
 import { TaonProjectResolve } from '../../project-resolve';
@@ -96,8 +97,10 @@ export namespace DevBuildUtils {
             );
           }
         }
-        Helpers.info('Taon Build Exit Cleaning Done');
+
         Helpers.removeFileIfExists(devBuildRepository.jsonDbLocation);
+        Helpers.remove(project.pathFor(tmpEnvFolder));
+        Helpers.info('Taon Build Exit Cleaning Done');
         resolve();
       });
     };

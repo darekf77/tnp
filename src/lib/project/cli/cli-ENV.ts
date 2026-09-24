@@ -107,7 +107,7 @@ export class $Env extends BaseCli {
   }
 
   async encode(notExit = false) {
-    await this.project.secretEnv.encode(notExit ? void 0 : this.firstArg);
+    await this.project.secretEnv.encodeOriginal(notExit ? void 0 : this.firstArg);
     Helpers.info('Done encoding.');
     if (!notExit) {
       this._exit();
@@ -115,7 +115,7 @@ export class $Env extends BaseCli {
   }
 
   async decode(notExit = false) {
-    await this.project.secretEnv.decode(notExit ? void 0 : this.firstArg);
+    await this.project.secretEnv.decodeOriginal(notExit ? void 0 : this.firstArg);
     Helpers.info('Done decoding.');
     if (!notExit) {
       this._exit();

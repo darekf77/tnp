@@ -71,16 +71,6 @@ export class Git extends BaseGit<Project> {
 
     this.project.quickFixes.removeHuskyHooks();
 
-    if (this.project.framework.frameworkVersionAtLeast('v21')) {
-      while (!(await this.project.secretEnv.canChangesBePush())) {
-        Helpers.info(`
-
-        ${chalk.bold.red('BEFORE PUSHING PLEASE ALWAYS ENCRYPT ALL YOUR DATA')}
-
-        `);
-        await this.project.secretEnv.encode();
-      }
-    }
 
     //#endregion
   }
