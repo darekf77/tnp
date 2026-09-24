@@ -768,8 +768,7 @@ export class Framework extends BaseFeatureForProject<Project> {
 
     UtilsFilesFoldersSync.writeFile(
       fileDestPath,
-      `${THIS_IS_GENERATED_INFO_COMMENT}
-${'imp' + 'ort'} { createContext, TaonBaseContext } from '${'ta' + 'on'}/${'src'}';
+      `${'imp' + 'ort'} { createContext, TaonBaseContext } from '${'ta' + 'on'}/${'src'}';
 ${folders
   .map(f => {
     const contextName = _.upperFirst(
@@ -786,8 +785,7 @@ ${'exp' + 'ort'} const ${fileContextName} = createContext(() => ({
 ${allContexts.join(',\n')}
   },
 }));
-
-${THIS_IS_GENERATED_INFO_COMMENT}`,
+`,
     );
     UtilsTypescript.formatFile(fileDestPath);
     //#endregion

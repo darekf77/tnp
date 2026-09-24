@@ -26,6 +26,7 @@ import { tnpPackageName } from 'tnp-core/src';
 import { taonActionFromParent } from 'tnp-core/src';
 import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
+import { filterChildren } from '../../../app-utils';
 import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
 import {
   appCloudflareTsFromSrc,
@@ -56,6 +57,7 @@ import {
 } from '../../../constants';
 import { ReleaseArtifactTaon, EnvOptions, ReleaseType } from '../../../options';
 import { EXPORT_TEMPLATE } from '../../../templates';
+import { CloudFlarePorjectsUtils } from '../cloud-flare-projects/cloud-flare-projects.utils';
 import { Project } from '../project';
 
 import { ArtifactsGlobalHelper } from './__helpers__/artifacts-helpers';
@@ -65,7 +67,6 @@ import type {
   ReleasePartialOutput,
 } from './base-artifact';
 import { FilesRecreator } from './npm-lib-and-cli-tool/tools/files-recreation';
-import { CloudFlarePorjectsUtils } from '../cloud-flare-projects/cloud-flare-projects.utils';
 //#endregion
 
 /**
@@ -471,9 +472,9 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
 
     this.recreateAndFixCoreFiles();
 
-    while (!(await this.project.secretEnv.canBeInitedLocally())) {
-      await this.project.secretEnv.decode();
-    }
+    // while (!(await this.project.secretEnv.canBeInitedLocally())) {
+    //   await this.project.secretEnv.decode();
+    // }
 
     initOptions = await this.project.environmentConfig.update(initOptions, {
       saveEnvToLibEnv:
@@ -896,67 +897,22 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
 
   //#region public methods / build all children
   async buildAllChildren(
-    options: EnvOptions,
+    buildOptions: EnvOptions,
     children = this.project.children,
   ): Promise<void> {
-    children = this.project.ins // @ts-ignore BaseProject inheritace compatiblity with Project problem
-      .sortGroupOfProject<Project>(
-        children,
-        proj => [
-          ...proj.taonJson.dependenciesNamesForNpmLib,
-          ...proj.taonJson.isomorphicDependenciesForNpmLib,
-          ...proj.taonJson.peerDependenciesNamesForNpmLib,
-        ],
-        proj => proj.nameForNpmPackage,
-        proj => proj.nameForNpmPackage,
-        this.project.taonJson.overridePackagesOrder,
-      );
-
-    if (options.container.only.length > 0) {
-      children = children.filter(c => {
-        return options.container.only.includes(c.name);
-      });
-    }
-
-    if (options.container.skip.length > 0) {
-      children = children.filter(c => {
-        return !options.container.skip.includes(c.name);
-      });
-    }
-
-    const endIndex = this.project.children.findIndex(
-      c => c.name === options.container.end,
-    );
-    if (endIndex !== -1) {
-      children = children.filter((c, i) => {
-        return i <= endIndex;
-      });
-    }
-    const startIndex = this.project.children.findIndex(
-      c => c.name === options.container.start,
-    );
-    if (startIndex !== -1) {
-      children = children.filter((c, i) => {
-        return i >= startIndex;
-      });
-    }
-
-    if (options.container.skipReleased) {
-      children = children.filter((c, i) => {
-        const lastCommitMessage = c?.git?.lastCommitMessage()?.trim();
-        return !lastCommitMessage?.startsWith('release: ');
-      });
-    }
+    children = filterChildren(this.project, children, buildOptions, {
+      isForRelease: false,
+    });
 
     if (
       !(await this.project.npmHelpers.shouldReleaseMessage({
-        releaseVersionBumpType: options.release.releaseVersionBumpType,
+        releaseVersionBumpType: buildOptions.release.releaseVersionBumpType,
         children: children as any,
         whatToRelease: {
           itself: false,
           children: true,
         },
-        skipQuestionToUser: options.isCiProcess,
+        skipQuestionToUser: buildOptions.isCiProcess,
         actionType: 'build',
       }))
     ) {
@@ -965,7 +921,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
 
     for (const child of children) {
       GlobalStorage.set(taonActionFromParent, child.name);
-      await child.artifactsManager.build(options);
+      await child.artifactsManager.build(buildOptions);
     }
   }
   //#endregion

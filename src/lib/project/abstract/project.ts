@@ -12,7 +12,7 @@ import {
   HelpersTaon,
 } from 'tnp-helpers/src';
 
-import { createShortName } from '../../app-utils';
+import { createShortName, filterChildren } from '../../app-utils';
 import {
   assetsFromTempSrc,
   binMainProject,
@@ -376,76 +376,8 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
         return;
       }
 
-      children = this.ins // @ts-ignore BaseProject inheritace compatiblity with Project problem
-        .sortGroupOfProject<Project>(
-          children,
-          proj => [
-            ...proj.taonJson.dependenciesNamesForNpmLib,
-            ...proj.taonJson.isomorphicDependenciesForNpmLib,
-            ...proj.taonJson.peerDependenciesNamesForNpmLib,
-          ],
-          proj => proj.nameForNpmPackage,
-          proj => proj.nameForNpmPackage,
-          this.taonJson.overridePackagesOrder,
-        )
-        .filter(
-          d =>
-            d.framework.isStandaloneProject ||
-            (d.framework.isContainer && d.taonJson.createOnlyTagWhenRelease),
-        );
-
-      // console.log({
-      //   overridePackagesOrder: this.taonJson.overridePackagesOrder,
-      // });
-
-      if (releaseOptions.container.only.length > 0) {
-        children = children.filter(c => {
-          return releaseOptions.container.only.includes(c.name);
-        });
-      }
-
-      if (releaseOptions.container.skip.length > 0) {
-        children = children.filter(c => {
-          return !releaseOptions.container.skip.includes(c.name);
-        });
-      }
-
-      const endIndex = children.findIndex(
-        c => c.name === releaseOptions.container.end,
-      );
-      if (endIndex !== -1) {
-        children = children.filter((c, i) => {
-          return i <= endIndex;
-        });
-      }
-
-      const startIndex = children.findIndex(
-        c => c.name === releaseOptions.container.start,
-      );
-      if (startIndex !== -1) {
-        children = children.filter((c, i) => {
-          return i >= startIndex;
-        });
-      }
-
-      if (releaseOptions.container.skipReleased) {
-        children = children.filter((c, i) => {
-          const lastCommitMessage = c?.git?.lastCommitMessage()?.trim();
-          return !lastCommitMessage?.startsWith('release: ');
-        });
-      }
-    }
-
-    if (releaseOptions.release.autoReleaseUsingConfig) {
-      children = children.filter(child => {
-        if (!child.framework.isStandaloneProject) {
-          return true;
-        }
-        const hasConfigForAutoRelease = child.hasValidAutoReleaseConfig(
-          releaseOptions,
-          { project: child, hideTaskErrors: true },
-        );
-        return hasConfigForAutoRelease;
+      children = filterChildren(this, children, releaseOptions, {
+        isForRelease: true,
       });
     }
 
@@ -594,7 +526,7 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
   //#endregion
 
   //#region has valid auto release config
-  protected hasValidAutoReleaseConfig(
+  hasValidAutoReleaseConfig(
     envOptions: EnvOptions,
     options?: {
       project?: Project;
