@@ -237,6 +237,58 @@ export const filterChildren = (
   //#endregion
 };
 
+export function transformEnvFunctionToBrowser(
+  functionAsString: string,
+): string {
+  //#region @backendFunc
+  const source = functionAsString.trim();
+
+  let returnExpression: string | undefined;
+
+  // Arrow:
+  // () => "secret"
+  // () => someVariable
+  // () => ({ foo: 'bar' })
+  const arrowExpressionMatch = source.match(
+    /^(?:async\s*)?\([^)]*\)\s*=>\s*(?!\{)([\s\S]+)$/,
+  );
+
+  if (arrowExpressionMatch) {
+    returnExpression = arrowExpressionMatch[1].trim();
+  }
+
+  // Arrow with body:
+  // () => { return "secret"; }
+  if (!returnExpression) {
+    const arrowBodyMatch = source.match(
+      /^(?:async\s*)?\([^)]*\)\s*=>\s*\{[\s\S]*?\breturn\s+([\s\S]*?);?\s*\}$/,
+    );
+
+    if (arrowBodyMatch) {
+      returnExpression = arrowBodyMatch[1].trim().replace(/;$/, '');
+    }
+  }
+
+  // Normal function:
+  // function () { return "secret"; }
+  if (!returnExpression) {
+    const normalFunctionMatch = source.match(
+      /^function(?:\s+\w+)?\s*\([^)]*\)\s*\{[\s\S]*?\breturn\s+([\s\S]*?);?\s*\}$/,
+    );
+
+    if (normalFunctionMatch) {
+      returnExpression = normalFunctionMatch[1].trim().replace(/;$/, '');
+    }
+  }
+
+  if (!returnExpression) {
+    throw new Error(`Cannot transform env function:\n${functionAsString}`);
+  }
+
+  return `(): Promise<string> => decodeEnv(${returnExpression})`;
+  //#endregion
+}
+
 //#region is test file
 export const isTestFile = (filePath: string): boolean => {
   if (!filePath) {

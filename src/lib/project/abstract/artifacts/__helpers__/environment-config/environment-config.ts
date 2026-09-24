@@ -34,6 +34,7 @@ import {
   ReleaseArtifactTaonNamesArr,
 } from '../../../../../options';
 import type { Project } from '../../../project';
+import { transformEnvFunctionToBrowser } from '../../../../../app-utils';
 
 //#endregion
 
@@ -380,6 +381,11 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
           // if (lodashPath === 'config.microsoftClientId') {
 
           // }
+
+          const stringValFromFun = _.isFunction(val)
+            ? transformEnvFunctionToBrowser(val?.toString())
+            : void 0;
+
           if (isOK) {
             pathsWithValues.push(lodashPath);
             backendConstants.push(
@@ -391,10 +397,7 @@ export const ENV_` +
                   _.isString(val)
                     ? `'${val}'`
                     : _.isFunction(val)
-                      ? val
-                          ?.toString()
-                          .replace('()', '():Promise<string>')
-                          .replace('=> ', '=> decodeEnv(') + ')'
+                      ? stringValFromFun
                       : val
                 };`,
             );
