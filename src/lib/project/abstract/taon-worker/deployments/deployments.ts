@@ -127,7 +127,7 @@ export class Deployments
   //#region @websql
   @String45Column()
   //#endregion
-  processIdComposeUp?: string | null;
+  processIdComposeUp?: number | string | null;
   //#endregion
 
   //#region process compose down id
@@ -135,7 +135,7 @@ export class Deployments
   //#region @websql
   @String45Column()
   //#endregion
-  processIdComposeDown?: string | null;
+  processIdComposeDown?: number | string | null;
   //#endregion
 
   //#region arrival date

@@ -236,7 +236,9 @@ export const filterChildren = (
   return children;
   //#endregion
 };
+//#endregion
 
+//#region transform env function to browser
 export function transformEnvFunctionToBrowser(
   functionAsString: string,
 ): string {
@@ -288,6 +290,7 @@ export function transformEnvFunctionToBrowser(
   return `(): Promise<string> => decodeEnv(${returnExpression})`;
   //#endregion
 }
+//#endregion
 
 //#region is test file
 export const isTestFile = (filePath: string): boolean => {
