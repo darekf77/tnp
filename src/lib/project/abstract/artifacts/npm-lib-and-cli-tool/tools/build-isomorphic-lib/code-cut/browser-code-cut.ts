@@ -781,13 +781,15 @@ export class BrowserCodeCut {
           fileAbsPath: this.absFileSourcePathBrowserOrWebsql,
           newContent: absFileSourceBrowserOrWebsqlNewContent,
           oldContent: absFileSourceBrowserOrWebsqlCurrent,
+          isBackend: false,
+          project: this.project,
         });
 
         //#endregion
       }
       // #region NORMAL TS BROWSER FILE FOR APP
-      const absFileSourceBrowserOrWebsqlAPPONLYCurrent = this.project
-        .watcher.isTaonLightWatcherMode
+      const absFileSourceBrowserOrWebsqlAPPONLYCurrent = this.project.watcher
+        .isTaonLightWatcherMode
         ? UtilsFilesFoldersSync.readFile(
             this.absFileSourcePathBrowserOrWebsqlAPPONLY,
           )
@@ -808,6 +810,8 @@ export class BrowserCodeCut {
         fileAbsPath: this.absFileSourcePathBrowserOrWebsqlAPPONLY,
         newContent: absFileSourceBrowserOrWebsqlAPPONLYNewContent,
         oldContent: absFileSourceBrowserOrWebsqlAPPONLYCurrent,
+        isBackend: false,
+        project: this.project,
       });
 
       //#endregion
@@ -1312,6 +1316,8 @@ export class BrowserCodeCut {
           isFirstTime: isFirstTimeBackendCompilation,
           newContent: backendDestFileNewContent,
           oldContent: backendDestFileCurrentContent,
+          isBackend: true,
+          project: this.project,
         });
       })();
       //#endregion
@@ -1361,6 +1367,8 @@ export class BrowserCodeCut {
           isFirstTime: isFirstTimeBackendCompilation,
           newContent: backendEsmDestFileNewContent,
           oldContent: backendEsmDestFileCurrentContent,
+          isBackend: true,
+          project: this.project,
         });
       })();
       //#endregion

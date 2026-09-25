@@ -789,23 +789,24 @@ export const replaceAssetsLinksForApp = (
 };
 //#endregion
 
-//#region replace import to assets imports
-export const replaceImportToAssetsIMport = (
-  rawContentForBrowser: string,
-  nameForNpmPackage: string,
+//#region replace before save in ts file
+export const replaceBeforeSaveInTsFile = (
+  beOrFeTsFileContent: string,
+  /**
+   * <project location>src/<relativeFilePath>
+   */
   relativeFilePath: string,
   project: Project,
 ): string => {
   //#region @backendFunc
-  if (!rawContentForBrowser) {
-    return rawContentForBrowser;
+  if (!beOrFeTsFileContent) {
+    return beOrFeTsFileContent;
   }
-
   if (relativeFilePath.endsWith('.ts') || relativeFilePath.endsWith('.tsx')) {
     //#region replace assets list from
     (() => {
       const assetsFromRegex = /Taon\.assetsListFrom\s*\(\s*(['"])(.*?)\1\s*\)/g;
-      rawContentForBrowser = rawContentForBrowser.replace(
+      beOrFeTsFileContent = beOrFeTsFileContent.replace(
         assetsFromRegex,
         (_, quote, folder: string) => {
           folder = folder.replace(/^\//, '').replace(/\/$/, '');
@@ -832,7 +833,7 @@ export const replaceImportToAssetsIMport = (
     //#region replace assets from
     (() => {
       const assetsFromRegex = /Taon\.assetsFrom\s*\(\s*(['"])(.*?)\1\s*\)/g;
-      rawContentForBrowser = rawContentForBrowser.replace(
+      beOrFeTsFileContent = beOrFeTsFileContent.replace(
         assetsFromRegex,
         (_, quote, folder: string) => {
           const files = UtilsFilesFoldersSync.getFilesFrom(
@@ -858,7 +859,7 @@ export const replaceImportToAssetsIMport = (
     //#region replace taon FILE RELATIVE PATH
     (() => {
       const assetsFromRegex = /Taon\.__FILE_RELATIVE_PATH/g;
-      rawContentForBrowser = rawContentForBrowser.replace(
+      beOrFeTsFileContent = beOrFeTsFileContent.replace(
         assetsFromRegex,
         (_, quote, folder: string) => {
           return `'${crossPlatformPath([srcMainProject, relativeFilePath])}'`;
@@ -870,7 +871,7 @@ export const replaceImportToAssetsIMport = (
     //#region replace taon LANG IMPORT MAP)
     (() => {
       const assetsFromRegex = /Taon\.LANG_IMPORT_MAP/g;
-      rawContentForBrowser = rawContentForBrowser.replace(
+      beOrFeTsFileContent = beOrFeTsFileContent.replace(
         assetsFromRegex,
         (_, quote, folder: string) => {
           // TODO @LAST REFACTOR this
@@ -917,6 +918,28 @@ export const replaceImportToAssetsIMport = (
     })();
     //#endregion
   }
+  return beOrFeTsFileContent;
+  //#endregion
+};
+//#endregion
+
+//#region replace import to assets imports
+export const replaceImportToAssetsIMport = (
+  rawContentForBrowser: string,
+  nameForNpmPackage: string,
+  relativeFilePath: string,
+  project: Project,
+): string => {
+  //#region @backendFunc
+  if (!rawContentForBrowser) {
+    return rawContentForBrowser;
+  }
+
+  rawContentForBrowser = replaceBeforeSaveInTsFile(
+    rawContentForBrowser,
+    relativeFilePath,
+    project,
+  );
 
   (() => {
     const from = `${srcMainProject}/${assetsFromSrc}/`;
@@ -944,14 +967,27 @@ export const compareAndSave = ({
   isFirstTime,
   newContent,
   oldContent,
+  isBackend,
+  project,
 }: {
   isFirstTime: boolean;
   newContent: string | undefined;
   oldContent: string;
   fileAbsPath: string;
+  isBackend: boolean;
+  project: Project;
 }): void => {
   //#region @backendFunc
-  const orgNewContent = newContent;
+  const beRelative = fileAbsPath
+    .replace(project.location + '/', '')
+    .split('/')
+    .slice(1)
+    .join('/');
+  // console.log({ beRelative });
+  const orgNewContent = isBackend
+    ? replaceBeforeSaveInTsFile(newContent, beRelative, project)
+    : newContent;
+
   const oldContentTrim =
     UtilsTypescript.removeCommentsFromTsContent(oldContent)?.trimEnd();
 
@@ -960,6 +996,7 @@ export const compareAndSave = ({
 
   if (isFirstTime || !oldContentTrim || oldContentTrim !== newContentTrim) {
     // console.info(`Writing: ${fileAbsPath}`);
+
     fse.writeFileSync(fileAbsPath, orgNewContent, 'utf8');
   }
   //#endregion
