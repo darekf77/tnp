@@ -54,11 +54,11 @@ export class $Env extends BaseCli {
       }
 
       if (choice === 'getSafePass') {
-        await this.pass(true);
+        await this.genPass(true);
       }
 
       if (choice === 'deleteSecret') {
-        await this.deletePass(true);
+        await this.rmPass(true);
       }
       if (choice === 'exit') {
         this._exit();
@@ -69,7 +69,7 @@ export class $Env extends BaseCli {
     //#endregion
   }
 
-  async deletePass(notExit = false) {
+  async rmPass(notExit = false) {
     const ctrl =
       await this.project.ins.taonProjectsWorker.secretsKeychainPackagesWorker.getRemoteControllerFor(
         {
@@ -89,7 +89,7 @@ export class $Env extends BaseCli {
     }
   }
 
-  async pass(notExit = false) {
+  async genPass(notExit = false) {
     const pass = UtilsSecretEnv.generateRandomPassword();
     await UtilsClipboard.copyText(pass);
     console.log(
