@@ -200,7 +200,7 @@ export class SecretEnv extends BaseFeatureForProject<Project> {
       }
     }
 
-    masterPassword = await UtilsTerminal.input({
+    masterPassword = await UtilsTerminal.password({
       question: `Please provide${requestNew ? ' new' : ''} master password`,
       required: true,
     });
