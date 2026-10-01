@@ -7,7 +7,6 @@ import path from 'path';
 import crypto from 'crypto';
 import express, { Request, Response, NextFunction } from 'express';
 import multer from 'multer';
-import { axios } from 'tnp-core/src';
 import FormData from 'form-data';
 
 //#region helpers
@@ -95,32 +94,32 @@ async function startServer(port: number) {
   });
 }
 
-// ---------- [2] Sender using axios ----------
+// ---------- [2] Sender using fetch ----------
 async function sendZip(filePath: string, url = 'http://localhost:3000/upload') {
   const abs = path.resolve(filePath);
   if (!fs.existsSync(abs)) throw new Error(`File not found: ${abs}`);
   if (!isZipPath(abs)) throw new Error(`Not a .zip file: ${abs}`);
 
   const stat = fs.statSync(abs);
-  const stream = fs.createReadStream(abs);
+
+  const fileBlob = new Blob([await fs.promises.readFile(abs)]);
 
   const form = new FormData();
-  form.append('file', stream, {
-    filename: path.basename(abs),
-    knownLength: stat.size,
-  });
 
-  const headers = form.getHeaders();
+  form.append('file', fileBlob, path.basename(abs));
 
-  // Note: onUploadProgress is browser-only for axios; we’ll just log start/finish.
   console.log(`Uploading ${path.basename(abs)} (${stat.size} bytes) -> ${url}`);
-  const resp = await axios.post(url, form, {
-    headers,
-    maxContentLength: Infinity,
-    maxBodyLength: Infinity,
+
+  const resp = await fetch(url, {
+    method: 'POST',
+    body: form as any,
   });
 
-  console.log('Server response:', resp.data);
+  if (!resp.ok) {
+    throw new Error(`Upload failed: HTTP ${resp.status} ${resp.statusText}`);
+  }
+
+  console.log('Server response:', resp.json());
 }
 
 // ---------- CLI entry ----------

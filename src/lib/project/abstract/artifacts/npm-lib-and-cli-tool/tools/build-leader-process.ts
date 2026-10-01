@@ -264,7 +264,7 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
         do {
           try {
             await devBuildControllerForProj.healthCheck().request({
-              timeout: 500,
+              signal: AbortSignal.timeout(500),
             });
             return true;
           } catch (error) {
@@ -554,7 +554,7 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
             await devBuildControllerForProj
               .displayRebuildDoneMessage(this.project.nameForNpmPackage)
               .request({
-                timeout: 500,
+                signal: AbortSignal.timeout(500),
               });
           } catch (error) {
             config.frameworkName === tnpPackageName &&
@@ -607,7 +607,7 @@ ${allDepProject.map((c, i) => `${i + 1}. ${c.nameForNpmPackage} (port=${c.port})
         await devModeControllerWorker
           .finishLeadBuildAndUnregisterLeadProject(getCurrentProjectData())!
           .request({
-            timeout: 500,
+            signal: AbortSignal.timeout(500),
           });
       } catch (error) {
         config.frameworkName === tnpPackageName &&

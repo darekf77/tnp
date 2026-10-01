@@ -83,6 +83,16 @@ export class DevModeRepository extends TaonBaseKvRepository<{
 
   //#region API
 
+  private async setBuildLeader(
+    body: DevMode.ProjectBuildNotificaiton,
+    reason: string,
+  ): Promise<void> {
+    this.addMessage(
+      `setting build leader with body [reason="${reason}"] value with something = ${!!body} `,
+    );
+    await this.set('currentLeadProject', body);
+  }
+
   //#region API / public methods / uniregister as build leader
   async finishLeadBuildAndUnregisterLeadProject(
     body: DevMode.ProjectBuildNotificaiton,
@@ -93,7 +103,10 @@ export class DevModeRepository extends TaonBaseKvRepository<{
       await this.get('currentLeadProject'),
     );
     if (currentLead && currentLead.isEqual(body)) {
-      await this.set('currentLeadProject', null);
+      await this.setBuildLeader(
+        null,
+        `finishLeadBuildAndUnregisterLeadProject current lead is qual bod`,
+      );
 
       //#region remove required builds when normal lead build
       const frameworkVersion = currentLead.coreContainerVersion;
@@ -207,7 +220,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
           currentLeadProject.port,
         );
         await leadController.cancelLeadBuildIfRunning()!.request({
-          timeout: 500,
+          signal: AbortSignal.timeout(500),
         });
       } catch (error) {
         this.addMessage(`Not able to set lead build as dirty`);
@@ -215,7 +228,10 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     }
     //#endregion
 
-    await this.set('currentLeadProject', projectRequestestingLeadPos);
+    await this.setBuildLeader(
+      projectRequestestingLeadPos,
+      `setAsLeadProjectAndReturnDependcies normal set`,
+    );
 
     this.addMessage(
       `Before sorting for ${projectRequestestingLeadPos.nameForNpmPackage}: ${projects.map(c => c.nameForNpmPackage).join(',')}`,
@@ -253,9 +269,11 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     const buildLeader = DevMode.ProjectBuildNotificaiton.from(
       await this.get('currentLeadProject'),
     );
+    // console.log('checkIfStillBuildLeader sno build leader ', body);
     if (!buildLeader) {
       return false;
     }
+    // console.log('checkIfStillBuildLeader comparing ', body, buildLeader);
     return buildLeader.uniqueKey === body.uniqueKey;
     //#endregion
   }
@@ -318,7 +336,10 @@ export class DevModeRepository extends TaonBaseKvRepository<{
       for (const deletedBuild of opt.deletedProjects || []) {
         await this.deleteContextByPort(deletedBuild.port);
         if (leadProj && leadProj.isEqual(deletedBuild)) {
-          await this.set('currentLeadProject', null);
+          await this.setBuildLeader(
+            null,
+            `updatePoolOfDevProjects lead proj isEqual deleted build`,
+          );
         }
       }
 
@@ -711,7 +732,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
       console.log(msg);
     }
     this.logMessages.push(msg);
-    this.logMessages = this.logMessages.slice(-100);
+    this.logMessages = this.logMessages.slice(-200);
     this.debouceWriteLog();
 
     //#endregion
@@ -750,7 +771,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
       try {
         buildIsOK = (
           await possibleDevBuildController.healthCheck()!.request({
-            timeout: 500,
+            signal: AbortSignal.timeout(500),
           })
         ).body.booleanValue;
 
@@ -761,7 +782,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
         const statusData = await possibleDevBuildController
           .getProjectInfo()!
           .request({
-            timeout: 500,
+            signal: AbortSignal.timeout(500),
           });
 
         const frameworkVersion = statusData.body.json.coreContainerVersion;
@@ -809,7 +830,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
     await this.set('poolOfDevModeProjects', {});
     await this.set('requiredToBeInLeadBuild', {});
     await this.set('frameworkVersions', []);
-    await this.set('currentLeadProject', null);
+    await this.setBuildLeader(null, `initia _ set`);
     await this.set('shouldBeRebuild', {});
     if (WRITE_LOG_TO_FILE) {
       Helpers.writeJson(this.pathToLog, []);

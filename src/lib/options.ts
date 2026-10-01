@@ -1,4 +1,3 @@
-import type axiosType from 'axios';
 import { walk } from 'lodash-walk-object/src';
 import {
   chalk,
@@ -295,10 +294,15 @@ export const dockerDatabaseMysql = {
       .pathFor([DOCKER_TEMPLATES, 'database-mysql']);
     //#endregion
   },
-  healthCheck: async ({ axios, env }) => {
+  healthCheck: async ({ env }) => {
     //#region @backendFunc
-    const res = await axios.get(`http://localhost:${env.HEALTH_PORT}/health`);
-    return res.data === 'OK';
+    const res = await fetch(`http://localhost:${env.HEALTH_PORT}/health`);
+
+    if (!res.ok) {
+      return false;
+    }
+
+    return (await res.text()) === 'OK';
     //#endregion
   },
 } as TaonDockerContainerConfig<{
@@ -342,7 +346,6 @@ export interface TaonDockerContainerConfig<ENV = {}> {
    * and it will be called to check if container is healthy
    */
   healthCheck?: (opt?: {
-    axios?: typeof axiosType;
     project?: Project;
     env?: ENV;
   }) => Promise<boolean>;

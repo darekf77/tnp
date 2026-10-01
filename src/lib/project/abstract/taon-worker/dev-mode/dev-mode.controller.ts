@@ -42,7 +42,7 @@ export class DevModeController extends TaonBaseCliWorkerController {
   }
   //#endregion
 
-  @GET()
+  @POST()
   getWhatShouldBeRebuild(
     @Body() body: DevMode.ProjectBuildNotificaiton,
   ): Taon.Response<{
@@ -73,7 +73,7 @@ export class DevModeController extends TaonBaseCliWorkerController {
   //#endregion
 
   //#region  check if still build leader
-  @GET()
+  @POST()
   checkIfStillBuildLeader(
     @Body() body: DevMode.ProjectBuildNotificaiton,
   ): Taon.Response<boolean> {

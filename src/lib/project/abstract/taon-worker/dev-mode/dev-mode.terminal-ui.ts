@@ -51,7 +51,7 @@ export class DevModeTerminalUI extends BaseCliWorkerTerminalUI<DevModeWorker> {
             requestTimeoutMs: 2000,
             fetchFn: async () => {
               const data = await ctrl.getLogMessages(60).request!({
-                timeout: 1000,
+                signal: AbortSignal.timeout(1000),
               });
               return data.body.json;
             },
@@ -78,7 +78,7 @@ export class DevModeTerminalUI extends BaseCliWorkerTerminalUI<DevModeWorker> {
           });
 
           await ctrl.clearLogMessages().request!({
-            timeout: 1000,
+            signal: AbortSignal.timeout(1000),
           });
 
           Helpers.info(`Done clearing message`);

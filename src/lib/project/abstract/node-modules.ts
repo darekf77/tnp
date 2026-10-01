@@ -410,7 +410,7 @@ export class NodeModules extends BaseNodeModules {
       '@ngx-formly/ionic',
       '@ngx-formly/material',
       'sql.js',
-      'axios',
+      'axi' + 'os',
       'mocha',
       'jest',
       'chai',

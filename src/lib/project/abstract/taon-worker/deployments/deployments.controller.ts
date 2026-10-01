@@ -1,6 +1,6 @@
 //#region imports
 import type * as FormData from 'form-data'; // @backend
-import { Ng2RestAxiosRequestConfig } from 'ng2-rest/src';
+import { Ng2RestFetchRequestConfig } from 'ng2-rest/src';
 import {
   Taon,
   ClassHelpers,
@@ -86,7 +86,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
       actionName: 'Checking if all deployments are removed',
       request: () =>
         this.removingAllDeploymentsStatus().request({
-          timeout: 900,
+          signal: AbortSignal.timeout(900),
         }) as any,
       statusCheck: resp => {
         return resp.body.json.status === AllDeploymentsRemoveStatus.DONE;
@@ -184,7 +184,8 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
 
   async uploadLocalFileToServer(
     absFilePath: string,
-    options?: Pick<Ng2RestAxiosRequestConfig, 'onUploadProgress'>,
+    // options?: Pick<Ng2RestFetchRequestConfig, 'onUploadProgress'>,
+    options?: Ng2RestFetchRequestConfig,
     queryParams?: DeploymentReleaseData,
   ): Promise<MulterFileUploadResponse[]> {
     //#region @backendFunc
@@ -253,7 +254,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
       request: () =>
         // @ts-ignore remove after move to separated repo
         this.getByDeploymentId(deploymentId).request({
-          timeout: 1000,
+          signal: AbortSignal.timeout(1000),
         }),
       statusCheck: resp => {
         return !!resp.body.json.processIdComposeUp;
@@ -273,7 +274,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
       request: () =>
         // @ts-ignore
         this.getByDeploymentId(deploymentId).request({
-          timeout: 1000,
+          signal: AbortSignal.timeout(1000),
         }),
       statusCheck: resp => {
         return DeploymentsStatesAllowedStart.includes(resp.body.json.status);
@@ -293,7 +294,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
       request: () =>
         // @ts-ignore
         this.getByDeploymentId(deploymentId).request({
-          timeout: 1000,
+          signal: AbortSignal.timeout(1000),
         }),
       loopRequestsOnBackendError: opt => {
         if (
@@ -365,7 +366,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
       actionName: 'Checking if all existed deployments are added',
       request: () =>
         this.isClearingAndAddingDeployments().request({
-          timeout: 900,
+          signal: AbortSignal.timeout(900),
         }) as any,
       statusCheck: resp => {
         if (resp.body.json.status === DeploymentsAddingStatus.FAILED) {

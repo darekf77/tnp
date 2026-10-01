@@ -28,7 +28,7 @@ export namespace DevModeUtils {
       try {
         Helpers.logInfo(`Checkin health... `);
         const data = await devBuildController.healthCheck().request!({
-          timeout: 500,
+          signal: AbortSignal.timeout(500),
         });
         const isOK = data.body.booleanValue;
         Helpers.logInfo(`is ok = "${isOK}"`);

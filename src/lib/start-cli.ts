@@ -1,6 +1,6 @@
 //#region imports
 import 'reflect-metadata';
-import { axios, UtilsStdinStdoutLogger } from 'tnp-core/src';
+import { UtilsStdinStdoutLogger } from 'tnp-core/src';
 import {
   config,
   crossPlatformPath,
@@ -281,13 +281,6 @@ export async function run(
       // In production, you might want to log and exit gracefully
       // process.exit(1);
     });
-  }
-
-  if (taonPackageName === config.frameworkName) {
-    /**
-     * ISSUE largest http request sometime are failing ... but with second try everything is OK
-     */
-    axios.defaults.timeout = 3000;
   }
 
   //#region prevent incorrect /etc/hosts file

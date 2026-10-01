@@ -1,5 +1,5 @@
 //#region imports
-import type { AxiosProgressEvent } from 'axios';
+import { ProcessesController } from '@taon-dev/cloud/src';
 import { MulterFileUploadResponse } from 'taon/src';
 import {
   config,
@@ -94,7 +94,6 @@ import type { Project } from '../../project';
 import { DeploymentsController } from '../../taon-worker/deployments';
 import type { DeploymentReleaseData } from '../../taon-worker/deployments/deployments.models';
 import { DeploymentsUtils } from '../../taon-worker/deployments/deployments.utils';
-import { ProcessesController } from '@taon-dev/cloud/src';
 import { ProductionBuild } from '../__helpers__/production-build';
 import { BaseArtifact, ReleasePartialOutput } from '../base-artifact';
 import { InsideStructuresElectron } from '../electron-app/tools/inside-struct-electron';
@@ -1497,13 +1496,14 @@ ${path.dirname(newZipFileName)}
         uploadResponse = await deploymentController.uploadLocalFileToServer(
           newZipFileName,
           {
-            onUploadProgress: (progressEvent: AxiosProgressEvent) => {
-              const percentCompleted = Math.round(
-                (progressEvent.loaded * 100) / progressEvent.total,
-              );
-              globalSpinner.instance.text = `Upload progress: ${percentCompleted}%`;
-              // console.log(`Upload progress: ${percentCompleted}%`);
-            },
+            // TODO @LAST @UNCOMMNET
+            // onUploadProgress: (progressEvent: Ng2RestUploadProgressEvent) => {
+            //   const percentCompleted = Math.round(
+            //     (progressEvent.loaded * 100) / progressEvent.total,
+            //   );
+            //   globalSpinner.instance.text = `Upload progress: ${percentCompleted}%`;
+            //   // console.log(`Upload progress: ${percentCompleted}%`);
+            // },
           },
           tmpProjDataForUpload,
         );
