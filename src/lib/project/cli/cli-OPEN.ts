@@ -1,5 +1,5 @@
 //#region imports
-import { config, LibTypeEnum, UtilsOs } from 'tnp-core/src';
+import { config, LibTypeEnum, UtilsOs, UtilsTempFolder } from 'tnp-core/src';
 import {
   CoreModels,
   _,
@@ -42,8 +42,9 @@ export class $Open extends BaseCli {
   async temp() {
     //#region @backendFunc
     const editor = await this.ins.editor();
+    const cwd = await UtilsTempFolder.getPath()
     Helpers.run(`${editor} .`, {
-      cwd: UtilsOs.getTempFolder(),
+      cwd,
     }).sync();
     this._exit();
     //#endregion

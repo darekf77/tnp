@@ -9,6 +9,7 @@ import {
   UtilsFilesFoldersSync,
   UtilsOs,
   UtilsSecretEnv,
+  UtilsTempFolder,
 } from 'tnp-core/src';
 
 import {
@@ -75,7 +76,7 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
       );
 
     // const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
-    const tempFolder = UtilsOs.getTempFolder({
+    const tempFolder = await UtilsTempFolder.getPath({
       prefix: 'temp-cloudflare',
     });
 
