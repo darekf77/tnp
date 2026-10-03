@@ -33,6 +33,20 @@ export const vscodeMenuItems = ({
 }) => {
   return [
     //#region items with actions / git log
+    new ProjectItem(
+      `Reload Current Window`,
+      vscode.TreeItemCollapsibleState.None,
+      {
+        iconPath: null,
+        project: CURRENT_PROJECT,
+        triggerActionOnClick: project => {
+          vscode.commands.executeCommand('workbench.action.reloadWindow');
+        },
+      },
+    ),
+    //#endregion
+
+    //#region items with actions / git log
     new ProjectItem(`$ git log`, vscode.TreeItemCollapsibleState.None, {
       iconPath: null,
       project: CURRENT_PROJECT,

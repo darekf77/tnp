@@ -127,21 +127,19 @@ export const vscodePatchingCodium = (
   );
   //#endregion
 
-  // Based on https://github.com/natqe/reload
-
-  //#region reload button
-  const statusBar = vscode.window.createStatusBarItem(
+  //#region reload ts server button
+  const tsStatusBar = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     0,
   );
 
-  statusBar.text = `Reload`;
+  tsStatusBar.text = `$(refresh) Reload TS Server`;
 
-  statusBar.command = `workbench.action.reloadWindow`;
+  tsStatusBar.command = 'typescript.restartTsServer';
 
-  statusBar.tooltip = `Reload window`;
+  tsStatusBar.tooltip = `Reload TypeScript Server`;
 
-  statusBar.show();
+  tsStatusBar.show();
 
   //#endregion
 };
