@@ -203,6 +203,9 @@ export class BrowserCompilation extends BaseClientCompiler {
   //#endregion
 
   //#region sass or html dest for releative path
+  /**
+   * Update html/scss in node_modues/package/<html or scss folder>
+   */
   private sassOrHtmlDestFor(relativePath: string): string {
     //#region @backendFunc
     const destScss = this.project.pathFor(
@@ -333,10 +336,15 @@ export class BrowserCompilation extends BaseClientCompiler {
     absoluteFilePath: string,
   ): void {
     //#region @backendFunc
-    const isScssOrSass = extForSassLikeFiles.includes(
+    // console.log('async action hand html or scss', {
+    //   eventName,
+    //   relativeFilePath,
+    //   absoluteFilePath,
+    // });
+    const isScssOrHtml = [...extForSassLikeFiles, '.html'].includes(
       path.extname(path.basename(relativeFilePath)),
     );
-    if (!isScssOrSass) {
+    if (!isScssOrHtml) {
       return;
     }
     const destinationFileScssPath = this.sassOrHtmlDestFor(relativeFilePath);
