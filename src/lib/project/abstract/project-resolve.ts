@@ -574,8 +574,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       Helpers.error(
         `Build already in progress for ${this.devBuildRepository.dataToRequest().uniqueKey} try:
 
-      ${chalk.bold(`${config.frameworkName} build:lib`)} # to kill other build
-      ${chalk.bold(`${config.frameworkName} bl`)} # to kill other build
+      ${chalk.bold(`${config.frameworkName} kill`)} # to kill other build
 
         `,
         false,

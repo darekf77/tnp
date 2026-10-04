@@ -419,6 +419,7 @@ export async function run(
       blp: 'build:lib:prod',
       bpl: 'build:lib:prod',
       bvscode: 'build:vscode',
+      kill: 'cloud:killCurrentProjectBuild',
       d: 'docs', // @deprecated
       dw: 'docs:watch', // @deprecated
       dg: 'docs:generate',

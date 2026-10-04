@@ -1,9 +1,12 @@
 //#region imports
 import {
+  chalk,
+  config,
   CoreModels,
   dotTaonFolder,
   frameworkName,
   path,
+  tnpPackageName,
   UtilsStdinStdoutLogger,
 } from 'tnp-core/src';
 import {
@@ -71,6 +74,65 @@ export class $Cloud extends BaseCli {
     );
 
     await super.__initialize__();
+    //#endregion
+  }
+
+  async killCurrentProjectBuild() {
+    //#region @backendFunc
+
+    // const devModeWorker =
+    //   await this.project.ins.devBuildRepository.getRemoteControllerFor({
+    //     methodOptions: {
+    //       calledFrom: 'Dev mode controller',
+    //     },
+    //   });
+
+    const devBuildsControllerForProj =
+      await this.project.ins.taonProjectsWorker.buildsWorker.getRemoteControllerFor(
+        {
+          methodOptions: {
+            calledFrom: 'killCurrentProjectWorker',
+          },
+        },
+      );
+
+    const data = await devBuildsControllerForProj.getAllDevModeProjects(
+      this.project.framework.frameworkVersion,
+    ).request!();
+
+    const proj = data.body.json.find(c => c.location === this.project.location);
+    if (!proj) {
+      Helpers.error(`No active builds for this location`, false, true);
+    }
+
+    const devBuildControllerForProj =
+      await this.project.ins.taonProjectsWorker.getDevBuildControllerForPort(
+        proj.port,
+      );
+
+    const task = Helpers.actionStarted(
+      `Killing build of ${chalk.bold(this.project.name)}`,
+    );
+    try {
+      await devBuildControllerForProj.kill().request!();
+    } catch (error) {
+      config.frameworkName === tnpPackageName && console.error(error);
+      Helpers.error(`No able to kill build from this location`, true, true);
+    }
+
+    try {
+      await devBuildsControllerForProj.deleteFromPool(proj).request!();
+    } catch (error) {
+      config.frameworkName === tnpPackageName && console.error(error);
+      Helpers.error(
+        `No able to delete build form this location in builds pool`,
+        false,
+        true,
+      );
+    }
+    task.done();
+    this._exit(0);
+
     //#endregion
   }
 

@@ -112,7 +112,6 @@ export class DevModeTerminalUI extends BaseCliWorkerTerminalUI<DevModeWorker> {
       getStuffFromBackend: {
         name: 'Get list of builds',
         action: async () => {
-          this.worker.getRemoteControllerFor;
           const devModeWorker = await this.worker.getRemoteControllerFor({
             methodOptions: {
               calledFrom: 'Dev mode controller',
