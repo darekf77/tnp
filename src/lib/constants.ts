@@ -969,6 +969,11 @@ export const esLintRuleNoNamespaceReExport =
 
 export const runJsMainProject = 'run.js';
 
+export const AgentsMdMainProject = 'AGENTS.md';
+
+export const dotGithubCopilotInstructions = '.github/copilot-instructions.md';
+export const dotAI = '.ai';
+
 export const indexDtsMainProject = fileName.index_d_ts;
 
 export const indexDtsNpmPackage = fileName.index_d_ts;

@@ -210,6 +210,7 @@ export class BuildLeader extends BaseFeatureForProject<Project> {
         this.projectStaredLeadingBuild = false;
         this.isDrityLeadBuild = false;
         this.isBuildCanceled = false;
+        console.error(error);
         Helpers.logInfo(`Build shutdown.. unknow error`);
         return;
         //#endregion

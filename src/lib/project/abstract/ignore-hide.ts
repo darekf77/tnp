@@ -9,6 +9,7 @@ import {
 } from 'tnp-helpers/src';
 
 import {
+  AgentsMdMainProject,
   appAutoGenDocsMd,
   appAutoGenJs,
   assetsFromSrc,
@@ -16,7 +17,9 @@ import {
   distMainProject,
   distNoCutSrcMainProject,
   docsConfigSchema,
+  dotAI,
   dotFileTemplateExt,
+  dotGithubCopilotInstructions,
   dotVscodeMainProject,
   esLintCustomRulesMainProject,
   frameworkBuildFolders,
@@ -117,6 +120,11 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
         : this.project.linkedProjects.linkedProjects
             .map(f => f.relativeClonePath)
             .map(c => `${crossPlatformPath(c)}`)),
+      ...(this.project.isMonorepo
+        ? []
+        : this.project.linkedProjects.linkedProjects
+            .map(f => f.relativeClonePath)
+            .map(c => `${crossPlatformPath(c)}.worktrees`)),
     ].filter(c => !!c) as string[];
   }
 
@@ -131,6 +139,10 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       'tmp-*',
       'dist*',
       '.tnp',
+      ...(!this.project.framework.isCoreProject
+        ? [AgentsMdMainProject, dotAI, dotGithubCopilotInstructions]
+        : []),
+      `${dotAI}/examples`,
       '.taon',
       'tsconfig*',
       '*.schema.json',

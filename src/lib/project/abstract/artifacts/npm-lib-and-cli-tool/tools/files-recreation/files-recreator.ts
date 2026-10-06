@@ -1,6 +1,11 @@
 //#region imports
 import * as JSON5 from 'json5';
-import { config, LibTypeEnum } from 'tnp-core/src';
+import {
+  config,
+  LibTypeEnum,
+  UtilsFilesFolders,
+  UtilsFilesFoldersSync,
+} from 'tnp-core/src';
 import { fse, crossPlatformPath, CoreModels, chalk } from 'tnp-core/src';
 import { path } from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
@@ -30,6 +35,9 @@ import {
   vitestConfigJsonMainProject,
   tsconfigBackendEsmDistJson,
   tsconfigBackendEsmDistJson_PROD,
+  AgentsMdMainProject,
+  dotGithubCopilotInstructions,
+  dotAI,
 } from '../../../../../../constants';
 import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
@@ -44,6 +52,18 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
   public async init(): Promise<void> {
     //#region @backendFunc
     this.handleProjectSpecyficFiles();
+
+    UtilsFilesFoldersSync.copy(
+      this.project.framework.coreContainer.pathFor(
+        `gen-examples-${this.project.framework.frameworkVersion}/taon-full/my-entity`,
+      ),
+      this.project.pathFor(`${dotAI}/examples`),
+      {
+        recursive: true,
+        copySymlinksAsFiles: false,
+      },
+    );
+
     //#endregion
   }
   //#endregion
@@ -61,6 +81,9 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
       tsconfigJsonBrowserMainProject,
       webpackConfigJsMainProject,
       runJsMainProject,
+      ...(!this.project.framework.isCoreProject
+        ? [AgentsMdMainProject, dotGithubCopilotInstructions, dotAI]
+        : []),
       updateVscodePackageJsonJsMainProject,
       esLintConfigJsonMainProject,
       vitestConfigJsonMainProject,
@@ -176,8 +199,16 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
       });
 
       files.forEach(file => {
-        Helpers.log(`Updating file ${file.where}`);
-        HelpersTaon.copyFile(file.from, file.where);
+        if (Helpers.isFolder(file.from)) {
+          Helpers.log(`[taon] Recreating folder ${file.where}`);
+          UtilsFilesFoldersSync.copy(file.from, file.where, {
+            copySymlinksAsFiles: true,
+            recursive: true,
+          });
+        } else {
+          Helpers.log(`[taon] Recreating file ${file.where}`);
+          HelpersTaon.copyFile(file.from, file.where);
+        }
       });
     }
     //#endregion

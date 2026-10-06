@@ -38,6 +38,7 @@ import {
   debugBrkSuffix,
   debugSuffix,
   distMainProject,
+  dotAI,
   dotFileTemplateExt,
   dotVscodeMainProject,
   globalScssFromSrc,
@@ -138,6 +139,8 @@ export class ArtifactManager {
 
     this.project.removeFile([TaonGeneratedFiles.BUILD_INFO_MD]);
     this.project.removeFile([TaonGeneratedFiles.BUILD_STATUS_MD]);
+
+    this.project.removeFolderByRelativePath(dotAI);
 
     if (this.project.framework.isStandaloneProject) {
       this.project.removeFolderByRelativePath(dotTnpFolder);
@@ -518,6 +521,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
           )
           .sync();
       } catch (error) {}
+      this.project.removeFile('vitest.content.config.ts');
       this.project.removeFile('tsconfig.isomorphic-flat-bundle.json');
       this.project.removeFile('webpack.backend-bundle-build.js');
       this.project.removeFile('.eslintrc.json');
