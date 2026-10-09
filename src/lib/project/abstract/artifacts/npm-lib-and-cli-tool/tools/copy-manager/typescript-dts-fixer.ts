@@ -4,6 +4,7 @@ import { crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
 import {
+  libFromImport,
   sourceLinkInNodeModules,
   srcFromTaonImport,
   TS_NOCHECK,
@@ -40,7 +41,7 @@ export class TypescriptDtsFixer {
 
   //#region helpers / fix dts import
 
-  forBackendContent(content: string) {
+  forBackendContent(content: string, suffix: string) {
     //#region @backendFunc
     content = content ? content : '';
     const isomorphicPackages =
@@ -58,7 +59,7 @@ export class TypescriptDtsFixer {
           ),
           'g',
         ),
-        `${isomorphicPackageName}'`,
+        `${isomorphicPackageName}/${suffix}'`,
       );
 
       content = (content || '').replace(
@@ -68,7 +69,7 @@ export class TypescriptDtsFixer {
           ),
           'g',
         ),
-        `${isomorphicPackageName}"`,
+        `${isomorphicPackageName}/${suffix}"`,
       );
       //#endregion
 
@@ -80,7 +81,7 @@ export class TypescriptDtsFixer {
           ),
           'g',
         ),
-        `${isomorphicPackageName}'`,
+        `${isomorphicPackageName}/${suffix}'`,
       );
 
       content = (content || '').replace(
@@ -90,7 +91,7 @@ export class TypescriptDtsFixer {
           ),
           'g',
         ),
-        `${isomorphicPackageName}"`,
+        `${isomorphicPackageName}/${suffix}"`,
       );
       //#endregion
     }

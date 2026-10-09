@@ -5,6 +5,7 @@ import {
   config,
   dateformat,
   folderName,
+  frontendFiles,
   LibTypeEnum,
   PREFIXES,
   taonPackageName,
@@ -27,6 +28,7 @@ import {
   indexDtsMainProject,
   indexDtsNpmPackage,
   libEsm,
+  libFromImport,
   nodeModulesMainProject,
   packageJsonMainProject,
   packageJsonNpmLib,
@@ -1603,6 +1605,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   //#endregion
 
   //#region update backend full dts files
+
   updateBackendFullDtsFiles(destinationOrDist: Project | string): void {
     //#region @backendFunc
     const base = this.project.pathFor(distNoCutSrcMainProject);
@@ -1610,29 +1613,50 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     const dtsFileForImportUpdates = UtilsFilesFoldersSync.getFilesFrom(base, {
       recursive: true,
     })
-      .filter(f => f.endsWith('.d.ts'))
+      .filter(f => {
+        if (!f.endsWith('.d.ts')) {
+          return false;
+        }
+        const isNotFrontendFile = !frontendFiles.some(ext =>
+          f
+            .replace(/\.d\.tsx$/, '.tsx')
+            .replace(/\.d\.ts$/, '.ts')
+            .endsWith(ext),
+        );
+        return isNotFrontendFile;
+      })
       .map(f => f.replace(`${base}/`, ''));
 
     for (let index = 0; index < dtsFileForImportUpdates.length; index++) {
       const relativePath = dtsFileForImportUpdates[index];
-      const source = crossPlatformPath(path.join(base, relativePath));
-      const dest = crossPlatformPath(
-        path.join(
-          _.isString(destinationOrDist)
-            ? this.monitoredOutDir
-            : destinationOrDist.nodeModules.pathFor(this.rootPackageName),
-          relativePath,
-        ),
-      );
-      // if (Helpers.exists(dest)) {
-      // console.log(dest);
-      const sourceContent = Helpers.readFile(source);
+      const sourceDts = crossPlatformPath(path.join(base, relativePath));
+      const destCjsDts = crossPlatformPath([
+        _.isString(destinationOrDist)
+          ? destinationOrDist
+          : destinationOrDist.nodeModules.pathFor(this.rootPackageName),
+        relativePath,
+      ]);
 
-      UtilsFilesFoldersSync.writeFile(
-        dest,
-        this.dtsFixer.forBackendContent(sourceContent),
+      const destEs6Dts = crossPlatformPath([
+        _.isString(destinationOrDist)
+          ? destinationOrDist
+          : destinationOrDist.nodeModules.pathFor(this.rootPackageName),
+        relativePath.replace(/^lib/, `${libEsm}/lib/`),
+      ]);
+
+      const sourceContent = UtilsFilesFoldersSync.readFile(sourceDts);
+      const fixedContentCjs = this.dtsFixer.forBackendContent(
+        sourceContent,
+        libFromImport,
       );
-      // }
+      UtilsFilesFoldersSync.writeFile(destCjsDts, fixedContentCjs);
+
+      const fixedContentEsm = this.dtsFixer.forBackendContent(
+        sourceContent,
+        libEsm,
+      );
+
+      UtilsFilesFoldersSync.writeFile(destEs6Dts, fixedContentEsm);
     }
     //#endregion
   }
