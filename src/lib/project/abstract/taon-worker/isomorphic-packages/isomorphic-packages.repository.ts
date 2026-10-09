@@ -262,7 +262,7 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
       );
 
       const namesFromActiveBuilds = poolProjectsBuilds.reduce((a, b) => {
-        return [...a, b.nameForNpmPackage, ...b.devModeDependenciesNames];
+        return [...a, b.nameForNpmPackage, ...b.watchBuildDependencies];
       }, [] as string[]);
 
       const sorted = Utils.uniqArray(

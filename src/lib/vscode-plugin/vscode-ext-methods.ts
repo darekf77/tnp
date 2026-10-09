@@ -656,6 +656,18 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+      //#region GENERATE wrap methods and functions from classes and namespaces
+      {
+        group: groupRefactor,
+        title: `wrap classes/namespaces methods/functions with ${'reg' + 'ion'}`,
+        exec: `${FRAMEWORK_NAME} generate:wrapClassesNamespacesMethodsFunctionWithRegions %absolutePath%`,
+        options: {
+          titleWhenProcessing: `wrapping classes/namespaces methods/functions with ${'reg' + 'ion'}s`,
+          showSuccessMessage: false,
+        },
+      },
+      //#endregion
+
       //#region GENERATE @websql regions for entity
       {
         group: groupRefactor,

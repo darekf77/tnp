@@ -204,7 +204,7 @@ export class DevModeTerminalUI extends BaseCliWorkerTerminalUI<DevModeWorker> {
                 const projBuild = data.body.json;
                 console.table(`Build type: ${projBuild.buildType}`);
                 console.table(
-                  `Dependencies: ${(projBuild.devModeDependenciesNames || []).join(',')}`,
+                  `Dependencies: ${(projBuild.watchBuildDependencies || []).join(',')}`,
                 );
                 console.table(projBuild.buildStatusInfo);
               } catch (error) {

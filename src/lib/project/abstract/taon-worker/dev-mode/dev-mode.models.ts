@@ -132,6 +132,6 @@ export namespace DevMode {
 
     declare location?: string;
 
-    declare devModeDependenciesNames?: string[];
+    declare watchBuildDependencies?: string[];
   }
 }

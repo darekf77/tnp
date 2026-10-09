@@ -59,7 +59,9 @@ export class $Generate extends BaseCli {
     }
     const absFilePath = crossPlatformPath(absDirnameFolderPath);
     if (!Helpers.isFolder(absDirnameFolderPath)) {
-      absDirnameFolderPath = crossPlatformPath(path.dirname(absDirnameFolderPath));
+      absDirnameFolderPath = crossPlatformPath(
+        path.dirname(absDirnameFolderPath),
+      );
     }
     entityName = decodeURIComponent(entityName);
     const nearestProj = this.ins.nearestTo(this.cwd) as Project;
@@ -198,7 +200,10 @@ export class $Generate extends BaseCli {
       }
 
       if (moduleName === 'generated-index-abstract-contexts') {
-        this.project.framework.generateAbstractContexts(absDirnameFolderPath, entityName);
+        this.project.framework.generateAbstractContexts(
+          absDirnameFolderPath,
+          entityName,
+        );
       }
       if (moduleName === 'wrap-with-browser-regions') {
         if (!Helpers.isFolder(absFilePath)) {
@@ -322,6 +327,20 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
         content,
         `${TAGS.WEBSQL}`,
       );
+    if (content !== fixedRegions) {
+      Helpers.writeFile(fileAbsPath, fixedRegions);
+      UtilsTypescript.formatFile(fileAbsPath);
+    }
+    this._exit(0);
+    //#endregion
+  }
+
+  wrapClassesNamespacesMethodsFunctionWithRegions() {
+    //#region @backendFunc
+    const fileAbsPath = crossPlatformPath(this.firstArg);
+    const content = Helpers.readFile(fileAbsPath);
+    const fixedRegions =
+      UtilsTypescript.wrapClassNamespacesMethodsAndFunctions(content);
     if (content !== fixedRegions) {
       Helpers.writeFile(fileAbsPath, fixedRegions);
       UtilsTypescript.formatFile(fileAbsPath);

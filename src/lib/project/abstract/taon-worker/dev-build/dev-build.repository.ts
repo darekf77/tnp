@@ -139,8 +139,8 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
         location: child.project.location,
         port: child.port,
         buildType: child.buildType,
-        devModeDependenciesNames:
-          this.project.taonJson.devModeDependenciesForNpmLib,
+        watchBuildDependencies:
+          this.project.taonJson.watchBuildDependencies,
         coreContainerVersion: child.project.framework.frameworkVersion,
       });
     });
@@ -160,8 +160,8 @@ export class DevBuildRepository extends TaonBaseKvRepository<{
       nameForNpmPackage: this.project.nameForNpmPackage,
       location: this.project.location,
       port: this.project.ins.currentActionPort,
-      devModeDependenciesNames:
-        this.project.taonJson.devModeDependenciesForNpmLib,
+      watchBuildDependencies:
+        this.project.taonJson.watchBuildDependencies,
 
       buildStatusInfo: opt.buildStatusInfo,
       coreContainerVersion: this.project.taonJson.frameworkVersion,

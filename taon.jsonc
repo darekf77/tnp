@@ -48,7 +48,7 @@
     },
   ],
 
-  "devModeDependenciesForNpmLib": ["tnp-helpers", "tnp-core"],
+  "watchBuildDependencies": ["tnp-helpers", "tnp-core"],
 
   "generateTranslationsFor": ["en-US", "pl-PL"],
   "isUsingOwnNodeModulesInsteadCoreContainer": true,

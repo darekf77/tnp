@@ -2095,7 +2095,7 @@ ${this.project.children
 
     const deps = UtilsProjects.sortGroupOfProject<Project>({
       projects: this.project.nodeModules.getIsomorphicProjectsInDevMode(),
-      resoveDepsArray: proj => proj.taonJson.devModeDependenciesForNpmLib,
+      resoveDepsArray: proj => proj.taonJson.watchBuildDependencies,
       projNameToCompare: proj => proj.nameForNpmPackage,
       projUniqueKeyToCompare: proj => proj.location,
     });

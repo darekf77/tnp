@@ -398,12 +398,12 @@ export class TaonJson extends BaseFeatureForProject<Project> {
    * External isomorphic dependencies for npm lib
    * (build-in/core taon isomorphic packages will not be here)
    */
-  get devModeDependenciesForNpmLib(): string[] {
+  get watchBuildDependencies(): string[] {
     //#region @backendFunc
     let res = (this.data as Models.TaonJsonStandalone)
-      ?.devModeDependenciesForNpmLib;
+      ?.watchBuildDependencies;
 
-    return res || this.isomorphicDependenciesForNpmLib;
+    return res || [];
     //#endregion
   }
   //#endregion

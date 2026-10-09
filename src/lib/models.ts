@@ -238,12 +238,12 @@ export namespace Models {
 
     /**
      * (STANDALONE) If not defined:
-     * devModeDependenciesForNpmLib === isomorphicDependenciesForNpmLib
+     * watchBuildDependencies === isomorphicDependenciesForNpmLib
      * if defined -> this array is begin used for dev mode isomorphic dependencies when
      * building locally projects in watch mode `taon build:lib:watch`
      * or normal mode `taon build:lib`
      */
-    devModeDependenciesForNpmLib?: string[];
+    watchBuildDependencies?: string[];
 
     /**
      * (STANDALONE) At beginning after node_modules installation taon is checking is

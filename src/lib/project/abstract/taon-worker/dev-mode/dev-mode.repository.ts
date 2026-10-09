@@ -295,7 +295,7 @@ export class DevModeRepository extends TaonBaseKvRepository<{
 
     const sortedPoolOfDevModeProjects = UtilsProjects.sortGroupOfProject({
       projects: opt.newListOfPorjects,
-      resoveDepsArray: proj => proj.devModeDependenciesNames || [],
+      resoveDepsArray: proj => proj.watchBuildDependencies || [],
       projNameToCompare: proj => proj.nameForNpmPackage,
       projUniqueKeyToCompare: proj => proj.uniqueKey,
     });

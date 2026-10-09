@@ -11,7 +11,7 @@ export namespace DevModeUtils {
   ): DevMode.ProjectBuildNotificaiton[] => {
     allProjects = UtilsProjects.sortGroupOfProject({
       projects: allProjects,
-      resoveDepsArray: proj => proj.devModeDependenciesNames,
+      resoveDepsArray: proj => proj.watchBuildDependencies,
       projNameToCompare: proj => proj.nameForNpmPackage,
       projUniqueKeyToCompare: proj => proj.uniqueKey,
       onlyAffectedByProject,

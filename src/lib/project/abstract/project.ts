@@ -248,7 +248,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     const deps = UtilsProjects.sortGroupOfProject<Project>({
       projects: this.nodeModules.getIsomorphicProjectsInDevMode(),
-      resoveDepsArray: proj => proj.taonJson.devModeDependenciesForNpmLib,
+      resoveDepsArray: proj => proj.taonJson.watchBuildDependencies,
       projNameToCompare: proj => proj.nameForNpmPackage,
       projUniqueKeyToCompare: proj => proj.location,
     });
@@ -671,7 +671,7 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
       nameForNpmPackage: project.nameForNpmPackage,
       location: project.location,
       port: this.currentActionPort,
-      devModeDependenciesNames: project.taonJson.devModeDependenciesForNpmLib,
+      watchBuildDependencies: project.taonJson.watchBuildDependencies,
       coreContainerVersion: project.taonJson.frameworkVersion,
     });
 
