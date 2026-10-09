@@ -761,6 +761,8 @@ export const appVscodeTsFromSrc = 'app.vscode.ts';
 
 export const appVscodeJSFromBuild = 'app.vscode.js';
 
+export const LANG_IMPORT = 'LANG_IM' + 'PORT_MAP';
+
 export enum TaonFileExtension {
   DOT_WORKER_TS = '.worker.ts',
   DOT_CONTEXT_TS = '.context.ts',

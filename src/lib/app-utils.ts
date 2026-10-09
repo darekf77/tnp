@@ -25,6 +25,7 @@ import {
   browserFromImport,
   i18nDataTsFileExt,
   i18nFolder,
+  LANG_IMPORT,
   libFromImport,
   oldBuildModePrefix,
   oldBuildModePrefixShort,
@@ -870,7 +871,9 @@ export const replaceBeforeSaveInTsFile = (
 
     //#region replace taon LANG IMPORT MAP)
     (() => {
-      const assetsFromRegex = /Taon\.LANG_IMPORT_MAP/g;
+      const regexAsset = 'Taon\\.' + LANG_IMPORT;
+      const assetsFromRegex = new RegExp(regexAsset, 'g');
+      // const assetsFromRegex = /Taon\.LANG_IMPORT_MAP/g;
       beOrFeTsFileContent = beOrFeTsFileContent.replace(
         assetsFromRegex,
         (_, quote, folder: string) => {

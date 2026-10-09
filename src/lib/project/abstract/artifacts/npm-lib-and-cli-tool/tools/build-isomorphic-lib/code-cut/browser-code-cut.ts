@@ -107,6 +107,7 @@ const notAllowedToPRocess = [appAutoGenDocsMd, appAutoGenJs];
 export class BrowserCodeCut {
   //#region constants
   public static debugFiles = [
+    // 'my-organization-proj.ts.en-US.i18n.data.ts',
     // 'taon-notification-recipient.entity.ts',
     // 'taon-auth-context.entity.ts',
     // 'app.ts',
@@ -476,21 +477,24 @@ export class BrowserCodeCut {
           UtilsFilesFoldersSync.readFile(this.absSourcePathFromSrc) || '';
 
         const tsFromPo = _.first(UtilsPoFile.extractPoToJson(orgContent));
-        tsFromPo.fileRelativePath = crossPlatformPath([
-          pathToTsData.replace(this.project.location + '/', ''),
-        ]);
 
-        // console.log({ tsFromPo: JSON.stringify(tsFromPo), lang });
-        if (
-          this.project.framework.translationI18n.saveTsFileData(
-            pathToTsData,
-            lang,
-            tsFromPo,
-          )
-        ) {
-          Helpers.info(
-            `Done rewriting ${path.basename(pathToTsData)} from .po file`,
-          );
+        if (tsFromPo) {
+          tsFromPo.fileRelativePath = crossPlatformPath([
+            pathToTsData.replace(this.project.location + '/', ''),
+          ]);
+
+          // console.log({ tsFromPo: JSON.stringify(tsFromPo), lang });
+          if (
+            this.project.framework.translationI18n.saveTsFileData(
+              pathToTsData,
+              lang,
+              tsFromPo,
+            )
+          ) {
+            Helpers.info(
+              `Done rewriting ${path.basename(pathToTsData)} from .po file`,
+            );
+          }
         }
       }
 
