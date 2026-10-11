@@ -516,6 +516,8 @@ export const distEsm = 'dist-esm';
 
 export const libEsm = 'lib-esm';
 
+export const fullDts = 'full-dts';
+
 /**
  * Dist from sass loader
  */

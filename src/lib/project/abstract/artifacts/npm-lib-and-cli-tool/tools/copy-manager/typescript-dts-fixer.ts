@@ -41,7 +41,11 @@ export class TypescriptDtsFixer {
 
   //#region helpers / fix dts import
 
-  forBackendContent(content: string, suffix: string) {
+  forBackendContent(
+    content: string,
+    suffixSourceArray: string[],
+    destSuffix: string,
+  ) {
     //#region @backendFunc
     content = content ? content : '';
     const isomorphicPackages =
@@ -51,49 +55,32 @@ export class TypescriptDtsFixer {
     for (let index = 0; index < isomorphicPackages.length; index++) {
       const isomorphicPackageName = isomorphicPackages[index];
 
-      //#region replace package/src
-      content = (content || '').replace(
-        new RegExp(
-          Utils.escapeStringForRegEx(
-            `${isomorphicPackageName}/${srcFromTaonImport}'`,
+      for (
+        let suffixIndex = 0;
+        suffixIndex < suffixSourceArray.length;
+        suffixIndex++
+      ) {
+        const suffixSrc = suffixSourceArray[suffixIndex];
+        content = (content || '').replace(
+          new RegExp(
+            Utils.escapeStringForRegEx(
+              `${isomorphicPackageName}/${suffixSrc}'`,
+            ),
+            'g',
           ),
-          'g',
-        ),
-        `${isomorphicPackageName}/${suffix}'`,
-      );
+          `${isomorphicPackageName}/${destSuffix}'`,
+        );
 
-      content = (content || '').replace(
-        new RegExp(
-          Utils.escapeStringForRegEx(
-            `${isomorphicPackageName}/${srcFromTaonImport}"`,
+        content = (content || '').replace(
+          new RegExp(
+            Utils.escapeStringForRegEx(
+              `${isomorphicPackageName}/${suffixSrc}"`,
+            ),
+            'g',
           ),
-          'g',
-        ),
-        `${isomorphicPackageName}/${suffix}"`,
-      );
-      //#endregion
-
-      //#region replace package/source
-      content = (content || '').replace(
-        new RegExp(
-          Utils.escapeStringForRegEx(
-            `${isomorphicPackageName}/${sourceLinkInNodeModules}'`,
-          ),
-          'g',
-        ),
-        `${isomorphicPackageName}/${suffix}'`,
-      );
-
-      content = (content || '').replace(
-        new RegExp(
-          Utils.escapeStringForRegEx(
-            `${isomorphicPackageName}/${sourceLinkInNodeModules}"`,
-          ),
-          'g',
-        ),
-        `${isomorphicPackageName}/${suffix}"`,
-      );
-      //#endregion
+          `${isomorphicPackageName}/${destSuffix}"`,
+        );
+      }
     }
     return content;
     //#endregion

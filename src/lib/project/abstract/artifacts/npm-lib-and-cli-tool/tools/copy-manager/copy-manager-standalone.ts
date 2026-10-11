@@ -25,6 +25,7 @@ import {
   distFromNgBuild,
   distMainProject,
   distNoCutSrcMainProject,
+  fullDts,
   indexDtsMainProject,
   indexDtsNpmPackage,
   libEsm,
@@ -37,6 +38,7 @@ import {
   sharedFromAssets,
   sourceLinkInNodeModules,
   srcDtsFromNpmPackage,
+  srcFromTaonImport,
   srcJSFromNpmPackage,
   srcMainProject,
   TaonVerifiedBuild,
@@ -1644,19 +1646,35 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
         relativePath.replace(/^lib/, `${libEsm}/lib/`),
       ]);
 
+      const destFullDts = crossPlatformPath([
+        _.isString(destinationOrDist)
+          ? destinationOrDist
+          : destinationOrDist.nodeModules.pathFor(this.rootPackageName),
+        relativePath.replace(/^lib/, `${fullDts}/`),
+      ]);
+
       const sourceContent = UtilsFilesFoldersSync.readFile(sourceDts);
-      const fixedContentCjs = this.dtsFixer.forBackendContent(
-        sourceContent,
-        libFromImport,
-      );
-      UtilsFilesFoldersSync.writeFile(destCjsDts, fixedContentCjs);
+      // const fixedContentCjs = this.dtsFixer.forBackendContent(
+      //   sourceContent,
+      //   [srcFromTaonImport, sourceLinkInNodeModules],
+      //   libFromImport,
+      // );
+      // UtilsFilesFoldersSync.writeFile(destCjsDts, fixedContentCjs);
 
-      const fixedContentEsm = this.dtsFixer.forBackendContent(
+      // const fixedContentEsm = this.dtsFixer.forBackendContent(
+      //   sourceContent,
+      //   [srcFromTaonImport, sourceLinkInNodeModules],
+      //   libEsm,
+      // );
+      // UtilsFilesFoldersSync.writeFile(destEs6Dts, fixedContentEsm);
+
+      const fixedContentFullDts = this.dtsFixer.forBackendContent(
         sourceContent,
-        libEsm,
+        [libFromImport, libEsm, sourceLinkInNodeModules],
+        srcFromTaonImport,
       );
 
-      UtilsFilesFoldersSync.writeFile(destEs6Dts, fixedContentEsm);
+      UtilsFilesFoldersSync.writeFile(destFullDts, fixedContentFullDts);
     }
     //#endregion
   }

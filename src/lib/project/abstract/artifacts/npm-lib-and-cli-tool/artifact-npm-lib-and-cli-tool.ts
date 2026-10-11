@@ -52,6 +52,7 @@ import {
   dotGitIgnoreMainProject,
   dotNpmIgnoreMainProject,
   dotNpmrcMainProject,
+  fullDts,
   generatedDocsFromMd,
   i18nDataTsFileExt,
   indexDtsNpmPackage,
@@ -1420,7 +1421,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       crossPlatformPath([releaseAbsPath, 'src.d.ts']),
       `
 ${THIS_IS_GENERATED_INFO_COMMENT}
-export * from './${libFromSrc}';
+export * from './${fullDts}';
 ${THIS_IS_GENERATED_INFO_COMMENT}
 // please use command: taon build:watch to see here links for your globally builded lib code files
 ${THIS_IS_GENERATED_INFO_COMMENT}
