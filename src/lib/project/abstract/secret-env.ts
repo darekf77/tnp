@@ -50,7 +50,7 @@ export class SecretEnv extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  public get hasTempFilesCreated(): boolean {
+  public get hasTmpEnvCreated(): boolean {
     return Helpers.exists(this.project.pathFor([tmpEnvFolder, envTs]));
   }
 

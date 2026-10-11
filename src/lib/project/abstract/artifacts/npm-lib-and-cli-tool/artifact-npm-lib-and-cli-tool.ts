@@ -58,6 +58,7 @@ import {
   indexDtsNpmPackage,
   indexJSNpmPackage,
   indexProdJs,
+  libEsm,
   libFromCompiledDist,
   libFromNpmPackage,
   libFromSrc,
@@ -77,6 +78,7 @@ import {
   suffixLatest,
   TaonCommands,
   TaonGeneratedFiles,
+  TaonGeneratedFolders,
   taonJsonMainProject,
   TempalteSubprojectType,
   testsFromSrc,
@@ -1412,6 +1414,9 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   ): void {
     //#region @backendFunc
     Helpers.remove(`${releaseAbsPath}/${appFromSrc}*`); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/${libFromCompiledDist}/${TaonGeneratedFolders.ENV_FOLDER}*`); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/${libEsm}/${libFromCompiledDist}/${TaonGeneratedFolders.ENV_FOLDER}*`); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/${fullDts}/${TaonGeneratedFolders.ENV_FOLDER}*`); // QUICK_FIX
     Helpers.remove(`${releaseAbsPath}/${testsFromSrc}*`); // QUICK_FIX
     Helpers.remove(`${releaseAbsPath}/${srcMainProject}`, true); // QUICK_FIX
     // Helpers.removeFileIfExists(`${relaseAbsPath}/source`);
