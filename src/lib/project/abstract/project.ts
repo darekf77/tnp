@@ -1,6 +1,13 @@
 //#region imports
 import { Observable, Subject } from 'rxjs';
-import { dotTaonFolder, LibTypeEnum, Utils, UtilsProjects } from 'tnp-core/src';
+import {
+  config,
+  dotTaonFolder,
+  LibTypeEnum,
+  tnpPackageName,
+  Utils,
+  UtilsProjects,
+} from 'tnp-core/src';
 import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
 import { child_process } from 'tnp-core/src';
 import { _, crossPlatformPath, path, CoreModels } from 'tnp-core/src';
@@ -35,6 +42,7 @@ import { EnvOptions, ReleaseType } from '../../options';
 
 import type { EnvironmentConfig } from './artifacts/__helpers__/environment-config/environment-config';
 import { ArtifactManager } from './artifacts/artifacts-manager';
+import { CloudFlarePorjectsUtils } from './cloud-flare-projects/cloud-flare-projects.utils';
 import { FileFoldersOperations } from './file-folders-operations';
 import type { Framework } from './framework';
 import { Git } from './git';
@@ -51,14 +59,13 @@ import { TaonProjectResolve } from './project-resolve';
 import { QuickFixes } from './quick-fixes';
 import { Refactor } from './refactor';
 import type { ReleaseProcess } from './release-process';
+import type { SecretEnv } from './secret-env';
 import { SubProject } from './sub-project';
 import { DevBuildModels } from './taon-worker/dev-build/dev-build.models';
 import { DevMode } from './taon-worker/dev-mode/dev-mode.models';
+import { DevModeUtils } from './taon-worker/dev-mode/dev-mode.utils';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
-import { DevModeUtils } from './taon-worker/dev-mode/dev-mode.utils';
-import { CloudFlarePorjectsUtils } from './cloud-flare-projects/cloud-flare-projects.utils';
-import type { SecretEnv } from './secret-env';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -470,6 +477,35 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
         }
       }
       if (this.framework.isContainer) {
+        //#region resolve env keys
+        for (const child of children) {
+          if (!releaseOptions.isCiProcess) {
+            Helpers.clearConsole();
+          }
+          Helpers.info(
+            `Checking if project has secrets to decode: ${child.name}`,
+          );
+
+          do {
+            const anyOrgFileWithSecretFn =
+              await child.secretEnv.anyOrgFileWithSecretFn();
+
+            if (!anyOrgFileWithSecretFn) {
+              break;
+            }
+            try {
+              await child.secretEnv.decodeTempEnv();
+            } catch (error) {
+              config.frameworkName === tnpPackageName && console.log(error);
+              await UtilsTerminal.pressAnyKeyToContinueAsync({
+                message: `Try again decode secret vars in ${child.name}`,
+              });
+            }
+          } while (!(await child.secretEnv.everyTempVariableDecoded()));
+        }
+        //#endregion
+
+        //#region resolve git changes
         if (!releaseOptions.release.skipResolvingGitChanges) {
           for (const child of children) {
             if (!releaseOptions.isCiProcess) {
@@ -485,6 +521,7 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
             });
           }
         }
+        //#endregion
       }
     }
     if (!releaseOptions.isCiProcess) {

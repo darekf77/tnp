@@ -50,6 +50,10 @@ export class SecretEnv extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  public get hasTempFilesCreated(): boolean {
+    return Helpers.exists(this.project.pathFor([tmpEnvFolder, envTs]));
+  }
+
   //#region travel and modify temp env files
   private async travelAndModifyTempEnvFiles(
     callback: (opt: CallbackTravelFnParam) => string | Promise<string>,
