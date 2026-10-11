@@ -486,22 +486,29 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
             `Checking if project has secrets to decode: ${child.name}`,
           );
 
-          do {
+          while (true) {
             const anyOrgFileWithSecretFn =
               await child.secretEnv.anyOrgFileWithSecretFn();
 
             if (!anyOrgFileWithSecretFn) {
               break;
             }
+
             try {
-              await child.secretEnv.decodeTempEnv();
+              await child.environmentConfig.recreateTmpEnv();
             } catch (error) {
               config.frameworkName === tnpPackageName && console.log(error);
               await UtilsTerminal.pressAnyKeyToContinueAsync({
                 message: `Try again decode secret vars in ${child.name}`,
               });
+              continue;
             }
-          } while (!(await child.secretEnv.everyTempVariableDecoded()));
+
+            if (!(await child.secretEnv.everyTempVariableDecoded())) {
+              continue;
+            }
+            break;
+          }
         }
         //#endregion
 

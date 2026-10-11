@@ -44,7 +44,7 @@ export class TypescriptDtsFixer {
   forBackendContent(
     content: string,
     suffixSourceArray: string[],
-    destSuffix: string,
+    destSuffix?: string,
   ) {
     //#region @backendFunc
     content = content ? content : '';
@@ -68,7 +68,7 @@ export class TypescriptDtsFixer {
             ),
             'g',
           ),
-          `${isomorphicPackageName}/${destSuffix}'`,
+          `${isomorphicPackageName}${destSuffix ? `/${destSuffix}` : ''}'`,
         );
 
         content = (content || '').replace(
@@ -78,7 +78,7 @@ export class TypescriptDtsFixer {
             ),
             'g',
           ),
-          `${isomorphicPackageName}/${destSuffix}"`,
+          `${isomorphicPackageName}${destSuffix ? `/${destSuffix}` : ''}"`,
         );
       }
     }

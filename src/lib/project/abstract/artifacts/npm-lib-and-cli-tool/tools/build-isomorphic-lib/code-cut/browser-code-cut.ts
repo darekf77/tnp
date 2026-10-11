@@ -62,6 +62,7 @@ import {
   tailwindScssImportRegex,
   tailwindScssImportRegexGlobal,
   TaonGeneratedFiles,
+  TaonGeneratedFolders,
   tempAppForFolder,
   tempSourceFolder,
   timestampPrefixComment,
@@ -589,10 +590,11 @@ export class BrowserCodeCut {
         //#endregion
       }
 
+      // at the beginning those are normal files from src
       this.rawContentForBrowser = orgContent;
-      this.rawContentForAPPONLYBrowser = this.rawContentForBrowser; // TODO not needed ?
-      this.rawContentBackend = this.rawContentForBrowser; // at the beginning those are normal files from src
-      this.rawContentEsmBackend = this.rawContentForBrowser;
+      this.rawContentForAPPONLYBrowser = orgContent;
+      this.rawContentBackend = orgContent;
+      this.rawContentEsmBackend = orgContent;
       break;
     }
     return this;
@@ -760,7 +762,10 @@ export class BrowserCodeCut {
 
       if (
         !this.relativePath.startsWith(`${appFromSrc}/`) &&
-        !this.relativePath.startsWith(`${appFromSrc}.`)
+        !this.relativePath.startsWith(`${appFromSrc}.`) &&
+        !this.relativePath.startsWith(
+          `${libFromSrc}/${TaonGeneratedFolders.ENV_FOLDER}/`,
+        )
       ) {
         // #region NORMAL TS BROWSER FILE FOR LIB
         const absFileSourceBrowserOrWebsqlCurrent = this.project.watcher
@@ -1154,11 +1159,16 @@ export class BrowserCodeCut {
     const ext = path.extname(this.relativePath);
     // console.log(`Ext: "${ext}" for file: ${path.basename(this.absoluteFilePath)}`)
     if (extAllowedToReplace.includes(ext)) {
-      const orgContent = this.rawContentForBrowser;
-
       this.rawContentForBrowser = RegionRemover.from(
         this.relativePath,
-        orgContent,
+        this.rawContentForAPPONLYBrowser,
+        [...options.replacements, TAGS.NOT_FOR_NPM],
+        () => this.project.environmentConfig.getEnvMain(),
+      ).output;
+
+      this.rawContentForAPPONLYBrowser = RegionRemover.from(
+        this.relativePath,
+        this.rawContentForAPPONLYBrowser,
         options.replacements,
         () => this.project.environmentConfig.getEnvMain(),
       ).output;
@@ -1217,7 +1227,7 @@ export class BrowserCodeCut {
     //#region @backendFunc
 
     this.rawContentForAPPONLYBrowser = replaceAssetsLinksForApp(
-      this.rawContentForBrowser,
+      this.rawContentForAPPONLYBrowser,
       this.relativePath,
       this.project,
       this.buildOptions,
