@@ -1753,7 +1753,10 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
           srcFromTaonImport,
         );
 
-        UtilsFilesFoldersSync.writeFile(destFullDts, fixedContentFullDts);
+        UtilsFilesFoldersSync.writeFile(
+          destFullDts,
+          `// @ts-` + `nocheck\n${fixedContentFullDts}`,
+        );
       }
       //#endregion
     })();
