@@ -5,6 +5,7 @@ import {
   config,
   dateformat,
   folderName,
+  frontendFiles,
   LibTypeEnum,
   PREFIXES,
   taonPackageName,
@@ -17,6 +18,7 @@ import { fileName } from 'tnp-core/src';
 import { BaseCompilerForProject, Helpers, HelpersTaon } from 'tnp-helpers/src';
 
 import {
+  appFromSrc,
   assetsFromNpmPackage,
   assetsFromSrc,
   browserMainProject,
@@ -24,9 +26,12 @@ import {
   distFromNgBuild,
   distMainProject,
   distNoCutSrcMainProject,
+  fullDts,
   indexDtsMainProject,
   indexDtsNpmPackage,
   libEsm,
+  libFromCompiledDist,
+  libFromImport,
   nodeModulesMainProject,
   packageJsonMainProject,
   packageJsonNpmLib,
@@ -35,8 +40,10 @@ import {
   sharedFromAssets,
   sourceLinkInNodeModules,
   srcDtsFromNpmPackage,
+  srcFromTaonImport,
   srcJSFromNpmPackage,
   srcMainProject,
+  TaonGeneratedFolders,
   TaonVerifiedBuild,
   THIS_IS_GENERATED_INFO_COMMENT,
   tmpAlreadyStartedCopyManager,
@@ -474,8 +481,22 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
       this.removeSourceSymlinks(destination);
       this.addSourceSymlinks(destination);
 
+      // remove lib-esm/app stuff
+      (() => {
+        const srcLibEsmEnvFolder = destination.nodeModules.pathFor([
+          this.rootPackageName,
+          libEsm,
+          appFromSrc,
+        ]);
+        Helpers.removeIfExists(srcLibEsmEnvFolder);
+      })();
+
       this.updateBackendFullDtsFiles(destination);
       this.updateBackendFullDtsFiles(this.monitoredOutDir);
+
+      if (this.buildOptions.release.releaseType) {
+        this.removeLibEnvFolder(destination);
+      }
 
       if (
         REPLACE_INDEX_D_TS_IN_DEST_WHEN_WATCH &&
@@ -1112,6 +1133,41 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   }
   //#endregion
 
+  //#region remove source symlinks
+  removeLibEnvFolder(destination: Project): void {
+    //#region @backendFunc
+    (() => {
+      const srcLibEnvFolder = destination.nodeModules.pathFor([
+        this.rootPackageName,
+        libFromCompiledDist,
+        TaonGeneratedFolders.ENV_FOLDER,
+      ]);
+      Helpers.removeFolderIfExists(srcLibEnvFolder);
+    })();
+
+    (() => {
+      const srcLibEsmEnvFolder = destination.nodeModules.pathFor([
+        this.rootPackageName,
+        libEsm,
+        libFromCompiledDist,
+        TaonGeneratedFolders.ENV_FOLDER,
+      ]);
+      Helpers.removeFolderIfExists(srcLibEsmEnvFolder);
+    })();
+
+    (() => {
+      const srcLibEsmEnvFolder = destination.nodeModules.pathFor([
+        this.rootPackageName,
+        fullDts,
+        TaonGeneratedFolders.ENV_FOLDER,
+      ]);
+      Helpers.removeFolderIfExists(srcLibEsmEnvFolder);
+    })();
+
+    //#endregion
+  }
+  //#endregion
+
   //#region copy source maps
   /**
    *
@@ -1603,37 +1659,110 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   //#endregion
 
   //#region update backend full dts files
+
   updateBackendFullDtsFiles(destinationOrDist: Project | string): void {
     //#region @backendFunc
     const base = this.project.pathFor(distNoCutSrcMainProject);
-
-    const dtsFileForImportUpdates = UtilsFilesFoldersSync.getFilesFrom(base, {
+    const files = UtilsFilesFoldersSync.getFilesFrom(base, {
       recursive: true,
-    })
-      .filter(f => f.endsWith('.d.ts'))
-      .map(f => f.replace(`${base}/`, ''));
+    });
 
-    for (let index = 0; index < dtsFileForImportUpdates.length; index++) {
-      const relativePath = dtsFileForImportUpdates[index];
-      const source = crossPlatformPath(path.join(base, relativePath));
-      const dest = crossPlatformPath(
-        path.join(
+    (() => {
+      //#region filter for cjs, esm
+      const dtsFileForImportUpdates = files
+        .filter(f => {
+          if (!f.endsWith('.d.ts')) {
+            return false;
+          }
+          const isNotFrontendFile = !frontendFiles.some(ext =>
+            f
+              .replace(/\.d\.tsx$/, '.tsx')
+              .replace(/\.d\.ts$/, '.ts')
+              .endsWith(ext),
+          );
+          return isNotFrontendFile;
+        })
+        .map(f => f.replace(`${base}/`, ''));
+
+      for (let index = 0; index < dtsFileForImportUpdates.length; index++) {
+        const relativePath = dtsFileForImportUpdates[index];
+        // console.log(`Processing DTS file: ${relativePath}`);
+        // const sourceDts = crossPlatformPath(path.join(base, relativePath));
+        const destCjsDts = crossPlatformPath([
           _.isString(destinationOrDist)
-            ? this.monitoredOutDir
+            ? destinationOrDist
             : destinationOrDist.nodeModules.pathFor(this.rootPackageName),
           relativePath,
-        ),
-      );
-      // if (Helpers.exists(dest)) {
-      // console.log(dest);
-      const sourceContent = Helpers.readFile(source);
+        ]);
 
-      UtilsFilesFoldersSync.writeFile(
-        dest,
-        this.dtsFixer.forBackendContent(sourceContent),
-      );
-      // }
-    }
+        const destEs6Dts = crossPlatformPath([
+          _.isString(destinationOrDist)
+            ? destinationOrDist
+            : destinationOrDist.nodeModules.pathFor(this.rootPackageName),
+          relativePath.replace(/^lib/, `${libEsm}/lib/`),
+        ]);
+
+        const sourceContentCjs = UtilsFilesFoldersSync.readFile(destCjsDts);
+
+        const fixedContentCjs = this.dtsFixer.forBackendContent(
+          sourceContentCjs,
+          [libFromImport, srcFromTaonImport, sourceLinkInNodeModules],
+          '',
+        );
+        if (fixedContentCjs !== sourceContentCjs) {
+          // console.log(`Updating CJS DTS file: ${destCjsDts}`);
+          UtilsFilesFoldersSync.writeFile(destCjsDts, fixedContentCjs);
+        }
+
+        const sourceContentEsm = UtilsFilesFoldersSync.readFile(destEs6Dts);
+
+        const fixedContentEsm = this.dtsFixer.forBackendContent(
+          sourceContentEsm,
+          [libFromImport, srcFromTaonImport, sourceLinkInNodeModules],
+          libEsm,
+        );
+        if (fixedContentEsm !== sourceContentEsm) {
+          // console.log(`Updating ESM DTS file: ${destEs6Dts}`);
+          UtilsFilesFoldersSync.writeFile(destEs6Dts, fixedContentEsm);
+        }
+      }
+      //#endregion
+    })();
+
+    (() => {
+      //#region filter for full dts
+      const dtsFileForImportUpdates = files
+        .filter(f => f.endsWith('.d.ts'))
+        .map(f => f.replace(`${base}/`, ''));
+
+      for (let index = 0; index < dtsFileForImportUpdates.length; index++) {
+        const relativePath = dtsFileForImportUpdates[index];
+        // console.log(`Processing full DTS file: ${relativePath}`);
+        const sourceDts = crossPlatformPath(path.join(base, relativePath));
+
+        const destFullDts = crossPlatformPath([
+          _.isString(destinationOrDist)
+            ? destinationOrDist
+            : destinationOrDist.nodeModules.pathFor(this.rootPackageName),
+          relativePath.replace(/^lib/, `${fullDts}/`),
+        ]);
+
+        const sourceContent = UtilsFilesFoldersSync.readFile(sourceDts);
+
+        const fixedContentFullDts = this.dtsFixer.forBackendContent(
+          sourceContent,
+          [libFromImport, libEsm, sourceLinkInNodeModules],
+          srcFromTaonImport,
+        );
+
+        UtilsFilesFoldersSync.writeFile(
+          destFullDts,
+          `// @ts-` + `nocheck\n${fixedContentFullDts}`,
+        );
+      }
+      //#endregion
+    })();
+
     //#endregion
   }
   //#endregion

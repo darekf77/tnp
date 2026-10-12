@@ -4,6 +4,7 @@ import { crossPlatformPath, path } from 'tnp-core/src';
 import { Helpers } from 'tnp-helpers/src';
 
 import {
+  libFromImport,
   sourceLinkInNodeModules,
   srcFromTaonImport,
   TS_NOCHECK,
@@ -40,7 +41,11 @@ export class TypescriptDtsFixer {
 
   //#region helpers / fix dts import
 
-  forBackendContent(content: string) {
+  forBackendContent(
+    content: string,
+    suffixSourceArray: string[],
+    destSuffix?: string,
+  ) {
     //#region @backendFunc
     content = content ? content : '';
     const isomorphicPackages =
@@ -50,49 +55,32 @@ export class TypescriptDtsFixer {
     for (let index = 0; index < isomorphicPackages.length; index++) {
       const isomorphicPackageName = isomorphicPackages[index];
 
-      //#region replace package/src
-      content = (content || '').replace(
-        new RegExp(
-          Utils.escapeStringForRegEx(
-            `${isomorphicPackageName}/${srcFromTaonImport}'`,
+      for (
+        let suffixIndex = 0;
+        suffixIndex < suffixSourceArray.length;
+        suffixIndex++
+      ) {
+        const suffixSrc = suffixSourceArray[suffixIndex];
+        content = (content || '').replace(
+          new RegExp(
+            Utils.escapeStringForRegEx(
+              `${isomorphicPackageName}/${suffixSrc}'`,
+            ),
+            'g',
           ),
-          'g',
-        ),
-        `${isomorphicPackageName}'`,
-      );
+          `${isomorphicPackageName}${destSuffix ? `/${destSuffix}` : ''}'`,
+        );
 
-      content = (content || '').replace(
-        new RegExp(
-          Utils.escapeStringForRegEx(
-            `${isomorphicPackageName}/${srcFromTaonImport}"`,
+        content = (content || '').replace(
+          new RegExp(
+            Utils.escapeStringForRegEx(
+              `${isomorphicPackageName}/${suffixSrc}"`,
+            ),
+            'g',
           ),
-          'g',
-        ),
-        `${isomorphicPackageName}"`,
-      );
-      //#endregion
-
-      //#region replace package/source
-      content = (content || '').replace(
-        new RegExp(
-          Utils.escapeStringForRegEx(
-            `${isomorphicPackageName}/${sourceLinkInNodeModules}'`,
-          ),
-          'g',
-        ),
-        `${isomorphicPackageName}'`,
-      );
-
-      content = (content || '').replace(
-        new RegExp(
-          Utils.escapeStringForRegEx(
-            `${isomorphicPackageName}/${sourceLinkInNodeModules}"`,
-          ),
-          'g',
-        ),
-        `${isomorphicPackageName}"`,
-      );
-      //#endregion
+          `${isomorphicPackageName}${destSuffix ? `/${destSuffix}` : ''}"`,
+        );
+      }
     }
     return content;
     //#endregion
