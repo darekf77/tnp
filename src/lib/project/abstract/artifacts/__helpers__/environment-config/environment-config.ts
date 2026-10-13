@@ -373,16 +373,21 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   //#endregion
 
   //#region private methods / save config workspace
-  private saveEnvironmentConfig(projectEnvConfig: EnvOptions): void {
+  private saveEnvironmentConfig(envOptions: EnvOptions): void {
     //#region @backendFunc
 
-    if (this.project.framework.isStandaloneProject) {
-      const backendConfigFileName = `env.${projectEnvConfig.release.targetArtifact}.ts`;
+    if (
+      this.project.framework.isStandaloneProject &&
+      envOptions.release.targetArtifact !==
+        ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL &&
+      envOptions.release.targetArtifact !== ReleaseArtifactTaon.DOCS_DOCS_WEBAPP
+    ) {
+      const backendConfigFileName = `env.${envOptions.release.targetArtifact}.ts`;
       const backendConstants: string[] = [];
       const pathsWithValues = [];
 
       walk.Object(
-        projectEnvConfig,
+        envOptions,
         (val, lodashPath, newValue) => {
           // console.log({ lodashPath });
           const isOK = !_.isObject(val) || _.isFunction(val);
@@ -400,7 +405,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
             backendConstants.push(
               `// ${lodashPath}
 export const ENV_` +
-                `${_.snakeCase(projectEnvConfig.release.targetArtifact).toUpperCase()}_` +
+                `${_.snakeCase(envOptions.release.targetArtifact).toUpperCase()}_` +
                 `${_.snakeCase(lodashPath).replace(/\ /g, '_').toUpperCase()} ` +
                 `= ${
                   _.isString(val)
@@ -421,7 +426,7 @@ export const ENV_` +
           backendConstants.push(
             `// ${setUndefinedLodashPath}
 export const ENV_` +
-              `${_.snakeCase(projectEnvConfig.release.targetArtifact).toUpperCase()}_` +
+              `${_.snakeCase(envOptions.release.targetArtifact).toUpperCase()}_` +
               `${_.snakeCase(setUndefinedLodashPath).replace(/\ /g, '_').toUpperCase()} ` +
               `= undefined;`,
           );
@@ -499,6 +504,15 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
       }
     }
 
+    await this.recreateTmpEnv();
+
+    //#endregion
+  }
+  //#endregion
+
+  //#region API / recreate temporary environment
+  public async recreateTmpEnv(): Promise<void> {
+    //#region @backendFunc
     Helpers.remove(this.project.pathFor(tmpEnvFolder));
     Helpers.mkdirp(this.project.pathFor(tmpEnvFolder));
     while (true) {
@@ -538,7 +552,6 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
       }
       break;
     }
-
     //#endregion
   }
   //#endregion

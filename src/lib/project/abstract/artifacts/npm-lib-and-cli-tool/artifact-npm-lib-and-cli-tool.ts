@@ -52,11 +52,13 @@ import {
   dotGitIgnoreMainProject,
   dotNpmIgnoreMainProject,
   dotNpmrcMainProject,
+  fullDts,
   generatedDocsFromMd,
   i18nDataTsFileExt,
   indexDtsNpmPackage,
   indexJSNpmPackage,
   indexProdJs,
+  libEsm,
   libFromCompiledDist,
   libFromNpmPackage,
   libFromSrc,
@@ -76,6 +78,7 @@ import {
   suffixLatest,
   TaonCommands,
   TaonGeneratedFiles,
+  TaonGeneratedFolders,
   taonJsonMainProject,
   TempalteSubprojectType,
   testsFromSrc,
@@ -1411,6 +1414,11 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   ): void {
     //#region @backendFunc
     Helpers.remove(`${releaseAbsPath}/${appFromSrc}*`); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/${libFromCompiledDist}/${TaonGeneratedFolders.ENV_FOLDER}*`); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/${libFromCompiledDist + prodSuffix}/${TaonGeneratedFolders.ENV_FOLDER}*`); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/${libEsm}/${libFromCompiledDist}/${TaonGeneratedFolders.ENV_FOLDER}*`); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/${libEsm}/${appFromSrc}*`); // QUICK_FIX
+    Helpers.remove(`${releaseAbsPath}/${fullDts}/${TaonGeneratedFolders.ENV_FOLDER}*`); // QUICK_FIX
     Helpers.remove(`${releaseAbsPath}/${testsFromSrc}*`); // QUICK_FIX
     Helpers.remove(`${releaseAbsPath}/${srcMainProject}`, true); // QUICK_FIX
     // Helpers.removeFileIfExists(`${relaseAbsPath}/source`);
@@ -1420,7 +1428,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       crossPlatformPath([releaseAbsPath, 'src.d.ts']),
       `
 ${THIS_IS_GENERATED_INFO_COMMENT}
-export * from './${libFromSrc}';
+export * from './${fullDts}';
 ${THIS_IS_GENERATED_INFO_COMMENT}
 // please use command: taon build:watch to see here links for your globally builded lib code files
 ${THIS_IS_GENERATED_INFO_COMMENT}

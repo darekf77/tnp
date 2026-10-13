@@ -19,9 +19,12 @@ import {
 
 import { isTestFile } from '../../app-utils';
 import {
+  appAutoGenDocsMd,
+  appAutoGenJs,
   assetsFromTempSrc,
   i18nDataTsFileExt,
   i18nFolder,
+  LANG_IMPORT,
   packageJsonNpmLib,
   srcMainProject,
   THIS_IS_GENERATED_INFO_COMMENT,
@@ -71,6 +74,17 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
           !content &&
           (content.includes('gettext') || content.includes('translate'))
         ) {
+          if (content.includes(LANG_IMPORT)) {
+            return {
+              // isAppFile: !fileRelativePath.startsWith('lib/'),
+              fileAbsPath: f,
+              fileRelativePath: crossPlatformPath([
+                srcMainProject,
+                fileRelativePath,
+              ]),
+              tags: [],
+            } as UtilsI18n.GettextFile;
+          }
           return;
         }
 
@@ -104,6 +118,17 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
         }
 
         if (tags.length === 0) {
+          if (content.includes(LANG_IMPORT)) {
+            return {
+              // isAppFile: !fileRelativePath.startsWith('lib/'),
+              fileAbsPath: f,
+              fileRelativePath: crossPlatformPath([
+                srcMainProject,
+                fileRelativePath,
+              ]),
+              tags: [],
+            } as UtilsI18n.GettextFile;
+          }
           return;
         }
 
@@ -117,7 +142,10 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
           tags,
         } as UtilsI18n.GettextFile;
       })
-      .filter(f => !!f);
+      .filter(
+        f =>
+          !!f && ![appAutoGenJs, appAutoGenDocsMd].includes(path.basename(f.fileAbsPath)),
+      );
     //#endregion
 
     const langs = this.project.taonJson.generateTranslationsFor;

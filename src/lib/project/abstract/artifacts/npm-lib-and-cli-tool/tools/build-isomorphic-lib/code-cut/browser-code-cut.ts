@@ -62,6 +62,7 @@ import {
   tailwindScssImportRegex,
   tailwindScssImportRegexGlobal,
   TaonGeneratedFiles,
+  TaonGeneratedFolders,
   tempAppForFolder,
   tempSourceFolder,
   timestampPrefixComment,
@@ -107,6 +108,7 @@ const notAllowedToPRocess = [appAutoGenDocsMd, appAutoGenJs];
 export class BrowserCodeCut {
   //#region constants
   public static debugFiles = [
+    // 'my-organization-proj.ts.en-US.i18n.data.ts',
     // 'taon-notification-recipient.entity.ts',
     // 'taon-auth-context.entity.ts',
     // 'app.ts',
@@ -476,21 +478,24 @@ export class BrowserCodeCut {
           UtilsFilesFoldersSync.readFile(this.absSourcePathFromSrc) || '';
 
         const tsFromPo = _.first(UtilsPoFile.extractPoToJson(orgContent));
-        tsFromPo.fileRelativePath = crossPlatformPath([
-          pathToTsData.replace(this.project.location + '/', ''),
-        ]);
 
-        // console.log({ tsFromPo: JSON.stringify(tsFromPo), lang });
-        if (
-          this.project.framework.translationI18n.saveTsFileData(
-            pathToTsData,
-            lang,
-            tsFromPo,
-          )
-        ) {
-          Helpers.info(
-            `Done rewriting ${path.basename(pathToTsData)} from .po file`,
-          );
+        if (tsFromPo) {
+          tsFromPo.fileRelativePath = crossPlatformPath([
+            pathToTsData.replace(this.project.location + '/', ''),
+          ]);
+
+          // console.log({ tsFromPo: JSON.stringify(tsFromPo), lang });
+          if (
+            this.project.framework.translationI18n.saveTsFileData(
+              pathToTsData,
+              lang,
+              tsFromPo,
+            )
+          ) {
+            Helpers.info(
+              `Done rewriting ${path.basename(pathToTsData)} from .po file`,
+            );
+          }
         }
       }
 
@@ -585,10 +590,11 @@ export class BrowserCodeCut {
         //#endregion
       }
 
+      // at the beginning those are normal files from src
       this.rawContentForBrowser = orgContent;
-      this.rawContentForAPPONLYBrowser = this.rawContentForBrowser; // TODO not needed ?
-      this.rawContentBackend = this.rawContentForBrowser; // at the beginning those are normal files from src
-      this.rawContentEsmBackend = this.rawContentForBrowser;
+      this.rawContentForAPPONLYBrowser = orgContent;
+      this.rawContentBackend = orgContent;
+      this.rawContentEsmBackend = orgContent;
       break;
     }
     return this;
@@ -714,8 +720,6 @@ export class BrowserCodeCut {
       );
     }
 
-    this.processAssetsLinksForApp();
-
     if (!this.isAssetsFile && this.relativePath.endsWith('.backend.ts')) {
       return;
     }
@@ -756,7 +760,10 @@ export class BrowserCodeCut {
 
       if (
         !this.relativePath.startsWith(`${appFromSrc}/`) &&
-        !this.relativePath.startsWith(`${appFromSrc}.`)
+        !this.relativePath.startsWith(`${appFromSrc}.`) &&
+        !this.relativePath.startsWith(
+          `${libFromSrc}/${TaonGeneratedFolders.ENV_FOLDER}/`,
+        )
       ) {
         // #region NORMAL TS BROWSER FILE FOR LIB
         const absFileSourceBrowserOrWebsqlCurrent = this.project.watcher
@@ -1065,6 +1072,8 @@ export class BrowserCodeCut {
       }
     }
     const prodPart = this.buildOptions.build.prod ? prodSuffix : '';
+
+    //#region replace region browser for lib
     if (_.isString(this.rawContentForBrowser)) {
       const toReplace = this.importExportsFromOrgContent.filter(imp => {
         imp.embeddedPathToFileResult = imp.wrapInParenthesis(
@@ -1088,7 +1097,35 @@ export class BrowserCodeCut {
         imp => delete imp.embeddedPathToFileResult,
       );
     }
+    //#endregion
 
+    //#region replace region browser for app
+    if (_.isString(this.rawContentForAPPONLYBrowser)) {
+      const toReplace = this.importExportsFromOrgContent.filter(imp => {
+        imp.embeddedPathToFileResult = imp.wrapInParenthesis(
+          imp.cleanEmbeddedPathToFile.replace(
+            `/${srcMainProject}`,
+            `/${
+              (this.buildOptions.build.websql
+                ? websqlFromImport
+                : browserFromImport) + prodPart
+            }`,
+          ),
+        );
+        return imp.isIsomorphic;
+      });
+
+      this.rawContentForAPPONLYBrowser = UtilsCodeCut.replaceInFile(
+        this.rawContentForAPPONLYBrowser,
+        toReplace,
+      );
+      this.importExportsFromOrgContent.forEach(
+        imp => delete imp.embeddedPathToFileResult,
+      );
+    }
+    //#endregion
+
+    //#region replace region backend cjs for lib
     if (_.isString(this.rawContentBackend)) {
       const toReplace = this.importExportsFromOrgContent.filter(imp => {
         imp.embeddedPathToFileResult = imp.wrapInParenthesis(
@@ -1108,7 +1145,9 @@ export class BrowserCodeCut {
         imp => delete imp.embeddedPathToFileResult,
       );
     }
+    //#endregion
 
+    //#region replace region backend esm for lib
     if (_.isString(this.rawContentEsmBackend)) {
       const toReplace = this.importExportsFromOrgContent.filter(imp => {
         imp.embeddedPathToFileResult = imp.wrapInParenthesis(
@@ -1128,6 +1167,7 @@ export class BrowserCodeCut {
         imp => delete imp.embeddedPathToFileResult,
       );
     }
+    //#endregion
 
     return this;
     //#endregion
@@ -1150,11 +1190,16 @@ export class BrowserCodeCut {
     const ext = path.extname(this.relativePath);
     // console.log(`Ext: "${ext}" for file: ${path.basename(this.absoluteFilePath)}`)
     if (extAllowedToReplace.includes(ext)) {
-      const orgContent = this.rawContentForBrowser;
-
       this.rawContentForBrowser = RegionRemover.from(
         this.relativePath,
-        orgContent,
+        this.rawContentForAPPONLYBrowser,
+        [...options.replacements, TAGS.NOT_FOR_NPM],
+        () => this.project.environmentConfig.getEnvMain(),
+      ).output;
+
+      this.rawContentForAPPONLYBrowser = RegionRemover.from(
+        this.relativePath,
+        this.rawContentForAPPONLYBrowser,
         options.replacements,
         () => this.project.environmentConfig.getEnvMain(),
       ).output;
@@ -1203,22 +1248,21 @@ export class BrowserCodeCut {
       this.project,
     );
 
-    return this;
-    //#endregion
-  }
-  //#endregion
-
-  //#region private / methods & getters / processing asset link for app
-  private processAssetsLinksForApp(): void {
-    //#region @backendFunc
+    this.rawContentForAPPONLYBrowser = replaceImportToAssetsIMport(
+      this.rawContentForAPPONLYBrowser,
+      this.nameForNpmPackage,
+      this.relativePath,
+      this.project,
+    );
 
     this.rawContentForAPPONLYBrowser = replaceAssetsLinksForApp(
-      this.rawContentForBrowser,
+      this.rawContentForAPPONLYBrowser,
       this.relativePath,
       this.project,
       this.buildOptions,
     );
 
+    return this;
     //#endregion
   }
   //#endregion

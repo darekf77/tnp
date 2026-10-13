@@ -92,6 +92,9 @@ export class BrowserCompilation extends BaseClientCompiler {
     //#region @backendFunc
     const isProd = this.buildOptions.build.prod;
 
+    // absFilesFromSrc.forEach(console.log);
+    // process.exit(0);
+
     //#region tags to cut
     const tagsNormal = [
       [TAGS.BACKEND_FUNC, `return (void 0);`],

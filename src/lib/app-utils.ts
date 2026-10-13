@@ -25,6 +25,7 @@ import {
   browserFromImport,
   i18nDataTsFileExt,
   i18nFolder,
+  LANG_IMPORT,
   libFromImport,
   oldBuildModePrefix,
   oldBuildModePrefixShort,
@@ -866,11 +867,71 @@ export const replaceBeforeSaveInTsFile = (
         },
       );
     })();
+
+    (() => {
+      const assetsFromRegex = /Replecables\.__FILE_RELATIVE_PATH__/g;
+      beOrFeTsFileContent = beOrFeTsFileContent.replace(
+        assetsFromRegex,
+        (_, quote, folder: string) => {
+          return `'${crossPlatformPath([srcMainProject, relativeFilePath])}'`;
+        },
+      );
+    })();
     //#endregion
 
     //#region replace taon LANG IMPORT MAP)
     (() => {
-      const assetsFromRegex = /Taon\.LANG_IMPORT_MAP/g;
+      const regexAsset = 'Taon\\.' + LANG_IMPORT;
+      const assetsFromRegex = new RegExp(regexAsset, 'g');
+      beOrFeTsFileContent = beOrFeTsFileContent.replace(
+        assetsFromRegex,
+        (_, quote, folder: string) => {
+          // TODO @LAST REFACTOR this
+          // - automatically add import from './i18m/*.translation default export where will be stored default imports
+          const res = {} as TaonTranslationsMapImport;
+
+          const files = UtilsFilesFoldersSync.getFilesFrom(
+            project.pathFor([srcMainProject, path.dirname(relativeFilePath)]),
+            {
+              recursive: false,
+              followSymlinks: false,
+            },
+          );
+
+          const langs = project.taonJson.generateTranslationsFor;
+
+          for (const lang of langs) {
+            for (let index = 0; index < files.length; index++) {
+              const fileAbsPath = files[index];
+              const base = project.location;
+              const relative = fileAbsPath.replace(base + '/', '');
+              // console.log({ fileAbsPath, relative });
+              const fileInI18PoFile = crossPlatformPath([
+                path.dirname(fileAbsPath),
+                i18nFolder,
+                `${path.basename(fileAbsPath)}.${lang}.po`,
+              ]);
+
+              if (Helpers.exists(fileInI18PoFile)) {
+                res[relative] = res[relative] || {};
+                res[relative][lang] =
+                  `####async () => (await import('./${i18nFolder}/${path.basename(
+                    fileAbsPath,
+                  )}.${lang}${i18nDataTsFileExt.replace('.ts', '')}')).default####` as any;
+              }
+            }
+          }
+
+          return `${JSON.stringify(res)
+            .replace(/\"\#\#\#\#/g, '')
+            .replace(/\#\#\#\#\"/g, '')} as any`;
+        },
+      );
+    })();
+
+    (() => {
+      const regexAsset = `Replecables\\.__${LANG_IMPORT}__`;
+      const assetsFromRegex = new RegExp(regexAsset, 'g');
       beOrFeTsFileContent = beOrFeTsFileContent.replace(
         assetsFromRegex,
         (_, quote, folder: string) => {
