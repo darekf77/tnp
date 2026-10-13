@@ -25,10 +25,11 @@ import {
   BaseCommandLineFeature,
   Helpers,
   HelpersTaon,
+  UtilsClipboard,
   UtilsTypescript,
 } from 'tnp-helpers/src';
 
-import { isTsFile } from '../../app-utils';
+import { hash64, isTsFile } from '../../app-utils';
 import {
   appFromSrc,
   DEFAULT_FRAMEWORK_VERSION,
@@ -314,6 +315,15 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
   async appRoutes() {
     //#region @backendFunc
     await this.project.framework.generateAppRoutes();
+    this._exit();
+    //#endregion
+  }
+
+  async hash64() {
+    //#region @backendFunc
+    const hash = await hash64();
+    await UtilsClipboard.copyText(hash);
+    Helpers.info(`Done copying hash  ${hash}`);
     this._exit();
     //#endregion
   }

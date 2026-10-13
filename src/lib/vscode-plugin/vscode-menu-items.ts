@@ -1,5 +1,6 @@
 import { config, tnpPackageName } from 'tnp-core/src';
 
+import { hash64 } from '../app-utils';
 import {
   taonNonInteractiveModePrefix,
   taonSkipEmitTerminalProgressPrefix,
@@ -596,6 +597,32 @@ export const vscodeMenuItems = ({
                     increment: 100,
                   });
                   // vscode.commands.executeCommand('workbench.view.explorer');
+                }
+              },
+            },
+          ),
+          //#endregion
+
+          //#region items with actions / regenerate src/lib/index._auto-generated_.ts
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} generate:hash64`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null,
+              project: CURRENT_PROJECT,
+              // skipReturnToMenu: true,
+              triggerActionOnClick: async (project, progress) => {
+                if (project) {
+                  progress?.report({
+                    message: 'Generating random 64 characters hash',
+                  });
+                  const hash = await hash64();
+                  vscode.env.clipboard.writeText(hash);
+                  progress?.report({
+                    message: 'Done generating random 64 characters hash',
+                    increment: 100,
+                  });
+                  vscode.window.showInformationMessage(`Hash copied to clipboard: ${hash}`)
                 }
               },
             },

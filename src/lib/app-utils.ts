@@ -1023,6 +1023,20 @@ export const replaceImportToAssetsIMport = (
 };
 //#endregion
 
+//#region copy 64 hash
+export async function hash64() {
+  //#region @backendFunc
+  const length = 64;
+  const crypto = await import('node:crypto');
+  const secret = crypto
+    .randomBytes(Math.ceil(length / 2))
+    .toString('hex')
+    .slice(0, length);
+
+  return secret;
+  //#endregion
+}
+
 export const compareAndSave = ({
   fileAbsPath,
   isFirstTime,
