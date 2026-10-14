@@ -532,7 +532,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     packagesFromWorker: string[],
     frameworkVersion: CoreModels.FrameworkVersion,
   ): void {
-    const current = this.packagesFromWorker.get(frameworkVersion) || [];
+    let current = this.packagesFromWorker.get(frameworkVersion) || [];
     const info = UtilsString.listDiff(current, packagesFromWorker);
 
     Helpers.info(
@@ -541,8 +541,13 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       `,
     );
     info.infoMessage();
+    if (info.added.length > 0) {
+      // TODO QUICK_FIX adding only new for now
+      current = Utils.uniqArray(current.concat(info.added));
+    }
+
     Helpers.logInfo(`From backend: ` + packagesFromWorker.join(','));
-    this.packagesFromWorker.set(frameworkVersion, packagesFromWorker);
+    this.packagesFromWorker.set(frameworkVersion, current);
   }
 
   public notifierIsomorphicPackages = UtilsWaitNotifier.getNotifier({

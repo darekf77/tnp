@@ -154,7 +154,7 @@ export class $Global extends BaseGlobalCommandLine<
       'Isomorphic packages.. detecting..',
       () => {
         packages =
-          this.project.framework.coreContainer.nodeModules.getIsomorphicPackagesNames();
+          this.project.nodeModules.getIsomorphicPackagesNames();
       },
     );
     console.log(`Found ${packages.length} packages. ${packages.join(',')}`);
