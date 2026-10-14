@@ -210,20 +210,21 @@ export class SubProject extends BaseFeatureForProject<Project> {
     }
     //#endregion
 
-    let selectedEnv = opt.projectEnvironmentNameWithNumber;
+    let selectedEnvWithNumber = opt.projectEnvironmentNameWithNumber;
     if (
       !opt.projectEnvironmentNameWithNumber &&
       selectedTemplate === TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
     ) {
-      selectedEnv = await UtilsTerminal.select({
+      selectedEnvWithNumber = await UtilsTerminal.select({
         choices: environments
           .filter(e => {
             return e.envName !== '__';
           }) // filter out default env from selection
           .map(e => {
             return {
-              name: e.envName === '__' ? '__ ( default )' : e.envName,
-              value: e.envName,
+              name:
+                e.envName === '__' ? '__ ( default )' : e.envName + (e.envNumber ?? ''),
+              value: e.envName + (e.envNumber ?? ''),
             };
           }),
         question: `Select environment for worker`,
@@ -232,7 +233,10 @@ export class SubProject extends BaseFeatureForProject<Project> {
     }
 
     const absLocationPath = crossPlatformPath([
-      this.repo.pathToTempalteInCurrentProject(selectedTemplate, selectedEnv),
+      this.repo.pathToTempalteInCurrentProject(
+        selectedTemplate,
+        selectedEnvWithNumber,
+      ),
       generatedWorkerName,
     ]);
 
