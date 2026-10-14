@@ -230,9 +230,12 @@ export class IsomorphicPackagesRepository extends TaonBaseKvRepository<{
 
       this.addMessage(`staring detection for version "${frameworkVersion}"`);
       const { Project } = await import('../../../abstract/project');
-      const coreContainer = Project.ins.by('container', frameworkVersion);
+
+      const homeDirTaonContainer =
+        Project.ins.homeDirCoreContainer(frameworkVersion);
+
       const allIsomorphicPackagesFromNodeModules: string[] =
-        coreContainer.nodeModules.getIsomorphicPackagesNames();
+        homeDirTaonContainer.nodeModules.getIsomorphicPackagesNames();
 
       const devModeController =
         await Project.ins.taonProjectsWorker.buildsWorker.getRemoteControllerFor();

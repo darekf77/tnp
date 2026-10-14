@@ -12,6 +12,7 @@ import {
   tnpPackageName,
   Utils,
   UtilsFilesFoldersSync,
+  UtilsOs,
 } from 'tnp-core/src';
 import { crossPlatformPath, glob, path, _, fse } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
@@ -73,7 +74,7 @@ const log = Log.create('Base copy manager', Level.WARN, Level.ERROR);
 const REPLACE_INDEX_D_TS_IN_DEST_WHEN_WATCH = false;
 
 export interface BaseCopyMangerInitialParams {
-  // TOOD this does not work
+  // TODO this does not work
   skipCopyDistToLocalTempProject?: boolean;
 }
 
@@ -168,12 +169,17 @@ export class CopyManagerStandalone extends BaseCompilerForProject<
 
     const isTaonProdCli = taonPackageName === config.frameworkName;
 
+    const homeDirTaonContainer = this.project.ins.homeDirCoreContainer(
+      this.project.framework.frameworkVersion,
+    );
+
     //#region resolve all possible project for package distribution
     let projectForNodeModulesPkgUpdate: Project[] = [
       this.project.ins.by(
         LibTypeEnum.CONTAINER,
         this.project.framework.frameworkVersion,
       ),
+      homeDirTaonContainer,
       this.project.framework.coreContainer,
     ];
     //#endregion

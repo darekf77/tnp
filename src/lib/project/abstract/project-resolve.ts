@@ -696,6 +696,22 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   }
   //#endregion
 
+  public homeDirCoreContainer(
+    frameworkVersion: CoreModels.FrameworkVersion,
+  ): Project {
+    //#region @backendFunc
+    const pathToStandardTaonContainer = crossPlatformPath([
+      UtilsOs.getRealHomeDir(),
+      `.${taonPackageName}`,
+      'taon-containers',
+      `container-${frameworkVersion}`,
+    ]);
+
+    const standardTaonContainer = this.From(pathToStandardTaonContainer);
+    return standardTaonContainer;
+    //#endregion
+  }
+
   //#region resolve core projects paths
   private resolveCoreProjectsPathes(version?: CoreModels.FrameworkVersion) {
     //#region @backendFunc
