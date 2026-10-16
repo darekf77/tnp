@@ -12,7 +12,6 @@ import {
   path,
   UtilsI18n,
   frontEndOnly,
-  stateServiceSuffix,
   fse,
 } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
@@ -98,13 +97,7 @@ export const isBrowserFilePath = (
   }
   options = options || {};
   const isFrontendFile = !_.isUndefined(
-    frontEndOnly.find(
-      f =>
-        pathToFile.endsWith(f) &&
-        (options.skipStateService
-          ? !pathToFile.endsWith(stateServiceSuffix)
-          : true),
-    ),
+    frontEndOnly.find(f => pathToFile.endsWith(f)),
   );
   return isFrontendFile;
 };

@@ -124,7 +124,7 @@ check command: cat /proc/sys/fs/inotify/max_user_watches
 
 # wachers
 check how many taken currently
-```basg
+```bash
 find /proc/[0-9]*/fdinfo -type f -readable 2>/dev/null \
   -exec grep -h '^inotify wd:' {} + | wc -l
 ```

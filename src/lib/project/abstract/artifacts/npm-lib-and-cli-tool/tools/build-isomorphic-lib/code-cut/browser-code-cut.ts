@@ -13,7 +13,6 @@ import {
   UtilsFilesFoldersSync,
   UtilsI18n,
   taonSkipCut,
-  stateServiceSuffix,
   config,
   tnpPackageName,
 } from 'tnp-core/src';

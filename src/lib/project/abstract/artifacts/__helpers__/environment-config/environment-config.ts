@@ -376,12 +376,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
   private saveEnvironmentConfig(envOptions: EnvOptions): void {
     //#region @backendFunc
 
-    if (
-      this.project.framework.isStandaloneProject &&
-      envOptions.release.targetArtifact !==
-        ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL &&
-      envOptions.release.targetArtifact !== ReleaseArtifactTaon.DOCS_DOCS_WEBAPP
-    ) {
+    if (this.project.framework.isStandaloneProject) {
       const backendConfigFileName = `env.${envOptions.release.targetArtifact}.ts`;
       const backendConstants: string[] = [];
       const pathsWithValues = [];
