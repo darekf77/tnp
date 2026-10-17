@@ -1,5 +1,11 @@
 //#region imports
-import { CoreModels, crossPlatformPath, Helpers, path } from 'tnp-core/src';
+import {
+  CoreModels,
+  crossPlatformPath,
+  Helpers,
+  path,
+  UtilsFilesFoldersSync,
+} from 'tnp-core/src';
 import { _ } from 'tnp-core/src';
 import { HelpersTaon } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartParams } from 'tnp-helpers/src';
@@ -41,6 +47,26 @@ export class $Lang extends BaseCli {
       const poFilePath = path.isAbsolute(arg)
         ? crossPlatformPath(arg)
         : crossPlatformPath([this.cwd, arg]);
+
+      if (Helpers.exists(poFilePath)) {
+        await this.project.framework.translatePoFile(poFilePath);
+      }
+    }
+    this._exit();
+    //#endregion
+  }
+
+  async translateAllPo() {
+    //#region @backendFunc
+    const files = UtilsFilesFoldersSync.getFilesFrom(
+      this.project.pathFor('src'),
+      {
+        recursive: true,
+        followSymlinks: false,
+      },
+    ).filter(f => f.endsWith('.po'));
+    for (const poFilePath of files) {
+      // console.log({ arg, isAbsolute: path.isAbsolute(arg) });
 
       if (Helpers.exists(poFilePath)) {
         await this.project.framework.translatePoFile(poFilePath);
