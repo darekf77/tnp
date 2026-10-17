@@ -549,6 +549,48 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
 
       {
         group: groupAI,
+        title: `paste & split from clipboard angular component`,
+        exec: async ({ selectedUris, uri, vscode }) => {
+          const WORKSPACE_MAIN_FOLDER_PATH = crossPlatformPath(uri.path);
+          // vscode.window.showInformationMessage(WORKSPACE_MAIN_FOLDER_PATH);
+
+          const textFromClipboard = await vscode.env.clipboard.readText();
+          const processed = await FrameworkUtils.pasteAndSplitAngularComponent(
+            WORKSPACE_MAIN_FOLDER_PATH,
+            textFromClipboard,
+          );
+
+          const nearestProject = Project.ins.nearestTo(
+            WORKSPACE_MAIN_FOLDER_PATH,
+          );
+
+          if (nearestProject) {
+            if (
+              processed.length > 0 &&
+              nearestProject?.taonJson.shouldGenerateAutogenIndexFile
+            ) {
+              await nearestProject.artifactsManager.artifact.npmLibAndCliTool.indexAutogenProvider.runTask(
+                {
+                  watch: false,
+                },
+              );
+              await nearestProject.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask(
+                {
+                  watch: false,
+                },
+              );
+            }
+          }
+        },
+        options: {
+          titleWhenProcessing:
+            'pasting from md/ai content to files and folders',
+          showSuccessMessage: false,
+        },
+      },
+
+      {
+        group: groupAI,
         title: `translate po file`,
         exec: async data => {
           let { selectedUris, uri, vscode, progress } = data;

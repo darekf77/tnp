@@ -44,7 +44,7 @@ import {
 import type { Progress } from 'vscode';
 
 import {
-  AiMdFile,
+  AIPasteFile,
   extractFirstLevelRegions,
   parseAiMdContent,
 } from '../../app-utils';

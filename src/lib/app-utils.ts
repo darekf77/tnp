@@ -576,15 +576,84 @@ export const getCleanImport = (importName: string): string | undefined => {
 //#endregion
 
 //#region ai md file
-export interface AiMdFile {
+export interface AIPasteFile {
   filename: string;
   content: string;
 }
 //#endregion
 
+//#region parse ai md content anuglar component
+
+export function pareseOneFileAngularComponent(input: string): AIPasteFile[] {
+  const selector = input.match(/selector\s*:\s*['"`]([^'"`]+)['"`]/)?.[1];
+
+  if (!selector) {
+    return [];
+  }
+
+  const componentName = selector;
+
+  const templateMatch = input.match(/template\s*:\s*`([\s\S]*?)`\s*,?/);
+
+  /**
+   * Supports:
+   *
+   * styles: `...`
+   *
+   * and:
+   *
+   * styles: [`...`]
+   */
+  const stylesMatch =
+    input.match(/styles\s*:\s*`([\s\S]*?)`\s*,?/) ??
+    input.match(/styles\s*:\s*\[\s*`([\s\S]*?)`\s*\]\s*,?/);
+
+  let tsContent = input;
+
+  if (templateMatch) {
+    tsContent = tsContent.replace(
+      templateMatch[0],
+      `templateUrl: './${componentName}.component.html',`,
+    );
+  }
+
+  if (stylesMatch) {
+    tsContent = tsContent.replace(
+      stylesMatch[0],
+      `styleUrl: './${componentName}.component.scss',`,
+    );
+  }
+
+  const results: AIPasteFile[] = [
+    {
+      filename: `${componentName}.component.ts`,
+      content: tsContent.trim(),
+    },
+  ];
+
+  if (templateMatch) {
+    results.push({
+      filename: `${componentName}.component.html`,
+      content: templateMatch[1].trim(),
+    });
+  }
+
+  if (stylesMatch) {
+    results.push({
+      filename: `${componentName}.component.scss`,
+      content: stylesMatch[1].trim(),
+    });
+  }
+
+  return results;
+}
+
+//#endregion
+
 //#region parse ai md content
-export function parseAiMdContent(input: string): AiMdFile[] {
-  const results: AiMdFile[] = [];
+
+export function parseAiMdContent(input: string): AIPasteFile[] {
+  const results: AIPasteFile[] = [];
 
   // Remove AI-MD wrapper markers if present
   input = input

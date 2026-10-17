@@ -7,7 +7,7 @@ import {
 } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 
-import { AiMdFile, parseAiMdContent } from './app-utils';
+import { AIPasteFile, pareseOneFileAngularComponent, parseAiMdContent } from './app-utils';
 
 export namespace FrameworkUtils {
   //#region copy component for AI
@@ -43,10 +43,32 @@ ${UtilsFilesFoldersSync.readFile(f)}
     //#endregion
   }
 
+   export async function pasteAndSplitAngularComponent(
+    absPathToFolder: string,
+    angularOneFileContent: string,
+  ): Promise<AIPasteFile[]> {
+    //#region @backendFunc
+    if (!Helpers.isFolder(absPathToFolder)) {
+      absPathToFolder = crossPlatformPath(path.dirname(absPathToFolder));
+    }
+
+    const toProcess = pareseOneFileAngularComponent(angularOneFileContent);
+    toProcess.forEach(f => {
+      const fullPath = crossPlatformPath([absPathToFolder, f.filename]);
+      UtilsFilesFoldersSync.writeFile(fullPath, f.content);
+      UtilsTypescript.formatFile(fullPath);
+    });
+
+    return toProcess;
+    //#endregion
+  }
+
+
+
   export async function pasteFromAIMDContentToFiles(
     absPathToFolder: string,
     MdAIcontent: string,
-  ): Promise<AiMdFile[]> {
+  ): Promise<AIPasteFile[]> {
     //#region @backendFunc
     if (!Helpers.isFolder(absPathToFolder)) {
       absPathToFolder = crossPlatformPath(path.dirname(absPathToFolder));

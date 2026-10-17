@@ -1,4 +1,9 @@
-import { config, tnpPackageName } from 'tnp-core/src';
+import {
+  config,
+  crossPlatformPath,
+  execAsyncVscode,
+  tnpPackageName,
+} from 'tnp-core/src';
 
 import { hash64 } from '../app-utils';
 import {
@@ -8,6 +13,7 @@ import {
 import type { Project } from '../project/abstract/project';
 
 import type { activateMenuTnp } from './vscode-ext-menu';
+import { UtilsVSCode } from 'tnp-helpers/src';
 
 export const vscodeMenuItems = ({
   vscode,
@@ -493,7 +499,18 @@ export const vscodeMenuItems = ({
                   progress?.report({
                     message: 'Generating export for all lib files',
                   });
-                  await project.framework.generateLibIndex();
+                  try {
+                    const command = `${FRAMEWORK_NAME} generate:lib:index ${taonNonInteractiveModePrefix}`;
+                    const { stdout, stderr } = await execAsyncVscode({
+                      command,
+                      cwd: project.location,
+                      progress,
+                    });
+                  } catch (error) {
+                    console.log(error);
+                    console.error(`Not able to generate lib index files`);
+                  }
+
                   // vscode.commands.executeCommand('workbench.view.explorer');
                   progress?.report({
                     message: 'Done  generating export for all lib files',
@@ -518,7 +535,19 @@ export const vscodeMenuItems = ({
                   progress?.report({
                     message: 'Generating app routes in app.ts...',
                   });
-                  await project.framework.generateAppRoutes();
+
+                  try {
+                    const command = `${FRAMEWORK_NAME} generate:app:routes ${taonNonInteractiveModePrefix}`;
+                    const { stdout, stderr } = await execAsyncVscode({
+                      command,
+                      cwd: project.location,
+                      progress,
+                    });
+                  } catch (error) {
+                    console.log(error);
+                    console.error(`Not able to generate app routes`);
+                  }
+
                   progress?.report({
                     message: 'Done generating app routes code ',
                     increment: 100,
@@ -543,10 +572,57 @@ export const vscodeMenuItems = ({
                   progress?.report({
                     message: 'Generating translation files',
                   });
-                  await project.framework.generateTranslations();
+
+                  try {
+                    const command = `${FRAMEWORK_NAME} lang:extract ${taonNonInteractiveModePrefix}`;
+                    const { stdout, stderr } = await execAsyncVscode({
+                      command,
+                      cwd: project.location,
+                      progress,
+                    });
+                  } catch (error) {
+                    console.log(error);
+                    console.error(`Not able to generate translate files`);
+                  }
                   // vscode.commands.executeCommand('workbench.view.explorer');
                   progress?.report({
                     message: 'Done generating translation filess',
+                    increment: 100,
+                  });
+                }
+              },
+            },
+          ),
+          //#endregion
+
+          //#region items with actions / regenerate translation
+          new ProjectItem(
+            `$ ${FRAMEWORK_NAME} lang:translate:all:po`,
+            vscode.TreeItemCollapsibleState.None,
+            {
+              iconPath: null as any,
+              project: CURRENT_PROJECT as any,
+              // skipReturnToMenu: true,
+              triggerActionOnClick: async (project, progress) => {
+                if (project) {
+                  progress?.report({
+                    message: 'Translating all po files',
+                  });
+
+                  try {
+                    const command = `${FRAMEWORK_NAME} lang:translateAllPo ${taonNonInteractiveModePrefix}`;
+                    const { stdout, stderr } = await execAsyncVscode({
+                      command,
+                      cwd: project.location,
+                      progress,
+                    });
+                  } catch (error) {
+                    console.log(error);
+                    console.error(`Not able to translate files`);
+                  }
+                  // vscode.commands.executeCommand('workbench.view.explorer');
+                  progress?.report({
+                    message: 'Done translating all po files',
                     increment: 100,
                   });
                 }
@@ -622,7 +698,9 @@ export const vscodeMenuItems = ({
                     message: 'Done generating random 64 characters hash',
                     increment: 100,
                   });
-                  vscode.window.showInformationMessage(`Hash copied to clipboard: ${hash}`)
+                  vscode.window.showInformationMessage(
+                    `Hash copied to clipboard: ${hash}`,
+                  );
                 }
               },
             },
