@@ -67,7 +67,7 @@ export function markTsSourceAsReadonly(
 - TAON READONLY SOURCE
 - DO NOT MODIFY THIS FILE.
 - Changes may be overwritten.
-- Use command: taon build:lib:watch
+- Use command: taon build:watch:lib
   inside ${packageName} project repository
   for watch development of third party modules like this.
   `;

@@ -428,6 +428,7 @@ export async function run(
       baw: 'build:watchApp',
       bw: 'build:watch',
       bwl: 'build:watchLib',
+      'build:lib:watch': 'build:watchLib',
       blw: 'build:watchLib',
       bwa: 'build:watchApp',
       bwaw: 'build:watchAppWebsql',
