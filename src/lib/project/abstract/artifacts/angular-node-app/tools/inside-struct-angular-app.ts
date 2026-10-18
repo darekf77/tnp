@@ -35,6 +35,7 @@ import {
   prodSuffix,
   projectsFromNgTemplate,
   pwaGeneratedFolder,
+  resoveRealTsBrowserFolder,
   sourceLinkInNodeModules,
   srcMainProject,
   srcNgProxyProject,
@@ -51,6 +52,7 @@ import {
   tmpSrcDist,
   tmpSrcDistWebsql,
   tsconfigNgProject,
+  tsSourceNodeModules,
   websqlMainProject,
 } from '../../../../../constants';
 import { ReleaseArtifactTaon } from '../../../../../options';
@@ -799,6 +801,17 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                 path.dirname(path.dirname(packageSourceRealPath)),
               );
 
+              const destinationLibInPorjects = crossPlatformPath([
+                this.project.location,
+                replacement(tmpProjectsStandalone),
+                projectsFromNgTemplate,
+                externalLibsFromNgProject,
+                srcNgProxyProject,
+                libFromNgProject,
+                packageName,
+                libFromSrc,
+              ]);
+
               if (projFromSrouce) {
                 //#region link lib
                 (() => {
@@ -810,17 +823,6 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                     libFromNgProject,
                   ]);
 
-                  const destinationLibInPorjects = crossPlatformPath([
-                    this.project.location,
-                    replacement(tmpProjectsStandalone),
-                    projectsFromNgTemplate,
-                    externalLibsFromNgProject,
-                    srcNgProxyProject,
-                    libFromNgProject,
-                    projFromSrouce.nameForNpmPackage,
-                    libFromSrc,
-                  ]);
-
                   Helpers.createSymLink(
                     sourceLibInProjects,
                     destinationLibInPorjects,
@@ -830,26 +832,44 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                   );
                 })();
                 //#endregion
+              } else {
+                //#region link lib real ts code
+                (() => {
+                  const packageSource = this.project.nodeModules.pathFor([
+                    packageName,
+                    tsSourceNodeModules,
+                    resoveRealTsBrowserFolder(this.initOptions),
+                  ]);
 
-                HelpersTaon.setValueToJSONC(
-                  tsconfigPath,
-                  `compilerOptions.paths['${projFromSrouce.nameForNpmPackage}/${
-                    this.initOptions.build.websql
-                      ? websqlMainProject
-                      : browserMainProject
-                  }']`,
-                  [
-                    crossPlatformPath([
-                      projectsFromNgTemplate,
-                      externalLibsFromNgProject,
-                      srcNgProxyProject,
-                      libFromNgProject,
-                      projFromSrouce.nameForNpmPackage,
-                      libFromSrc,
-                    ]),
-                  ],
-                );
+                  Helpers.createSymLink(
+                    packageSource,
+                    destinationLibInPorjects,
+                    {
+                      continueWhenExistedFolderDoesntExists: true,
+                    },
+                  );
+                })();
+                //#endregion
               }
+
+              HelpersTaon.setValueToJSONC(
+                tsconfigPath,
+                `compilerOptions.paths['${packageName}/${
+                  this.initOptions.build.websql
+                    ? websqlMainProject
+                    : browserMainProject
+                }']`,
+                [
+                  crossPlatformPath([
+                    projectsFromNgTemplate,
+                    externalLibsFromNgProject,
+                    srcNgProxyProject,
+                    libFromNgProject,
+                    packageName,
+                    libFromSrc,
+                  ]),
+                ],
+              );
 
               UtilsFilesFoldersSync.writeFile(
                 [

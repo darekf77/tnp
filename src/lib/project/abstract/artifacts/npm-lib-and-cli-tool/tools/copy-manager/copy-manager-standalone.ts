@@ -18,10 +18,12 @@ import { crossPlatformPath, glob, path, _, fse } from 'tnp-core/src';
 import { fileName } from 'tnp-core/src';
 import { BaseCompilerForProject, Helpers, HelpersTaon } from 'tnp-helpers/src';
 
+import { markTsSourceAsReadonly } from '../../../../../../app-utils';
 import {
   appFromSrc,
   assetsFromNpmPackage,
   assetsFromSrc,
+  browserCode,
   browserMainProject,
   dirnameFromSourceToProject,
   distFromNgBuild,
@@ -33,6 +35,7 @@ import {
   libEsm,
   libFromCompiledDist,
   libFromImport,
+  libFromSrc,
   nodeModulesMainProject,
   packageJsonMainProject,
   packageJsonNpmLib,
@@ -54,7 +57,9 @@ import {
   tmpSrcDist,
   tmpSrcDistWebsql,
   TO_REMOVE_TAG,
+  tsSourceNodeModules,
   VERIFIED_BUILD_DATA,
+  websqlCode,
   websqlMainProject,
   whatToLinkFromCore,
 } from '../../../../../../constants';
@@ -499,6 +504,13 @@ ${projectToCopyTo.map(proj => `- ${proj.location}`).join('\n')}
 
       this.updateBackendFullDtsFiles(destination);
       this.updateBackendFullDtsFiles(this.monitoredOutDir);
+
+      if (
+        this.buildOptions.release.releaseType ||
+        this.buildOptions.build.prod
+      ) {
+        this.updateBrowserFullRealTsCode(destination, isTempLocalProj);
+      }
 
       if (this.buildOptions.release.releaseType) {
         this.removeLibEnvFolder(destination);
@@ -1664,6 +1676,134 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   }
   //#endregion
 
+  //#region add real browser source to npm bundle
+  private addRealBrowserSourceToNpmBundle(localTempProj: string): void {
+    //#region @backendFunc
+
+    //#region copy real source / browser
+    (() => {
+      const filerDotCopyAssetsBrowser = HelpersTaon.filterDontCopy(
+        [assetsFromSrc, TaonGeneratedFolders.ENV_FOLDER],
+        this.project.pathFor([tmpSrcDist, libFromSrc]),
+      );
+
+      UtilsFilesFoldersSync.copy(
+        this.project.pathFor([tmpSrcDist, libFromSrc]),
+        crossPlatformPath([localTempProj, tsSourceNodeModules, browserCode]),
+        {
+          recursive: true,
+          copySymlinksAsFiles: false,
+          filter: filerDotCopyAssetsBrowser,
+        },
+      );
+    })();
+    //#endregion
+
+    //#region copy real source / browser prod
+    (() => {
+      const filerDotCopyAssetsBrowser = HelpersTaon.filterDontCopy(
+        [assetsFromSrc, TaonGeneratedFolders.ENV_FOLDER],
+        this.project.pathFor([tmpSrcDist + prodSuffix, libFromSrc]),
+      );
+
+      UtilsFilesFoldersSync.copy(
+        this.project.pathFor([tmpSrcDist + prodSuffix, libFromSrc]),
+        crossPlatformPath([
+          localTempProj,
+          tsSourceNodeModules,
+          browserCode + prodSuffix,
+        ]),
+        {
+          recursive: true,
+          copySymlinksAsFiles: false,
+          filter: filerDotCopyAssetsBrowser,
+        },
+      );
+    })();
+    //#endregion
+
+    //#region copy real source / websql
+    (() => {
+      const filerDotCopyAssetsWebsql = HelpersTaon.filterDontCopy(
+        [assetsFromSrc, TaonGeneratedFolders.ENV_FOLDER],
+        this.project.pathFor([tmpSrcDistWebsql, libFromSrc]),
+      );
+
+      UtilsFilesFoldersSync.copy(
+        this.project.pathFor([tmpSrcDistWebsql, libFromSrc]),
+        crossPlatformPath([localTempProj, tsSourceNodeModules, websqlCode]),
+        {
+          recursive: true,
+          copySymlinksAsFiles: false,
+          filter: filerDotCopyAssetsWebsql,
+        },
+      );
+    })();
+    //#endregion
+
+    //#region copy real source / websql prod
+    (() => {
+      const filerDotCopyAssetsWebsql = HelpersTaon.filterDontCopy(
+        [assetsFromSrc, TaonGeneratedFolders.ENV_FOLDER],
+        this.project.pathFor([tmpSrcDistWebsql + prodSuffix, libFromSrc]),
+      );
+
+      UtilsFilesFoldersSync.copy(
+        this.project.pathFor([tmpSrcDistWebsql + prodSuffix, libFromSrc]),
+        crossPlatformPath([
+          localTempProj,
+          tsSourceNodeModules,
+          websqlCode + prodSuffix,
+        ]),
+        {
+          recursive: true,
+          copySymlinksAsFiles: false,
+          filter: filerDotCopyAssetsWebsql,
+        },
+      );
+    })();
+    //#endregion
+
+    markTsSourceAsReadonly(
+      crossPlatformPath([localTempProj, tsSourceNodeModules]),
+    );
+
+    //#endregion
+  }
+  //#endregion
+
+  updateBrowserFullRealTsCode(
+    destinationOrDist: Project,
+    isLocalTemp: boolean,
+  ): void {
+    //#region @backendFunc
+
+    if (isLocalTemp) {
+      this.addRealBrowserSourceToNpmBundle(
+        destinationOrDist.nodeModules.pathFor(this.rootPackageName),
+      );
+      return;
+    }
+
+    const dest = crossPlatformPath([
+      destinationOrDist.nodeModules.pathFor(this.rootPackageName),
+      tsSourceNodeModules,
+    ]);
+
+    const browserTsSources = this.project.pathFor([
+      tmpLocalCopytoProjDist,
+      nodeModulesMainProject,
+      this.rootPackageName,
+      tsSourceNodeModules,
+    ]);
+    if (!Helpers.exists(browserTsSources)) {
+      debugger;
+    }
+
+    UtilsFilesFoldersSync.copy(browserTsSources, dest);
+    //#endregion
+  }
+
   //#region update backend full dts files
 
   updateBackendFullDtsFiles(destinationOrDist: Project | string): void {
@@ -1768,6 +1908,8 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       }
       //#endregion
     })();
+
+    (() => {})();
 
     //#endregion
   }
