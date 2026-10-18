@@ -28,6 +28,7 @@ import { ProcessStartOptions } from 'tnp-core/src';
 import {
   angularProjProxyPath,
   getProxyNgProj,
+  markTsSourceAsReadonly,
   templateFolderForArtifact,
 } from '../../../../app-utils';
 import {
@@ -36,6 +37,7 @@ import {
   assetsFromNgProj,
   assetsFromSrc,
   binMainProject,
+  browserCode,
   browserFromCompiledDist,
   browserMainProject,
   BundledFiles,
@@ -85,8 +87,12 @@ import {
   THIS_IS_GENERATED_INFO_COMMENT,
   tmpBaseHrefOverwrite,
   tmpLocalCopytoProjDist,
+  tmpSourceDist,
+  tmpSourceDistWebsql,
   tmpSrcDist,
   tmpSrcDistWebsql,
+  tsSourceNodeModules,
+  websqlCode,
   websqlFromCompiledDist,
   websqlMainProject,
 } from '../../../../constants';
@@ -1414,13 +1420,22 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   ): void {
     //#region @backendFunc
     Helpers.remove(`${releaseAbsPath}/${appFromSrc}*`); // QUICK_FIX
-    Helpers.remove(`${releaseAbsPath}/${libFromCompiledDist}/${TaonGeneratedFolders.ENV_FOLDER}*`); // QUICK_FIX
-    Helpers.remove(`${releaseAbsPath}/${libFromCompiledDist + prodSuffix}/${TaonGeneratedFolders.ENV_FOLDER}*`); // QUICK_FIX
-    Helpers.remove(`${releaseAbsPath}/${libEsm}/${libFromCompiledDist}/${TaonGeneratedFolders.ENV_FOLDER}*`); // QUICK_FIX
+    Helpers.remove(
+      `${releaseAbsPath}/${libFromCompiledDist}/${TaonGeneratedFolders.ENV_FOLDER}*`,
+    ); // QUICK_FIX
+    Helpers.remove(
+      `${releaseAbsPath}/${libFromCompiledDist + prodSuffix}/${TaonGeneratedFolders.ENV_FOLDER}*`,
+    ); // QUICK_FIX
+    Helpers.remove(
+      `${releaseAbsPath}/${libEsm}/${libFromCompiledDist}/${TaonGeneratedFolders.ENV_FOLDER}*`,
+    ); // QUICK_FIX
     Helpers.remove(`${releaseAbsPath}/${libEsm}/${appFromSrc}*`); // QUICK_FIX
-    Helpers.remove(`${releaseAbsPath}/${fullDts}/${TaonGeneratedFolders.ENV_FOLDER}*`); // QUICK_FIX
+    Helpers.remove(
+      `${releaseAbsPath}/${fullDts}/${TaonGeneratedFolders.ENV_FOLDER}*`,
+    ); // QUICK_FIX
     Helpers.remove(`${releaseAbsPath}/${testsFromSrc}*`); // QUICK_FIX
     Helpers.remove(`${releaseAbsPath}/${srcMainProject}`, true); // QUICK_FIX
+
     // Helpers.removeFileIfExists(`${relaseAbsPath}/source`);
 
     // regenerate src.d.ts

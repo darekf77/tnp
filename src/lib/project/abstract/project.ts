@@ -297,6 +297,9 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
       await this.artifactsManager.build(buildOptions);
       skipProjectsNames = [this.nameForNpmPackage];
     }
+    if (this.framework.isContainer && buildOptions.build.watch) {
+      Helpers.error(`You can't run container in watch build mode`, false, true);
+    }
     if (this.framework.isContainer) {
       buildOptions.build.watch = false; // there is no need to watch for container ever
       await this.artifactsManager.build(buildOptions);
@@ -305,7 +308,6 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
       }
       skipProjectsNames = this.children.map(c => c.nameForNpmPackage);
     }
-
     if (this.watcher.isTaonLightWatcherMode) {
       await this.taonBuildObserver.leader.takeLeadOfBuilding({
         skipProjectsNames,

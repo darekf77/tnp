@@ -57,6 +57,87 @@ export function removeCommentsFromScssFile(scss: string): string {
   //#endregion
 }
 
+//#region mark ts source as readonly
+export function markTsSourceAsReadonly(
+  tsSourcePath: string,
+  packageName: string,
+): void {
+  //#region @backend
+  const messageNotModify = `
+- TAON READONLY SOURCE
+- DO NOT MODIFY THIS FILE.
+- Changes may be overwritten.
+- Use command: taon build:lib:watch
+  inside ${packageName} project repository
+  for watch development of third party modules like this.
+  `;
+
+  const commentsByExt: Record<string, string> = {
+    '.ts': `/* ============================================================================
+${messageNotModify}
+ * ========================================================================== */
+
+`,
+    '.scss': `/* ============================================================================
+ ${messageNotModify}
+ * ========================================================================== */
+
+`,
+    '.html': `<!--
+==============================================================================
+${messageNotModify}
+==============================================================================
+-->
+
+`,
+  };
+
+  const processDirectory = (dirPath: string): void => {
+    for (const entry of fse.readdirSync(dirPath, { withFileTypes: true })) {
+      const fullPath = path.join(dirPath, entry.name);
+
+      if (entry.isDirectory()) {
+        processDirectory(fullPath);
+        continue;
+      }
+
+      const ext = path.extname(entry.name);
+      const readonlyHeader = commentsByExt[ext];
+
+      if (!readonlyHeader) {
+        continue;
+      }
+
+      let content = UtilsFilesFoldersSync.readFile(fullPath);
+
+      if (ext === '.ts') {
+        content =
+          `// @ts-` +
+          `nocheck\n${readonlyHeader}${UtilsTypescript.minifyTypescriptSource(content)}`;
+      } else if (ext === '.scss') {
+        content = `${readonlyHeader}${removeScssComments(content)}`;
+      } else if (ext === '.html') {
+        content = `${readonlyHeader}${removeHtmlComments(content)}`;
+      }
+
+      UtilsFilesFoldersSync.writeFile(fullPath, content);
+    }
+  };
+
+  processDirectory(tsSourcePath);
+  //#endregion
+}
+
+function removeScssComments(content: string): string {
+  return content.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+}
+
+function removeHtmlComments(content: string): string {
+  return content.replace(/<!--[\s\S]*?-->/g, '');
+}
+
+//#endregion
+
 //#region allowed to release map
 export const ALLOWED_TO_RELEASE: {
   [releaseType in ReleaseType]: ReleaseArtifactTaon[];
@@ -1098,7 +1179,9 @@ export async function hash64() {
   return secret;
   //#endregion
 }
+//#endregion
 
+//#region copare and save
 export const compareAndSave = ({
   fileAbsPath,
   isFirstTime,
@@ -1138,3 +1221,4 @@ export const compareAndSave = ({
   }
   //#endregion
 };
+//#endregion

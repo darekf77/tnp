@@ -1002,6 +1002,18 @@ export const indexJsMapMainProject = fileName.index_js_map;
 
 export const sourceLinkInNodeModules = folderName.source;
 
+export const tsSourceNodeModules = 'ts-source';
+
+export const resoveRealTsBrowserFolder = (envOptions: EnvOptions): string => {
+  if (envOptions.build.websql) {
+    return websqlCode + (envOptions.build.prod ? prodSuffix : '');
+  }
+  return browserCode + (envOptions.build.prod ? prodSuffix : '');
+};
+
+export const browserCode = 'browser-code';
+export const websqlCode = 'websql-code';
+
 export const taonJsonMainProject = fileName.taon_jsonc;
 
 export const updateVscodePackageJsonJsMainProject =

@@ -35,6 +35,7 @@ import {
   prodSuffix,
   projectsFromNgTemplate,
   pwaGeneratedFolder,
+  resoveRealTsBrowserFolder,
   sourceLinkInNodeModules,
   srcMainProject,
   srcNgProxyProject,
@@ -51,6 +52,7 @@ import {
   tmpSrcDist,
   tmpSrcDistWebsql,
   tsconfigNgProject,
+  tsSourceNodeModules,
   websqlMainProject,
 } from '../../../../../constants';
 import { ReleaseArtifactTaon } from '../../../../../options';
@@ -751,7 +753,7 @@ export class InsideStructAngularApp extends BaseInsideStruct {
             // 1. recreate projects/in-dev-packages-lib
 
             const isomorphicPackagesDevMode =
-              this.project.nodeModules.getIsomorphicPackagesNamesInDevMode();
+              this.project.nodeModules.getIsomorphicPackagesNames();
             // console.log(isomorphicPackagesDevMode);
 
             const tsconfigPath = crossPlatformPath([
@@ -788,18 +790,37 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                 fse.existsSync(packageSource) &&
                 crossPlatformPath(fse.realpathSync(packageSource));
 
-              if (!packageJsonNgProject) {
+              const packageJsonNgProjectPath = this.project.nodeModules.pathFor(
+                [packageName, packageJsonNgProject],
+              );
+
+              if (!Helpers.exists(packageJsonNgProjectPath)) {
                 Helpers.warn(
                   `Recreation failded.. path does not exits ${packageJsonNgProject}`,
                 );
                 continue;
               }
 
-              const projFromSrouce = this.project.ins.From(
-                path.dirname(path.dirname(packageSourceRealPath)),
-              );
+              const projFromSrouce = packageSourceRealPath
+                ? this.project.ins.From(
+                    path.dirname(path.dirname(packageSourceRealPath)),
+                  )
+                : void 0;
 
+              const destinationLibInPorjects = crossPlatformPath([
+                this.project.location,
+                replacement(tmpProjectsStandalone),
+                projectsFromNgTemplate,
+                externalLibsFromNgProject,
+                srcNgProxyProject,
+                libFromNgProject,
+                packageName,
+                libFromSrc,
+              ]);
+
+              let sourceExists = false;
               if (projFromSrouce) {
+                sourceExists = true;
                 //#region link lib
                 (() => {
                   const sourceLibInProjects = projFromSrouce.pathFor([
@@ -808,17 +829,6 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                       : tmpSrcAppDist) +
                       (this.initOptions.build.prod ? prodSuffix : ''),
                     libFromNgProject,
-                  ]);
-
-                  const destinationLibInPorjects = crossPlatformPath([
-                    this.project.location,
-                    replacement(tmpProjectsStandalone),
-                    projectsFromNgTemplate,
-                    externalLibsFromNgProject,
-                    srcNgProxyProject,
-                    libFromNgProject,
-                    projFromSrouce.nameForNpmPackage,
-                    libFromSrc,
                   ]);
 
                   Helpers.createSymLink(
@@ -830,26 +840,50 @@ export class InsideStructAngularApp extends BaseInsideStruct {
                   );
                 })();
                 //#endregion
+              } else {
+                //#region link lib real ts code
+                (() => {
+                  const packageSourceTsSource =
+                    this.project.nodeModules.pathFor([
+                      packageName,
+                      tsSourceNodeModules,
+                      resoveRealTsBrowserFolder(this.initOptions),
+                    ]);
 
-                HelpersTaon.setValueToJSONC(
-                  tsconfigPath,
-                  `compilerOptions.paths['${projFromSrouce.nameForNpmPackage}/${
-                    this.initOptions.build.websql
-                      ? websqlMainProject
-                      : browserMainProject
-                  }']`,
-                  [
-                    crossPlatformPath([
-                      projectsFromNgTemplate,
-                      externalLibsFromNgProject,
-                      srcNgProxyProject,
-                      libFromNgProject,
-                      projFromSrouce.nameForNpmPackage,
-                      libFromSrc,
-                    ]),
-                  ],
-                );
+                  if (Helpers.exists(packageSourceTsSource)) {
+                    sourceExists = true;
+                    Helpers.createSymLink(
+                      packageSourceTsSource,
+                      destinationLibInPorjects,
+                    );
+                  } else {
+                    // Helpers.warn(`NOT EXISTS ${packageSourceTsSource}`);
+                  }
+                })();
+                //#endregion
               }
+              if (!sourceExists) {
+                continue;
+              }
+
+              HelpersTaon.setValueToJSONC(
+                tsconfigPath,
+                `compilerOptions.paths['${packageName}/${
+                  this.initOptions.build.websql
+                    ? websqlMainProject
+                    : browserMainProject
+                }']`,
+                [
+                  crossPlatformPath([
+                    projectsFromNgTemplate,
+                    externalLibsFromNgProject,
+                    srcNgProxyProject,
+                    libFromNgProject,
+                    packageName,
+                    libFromSrc,
+                  ]),
+                ],
+              );
 
               UtilsFilesFoldersSync.writeFile(
                 [
