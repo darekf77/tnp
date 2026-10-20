@@ -431,6 +431,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
         program: '${workspaceFolder}/run.js',
         cwd: void 0,
         args: [
+          'TAON_LOCAL_DEV',
           ...(additionalEntrypointId
             ? [`additionalEntrypointId=${additionalEntrypointId}`]
             : []),
