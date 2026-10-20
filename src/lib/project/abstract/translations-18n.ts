@@ -31,6 +31,7 @@ import {
   tmpSourceDist,
   tmpSrcDist,
   tmpSrcDistWebsql,
+  translationTsExt,
 } from '../../constants';
 
 import { Project } from './project';
@@ -60,11 +61,16 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
     //#region find files
     const files = filesPathes
       .map(f => {
+        // if (path.basename(f).includes('taon-session')) {
+        //   debugger;
+        // }
         const fileRelativePath = f.replace(filesLocaiton + '/', '');
         // console.log({ fileRelativePath });
         if (
           fileRelativePath.startsWith('lib/env/') ||
-          fileRelativePath.startsWith('assets/')
+          fileRelativePath.startsWith('assets/') ||
+          fileRelativePath.endsWith(translationTsExt) ||
+          fileRelativePath.endsWith(i18nDataTsFileExt)
         ) {
           return;
         }
@@ -144,7 +150,10 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
       })
       .filter(
         f =>
-          !!f && ![appAutoGenJs, appAutoGenDocsMd].includes(path.basename(f.fileAbsPath)),
+          !!f &&
+          ![appAutoGenJs, appAutoGenDocsMd].includes(
+            path.basename(f.fileAbsPath),
+          ),
       );
     //#endregion
 

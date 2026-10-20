@@ -22,6 +22,7 @@ import {
   TaonGeneratedFiles,
   TaonGeneratedFolders,
   taonJsonMainProject,
+  translationTsExt,
 } from '../../../../../constants';
 import type { Project } from '../../../project';
 
@@ -66,6 +67,11 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
       if (relativePath.endsWith(i18nDataTsFileExt)) {
         return;
       }
+
+      if (relativePath.endsWith(translationTsExt)) {
+        return;
+      }
+
       // TODO this is not watching files!
       // console.log(`Processing file for index autogen: ${relativePath}`);
 

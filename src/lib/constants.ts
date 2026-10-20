@@ -1116,3 +1116,6 @@ export const removeAngularCacheBeforeCompilation = false;
 export const i18nFolder = 'i18n';
 
 export const i18nDataTsFileExt = '.i18n.data.ts';
+
+export const translationTsExt = '.translation.ts';
+

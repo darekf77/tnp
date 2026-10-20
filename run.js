@@ -54,6 +54,9 @@ const entrypointarg = (process.argv.find( arg => arg.startsWith('additionalEntry
 
 console.log({PROJECT_NPM_NAME});
 
+const tnpCore = require('tnp-core').GlobalStorage;
+// TODO @LAST
+
 var app = require(`./dist/app${entrypointarg ? `.server${entrypointarg.split('=')[1]}`:''}`).default;
 
 var ContextsEndpointStorageInstance = globalThis['$$$ContextsEndpointStorage$$$'];
