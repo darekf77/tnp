@@ -425,20 +425,26 @@ ${'req' + 'uire'}('./start');
 
     //#region check isomorphic dependencies for npm lib
     if (this.project.framework.isStandaloneProject) {
-      this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSrcJSToDestination(
-        this.project.framework.coreContainer,
+      const toInitLink = Utils.uniqArray<Project>(
+        [
+          this.project.framework.coreContainer,
+          Project.ins.homeDirCoreContainer(
+            this.project.framework.frameworkVersion,
+          ),
+          ...(this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer
+            ? [this.project]
+            : []),
+        ],
+        'location',
       );
 
-      this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSourceSymlinks(
-        this.project.framework.coreContainer,
-      );
-
-      if (this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer) {
+      for (const container of toInitLink) {
         this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSrcJSToDestination(
-          this.project,
+          container,
         );
+
         this.project.artifactsManager.artifact.npmLibAndCliTool.copyNpmDistLibManager.addSourceSymlinks(
-          this.project,
+          container,
         );
       }
 
