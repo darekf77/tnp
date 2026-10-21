@@ -29,9 +29,11 @@ import {
   nodeModulesMainProject,
   packageJsonMainProject,
   packageJsonNpmLib,
+  sourceLinkInNodeModules,
   srcMainProject,
   taonJsonMainProject,
   tmpAllAssetsLinked,
+  tmpAlreadyStartedCopyManager,
   tmpSourceDist,
   tmpSrcAppDist,
   tmpSrcAppDistWebsql,
@@ -291,6 +293,14 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
   async build(buildOptions?: EnvOptions): Promise<void> {
     this.warnAboutNotVerifiedWhenProdBuild(buildOptions);
     buildOptions = EnvOptions.from(buildOptions);
+
+    const pathToSourceLinked = this.ins
+      .homeDirCoreContainer(this.framework.frameworkVersion)
+      .nodeModules.pathFor([this.nameForNpmPackage, sourceLinkInNodeModules]);
+
+    if (!Helpers.exists(pathToSourceLinked)) {
+      this.removeFile(tmpAlreadyStartedCopyManager);
+    }
 
     let skipProjectsNames = [] as string[];
     if (this.framework.isStandaloneProject) {
