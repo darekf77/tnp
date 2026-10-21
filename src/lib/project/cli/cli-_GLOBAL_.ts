@@ -47,6 +47,7 @@ import {
   UtilsNpm,
   UtilsTypescript,
   HelpersTaon,
+  TypeOfMsgPrefixArr,
 } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartMode } from 'tnp-helpers/src';
 import {
@@ -55,6 +56,7 @@ import {
   SchemaGenerator,
 } from 'ts-json-schema-generator';
 
+import { filterChildren } from '../../app-utils';
 import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
 import {
   containerPrefix,
@@ -153,8 +155,7 @@ export class $Global extends BaseGlobalCommandLine<
     UtilsTime.mesureExecutionTimeSync(
       'Isomorphic packages.. detecting..',
       () => {
-        packages =
-          this.project.nodeModules.getIsomorphicPackagesNames();
+        packages = this.project.nodeModules.getIsomorphicPackagesNames();
       },
     );
     console.log(`Found ${packages.length} packages. ${packages.join(',')}`);
@@ -1976,7 +1977,7 @@ ${this.project.children
       omitPatterns: [
         ...UtilsFilesFoldersSync.IGNORE_FOLDERS_FILES_PATTERNS,
         // 'placeholder',
-        '**/placeholder_exclude*'
+        '**/placeholder_exclude*',
       ],
     });
 
@@ -2274,6 +2275,65 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
   //#endregion
   // }
   //#endregion
+
+  async git() {
+    //#region @backendFunc
+    UtilsTerminal.clearConsole();
+    let children = this.project.children;
+    children = filterChildren(
+      this.project,
+      children,
+      EnvOptions.from({
+        container: {
+          skipReleased: true,
+        },
+      }),
+      {
+        isForRelease: true,
+      },
+    );
+
+    Helpers.info(`
+
+      Found ${children.length} with git changes.
+
+      `);
+
+    for (let index = 0; index < children.length; index++) {
+      const child = children[index];
+      // const changes = ch
+      const changes = Utils.uniqArray([
+        ...child.git.listOfCurrentGitChanges.created,
+        ...child.git.listOfCurrentGitChanges.modified,
+        ...child.git.listOfCurrentGitChanges.deleted,
+      ]);
+      console.info(
+        `${index + 1}. ${chalk.bold(child.name)}${child.name !== child.name ? `(${child.nameForNpmPackage})` : ''} ` +
+          `${changes.length > 0 ? `${chalk.red('changed files ' + changes.length.toString())}` : ''} `,
+      );
+      let commitIndex = 0;
+      while (true) {
+        let message = '';
+        try {
+          message = await child.git.getCommitMessageByIndex(commitIndex++);
+        } catch (error) {
+          break;
+        }
+
+        if (!message || message?.startsWith('release: ')) {
+          break;
+        }
+        message = message.replace(
+          new RegExp(`^(${TypeOfMsgPrefixArr.join('|')}):`),
+          (_, prefix) => `${chalk.bold(prefix)}:`,
+        );
+        console.log(`\t${chalk.blue(message)}`);
+      }
+    }
+
+    this._exit();
+    //#endregion
+  }
 
   envs() {
     const environments = this.project.releaseProcess.getEnvNamesByArtifact(
