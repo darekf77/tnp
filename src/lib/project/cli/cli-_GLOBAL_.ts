@@ -6,6 +6,7 @@ import {
 import { walk } from 'lodash-walk-object/src';
 import * as semver from 'semver';
 import {
+  child_process,
   config,
   dotTaonFolder,
   LibTypeEnum,
@@ -13,6 +14,7 @@ import {
   taonPackageName,
   tnpPackageName,
   UtilsEnv,
+  UtilsExecProc,
   UtilsFilesFoldersSync,
   UtilsMdDocs,
   UtilsProjects,
@@ -48,6 +50,7 @@ import {
   UtilsTypescript,
   HelpersTaon,
   TypeOfMsgPrefixArr,
+  BaseNodeModules,
 } from 'tnp-helpers/src';
 import { BaseCLiWorkerStartMode } from 'tnp-helpers/src';
 import {
@@ -2276,6 +2279,7 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
   // }
   //#endregion
 
+  //#region git
   async git() {
     //#region @backendFunc
     UtilsTerminal.clearConsole();
@@ -2334,7 +2338,9 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
     this._exit();
     //#endregion
   }
+  //#endregion
 
+  //#region envs
   envs() {
     const environments = this.project.releaseProcess.getEnvNamesByArtifact(
       this.firstArg as any,
@@ -2342,6 +2348,99 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
     console.log({ environments });
     this._exit(0);
   }
+  //#endregion
+
+  //#region install
+  async install() {
+    //#region @backendFunc
+    const coreContainer = this.project.framework.coreContainer;
+    coreContainer.taonJson.saveToDisk('before install');
+    const allPackages = this.project.nodeModules.getAllPackagesNames({
+      followSymlinks: false,
+    });
+
+    const deps = coreContainer.packageJson.dependencies;
+    const depsKeys = Object.keys(deps as any);
+    // console.log({ depsKeys });
+    const notInstalled = depsKeys.filter(
+      key => !coreContainer.nodeModules.hasPackageInstalled(key),
+    );
+    if (!notInstalled.length) {
+      Helpers.info(`All dependencies are installed.`);
+      this._exit();
+    }
+    // console.log({ notInstalled });
+    for (const key of notInstalled) {
+      console.log(`Package not installed: ${key}`);
+      const tempCatalogForInstallation = this.project.pathFor([
+        `tmp-temp-npm-install`,
+        new Date().getTime().toString(),
+      ]);
+      Helpers.remove(tempCatalogForInstallation);
+      Helpers.mkdirp(tempCatalogForInstallation);
+      Helpers.run(`npm init -y`, {
+        cwd: tempCatalogForInstallation,
+      }).sync();
+      Helpers.run(`npm install ${key}`, {
+        cwd: tempCatalogForInstallation,
+      }).sync();
+      const conflictingFiles: string[] = [];
+
+      const projFromTemp = this.ins.From(tempCatalogForInstallation);
+      const allPackagesFromTemp = projFromTemp.nodeModules.getAllPackagesNames({
+        followSymlinks: false,
+      });
+
+      for (const nodeModulesKey of allPackagesFromTemp) {
+        if (allPackages.includes(nodeModulesKey)) {
+          conflictingFiles.push(nodeModulesKey);
+        }
+        console.log(`Found new package in node_modules: ${nodeModulesKey}`);
+      }
+      if (conflictingFiles.length > 0) {
+        Helpers.error(
+          `Conflicting packages found: ${conflictingFiles.join(', ')}`,
+          false,
+          true,
+        );
+      } else {
+        const toCopy = Utils.uniqArray<Project>(
+          [
+            this.project.framework.coreContainer,
+            Project.ins.homeDirCoreContainer(
+              this.project.framework.frameworkVersion,
+            ),
+            ...(this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer
+              ? [this.project]
+              : []),
+          ],
+          'location',
+        ).map(c => this.ins.From(c.location));
+
+        for (const npmPackageName of allPackagesFromTemp) {
+          for (const coreContainer of toCopy) {
+            Helpers.info(
+              `Copying ${chalk.bold(`${npmPackageName}`)} to project: ${coreContainer.location} `,
+            );
+            UtilsFilesFoldersSync.copy(
+              projFromTemp.nodeModules.pathFor(npmPackageName),
+              coreContainer.nodeModules.pathFor(npmPackageName),
+              {
+                recursive: true,
+                overwrite: true,
+              },
+            );
+          }
+        }
+        Helpers.taskDone(`Finished copying packages from temporary installation.`);
+      }
+    }
+
+    this._exit();
+
+    //#endregion
+  }
+  //#endregion
 }
 
 export default {
