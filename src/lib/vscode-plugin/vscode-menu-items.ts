@@ -320,20 +320,20 @@ export const vscodeMenuItems = ({
           //#endregion
 
           //#region items with actions /  clear
-          new ProjectItem(
-            `$ ${FRAMEWORK_NAME} clear`,
-            vscode.TreeItemCollapsibleState.None,
-            {
-              iconPath: null,
-              project: CURRENT_PROJECT,
-              triggerActionOnClick: project => {
-                runInTerminal(`${FRAMEWORK_NAME} clear`);
-                if (project?.location) {
-                  focustFirstElement();
-                }
-              },
-            },
-          ),
+          // new ProjectItem(
+          //   `$ ${FRAMEWORK_NAME} clear`,
+          //   vscode.TreeItemCollapsibleState.None,
+          //   {
+          //     iconPath: null,
+          //     project: CURRENT_PROJECT,
+          //     triggerActionOnClick: project => {
+          //       runInTerminal(`${FRAMEWORK_NAME} clear`);
+          //       if (project?.location) {
+          //         focustFirstElement();
+          //       }
+          //     },
+          //   },
+          // ),
           //#endregion
 
           //#region items with actions /  melt
