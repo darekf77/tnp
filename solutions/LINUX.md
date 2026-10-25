@@ -159,3 +159,10 @@ EOF
 
 sudo sysctl --system
 ```
+
+remove megasync override (sometimes is blocking command above)
+
+```bash
+sudo rm /etc/sysctl.d/99-megasync-inotify-limit.conf
+sudo sysctl --system
+```
