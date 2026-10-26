@@ -92,14 +92,24 @@ export class $SubProject extends BaseCli {
         overrideSelect = void 0;
       }
 
+      const releaseOptions = this.params.clone({
+        build: {
+          ...this.params.build,
+          cloudflare: true,
+        },
+      });
+
       if (select === 'info') {
         await this.project.subProject.getInfo();
       } else if (select === 'addDeploy') {
-        await this.project.subProject.addAndConfigure();
+        await this.project.subProject.addAndConfigure({
+          releaseOptions,
+        });
         await this.project.init();
       } else if (select === 'add') {
         await this.project.subProject.addAndConfigure({
           skipDeployment: true,
+          releaseOptions,
         });
         await this.project.init();
       } else if (select === 'dev') {
@@ -107,12 +117,7 @@ export class $SubProject extends BaseCli {
           projectName: this.secondArg
             ? path.basename(this.secondArg?.trim())
             : void 0,
-          envOptions: this.params.clone({
-            build: {
-              ...this.params.build,
-              cloudflare: true,
-            },
-          }),
+          envOptions: releaseOptions,
         });
         // } else if (select === 'build') {
         //   await this.project.subProject.buildInDevMode({
@@ -125,7 +130,7 @@ export class $SubProject extends BaseCli {
       } else if (select === 'secrets') {
         await this.project.subProject.setWorkerSecrets();
       } else if (select === 'deploy') {
-        await this.project.subProject.deployWorker();
+        await this.project.subProject.deployWorker(releaseOptions);
       } else if (select === 'initall') {
         await this.project.subProject.repo.initAll();
       } else if (select === 'login') {

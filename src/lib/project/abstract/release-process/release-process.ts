@@ -445,6 +445,7 @@ ${chalk.bold.green('Local release')} => use current git repo for storing release
           if (allCustomWorkers.length === 0) {
             await this.project.subProject.addAndConfigure({
               skipDeployment: true,
+              releaseOptions: envOptions,
               projectType: TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER,
             });
           }

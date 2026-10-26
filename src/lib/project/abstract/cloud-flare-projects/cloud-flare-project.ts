@@ -31,6 +31,7 @@ import {
   wranglerJsonC,
 } from '../../../constants';
 import { EnvOptions } from '../../../options';
+import { ArtifactsAngularNodeAppHelpers } from '../artifacts/angular-node-app/artifact-angular-node-app-helpers';
 import type { Project } from '../project';
 
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
@@ -302,7 +303,7 @@ export class CloudFlareSubProject {
 
     await this.addKVDb();
 
-    await this.deployment();
+    await this.deployment(opt.releaseOptions);
 
     const secretsData = this.apiSecretsKeyData();
     if (secretsData.length > 0) {
@@ -385,7 +386,7 @@ export class CloudFlareSubProject {
   //#endregion
 
   //#region deplyment to cloud flare
-  async deployment(): Promise<void> {
+  async deployment(releaseOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
     await this.init();
 
@@ -413,6 +414,25 @@ export class CloudFlareSubProject {
           [this.cwdWorker, '.env'],
           `${UtilsSecretEnv.MASTER_PASS_KEY}="${masterKey}"`,
         );
+
+        const contextsNames =
+          this.taonParentProject.framework.getAllDetectedTaonContexts({
+            skipLibFolder: true,
+          });
+
+        releaseOptions.build.cloudflare = true; // TODO QUICK_FIX
+        if (!releaseOptions.website.useDomain) {
+          releaseOptions.website.useDomain = true;
+          releaseOptions.website.domain = this.workerUrl;
+        }
+
+        await ArtifactsAngularNodeAppHelpers.updateReleasDotEnv(
+          contextsNames,
+          this.cwdWorker,
+          this.taonParentProject,
+          releaseOptions,
+        );
+
         const data = await UtilsExecProc.spawnAsync(
           `npm-run wrangler deploy --secrets-file .env`,
           {
@@ -423,7 +443,18 @@ export class CloudFlareSubProject {
           data.stdout + data.stderr,
         );
         Helpers.removeFileIfExists([this.cwdWorker, '.env']);
-        Helpers.taskDone(`DONE DEPLOYMENT on acccount name "${accountName}"`);
+        Helpers.taskDone(`
+
+          DONE DEPLOYMENT on acccount name "${accountName}"
+
+
+          YOU WEBSITE IS AVAILABLE HERE:
+
+    ${this.workerUrl}
+
+
+
+          `);
         this.taonParentProject.taonJson.setCloudFlareAccountSubdomain(
           accountName,
         );

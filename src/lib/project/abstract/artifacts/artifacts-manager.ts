@@ -980,6 +980,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
         ) {
           await this.project.subProject.addAndConfigure({
             skipDeployment: true,
+            releaseOptions,
             projectType: TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER,
             projectEnvironmentNameWithNumber: item.envName
               ? `${item.envName}${item.envNumber ?? ''}`

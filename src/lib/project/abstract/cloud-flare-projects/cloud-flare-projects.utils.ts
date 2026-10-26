@@ -28,6 +28,7 @@ import {
   tsconfigSubProject,
   wranglerJsonC,
 } from '../../../constants';
+import { EnvOptions } from '../../../options';
 import type { Project } from '../project';
 
 import { CloudCustomWorkerProject } from './cloud-flare-custom-worker';
@@ -41,6 +42,7 @@ export namespace CloudFlarePorjectsUtils {
   //#region add project options
   export interface AddProjectOptions {
     skipDeployment?: boolean;
+    releaseOptions?: EnvOptions;
     projectType?: TempalteSubprojectType;
     projectEnvironmentNameWithNumber?: string;
   }

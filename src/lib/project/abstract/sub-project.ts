@@ -457,11 +457,11 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region PUBLIC API / deploy worker
-  public async deployWorker(): Promise<void> {
+  public async deployWorker(envOptions:EnvOptions): Promise<void> {
     //#region @backendFunc
     while (true) {
       const chosenProject = await this.selectAnyProject();
-      await chosenProject.deployment();
+      await chosenProject.deployment(envOptions);
       const again = await UtilsTerminal.confirm({
         message: `Would you like to deploy any project again ?`,
         defaultValue: true,

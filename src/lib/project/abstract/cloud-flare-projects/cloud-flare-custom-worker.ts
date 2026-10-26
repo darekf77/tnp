@@ -1,3 +1,4 @@
+//#region imports
 import {
   crossPlatformPath,
   fileName,
@@ -24,6 +25,7 @@ import { EnvOptions, ReleaseArtifactTaon } from '../../../options';
 
 import { CloudFlareSubProject } from './cloud-flare-project';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
+//#endregion
 
 export class CloudCustomWorkerProject extends CloudFlareSubProject {
   constructor(...args) {
@@ -123,6 +125,7 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
   }
   //#endregion
 
+  //#region API / get files for branding worker
   public getFilesForBrandingWorker(): CloudFlarePorjectsUtils.FilesForSubProjectBranding[] {
     const filesForBranding: CloudFlarePorjectsUtils.FilesForSubProjectBranding[] =
       [
@@ -144,8 +147,10 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
       ];
     return filesForBranding;
   }
+  //#endregion
 }
 
+//#region strip ansi
 export function stripAnsi(input: string): string {
   return input.replace(
     // ANSI/VT100 escape sequences
@@ -154,7 +159,9 @@ export function stripAnsi(input: string): string {
     '',
   );
 }
+//#endregion
 
+//#region extract wrangler ready url
 export function extractWranglerReadyUrl(output: string): string | undefined {
   const clean = stripAnsi(output);
 
@@ -162,3 +169,4 @@ export function extractWranglerReadyUrl(output: string): string | undefined {
     /\[wrangler:info\]\s+Ready on\s+(https?:\/\/[^\s]+)/i,
   )?.[1];
 }
+//#endregion
