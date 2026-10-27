@@ -49,6 +49,7 @@ import {
   libFromSrc,
   migrationsFromLib,
   nodeModulesMainProject,
+  sourceLinkInNodeModules,
   srcMainProject,
   startJsFromBin,
   startTsFromLib,
@@ -425,10 +426,23 @@ ${'req' + 'uire'}('./start');
 
     //#region check isomorphic dependencies for npm lib
     if (this.project.framework.isStandaloneProject) {
+      const pathToSourceLinked = this.project.ins
+        .homeDirCoreContainer(this.project.framework.frameworkVersion)
+        .nodeModules.pathFor([
+          this.project.nameForNpmPackage,
+          sourceLinkInNodeModules,
+        ]);
+
+      if (!Helpers.exists(pathToSourceLinked)) {
+        await this.project.clear({
+          recursiveAction: false,
+        });
+      }
+
       const toInitLink = Utils.uniqArray<Project>(
         [
           this.project.framework.coreContainer,
-          Project.ins.homeDirCoreContainer(
+          this.project.ins.homeDirCoreContainer(
             this.project.framework.frameworkVersion,
           ),
           ...(this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer

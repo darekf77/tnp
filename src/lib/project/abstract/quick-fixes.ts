@@ -373,22 +373,16 @@ Put here files that you don't want to share through npm package.
 ${THIS_IS_GENERATED_STRING}`,
     );
 
-    Helpers.writeFile(
-      [
-        this.project.location,
-        TaonTempDatabasesFolder,
-        'databases-folder-info.md',
-      ],
-      `${THIS_IS_GENERATED_STRING}
+    this.recreateDatabaseFolder();
 
-# PURPOSE OF THIS FOLDER
+    this.recreateRoutesFolder();
 
-You will see here *.sqlite database files only after you run your application
-that uses HOST_CONFIG from src/app.hosts.ts
+    Helpers.taskDone(`[quick fixes] missing angular lib fles end`);
+    //#endregion
+  }
 
-${THIS_IS_GENERATED_STRING}`,
-    );
-
+  recreateRoutesFolder() {
+    //#region @backendFunc
     Helpers.writeFile(
       [this.project.location, TaonTempRoutesFolder, 'routes-folder-info.md'],
       `${THIS_IS_GENERATED_STRING}
@@ -400,8 +394,26 @@ that uses HOST_CONFIG from src/app.hosts.ts
 
 ${THIS_IS_GENERATED_STRING}`,
     );
+    //#endregion
+  }
 
-    Helpers.taskDone(`[quick fixes] missing angular lib fles end`);
+  recreateDatabaseFolder() {
+    //#region @backendFunc
+    Helpers.writeFile(
+      [
+        this.project.location,
+        TaonTempDatabasesFolder,
+        'databases-folder-info.md',
+      ],
+      `${THIS_IS_GENERATED_STRING}
+
+# PURPOSE OF THIS FOLDER
+
+You will see here sqlite,kv and bucket database files only after you run your application.
+Check HOST_CONFIG from src/app.hosts.ts to see context informations.
+
+${THIS_IS_GENERATED_STRING}`,
+    );
     //#endregion
   }
   //#endregion

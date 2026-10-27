@@ -294,14 +294,6 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
     this.warnAboutNotVerifiedWhenProdBuild(buildOptions);
     buildOptions = EnvOptions.from(buildOptions);
 
-    const pathToSourceLinked = this.ins
-      .homeDirCoreContainer(this.framework.frameworkVersion)
-      .nodeModules.pathFor([this.nameForNpmPackage, sourceLinkInNodeModules]);
-
-    if (!Helpers.exists(pathToSourceLinked)) {
-      this.removeFile(tmpAlreadyStartedCopyManager);
-    }
-
     let skipProjectsNames = [] as string[];
     if (this.framework.isStandaloneProject) {
       await this.artifactsManager.build(buildOptions);

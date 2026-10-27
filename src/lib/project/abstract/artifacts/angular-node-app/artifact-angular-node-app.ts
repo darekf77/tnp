@@ -150,7 +150,9 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
   //#region clear partial
   async clearPartial(options: EnvOptions): Promise<void> {
     this.project.remove(`${routes}/*.rest`, false);
-    this.project.remove(`${databases}/*.sqlite`, false);
+    this.project.quickFixes.recreateRoutesFolder();
+    this.project.remove(`${databases}/*`, false);
+    this.project.quickFixes.recreateDatabaseFolder();
   }
   //#endregion
 
