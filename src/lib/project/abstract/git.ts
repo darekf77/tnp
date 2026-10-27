@@ -71,7 +71,6 @@ export class Git extends BaseGit<Project> {
 
     this.project.quickFixes.removeHuskyHooks();
 
-
     //#endregion
   }
   //#endregion
@@ -97,7 +96,7 @@ export class Git extends BaseGit<Project> {
         await UtilsTerminal.confirm({
           message:
             `[taon][after-pull-action] Do you want to remove old folders: ` +
-            `\n${absPaths.map(c => `- /${c}`).join('\n, ')}\n?`,
+            `\n${absPaths.map(c => `- ./${path.basename(c)}`).join('\n, ')}\n?`,
         })
       ) {
         for (let index = 0; index < absPaths.length; index++) {
