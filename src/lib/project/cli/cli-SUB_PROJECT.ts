@@ -33,7 +33,10 @@ export class $SubProject extends BaseCli {
         name: 'Get info about subproject embeded in this taon project',
       },
       dev: {
-        name: 'Local dev watch mode',
+        name: 'Local dev build',
+      },
+      devprod: {
+        name: 'Local dev minified build',
       },
       // build: {
       //   name: 'Local dev single build',
@@ -119,10 +122,19 @@ export class $SubProject extends BaseCli {
             : void 0,
           envOptions: releaseOptions,
         });
-        // } else if (select === 'build') {
-        //   await this.project.subProject.buildInDevMode({
-        //     projectName: this.secondArg?.trim(),
-        //   });
+      } else if (select === 'devprod') {
+        await this.project.subProject.startInDevMode({
+          projectName: this.secondArg
+            ? path.basename(this.secondArg?.trim())
+            : void 0,
+          envOptions: releaseOptions.clone({
+            release: {
+              nodeBackendApp: {
+                minify: true,
+              },
+            },
+          }),
+        });
       } else if (select === 'teststripe') {
         await this.project.subProject.testStripeProjectWithExampleData();
       } else if (select === 'mode') {

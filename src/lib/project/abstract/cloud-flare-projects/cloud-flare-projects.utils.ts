@@ -18,7 +18,6 @@ import {
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
 import {
-  buildJS,
   buildJSprod,
   externalJs,
   indexTsInSrcForWorker,

@@ -903,7 +903,8 @@ export const dotVscodeMainProject = '.vscode';
 export const indexTsInSrcForWorker = `src/index.ts`;
 
 export const externalJs = `external.js`;
-export const buildJS = `build.js`;
+export const buildDevMinifyJS = `build.dev-minify.js`;
+export const buildDevNormalJS = `build.dev-normal.js`;
 export const buildJSprod = `build.prod.js`;
 
 export const wranglerJsonC = `wrangler.jsonc`;

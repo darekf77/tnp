@@ -15,7 +15,8 @@ import {
 
 import {
   browserWorkerBuild,
-  buildJS,
+  buildDevMinifyJS,
+  buildDevNormalJS,
   buildJSprod,
   distFromWorkerBuild,
   externalJs,
@@ -57,14 +58,19 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
     ).body.text;
 
     Helpers.removeFileIfExists([this.cwdWorker, '.env']);
-    await UtilsExecProc.spawnAsync(
-      `npm-run bun run ${envOptions.build.prod ? buildJSprod : buildJS}`,
-      {
-        cwd: this.cwdWorker,
-        showOutput: true,
-        showOutputColor: true,
-      },
-    ).waitUntilDoneOrThrow({
+
+    const cloudflareBuildFile = envOptions.build.prod
+      ? buildJSprod
+      : envOptions.release.nodeBackendApp.minify
+        ? buildDevMinifyJS
+        : buildDevNormalJS;
+
+    Helpers.info(`Using build file: ${cloudflareBuildFile}`);
+    await UtilsExecProc.spawnAsync(`npm-run bun run ${cloudflareBuildFile}`, {
+      cwd: this.cwdWorker,
+      showOutput: true,
+      showOutputColor: true,
+    }).waitUntilDoneOrThrow({
       successOutputMessage: 'Compilation Done',
     });
 
@@ -130,7 +136,8 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
     const filesForBranding: CloudFlarePorjectsUtils.FilesForSubProjectBranding[] =
       [
         ...super.getFilesForBrandingWorker(),
-        { relativePath: buildJS },
+        { relativePath: buildDevMinifyJS },
+        { relativePath: buildDevNormalJS },
         { relativePath: buildJSprod },
         { relativePath: externalJs },
         { relativePath: wranglerJsonC },
