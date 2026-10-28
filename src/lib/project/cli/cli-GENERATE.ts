@@ -358,6 +358,20 @@ import { MIGRATIONS_CLASSES_FOR_${_.upperFirst(_.camelCase(newEntityName))}Activ
     this._exit(0);
     //#endregion
   }
+
+  wrapClassesNamespacesMethodsBodyWithWebsqlFunc() {
+    //#region @backendFunc
+    const fileAbsPath = crossPlatformPath(this.firstArg);
+    const content = Helpers.readFile(fileAbsPath);
+    const fixedRegions =
+      UtilsTypescript.wrapClassesNamespacesMethodsBodyWithWebsqlFunc(content);
+    if (content !== fixedRegions) {
+      Helpers.writeFile(fileAbsPath, fixedRegions);
+      UtilsTypescript.formatFile(fileAbsPath);
+    }
+    this._exit(0);
+    //#endregion
+  }
 }
 
 export default {

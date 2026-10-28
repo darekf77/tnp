@@ -710,6 +710,18 @@ export const vscodeExtMethods = (FRAMEWORK_NAME: string): CommandType[] => {
       },
       //#endregion
 
+      //#region GENERATE wrap methods and functions with @ web sql
+      {
+        group: groupRefactor,
+        title: `wrap classes/namespaces methods/functions inside with ${'@web' + 'sql' + 'Func'}`,
+        exec: `${FRAMEWORK_NAME} generate:wrapClassesNamespacesMethodsBodyWithWebsqlFunc %absolutePath%`,
+        options: {
+          titleWhenProcessing: `wrapping classes/namespaces methods/functions body with ${'@web' + 'sql' + 'Func'}`,
+          showSuccessMessage: false,
+        },
+      },
+      //#endregion
+
       //#region GENERATE @websql regions for entity
       {
         group: groupRefactor,
