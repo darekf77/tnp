@@ -13,6 +13,7 @@ import {
   UtilsTempFolder,
 } from 'tnp-core/src';
 
+import { pingUrl } from '../../../app-utils';
 import {
   browserWorkerBuild,
   buildDevMinifyJS,
@@ -26,6 +27,7 @@ import { EnvOptions, ReleaseArtifactTaon } from '../../../options';
 
 import { CloudFlareSubProject } from './cloud-flare-project';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
+import { apiPrefix } from 'taon/src';
 //#endregion
 
 export class CloudCustomWorkerProject extends CloudFlareSubProject {
@@ -112,9 +114,7 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
         if (line.includes('Ready on')) {
           let url = extractWranglerReadyUrl(line);
           if (url) {
-            url = `${url}/api/`;
-            console.log(`PINGING FOR INIT "${url}"`);
-            fetch(url);
+            void pingUrl(url);
           }
         }
         const errorPath = 'at null.<anonymous> (';

@@ -15,6 +15,7 @@ import {
 } from 'tnp-core/src';
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
+import { pingUrl } from '../../..//app-utils';
 import {
   buildDevMinifyJS,
   buildDevNormalJS,
@@ -459,6 +460,8 @@ export class CloudFlareSubProject {
         this.taonParentProject.taonJson.setCloudFlareAccountSubdomain(
           accountName,
         );
+
+        await pingUrl(this.workerUrl);
         break;
       } catch (error) {
         this.wranglerJsonC.setDevMode();

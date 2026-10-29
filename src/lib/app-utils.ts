@@ -42,6 +42,7 @@ import {
 } from './constants';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from './options';
 import type { Project } from './project/abstract/project';
+import { apiPrefix } from 'taon/src';
 //#endregion
 
 export function removeCommentsFromScssFile(scss: string): string {
@@ -56,6 +57,16 @@ export function removeCommentsFromScssFile(scss: string): string {
   // return root.toString(postcssScss);
   //#endregion
 }
+
+export const pingUrl = async (url: string) => {
+  const task = Helpers.actionStarted(`Pinging ${url}/${apiPrefix}/`);
+  try {
+    await fetch(url);
+    task.done();
+  } catch (error) {
+    Helpers.error(`No able to ping after deploy.`, false, true);
+  }
+};
 
 //#region mark ts source as readonly
 export function markTsSourceAsReadonly(
