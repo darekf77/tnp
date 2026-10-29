@@ -9,10 +9,11 @@ import type { ExtensionContext } from 'vscode';
 const FRAMEWORK_NAME = 'tnp';
 import * as menu from './lib/vscode-plugin';
 import { activateRecentWorkspaces } from './lib/vscode-plugin';
+import { activateCompareSelectMenu } from './lib/vscode-plugin/vscode-compare-menu';
+import { setIsTaonProject } from './lib/vscode-plugin/vscode-is-taon-project';
 
 const commands = vscodeExtMethods(FRAMEWORK_NAME);
 export async function activate(context: ExtensionContext) {
-
   const vscode = await import('vscode');
 
   // const extension = vscode.extensions.getExtension(context.extension.id);
@@ -29,6 +30,9 @@ export async function activate(context: ExtensionContext) {
   await activateRecentWorkspaces(context, vscode, FRAMEWORK_NAME);
 
   menu.activateMenuTnp(context, vscode, FRAMEWORK_NAME);
+
+  await setIsTaonProject(context, vscode, FRAMEWORK_NAME)
+  activateCompareSelectMenu(context, vscode, FRAMEWORK_NAME);
 
   //#region @backendFunc
   for (let index = 0; index < commands.length; index++) {

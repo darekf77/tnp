@@ -1,6 +1,6 @@
 {
   "name": "tnp",
-  "version": "21.0.296",
+  "version": "21.0.298",
   "scripts": {
     "activate": "npm i --force && npx taon dedupe && npx taon build && npx taon link",
     "taon init": "taon init",
@@ -41,9 +41,24 @@
       {
         "command": "tnp.openRecentWorkspace",
         "title": "Taon: Open Recent Workspace"
+      },
+      {
+        "command": "tnp.compareVersion",
+        "icon": {
+          "dark": "./icon-menu-tnp.svg",
+          "light": "./icon-menu-tnp.svg"
+        },
+        "title": "Compare Tnp Version"
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "tnp.compareVersion",
+          "group": "navigation@1",
+          "when": "tnp.isTaonProject && resourceExtname == .ts"
+        }
+      ],
       "explorer/context": [
         {
           "command": "extension.createFileTnp",

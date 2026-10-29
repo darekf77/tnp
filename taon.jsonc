@@ -81,7 +81,7 @@
     {
       "description": "Json c parser",
       "includeInBundleNodeModules": ["vscode-plugin"],
-      "isExternalFor": ["npm-lib-and-cli-tool","vscode-plugin"],
+      "isExternalFor": ["npm-lib-and-cli-tool", "vscode-plugin"],
       "packageName": "jsonc-parser",
     },
     // {
@@ -198,8 +198,23 @@
           "command": "tnp.openRecentWorkspace",
           "title": "Taon: Open Recent Workspace",
         },
+        {
+          "command": "tnp.compareVersion",
+          "title": "Compare Tnp Version",
+          "icon": {
+            "light": "./icon-menu-tnp.svg",
+            "dark": "./icon-menu-tnp.svg",
+          },
+        },
       ],
       "menus": {
+        "editor/title": [
+          {
+            "command": "tnp.compareVersion",
+            "group": "navigation@1",
+            "when": "tnp.isTaonProject && resourceExtname == .ts",
+          },
+        ],
         "explorer/context": [
           {
             "command": "extension.createFileTnp",
