@@ -95,6 +95,15 @@ export class MigrationHelper extends BaseDebounceCompilerForProject<
           `'./${c.relativePath.replace('.ts', '')}';`
         );
       });
+
+    const allExports = relativePathsWithClasses
+      .filter(c => c.classes.length >= 1)
+      .map(c => {
+        return (
+          `export { ${c.classes.join(', ')} } from ` +
+          `'./${c.relativePath.replace('.ts', '')}';`
+        );
+      });
     // console.log('MigrationHelper rebuild for ', allImports);
 
     // export const MIGRATIONS_CLASSES = [${allClasses.join(',\n')}];
@@ -103,6 +112,7 @@ export class MigrationHelper extends BaseDebounceCompilerForProject<
       `
 ${THIS_IS_GENERATED_INFO_COMMENT}
 ${allImports.join('\n')}
+${allExports.join('\n')}
 ${THIS_IS_GENERATED_INFO_COMMENT}
 ${_.keys(allContexts)
   .map(contextName => {
