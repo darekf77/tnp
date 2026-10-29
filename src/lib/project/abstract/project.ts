@@ -625,7 +625,7 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
       }
       return false;
     }
-    const regexContainerOnlySmallLettersAndDash = /^[a-z\-]+$/;
+    const regexContainerOnlySmallLettersAndDash = /^[a-z\-\:]+$/;
     if (regexContainerOnlySmallLettersAndDash.test(task.taskName) === false) {
       if (!options.hideTaskErrors) {
         Helpers.error(
