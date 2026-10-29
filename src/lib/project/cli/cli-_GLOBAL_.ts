@@ -246,17 +246,11 @@ export class $Global extends BaseGlobalCommandLine<
   //#endregion
 
   //#region watcher linux
-  watchersfix() {
-    //#region @backendFunc
-    Helpers.run(
-      `echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p`,
-    ).sync();
-    this._exit();
-    //#endregion
-  }
-
   watchers() {
     //#region @backendFunc
+    if (process.platform === 'darwin' || process.platform === 'win32') {
+      Helpers.error(`Watchers command is only for linux`, false, true);
+    }
     Helpers.run(
       `find /proc/*/fd -user "$USER" -lname anon_inode:inotify -printf '%hinfo/%f\n' 2>/dev/null | xargs cat | grep -c '^inotify'`,
     ).sync();
@@ -268,11 +262,7 @@ export class $Global extends BaseGlobalCommandLine<
   //#region code instal ext
   async code() {
     //#region @backendFunc
-    this.project
-      .run(
-        `${await this.ins.editor()} --install-extension ${this.args.join(' ')}`,
-      )
-      .sync();
+    this.project.run(`${await this.ins.editor()} .`).sync();
     this._exit();
     //#endregion
   }
@@ -2432,7 +2422,9 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
             );
           }
         }
-        Helpers.taskDone(`Finished copying packages from temporary installation.`);
+        Helpers.taskDone(
+          `Finished copying packages from temporary installation.`,
+        );
       }
     }
 

@@ -169,7 +169,10 @@ export class CopyManagerStandalone extends BaseCompilerForProject<
    */
   get projectToCopyTo() {
     //#region @backendFunc
-
+    if (this.project.location.includes(this.project.proxyCloned.tempRoot)) {
+      Helpers.warn(`Skipping copy to other projects than local temp`);
+      return [this.localTempProj];
+    }
     let result: Project[] = [];
 
     const isTaonProdCli = taonPackageName === config.frameworkName;
@@ -1095,6 +1098,12 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
   //#region add source symlinks
   addSourceSymlinks(destination: Project): void {
     //#region @backendFunc
+
+    if (this.project.location.includes(this.project.proxyCloned.tempRoot)) {
+      Helpers.warn(`Skipping adding source symlinks`);
+      return;
+    }
+
     const source = crossPlatformPath([
       destination.nodeModules.pathFor(this.rootPackageName),
       sourceLinkInNodeModules,

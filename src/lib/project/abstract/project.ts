@@ -58,6 +58,7 @@ import { NpmHelpers } from './npm-helpers';
 import { PackageJSON } from './package-json';
 import { PackagesRecognition } from './packages-recognition';
 import { TaonProjectResolve } from './project-resolve';
+import type { ProxyClonedProject } from './proxy-cloned-project';
 import { QuickFixes } from './quick-fixes';
 import { Refactor } from './refactor';
 import type { ReleaseProcess } from './release-process';
@@ -102,6 +103,8 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   public readonly watcher: LightWeightWatcher;
 
   public readonly secretEnv: SecretEnv;
+
+  public readonly proxyCloned: ProxyClonedProject;
 
   get taonBuildObserver() {
     return this.artifactsManager.artifact.npmLibAndCliTool.taonBuildObserver;
@@ -186,6 +189,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
 
     this.secretEnv = new (require('./secret-env')
       .SecretEnv as typeof SecretEnv)(this);
+
+    this.proxyCloned = new (require('./proxy-cloned-project')
+      .ProxyClonedProject as typeof ProxyClonedProject)(this);
 
     this.watcher = new (require('./lightweight-watcher')
       .LightWeightWatcher as typeof LightWeightWatcher)(this);

@@ -16,6 +16,7 @@ import LINK from './cli-LINK';
 import MIGRATION from './cli-MIGRATION';
 import NEW from './cli-NEW';
 import OPEN from './cli-OPEN';
+import PROXY from './cli-PROXY';
 import REFACTOR from './cli-REFACTOR';
 import RELEASE from './cli-RELEASE';
 import SUB_PROJECT from './cli-SUB_PROJECT';
@@ -41,6 +42,7 @@ export default [
   REFACTOR,
   VERSION,
   GENERATE,
+  PROXY,
   DOCKER,
   FILE_SYNC,
   CORE,

@@ -409,6 +409,7 @@ export async function run(
       'install:locally': 'release:install:locally',
       cinit: 'init:clearInit',
       a: 'app',
+      p: 'proxy',
       an: 'app:normal',
       aw: 'app:websql',
       ae: 'app:electron',
@@ -509,8 +510,6 @@ export async function run(
       show: 'vscode:temp:show',
       simulate: 'simulateDomain',
       taonjson: 'recreateTaonJsonSchema',
-      p: 'push',
-      pl: 'pull',
       //#endregion
     },
   });
