@@ -152,18 +152,10 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       );
     });
     if (changeOfFiles.length === 0) {
-      // console.log('MigrationHelper action skipped');
       return;
     }
 
-    if (
-      !this.project.hasFile([
-        srcMainProject,
-        libFromSrc,
-        migrationsFromLib,
-        indexTsFromMigrationsFromSrc,
-      ])
-    ) {
+    if (!asyncEvent) {
       Helpers.writeFile(
         this.project.pathFor([
           srcMainProject,
