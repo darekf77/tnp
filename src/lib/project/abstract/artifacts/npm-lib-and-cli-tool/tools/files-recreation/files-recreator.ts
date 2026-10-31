@@ -101,13 +101,17 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
   projectSpecificFilesForContainer(): string[] {
     return [
       taonConfigSchemaJsonContainer,
-      `${LibTypeEnum.ISOMORPHIC_LIB}-${
-        this.project.framework.frameworkVersion
-      }/${esLintConfigJsonMainProject}`,
-      `${LibTypeEnum.ISOMORPHIC_LIB}-${
-        this.project.framework.frameworkVersion
-      }/${esLintRuleNoNamespaceReExport}`,
-    ];
+      esLintConfigJsonMainProject,
+      esLintRuleNoNamespaceReExport,
+      AgentsMdMainProject,
+      dotGithubCopilotInstructions,
+      dotAI,
+    ].map(
+      c =>
+        `${LibTypeEnum.ISOMORPHIC_LIB}-${
+          this.project.framework.frameworkVersion
+        }/${c}`,
+    );
   }
 
   //#region getters & methods / project specify files
@@ -163,6 +167,15 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
         let from = crossPlatformPath(
           path.join(defaultProjectProptotype.location, relativeFilePath),
         );
+
+        if (defaultProjectProptotype.framework.isContainer) {
+          relativeFilePath = relativeFilePath.replace(
+            `${LibTypeEnum.ISOMORPHIC_LIB}-${
+              this.project.framework.frameworkVersion
+            }/`,
+            '',
+          );
+        }
 
         // console.log({ relativeFilePath, from });
 
