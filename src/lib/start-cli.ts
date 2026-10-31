@@ -350,6 +350,7 @@ export async function run(
           a.startsWith('shorten') ||
           a.startsWith('vscode') ||
           a.startsWith('repush') ||
+          a.startsWith('lang') ||
           a === 'dumpPackagesVersions' ||
           a === 'melt' ||
           a === 'soft' ||
