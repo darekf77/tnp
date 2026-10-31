@@ -351,6 +351,8 @@ export async function run(
           a.startsWith('vscode') ||
           a.startsWith('repush') ||
           a.startsWith('lang') ||
+          a.startsWith('link') ||
+          a.startsWith('refactor') ||
           a === 'dumpPackagesVersions' ||
           a === 'melt' ||
           a === 'soft' ||
