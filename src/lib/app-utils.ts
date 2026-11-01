@@ -295,7 +295,13 @@ export const filterChildren = (
 
   //#region handle skip released
   if (releaseOptions.container.skipReleased) {
+    const allNotVerified =
+      currentProject.framework.notVerifiedIsomorphicPackagesBuildsInNodeModules;
+
     children = children.filter((c, i) => {
+      if (allNotVerified.includes(c.nameForNpmPackage)) {
+        return true;
+      }
       const lastCommitMessage = c?.git?.lastCommitMessage()?.trim();
       return !lastCommitMessage?.startsWith('release: ');
     });
