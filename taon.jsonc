@@ -48,7 +48,7 @@
     },
   ],
 
-  "watchBuildDependencies": ["tnp-helpers", "tnp-core"],
+  "watchBuildDependencies": [],
 
   "generateTranslationsFor": ["en-US", "pl-PL"],
   "isUsingOwnNodeModulesInsteadCoreContainer": true,

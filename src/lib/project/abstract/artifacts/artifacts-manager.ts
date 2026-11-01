@@ -1191,20 +1191,32 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
       releaseOutput.projectsReposToPush =
         releaseOutput.projectsReposToPush || [];
 
-      //#region push repos
-      for (const repoAbsPath of Utils.uniqArray(
-        releaseOutput.projectsReposToPush,
-      )) {
-        Helpers.info(`Checking  path "${repoAbsPath}" `);
+      //#region push and tag repos
+
+      const projectsReposToPushAndTag = Utils.uniqArray(
+        releaseOutput.projectsReposToPushAndTag,
+      );
+
+      for (const repoAbsPath of projectsReposToPushAndTag) {
         if (shouldAskQuestions) {
+          Helpers.info(`Checking  path "${repoAbsPath}" ..`);
           await this.project.releaseProcess.checkBundleQuestion(
             repoAbsPath,
-            `[${releaseOptions.release.releaseType}] Check ${chalk.bold('project repo')} before pushing`,
+            `[${releaseOptions.release.releaseType}] Check ${chalk.bold('project repo')} before tagging/pushing`,
           );
         }
-
         if (this.project.git.isInsideGitRepo) {
+          //#region handle single origin
+          await HelpersTaon.git.tagAndPushToGitRepo(repoAbsPath, {
+            newVersion: releaseOutput.resolvedNewVersion,
+            skipAskingQuestionBeforePush: !shouldAskQuestions,
+            isCiProcess: releaseOptions.isCiProcess,
+            commitWhenEmpty: true,
+          });
+          //#endregion
+
           if (releaseOptions.release.pushToAllOriginsWhenLocalReleaseBranch) {
+            //#region handle when pushing multiple origins
             const allOrigins = HelpersTaon.git.allOrigins(
               this.project.location,
             );
@@ -1214,46 +1226,13 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
                 origin.origin,
                 origin.url,
               );
-              await HelpersTaon.git.tagAndPushToGitRepo(repoAbsPath, {
-                newVersion: releaseOutput.resolvedNewVersion,
-                skipAskingQuestionBeforePush: !shouldAskQuestions,
-                isCiProcess: releaseOptions.isCiProcess,
-                customOrigin: origin.origin,
-                skipTag: true,
+              await HelpersTaon.git.pushCurrentBranch(repoAbsPath, {
+                origin: origin.origin,
+                askToRetry: true,
               });
             }
-          } else {
-            await HelpersTaon.git.tagAndPushToGitRepo(repoAbsPath, {
-              newVersion: releaseOutput.resolvedNewVersion,
-              skipAskingQuestionBeforePush: !shouldAskQuestions,
-              isCiProcess: releaseOptions.isCiProcess,
-              skipTag: true,
-            });
+            //#endregion
           }
-        } else {
-          Helpers.warn(`Skipping adding origin when not inside repository.`);
-        }
-      }
-      //#endregion
-
-      //#region push and tag repos
-
-      for (const repoAbsPath of Utils.uniqArray(
-        releaseOutput.projectsReposToPushAndTag,
-      )) {
-        if (shouldAskQuestions) {
-          Helpers.info(`Checking  path "${repoAbsPath}" ..`);
-          await this.project.releaseProcess.checkBundleQuestion(
-            repoAbsPath,
-            `[${releaseOptions.release.releaseType}] Check ${chalk.bold('project repo')} before tagging/pushing`,
-          );
-        }
-        if (this.project.git.isInsideGitRepo) {
-          await HelpersTaon.git.tagAndPushToGitRepo(repoAbsPath, {
-            newVersion: releaseOutput.resolvedNewVersion,
-            skipAskingQuestionBeforePush: !shouldAskQuestions,
-            isCiProcess: releaseOptions.isCiProcess,
-          });
         } else {
           Helpers.warn(`Skipping git tag when not inside repository.`);
         }
