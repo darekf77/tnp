@@ -47,14 +47,16 @@ type DirnameData = {
 
 // @ts-ignore TODO weird inheritance problem
 export class TranslationI18n extends BaseFeatureForProject<Project> {
-  async start(): Promise<void> {
+  async start(onlyFiles?: string[]): Promise<void> {
     //#region @backendFunc
     const filesLocaiton = this.project.pathFor(srcMainProject);
 
-    const filesPathes = UtilsFilesFoldersSync.getFilesFrom(filesLocaiton, {
-      followSymlinks: false,
-      recursive: true,
-    }).filter(f => !isTestFile(f));
+    const filesPathes = onlyFiles
+      ? onlyFiles
+      : UtilsFilesFoldersSync.getFilesFrom(filesLocaiton, {
+          followSymlinks: false,
+          recursive: true,
+        }).filter(f => !isTestFile(f));
 
     // console.log({ filesLocaiton });
 
@@ -158,7 +160,7 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
     //#endregion
 
     const langs = this.project.taonJson.generateTranslationsFor;
-    // console.log(JSON.stringify(files, null, 2));
+    console.log(JSON.stringify(files, null, 2));
     // console.log({ langs });
 
     //#region dirname data interface

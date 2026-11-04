@@ -1273,11 +1273,11 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
   //#endregion
 
   //#region generate translations
-  async generateTranslations(): Promise<void> {
+  async generateTranslations(onlyFiles?:string[]): Promise<void> {
     //#region @backendFunc
     const task = Helpers.actionStarted('Genrating translations');
     this.project.taonJson.setShouldGenerateTranslationsFiles(true);
-    await this.translationI18n.start();
+    await this.translationI18n.start(onlyFiles);
     task.done();
     //#endregion
   }

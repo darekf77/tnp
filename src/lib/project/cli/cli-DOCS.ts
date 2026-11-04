@@ -1,6 +1,6 @@
 //#region imports
 import { _, chalk, UtilsTerminal } from 'tnp-core/src';
-import { Helpers, HelpersTaon, UtilsHttp } from 'tnp-helpers/src';
+import { Helpers, HelpersTaon, UtilsHttpServer } from 'tnp-helpers/src';
 import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
 import { EnvOptions, ReleaseArtifactTaon } from '../../options';
@@ -59,7 +59,7 @@ class $Docs extends BaseCli {
       this.project.artifactsManager.artifact.docsWebapp.mkddocs
         .outDocsDistFolderAbs;
 
-    await UtilsHttp.startHttpServer(buildedDocsFolder, port, {
+    await UtilsHttpServer.start(buildedDocsFolder, port, {
       startMessage: `
 
         Serving static docs pages on http://localhost:${port}

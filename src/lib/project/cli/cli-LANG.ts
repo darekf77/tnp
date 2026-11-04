@@ -33,7 +33,16 @@ export class $Lang extends BaseCli {
   async extract(): Promise<void> {
     //#region @backendFunc
     const task = Helpers.actionStarted('Extracting translations..');
-    await this.project.framework.generateTranslations();
+    await this.project.framework.generateTranslations(
+      this.args
+        .filter(f => !!f)
+        .map(c => {
+          if (!path.isAbsolute(c)) {
+            return crossPlatformPath([this.cwd, c]);
+          }
+          return crossPlatformPath(c);
+        }),
+    );
 
     task.done();
     this._exit();
