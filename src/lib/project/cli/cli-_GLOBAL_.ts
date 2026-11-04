@@ -85,6 +85,7 @@ import type { TaonProjectResolve } from '../abstract/project-resolve';
 export class $Global extends BaseGlobalCommandLine<
   {
     watch?: boolean;
+    force?: boolean;
     w?: boolean;
   },
   // @ts-ignore TODO weird inheritance problem
@@ -2374,58 +2375,68 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
       Helpers.run(`npm install ${key}`, {
         cwd: tempCatalogForInstallation,
       }).sync();
-      const conflictingFiles: string[] = [];
+      const conflictingPackages: string[] = [];
 
       const projFromTemp = this.ins.From(tempCatalogForInstallation);
-      const allPackagesFromTemp = projFromTemp.nodeModules.getAllPackagesNames({
+      let allPackagesFromTemp = projFromTemp.nodeModules.getAllPackagesNames({
         followSymlinks: false,
       });
 
       for (const nodeModulesKey of allPackagesFromTemp) {
         if (allPackages.includes(nodeModulesKey)) {
-          conflictingFiles.push(nodeModulesKey);
+          conflictingPackages.push(nodeModulesKey);
         }
         console.log(`Found new package in node_modules: ${nodeModulesKey}`);
       }
-      if (conflictingFiles.length > 0) {
+
+      let proceed = true;
+      if (conflictingPackages.length > 0) {
+        proceed = false;
+        if (this.params.force) {
+          proceed = true;
+        }
         Helpers.error(
-          `Conflicting packages found: ${conflictingFiles.join(', ')}`,
-          false,
+          `Conflicting packages found: ${conflictingPackages.join(', ')}`,
+          proceed,
           true,
         );
-      } else {
-        const toCopy = Utils.uniqArray<Project>(
-          [
-            this.project.framework.coreContainer,
-            Project.ins.homeDirCoreContainer(
-              this.project.framework.frameworkVersion,
-            ),
-            ...(this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer
-              ? [this.project]
-              : []),
-          ],
-          'location',
-        ).map(c => this.ins.From(c.location));
-
-        for (const npmPackageName of allPackagesFromTemp) {
-          for (const coreContainer of toCopy) {
-            Helpers.info(
-              `Copying ${chalk.bold(`${npmPackageName}`)} to project: ${coreContainer.location} `,
-            );
-            UtilsFilesFoldersSync.copy(
-              projFromTemp.nodeModules.pathFor(npmPackageName),
-              coreContainer.nodeModules.pathFor(npmPackageName),
-              {
-                recursive: true,
-                overwrite: true,
-              },
-            );
-          }
-        }
-        Helpers.taskDone(
-          `Finished copying packages from temporary installation.`,
-        );
       }
+
+      const toCopy = Utils.uniqArray<Project>(
+        [
+          this.project.framework.coreContainer,
+          Project.ins.homeDirCoreContainer(
+            this.project.framework.frameworkVersion,
+          ),
+          ...(this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer
+            ? [this.project]
+            : []),
+        ],
+        'location',
+      ).map(c => this.ins.From(c.location));
+
+      allPackagesFromTemp = allPackagesFromTemp.filter(f => {
+        return !conflictingPackages.includes(f);
+      });
+
+      for (const npmPackageName of allPackagesFromTemp) {
+        for (const coreContainer of toCopy) {
+          Helpers.info(
+            `Copying ${chalk.bold(`${npmPackageName}`)} to project: ${coreContainer.location} `,
+          );
+          UtilsFilesFoldersSync.copy(
+            projFromTemp.nodeModules.pathFor(npmPackageName),
+            coreContainer.nodeModules.pathFor(npmPackageName),
+            {
+              recursive: true,
+              overwrite: true,
+            },
+          );
+        }
+      }
+      Helpers.taskDone(
+        `Finished copying packages from temporary installation.`,
+      );
     }
 
     this._exit();
