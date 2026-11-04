@@ -51,6 +51,8 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
     //#region @backendFunc
     const filesLocaiton = this.project.pathFor(srcMainProject);
 
+    const debugData = !!(onlyFiles && onlyFiles.length > 0);
+
     const filesPathes = onlyFiles
       ? onlyFiles
       : UtilsFilesFoldersSync.getFilesFrom(filesLocaiton, {
@@ -160,7 +162,7 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
     //#endregion
 
     const langs = this.project.taonJson.generateTranslationsFor;
-    console.log(JSON.stringify(files, null, 2));
+    debugData && console.log(JSON.stringify(files, null, 2));
     // console.log({ langs });
 
     //#region dirname data interface
