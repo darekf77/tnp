@@ -227,6 +227,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
 
     copyFromCoreAssets(CoreAssets.sqlWasmFile);
     copyFromCoreAssets(CoreAssets.mainFont);
+    copyFromCoreAssets(CoreAssets.mainFont2);
 
     return initOptions;
     //#endregion

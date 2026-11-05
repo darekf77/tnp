@@ -413,6 +413,8 @@ export enum AngularJsonTaskName {
 export enum CoreAssets {
   sqlWasmFile = 'sql-wasm.wasm',
   mainFont = 'flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2',
+
+  mainFont2 = 'kJF1BvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oDMzByHX9rA6RzaxHMPdY43zj-jCxv3fzvRNU22ZXGJpEpjC_1v-p_4MrImHCIJIZrDCvHOej.woff2',
 }
 
 export const dockerTemplatesFolder = 'docker-templates';
