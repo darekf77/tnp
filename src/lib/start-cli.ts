@@ -387,18 +387,19 @@ export async function run(
     argsv,
     callbackNotRecognizedCommand: async options => {
       Helpers.warn('Command has not been recognized. ');
-      if (
-        await UtilsTerminal.confirm({
-          message:
-            `Do you want to start ${chalk.bold(config.frameworkName)}` +
-            ` ${chalk.bold('cli menu')} to see what you can do in this project ?`,
-          defaultValue: true,
-        })
-      ) {
-        await ProjectClass.ins.taonProjectsWorker.terminalUI.infoScreen();
-      } else {
-        process.exit(0);
-      }
+      process.exit(0);
+      // if (
+      //   await UtilsTerminal.confirm({
+      //     message:
+      //       `Do you want to start ${chalk.bold(config.frameworkName)}` +
+      //       ` ${chalk.bold('cli menu')} to see what you can do in this project ?`,
+      //     defaultValue: true,
+      //   })
+      // ) {
+      //   await ProjectClass.ins.taonProjectsWorker.terminalUI.infoScreen();
+      // } else {
+      //   process.exit(0);
+      // }
     },
     shortArgsReplaceConfig: {
       //#region short args replacement

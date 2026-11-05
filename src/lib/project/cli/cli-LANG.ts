@@ -41,7 +41,8 @@ export class $Lang extends BaseCli {
             return crossPlatformPath([this.cwd, c]);
           }
           return crossPlatformPath(c);
-        }),
+        })
+        .filter(f => Helpers.exists(f)),
     );
 
     task.done();

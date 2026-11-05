@@ -53,12 +53,13 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
 
     const debugData = !!(onlyFiles && onlyFiles.length > 0);
 
-    const filesPathes = onlyFiles
-      ? onlyFiles
-      : UtilsFilesFoldersSync.getFilesFrom(filesLocaiton, {
-          followSymlinks: false,
-          recursive: true,
-        }).filter(f => !isTestFile(f));
+    const filesPathes =
+      onlyFiles && onlyFiles?.length > 0
+        ? onlyFiles
+        : UtilsFilesFoldersSync.getFilesFrom(filesLocaiton, {
+            followSymlinks: false,
+            recursive: true,
+          }).filter(f => !isTestFile(f));
 
     // console.log({ filesLocaiton });
 

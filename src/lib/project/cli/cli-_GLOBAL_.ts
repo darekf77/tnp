@@ -94,7 +94,9 @@ export class $Global extends BaseGlobalCommandLine<
 > {
   public async _() {
     //#region @backendFunc
-    await this.ins.taonProjectsWorker.terminalUI.infoScreen();
+    Helpers.warn('Command has not been recognized. ');
+    process.exit(0);
+    // await this.ins.taonProjectsWorker.terminalUI.infoScreen();
     //#endregion
   }
 
