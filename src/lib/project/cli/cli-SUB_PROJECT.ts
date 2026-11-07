@@ -38,6 +38,9 @@ export class $SubProject extends BaseCli {
       devprod: {
         name: 'Local dev minified build',
       },
+      sql: {
+        name: 'Save to file migration sql code',
+      },
       // build: {
       //   name: 'Local dev single build',
       // },
@@ -117,6 +120,13 @@ export class $SubProject extends BaseCli {
         await this.project.init();
       } else if (select === 'dev') {
         await this.project.subProject.startInDevMode({
+          projectName: this.secondArg
+            ? path.basename(this.secondArg?.trim())
+            : void 0,
+          envOptions: releaseOptions,
+        });
+      } else if (select === 'sql') {
+        await this.project.subProject.gatherMigrationSQL({
           projectName: this.secondArg
             ? path.basename(this.secondArg?.trim())
             : void 0,

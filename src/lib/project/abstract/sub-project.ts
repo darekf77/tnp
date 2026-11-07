@@ -92,6 +92,27 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region PUBLIC API / add new and configure
+  public async gatherMigrationSQL(opt?: {
+    projectName?: string;
+    envOptions?: EnvOptions;
+  }): Promise<void> {
+    //#region @backendFunc
+    opt = opt || {};
+    // console.log(`opt`, opt);
+    if (this.repo.getAll().length === 0) {
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: `Please use ${config.frameworkName} sub add # to add woker.. Press any key to return.`,
+      });
+      return;
+    }
+    const chosenProject = await this.selectAnyProject(opt.projectName);
+    await chosenProject.init();
+    await chosenProject.gatherMigrationSQL(opt.envOptions);
+    //#endregion
+  }
+  //#endregion
+
+  //#region PUBLIC API / add new and configure
   public async addAndConfigure(
     opt?: CloudFlarePorjectsUtils.AddProjectOptions,
   ): Promise<void> {

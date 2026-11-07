@@ -12,6 +12,7 @@ import {
   CoreModels,
   UtilsEnv,
   UtilsSecretEnv,
+  UtilsDotFile,
 } from 'tnp-core/src';
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
@@ -20,6 +21,7 @@ import {
   buildDevMinifyJS,
   buildDevNormalJS,
   buildJSprod,
+  dotEnvFile,
   externalJs,
   groupsFolder,
   indexTsInSrcForWorker,
@@ -336,6 +338,13 @@ export class CloudFlareSubProject {
   }
   //#endregion
 
+  //#region start in dev mode
+  async gatherMigrationSQL(envOptions: EnvOptions): Promise<void> {
+    //#region @backendFunc
+    //#endregion
+  }
+  //#endregion
+
   //#region buld in dev mode
   async buildInDevMode(): Promise<void> {
     //#region @backendFunc
@@ -433,6 +442,13 @@ export class CloudFlareSubProject {
           this.cwdWorker,
           this.taonParentProject,
           releaseOptions,
+        );
+
+        const TAON_DEPLOYMENT_ID = `${Date.now()}-${crypto.randomUUID()}`;
+        UtilsDotFile.setValueToDotFile(
+          [this.cwdWorker, dotEnvFile],
+          'TAON_DEPLOYMENT_ID',
+          TAON_DEPLOYMENT_ID,
         );
 
         const data = await UtilsExecProc.spawnAsync(
