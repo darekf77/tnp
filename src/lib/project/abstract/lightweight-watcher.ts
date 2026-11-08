@@ -138,41 +138,15 @@ export class LightWeightWatcher extends BaseFeatureForProject<Project> {
       // ),
     ];
 
-    // console.log('Watching for changes in:', pathsToWatch);
+    Helpers.logInfo(`Watching for changes in: ${pathsToWatch}`);
 
     chokidar
       .watch(pathsToWatch, {
         ignoreInitial: true,
       })
       .on('all', async (eventWatcher, pathToFile) => {
-        const relative = crossPlatformPath(pathToFile).replace(
-          this.project.location + '/' + path.basename(folders[0]) + '/',
-          '',
-        );
-
-        if (watcherType === 'backend-watcher') {
-          if (!relative.startsWith(`${assetsFromTempSrc}/`)) {
-            // console.log('WATCHER CHANGE', {
-            //   eventWatcher,
-            //   pathToFile,
-            //   watcherType,
-            // });
-            watcher.next({});
-          }
-        } else {
-          if (
-            !relative.startsWith(`${assetsFromTempSrc}/`) &&
-            !relative.startsWith(`app/`) &&
-            !relative.startsWith(`app.`)
-          ) {
-            // console.log('WATCHER CHANGE', {
-            //   eventWatcher,
-            //   pathToFile,
-            //   watcherType,
-            // });
-            watcher.next({});
-          }
-        }
+        // console.log(`notify ${pathToFile} `);
+        watcher.next({});
       });
     return watcher.asObservable();
     //#endregion
