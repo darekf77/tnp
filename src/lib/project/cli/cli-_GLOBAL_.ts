@@ -2446,6 +2446,52 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
     //#endregion
   }
   //#endregion
+
+  appsLinkCheck() {
+    //#region @backendFunc
+    const folderWithLinks = this.project.pathFor(
+      `tmp-apps-for-dist/${this.project.name}/projects/external-libs/src/lib`,
+    );
+    // const links: string = [];
+    const folders = UtilsFilesFoldersSync.getFoldersFrom(folderWithLinks, {
+      recursive: false,
+      followSymlinks: false,
+    })
+      .filter(c => !path.basename(c).startsWith('@'))
+      .map(c => {
+        const org = crossPlatformPath([c, 'lib']);
+        if (!Helpers.exists(c) || Helpers.isUnexistedLink(org)) {
+          return {
+            project: path.basename(path.dirname(c)).startsWith('@')
+              ? path.basename(path.dirname(c))
+              : path.basename(c),
+            notExists: true,
+          };
+        }
+        let source: string;
+
+        try {
+          source = crossPlatformPath(fse.realpathSync(org));
+        } catch (error) {
+          return {
+            project: path.basename(path.dirname(c)).startsWith('@')
+              ? path.basename(path.dirname(c))
+              : path.basename(c),
+            cantCheckLink: true,
+          };
+        }
+
+        return {
+          project: path.basename(path.dirname(c)).startsWith('@')
+            ? path.basename(path.dirname(c))
+            : path.basename(c),
+          source,
+        };
+      });
+    console.log(folders);
+    this._exit(0);
+    //#endregion
+  }
 }
 
 export default {

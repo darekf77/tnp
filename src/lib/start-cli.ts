@@ -355,6 +355,7 @@ export async function run(
           a.startsWith('refactor') ||
           a === 'dumpPackagesVersions' ||
           a === 'melt' ||
+          a === 'git' ||
           a === 'soft' ||
           a === 'local:sync' ||
           a === 'localSync' ||

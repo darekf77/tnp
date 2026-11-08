@@ -58,10 +58,14 @@ export function removeCommentsFromScssFile(scss: string): string {
   //#endregion
 }
 
-export const pingUrl = async (url: string) => {
-  const task = Helpers.actionStarted(`Pinging ${url}/${apiPrefix}/`);
+export const pingUrl = async (url: string, context: string = '') => {
+  const task = Helpers.actionStarted(
+    `Pinging ${url}/${apiPrefix}/${context ? context + '/tcp/' : ''}`,
+  );
   try {
-    await fetch(url);
+    const res = await fetch(url);
+    const pingResponse = await res.text();
+    Helpers.logInfo(`Ping response:${pingResponse}`);
     task.done();
   } catch (error) {
     Helpers.error(`No able to ping after deploy.`, false, true);
