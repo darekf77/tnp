@@ -83,6 +83,9 @@ export class CodeCut {
     remove: boolean = false,
   ): void {
     // console.log('CUT: ', relativePathToFile);
+    // if (relativePathToFile.endsWith('.sql')) {
+    //   debugger;
+    // }
 
     //#region @backendFunc
     if (!this.isAllowedPathForSave(relativePathToFile)) {

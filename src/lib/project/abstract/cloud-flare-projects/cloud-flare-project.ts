@@ -1,5 +1,6 @@
 //#region imports
 import { RenameRule } from 'magic-renamer/src';
+import { Models } from 'taon/src';
 import {
   crossPlatformPath,
   Helpers,
@@ -12,6 +13,11 @@ import {
   CoreModels,
   UtilsEnv,
   UtilsSecretEnv,
+  UtilsDotFile,
+  chalk,
+  startAsyncProc,
+  UtilsTempFolder,
+  UtilsProcess,
 } from 'tnp-core/src';
 import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
@@ -20,6 +26,8 @@ import {
   buildDevMinifyJS,
   buildDevNormalJS,
   buildJSprod,
+  distFromWorkerBuild,
+  dotEnvFile,
   externalJs,
   groupsFolder,
   indexTsInSrcForWorker,
@@ -36,7 +44,13 @@ import { EnvOptions } from '../../../options';
 import { ArtifactsAngularNodeAppHelpers } from '../artifacts/angular-node-app/artifact-angular-node-app-helpers';
 import type { Project } from '../project';
 
+import { extractWranglerReadyUrl } from './cloud-flare-custom-worker';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
+import {
+  executeRemoteMigrationSql,
+  executeWranglerQuery,
+  prepareRemoteDeploymentSql,
+} from './cloudfalre-migrations';
 //#endregion
 
 export class CloudFlareSubProject {
@@ -79,36 +93,39 @@ export class CloudFlareSubProject {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  get wranglerJsonC() {
-    return {
-      setDevMode: () => {
-        if (
-          this.selectedTempalte ===
-          TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
-        ) {
-          HelpersTaon.setValueToJSONC(
-            [this.cwdWorker, wranglerJsonC],
-            'build',
-            void 0,
-          );
-        }
-      },
-      setDeployMode: () => {
-        if (
-          this.selectedTempalte ===
-          TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
-        ) {
-          HelpersTaon.setValueToJSONC(
-            [this.cwdWorker, wranglerJsonC],
-            'build',
-            {
-              command: `npm-run bun run ${buildJSprod}`,
-            },
-          );
-        }
-      },
-    };
+  wranglerJsonCsetDevMode(): void {
+    if (
+      this.selectedTempalte ===
+      TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
+    ) {
+      HelpersTaon.setValueToJSONC(
+        [this.cwdWorker, wranglerJsonC],
+        'build',
+        void 0,
+      );
+      HelpersTaon.setValueToJSONC(
+        [this.cwdWorker, wranglerJsonC],
+        'assets',
+        void 0,
+      );
+    }
+  }
+
+  wranglerJsonSetDeployMode(): void {
+    if (
+      this.selectedTempalte ===
+      TempalteSubprojectType.TAON_CUSTOM_CLOUDFLARE_WORKER
+    ) {
+      HelpersTaon.setValueToJSONC([this.cwdWorker, wranglerJsonC], 'build', {
+        command: `npm-run bun run ${buildJSprod}`,
+      });
+
+      HelpersTaon.setValueToJSONC([this.cwdWorker, wranglerJsonC], 'assets', {
+        directory: './browser',
+        binding: 'ASSETS',
+        not_found_handling: 'none',
+      });
+    }
   }
 
   get workerCore(): Project {
@@ -326,12 +343,259 @@ export class CloudFlareSubProject {
   //#region start in dev mode
   async startInDevMode(envOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
-    this.wranglerJsonC.setDevMode();
+    this.wranglerJsonCsetDevMode();
     await UtilsExecProc.spawnAsync(`npm run start`, {
       cwd: this.cwdWorker,
       showOutput: true,
       showOutputColor: true,
     }).waitUntilDoneOrThrow();
+    //#endregion
+  }
+  //#endregion
+
+  //#region protected methods / get worker port number
+  protected async getWorkerPortNum(envOptions: EnvOptions): Promise<number> {
+    //#region @backendFunc
+    const ngCloudflareWorkerPort =
+      await this.taonParentProject.artifactsManager.artifact.angularNodeApp.appHostsRecreateHelper.NODE_BACKEND_PORT_UNIQ_KEY(
+        envOptions.clone({
+          build: {
+            cloudflare: true,
+          },
+        }),
+      );
+    return ngCloudflareWorkerPort;
+    //#endregion
+  }
+  //#endregion
+
+  //#region protected methods /  get master key
+  protected async getMaterKey(): Promise<string> {
+    //#region @backendFunc
+    const ctrl =
+      await this.taonParentProject.ins.taonProjectsWorker.secretsKeychainPackagesWorker.getRemoteControllerFor(
+        {
+          methodOptions: {
+            calledFrom: 'cloudflare deployment',
+          },
+        },
+      );
+    const masterKey = (
+      await ctrl.getMasterPassword(this.taonParentProject.location).request()
+    ).body.text;
+
+    return masterKey;
+    //#endregion
+  }
+  //#endregion
+
+  //#region gather migration sql
+  /**
+   * @returns all migrations sql data from running app
+   */
+  async gatherMigrationSQL(envOptions: EnvOptions): Promise<string> {
+    //#region @backendFunc
+    this.wranglerJsonCsetDevMode();
+    const masterKey = await this.getMaterKey();
+    const ngCloudflareWorkerPort = await this.getWorkerPortNum(envOptions);
+
+    Helpers.logInfo(`Killling process ${ngCloudflareWorkerPort}`);
+    await UtilsProcess.killProcessOnPort(ngCloudflareWorkerPort, true);
+
+    //#region skip build when in deployment
+    Helpers.removeFileIfExists([this.cwdWorker, '.env']);
+
+    const cloudflareBuildFile = envOptions.build.prod
+      ? buildJSprod
+      : envOptions.release.nodeBackendApp.minify
+        ? buildDevMinifyJS
+        : buildDevNormalJS;
+
+    Helpers.info(`Using build file: ${cloudflareBuildFile}`);
+    await UtilsExecProc.spawnAsync(`npm-run bun run ${cloudflareBuildFile}`, {
+      cwd: this.cwdWorker,
+      showOutput: true,
+      showOutputColor: true,
+    }).waitUntilDoneOrThrow({
+      successOutputMessage: 'Compilation Done',
+    });
+    //#endregion
+
+    // const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
+    const tempFolder = await UtilsTempFolder.getPath({
+      prefix: 'temp-cloudflare',
+    });
+
+    // Helpers.remove(tempFolder);
+
+    Helpers.logInfo(`Using temp folder ${tempFolder}`);
+
+    const command =
+      `npm run start -- ` +
+      `--var TAON_LOCAL_DEV:true  ` +
+      `--var DISPLAY_RAW_SQL_COMMANDS:true  ` +
+      `--var ${UtilsSecretEnv.MASTER_PASS_KEY}:"${masterKey}" ` +
+      `--port ${ngCloudflareWorkerPort} ` +
+      ` --persist-to ${tempFolder} `;
+
+    Helpers.info(`Executing command:
+
+      ${command}
+
+      `);
+
+    const queries: string[] = [];
+
+    const contextsNames = this.taonParentProject.framework
+      .getAllDetectedTaonContexts({
+        skipLibFolder: true,
+      })
+      .map(c => c.contextName);
+
+    await startAsyncProc(command, this.cwdWorker, {
+      uniqueName: `cloudflare`,
+      prefix: true,
+      resolvePromiseMsg_stderr: ['$$$ APP_READY $$$'],
+      resolvePromiseMsg_stdout: ['$$$ APP_READY $$$'],
+      hideOutput_stdout: true,
+      // hideOutput_stderr: true,
+      outputLineReplace: line => {
+        if (line.trim().startsWith(CoreModels.queryExtract)) {
+          queries.push(line);
+        }
+        if (line.includes('Ready on')) {
+          let url = extractWranglerReadyUrl(line);
+          if (url) {
+            void pingUrl(url, _.first(contextsNames));
+          }
+        }
+        const errorPath = 'at null.<anonymous> (';
+        if (line.includes(errorPath)) {
+          line = line.replace(
+            errorPath,
+            `(${this.cwdWorker}/${distFromWorkerBuild}/`,
+          );
+        }
+        return line;
+      },
+    });
+
+    const queryPrefix = new RegExp(`^${CoreModels.queryExtract}`);
+
+    const generatedSqlFromAllContexts = queries
+      .map(c => c.replace(queryPrefix, '').trim())
+      .filter(Boolean)
+      .map(c =>
+        /^--\s*#(?:reg|endreg)ion\b/.test(c)
+          ? c
+          : `${c.replace(/;+\s*$/, '')};`,
+      )
+      .join('\n');
+
+    Helpers.logInfo(`DONE GATHERING SQL DATA! `);
+    return generatedSqlFromAllContexts;
+    //#endregion
+  }
+  //#endregion
+
+  //#region apply migrations
+  async applyMigrations(
+    envOptions: EnvOptions,
+    generatedSqlFromAllContexts: string,
+  ): Promise<void> {
+    //#region @backendFunc
+    const contextsNames = this.taonParentProject.framework
+      .getAllDetectedTaonContexts({
+        skipLibFolder: true,
+      })
+      .map(c => c.contextName);
+
+    const migrationsFromAllContextFileAbsPath = this.taonParentProject.pathFor([
+      `.taon/workers-temp-data/all-sql-for-migration/${this.name}--${new Date().getTime()}.sql`,
+    ]);
+
+    UtilsFilesFoldersSync.writeFile(
+      migrationsFromAllContextFileAbsPath,
+      generatedSqlFromAllContexts,
+    );
+
+    Helpers.logInfo(
+      `Migrations file from ALL CONTEXTS: ${migrationsFromAllContextFileAbsPath}`,
+    );
+
+    for (let index = 0; index < contextsNames.length; index++) {
+      const contextName = contextsNames[index];
+      const absFileForSpecyficContextMigrations = crossPlatformPath([
+        this.cwdWorker,
+        `tmp-taon-migrations/migration-${contextName}-${new Date().getTime()}.sql`,
+      ]);
+
+      const task = Helpers.actionStarted(
+        `Applying migration for context: ${contextName}`,
+      );
+      const plan = await prepareRemoteDeploymentSql({
+        mode: envOptions.release.clearDb
+          ? Models.DBRecreateMode.DROP_DB_MIGRATIONS
+          : Models.DBRecreateMode.PRESERVE_DATA_MIGRATIONS,
+        sql: generatedSqlFromAllContexts,
+        cwdWorker: this.cwdWorker,
+        contextName: contextName,
+      });
+
+      Helpers.info(
+        `[${contextName}] Pending: ${plan.pending?.join(',') || '<nothing>'}`,
+      );
+      Helpers.info(
+        `[${contextName}] New: ${plan.newMigrations?.join(',') || '<nothing>'}`,
+      );
+      Helpers.info(
+        `[${contextName}] Skipped: ${plan.skipped?.join(',') || '<nothing>'}`,
+      );
+      Helpers.info(
+        `[${contextName}] SQL lines of migrations = ${plan.sql?.split(';')?.length || 0}`,
+      );
+
+      UtilsFilesFoldersSync.writeFile(
+        absFileForSpecyficContextMigrations,
+        plan.sql,
+      );
+
+      if (envOptions.release.releaseType) {
+        Helpers.info(`[${contextName}] Executing remote migrations... `);
+        await executeRemoteMigrationSql(plan.sql, this.cwdWorker, contextName);
+      } else {
+        Helpers.info(
+          `[${contextName}] Generated sql: ${chalk.bold(absFileForSpecyficContextMigrations)}`,
+        );
+        Helpers.warn(`[${contextName}] Skipping remote migrations... `);
+      }
+
+      task.done();
+    }
+
+    //#endregion
+  }
+  //#endregion
+
+  //#region mark deployment as ready
+  async markDeploymentAsReady(TAON_DEPLOYMENT_ID: string): Promise<void> {
+    //#region @backendFunc
+    const task = Helpers.actionStarted(
+      `Marking deployment ${TAON_DEPLOYMENT_ID} as ready.`,
+    );
+    await executeWranglerQuery(
+      `
+    CREATE TABLE IF NOT EXISTS TaonCloudfalreDeployment (
+      deploymentVersion TEXT NOT NULL PRIMARY KEY
+    );
+
+    INSERT INTO TaonCloudfalreDeployment (deploymentVersion)
+    VALUES ('${TAON_DEPLOYMENT_ID}')
+    ON CONFLICT (deploymentVersion) DO NOTHING;
+  `,
+      this.cwdWorker,
+    );
+    task.done();
     //#endregion
   }
   //#endregion
@@ -393,24 +657,25 @@ export class CloudFlareSubProject {
     await this.init();
 
     await CloudFlarePorjectsUtils.loginCliCloudFlare();
-    Helpers.taskStarted(`STARTING DEPLOYMENT OF WORKER ${this.cwdWorker}`);
+    Helpers.taskStarted(`
+
+
+      STARTING DEPLOYMENT OF WORKER ${this.cwdWorker}
+
+      CLEAR DATABASE ? = ${releaseOptions.release.clearDb}
+
+    `);
+
+    const TAON_DEPLOYMENT_ID = `${Date.now()}-${crypto.randomUUID()}`;
+    const generatedSqlFromAllContexts =
+      await this.gatherMigrationSQL(releaseOptions);
+
     while (true) {
       try {
-        this.wranglerJsonC.setDeployMode();
+        this.wranglerJsonSetDeployMode();
         Helpers.taskStarted(`Deploying worker to cloud flare...`);
-        const ctrl =
-          await this.taonParentProject.ins.taonProjectsWorker.secretsKeychainPackagesWorker.getRemoteControllerFor(
-            {
-              methodOptions: {
-                calledFrom: 'cloudflare deployment',
-              },
-            },
-          );
-        const masterKey = (
-          await ctrl
-            .getMasterPassword(this.taonParentProject.location)
-            .request()
-        ).body.text;
+
+        const masterKey = await this.getMaterKey();
 
         UtilsFilesFoldersSync.writeFile(
           [this.cwdWorker, '.env'],
@@ -435,6 +700,12 @@ export class CloudFlareSubProject {
           releaseOptions,
         );
 
+        UtilsDotFile.setValueToDotFile(
+          [this.cwdWorker, dotEnvFile],
+          'TAON_DEPLOYMENT_ID',
+          TAON_DEPLOYMENT_ID,
+        );
+
         const data = await UtilsExecProc.spawnAsync(
           `npm-run wrangler deploy --secrets-file .env`,
           {
@@ -445,6 +716,11 @@ export class CloudFlareSubProject {
           data.stdout + data.stderr,
         );
         Helpers.removeFileIfExists([this.cwdWorker, '.env']);
+
+        await this.applyMigrations(releaseOptions, generatedSqlFromAllContexts);
+
+        await this.markDeploymentAsReady(TAON_DEPLOYMENT_ID);
+
         Helpers.taskDone(`
 
           DONE DEPLOYMENT on acccount name "${accountName}"
@@ -460,11 +736,9 @@ export class CloudFlareSubProject {
         this.taonParentProject.taonJson.setCloudFlareAccountSubdomain(
           accountName,
         );
-
-        await pingUrl(this.workerUrl);
         break;
       } catch (error) {
-        this.wranglerJsonC.setDevMode();
+        this.wranglerJsonCsetDevMode();
         if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
           break;
         } else {

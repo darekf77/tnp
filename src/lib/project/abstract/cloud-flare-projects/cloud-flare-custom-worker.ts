@@ -2,15 +2,12 @@
 import {
   crossPlatformPath,
   fileName,
-  GlobalStorage,
   Helpers,
   startAsync,
-  taonActionFromParent,
   UtilsExecProc,
-  UtilsFilesFoldersSync,
-  UtilsOs,
   UtilsSecretEnv,
   UtilsTempFolder,
+  _,
 } from 'tnp-core/src';
 
 import { pingUrl } from '../../../app-utils';
@@ -23,11 +20,10 @@ import {
   externalJs,
   wranglerJsonC,
 } from '../../../constants';
-import { EnvOptions, ReleaseArtifactTaon } from '../../../options';
+import { EnvOptions } from '../../../options';
 
 import { CloudFlareSubProject } from './cloud-flare-project';
 import { CloudFlarePorjectsUtils } from './cloud-flare-projects.utils';
-import { apiPrefix } from 'taon/src';
 //#endregion
 
 export class CloudCustomWorkerProject extends CloudFlareSubProject {
@@ -47,17 +43,15 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
   //#region start in dev mode
   async startInDevMode(envOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
-    const ctrl =
-      await this.taonParentProject.ins.taonProjectsWorker.secretsKeychainPackagesWorker.getRemoteControllerFor(
-        {
-          methodOptions: {
-            calledFrom: 'cloudflare deployment',
-          },
-        },
-      );
-    const masterKey = (
-      await ctrl.getMasterPassword(this.taonParentProject.location).request()
-    ).body.text;
+    this.wranglerJsonCsetDevMode();
+    const masterKey = await this.getMaterKey();
+    const ngCloudflareWorkerPort = await this.getWorkerPortNum(envOptions);
+
+    const contextsNames = this.taonParentProject.framework
+      .getAllDetectedTaonContexts({
+        skipLibFolder: true,
+      })
+      .map(c => c.contextName);
 
     Helpers.removeFileIfExists([this.cwdWorker, '.env']);
 
@@ -75,15 +69,6 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
     }).waitUntilDoneOrThrow({
       successOutputMessage: 'Compilation Done',
     });
-
-    const ngCloudflareWorkerPort =
-      await this.taonParentProject.artifactsManager.artifact.angularNodeApp.appHostsRecreateHelper.NODE_BACKEND_PORT_UNIQ_KEY(
-        envOptions.clone({
-          build: {
-            cloudflare: true,
-          },
-        }),
-      );
 
     // const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
     const tempFolder = await UtilsTempFolder.getPath({
@@ -114,7 +99,7 @@ export class CloudCustomWorkerProject extends CloudFlareSubProject {
         if (line.includes('Ready on')) {
           let url = extractWranglerReadyUrl(line);
           if (url) {
-            void pingUrl(url);
+            void pingUrl(url, _.first(contextsNames));
           }
         }
         const errorPath = 'at null.<anonymous> (';

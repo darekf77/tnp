@@ -345,10 +345,7 @@ export interface TaonDockerContainerConfig<ENV = {}> {
    * then healthCheck function is required
    * and it will be called to check if container is healthy
    */
-  healthCheck?: (opt?: {
-    project?: Project;
-    env?: ENV;
-  }) => Promise<boolean>;
+  healthCheck?: (opt?: { project?: Project; env?: ENV }) => Promise<boolean>;
   waitUnitHealthy?: boolean;
   overrideDotEnv?: { [key in keyof ENV]: string | number | boolean };
 }
@@ -457,6 +454,8 @@ class EnvOptionsRelease {
    * skip npm publish
    */
   declare skipDeploy?: boolean;
+
+  declare clearDb?: boolean;
 
   /**
    * skip npm publish
@@ -1173,6 +1172,7 @@ export const EnvOptionsDummyWithAllProps = EnvOptions.from({
     releaseVersionBumpType: '-' as any,
     envName: '-' as any,
     envNumber: '-' as any,
+    clearDb: '-' as any,
     installLocally: '-' as any,
     removeReleaseOutputAfterLocalInstall: '-' as any,
     cli: {

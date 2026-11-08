@@ -450,6 +450,11 @@ export class BrowserCodeCut {
           this.absSourcePathFromSrc,
           this.replaceAssetsPath(this.absoluteBackendEsmDestFilePath),
         );
+        // QUICK_FIX copy not related to build files to dist (for tests)
+        HelpersTaon.copyFile(
+          this.absSourcePathFromSrc,
+          this.project.pathFor(['dist', this.relativePath]),
+        );
       } catch (error) {
         Helpers.warn(
           `[taon][browser-code-cut] file not found ${this.absSourcePathFromSrc}`,

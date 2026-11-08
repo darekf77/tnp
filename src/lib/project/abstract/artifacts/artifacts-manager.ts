@@ -1033,6 +1033,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
             askUserBeforeFinalAction: item.askUserBeforeFinalAction,
             staticPagesCustomRepoUrl: item.staticPagesCustomRepoUrl,
             workerName: item.workerName,
+            clearDb: item.clearDb,
           },
         });
 

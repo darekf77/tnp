@@ -38,6 +38,14 @@ export class SubProject extends BaseFeatureForProject<Project> {
     this.repo = new CloudFlareSubProjectsRepository(project);
   }
 
+  public async ls() {
+    const projects = this.repo.getAll().map(c => c.name);
+    for (let index = 0; index < projects.length; index++) {
+      const proj = projects[index];
+      console.log(`- ${index + 1}. ${proj}`);
+    }
+  }
+
   //#region PUBLIC API / set mode for worker
   public async getInfo(): Promise<void> {
     //#region @backendFunc
@@ -87,6 +95,35 @@ export class SubProject extends BaseFeatureForProject<Project> {
     const chosenProject = await this.selectAnyProject(opt.projectName);
     await chosenProject.init();
     await chosenProject.startInDevMode(opt.envOptions);
+    //#endregion
+  }
+  //#endregion
+
+  //#region PUBLIC API / add new and configure
+  public async gatherMigrationSQL(opt?: {
+    projectName?: string;
+    envOptions?: EnvOptions;
+  }): Promise<void> {
+    //#region @backendFunc
+    opt = opt || {};
+    // console.log(`opt`, opt);
+    if (this.repo.getAll().length === 0) {
+      await UtilsTerminal.pressAnyKeyToContinueAsync({
+        message: `Please use ${config.frameworkName} sub add # to add woker.. Press any key to return.`,
+      });
+      return;
+    }
+    const chosenProject = await this.selectAnyProject(opt.projectName);
+    await chosenProject.init();
+    const generatedSqlFromAllContexts = await chosenProject.gatherMigrationSQL(
+      opt.envOptions,
+    );
+    await chosenProject.applyMigrations(
+      opt.envOptions,
+      generatedSqlFromAllContexts,
+    );
+    process.exit(0);
+
     //#endregion
   }
   //#endregion
@@ -223,7 +260,9 @@ export class SubProject extends BaseFeatureForProject<Project> {
           .map(e => {
             return {
               name:
-                e.envName === '__' ? '__ ( default )' : e.envName + (e.envNumber ?? ''),
+                e.envName === '__'
+                  ? '__ ( default )'
+                  : e.envName + (e.envNumber ?? ''),
               value: e.envName + (e.envNumber ?? ''),
             };
           }),
@@ -457,7 +496,7 @@ export class SubProject extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region PUBLIC API / deploy worker
-  public async deployWorker(envOptions:EnvOptions): Promise<void> {
+  public async deployWorker(envOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
     while (true) {
       const chosenProject = await this.selectAnyProject();

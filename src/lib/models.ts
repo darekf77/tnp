@@ -107,6 +107,11 @@ export namespace Models {
      * Cloudflare worker name
      */
     workerName?: string;
+
+    /**
+     * Clear database during deploy
+     */
+    clearDb?: boolean;
     /**
      * Ask for confirmation before deployement to taon cloud
      */
