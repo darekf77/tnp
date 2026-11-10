@@ -388,6 +388,7 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
             releaseOptions.release.autoReleaseUsingConfig,
           isCiProcess: releaseOptions.isCiProcess,
           skipTag: false,
+          commitWhenEmpty: true,
         });
         endCallback();
         return;
