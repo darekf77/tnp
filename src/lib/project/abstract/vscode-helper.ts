@@ -28,6 +28,7 @@ import {
   appAutoGenDocsMd,
   appAutoGenJs,
   TaonGeneratedFiles,
+  mainProjectSubProjects,
 } from '../../constants';
 import { Models } from '../../models';
 import { Development, EnvOptions } from '../../options';
@@ -573,8 +574,6 @@ export class Vscode extends BaseVscodeHelpers<Project> {
       }
     });
 
-
-
     this.project.writeFile(
       `.vscode/${TaonGeneratedFiles.LAUNCH_BACKUP_JSONC}`,
       `${THIS_IS_GENERATED_INFO_COMMENT}\n` +
@@ -730,6 +729,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
 
     settings['search.exclude'][`${srcMainProject}/${appAutoGenDocsMd}`] = true;
     settings['search.exclude'][`${srcMainProject}/${appAutoGenJs}`] = true;
+    settings['search.exclude'][`${mainProjectSubProjects}`] = true;
     return settings;
     //#endregion
   }
