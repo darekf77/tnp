@@ -487,14 +487,14 @@ export async function prepareRemoteDeploymentSql(options: {
 export async function executeRemoteMigrationSql(
   sql: string,
   cwdWorker: string,
-  contextName: string,
+  contextNameForMigration?: string,
 ): Promise<void> {
   //#region @backendFunc
   if (!sql.trim()) return;
 
   const sqlFileAbs = crossPlatformPath([
     cwdWorker,
-    `tmp-taon-migrations/migration-${contextName}-${new Date().getTime()}.sql`,
+    `tmp-taon-sql-exec-files/${contextNameForMigration ? `migration-${contextNameForMigration}` : 'sql-query'}-${new Date().getTime()}.sql`,
   ]);
 
   UtilsFilesFoldersSync.writeFile(sqlFileAbs, sql);

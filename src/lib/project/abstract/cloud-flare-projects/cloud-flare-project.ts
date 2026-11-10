@@ -1,6 +1,6 @@
 //#region imports
 import { RenameRule } from 'magic-renamer/src';
-import { Models } from 'taon/src';
+import { ContextDbMigrations, Models } from 'taon/src';
 import {
   crossPlatformPath,
   Helpers,
@@ -530,9 +530,20 @@ export class CloudFlareSubProject {
         `tmp-taon-migrations/migration-${contextName}-${new Date().getTime()}.sql`,
       ]);
 
+      const taskMakeSureTable = Helpers.actionStarted(
+        `Making sure migration table exists for context: ${contextName}`,
+      );
+      await executeRemoteMigrationSql(
+        new ContextDbMigrations(void 0).TAON_MIGRATION_META__CREATE_QUERY,
+        this.cwdWorker,
+        contextName,
+      );
+      taskMakeSureTable.done();
+
       const task = Helpers.actionStarted(
         `Applying migration for context: ${contextName}`,
       );
+
       const plan = await prepareRemoteDeploymentSql({
         mode: envOptions.release.clearDb
           ? Models.DBRecreateMode.DROP_DB_MIGRATIONS
