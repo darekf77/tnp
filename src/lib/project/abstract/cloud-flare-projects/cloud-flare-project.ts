@@ -492,6 +492,9 @@ export class CloudFlareSubProject {
       )
       .join('\n');
 
+    Helpers.logInfo(`Killling process ${ngCloudflareWorkerPort}`);
+    await UtilsProcess.killProcessOnPort(ngCloudflareWorkerPort, true);
+
     Helpers.logInfo(`DONE GATHERING SQL DATA! `);
     return generatedSqlFromAllContexts;
     //#endregion
