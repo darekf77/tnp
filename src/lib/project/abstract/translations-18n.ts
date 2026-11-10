@@ -9,6 +9,9 @@ import {
   fse,
   Utils,
   UtilsI18n,
+  chalk,
+  GlobalStorage,
+  taonActionFromParent,
 } from 'tnp-core/src';
 import { crossPlatformPath, path } from 'tnp-core/src';
 import {
@@ -35,6 +38,7 @@ import {
 } from '../../constants';
 
 import { Project } from './project';
+import { Replecables } from 'taon/src';
 //#endregion
 
 type DirnameData = {
@@ -73,6 +77,9 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
       `${path.basename(orgTsFileOrPoFileAbsPath)}.${lang}.po`,
     ]);
     Helpers.remove(i18poAbsPathPo);
+    // if (i18poAbsPathPo.includes('controller')) {
+    //   debugger;
+    // }
 
     const i18poDatats = crossPlatformPath([
       path.dirname(orgTsFileOrPoFileAbsPath),
@@ -99,6 +106,8 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
 
   async start(onlyFiles?: string[]): Promise<void> {
     //#region @backendFunc
+    const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
+
     const filesLocaiton = this.project.pathFor(srcMainProject);
     const langs = this.project.taonJson.generateTranslationsFor;
 
@@ -140,8 +149,25 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
         }
 
         if (
+          f.endsWith('.contro' + 'ller.ts') &&
+          content.includes('get' + 'text') &&
+          !content.includes('Transl' + 'ation.for(')
+        ) {
+          Helpers.warn(
+            `[${chalk.bold(
+              `${
+                taonActionFromParentName ? `./${taonActionFromParentName}` : '.'
+              }/src/${fileRelativePath}`,
+            )}:0]
+Please create: const t:${'Trans' + 'lation'}.for(...) and assign it to controller instnace.`,
+          );
+        }
+
+        if (
           ['.ts', '.tsx'].includes(path.extname(f)) &&
-          !content.includes(LANG_IMPORT)
+          !content.includes(LANG_IMPORT) &&
+          !content.includes('gettext') &&
+          !content.includes('translate')
         ) {
           for (const lang of langs) {
             this.removeUnusedLangFiles(lang, f);
