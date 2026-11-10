@@ -47,9 +47,60 @@ type DirnameData = {
 
 // @ts-ignore TODO weird inheritance problem
 export class TranslationI18n extends BaseFeatureForProject<Project> {
+  public removeUnusedLangFiles(
+    lang: UtilsI18n.CommonLocaleCode,
+    orgTsFileOrPoFileAbsPath: string,
+  ): void {
+    if (orgTsFileOrPoFileAbsPath.endsWith('.po')) {
+      orgTsFileOrPoFileAbsPath = crossPlatformPath([
+        path.dirname(path.dirname(orgTsFileOrPoFileAbsPath)),
+        path.basename(orgTsFileOrPoFileAbsPath).replace(`.${lang}.po`, ''),
+      ]);
+    }
+    if (
+      orgTsFileOrPoFileAbsPath.endsWith('.ts') ||
+      orgTsFileOrPoFileAbsPath.endsWith('.tsx') ||
+      orgTsFileOrPoFileAbsPath.endsWith('.html')
+    ) {
+      // ok
+    } else {
+      return;
+    }
+    // not content but old files should be cleaned
+    const i18poAbsPathPo = crossPlatformPath([
+      path.dirname(orgTsFileOrPoFileAbsPath),
+      i18nFolder,
+      `${path.basename(orgTsFileOrPoFileAbsPath)}.${lang}.po`,
+    ]);
+    Helpers.remove(i18poAbsPathPo);
+
+    const i18poDatats = crossPlatformPath([
+      path.dirname(orgTsFileOrPoFileAbsPath),
+      i18nFolder,
+      `${path.basename(orgTsFileOrPoFileAbsPath)}.${lang}${i18nDataTsFileExt}`,
+    ]);
+    Helpers.remove(i18poDatats);
+
+    const removeParent =
+      UtilsFilesFoldersSync.getFilesFrom(
+        [path.dirname(orgTsFileOrPoFileAbsPath), i18nFolder],
+        { recursive: false, followSymlinks: false },
+      ).filter(f => f.endsWith('.po')).length === 0;
+
+    if (removeParent) {
+      const i18parentFolder = crossPlatformPath([
+        path.dirname(orgTsFileOrPoFileAbsPath),
+        i18nFolder,
+        `${path.basename(path.dirname(orgTsFileOrPoFileAbsPath))}${translationTsExt}`,
+      ]);
+      Helpers.remove(i18parentFolder);
+    }
+  }
+
   async start(onlyFiles?: string[]): Promise<void> {
     //#region @backendFunc
     const filesLocaiton = this.project.pathFor(srcMainProject);
+    const langs = this.project.taonJson.generateTranslationsFor;
 
     const debugData = !!(onlyFiles && onlyFiles.length > 0);
 
@@ -81,20 +132,19 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
         }
 
         const content = UtilsFilesFoldersSync.readFile(f);
+        if (!content) {
+          for (const lang of langs) {
+            this.removeUnusedLangFiles(lang, f);
+          }
+          return;
+        }
+
         if (
-          !content &&
-          (content.includes('gettext') || content.includes('translate'))
+          ['.ts', '.tsx'].includes(path.extname(f)) &&
+          !content.includes(LANG_IMPORT)
         ) {
-          if (content.includes(LANG_IMPORT)) {
-            return {
-              // isAppFile: !fileRelativePath.startsWith('lib/'),
-              fileAbsPath: f,
-              fileRelativePath: crossPlatformPath([
-                srcMainProject,
-                fileRelativePath,
-              ]),
-              tags: [],
-            } as UtilsI18n.GettextFile;
+          for (const lang of langs) {
+            this.removeUnusedLangFiles(lang, f);
           }
           return;
         }
@@ -117,7 +167,10 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
           // });
         }
 
-        if (['.html'].includes(path.extname(f))) {
+        if (
+          ['.html'].includes(path.extname(f)) &&
+          (content.includes('gettext') || content.includes('translate'))
+        ) {
           tags = UtilsI18nHtml.extractGettextTranslateFromHtml(content);
           // if (path.basename(f) === 'simple-paywall-tw.component.html') {
           //   console.log({
@@ -129,7 +182,10 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
         }
 
         if (tags.length === 0) {
-          if (content.includes(LANG_IMPORT)) {
+          if (
+            ['.ts', '.tsx'].includes(path.extname(f)) &&
+            content.includes(LANG_IMPORT)
+          ) {
             return {
               // isAppFile: !fileRelativePath.startsWith('lib/'),
               fileAbsPath: f,
@@ -162,7 +218,6 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
       );
     //#endregion
 
-    const langs = this.project.taonJson.generateTranslationsFor;
     debugData && console.log(JSON.stringify(files, null, 2));
     // console.log({ langs });
 
@@ -202,6 +257,7 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
             const tsFromPo = _.first(
               UtilsPoFile.extractPoToJson(exitedPoContent),
             );
+
             file = UtilsPoFile.mergeGettextFile(file, tsFromPo);
             poFileContent = UtilsPoFile.generatePoFileContent([file], lang);
           }

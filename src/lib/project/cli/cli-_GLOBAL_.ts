@@ -178,7 +178,17 @@ export class $Global extends BaseGlobalCommandLine<
   async killonport() {
     //#region @backendFunc
     const port = parseInt(this.firstArg);
-    await Helpers.killProcessByPort(port);
+    await UtilsProcess.killProcessOnPort(port);
+    this._exit();
+    //#endregion
+  }
+  //#endregion
+
+  //#region kill process on port
+  async killonportparent() {
+    //#region @backendFunc
+    const port = parseInt(this.firstArg);
+    await UtilsProcess.killProcessOnPort(port, true);
     this._exit();
     //#endregion
   }

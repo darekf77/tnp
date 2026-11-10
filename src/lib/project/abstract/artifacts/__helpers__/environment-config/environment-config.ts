@@ -160,8 +160,8 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
         this.saveEnvironmentConfig(configResultForTarget);
       }
 
-      this.project.framework.generateIndexTs(
-        `${srcMainProject}/${libFromSrc}/${TaonGeneratedFolders.ENV_FOLDER}`,
+      this.project.removeFolderByRelativePath(
+        `${srcMainProject}/${libFromSrc}/${TaonGeneratedFolders.ENV_FOLDER}/index.ts`,
       );
     }
 
