@@ -109,6 +109,17 @@ export namespace UtilsMdToHtml {
 
       if (prose.text().trim()) {
         block.attr('translate', '');
+        block.attr('[translate-t]', 't');
+
+        const children = block.children();
+        const hasOnlyLineBreaks =
+          children.length > 0 &&
+          children.filter('br').length === children.length;
+
+        if (hasOnlyLineBreaks) {
+          const htmlKey = (block.html() ?? '').trim();
+          block.attr('[translate-html-key]', JSON.stringify(htmlKey));
+        }
       }
     });
 
@@ -118,9 +129,7 @@ export namespace UtilsMdToHtml {
 
     //#endregion
 
-    // ---------------------------------------------------------
-    // Headings + IDs
-    // ---------------------------------------------------------
+    //#region heading ids
 
     $('h1, h2, h3').each((_, element) => {
       const heading = $(element);
@@ -143,7 +152,9 @@ export namespace UtilsMdToHtml {
         level,
       });
     });
+    //#endregion
 
+    //#region search index
     // ---------------------------------------------------------
     // Search index
     //
@@ -189,7 +200,9 @@ export namespace UtilsMdToHtml {
         text: sectionText,
       });
     });
+    //#endregion
 
+    //#region code block
     // ---------------------------------------------------------
     // Code blocks
     // ---------------------------------------------------------
@@ -209,7 +222,11 @@ export namespace UtilsMdToHtml {
       //
       // which is exactly what we want inside context.codeblockX.
 
-      const codeContent = codeElement.text();
+      const decodedCode = codeElement.text();
+
+      const codeContent = codeElement.closest('pre').length
+        ? decodedCode
+        : decodedCode.replace(/[ \t]*(?:\r\n?|\n)[ \t]*/g, ' ').trim();
 
       codeblocks.push({
         name,
@@ -245,6 +262,7 @@ export namespace UtilsMdToHtml {
 
       codeElement.html(`{{ context.${name} }}`);
     });
+    //#endregion
 
     return {
       resultContent: $.html(),

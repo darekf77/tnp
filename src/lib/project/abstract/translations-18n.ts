@@ -51,6 +51,7 @@ type DirnameData = {
 
 // @ts-ignore TODO weird inheritance problem
 export class TranslationI18n extends BaseFeatureForProject<Project> {
+  //#region API / remove unused lang files
   public removeUnusedLangFiles(
     lang: UtilsI18n.CommonLocaleCode,
     orgTsFileOrPoFileAbsPath: string,
@@ -103,7 +104,9 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
       Helpers.remove(i18parentFolder);
     }
   }
+  //#endregion
 
+  //#region methods / start
   async start(onlyFiles?: string[]): Promise<void> {
     //#region @backendFunc
     const taonActionFromParentName = GlobalStorage.get(taonActionFromParent);
@@ -358,7 +361,9 @@ export type ${_.upperFirst(
 
     //#endregion
   }
+  //#endregion
 
+  //#region methods / save ts file data
   saveTsFileData(
     fileAbsPath: string,
     lang: UtilsI18n.CommonLocaleCode,
@@ -423,4 +428,5 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     return false;
     //#endregion
   }
+  //#endregion
 }
