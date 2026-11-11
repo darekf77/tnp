@@ -712,13 +712,13 @@ ${codeblocks
     return `
 //#${'reg' + 'ion'} imports
 import { Routes } from '@angular/router';
-import { ${this.getComponentNameFromFilePath(relativePath)} } from './${path.basename(relativePath).replace('.md', '.component')}';
 //#${'end' + 'reg' + 'ion'}
 
 ${'exp' + 'ort'} const ${this.getRoutesNameFromFilePath(relativePath)}: Routes = [
   {
     path: '',
-    component: ${this.getComponentNameFromFilePath(relativePath)},
+    loadComponent: () =>
+      import('./${path.basename(relativePath).replace('.md', '.component')}').then(m => m.${this.getComponentNameFromFilePath(relativePath)})
   },
 ];
 
