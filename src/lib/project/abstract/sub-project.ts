@@ -39,10 +39,16 @@ export class SubProject extends BaseFeatureForProject<Project> {
   }
 
   public async ls() {
-    const projects = this.repo.getAll().map(c => c.name);
+    const projects = this.repo.getAll();
     for (let index = 0; index < projects.length; index++) {
       const proj = projects[index];
-      console.log(`- ${index + 1}. ${proj}`);
+      const isWorkerDeployed = await CloudFlarePorjectsUtils.isWorkerDeployed(
+        proj.cwdWorker,
+        true,
+      );
+      console.log(
+        `- ${index + 1}. ${proj.name} (deployed=${isWorkerDeployed})`,
+      );
     }
   }
 

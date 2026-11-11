@@ -464,10 +464,11 @@ export class CloudFlareSubProject {
           queries.push(line);
         }
         if (line.includes('Ready on')) {
-          let url = extractWranglerReadyUrl(line);
-          if (url) {
-            void pingUrl(url, _.first(contextsNames));
-          }
+          void pingUrl(
+            `http://localhost:${ngCloudflareWorkerPort}`,
+            _.first(contextsNames),
+            'Not able to to gather sql data',
+          );
         }
         const errorPath = 'at null.<anonymous> (';
         if (line.includes(errorPath)) {
@@ -492,8 +493,10 @@ export class CloudFlareSubProject {
       )
       .join('\n');
 
-    Helpers.logInfo(`Killling process ${ngCloudflareWorkerPort}`);
-    await UtilsProcess.killProcessOnPort(ngCloudflareWorkerPort, true);
+    if (!envOptions.release.releaseType) {
+      Helpers.logInfo(`Killling process ${ngCloudflareWorkerPort}`);
+      await UtilsProcess.killProcessOnPort(ngCloudflareWorkerPort, true);
+    }
 
     Helpers.logInfo(`DONE GATHERING SQL DATA! `);
     return generatedSqlFromAllContexts;
@@ -547,10 +550,15 @@ export class CloudFlareSubProject {
         `Applying migration for context: ${contextName}`,
       );
 
+      const isWorkerDeployed = await CloudFlarePorjectsUtils.isWorkerDeployed(
+        this.cwdWorker,
+      );
+
       const plan = await prepareRemoteDeploymentSql({
-        mode: envOptions.release.clearDb
-          ? Models.DBRecreateMode.DROP_DB_MIGRATIONS
-          : Models.DBRecreateMode.PRESERVE_DATA_MIGRATIONS,
+        mode:
+          !isWorkerDeployed || envOptions.release.clearDb
+            ? Models.DBRecreateMode.DROP_DB_MIGRATIONS
+            : Models.DBRecreateMode.PRESERVE_DATA_MIGRATIONS,
         sql: generatedSqlFromAllContexts,
         cwdWorker: this.cwdWorker,
         contextName: contextName,
@@ -726,6 +734,8 @@ export class CloudFlareSubProject {
             cwd: this.cwdWorker,
           },
         ).getOutput();
+        Helpers.error(data.stderr, true, false);
+        Helpers.info(data.stdout);
         const accountName = CloudFlarePorjectsUtils.extractWorkersDevInfo(
           data.stdout + data.stderr,
         );
@@ -742,7 +752,13 @@ export class CloudFlareSubProject {
 
           YOU WEBSITE IS AVAILABLE HERE:
 
-    ${this.workerUrl}
+    ${
+      releaseOptions.website.useDomain
+        ? releaseOptions.website.domain?.startsWith('http')
+          ? releaseOptions.website.domain
+          : `https://${releaseOptions.website.domain}`
+        : this.workerUrl
+    }
 
 
 

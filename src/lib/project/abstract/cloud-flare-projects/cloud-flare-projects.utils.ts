@@ -1,32 +1,19 @@
 //#region imports
-import { RenameRule } from 'magic-renamer/src';
-import {
-  crossPlatformPath,
-  Helpers,
-  path,
-  Utils,
-  UtilsExecProc,
-  UtilsFilesFoldersSync,
-  UtilsTerminal,
-  _,
-  CoreModels,
-  LibTypeEnum,
-  child_process,
-  fse,
-  chalk,
-} from 'tnp-core/src';
-import { HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
+import { execFile } from 'node:child_process'; // @backend
+import { promisify } from 'node:util'; // @backend
 
 import {
-  buildJSprod,
-  externalJs,
-  indexTsInSrcForWorker,
-  KV_DATABASE_ONLINE_NAME,
-  packageJsonSubProject,
-  TempalteSubprojectType,
-  tsconfigSubProject,
-  wranglerJsonC,
-} from '../../../constants';
+  Helpers,
+  Utils,
+  UtilsExecProc,
+  UtilsTerminal,
+  _,
+  LibTypeEnum,
+  child_process,
+  chalk,
+} from 'tnp-core/src';
+
+import { TempalteSubprojectType } from '../../../constants';
 import { EnvOptions } from '../../../options';
 import type { Project } from '../project';
 
@@ -245,6 +232,55 @@ export namespace CloudFlarePorjectsUtils {
     );
     //#endregion
   };
+
+  export async function isWorkerDeployed(
+    cwdWorker: string,
+    skipDiagnostics = false,
+  ): Promise<boolean> {
+    //#region @backendFunc
+    const task = skipDiagnostics
+      ? void 0
+      : Helpers.actionStarted(`Checking if worker deployed`);
+    let stdout: string;
+    const execFileAsync = promisify(execFile);
+    try {
+      ({ stdout } = await execFileAsync(
+        './node_modules/.bin/wrangler',
+        ['deployments', 'list', '--json'],
+        {
+          cwd: cwdWorker,
+          env: { ...process.env, CI: 'true', FORCE_COLOR: '0' },
+          timeout: 30_000,
+        },
+      ));
+    } catch (error) {
+      const { stderr, message } = error as Error & { stderr?: string };
+      const output = `${stderr ?? ''}\n${message}`;
+
+      if (/\[code:\s*10090\s*\]/i.test(output)) {
+        return false;
+      }
+
+      if (/\[code:\s*10007\s*\]/i.test(output)) {
+        return false;
+      }
+
+      Helpers.error(`Not able to check if worker is deployed`, false, true);
+    }
+
+    const deployments: unknown = JSON.parse(stdout);
+
+    if (!Array.isArray(deployments)) {
+      throw new Error('Unexpected Wrangler deployments list response');
+    }
+
+    if (!skipDiagnostics) {
+      task.done();
+    }
+
+    return deployments.length > 0;
+    //#endregion
+  }
 
   //#region login to cloud flare
   export const loginCliCloudFlare = async (

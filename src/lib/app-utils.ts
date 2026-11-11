@@ -58,7 +58,14 @@ export function removeCommentsFromScssFile(scss: string): string {
   //#endregion
 }
 
-export const pingUrl = async (url: string, context: string ) => {
+export const pingUrl = async (
+  url: string,
+  context: string,
+  reason = 'No able to ping after depoy',
+) => {
+  if (!url.startsWith('http')) {
+    url = `https://${url}`;
+  }
   const task = Helpers.actionStarted(
     `Pinging ${url}/${apiPrefix}/${context ? context + '/tcp/' : ''}`,
   );
@@ -68,7 +75,8 @@ export const pingUrl = async (url: string, context: string ) => {
     Helpers.logInfo(`Ping response:${pingResponse}`);
     task.done();
   } catch (error) {
-    Helpers.error(`No able to ping after deploy.`, false, true);
+    config.frameworkName === 'tnp' && console.error(error);
+    Helpers.error(reason, false, true);
   }
 };
 

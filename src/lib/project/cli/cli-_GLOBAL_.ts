@@ -80,6 +80,7 @@ import { Models } from '../../models';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
 import { Project } from '../abstract/project';
 import type { TaonProjectResolve } from '../abstract/project-resolve';
+import { CloudFlarePorjectsUtils } from '../abstract/cloud-flare-projects/cloud-flare-projects.utils';
 //#endregion
 
 export class $Global extends BaseGlobalCommandLine<
