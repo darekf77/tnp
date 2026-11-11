@@ -673,7 +673,7 @@ ${'imp' + 'ort'} { Taon } from '${
 ${'imp' + 'ort'} { ChangeDetectionStrategy, Component, Input, ViewChild } from '@angular/core';
 ${'imp' + 'ort'} { RouterOutlet } from '@angular/router';
 ${'imp' + 'ort'} { Translation, TranslateDirective } from '@${'taon-' + 'dev/i' + '18n/src'}';
-${'imp' + 'ort'} { TaonLayoutDocsGenNgDocsComponent, DocsHeading } from '${
+${'imp' + 'ort'} { TaonDocsPageComponent, DocsHeading } from '${
       this.project.nameForNpmPackage === taonPackageName
         ? `${_.times(howMuchBack)
             .map(() => '../')
@@ -692,13 +692,23 @@ const t = ${'Trans'+'lation'}.for(Taon.${'__FI' + 'LE_RELAT' + 'IVE_PATH'}, Taon
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateDirective],
 })
-${'exp' + 'ort'} class ${cmpName} extends TaonLayoutDocsGenNgDocsComponent {
+${'exp' + 'ort'} class ${cmpName} extends TaonDocsPageComponent {
   t = t.for(this);
   @Input() ${baseHrefDocsGen}: string = '/';
-  @Input() context: any = {
+   @Input() context: any = {
 ${codeblocks
-  .map(c => {
-    return `${taonCutNextLineCut}\n${c.name}: ${JSON.stringify(c.codeContent)}`;
+  .flatMap(({ name, codeContent, highlightedHtml }) => {
+    const entries = [
+      `${taonCutNextLineCut}\n${name}: ${JSON.stringify(codeContent)}`,
+    ];
+
+    if (highlightedHtml !== undefined) {
+      entries.push(
+        `${taonCutNextLineCut}\n${name}Html: ${JSON.stringify(highlightedHtml)}`,
+      );
+    }
+
+    return entries;
   })
   .join(',\n')}
   };

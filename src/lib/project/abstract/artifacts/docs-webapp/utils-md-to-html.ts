@@ -1,16 +1,16 @@
-// import * as hljs from 'highlight.js/lib/core';
-// import * as bash from 'highlight.js/lib/languages/bash';
-// import * as javascript from 'highlight.js/lib/languages/javascript';
-// import * as scss from 'highlight.js/lib/languages/scss';
-// import * as typescript from 'highlight.js/lib/languages/typescript';
+import * as hljs from 'highlight.js/lib/core';
+import * as bash from 'highlight.js/lib/languages/bash';
+import * as javascript from 'highlight.js/lib/languages/javascript';
+import * as scss from 'highlight.js/lib/languages/scss';
+import * as typescript from 'highlight.js/lib/languages/typescript';
 import * as MarkdownIt from 'markdown-it'; // @backend
 import type { DocsHeading, IndexData } from 'taon/src';
 
-// hljs.registerLanguage('javascript', javascript);
-// hljs.registerLanguage('typescript', typescript);
-// hljs.registerLanguage('ts', typescript);
-// hljs.registerLanguage('bash', bash);
-// hljs.registerLanguage('scss', scss);
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('ts', typescript);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('scss', scss);
 
 import { baseHrefDocsGen } from '../../../../constants';
 
@@ -27,6 +27,7 @@ export namespace UtilsMdToHtml {
   //#region code block
   export interface CodeBlock {
     codeContent: string;
+    highlightedHtml?: string;
     name: string; // codeblock0, codeblock1...
   }
   //#endregion
@@ -44,7 +45,7 @@ export namespace UtilsMdToHtml {
     res.resultContent = replaceHrefsWithAngularBaseHref(
       res.resultContent,
       packageName,
-    );
+    ).replace(/\[innerhtml\](?="|=)/g, '[innerHTML]');
     return res;
     //#endregion
   };
@@ -209,56 +210,34 @@ export namespace UtilsMdToHtml {
 
     $('code').each((index, element) => {
       const codeElement = $(element);
-
       const name = `codeblock${index}`;
-
-      // .text() gives us decoded code:
-      //
-      // &lt;div&gt;
-      //
-      // becomes:
-      //
-      // <div>
-      //
-      // which is exactly what we want inside context.codeblockX.
-
+      const isBlock = codeElement.closest('pre').length > 0;
       const decodedCode = codeElement.text();
 
-      const codeContent = codeElement.closest('pre').length
+      const codeContent = isBlock
         ? decodedCode
         : decodedCode.replace(/[ \t]*(?:\r\n?|\n)[ \t]*/g, ' ').trim();
 
-      codeblocks.push({
-        name,
-        codeContent,
-      });
+      const block: CodeBlock = { name, codeContent };
+      codeblocks.push(block);
 
-      // const className = codeElement.attr('class') ?? '';
-      // const languageMatch = className.match(/language-([a-zA-Z0-9_-]+)/);
+      const language = (codeElement.attr('class') ?? '')
+        .match(/(?:^|\s)language-([\w-]+)(?=\s|$)/i)?.[1]
+        .toLowerCase();
 
-      // const lang = languageMatch?.[1];
+      if (isBlock && language && hljs.getLanguage(language)) {
+        block.highlightedHtml = hljs.highlight(codeContent, {
+          language,
+          ignoreIllegals: true,
+        }).value;
 
-      // let highlightedCode = codeContent;
+        codeElement
+          .addClass('hljs')
+          .attr('[innerHTML]', `context.${name}Html`)
+          .empty();
 
-      // if (lang && hljs.getLanguage(lang)) {
-      //   highlightedCode = hljs.highlight(codeContent, {
-      //     language: lang,
-      //   }).value;
-      // }
-
-      // codeblocks.push({
-      //   name,
-      //   codeContent: highlightedCode,
-      // });
-
-      // IMPORTANT:
-      //
-      // Use html(), not text().
-      //
-      // text('{{ context.codeblock0 }}')
-      // would escape braces in some serializers / transformations.
-      //
-      // We deliberately want Angular template syntax here.
+        return;
+      }
 
       codeElement.html(`{{ context.${name} }}`);
     });
