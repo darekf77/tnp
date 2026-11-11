@@ -1134,9 +1134,27 @@ ${this.project.children
     //#endregion
   }
 
+  async esmcompile() {
+    //#region @backend
+    await this.project.framework.fixMissingEsmVersions();
+    this._exit();
+    //#endregion
+  }
+
   async compileToCjs() {
     //#region @backend
     await this.project.framework.fixMissingCjsVersionsFor(
+      this.args.map(c => {
+        return { packageName: c };
+      }),
+    );
+    this._exit();
+    //#endregion
+  }
+
+  async compileToEsm() {
+    //#region @backend
+    await this.project.framework.fixMissingEsmVersionsFor(
       this.args.map(c => {
         return { packageName: c };
       }),

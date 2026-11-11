@@ -30,7 +30,7 @@ import {
 import { fileName } from 'tnp-core/src';
 import {
   BaseFeatureForProject,
-  UtilsCjsPackage,
+  UtilsCjsEsmPackage,
   UtilsNpm,
   UtilsTypescript,
 } from 'tnp-helpers/src';
@@ -1273,7 +1273,7 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
   //#endregion
 
   //#region generate translations
-  async generateTranslations(onlyFiles?:string[]): Promise<void> {
+  async generateTranslations(onlyFiles?: string[]): Promise<void> {
     //#region @backendFunc
     const task = Helpers.actionStarted('Genrating translations');
     this.project.taonJson.setShouldGenerateTranslationsFiles(true);
@@ -1509,6 +1509,32 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
   }
   //#endregion
 
+  //#region get global esm only packages
+  get globalCjsToEsmPrecompilePackages(): Models.CjsCompileEsm[] {
+    //#region @backendFunc
+    const jsoncContent = this.project.readFile('taon.jsonc');
+
+    let found: Models.CjsCompileEsm[] = [];
+    walk.Object(Helpers.parse(jsoncContent, true)!, (value, jsonPath) => {
+      const attrs = UtilsJson.getAtrributiesFromJsonWithComments(
+        jsonPath,
+        jsoncContent,
+      );
+      const esmTag = attrs.find(c => c.name === '@esmCompile' && c.value);
+      const packagesHasEsmTag = !_.isUndefined(esmTag);
+      if (packagesHasEsmTag) {
+        found.push({
+          packageName: _.last(jsonPath.split('.')),
+          overrideEsmFolder: _.isBoolean(esmTag?.value) ? 'esm' : esmTag.value,
+        });
+      }
+    });
+
+    return found;
+    //#endregion
+  }
+  //#endregion
+
   //#region fix missing cjs versions of packages
 
   public async fixMissingCjsVersionsFor(
@@ -1555,10 +1581,72 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
         Helpers.info(
           `Fixing ${pkg.packageName} in node_modules of ${path.basename(path.dirname(nodeModulesFolderAbsPath))}`,
         );
-        await UtilsCjsPackage.buildCjsVersionFor(
+        await UtilsCjsEsmPackage.buildCjsVersionFor(
           pkg.packageName,
           nodeModulesFolderAbsPath,
           pkg.overrideCjsFolder,
+          {
+            force,
+          },
+        );
+      }
+
+      task.done();
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region fix missing cjs versions of packages
+
+  public async fixMissingEsmVersionsFor(
+    packagesToUpdate: Models.CjsCompileEsm[],
+  ): Promise<void> {
+    const packages =
+      packagesToUpdate && packagesToUpdate.length > 0
+        ? packagesToUpdate
+        : this.project.framework.coreContainer.framework
+            .globalCjsToEsmPrecompilePackages;
+    Helpers.info(
+      `Force Rebuilding cjs version for ${packages.map(c => c.packageName).join(',')}`,
+    );
+    await this.fixMissingEsmVersions(packages, true);
+  }
+
+  public async fixMissingEsmVersions(
+    packagesToUpdate?: Models.CjsCompileEsm[],
+    force = false,
+  ): Promise<void> {
+    //#region @backendFunc
+    const packages = packagesToUpdate
+      ? packagesToUpdate
+      : this.project.framework.coreContainer.framework
+          .globalCjsToEsmPrecompilePackages;
+
+    Helpers.info(
+      `Rebuilding esm version for ${packages.map(c => c.packageName).join(',')}`,
+    );
+
+    const foldersToUpdate = [
+      this.project.framework.coreContainer.nodeModules.path,
+      ...(this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer
+        ? [this.project.nodeModules.path]
+        : []),
+    ];
+
+    for (const pkg of packages) {
+      const task = Helpers.actionStarted(
+        `Rebuilding esm version for ${pkg.packageName}`,
+      );
+
+      for (const nodeModulesFolderAbsPath of foldersToUpdate) {
+        Helpers.info(
+          `Fixing ${pkg.packageName} in node_modules of ${path.basename(path.dirname(nodeModulesFolderAbsPath))}`,
+        );
+        await UtilsCjsEsmPackage.buildEsmVersionFor(
+          pkg.packageName,
+          nodeModulesFolderAbsPath,
+          pkg.overrideEsmFolder,
           {
             force,
           },

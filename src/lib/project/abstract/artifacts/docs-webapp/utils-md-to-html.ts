@@ -70,6 +70,54 @@ export namespace UtilsMdToHtml {
     const codeblocks: CodeBlock[] = [];
     const indexData: IndexData[] = [];
 
+    //#region add translate tags
+    const translatableBlocks = 'h1, h2, h3, p, div';
+
+    const excludedFromTranslation = [
+      'pre',
+      'code',
+      'i',
+      'kbd',
+      'samp',
+      'var',
+      'script',
+      'style',
+      'textarea',
+      'template',
+      'svg',
+      'math',
+      '[translate="no"]',
+      '[data-no-translate]',
+    ].join(', ');
+
+    const translationBoundaries = `${translatableBlocks}, ${excludedFromTranslation}`;
+
+    $(translatableBlocks).each((_, element) => {
+      const block = $(element);
+
+      if (
+        block.closest(excludedFromTranslation).length ||
+        block.attr('translate') !== undefined
+      ) {
+        return;
+      }
+
+      // Look for prose owned by this block. Inline formatting such as
+      // <strong>, <em>, and <a> can contribute text to the same block.
+      const prose = block.clone();
+      prose.find(translationBoundaries).remove();
+
+      if (prose.text().trim()) {
+        block.attr('translate', '');
+      }
+    });
+
+    // $('br')
+    //   .filter((_, element) => !$(element).closest('pre, code').length)
+    //   .replaceWith(' ');
+
+    //#endregion
+
     // ---------------------------------------------------------
     // Headings + IDs
     // ---------------------------------------------------------
@@ -209,9 +257,11 @@ export namespace UtilsMdToHtml {
 
   //#endregion
 
+  //#region normalize search text
   function normalizeSearchText(value: string): string {
     return value.replace(/\s+/g, ' ').trim();
   }
+  //#endregion
 
   //#region slugify
   function slugify(value: string): string {

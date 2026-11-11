@@ -672,6 +672,7 @@ ${'imp' + 'ort'} { Taon } from '${
     }';
 ${'imp' + 'ort'} { ChangeDetectionStrategy, Component, Input, ViewChild } from '@angular/core';
 ${'imp' + 'ort'} { RouterOutlet } from '@angular/router';
+${'imp' + 'ort'} { Translation, TranslateDirective } from '@${'taon-' + 'dev/i' + '18n/src'}';
 ${'imp' + 'ort'} { TaonDocsPageComponent, DocsHeading } from '${
       this.project.nameForNpmPackage === taonPackageName
         ? `${_.times(howMuchBack)
@@ -682,13 +683,17 @@ ${'imp' + 'ort'} { TaonDocsPageComponent, DocsHeading } from '${
 
 //#${'end' + 'reg' + 'ion'}
 
+const t = ${'Trans'+'lation'}.for(Taon.${'__FI' + 'LE_RELAT' + 'IVE_PATH'}, Taon.${'LAN' + 'G_IMPO' + 'RT_MAP'});
+
 @Component({
   selector: 'app-my-docs-page-${_.kebabCase(path.basename(absPath))}',
   templateUrl: './${path.basename(absPath).replace('.md', '.component.html')}',
   styles: '',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslateDirective],
 })
 ${'exp' + 'ort'} class ${cmpName} extends TaonDocsPageComponent {
+  t = t.for(this);
   @Input() ${baseHrefDocsGen}: string = '/';
   @Input() context: any = {
 ${codeblocks

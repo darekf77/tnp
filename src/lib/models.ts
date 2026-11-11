@@ -9,6 +9,7 @@ export namespace Models {
   export interface CjsCompileEsm {
     packageName: string;
     overrideCjsFolder?: string;
+    overrideEsmFolder?: string;
   }
 
   //#region taon test type
