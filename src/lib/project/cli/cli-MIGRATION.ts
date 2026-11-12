@@ -220,7 +220,7 @@ export class ${contextName}_${timestamp}_${migrationName} extends TaonBaseMigrat
   //#endregion
 
   async regenerate() {
-    await this.project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask()
+    await this.project.artifactsManager.artifact.angularNodeApp.migrationHelper.runTask();
     Helpers.info(`Migrations regenerated`);
     this._exit();
   }
@@ -241,7 +241,10 @@ export class ${contextName}_${timestamp}_${migrationName} extends TaonBaseMigrat
   //#endregion
 
   //#region revert
-  async revert(timestamp: number) {
+  async revert(timestampFromMigrations: number | string) {
+    const timestamp: number =
+      Number(timestampFromMigrations) || Number(this.firstArg);
+
     console.info(`
 
     ACTION: REVERTING MIGRATIONS
