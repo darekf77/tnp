@@ -53,16 +53,23 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
     //#region @backendFunc
     this.handleProjectSpecyficFiles();
 
-    UtilsFilesFoldersSync.copy(
-      this.project.framework.coreContainer.pathFor(
-        `gen-examples-${this.project.framework.frameworkVersion}/taon-full/my-entity`,
-      ),
-      this.project.pathFor(`${dotAI}/examples`),
-      {
-        recursive: true,
-        copySymlinksAsFiles: false,
-      },
-    );
+    if (
+      !(
+        this.project.framework.isCoreProject &&
+        this.project.framework.isStandaloneProject
+      )
+    ) {
+      UtilsFilesFoldersSync.copy(
+        this.project.framework.coreContainer.pathFor(
+          `gen-examples-${this.project.framework.frameworkVersion}/taon-full/my-entity`,
+        ),
+        this.project.pathFor(`${dotAI}/examples`),
+        {
+          recursive: true,
+          copySymlinksAsFiles: false,
+        },
+      );
+    }
 
     //#endregion
   }

@@ -141,7 +141,9 @@ export class ArtifactManager {
     this.project.removeFile([TaonGeneratedFiles.BUILD_INFO_MD]);
     this.project.removeFile([TaonGeneratedFiles.BUILD_STATUS_MD]);
 
-    this.project.removeFolderByRelativePath(dotAI);
+    if (!this.project.framework.isCoreProject) {
+      this.project.removeFolderByRelativePath(dotAI);
+    }
 
     if (this.project.framework.isStandaloneProject) {
       this.project.removeFolderByRelativePath(dotTnpFolder);
