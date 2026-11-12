@@ -557,8 +557,8 @@ export class CloudFlareSubProject {
       const plan = await prepareRemoteDeploymentSql({
         mode:
           !isWorkerDeployed || envOptions.release.clearDb
-            ? Models.DBRecreateMode.DROP_DB_MIGRATIONS
-            : Models.DBRecreateMode.PRESERVE_DATA_MIGRATIONS,
+            ? Models.DBRecreateMode.DROP_DB__RUN_MIGRATIONS
+            : Models.DBRecreateMode.PRESERVE_DATA__RUN_MIGRATIONS,
         sql: generatedSqlFromAllContexts,
         cwdWorker: this.cwdWorker,
         contextName: contextName,

@@ -407,7 +407,7 @@ export function getSqlFor(
 
   const remoteByName = new Map(remoteMigrations.map(m => [m.name, m]));
 
-  if (mode === Models.DBRecreateMode.DROP_DB_MIGRATIONS) {
+  if (mode === Models.DBRecreateMode.DROP_DB__RUN_MIGRATIONS) {
     return {
       sql:
         [schemaSql, ...migrations.map(m => m.sql)]
@@ -420,7 +420,7 @@ export function getSqlFor(
     };
   }
 
-  if (mode !== Models.DBRecreateMode.PRESERVE_DATA_MIGRATIONS) {
+  if (mode !== Models.DBRecreateMode.PRESERVE_DATA__RUN_MIGRATIONS) {
     throw new Error(`Unsupported DB recreate mode: ${mode}`);
   }
 
@@ -469,7 +469,7 @@ export async function prepareRemoteDeploymentSql(options: {
   //#region @backendFunc
   const { mode, sql, cwdWorker, contextName } = options;
 
-  if (mode === Models.DBRecreateMode.DROP_DB_MIGRATIONS) {
+  if (mode === Models.DBRecreateMode.DROP_DB__RUN_MIGRATIONS) {
     return getSqlFor(sql, mode, contextName);
   }
 
