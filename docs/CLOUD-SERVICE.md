@@ -109,3 +109,45 @@ By default, each Taon command checks if a working and healthy local Taon service
     <td><= same as on localhost</td>
   </tr>
 </table>
+
+
+
+## Cloudflare Worker subprojects
+
+The `taon sub` workflow is limited to Taon isomorphic library projects that
+contain a Worker subproject. It can start local development, authenticate the
+machine with Cloudflare, configure Worker secrets, set the Worker mode, and
+deploy the subproject:
+
+```sh
+taon app:cloudflare
+taon sub dev
+taon sub login
+taon sub secrets
+taon sub mode
+taon sub deploy
+```
+
+Set secrets as Worker bindings, not as browser variables. Cloudflare Workers
+run in an ESM runtime rather than full Node.js; use the relevant
+[isomorphic code-region rules](https://github.com/darekf77/taon-containers/blob/master/container-v21/isomorphic-lib-v21/.ai/docs/isomorphic-code-regions.md)
+and verify that each database and storage adapter supports Workers.
+
+## Deployment checklist
+
+Before a cloud release:
+
+1. Select the intended release type and artifact in `taon.jsonc`.
+2. Check the target's database, storage, environment-variable, and secret
+   configuration.
+3. Build and verify the same artifact locally where the target supports it.
+4. Confirm public routes, domain configuration, webhook reachability, and
+   monitoring for the actual deployment environment.
+5. Test rollback and backup procedures; a successful CLI release does not
+   prove that the application is operationally ready.
+
+See the [CLI command guide](./COMMANDS.md),
+[Cloud Release](./RELEASE-CLOUD.md), and
+[CI/CD notes](./CI-CD.md) for related workflows. Availability and release
+steps can vary by artifact and project configuration; verify against the
+installed Taon CLI and the project's release configuration.
