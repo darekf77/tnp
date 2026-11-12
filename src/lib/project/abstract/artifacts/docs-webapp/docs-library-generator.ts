@@ -173,9 +173,9 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   public async start(buildOptions: EnvOptions, force = false): Promise<void> {
     //#region @backendFunc
     this.buildOptions = buildOptions;
-    if (force) {
-      this.removeTempFolders();
-    }
+    // if (force) {
+    //   this.removeTempFolders();
+    // }
 
     const requiredPackages = Utils.uniqArray([
       ...this.analyzeAndGetWhatDocsPackagesRequired(

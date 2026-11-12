@@ -246,9 +246,10 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         await this.project.artifactsManager.artifact.docsWebapp.docsGen.start(
           initOptions,
         );
-      } else {
-        await this.project.artifactsManager.artifact.docsWebapp.docsGen.removeTempFolders();
       }
+      //  else {
+      //   await this.project.artifactsManager.artifact.docsWebapp.docsGen.removeTempFolders();
+      // }
     }
 
     initTask.done();

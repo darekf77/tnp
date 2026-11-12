@@ -633,14 +633,14 @@ ERROR: ${this.buildStatusInfo['websql-watcher-error'] ? `${this.buildStatusInfo[
       for (const watcherType of CoreModels.BuildWatcherTypeArr) {
         handleCodeChanges(watcherType);
       }
-    }
-    Helpers.info(`
+      Helpers.info(`
 
 
       CODE WATCHERS STARTED!
 
 
-    `)
+    `);
+    }
 
     let lastTaonJSON: string;
     chokidar.watch(this.project.taonJson.path).on('change', () => {
