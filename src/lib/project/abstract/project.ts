@@ -658,20 +658,6 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
   }
   //#endregion
 
-  //#region taon relative projects paths
-  /**
-   * @deprecated
-   */
-  get tnpCurrentCoreContainer(): Project {
-    return this.ins.From(
-      this.pathFor(
-        `${this.ins.taonProjectsRelative}/${containerPrefix}${this.framework.frameworkVersion}`,
-      ),
-    );
-  }
-
-  //#endregion
-
   //#region name
   /**
    * @overload

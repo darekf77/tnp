@@ -392,35 +392,9 @@ ${'req' + 'uire'}('./start');
 
     this.project.quickFixes.fixPrettierCreatingConfigInNodeModules();
     if (!initOptions.init.struct) {
-      //#region prevent incorrect node_modules with tnp dev mode
-      if (config.frameworkName === tnpPackageName) {
-        let node_modules_path = this.project.nodeModules.path;
-        let node_modules_real_path = this.project.nodeModules.realPath;
-        if (node_modules_path !== node_modules_real_path) {
-          // const containerName = path.basename(
-          //   path.dirname(node_modules_real_path),
-          // );
-          const properRelativeNodeModulesPath = crossPlatformPath(
-            path.resolve(
-              config.dirnameForTnp,
-              this.project.ins.taonProjectsRelative,
-              `${containerPrefix}${this.project.taonJson.frameworkVersion}`,
-              nodeModulesMainProject,
-            ),
-          );
-          if (node_modules_real_path !== properRelativeNodeModulesPath) {
-            console.warn(`
-    (DEV MODE TNP) DETECTED NODE_MODULES LINK NOT FROM PROPER CONTAINER
-    fixing/linking proper node_modules path
-              `);
-            try {
-              fse.unlinkSync(node_modules_path);
-            } catch (error) {}
-          }
-        }
-      }
-      //#endregion
-
+      try {
+        fse.unlinkSync(this.project.nodeModules.path);
+      } catch (error) {}
       await this.project.nodeModules.makeSureInstalled();
     }
 

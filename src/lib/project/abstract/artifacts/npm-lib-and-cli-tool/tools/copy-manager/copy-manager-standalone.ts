@@ -192,7 +192,6 @@ export class CopyManagerStandalone extends BaseCompilerForProject<
     ];
     //#endregion
 
-    projectForNodeModulesPkgUpdate.push(this.project.tnpCurrentCoreContainer);
     projectForNodeModulesPkgUpdate = projectForNodeModulesPkgUpdate.filter(
       f => !!f,
     );

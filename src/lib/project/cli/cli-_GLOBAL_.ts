@@ -903,7 +903,7 @@ export class $Global extends BaseGlobalCommandLine<
     }
     const localTaonRepoPath = crossPlatformPath([
       this.project.location,
-      this.project.ins.taonProjectsRelative,
+      `../${taonContainers}`,
     ]);
     return localTaonRepoPath;
     //#endregion

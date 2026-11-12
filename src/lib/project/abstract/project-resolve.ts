@@ -670,36 +670,17 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   }
   //#endregion
 
-  //#region path resolved
-  private pathResolved(...partOfPath: string[]): string {
-    //#region @backendFunc
-    // console.log('pathResolved', partOfPath);
-
-    if (
-      (global['frameworkName'] &&
-        global['frameworkName'] === taonPackageName) ||
-      UtilsOs.isRunningInVscodeExtension()
-    ) {
-      const joined = partOfPath.join('/');
-
-      let pathResult = joined.replace(
-        config.dirnameForTnp + '/' + this.taonProjectsRelative,
-        this.projectsInUserFolder,
-      );
-
-      pathResult = crossPlatformPath(path.resolve(pathResult));
-      this.initialCheck();
-      return pathResult;
-    }
-    return crossPlatformPath(path.resolve(path.join(...partOfPath)));
-    //#endregion
-  }
-  //#endregion
-
   public homeDirCoreContainer(
     frameworkVersion: CoreModels.FrameworkVersion,
   ): Project {
     //#region @backendFunc
+
+    // if (Number(frameworkVersion.replace('v', '')) < 18) {
+    //   Helpers.warn(
+    //     `[taon/project] ${frameworkVersion} is not supported anymore.. use v19 instead`,
+    //   );
+    // }
+
     const pathToStandardTaonContainer = crossPlatformPath([
       UtilsOs.getRealHomeDir(),
       `.${taonPackageName}`,
@@ -726,33 +707,19 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
 
     // console.log(({ dirnameForTnp: config.dirnameForTnp, taonProjectsRelative: this.taonProjectsRelative, version }));
 
-    const coreContainerPath = this.pathResolved(
-      config.dirnameForTnp,
-      `${this.taonProjectsRelative}/${containerPrefix}${version}`,
-    );
+    const coreContainerPath = this.homeDirCoreContainer(version);
 
     const result = {
-      container: coreContainerPath,
-      projectByType: (libType: CoreModels.NewFactoryType) => {
-        const resultByType = this.pathResolved(
-          config.dirnameForTnp,
-          `${this.taonProjectsRelative}/${containerPrefix}${version}/${libType}-${version}`,
-        );
-        // console.log(`resultByType ${libType}`, resultByType);
-        return resultByType;
+      container: coreContainerPath.location,
+      projectByType: (libType: CoreModels.NewFactoryType): string => {
+        return crossPlatformPath([
+          coreContainerPath.location,
+          `${libType}-${version}`,
+        ]);
       },
     };
     return result;
     //#endregion
-  }
-  //#endregion
-
-  //#region taon relative projects paths
-  /**
-   * only for tnp dev mode cli
-   */
-  public get taonProjectsRelative(): string {
-    return `../${taonContainers}`;
   }
   //#endregion
 
