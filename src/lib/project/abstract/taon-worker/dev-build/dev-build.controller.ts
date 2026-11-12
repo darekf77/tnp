@@ -32,7 +32,7 @@ import { DevBuildRepository } from './dev-build.repository';
   className: 'DevBuildController',
 })
 export class DevBuildController extends TaonBaseController {
-  devBuildRepository = this.injectKvRepository(DevBuildRepository);
+  devBuildRepository = this.inject(DevBuildRepository);
 
   //#region API / html info
   @HTML({

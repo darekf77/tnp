@@ -47,13 +47,13 @@ export class DeploymentsRepository extends TaonBaseRepository<Deployments> {
 
   //#region protected methods / wait until deployment removed
   protected async waitUntilDeploymentRemoved(
-    deploymentId: string,
+    deploymentId: string | number,
   ): Promise<void> {
     //#region @backendFunc
     while (true) {
       const deployment = await this.findOne({
         where: {
-          id: deploymentId?.toString(),
+          id: deploymentId as number,
         },
       });
       if (!deployment) {
@@ -218,7 +218,7 @@ export class DeploymentsRepository extends TaonBaseRepository<Deployments> {
     try {
       deployment = await this.findOne({
         where: {
-          id: deploymentId?.toString(),
+          id: deploymentId as number,
         },
       });
     } catch (error) {}

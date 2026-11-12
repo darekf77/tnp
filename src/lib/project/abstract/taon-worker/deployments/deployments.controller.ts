@@ -122,7 +122,7 @@ export class DeploymentsController extends TaonBaseCliWorkerController<Deploymen
       }
       const deployment = await this.deploymentsRepository.findOne({
         where: {
-          id: deploymentId?.toString(),
+          id: deploymentId as number,
         },
       });
       if (!deployment) {

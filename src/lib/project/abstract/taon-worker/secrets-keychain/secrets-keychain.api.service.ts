@@ -10,7 +10,7 @@ import { SecretsKeychainController } from './secrets-keychain.controller';
 
 @Injectable()
 export class SecretsKeychainApiService extends TaonBaseAngularService {
-  private secretsKeychainController = this.injectController(SecretsKeychainController);
+  private secretsKeychainController = this.inject(SecretsKeychainController);
 
   public get allMyEntities$(): Observable<SecretsKeychainEntity[]> {
     return this.secretsKeychainController.getAll().request!().observable.pipe(

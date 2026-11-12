@@ -24,7 +24,7 @@ import { SecretsKeychainRepository } from './secrets-keychain.repository';
 export class SecretsKeychainController extends TaonBaseCliWorkerController {
   //#region get all for framework version
 
-  secretsKeychainKvRepository = this.injectKvRepository(
+  secretsKeychainKvRepository = this.inject(
     SecretsKeychainKvRepository,
   );
 

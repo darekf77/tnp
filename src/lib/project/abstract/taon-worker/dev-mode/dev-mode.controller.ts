@@ -21,7 +21,7 @@ import { DevModeRepository } from './dev-mode.repository';
   className: 'DevModeController',
 })
 export class DevModeController extends TaonBaseCliWorkerController {
-  devModeRepository = this.injectKvRepository(DevModeRepository);
+  devModeRepository = this.inject(DevModeRepository);
 
   //#region  get all dev mode projects for given framework version
   @POST()

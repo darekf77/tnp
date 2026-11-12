@@ -10,7 +10,7 @@ export interface DeploymentReleaseData {
   projectName: string;
   destinationDomain: string;
   releaseType: ReleaseType;
-  version: string;
+  version: number | string;
   envName: UtilsEnv.EnvironmentNameTaon;
   envNumber?: string;
   targetArtifact: ReleaseArtifactTaon;

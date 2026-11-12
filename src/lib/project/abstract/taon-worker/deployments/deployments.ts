@@ -1,5 +1,10 @@
 //#region imports
-import { MulterFileUploadResponse, Taon, TaonEntity } from 'taon/src';
+import {
+  MulterFileUploadResponse,
+  Taon,
+  TaonBaseAbstractEntity,
+  TaonEntity,
+} from 'taon/src';
 import {
   TaonBaseEntity,
   PrimaryGeneratedColumn,
@@ -26,14 +31,9 @@ import { DeploymentReleaseData, DeploymentsStatus } from './deployments.models';
   className: 'Deployments',
 })
 export class Deployments
-  extends TaonBaseEntity<Deployments>
+  extends TaonBaseAbstractEntity<Deployments>
   implements DeploymentReleaseData
 {
-  //#region @websql
-  @PrimaryGeneratedColumn()
-  //#endregion
-  id: string;
-
   //#region base file name with hash datetime
 
   //#region @websql
@@ -106,14 +106,6 @@ export class Deployments
   releaseType: ReleaseType;
   //#endregion
 
-  //#region project version
-
-  //#region @websql
-  @VersionColumn()
-  //#endregion
-  version: string;
-  //#endregion
-
   //#region destination domain
 
   //#region @websql
@@ -182,7 +174,8 @@ export class Deployments
       envName = `${this.envName} ${this.envNumber}`;
     }
 
-    const boldFn = (str: string) => (boldValues ? chalk.bold(str) : str);
+    const boldFn = (str: string | number) =>
+      boldValues ? chalk.bold(str as any) : str;
 
     return [
       `Destination domain (${boldFn(this.destinationDomain || '- unknown domain -')})`,

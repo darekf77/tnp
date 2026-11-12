@@ -9,7 +9,7 @@ import { IsomorphicPackagesController } from './isomorphic-packages.controller';
 
 @Injectable()
 export class IsomorphicPackagesApiService extends TaonBaseAngularService {
-  private isomorphicPackagesController = this.injectController(
+  private isomorphicPackagesController = this.inject(
     IsomorphicPackagesController,
   );
 

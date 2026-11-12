@@ -9,7 +9,7 @@ import { DevModeController } from './dev-mode.controller';
 
 @Injectable()
 export class DevModeApiService extends TaonBaseAngularService {
-  private devModeController = this.injectController(DevModeController);
+  private devModeController = this.inject(DevModeController);
 
   // public get allMyEntities$(): Observable<DevMode[]> {
   //   return this.devModeController.allData().request!().observable.pipe(

@@ -7,5 +7,5 @@ import { DevBuildController } from './dev-build.controller';
 
 @Injectable()
 export class DevBuildApiService extends TaonBaseAngularService {
-  protected devBuildController = this.injectController(DevBuildController);
+  protected devBuildController = this.inject(DevBuildController);
 }

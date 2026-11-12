@@ -144,7 +144,7 @@ class UserController extends TaonBaseCrudController<User> {
 ```ts
 @Injectable()
 export class UserApiService  extends TaonBaseAngularService {
-  userController = this.injectController(UserController);
+  userController = this.inject(UserController);
 
   getAll() {
     return this.userController
@@ -313,7 +313,7 @@ export class RealtimeClassSubscriber extends Taon.Base.SubscriberForEntity {
 export class RealtimeUserController extends TaonBaseCrudController<UserEntity> {
   entityClassResolveFn = () => UserEntity;
 
-  realtimeClassSubscriber = this.injectSubscriber( ()=> UserContext.getClass(RealtimeClassSubscriber));
+  realtimeClassSubscriber = this.inject(RealtimeClassSubscriber);
   
   async initExampleDbData() {
     //#region @websql

@@ -21,7 +21,7 @@ import { IsomorphicPackagesRepository } from './isomorphic-packages.repository';
   className: 'IsomorphicPackagesController',
 })
 export class IsomorphicPackagesController extends TaonBaseCliWorkerController {
-  isomorphicPackagesRepository = this.injectCustomRepo(
+  isomorphicPackagesRepository = this.inject(
     IsomorphicPackagesRepository,
   );
 

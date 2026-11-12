@@ -15,7 +15,7 @@ import { DeploymentsController } from './deployments.controller';
 //#endregion
 
 export class DeploymentsApiService extends TaonBaseAngularService {
-  deploymentsController: DeploymentsController = this.injectController(
+  deploymentsController: DeploymentsController = this.inject(
     DeploymentsController,
   );
 
