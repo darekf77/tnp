@@ -161,28 +161,42 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   public removeTempFolders(): void {
     //#region @backendFunc
     Helpers.remove(this.temporaryMdDocsFolderAbsPath);
-    Helpers.tryRemoveDir(
-      this.project.pathFor([srcMainProject, libFromSrc, generatedDocsFromMd]),
-    );
-    Helpers.tryRemoveDir(
-      this.project.pathFor([
-        srcMainProject,
-        assetsFromSrc,
-        sharedFromAssets,
-        generatedDocsFromMd,
-      ]),
-    );
+
+    const toSkipPaths = this.project.taonJson.genTsDocsExcludePaths;
+
+    for (const relative of toSkipPaths) {
+      ['.component.ts', '.component.html', '.routes.ts'].forEach(ext => {
+        const checkPath = this.project.pathFor([
+          srcMainProject,
+          libFromSrc,
+          generatedDocsFromMd,
+          relative.replace('.md', ext),
+        ]);
+
+        Helpers.removeFileIfExists(checkPath);
+      });
+    }
+    // Helpers.tryRemoveDir(
+    //   this.project.pathFor([srcMainProject, libFromSrc, generatedDocsFromMd]),
+    // );
+    // Helpers.tryRemoveDir(
+    //   this.project.pathFor([
+    //     srcMainProject,
+    //     assetsFromSrc,
+    //     sharedFromAssets,
+    //     generatedDocsFromMd,
+    //   ]),
+    // );
     //#endregion
   }
   //#endregion
 
   //#region api / start
-  public async start(buildOptions: EnvOptions, force = false): Promise<void> {
+  public async start(buildOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
     this.buildOptions = buildOptions;
-    // if (force) {
-    //   this.removeTempFolders();
-    // }
+
+    this.removeTempFolders();
 
     const requiredPackages = Utils.uniqArray([
       ...this.analyzeAndGetWhatDocsPackagesRequired(
@@ -316,7 +330,6 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
         return found;
       }
       Helpers.error(`Please build project: ${packageName}`, false, true);
-      return;
     }
 
     const pathToProjectReal = crossPlatformPath(
