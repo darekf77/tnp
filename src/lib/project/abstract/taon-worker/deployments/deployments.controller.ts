@@ -40,9 +40,10 @@ import { DeploymentsRepository } from './deployments.repository';
 export class DeploymentsController extends TaonBaseCliWorkerController<DeploymentReleaseData> {
   //#region fields & getters
 
-  // @ts-ignore remove after move to separated repo
-  protected deploymentsRepository = // @ts-ignore remove after move to separated repo
-    this.injectCustomRepo<DeploymentsRepository>(DeploymentsRepository);
+  //  remove after move to separated repo
+  protected deploymentsRepository = this.inject<DeploymentsRepository>(
+    DeploymentsRepository,
+  );
 
   //#endregion
 
