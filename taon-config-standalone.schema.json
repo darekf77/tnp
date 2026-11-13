@@ -5405,13 +5405,6 @@
           },
           "description": "what projects should be included for genrated docs"
         },
-        "genTsDocsExcludePaths": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "what projects paths be excluded for genrated docs\n\nExamples:\n- taon/exclude-folder\n- npm-project/folder-deep/exclude-folder"
-        },
         "gitignoreGenDocsFiles": {
           "type": "boolean"
         },

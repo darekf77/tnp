@@ -1304,6 +1304,7 @@ ${this.project.children
       await (async () => {
         const projectsOfInterestStandalone = [
           this.project.framework.coreProject,
+          this.project.framework.tnpCoreContainer,
           this.project,
         ];
 
@@ -1322,6 +1323,7 @@ ${this.project.children
 
         const projectsOfInterestContainer = [
           this.project.framework.coreContainer,
+          this.project.framework.tnpCoreContainer,
           this.project.parent,
         ];
 

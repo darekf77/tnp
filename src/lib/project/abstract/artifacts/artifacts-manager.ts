@@ -392,6 +392,11 @@ ${'req' + 'uire'}('./start');
     }
     //#endregion
 
+    // TODO @LAST sync containers before command
+    if (!initOptions.isCiProcess && !this.project.framework.isCoreProject) {
+      this.project.removeFolderByRelativePath(dotAI);
+    }
+
     this.project.quickFixes.fixPrettierCreatingConfigInNodeModules();
     if (!initOptions.init.struct) {
       try {

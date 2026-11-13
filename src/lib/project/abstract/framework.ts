@@ -10,6 +10,7 @@ import {
   LibTypeEnum,
   notNeededForExportFiles,
   TAGS,
+  taonContainers,
   taonPackageName,
   UtilsFilesFoldersSync,
   UtilsI18n,
@@ -572,6 +573,18 @@ export class Framework extends BaseFeatureForProject<Project> {
   get coreProject(): Project {
     //#region @backendFunc
     return this.project.ins.by(this.project.type, this.frameworkVersion) as any;
+    //#endregion
+  }
+  //#endregion
+
+  //#region core project
+  get tnpCoreContainer(): Project {
+    //#region @backendFunc
+    return this.project.ins.From(
+      this.project.ins.Tnp.pathFor(
+        `../${taonContainers}/${containerPrefix}${this.project.framework.frameworkVersion}`,
+      ),
+    );
     //#endregion
   }
   //#endregion
