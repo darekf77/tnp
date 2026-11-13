@@ -115,14 +115,14 @@ export namespace UtilsMdToHtml {
         block.attr('translate', '');
         block.attr('[translate-t]', 't');
 
-        const children = block.children();
-        const hasOnlyLineBreaks =
-          children.length > 0 &&
-          children.filter('br').length === children.length;
+        const inlineFormatting = 'br, strong, em, b, u, s, del, sub, sup';
+        const descendants = block.find('*');
+        const hasOnlyInlineFormatting =
+          descendants.length > 0 &&
+          descendants.not(inlineFormatting).length === 0;
 
-        if (hasOnlyLineBreaks) {
-          const htmlKey = (block.html() ?? '').trim();
-          block.attr('[translate-html-key]', JSON.stringify(htmlKey));
+        if (hasOnlyInlineFormatting) {
+          block.attr('translate-html', '');
         }
       }
     });
