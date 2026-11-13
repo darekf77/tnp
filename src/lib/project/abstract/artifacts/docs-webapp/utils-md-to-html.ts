@@ -13,10 +13,11 @@ hljs.registerLanguage('bash', bash);
 hljs.registerLanguage('scss', scss);
 
 import { baseHrefDocsGen } from '../../../../constants';
+import { crossPlatformPath, path } from 'tnp-core/src';
 
 export namespace UtilsMdToHtml {
   //#region @backend
-  const md = new MarkdownIt({
+  const markdownit: MarkdownIt = new MarkdownIt({
     html: true,
     linkify: true,
     typographer: false,
@@ -39,12 +40,14 @@ export namespace UtilsMdToHtml {
     packageName: string,
   ): ReturnType<typeof modifyAndGetHeadings> => {
     //#region @backendFunc
-    content = md.render(content);
+    // const originlContent = content;
+    content = markdownit.render(content);
 
     const res = modifyAndGetHeadings(content, filePath);
     res.resultContent = replaceHrefsWithAngularBaseHref(
       res.resultContent,
       packageName,
+      filePath,
     ).replace(/\[innerhtml\](?="|=)/g, '[innerHTML]');
     return res;
     //#endregion
@@ -275,43 +278,52 @@ export namespace UtilsMdToHtml {
   export function replaceHrefsWithAngularBaseHref(
     html: string,
     packageName: string,
+    filePath?: string,
   ): string {
     //#region @backendFunc
     const cheerio = require('cheerio');
+    const { posix } = require('node:path') as typeof import('node:path');
     const $ = cheerio.load(html, null, false);
 
+    const packagePrefix = `${packageName}/`;
+    const normalizedFilePath = filePath?.replace(/\\/g, '/') ?? '';
+    const pathInPackage = normalizedFilePath.startsWith(packagePrefix)
+      ? normalizedFilePath.slice(packagePrefix.length)
+      : normalizedFilePath;
+    const sourceDirectory = posix.dirname(pathInPackage);
+
     $('a[href]').each((_, el) => {
-      const href = $(el).attr('href') as string;
+      const anchor = $(el);
+      const href = anchor.attr('href');
 
-      if (!href) {
-        return;
-      }
-
-      // Leave external/special links untouched
       if (
-        href.startsWith('http://') ||
-        href.startsWith('https://') ||
+        !href ||
         href.startsWith('//') ||
         href.startsWith('#') ||
-        href.startsWith('mailto:') ||
-        href.startsWith('tel:')
+        /^[a-z][a-z\d+.-]*:/i.test(href)
       ) {
         return;
       }
 
-      $(el).removeAttr('href');
+      if (href.startsWith('./') || href.startsWith('../')) {
+        const suffixIndex = href.search(/[?#]/);
+        const targetPath =
+          suffixIndex === -1 ? href : href.slice(0, suffixIndex);
+        const suffix = suffixIndex === -1 ? '' : href.slice(suffixIndex);
+        const resolvedPath = posix.join(sourceDirectory, targetPath);
 
-      if (href.startsWith('./') || href.startsWith('./')) {
-        $(el).attr(
-          '[href]',
-          `${baseHrefDocsGen} + '/${packageName}/' + ${JSON.stringify(href.replace(/^\.\//, ''))}`,
-        );
-      } else {
-        $(el).attr(
-          '[href]',
-          `${baseHrefDocsGen} + ${JSON.stringify(`/${href}`)}`,
-        );
+        anchor
+          .removeAttr('href')
+          .attr(
+            '[href]',
+            `${baseHrefDocsGen} + '/${packageName}/' + ${JSON.stringify(resolvedPath + suffix)}`,
+          );
+        return;
       }
+
+      anchor
+        .removeAttr('href')
+        .attr('[href]', `${baseHrefDocsGen} + ${JSON.stringify(`/${href}`)}`);
     });
 
     return $.html();

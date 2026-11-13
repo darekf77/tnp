@@ -36,6 +36,7 @@ import {
   baseHrefDocsGen,
   docsMainProject,
   docsRoutes,
+  dotAI,
   generatedDocsFromMd,
   libFromSrc,
   sharedFromAssets,
@@ -125,6 +126,12 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
           followSymlinks: false,
         },
       ).filter(f => f.toLowerCase().endsWith('.md')),
+
+      // .ai
+      ...UtilsFilesFoldersSync.getFilesFrom(this.project.pathFor([dotAI]), {
+        recursive: true,
+        followSymlinks: false,
+      }).filter(f => f.toLowerCase().endsWith('.md')),
 
       // src/app/**
       ...UtilsFilesFoldersSync.getFilesFrom(
@@ -412,6 +419,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
     content: string;
   }): string {
     //#region @backendFunc
+
     const renderTags = UtilsMdDocs.getRenderImports(content);
 
     for (const tag of renderTags) {
@@ -536,6 +544,10 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
       ]);
 
       const content = UtilsFilesFoldersSync.readFile(mdFileAbsPAth) || '';
+
+      if (path.basename(relativePath) === 'link-test.md') {
+        debugger;
+      }
 
       const { headings, resultContent, codeblocks, indexData } =
         UtilsMdToHtml.transform(content, relativePath, packageName);
@@ -683,7 +695,7 @@ ${'imp' + 'ort'} { TaonDocsPageComponent, DocsHeading } from '${
 
 //#${'end' + 'reg' + 'ion'}
 
-const t = ${'Trans'+'lation'}.for(Taon.${'__FI' + 'LE_RELAT' + 'IVE_PATH'}, Taon.${'LAN' + 'G_IMPO' + 'RT_MAP'});
+const t = ${'Trans' + 'lation'}.for(Taon.${'__FI' + 'LE_RELAT' + 'IVE_PATH'}, Taon.${'LAN' + 'G_IMPO' + 'RT_MAP'});
 
 @Component({
   selector: 'app-my-docs-page-${_.kebabCase(path.basename(absPath))}',
