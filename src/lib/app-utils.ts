@@ -45,6 +45,7 @@ import type { Project } from './project/abstract/project';
 import { apiPrefix } from 'taon/src';
 //#endregion
 
+//#region remove comments from scss file
 export function removeCommentsFromScssFile(scss: string): string {
   //#region @backendFunc
   return void 0 as string;
@@ -57,7 +58,9 @@ export function removeCommentsFromScssFile(scss: string): string {
   // return root.toString(postcssScss);
   //#endregion
 }
+//#endregion
 
+//#region ping url
 export const pingUrl = async (
   url: string,
   context: string,
@@ -79,6 +82,7 @@ export const pingUrl = async (
     Helpers.error(reason, false, true);
   }
 };
+//#endregion
 
 //#region mark ts source as readonly
 export function markTsSourceAsReadonly(
@@ -957,7 +961,7 @@ export const replaceAssetsLinksForApp = (
 //#endregion
 
 //#region replace before save in ts file
-export const replaceBeforeSaveInTsFile = (
+export const applyTsFileReplacements = (
   beOrFeTsFileContent: string,
   /**
    * <project location>src/<relativeFilePath>
@@ -1148,6 +1152,82 @@ export const replaceBeforeSaveInTsFile = (
   return beOrFeTsFileContent;
   //#endregion
 };
+
+export const replaceBeforeSaveInTsFile = (
+  beOrFeTsFileContent: string,
+  /**
+   * <project location>/src/<relativeFilePath>
+   */
+  relativeFilePath: string,
+  project: Project,
+): string => {
+  //#region @backendFunc
+  if (
+    !beOrFeTsFileContent ||
+    !/\.(?:ts|tsx)$/.test(relativeFilePath)
+  ) {
+    return beOrFeTsFileContent;
+  }
+
+  const skipFileTag = '@taonSkip' + 'Cut';
+  const skipNextLineTag = '@taonSkipNextLine' + 'Cut';
+  const lines = beOrFeTsFileContent.split(/(\r\n|[\n\r])/);
+
+  const getDirective = (line: string): string | undefined =>
+    /^[ \t]*\/\/[ \t]*(@\w+)[ \t]*$/.exec(line)?.[1];
+
+  const directives = lines.map(getDirective);
+
+  if (directives.includes(skipFileTag)) {
+    return beOrFeTsFileContent;
+  }
+
+  if (!directives.includes(skipNextLineTag)) {
+    return applyTsFileReplacements(
+      beOrFeTsFileContent,
+      relativeFilePath,
+      project,
+    );
+  }
+
+  const result: string[] = [];
+  let chunkStart = 0;
+
+  for (let index = 0; index < lines.length; index += 2) {
+    const isDirective = directives[index] === skipNextLineTag;
+    const isProtectedLine = directives[index - 2] === skipNextLineTag;
+
+    if (!isDirective && !isProtectedLine) {
+      continue;
+    }
+
+    if (chunkStart < index) {
+      result.push(
+        applyTsFileReplacements(
+          lines.slice(chunkStart, index).join(''),
+          relativeFilePath,
+          project,
+        ),
+      );
+    }
+
+    result.push(lines[index], lines[index + 1] ?? '');
+    chunkStart = index + 2;
+  }
+
+  if (chunkStart < lines.length) {
+    result.push(
+      applyTsFileReplacements(
+        lines.slice(chunkStart).join(''),
+        relativeFilePath,
+        project,
+      ),
+    );
+  }
+
+  return result.join('');
+  //#endregion
+};
 //#endregion
 
 //#region replace import to assets imports
@@ -1204,7 +1284,7 @@ export async function hash64() {
 }
 //#endregion
 
-//#region copare and save
+//#region compare and save
 export const compareAndSave = ({
   fileAbsPath,
   isFirstTime,
