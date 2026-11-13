@@ -70,5 +70,3 @@ The library code is shared across all other artifacts except docs webapp.
 ✅  <b>electron app   </b> - Electron app with *angular node app* as IPC  `dfrontend/backend 
 
 ⌛ <b>mobile app  </b> - Capacitor framework based mobile app with *angular node app* as frontend/backend.
-
-✅  <b>docs webapp  </b> - Combined documentation: *MkDocs* + *Compodoc*  + *Storybook* .

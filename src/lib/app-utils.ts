@@ -178,7 +178,7 @@ export const ALLOWED_TO_RELEASE: {
   'manual-cloudflare': [ReleaseArtifactTaon.ANGULAR_NODE_APP],
   'manual-static-pages': [
     ReleaseArtifactTaon.ANGULAR_NODE_APP,
-    ReleaseArtifactTaon.DOCS_DOCS_WEBAPP,
+    // ReleaseArtifactTaon.DOCS_DOCS_WEBAPP,
     ReleaseArtifactTaon.ELECTRON_APP,
     ReleaseArtifactTaon.VSCODE_PLUGIN,
   ],
