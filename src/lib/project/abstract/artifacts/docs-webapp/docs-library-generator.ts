@@ -570,10 +570,6 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
 
       const content = UtilsFilesFoldersSync.readFile(mdFileAbsPAth) || '';
 
-      if (path.basename(relativePath) === 'link-test.md') {
-        debugger;
-      }
-
       const { headings, resultContent, codeblocks, indexData } =
         UtilsMdToHtml.transform(content, relativePath, packageName);
 
