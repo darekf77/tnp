@@ -265,8 +265,17 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
     if (!alreadyAnalyzed.includes(packageName)) {
       alreadyAnalyzed.push(packageName);
     }
-
+    const toSkipPaths = this.project.taonJson.genTsDocsExcludePaths;
     for (const mdFileAbsPAth of allMdFiles) {
+      const checkPath = crossPlatformPath([
+        packageName,
+        mdFileAbsPAth.replace(project.location + '/', ''),
+      ]);
+
+      if (toSkipPaths.some(p => checkPath.startsWith(p))) {
+        continue;
+      }
+
       const content = UtilsFilesFoldersSync.readFile(mdFileAbsPAth) || '';
       const links = UtilsMdDocs.getRenderImports(content);
       for (const link of links) {
@@ -465,11 +474,18 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
       if (!proj) {
         continue;
       }
+      const toSkipPaths = this.project.taonJson.genTsDocsExcludePaths;
+
       const allMdFiles =
         proj.artifactsManager.artifact.docsWebapp.docsGen.allMdFilesAbsPaths;
 
       for (const mdFileAbsPath of allMdFiles) {
         const relativePath = mdFileAbsPath.replace(proj.location + '/', '');
+        const checkPath = crossPlatformPath([packageName, relativePath]);
+        if (toSkipPaths.some(p => checkPath.startsWith(p))) {
+          continue;
+        }
+
         const destinationInTempFolderAbsPath = crossPlatformPath([
           this.temporaryMdDocsFolderAbsPath,
           packageName,

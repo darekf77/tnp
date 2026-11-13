@@ -210,6 +210,15 @@ export namespace Models {
      */
     genTsDocsInclude?: string[];
 
+    /**
+     * what projects paths be excluded for genrated docs
+     *
+     * Examples:
+     * - taon/exclude-folder
+     * - npm-project/folder-deep/exclude-folder
+     */
+    genTsDocsExcludePaths?: string[];
+
     gitignoreGenDocsFiles?: boolean;
 
     /**

@@ -313,6 +313,14 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region get ts docs excluded paths
+  get genTsDocsExcludePaths(): string[] {
+    //#region @backendFunc
+    return (this.data as Models.TaonJsonStandalone)?.genTsDocsExcludePaths || [];
+    //#endregion
+  }
+  //#endregion
+
   //#region git ignore gen docs
   get gitignoreGenDocsFiles(): boolean {
     //#region @backendFunc
