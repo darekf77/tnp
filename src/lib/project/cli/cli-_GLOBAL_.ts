@@ -59,7 +59,10 @@ import {
   SchemaGenerator,
 } from 'ts-json-schema-generator';
 
-import { filterChildren } from '../../app-utils';
+import {
+  filterChildren,
+  somethingWasDevelopSinceLastRelease,
+} from '../../app-utils';
 import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
 import {
   containerPrefix,
@@ -2308,18 +2311,9 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
     //#region @backendFunc
     UtilsTerminal.clearConsole();
     let children = this.project.children;
-    children = filterChildren(
-      this.project,
-      children,
-      EnvOptions.from({
-        container: {
-          skipReleased: true,
-        },
-      }),
-      {
-        isForRelease: true,
-      },
-    );
+    children = children.filter(c => {
+      return somethingWasDevelopSinceLastRelease(c) || c.git.listOfAllCurrentGitChanges.length > 0;
+    });
 
     Helpers.info(`
 

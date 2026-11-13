@@ -218,6 +218,14 @@ export const isTsFile = (pathToFile: string): boolean =>
   );
 //#endregion
 
+export const somethingWasDevelopSinceLastRelease = (c: Project): boolean => {
+  const lastCommitMessage = c?.git?.lastCommitMessage()?.trim();
+  if (!lastCommitMessage) {
+    return true;
+  }
+  return !lastCommitMessage?.startsWith('release: ');
+};
+
 //#region filter/sort children for build or release
 export const filterChildren = (
   currentProject: Project,
@@ -312,8 +320,7 @@ export const filterChildren = (
   //#region handle skip released
   if (releaseOptions.container.skipReleased) {
     children = children.filter((c, i) => {
-      const lastCommitMessage = c?.git?.lastCommitMessage()?.trim();
-      return !lastCommitMessage?.startsWith('release: ');
+      return somethingWasDevelopSinceLastRelease(c);
     });
   }
   //#endregion
@@ -1162,10 +1169,7 @@ export const replaceBeforeSaveInTsFile = (
   project: Project,
 ): string => {
   //#region @backendFunc
-  if (
-    !beOrFeTsFileContent ||
-    !/\.(?:ts|tsx)$/.test(relativeFilePath)
-  ) {
+  if (!beOrFeTsFileContent || !/\.(?:ts|tsx)$/.test(relativeFilePath)) {
     return beOrFeTsFileContent;
   }
 
