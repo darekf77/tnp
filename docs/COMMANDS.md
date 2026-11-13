@@ -3,10 +3,10 @@
 # create single standalone project
 tnp new my-standalone-project
 
-# create container with on standalone project
+# create container with standalone child project
 tnp new my-projects-container/my-project
 
-# create folder/container my-container-org and mark it as organization
+# create folder/container "my-container-org" and mark it as organization
 tnp new @my-container-org/my-project
 
 ```
