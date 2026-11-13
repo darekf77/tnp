@@ -315,11 +315,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
       if (found) {
         return found;
       }
-      Helpers.error(
-        `Please build project: ${packageName}`,
-        config.frameworkName === tnpPackageName,
-        true,
-      );
+      Helpers.error(`Please build project: ${packageName}`, false, true);
       return;
     }
 
