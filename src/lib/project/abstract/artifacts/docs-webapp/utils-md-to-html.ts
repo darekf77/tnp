@@ -230,11 +230,14 @@ export namespace UtilsMdToHtml {
 
       if (isBlock) {
         const preElement = codeElement.closest('pre');
-        preElement.wrap('<div class="docs-code-block" translate="no"></div>');
+        preElement.wrap('<div class="docs-code-block" ></div>');
 
-        const copyButton = $(
-          '<button type="button" class="docs-code-copy">Copy</button>',
-        ).attr('(click)', `copyCode(context.${name}, $event)`);
+        const copyButton = $(`
+  <button type="button" class="docs-code-copy"
+          aria-label="Copy code" title="Copy code">
+    <span class="material-icons" aria-hidden="true">content_copy</span>
+  </button>
+`).attr('(click)', `copyCode(context.${name}, $event)`);
 
         preElement.before(copyButton);
       }
