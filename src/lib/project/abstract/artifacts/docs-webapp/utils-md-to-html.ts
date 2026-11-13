@@ -228,6 +228,17 @@ export namespace UtilsMdToHtml {
         .match(/(?:^|\s)language-([\w-]+)(?=\s|$)/i)?.[1]
         .toLowerCase();
 
+      if (isBlock) {
+        const preElement = codeElement.closest('pre');
+        preElement.wrap('<div class="docs-code-block" translate="no"></div>');
+
+        const copyButton = $(
+          '<button type="button" class="docs-code-copy">Copy</button>',
+        ).attr('(click)', `copyCode(context.${name}, $event)`);
+
+        preElement.before(copyButton);
+      }
+
       if (isBlock && language && hljs.getLanguage(language)) {
         block.highlightedHtml = hljs.highlight(codeContent, {
           language,

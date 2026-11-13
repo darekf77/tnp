@@ -725,6 +725,24 @@ ${codeblocks
   .join(',\n')}
   };
 
+  async copyCode(code: string, event: MouseEvent): Promise<void> {
+    const button = event.currentTarget as HTMLButtonElement;
+
+    button.disabled = true;
+
+    try {
+      await navigator.clipboard.writeText(code);
+      button.textContent = 'Copied!';
+    } catch {
+      button.textContent = 'Copy failed';
+    } finally {
+      setTimeout(() => {
+        button.textContent = 'Copy';
+        button.disabled = false;
+      }, 1500);
+    }
+  }
+
   headings: DocsHeading[] = ${JSON.stringify(headings, null, 2)};
 
 }
