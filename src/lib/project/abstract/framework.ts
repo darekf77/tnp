@@ -4,6 +4,7 @@ import { UtilsPoFile } from '@taon-dev/i18n/src';
 import { walk } from 'lodash-walk-object/src';
 import {
   backendNodejsOnlyFiles,
+  child_process,
   config,
   extAllowedToExportAndReplaceTSJSCodeFiles,
   frontendFiles,
@@ -12,6 +13,7 @@ import {
   TAGS,
   taonContainers,
   taonPackageName,
+  tnpPackageName,
   UtilsFilesFoldersSync,
   UtilsI18n,
   UtilsJson,
@@ -31,6 +33,7 @@ import {
 import { fileName } from 'tnp-core/src';
 import {
   BaseFeatureForProject,
+  TypeOfMsgPrefixArr,
   UtilsCjsEsmPackage,
   UtilsNpm,
   UtilsTypescript,
@@ -48,6 +51,7 @@ import {
   AIPasteFile,
   extractFirstLevelRegions,
   parseAiMdContent,
+  somethingWasDevelopSinceLastRelease,
 } from '../../app-utils';
 import {
   appAutoGenDocsMd,
@@ -801,6 +805,206 @@ ${allContexts.join(',\n')}
 `,
     );
     UtilsTypescript.formatFile(fileDestPath);
+    //#endregion
+  }
+
+  async compareAndSyncCoreContainers(): Promise<void> {
+    //#region @backendFunc
+    if (config.frameworkName === taonPackageName) {
+      Helpers.error(`This command is only for tnp cli.`, false, true);
+      return;
+    }
+
+    const coreContainer = this.coreContainer;
+    const tnpCoreContainer = this.tnpCoreContainer;
+
+    const source = tnpCoreContainer;
+    const target = coreContainer;
+
+    const sourceLocation = crossPlatformPath(path.dirname(source.location));
+    const targetLocation = crossPlatformPath(path.dirname(target.location));
+
+    const syncRef = 'refs/taon-sync/tnp-core';
+
+    const quote = (value: string): string =>
+      `'${value.replace(/'/g, `'\\''`)}'`;
+
+    const run = (command: string, project = target): string => {
+      const parentCwd = project.parent.location;
+      return child_process
+        .execSync(command, {
+          cwd: parentCwd,
+          encoding: 'utf8',
+          stdio: ['ignore', 'pipe', 'pipe'],
+        })
+        .trim();
+    };
+
+    const getLines = (command: string, project = target): string[] =>
+      run(command, project)
+        .split(/\r?\n/)
+        .filter(Boolean)
+        .map(c => crossPlatformPath(c));
+
+    Helpers.info(`Syncing TNP core container`);
+    Helpers.info(`Source: ${sourceLocation}`);
+    Helpers.info(`Target: ${targetLocation}`);
+
+    // 1. Verify both repositories.
+    for (const project of [source, target]) {
+      const isGitRepo = run('git rev-parse --is-inside-work-tree', project);
+
+      if (isGitRepo !== 'true') {
+        throw new Error(`Not a Git repository: ${project.location}`);
+      }
+
+      // Refuse unfinished Git operations.
+      const gitDir = run('git rev-parse --absolute-git-dir', project);
+
+      const hasOperation =
+        fse.existsSync(path.join(gitDir, 'rebase-merge')) ||
+        fse.existsSync(path.join(gitDir, 'rebase-apply')) ||
+        fse.existsSync(path.join(gitDir, 'MERGE_HEAD')) ||
+        fse.existsSync(path.join(gitDir, 'CHERRY_PICK_HEAD')) ||
+        fse.existsSync(path.join(gitDir, 'REVERT_HEAD')) ||
+        fse.existsSync(path.join(gitDir, 'BISECT_LOG'));
+
+      if (hasOperation) {
+        throw new Error(`Unfinished Git operation in ${project.location}`);
+      }
+    }
+
+    // 2. Do not overwrite existing target changes.
+    const targetChanges = target.parent.git.listOfAllCurrentGitChanges;
+
+    if (targetChanges.length > 0) {
+      run(
+        'git stash push --include-untracked -m "taon-core-sync-backup"',
+        target,
+      );
+      // throw new Error(
+      //   `Core container has uncommitted changes. ` +
+      //     `Please commit or stash them first.`,
+      // );
+    }
+
+    // 3. Fetch local source history.
+    Helpers.info(`Fetching local TNP history...`);
+
+    run(`git fetch --no-tags ${quote(sourceLocation)} ` + `HEAD:${syncRef}`);
+
+    try {
+      // 4. Find common ancestor.
+      let commonCommit = '';
+
+      try {
+        commonCommit = run(`git merge-base HEAD ${syncRef}`);
+      } catch {
+        throw new Error(`Core containers do not share a common commit.`);
+      }
+
+      if (!commonCommit) {
+        throw new Error(`Core containers do not share a common commit.`);
+      }
+
+      Helpers.info(`Common commit: ${commonCommit}`);
+
+      // 5. Check whether destination is ahead.
+      const targetOnlyCommits = getLines(`git rev-list ${syncRef}..HEAD`);
+
+      if (targetOnlyCommits.length > 0) {
+        Helpers.warn(
+          `Please update from git your local ` +
+            `tnp taon-containers. ` +
+            `Core container has ${targetOnlyCommits.length} ` +
+            `commit(s) not present in TNP core container.`,
+        );
+
+        return;
+      }
+
+      // 6. Synchronize committed history.
+      const sourceOnlyCommits = getLines(
+        `git rev-list --reverse HEAD..${syncRef}`,
+      );
+
+      if (sourceOnlyCommits.length > 0) {
+        Helpers.info(`Synchronizing ${sourceOnlyCommits.length} commits...`);
+
+        // Fast-forward preserves original commit hashes.
+        run(`git merge --ff-only ${syncRef}`);
+      } else {
+        Helpers.info(`Git commits already synchronized.`);
+      }
+
+      // 7. Copy uncommitted source changes.
+      const sourceChanges = source.parent.git.listOfAllCurrentGitChanges.map(
+        f => crossPlatformPath([sourceLocation, f]),
+      );
+
+      Helpers.info(`Synchronizing ${sourceChanges.length} changed files...`);
+
+      // Detect tracked deletions separately.
+      const deletedFiles = new Set(getLines('git ls-files --deleted', source));
+
+      for (const absoluteSourcePath of sourceChanges) {
+        // const relativePath = path.relative(sourceLocation, absoluteSourcePath);
+
+        const relativePath = absoluteSourcePath.replace(
+          sourceLocation + '/',
+          '',
+        );
+
+        // Never allow paths outside source repository.
+        if (
+          relativePath === '..' ||
+          relativePath.startsWith(`..${path.sep}`) ||
+          path.isAbsolute(relativePath)
+        ) {
+          throw new Error(`Invalid source path: ${absoluteSourcePath}`);
+        }
+
+        const absoluteTargetPath = crossPlatformPath([
+          targetLocation,
+          relativePath,
+        ]);
+
+        if (deletedFiles.has(relativePath)) {
+          fse.removeSync(absoluteTargetPath);
+          continue;
+        }
+
+        if (!fse.existsSync(absoluteSourcePath)) {
+          continue;
+        }
+
+        // Avoid recursively copying directories or .git.
+        if (
+          relativePath === '.git' ||
+          relativePath.startsWith(`.git${path.sep}`)
+        ) {
+          continue;
+        }
+
+        if (fse.statSync(absoluteSourcePath).isDirectory()) {
+          continue;
+        }
+
+        fse.ensureDirSync(path.dirname(absoluteTargetPath));
+
+        // Use your existing helper if preferred:
+        // Helpers.copyFile(absoluteSourcePath, absoluteTargetPath);
+        fse.copyFileSync(absoluteSourcePath, absoluteTargetPath);
+      }
+
+      Helpers.info(`Core containers synchronized successfully.`);
+
+      // remove vscode setting to mark that is core container form ~/.taon folder
+      Helpers.remove(target.pathFor('../.vscode'));
+    } finally {
+      // 8. Remove temporary reference.
+      run(`git update-ref -d ${syncRef}`);
+    }
     //#endregion
   }
 

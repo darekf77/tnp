@@ -2312,7 +2312,10 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
     UtilsTerminal.clearConsole();
     let children = this.project.children;
     children = children.filter(c => {
-      return somethingWasDevelopSinceLastRelease(c) || c.git.listOfAllCurrentGitChanges.length > 0;
+      return (
+        somethingWasDevelopSinceLastRelease(c) ||
+        c.git.listOfAllCurrentGitChanges.length > 0
+      );
     });
 
     Helpers.info(`
@@ -2469,6 +2472,16 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
     this._exit();
 
     //#endregion
+  }
+  //#endregion
+
+  //#region sync containers
+  async syncContainers() {
+    if (config.frameworkName === taonPackageName) {
+      Helpers.error(`This command is only for tnp cli.`, false, true);
+    }
+    await this.project.framework.compareAndSyncCoreContainers();
+    this._exit(0);
   }
   //#endregion
 
