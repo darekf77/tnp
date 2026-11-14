@@ -815,90 +815,194 @@ ${allContexts.join(',\n')}
       return;
     }
 
-    const coreContainer = this.coreContainer;
-    const tnpCoreContainer = this.tnpCoreContainer;
+    const source = this.tnpCoreContainer;
+    const target = this.coreContainer;
 
-    const source = tnpCoreContainer;
-    const target = coreContainer;
-
-    const sourceLocation = crossPlatformPath(path.dirname(source.location));
-    const targetLocation = crossPlatformPath(path.dirname(target.location));
+    const sourceLocation = path.resolve(path.dirname(source.location));
+    const targetLocation = path.resolve(path.dirname(target.location));
 
     const syncRef = 'refs/taon-sync/tnp-core';
 
-    const quote = (value: string): string =>
-      `'${value.replace(/'/g, `'\\''`)}'`;
-
-    const run = (command: string, project = target): string => {
-      const parentCwd = project.parent.location;
+    const run = (args: string[], project = target): string => {
       return child_process
-        .execSync(command, {
-          cwd: parentCwd,
+        .execFileSync('git', args, {
+          cwd: path.resolve(path.dirname(project.location)),
           encoding: 'utf8',
           stdio: ['ignore', 'pipe', 'pipe'],
+          maxBuffer: 50 * 1024 * 1024,
         })
         .trim();
     };
 
-    const getLines = (command: string, project = target): string[] =>
-      run(command, project)
-        .split(/\r?\n/)
-        .filter(Boolean)
-        .map(c => crossPlatformPath(c));
+    const runRaw = (args: string[], project = target): string => {
+      return child_process.execFileSync('git', args, {
+        cwd: path.resolve(path.dirname(project.location)),
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        maxBuffer: 50 * 1024 * 1024,
+      });
+    };
 
-    Helpers.info(`Syncing TNP core container`);
-    Helpers.info(`Source: ${sourceLocation}`);
-    Helpers.info(`Target: ${targetLocation}`);
+    const getLines = (args: string[], project = target): string[] =>
+      run(args, project).split(/\r?\n/).filter(Boolean);
 
-    // 1. Verify both repositories.
-    for (const project of [source, target]) {
-      const isGitRepo = run('git rev-parse --is-inside-work-tree', project);
+    const getPaths = (args: string[], project = target): string[] =>
+      runRaw(args, project).split('\0').filter(Boolean);
 
-      if (isGitRepo !== 'true') {
-        throw new Error(`Not a Git repository: ${project.location}`);
+    const isInsideRepository = (root: string, candidate: string): boolean => {
+      const relative = path.relative(root, candidate);
+
+      return (
+        relative !== '' &&
+        relative !== '..' &&
+        !relative.startsWith(`..${path.sep}`) &&
+        !path.isAbsolute(relative)
+      );
+    };
+
+    const resolveSafePath = (root: string, relativePath: string): string => {
+      const absolutePath = path.resolve(root, relativePath);
+
+      if (!isInsideRepository(root, absolutePath)) {
+        throw new Error(`Invalid repository path: ${relativePath}`);
       }
 
-      // Refuse unfinished Git operations.
-      const gitDir = run('git rev-parse --absolute-git-dir', project);
+      const parts = path.relative(root, absolutePath).split(path.sep);
 
-      const hasOperation =
-        fse.existsSync(path.join(gitDir, 'rebase-merge')) ||
-        fse.existsSync(path.join(gitDir, 'rebase-apply')) ||
-        fse.existsSync(path.join(gitDir, 'MERGE_HEAD')) ||
-        fse.existsSync(path.join(gitDir, 'CHERRY_PICK_HEAD')) ||
-        fse.existsSync(path.join(gitDir, 'REVERT_HEAD')) ||
-        fse.existsSync(path.join(gitDir, 'BISECT_LOG'));
+      if (parts.some(part => part.toLowerCase() === '.git')) {
+        throw new Error(`Cannot synchronize Git metadata: ${relativePath}`);
+      }
+
+      return absolutePath;
+    };
+
+    Helpers.info(`Syncing TNP core container`);
+    Helpers.info(`Source: ${crossPlatformPath(sourceLocation)}`);
+    Helpers.info(`Target: ${crossPlatformPath(targetLocation)}`);
+
+    if (
+      process.platform === 'win32'
+        ? sourceLocation.toLowerCase() === targetLocation.toLowerCase()
+        : sourceLocation === targetLocation
+    ) {
+      Helpers.info(`Source and target are the same repository.`);
+      return;
+    }
+
+    // 1. Verify repositories.
+    for (const project of [source, target]) {
+      const repositoryRoot = path.resolve(
+        run(['rev-parse', '--show-toplevel'], project),
+      );
+
+      const expectedRoot = path.resolve(path.dirname(project.location));
+
+      const sameRoot =
+        process.platform === 'win32'
+          ? repositoryRoot.toLowerCase() === expectedRoot.toLowerCase()
+          : repositoryRoot === expectedRoot;
+
+      if (!sameRoot) {
+        throw new Error(`Unexpected Git repository root: ${repositoryRoot}`);
+      }
+
+      const gitDir = run(['rev-parse', '--absolute-git-dir'], project);
+
+      const hasOperation = [
+        'rebase-merge',
+        'rebase-apply',
+        'MERGE_HEAD',
+        'CHERRY_PICK_HEAD',
+        'REVERT_HEAD',
+        'BISECT_LOG',
+      ].some(name => fse.existsSync(path.join(gitDir, name)));
 
       if (hasOperation) {
         throw new Error(`Unfinished Git operation in ${project.location}`);
       }
     }
 
-    // 2. Do not overwrite existing target changes.
-    const targetChanges = target.parent.git.listOfAllCurrentGitChanges;
+    // 2. Refuse an existing synchronization reference.
+    const existingSyncRef = child_process.spawnSync(
+      'git',
+      ['show-ref', '--verify', '--quiet', syncRef],
+      {
+        cwd: targetLocation,
+        encoding: 'utf8',
+      },
+    );
 
-    if (targetChanges.length > 0) {
-      run(
-        'git stash push --include-untracked -m "taon-core-sync-backup"',
-        target,
-      );
-      // throw new Error(
-      //   `Core container has uncommitted changes. ` +
-      //     `Please commit or stash them first.`,
-      // );
+    if (existingSyncRef.error) {
+      throw existingSyncRef.error;
     }
 
-    // 3. Fetch local source history.
-    Helpers.info(`Fetching local TNP history...`);
+    if (existingSyncRef.status === 0) {
+      throw new Error(
+        `Temporary synchronization reference already exists: ${syncRef}`,
+      );
+    }
 
-    run(`git fetch --no-tags ${quote(sourceLocation)} ` + `HEAD:${syncRef}`);
+    if (existingSyncRef.status !== 1) {
+      throw new Error(`Unable to check synchronization reference: ${syncRef}`);
+    }
+
+    let stashCommit: string | undefined;
+    let synchronizationCompleted = false;
+    let fetchAttempted = false;
 
     try {
-      // 4. Find common ancestor.
+      // 3. Backup target changes.
+      const targetStatus = runRaw([
+        'status',
+        '--porcelain=v1',
+        '-z',
+        '--untracked-files=all',
+      ]);
+
+      if (targetStatus.length > 0) {
+        Helpers.info(`Backing up target changes...`);
+
+        const stashBefore = run(['rev-parse', '-q', '--verify', 'refs/stash']);
+
+        run([
+          'stash',
+          'push',
+          '--include-untracked',
+          '-m',
+          'taon-core-sync-backup',
+        ]);
+
+        const stashAfter = run(['rev-parse', '-q', '--verify', 'refs/stash']);
+
+        if (stashAfter && stashAfter !== stashBefore) {
+          stashCommit = stashAfter;
+        } else {
+          throw new Error(
+            `Unable to stash target changes before synchronization.`,
+          );
+        }
+      }
+
+      // 4. Fetch local source history.
+      Helpers.info(`Fetching local TNP history...`);
+
+      fetchAttempted = true;
+
+      run([
+        '-c',
+        'protocol.file.allow=always',
+        'fetch',
+        '--no-tags',
+        '--no-write-fetch-head',
+        sourceLocation,
+        `HEAD:${syncRef}`,
+      ]);
+
+      // 5. Find common ancestor.
       let commonCommit = '';
 
       try {
-        commonCommit = run(`git merge-base HEAD ${syncRef}`);
+        commonCommit = run(['merge-base', 'HEAD', syncRef]);
       } catch {
         throw new Error(`Core containers do not share a common commit.`);
       }
@@ -909,8 +1013,8 @@ ${allContexts.join(',\n')}
 
       Helpers.info(`Common commit: ${commonCommit}`);
 
-      // 5. Check whether destination is ahead.
-      const targetOnlyCommits = getLines(`git rev-list ${syncRef}..HEAD`);
+      // 6. Check whether target has additional commits.
+      const targetOnlyCommits = getLines(['rev-list', `${syncRef}..HEAD`]);
 
       if (targetOnlyCommits.length > 0) {
         Helpers.warn(
@@ -923,87 +1027,136 @@ ${allContexts.join(',\n')}
         return;
       }
 
-      // 6. Synchronize committed history.
-      const sourceOnlyCommits = getLines(
-        `git rev-list --reverse HEAD..${syncRef}`,
-      );
+      // 7. Synchronize committed history.
+      const sourceOnlyCommits = getLines([
+        'rev-list',
+        '--reverse',
+        `HEAD..${syncRef}`,
+      ]);
 
       if (sourceOnlyCommits.length > 0) {
         Helpers.info(`Synchronizing ${sourceOnlyCommits.length} commits...`);
 
-        // Fast-forward preserves original commit hashes.
-        run(`git merge --ff-only ${syncRef}`);
+        run(['merge', '--ff-only', syncRef]);
       } else {
         Helpers.info(`Git commits already synchronized.`);
       }
 
-      // 7. Copy uncommitted source changes.
-      const sourceChanges = source.parent.git.listOfAllCurrentGitChanges.map(
-        f => crossPlatformPath([sourceLocation, f]),
+      // 8. Synchronize uncommitted source changes.
+      const sourceStatus = runRaw(
+        ['status', '--porcelain=v1', '-z', '--untracked-files=all'],
+        source,
       );
 
-      Helpers.info(`Synchronizing ${sourceChanges.length} changed files...`);
+      const changedPaths = new Set<string>();
 
-      // Detect tracked deletions separately.
-      const deletedFiles = new Set(getLines('git ls-files --deleted', source));
+      const statusEntries = sourceStatus.split('\0').filter(Boolean);
 
-      for (const absoluteSourcePath of sourceChanges) {
-        // const relativePath = path.relative(sourceLocation, absoluteSourcePath);
+      for (let i = 0; i < statusEntries.length; i++) {
+        const entry = statusEntries[i];
 
-        const relativePath = absoluteSourcePath.replace(
-          sourceLocation + '/',
-          '',
+        const status = entry.slice(0, 2);
+        const relativePath = entry.slice(3);
+
+        changedPaths.add(relativePath);
+
+        if (status.includes('R') || status.includes('C')) {
+          const originalPath = statusEntries[++i];
+
+          if (status.includes('R') && originalPath) {
+            changedPaths.add(originalPath);
+          }
+        }
+      }
+
+      Helpers.info(`Synchronizing ${changedPaths.size} changed files...`);
+
+      for (const relativePath of changedPaths) {
+        const absoluteSourcePath = resolveSafePath(
+          sourceLocation,
+          relativePath,
         );
 
-        // Never allow paths outside source repository.
-        if (
-          relativePath === '..' ||
-          relativePath.startsWith(`..${path.sep}`) ||
-          path.isAbsolute(relativePath)
-        ) {
-          throw new Error(`Invalid source path: ${absoluteSourcePath}`);
-        }
-
-        const absoluteTargetPath = crossPlatformPath([
+        const absoluteTargetPath = resolveSafePath(
           targetLocation,
           relativePath,
-        ]);
+        );
 
-        if (deletedFiles.has(relativePath)) {
+        if (!fse.existsSync(absoluteSourcePath)) {
           fse.removeSync(absoluteTargetPath);
           continue;
         }
 
-        if (!fse.existsSync(absoluteSourcePath)) {
+        const sourceStat = fse.lstatSync(absoluteSourcePath);
+
+        if (sourceStat.isSymbolicLink()) {
+          const linkTarget = fse.readlinkSync(absoluteSourcePath);
+
+          fse.removeSync(absoluteTargetPath);
+          fse.ensureSymlinkSync(linkTarget, absoluteTargetPath);
+
           continue;
         }
 
-        // Avoid recursively copying directories or .git.
-        if (
-          relativePath === '.git' ||
-          relativePath.startsWith(`.git${path.sep}`)
-        ) {
-          continue;
-        }
-
-        if (fse.statSync(absoluteSourcePath).isDirectory()) {
+        if (!sourceStat.isFile()) {
           continue;
         }
 
         fse.ensureDirSync(path.dirname(absoluteTargetPath));
 
-        // Use your existing helper if preferred:
-        // Helpers.copyFile(absoluteSourcePath, absoluteTargetPath);
+        fse.removeSync(absoluteTargetPath);
+
         fse.copyFileSync(absoluteSourcePath, absoluteTargetPath);
+
+        fse.chmodSync(absoluteTargetPath, sourceStat.mode);
       }
+
+      synchronizationCompleted = true;
 
       Helpers.info(`Core containers synchronized successfully.`);
 
-      // remove vscode setting to mark that is core container form ~/.taon folder
+      // 9. Remove generated VS Code settings.
       Helpers.remove(target.pathFor('../.vscode'));
     } finally {
-      // 8. Remove temporary reference.
-      run(`git update-ref -d ${syncRef}`);
+      // 10. Remove temporary reference.
+      if (fetchAttempted) {
+        try {
+          run(['update-ref', '-d', syncRef]);
+        } catch (error) {
+          Helpers.warn(`Could not remove temporary Git reference: ${syncRef}`);
+        }
+      }
+
+      // 11. Restore target changes.
+      if (stashCommit) {
+        Helpers.info(`Restoring previous target changes...`);
+
+        try {
+          run(['stash', 'apply', '--index', stashCommit]);
+
+          const currentStash = run([
+            'rev-parse',
+            '-q',
+            '--verify',
+            'refs/stash',
+          ]);
+
+          if (currentStash === stashCommit) {
+            run(['stash', 'drop', 'stash@{0}']);
+          }
+
+          Helpers.info(`Previous target changes restored.`);
+        } catch (error) {
+          Helpers.warn(
+            `Could not automatically restore target changes. ` +
+              `Your backup remains in Git stash: ${stashCommit}`,
+          );
+
+          if (synchronizationCompleted) {
+            throw error;
+          }
+        }
+      }
     }
     //#endregion
   }
@@ -1472,7 +1625,7 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
     //#region @backendFunc
     this.project.taonJson.setShouldGenerateDocsComponents(true);
     await this.project.artifactsManager.artifact.docsWebapp.docsGen.start(
-      envOptions
+      envOptions,
     );
     Helpers.info(`Ts Docs regenerated`);
     //#endregion
