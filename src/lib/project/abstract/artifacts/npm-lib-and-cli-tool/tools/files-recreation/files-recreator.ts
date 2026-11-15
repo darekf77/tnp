@@ -37,6 +37,8 @@ import {
   dotGithubCopilotInstructions,
   dotAI,
   taonConfigSchema,
+  vitestConfigAngularSetup,
+  vitestConfigResouecePlugin,
 } from '../../../../../../constants';
 import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
@@ -94,6 +96,8 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
       esLintConfigJsonMainProject,
       vitestConfigJsonBrowser,
       vitestConfigJsonBackend,
+      vitestConfigAngularSetup,
+      vitestConfigResouecePlugin,
       esLintRuleNoNamespaceReExport,
       ...this.filesTemplates(),
     ]);
