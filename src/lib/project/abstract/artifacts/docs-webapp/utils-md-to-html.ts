@@ -202,6 +202,7 @@ export namespace UtilsMdToHtml {
         headingId,
         headingTitle,
         text: sectionText,
+        api: false,
       });
     });
     //#endregion

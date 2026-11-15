@@ -17,6 +17,7 @@ import {
   taonSkipCut,
   taonPackageName,
   Utils,
+  UtilsJson,
 } from 'tnp-core/src';
 import { BaseFeatureForProject, Helpers } from 'tnp-helpers/src';
 
@@ -27,6 +28,7 @@ import {
 } from '../../../../app-utils';
 import {
   allDocsIndexDataFileTs,
+  apiGraphJson,
   appFromSrc,
   assetsFor,
   assetsFromNgProj,
@@ -48,12 +50,14 @@ import {
 import { EnvOptions } from '../../../../options';
 import { Project } from '../../project';
 
+import { TaonTsDocs } from './taon-ts-docs';
 import { UtilsMdToHtml } from './utils-md-to-html';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
 export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   //#region fields & getters
+  taonTsDocs: TaonTsDocs;
 
   buildOptions: EnvOptions;
 
@@ -157,6 +161,13 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
 
   //#endregion
 
+  //#region constructor
+  constructor(project: Project) {
+    super(project);
+    this.taonTsDocs = new TaonTsDocs(project);
+  }
+  //#endregion
+
   //#region api / remove temp folders
   public removeTempFolders(): void {
     //#region @backendFunc
@@ -213,10 +224,17 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
     // const indexData: IndexedData[] = []; // I wonder how to index stuff
 
     this.copyAllMdFilesToTemporaryPath(requiredPackages);
-    this.recreateMdFilesComponents();
+
+    const indexData = this.recreateMdFilesComponents();
+    this.generateComponents(requiredPackages);
 
     this.recreateMainRoutesWithAllLinks();
-    this.recreateIndexingFile();
+    this.recreateIndexingFile(
+      indexData,
+      this.project.taonJson.shouldAddApiDocsIndexGeneratedSearch
+        ? requiredPackages
+        : [],
+    );
     //#endregion
   }
   //#endregion
@@ -475,6 +493,116 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  protected generateComponents(packages: string[]): void {
+    //#region @backendFunc
+
+    for (const packageName of packages) {
+      const proj = this.getProjectFromPackage(packageName);
+      if (!proj) {
+        continue;
+      }
+      const task = Helpers.actionStarted(
+        `Geneated API docs for ${packageName}`,
+      );
+      const base = this.project.pathFor([
+        srcMainProject,
+        libFromSrc,
+        generatedDocsFromMd,
+        packageName,
+      ]);
+
+      const cmpName = `${_.upperFirst(_.camelCase(packageName))}`;
+      const tsDocs = new TaonTsDocs(proj);
+      const graph = tsDocs.getGraph();
+      Helpers.writeJson(
+        [this.sharedMdDocsAssetsFolderAbsPath, packageName, apiGraphJson],
+        graph,
+      );
+
+      Helpers.writeJson(
+        [this.temporaryMdDocsFolderAbsPath, packageName, 'index.json'],
+        tsDocs.getIndexDataGraph(graph, `${packageName}/api.md`),
+      );
+
+      UtilsFilesFoldersSync.writeFile(
+        [base, 'api.routes.ts'],
+        `
+//#${'reg' + 'ion'} imports
+import { Routes } from '@angular/router';
+//#${'end' + 'reg' + 'ion'}
+
+${'exp' + 'ort'} const ${cmpName}ApiMdRoutes: Routes = [
+  {
+    path: '',
+    loadComponent: () =>
+      import('./api.component').then(m => m.${cmpName}Component )
+  },
+];
+        `,
+      );
+
+      const howMuchBack = 2;
+
+      UtilsFilesFoldersSync.writeFile(
+        [base, 'api.component.ts'],
+        `${'imp' + 'ort'} { ChangeDetectionStrategy, Component, signal, Input, ViewChild } from '@angular/core';
+${'imp' + 'ort'} { Taon, TaonTsDocsApiComponent, TaonTsDocsGraph } from '${
+          this.project.nameForNpmPackage === taonPackageName
+            ? `${_.times(howMuchBack)
+                .map(() => '../')
+                .join('')}index`
+            : `${taonPackageName}/src`
+        }';
+${'imp' + 'ort'} { Translation, TranslateDirective } from '@${'taon-' + 'dev/i' + '18n/src'}';
+
+const t = ${'Trans' + 'lation'}.for(Taon.${'__FI' + 'LE_RELAT' + 'IVE_PATH'}, Taon.${'LAN' + 'G_IMPO' + 'RT_MAP'});
+
+@Component({
+  selector: 'api-docs-${_.kebabCase(packageName)}',
+  template: \`
+  @if (graph(); as graph) {
+    <taon-ts-docs-api [graph]="graph" [showSearch]="${
+      this.project.taonJson.shouldAddApiDocsIndexGeneratedSearch
+        ? 'false'
+        : 'true'
+    }" [queryParamNavigation]="true" />
+  } @else {
+    <div class="p-4" translate>Loading API documentation for ${packageName}...</div>
+  }
+  \`,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TaonTsDocsApiComponent, TranslateDirective],
+})
+${'exp' + 'ort'} class ${cmpName}Component {
+  t= t.for(this);
+  readonly graph = signal<TaonTsDocsGraph | null>(null);
+
+  async ngOnInit(): Promise<void> {
+    const pathInAssets = Taon.asset('/${crossPlatformPath([
+      srcMainProject,
+      assetsFromSrc,
+      sharedFromAssets,
+      generatedDocsFromMd,
+      packageName,
+      apiGraphJson,
+    ])}');
+
+    const response = await fetch(pathInAssets);
+
+    if (!response.ok) {
+      throw new Error('Failed to load API documentation');
+    }
+
+    this.graph.set(await response.json());
+  }
+}
+        `,
+      );
+      task.done();
+    }
+    //#endregion
+  }
+
   //#region methods / copy all md file to temporary path
   protected copyAllMdFilesToTemporaryPath(packages: string[]): void {
     //#region @backendFunc
@@ -531,7 +659,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   //#endregion
 
   //#region methods / recreaste libraries ts files from md files
-  protected recreateMdFilesComponents(): void {
+  protected recreateMdFilesComponents(): IndexData[] {
     //#region @backendFunc
     let allIndexData: IndexData[] = [];
     const allMdFiles = this.allMdFilesAbsPathsFromTemporaryPath;
@@ -596,22 +724,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
       );
     }
 
-    const pathAllIndexData = this.project.pathFor([
-      srcMainProject,
-      libFromSrc,
-      generatedDocsFromMd,
-      allDocsIndexDataFileTs,
-    ]);
-
-    UtilsFilesFoldersSync.writeFile(
-      pathAllIndexData,
-      `${taonSkipCut}
-      // ${THIS_IS_GENERATED_STRING}
-export const ${this.getUnifiedNameFromPackage(this.project.nameForNpmPackage)}DocsIndexData = ${JSON.stringify(allIndexData, null, 2)};
-
-${'exp' + 'ort'} default ${this.getUnifiedNameFromPackage(this.project.nameForNpmPackage)}DocsIndexData;
-`,
-    );
+    return allIndexData;
 
     //#endregion
   }
@@ -649,8 +762,42 @@ ${'exp' + 'ort'} default ${this.getUnifiedNameFromPackage(this.project.nameForNp
   //#endregion
 
   //#region methods / recreate main route
-  protected recreateIndexingFile(): void {
+  protected recreateIndexingFile(
+    allIndexData: IndexData[],
+    packages: string[],
+  ): void {
     //#region @backendFunc
+
+    const pathAllIndexData = this.project.pathFor([
+      srcMainProject,
+      libFromSrc,
+      generatedDocsFromMd,
+      allDocsIndexDataFileTs,
+    ]);
+
+    for (const packageName of packages) {
+      const proj = this.getProjectFromPackage(packageName);
+      if (!proj) {
+        continue;
+      }
+      const data =
+        UtilsJson.readJson([
+          this.temporaryMdDocsFolderAbsPath,
+          packageName,
+          'index.json',
+        ]) || [];
+      allIndexData = [...allIndexData, ...data];
+    }
+    UtilsFilesFoldersSync.writeFile(
+      pathAllIndexData,
+      `${taonSkipCut}
+// ${THIS_IS_GENERATED_STRING}
+export const ${this.getUnifiedNameFromPackage(this.project.nameForNpmPackage)}DocsIndexData = ${JSON.stringify(allIndexData, null, 2)} as any;
+
+${'exp' + 'ort'} default ${this.getUnifiedNameFromPackage(this.project.nameForNpmPackage)}DocsIndexData;
+`,
+    );
+
     // TODO
     // const baseMdGen = this.project.pathFor([
     //   srcMainProject,

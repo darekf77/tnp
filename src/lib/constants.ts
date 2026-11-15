@@ -667,6 +667,8 @@ export const generatedFromAssets = folderName.generated;
 
 export const generatedDocsFromMd = 'generated-docs-from-md-files';
 
+export const apiGraphJson = 'api-graph.json';
+
 /**
  * Generated pwa assets from /src/assets/generated/pwa folder
  */

@@ -352,6 +352,12 @@ export namespace Models {
     shouldGenerateDocsComponents?: boolean;
 
     /**
+     * @default false
+     * (STANDALONE) may be slow if big api
+     */
+    shouldAddApiDocsIndexGeneratedSearch?: boolean;
+
+    /**
      * (STANDALONE) generate src/lib/index._auto-generated_.ts with
      * all exports from lib ts files
      */

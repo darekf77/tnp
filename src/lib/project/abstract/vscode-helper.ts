@@ -90,6 +90,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
       'tmp-*/**': true,
       '**/node_modules/**': true,
       '**/dist/**': true,
+      '**/src/**': true,
       '**/dist-nocutsrc/**': true,
       // '**/.git/**': true,
       //   }

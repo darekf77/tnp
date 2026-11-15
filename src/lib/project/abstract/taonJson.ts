@@ -628,6 +628,16 @@ export class TaonJson extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
+  //#region should generate src/lib/index file
+  get shouldAddApiDocsIndexGeneratedSearch(): boolean {
+    const data = this.data as Models.TaonJsonStandalone;
+
+    //#region @backendFunc
+    return !!data?.shouldAddApiDocsIndexGeneratedSearch;
+    //#endregion
+  }
+  //#endregion
+
   get generateTranslationsFor(): UtilsI18n.CommonLocaleCode[] {
     //#region @backendFunc
     const data = this.data as Models.TaonJsonStandalone;

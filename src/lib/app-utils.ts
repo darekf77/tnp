@@ -13,6 +13,7 @@ import {
   UtilsI18n,
   frontEndOnly,
   fse,
+  taonSkipCut,
 } from 'tnp-core/src';
 import { UtilsTypescript } from 'tnp-helpers/src';
 
@@ -1160,6 +1161,15 @@ export const applyTsFileReplacements = (
   //#endregion
 };
 
+export const shouldSkipCut = (content: string): boolean => {
+  const res = content
+    ?.trimStart()
+    .split('\n', 1)[0]
+    ?.includes(taonSkipCut.replace('//', '').trim());
+
+  return res;
+};
+
 export const replaceBeforeSaveInTsFile = (
   beOrFeTsFileContent: string,
   /**
@@ -1173,7 +1183,10 @@ export const replaceBeforeSaveInTsFile = (
     return beOrFeTsFileContent;
   }
 
-  const skipFileTag = '@taonSkip' + 'Cut';
+  if (shouldSkipCut(beOrFeTsFileContent)) {
+    return beOrFeTsFileContent;
+  }
+
   const skipNextLineTag = '@taonSkipNextLine' + 'Cut';
   const lines = beOrFeTsFileContent.split(/(\r\n|[\n\r])/);
 
@@ -1181,10 +1194,6 @@ export const replaceBeforeSaveInTsFile = (
     /^[ \t]*\/\/[ \t]*(@\w+)[ \t]*$/.exec(line)?.[1];
 
   const directives = lines.map(getDirective);
-
-  if (directives.includes(skipFileTag)) {
-    return beOrFeTsFileContent;
-  }
 
   if (!directives.includes(skipNextLineTag)) {
     return applyTsFileReplacements(

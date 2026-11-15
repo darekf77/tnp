@@ -20,7 +20,7 @@ import {
   UtilsTypescript,
 } from 'tnp-helpers/src';
 
-import { isTestFile } from '../../app-utils';
+import { isTestFile, shouldSkipCut } from '../../app-utils';
 import {
   appAutoGenDocsMd,
   appAutoGenJs,
@@ -148,6 +148,10 @@ export class TranslationI18n extends BaseFeatureForProject<Project> {
           for (const lang of langs) {
             this.removeUnusedLangFiles(lang, f);
           }
+          return;
+        }
+
+        if (shouldSkipCut(content)) {
           return;
         }
 

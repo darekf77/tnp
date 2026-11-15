@@ -26,6 +26,7 @@ import {
   isTestFile,
   replaceAssetsLinksForApp,
   replaceImportToAssetsIMport,
+  shouldSkipCut,
 } from '../../../../../../../app-utils';
 import {
   appAutoGenDocsMd,
@@ -1062,10 +1063,7 @@ export class BrowserCodeCut {
   //#region private / methods & getters / replace regions from ts import export
   private REPLACERegionsFromTsImportExport(): BrowserCodeCut {
     //#region @backendFunc
-    if (
-      this.isAssetsFile ||
-      this.rawOrginalContent?.trim().startsWith(taonSkipCut)
-    ) {
+    if (this.isAssetsFile || shouldSkipCut(this.rawOrginalContent)) {
       return this;
     }
     if (!this.relativePath.endsWith('.ts')) {
@@ -1183,10 +1181,7 @@ export class BrowserCodeCut {
     options: ReplaceOptionsExtended,
   ): BrowserCodeCut {
     //#region @backendFunc
-    if (
-      this.isAssetsFile ||
-      this.rawOrginalContent?.trim().startsWith(taonSkipCut)
-    ) {
+    if (this.isAssetsFile || shouldSkipCut(this.rawOrginalContent)) {
       return this;
     }
     options = _.clone(options);
