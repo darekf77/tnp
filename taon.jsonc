@@ -51,7 +51,6 @@
   "watchBuildDependencies": ["tnp-helpers", "tnp-core"],
 
   "generateTranslationsFor": ["en-US", "pl-PL"],
-  "isUsingOwnNodeModulesInsteadCoreContainer": true,
   "resources": ["icon-menu-tnp.svg"],
   "shortName": "tnp",
 
