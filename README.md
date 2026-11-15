@@ -9,4 +9,4 @@
 
 (tnp means "typescript-npm-project" - old name of taon framework)
 
-Check taon on https://taon.dev
+[TAON DEVELOPER GUIDE - HOW TO USE TNP](./DEVELOPER_GUIDE.md)
