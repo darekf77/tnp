@@ -46,6 +46,20 @@ export class CoreContainerSync {
         this.runGit(['reset', '--hard']);
       } catch (error) {}
 
+      try {
+        this.runGit(['clean', '-fd']);
+      } catch (error) {}
+
+      if (
+        this.source.git.lastCommitMessage() ===
+          this.target.git.lastCommitMessage() &&
+        this.source.git.lastCommitHash() !== this.target.git.lastCommitHash()
+      ) {
+        try {
+          this.runGit(['reset', '--hard', 'HEAD~1']);
+        } catch (error) {}
+      }
+
       this.fetchSourceHistory();
 
       const commonCommit = this.getCommonCommit();
