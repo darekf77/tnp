@@ -88,7 +88,10 @@
 /tsconfig*
 /tslint.*
 /update-vscode-package-json.js
-/vitest.config.ts
+/vitest-angular-resources.plugin.ts
+/vitest.config-backend.ts
+/vitest.config-browser.ts
+/vitest.setup-browser.ts
 /webpack.*
 /webpack*
 /websql

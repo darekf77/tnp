@@ -31,6 +31,8 @@ import {
   oldBuildModePrefixShort,
   prodSuffix,
   srcMainProject,
+  taonConfigSchemaJsonContainer,
+  taonConfigSchemaJsonStandalone,
   TemplateFolder,
   tmpAppsForDist,
   tmpAppsForDistElectron,
@@ -401,6 +403,22 @@ export function transformEnvFunctionToBrowser(
   //#endregion
 }
 //#endregion
+
+export function oldFiles(): string[] {
+  return [
+    'vitest.content.config.ts',
+    'tsconfig.isomorphic-flat-bundle.json',
+    'webpack.backend-bundle-build.js',
+    '.eslintrc.json',
+    'eslint.config.js',
+    'tslint.json',
+    'run-org.js',
+    'src/tests/mocha-tests-info.md',
+    '.vscode/launch-backup.json',
+    taonConfigSchemaJsonContainer,
+    taonConfigSchemaJsonStandalone,
+  ];
+}
 
 //#region is test file
 export const isTestFile = (filePath: string): boolean => {

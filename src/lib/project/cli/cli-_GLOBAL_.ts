@@ -61,6 +61,7 @@ import {
 
 import {
   filterChildren,
+  oldFiles,
   somethingWasDevelopSinceLastRelease,
 } from '../../app-utils';
 import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
@@ -2292,12 +2293,14 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
     //#region @backendFunc
     UtilsTerminal.clearConsole();
     let children = this.project.children;
-    children = children.filter(c => {
-      return (
-        somethingWasDevelopSinceLastRelease(c) ||
-        c.git.listOfAllCurrentGitChanges.length > 0
-      );
-    });
+    children = children
+      .filter(c => {
+        return (
+          somethingWasDevelopSinceLastRelease(c) ||
+          c.git.listOfAllCurrentGitChanges.length > 0
+        );
+      })
+      .filter(f => !f.framework.isContainer);
 
     Helpers.info(`
 
@@ -2312,7 +2315,23 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
         ...child.git.listOfCurrentGitChanges.created,
         ...child.git.listOfCurrentGitChanges.modified,
         ...child.git.listOfCurrentGitChanges.deleted,
-      ]);
+      ]).filter(
+        f =>
+          ![
+            '.gitignore',
+            'package.json',
+            '.vscode/settings.json',
+            '.vscode/launch-backup.jsonc',
+            'src/lib/build-info._auto-generated_.ts',
+            'src/app.auto-gen-ver.js',
+            'src/app.auto-gen-ver.md',
+            ...oldFiles(),
+          ].includes(f),
+      );
+      for (const change of changes) {
+        Helpers.log(`- ${change}`);
+      }
+
       console.info(
         `${index + 1}. ${chalk.bold(child.name)}${child.name !== child.name ? `(${child.nameForNpmPackage})` : ''} ` +
           `${changes.length > 0 ? `${chalk.red('changed files ' + changes.length.toString())}` : ''} `,
