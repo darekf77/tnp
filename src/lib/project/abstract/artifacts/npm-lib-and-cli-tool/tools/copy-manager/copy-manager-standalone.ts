@@ -109,13 +109,13 @@ export class CopyManagerStandalone extends BaseCompilerForProject<
 
     const independentProjects = [containerCoreProj];
 
-    if (
-      config.frameworkName === tnpPackageName &&
-      this.project.name !== tnpPackageName
-    ) {
-      // tnp in tnp is not being used at all
-      independentProjects.push(this.project.ins.Tnp);
-    }
+    // if (
+    //   config.frameworkName === tnpPackageName &&
+    //   this.project.name !== tnpPackageName
+    // ) {
+    //   // tnp in tnp is not being used at all
+    //   independentProjects.push(this.project.ins.Tnp);
+    // }
 
     this.copyto = [...independentProjects];
     // console.log(this.copyto.map(c => 'COPYTO ' + c.nodeModules.path))

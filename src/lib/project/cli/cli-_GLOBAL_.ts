@@ -914,7 +914,8 @@ export class $Global extends BaseGlobalCommandLine<
 
   async TNP_SYNC() {
     //#region @backendFunc
-
+    Helpers.error(`Not suported anymore`, false, true);
+    this._exit();
     const currentFrameworkVersion = this.project.taonJson.frameworkVersion;
     const pathToTaonContainerNodeModules = crossPlatformPath([
       UtilsOs.getRealHomeDir(),
@@ -985,17 +986,17 @@ export class $Global extends BaseGlobalCommandLine<
         `);
     }
 
-    const updateTnpAndLocalTona =
-      isInsideTnpAndTaonDev &&
-      (await UtilsTerminal.confirm({
-        message: `Would you like to update tnp and ../${taonContainers} (after sync command) ?`,
-        defaultValue: true,
-      }));
+    // const updateTnpAndLocalTona =
+    //   isInsideTnpAndTaonDev &&
+    //   (await UtilsTerminal.confirm({
+    //     message: `Would you like to update tnp and ../${taonContainers} (after sync command) ?`,
+    //     defaultValue: true,
+    //   }));
 
     this.ins.sync({ syncFromCommand: true });
-    if (updateTnpAndLocalTona) {
-      await this.TNP_SYNC();
-    }
+    // if (updateTnpAndLocalTona) {
+    //   await this.TNP_SYNC();
+    // }
     this._exit();
     //#endregion
   }
@@ -1597,7 +1598,7 @@ ${this.project.children
         },
       )}`,
     );
-    console.log(config.dirnameForTnp);
+    console.log(this.ins.Tnp?.location);
     this._exit();
     //#endregion
   }

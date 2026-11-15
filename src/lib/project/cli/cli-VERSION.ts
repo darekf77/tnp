@@ -1,13 +1,9 @@
-import { config, taonPackageName, Utils, _ } from 'tnp-core/src';
-import { CoreModels, fse, path } from 'tnp-core/src';
+import { _ } from 'tnp-core/src';
 import { Helpers, HelpersTaon } from 'tnp-helpers/src';
-import { BaseCommandLineFeature } from 'tnp-helpers/src';
 
-import { globalSpinner } from '../../constants';
 import { Project } from '../abstract/project'; // TODO QUICK FIX for version
 
 import { BaseCli } from './base-cli';
-import { DevBuildModels } from '../abstract/taon-worker/dev-build/dev-build.models';
 
 declare const ENV: any;
 
@@ -15,16 +11,10 @@ declare const ENV: any;
 export class $Version extends BaseCli {
   //#region _
   public async _(): Promise<void> {
-    const tnpProj = Project.ins.Tnp;
-
-    const taonProj = Project.ins.From([
-      fse.realpathSync(path.dirname(tnpProj.location)),
-      taonPackageName,
-    ]);
     Helpers.success(`
 
-  Taon: ${taonProj?.packageJson.version ? `v${taonProj.packageJson.version}` : '-'}
-  Tnp: ${tnpProj?.packageJson.version ? `v${tnpProj.packageJson.version}` : '-'}
+  Tnp: ${Project.ins.Tnp ? `v${Project.ins.Tnp?.packageJson?.version}` : '-'}
+  Taon: ${Project.ins.Taon ? `v${Project.ins.Taon?.packageJson?.version}` : '-'}
 
     `);
 

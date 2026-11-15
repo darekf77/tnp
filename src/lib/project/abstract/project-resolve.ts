@@ -28,7 +28,10 @@ import { fileName } from 'tnp-core/src';
 import { taonRepoPathUserInUserDirFn } from 'tnp-core/src';
 import { Helpers, BaseProjectResolver, HelpersTaon } from 'tnp-helpers/src';
 
-import { CURRENT_PACKAGE_VERSION } from '../../build-info._auto-generated_';
+import {
+  CURRENT_PACKAGE_TAON_VERSION,
+  CURRENT_PACKAGE_VERSION,
+} from '../../build-info._auto-generated_';
 import {
   containerPrefix,
   DEFAULT_FRAMEWORK_VERSION,
@@ -62,44 +65,6 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
     public cliToolNameFn: () => string,
   ) {
     super(classFn, cliToolNameFn);
-
-    // if (!this.cliToolName) {
-    //   Helpers.throwError(`cliToolName is not provided`);
-    // }
-    if (UtilsOs.isRunningInVscodeExtension()) {
-      //#region @backend
-      console.log('config.frameworkName', config.frameworkName);
-
-      const allTaonContainersCoreContainers = Helpers.foldersFrom(
-        [UtilsOs.getRealHomeDir(), dotTaonFolder, taonContainers],
-        { recursive: false },
-      )
-        .map(c => this.From(c))
-        .filter(c => c?.typeIs(LibTypeEnum.CONTAINER))
-        .sort((a, b) => {
-          const numA =
-            Number(
-              a.name
-                ?.replace(LibTypeEnum.CONTAINER, '')
-                .replace('-', '')
-                .replace('v', ''),
-            ) || 0;
-          const numB =
-            Number(
-              b.name
-                ?.replace(LibTypeEnum.CONTAINER, '')
-                .replace('-', '')
-                .replace('v', ''),
-            ) || 0;
-          return numB - numA; // highest numbers first
-        });
-      const firstContainer = _.first(allTaonContainersCoreContainers);
-      config.dirnameForTnp =
-        firstContainer?.pathFor(
-          `${nodeModulesMainProject}/${tnpPackageName}`,
-        ) || config.dirnameForTnp;
-      //#endregion
-    }
 
     // TODO $Global not available here
     // const commandStartWorker = `${cliToolName} ${UtilsCliClassMethod.getFrom(
@@ -293,19 +258,95 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   //#endregion
 
   //#region methods / tnp
+  /**
+   * Project resovle from npm global link
+   */
   get Tnp(): Project {
     //#region @backendFunc
-    let tnpProject = this.From(config.dirnameForTnp);
-    Helpers.log(
-      `Using ${config.frameworkName} path: ${config.dirnameForTnp}`,
-      1,
-    );
-    if (!tnpProject && !global.globalSystemToolMode) {
+
+    let projFromNodeModules: Project;
+    let resovedTnpPath: string;
+    let resovedRealTnpPath: string;
+    let rootForTnp: string;
+    if (!projFromNodeModules) {
+      //#region resove from global link
+      try {
+        resovedTnpPath = UtilsOs.whichOrWherePackageLocated('tnp');
+        resovedRealTnpPath = crossPlatformPath(
+          fse.realpathSync(resovedTnpPath),
+        );
+        rootForTnp = path.dirname(path.dirname(resovedRealTnpPath));
+
+        const realPorj = this.From(crossPlatformPath(rootForTnp));
+        if (realPorj) {
+          projFromNodeModules = realPorj;
+        }
+      } catch (error) {}
+      //#endregion
+    }
+
+    if (!projFromNodeModules && !global.globalSystemToolMode) {
       Helpers.error(
-        `Not able to find tnp project in "${config.dirnameForTnp}".`,
+        `
+
+        Something wrong with tnp npm global link, please run in tnp project command: taon link:global
+
+        resovedTnpPath:${resovedTnpPath}
+        resovedRealTnpPath:${resovedRealTnpPath}
+        rootForTnp:${rootForTnp}
+      `,
+        false,
+        true,
       );
     }
-    return tnpProject;
+    return projFromNodeModules;
+    //#endregion
+  }
+  //#endregion
+
+  //#region methods / tnp
+  /**
+   * Project resovle from npm global link
+   */
+  get Taon(): Project {
+    //#region @backendFunc
+
+    let projFromNodeModules: Project;
+    let resovedTnpPath: string;
+    let resovedRealTnpPath: string;
+    let rootForTnp: string;
+    if (!projFromNodeModules) {
+      //#region resove from global link
+      try {
+        resovedTnpPath = UtilsOs.whichOrWherePackageLocated('taon');
+        resovedRealTnpPath = crossPlatformPath(
+          fse.realpathSync(resovedTnpPath),
+        );
+        rootForTnp = path.dirname(path.dirname(resovedRealTnpPath));
+
+        const realPorj = this.From(crossPlatformPath(rootForTnp));
+        if (realPorj) {
+          projFromNodeModules = realPorj;
+        }
+      } catch (error) {}
+      //#endregion
+    }
+
+    if (!projFromNodeModules && !global.globalSystemToolMode) {
+      Helpers.error(
+        `
+
+        Something wrong with taon npm global link, please run in tnp project command: taon link:global
+
+        resovedTnpPath:${resovedTnpPath}
+        resovedRealTnpPath:${resovedRealTnpPath}
+        rootForTnp:${rootForTnp}
+      `,
+        false,
+        true,
+      );
+    }
+    return projFromNodeModules;
     //#endregion
   }
   //#endregion
@@ -341,7 +382,6 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
       Helpers.error(
         `
     path: ${crossPlatformPath(projectPath)}
-    config.dirnameForTnp: ${config.dirnameForTnp}
 
      [taon/project] Bad library type "${libraryType}" for this framework version "${version}"
 

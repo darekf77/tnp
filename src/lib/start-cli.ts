@@ -327,7 +327,7 @@ export async function run(
   const ProjectClass = (await import('./project/abstract/project')).Project;
   ProjectClass.ins.initialCheck();
 
-  if (tnpPackageName === config.frameworkName) {
+  if (tnpPackageName === config.frameworkName && !global.skipCoreCheck) {
     const currentProj = ProjectClass.ins.From(process.cwd());
     if (currentProj) {
       await currentProj.framework.compareAndSyncCoreContainers();
