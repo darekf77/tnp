@@ -20,6 +20,7 @@ import {
   dotAI,
   dotFileTemplateExt,
   dotGithubCopilotInstructions,
+  dotGitIgnoreMainProject,
   dotVscodeMainProject,
   esLintCustomRulesMainProject,
   frameworkBuildFolders,
@@ -33,6 +34,7 @@ import {
   localReleaseMainProject,
   migrationsFromLib,
   packageJsonLockMainProject,
+  packageJsonMainProject,
   packageJsonSubProject,
   prodSuffix,
   runJsMainProject,
@@ -54,214 +56,266 @@ import type { Project } from './project';
 export class IgnoreHide // @ts-ignore TODO weird inheritance problem
   extends BaseIgnoreHideHelpers<Project>
 {
-  private applyToChildren(toIgnore: string[]): string[] {
-    return toIgnore;
-    // TODO remvoe ?
-    // const chilredn = Utils.uniqArray([
-    //   ...(this.project.children || []).map(c => c.name),
-    //   ...(this.project.linkedProjects?.linkedProjects || []).map(
-    //     c => c.relativeClonePath,
-    //   ),
-    // ]).filter(f => !!f);
-    // return [
-    //   ...toIgnore,
-    //   ...chilredn.reduce((a, childFolderName) => {
-    //     return [...a, ...toIgnore.map(c => `${childFolderName}/${c}`)];
-    //   }, []),
-    // ];
-  }
+  //#region getters
 
-  getPatternsIgnoredInRepoButVisibleToUser(): string[] {
-    // TODO
-    return [
-      ...super.getPatternsIgnoredInRepoButVisibleToUser(),
-      ...frameworkBuildFolders.filter(c => !!c).map(c => `/${c}`),
-      this.project.framework.isStandaloneProject
-        ? `/${testEnvironmentsMainProject}`
-        : void 0,
-      `/${srcMainProject}/${TaonGeneratedFiles.APP_HOSTS_TS}`,
-      `/${srcMainProject}/${TaonGeneratedFiles.VARS_SCSS}`,
-      `/${TaonGeneratedFiles.BUILD_INFO_MD}`,
-      `/${TaonGeneratedFiles.BUILD_STATUS_MD}`,
-      `/${docsConfigSchema}`,
-      `/${TaonTempDatabasesFolder}/bucket`,
-      `/${TaonTempDatabasesFolder}/**/*.sqlite`,
-      `/${TaonTempDatabasesFolder}/**/*.sqlite`,
-      `/${TaonTempDatabasesFolder}/**/*.sqlite.png`,
-      `/${TaonTempDatabasesFolder}/**/*.sqlite.drawio`,
-      `/${TaonTempDatabasesFolder}/**/*.sqlite.txt`,
-      `/${TaonTempDatabasesFolder}/**/*.sqlite.schema.txt`,
-      `/${TaonTempDatabasesFolder}/**/*.sqlite.overview.txt`,
-      `/${TaonTempDatabasesFolder}/**/*.json`,
-      `/${TaonTempRoutesFolder}/*.rest`,
-      `/${srcMainProject}/${libFromSrc}/${TaonGeneratedFiles.build_info_generated_ts}`,
-      ...(this.project.taonJson.gitignoreGenDocsFiles
-        ? [
-            `/${srcMainProject}/${assetsFromSrc}/${sharedFromAssets}/${generatedDocsFromMd}/`,
-            `/${srcMainProject}/${libFromSrc}/${generatedDocsFromMd}/`,
-          ]
-        : []),
-      `/${srcMainProject}/${libFromSrc}/${TaonGeneratedFiles.LIB_INFO_MD}`,
-      `/${srcMainProject}/${libFromSrc}/${TaonGeneratedFolders.ENV_FOLDER}/**/*.*`,
-      `/${srcMainProject}/${libFromSrc}/${migrationsFromLib}/${TaonGeneratedFiles.MIGRATIONS_INFO_MD}`,
-      `/${srcMainProject}/${testsFromSrc}/${TaonGeneratedFiles.TESTS_FOLDER_INFO_MD}`,
-      `/${srcMainProject}/${assetsFromSrc}/${sharedFromAssets}/${TaonGeneratedFiles.SHARED_FOLDER_INFO_TXT}`,
-      `/${srcMainProject}/${appAutoGenDocsMd}`,
-      `/${srcMainProject}/${appAutoGenJs}`,
-      `/${dotVscodeMainProject}/${TaonGeneratedFiles.LAUNCH_JSON}`,
-      !this.project.taonJson.storeGeneratedAssetsInRepository
-        ? `/${srcMainProject}/${assetsFromSrc}/${generatedFromAssets}`
-        : void 0,
-      !this.project.taonJson.storeLocalReleaseFilesInRepository
-        ? `/${localReleaseMainProject}`
-        : void 0,
-      ...(this.project.isMonorepo
-        ? []
-        : this.project.linkedProjects.linkedProjects
-            .map(f => f.relativeClonePath)
-            .map(c => `${crossPlatformPath(c)}`)),
-      ...(this.project.isMonorepo
-        ? []
-        : this.project.linkedProjects.linkedProjects
-            .map(f => f.relativeClonePath)
-            .map(c => `${crossPlatformPath(c)}.worktrees`)),
-    ].filter(c => !!c) as string[];
-  }
-
-  // ! TODO THIS IS COLLIDING WITH hide in project
-  protected storeInRepoConfigFiles(): boolean {
-    return true; // TODO for now true in future may be false - everything recreate from template
-  }
-
-  // TODO use constants
-  get hideInProject(): string[] {
-    let tohide = [
-      'tmp-*',
-      'dist*',
-      '.tnp',
-      ...(!this.project.framework.isCoreProject
-        ? [AgentsMdMainProject, dotAI, dotGithubCopilotInstructions]
-        : []),
-      `${dotAI}/examples`,
-      '.taon',
-      'tsconfig*',
-      '*.schema.json',
-      'eslint*',
+  //#region getters / core container exceptins
+  get notIgnoredFilesAndFolderInStandaloneCoreProject(): string[] {
+    if (!this.project.framework.isStandaloneProject) {
+      return [];
+    }
+    const files = [
       'run.js',
-      'webpack*',
       'index.js',
       'index.js.map',
       'index.d.ts',
-      vitestConfigJsonMainProject,
+      'vitest.config.ts',
+      'eslint-rules',
       '.gitignore',
       '.npmignore',
       '.npmrc',
       '.prettierrc',
       '.prettierignore',
+      'docs-config.schema.json',
       'update-vscode-package-json.js',
       '.editorconfig',
-      'websql',
-      'browser',
-      'node_modules',
+      'AGENTS.md',
       'package.json',
+      '.github/copilot-instructions.md',
+      'run.js',
+      '.ai',
+    ];
+    return files;
+  }
+
+  get notIgnoredPatternsInStandaloneCoreProject(): string[] {
+    if (!this.project.framework.isStandaloneProject) {
+      return [];
+    }
+    const files = [
+      'webpack*',
+      'tsconfig*',
+      'eslint*',
+      '*.filetemplate',
+      '*.i18n.data.ts',
+    ];
+    return files;
+  }
+  //#endregion
+
+  //#region getters / ignored but visible to user
+  get ignoredAlwaysForStandaloneFilesButVisibleToUSer(): string[] {
+    if (!this.project.framework.isStandaloneProject) {
+      return [];
+    }
+    const files = [
+      `src/app.auto-gen-docs.md`,
+      `src/app.auto-gen-ver.js`,
+      '.vscode/launch.json',
+      'src/vars.scss',
+      'src/app.hosts.ts',
+      'BUILD-INFO.md',
+      'BUILD-STATUS.m',
+    ];
+    return files;
+  }
+
+  get ignoredAlwaysForStandalonePatternsButVisibleToUSer(): string[] {
+    if (!this.project.framework.isStandaloneProject) {
+      return [];
+    }
+    const patterns = [
+      'src/assets/shared/shared_folder_info.txt',
+      'src/tests/tests-folder-info.md',
+      'src/lib/migrations/migrations-info.md',
+      'src/lib/lib-info.md',
+      'src/lib/env/**/*.*',
+      `src/lib/build-info._auto-generated_.ts`,
+      `databases/bucket`,
+      `databases/**/*.sqlite`,
+      `databases/**/*.sqlite`,
+      `databases/**/*.sqlite.png`,
+      `databases/**/*.sqlite.drawio`,
+      `databases/**/*.sqlite.txt`,
+      `databases/**/*.sqlite.schema.txt`,
+      `databases/**/*.sqlite.overview.txt`,
+      `databases/**/*.json`,
+      `routes/*.rest`,
     ];
 
-    if (this.project.framework.isCoreProject) {
-      tohide = tohide.filter(f => f !== vitestConfigJsonMainProject);
-      tohide = tohide.filter(f => f !== 'package.json');
-      tohide = tohide.filter(f => f !== '.gitignore');
-      tohide = tohide.filter(f => f !== 'tsconfig*');
+    return patterns;
+  }
+  //#endregion
+
+  //#endregion
+
+  //#region methods
+
+  //#region methods don't store core container fiels
+
+  protected storeInRepoConfigFiles(): boolean {
+    return false; // TODO for now true in future may be false - everything recreate from template
+  }
+  //#endregion
+
+  //#region get patterns ignore but visible to use
+  getPatternsIgnoredInRepoButVisibleToUser(): string[] {
+    let patternsFilesFolders = [
+      'sub-projects/**/browser',
+      'sub-projects/**/tmp-taon-migrations',
+      'sub-projects/**/node_modules',
+      'sub-projects/**/package.json',
+      '*.schema.json',
+      '.tnp',
+      '.taon',
+      ...super.getPatternsIgnoredInRepoButVisibleToUser(),
+    ];
+
+    if (this.project.taonJson.gitignoreGenDocsFiles) {
+      patternsFilesFolders.push(
+        ...[
+          `src/assets/shared/generated-docs-from-md-files`,
+          `src/lib/generated-docs-from-md-files`,
+        ],
+      );
     }
 
-    return tohide;
+    if (!this.project.taonJson.storeGeneratedAssetsInRepository) {
+      patternsFilesFolders.push(`src/assets/generated`);
+    }
+
+    if (!this.project.taonJson.storeLocalReleaseFilesInRepository) {
+      patternsFilesFolders.push(`local_release`);
+    }
+
+    patternsFilesFolders.push(
+      ...this.project.linkedProjects.linkedProjects
+        .map(f => f.relativeClonePath)
+        .map(c => `${crossPlatformPath(c)}`),
+    );
+
+    patternsFilesFolders.push(
+      ...this.ignoredAlwaysForStandaloneFilesButVisibleToUSer,
+    );
+
+    patternsFilesFolders.push(
+      ...this.ignoredAlwaysForStandalonePatternsButVisibleToUSer,
+    );
+
+    //#region handle core container exceptions
+    if (
+      this.project.framework.isCoreProject &&
+      this.project.framework.isStandaloneProject
+    ) {
+      patternsFilesFolders = patternsFilesFolders.filter(f => {
+        return !this.notIgnoredFilesAndFolderInStandaloneCoreProject.includes(
+          f,
+        );
+      });
+    } else {
+      patternsFilesFolders.push(
+        ...this.notIgnoredFilesAndFolderInStandaloneCoreProject,
+      );
+    }
+
+    if (
+      this.project.framework.isCoreProject &&
+      this.project.framework.isStandaloneProject
+    ) {
+      patternsFilesFolders = patternsFilesFolders.filter(f => {
+        return !this.notIgnoredPatternsInStandaloneCoreProject.includes(f);
+      });
+    } else {
+      patternsFilesFolders.push(
+        ...this.notIgnoredPatternsInStandaloneCoreProject,
+      );
+    }
+    //#endregion
+
+    return patternsFilesFolders.filter(c => !!c) as string[];
   }
+  //#endregion
 
-  protected alwaysIgnoredHiddenPatterns(): string[] {
-    const toIgnore = [
-      `*${i18nDataTsFileExt}`,
-      ...super.alwaysIgnoredHiddenPatterns(),
-      ...this.hideInProject,
-      !this.project.framework.isCoreProject ? `*${dotFileTemplateExt}` : void 0,
-    ].filter(f => !!f) as string[];
-
-    return this.applyToChildren(toIgnore);
-  }
-
-  protected alwaysIgnoredAndHiddenFilesAndFolders(): string[] {
-    const toIgnore = [
-      ...super.alwaysIgnoredAndHiddenFilesAndFolders(),
-      browserMainProject,
-      websqlMainProject,
-      websqlMainProject,
-      esLintCustomRulesMainProject,
-      distMainProject + prodSuffix,
-      distNoCutSrcMainProject,
-      distNoCutSrcMainProject + prodSuffix,
-      packageJsonLockMainProject,
+  //#region get patterns always ignored and hidden
+  protected getPatternsAlwaysIgnoredHidden(): string[] {
+    const patternsFilesFolders = [
+      'tmp-*',
+      'dist*',
+      'dist-*',
+      'node_modules',
+      'package.json',
+      'websql',
+      'browser',
+      'sub-projects/**/tsconfig.json',
+      ...super.getPatternsAlwaysIgnoredHidden(),
     ];
-    return this.applyToChildren(toIgnore);
-  }
 
-  alwaysUseRecursivePattern(): string[] {
-    return [
-      ...super.alwaysUseRecursivePattern(),
-      `*${dotFileTemplateExt}`,
-      `*${i18nDataTsFileExt}`,
-      ...this.hideInProject,
-    ];
-  }
+    patternsFilesFolders.push(
+      ...this.project.linkedProjects.linkedProjects
+        .map(f => f.relativeClonePath)
+        .map(c => `${crossPlatformPath(c)}.worktrees`),
+    );
 
+    return patternsFilesFolders.filter(f => !!f) as string[];
+  }
+  //#endregion
+
+  //#region always use as recursive patterns
+  protected alwaysUseRecursivePattern(): string[] {
+    const patterns = super.alwaysUseRecursivePattern();
+
+    patterns.push('*.i18n.data.ts');
+
+    return patterns;
+  }
+  //#endregion
+
+  //#region files and folders Always Ignored And hidden
+  protected filesAndFoldersAlwaysIgnoredAndHidden(): string[] {
+    const filesAndFolders = [...super.filesAndFoldersAlwaysIgnoredAndHidden()];
+    return filesAndFolders.filter(f => !!f) as string[];
+  }
+  //#endregion
+
+  //#region hidden but not necesary ignored in repo files and folders
   protected hiddenButNotNecessaryIgnoredInRepoFilesAndFolders(): string[] {
-    const toIgnore = [
+    let filesAndFolders = [
       ...super.hiddenButNotNecessaryIgnoredInRepoFilesAndFolders(),
-      runJsMainProject,
-      indexDtsMainProject,
-      indexJsMainProject,
-      indexJsMapMainProject,
-      updateVscodePackageJsonJsMainProject,
     ];
-    return this.applyToChildren(toIgnore);
-  }
 
+    if (
+      this.project.framework.isCoreProject &&
+      this.project.framework.isStandaloneProject
+    ) {
+      filesAndFolders = filesAndFolders.filter(f => {
+        return !this.notIgnoredFilesAndFolderInStandaloneCoreProject.includes(
+          f,
+        );
+      });
+    }
+
+    return filesAndFolders;
+  }
+  //#endregion
+
+  //#region hidden but not necessary ignored in repo patterns
   protected hiddenButNotNecessaryIgnoredInRepoPatterns(): string[] {
-    const toIgnore = [
+    let patterns = [
       ...super.hiddenButNotNecessaryIgnoredInRepoPatterns(),
-      '*.schema.json',
-      `!${TemplateFolder.templatesSubprojects}/**/${packageJsonSubProject}`,
-    ].filter(f => !!f) as string[];
-    return this.applyToChildren(toIgnore);
-  }
-
-  protected hiddenButNeverIgnoredInRepo(): string[] {
-    const toIgnore = [
-      ...super.hiddenButNeverIgnoredInRepo(),
-      ...(Helpers.exists(this.project.pathFor(fileName.taon_jsonc))
-        ? [fileName.package_json]
-        : []),
+      `!templates-subprojects/**/package.json`,
     ];
 
-    return this.applyToChildren(toIgnore);
+    if (
+      this.project.framework.isCoreProject &&
+      this.project.framework.isStandaloneProject
+    ) {
+      patterns = patterns.filter(f => {
+        return !this.notIgnoredPatternsInStandaloneCoreProject.includes(f);
+      });
+    }
+
+    return patterns.filter(f => !!f) as string[];
   }
+  //#endregion
 
-  public getVscodeFilesFoldersAndPatternsToHide(): {
-    [fileFolderOrPattern: string]: true;
-  } {
-    const result = {
-      ...super.getVscodeFilesFoldersAndPatternsToHide(),
-    };
-
-    // if (
-    //   this.project.framework.isContainer &&
-    //   this.project.taonJson.isOrganization
-    // ) {
-    //   this.project.linkedProjects.linkedProjects
-    //     .map(f => f.relativeClonePath)
-    //     .map(c => `${crossPlatformPath(c)}`)
-    //     .forEach(c => {
-    //       result[c] = true;
-    //     });
-    // }
-
-    return result;
-  }
+  //#endregion
 }
