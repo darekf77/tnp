@@ -73,8 +73,7 @@ import {
   readmeMdMainProject,
   result_packages_json,
   srcMainProject,
-  taonConfigSchemaJsonContainer,
-  taonConfigSchemaJsonStandalone,
+  taonConfigSchema,
   taonJsonMainProject,
   tmpIsomorphicPackagesJson,
   tsconfigForSchemaJson,
@@ -1312,35 +1311,16 @@ ${this.project.children
           this.project,
         ];
 
-        const schemaStandalone = await this._createJsonSchemaFrom({
+        const schemaCombined = await this._createJsonSchemaFrom({
           nameOfTypeOrInterface: 'Models.TaonJsonCombined',
           project: this.project,
           relativePathToTsFile: fileToWatch,
         });
         for (const proj of projectsOfInterestStandalone) {
           proj.vsCodeHelpers.recreateJsonSchemaForTaon();
-          Helpers.writeFile(
-            proj.pathFor(taonConfigSchemaJsonStandalone),
-            schemaStandalone,
-          );
-        }
-
-        const projectsOfInterestContainer = [
-          this.project.framework.coreContainer,
-          this.project.framework.tnpCoreContainer,
-          this.project.parent,
-        ];
-
-        // const schemaContainer = await this._createJsonSchemaFrom({
-        //   nameOfTypeOrInterface: 'Models.TaonJsonContainer',
-        //   project: this.project,
-        //   relativePathToTsFile: fileToWatch,
-        // });
-        for (const proj of projectsOfInterestContainer) {
-          proj.vsCodeHelpers.recreateJsonSchemaForTaon();
-          Helpers.writeFile(
-            proj.pathFor(taonConfigSchemaJsonContainer),
-            schemaStandalone,
+          UtilsFilesFoldersSync.writeFile(
+            proj.pathFor(taonConfigSchema),
+            schemaCombined,
           );
         }
       })();

@@ -59,6 +59,11 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
   //#region getters
 
   //#region getters / core container exceptins
+
+  get aiFiles(): string[] {
+    return ['AGENTS.md', '.github/copilot-instructions.md', '.ai'];
+  }
+
   get notIgnoredFilesAndFolderInStandaloneCoreProject(): string[] {
     if (!this.project.framework.isStandaloneProject) {
       return [];
@@ -75,14 +80,13 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       '.npmrc',
       '.prettierrc',
       '.prettierignore',
+      'taon-config.schema.json',
       'docs-config.schema.json',
       'update-vscode-package-json.js',
       '.editorconfig',
-      'AGENTS.md',
       'package.json',
-      '.github/copilot-instructions.md',
+      ...this.aiFiles,
       'run.js',
-      '.ai',
     ];
     return files;
   }
@@ -164,7 +168,6 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
       'sub-projects/**/tmp-taon-migrations',
       'sub-projects/**/node_modules',
       'sub-projects/**/package.json',
-      '*.schema.json',
       '.tnp',
       '.taon',
       ...super.getPatternsIgnoredInRepoButVisibleToUser(),
@@ -254,6 +257,22 @@ export class IgnoreHide // @ts-ignore TODO weird inheritance problem
         .map(f => f.relativeClonePath)
         .map(c => `${crossPlatformPath(c)}.worktrees`),
     );
+
+    if (
+      this.project.framework.isCoreProject &&
+      this.project.framework.isStandaloneProject
+    ) {
+      // nothing
+    } else {
+      patternsFilesFolders.push(
+        ...[
+          'eslint-rules',
+          'eslint.config.ts',
+          'taon-config.schema.json',
+          ...this.aiFiles,
+        ],
+      );
+    }
 
     return patternsFilesFolders.filter(f => !!f) as string[];
   }

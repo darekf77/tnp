@@ -29,6 +29,8 @@ import {
   appAutoGenJs,
   TaonGeneratedFiles,
   mainProjectSubProjects,
+  taonConfigSchema,
+  assetsFromSrc,
 } from '../../constants';
 import { Models } from '../../models';
 import { Development, EnvOptions } from '../../options';
@@ -200,31 +202,15 @@ export class Vscode extends BaseVscodeHelpers<Project> {
       currentSchemas.splice(index, 1);
     }
 
-    if (this.project.framework.isStandaloneProject) {
-      const properSchema = {
-        fileMatch: [`/${fileName.taon_jsonc}`],
-        url: `./${taonConfigSchemaJsonStandalone}`,
-      };
+    const properSchema = {
+      fileMatch: [`/${fileName.taon_jsonc}`],
+      url: `./${taonConfigSchema}`,
+    };
 
-      currentSchemas.push(properSchema);
+    currentSchemas.push(properSchema);
 
-      if (!this.project.framework.isCoreProject) {
-        this.project.removeFile(taonConfigSchemaJsonContainer);
-      }
-    } else if (this.project.framework.isContainer) {
-      const properSchema = {
-        fileMatch: [`/${fileName.taon_jsonc}`],
-        url: `./${taonConfigSchemaJsonContainer}`,
-      };
-
-      currentSchemas.push(properSchema);
-
-      if (!this.project.framework.isCoreProject) {
-        this.project.removeFile(taonConfigSchemaJsonStandalone);
-      }
-    }
-
-    this.project.removeFile('taon-config.schema.json'); // QUICK_FIX
+    this.project.removeFile(taonConfigSchemaJsonContainer);
+    this.project.removeFile(taonConfigSchemaJsonStandalone);
 
     _.set(this.currentSettingsValue, '["json.schemas"]', currentSchemas);
     //#endregion
@@ -730,6 +716,8 @@ export class Vscode extends BaseVscodeHelpers<Project> {
 
     settings['search.exclude'][`${srcMainProject}/${appAutoGenDocsMd}`] = true;
     settings['search.exclude'][`${srcMainProject}/${appAutoGenJs}`] = true;
+    settings['search.exclude'][`**/${srcMainProject}/${appAutoGenDocsMd}`] = true;
+    settings['search.exclude'][`**/${srcMainProject}/${appAutoGenJs}`] = true;
     settings['search.exclude'][`${mainProjectSubProjects}`] = true;
     return settings;
     //#endregion

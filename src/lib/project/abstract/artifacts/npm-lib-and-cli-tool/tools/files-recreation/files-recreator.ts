@@ -13,9 +13,6 @@ import { Helpers, HelpersTaon } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
 import {
-  frameworkBuildFolders,
-  taonConfigSchemaJsonStandalone,
-  taonConfigSchemaJsonContainer,
   dotFileTemplateExt,
   tsconfigJsonMainProject,
   tsconfigBackendDistJson,
@@ -38,6 +35,7 @@ import {
   AgentsMdMainProject,
   dotGithubCopilotInstructions,
   dotAI,
+  taonConfigSchema,
 } from '../../../../../../constants';
 import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
@@ -84,7 +82,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
     ];
 
     files = files.concat([
-      taonConfigSchemaJsonStandalone,
+      taonConfigSchema,
       tsconfigJsonBrowserMainProject,
       webpackConfigJsMainProject,
       runJsMainProject,
@@ -107,7 +105,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
 
   projectSpecificFilesForContainer(): string[] {
     return [
-      taonConfigSchemaJsonContainer,
+      taonConfigSchema,
       esLintConfigJsonMainProject,
       esLintRuleNoNamespaceReExport,
       AgentsMdMainProject,

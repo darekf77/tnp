@@ -213,8 +213,11 @@ export const websqlPrefix = '-websql';
 export const folder_shared_folder_info = 'shared_folder_info.txt';
 export const taonConfigSchemaJsonStandalone =
   'taon-config-standalone.schema.json';
+
 export const taonConfigSchemaJsonContainer =
   'taon-config-container.schema.json';
+
+export const taonConfigSchema = 'taon-config.schema.json';
 
 export const TEMP_DOCS = 'tmp-documentation';
 
@@ -1123,4 +1126,3 @@ export const i18nFolder = 'i18n';
 export const i18nDataTsFileExt = '.i18n.data.ts';
 
 export const translationTsExt = '.translation.ts';
-
