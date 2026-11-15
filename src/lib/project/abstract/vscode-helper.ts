@@ -362,12 +362,20 @@ export class Vscode extends BaseVscodeHelpers<Project> {
     const templateForVite = () => {
       return [
         {
-          name: `${DEBUG_WORD} Vitest (all *.test.ts files)`,
+          name: `${DEBUG_WORD} Vitest Browser (all *.spec.ts files)`,
           type: 'node',
           ...this.commonProps,
           request: 'launch',
           program: '${workspaceFolder}/node_modules/vitest/vitest.mjs',
-          args: ['run', '--environment', 'node', '--testTimeout', '60000'],
+          args: [
+            'run',
+            '--environment',
+            'node',
+            '--testTimeout',
+            '60000',
+            '--config',
+            'vitest.config-browser.ts',
+          ],
           console: 'integratedTerminal',
           skipFiles: ['<node_internals>/**'],
           outFiles,
@@ -376,7 +384,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
         },
 
         {
-          name: `${DEBUG_WORD} Vitest (editor active test file)`,
+          name: `${DEBUG_WORD} Vitest Browser (editor active spec file)`,
           type: 'node',
           ...this.commonProps,
           request: 'launch',
@@ -388,6 +396,53 @@ export class Vscode extends BaseVscodeHelpers<Project> {
             'node',
             '--testTimeout',
             '60000',
+            '--config',
+            'vitest.config-browser.ts',
+          ],
+          console: 'integratedTerminal',
+          skipFiles: ['<node_internals>/**'],
+          outFiles,
+          sourceMapPathOverrides,
+          smartStep: true,
+        },
+
+        {
+          name: `${DEBUG_WORD} Vitest Backend (all *.test.ts files)`,
+          type: 'node',
+          ...this.commonProps,
+          request: 'launch',
+          program: '${workspaceFolder}/node_modules/vitest/vitest.mjs',
+          args: [
+            'run',
+            '--environment',
+            'node',
+            '--testTimeout',
+            '60000',
+            '--config',
+            'vitest.config-backend.ts',
+          ],
+          console: 'integratedTerminal',
+          skipFiles: ['<node_internals>/**'],
+          outFiles,
+          sourceMapPathOverrides,
+          smartStep: true,
+        },
+
+        {
+          name: `${DEBUG_WORD} Vitest Backend (editor active test file)`,
+          type: 'node',
+          ...this.commonProps,
+          request: 'launch',
+          program: '${workspaceFolder}/node_modules/vitest/vitest.mjs',
+          args: [
+            'run',
+            '${fileBasenameNoExtension}',
+            '--environment',
+            'node',
+            '--testTimeout',
+            '60000',
+            '--config',
+            'vitest.config-backend.ts',
           ],
           console: 'integratedTerminal',
           skipFiles: ['<node_internals>/**'],
@@ -716,7 +771,8 @@ export class Vscode extends BaseVscodeHelpers<Project> {
 
     settings['search.exclude'][`${srcMainProject}/${appAutoGenDocsMd}`] = true;
     settings['search.exclude'][`${srcMainProject}/${appAutoGenJs}`] = true;
-    settings['search.exclude'][`**/${srcMainProject}/${appAutoGenDocsMd}`] = true;
+    settings['search.exclude'][`**/${srcMainProject}/${appAutoGenDocsMd}`] =
+      true;
     settings['search.exclude'][`**/${srcMainProject}/${appAutoGenJs}`] = true;
     settings['search.exclude'][`${mainProjectSubProjects}`] = true;
     return settings;

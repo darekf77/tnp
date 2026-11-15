@@ -1,8 +1,4 @@
-import {
-  tmpSourceDist,
-  UNIT_TEST_TIMEOUT,
-  vitestConfigJsonMainProject,
-} from '../../../../../../constants';
+import { tmpSourceDist, UNIT_TEST_TIMEOUT } from '../../../../../../constants';
 
 import { BaseTestRunner } from './base-test-runner';
 

@@ -24,7 +24,6 @@
 /*.filetemplate
 /*.i18n.data.ts
 /*.rest
-/*.schema.json
 /*.sqlite
 /**/.DS_Store
 /**/*.i18n.data.ts
@@ -50,6 +49,7 @@
 /docs-config.schema.json
 /eslint-rules
 /eslint.config.js
+/eslint.config.ts
 /eslint*
 /index.d.ts
 /index.js
@@ -80,6 +80,7 @@
 /sub-projects/**/package.json
 /sub-projects/**/tmp-taon-migrations
 /sub-projects/**/tsconfig.json
+/taon-config.schema.json
 /testem.log
 /Thumbs.db
 /tmp-*

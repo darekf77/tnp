@@ -393,6 +393,12 @@ export class NodeModules extends BaseNodeModules {
       'prettier',
       'wrangler',
       '@types/node',
+      '@cloudflare/vitest-pool-workers',
+      '@vitest/browser-playwright',
+      '@vitest/coverage-v8',
+      '@vitest/ui',
+      '@vitest/runner',
+      'vitest',
       // [
       //   'core-js',
       //   '!babel-register',

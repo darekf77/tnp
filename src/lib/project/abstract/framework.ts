@@ -816,6 +816,7 @@ ${allContexts.join(',\n')}
       return;
     }
     if (this.tnpCoreContainer && this.coreContainer) {
+      await this.coreContainer.git.meltActionCommits();
       await new CoreContainerSync(
         this.tnpCoreContainer,
         this.coreContainer,
