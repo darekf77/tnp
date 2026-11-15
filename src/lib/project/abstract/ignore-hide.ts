@@ -49,10 +49,8 @@ import {
 
 import type { Project } from './project';
 //#endregion
-
-export class IgnoreHide // @ts-ignore TODO weird inheritance problem
-  extends BaseIgnoreHideHelpers<Project>
-{
+// @ts-ignore TODO weird inheritance problem
+export class IgnoreHide extends BaseIgnoreHideHelpers<Project> {
   //#region getters
 
   //#region getters / core container exceptins
