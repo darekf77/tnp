@@ -324,6 +324,7 @@ class $Build extends BaseCli {
 
   //#region other build commands / start lib/app build
   async start() {
+    Helpers.error(`Not implemented yet.`, false, true); // TODO
     // TODO add proper logic
     await this.project.build(
       this.params.clone({
@@ -331,7 +332,7 @@ class $Build extends BaseCli {
           targetArtifact: ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL,
         },
         build: {
-          watch: true,
+          watch: false,
         },
       }),
     );

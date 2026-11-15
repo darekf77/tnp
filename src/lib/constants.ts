@@ -221,7 +221,27 @@ export const taonConfigSchema = 'taon-config.schema.json';
 
 export const TEMP_DOCS = 'tmp-documentation';
 
+export const APP_TYPE_TAON = {
+  NORMAL: 'NORMAL',
+  CLOUDFLARE: 'CLOUDFLARE',
+  WEBSQL: 'WEBSQL',
+  ELECTRON: 'ELECTRON',
+  MOBILE: 'MOBILE',
+} as const;
+
 const libsAppPortsFolder = 'libs-apps-ports';
+
+export const tmp_E2E_PORTS_KEYS_REL_PATH = Object.keys(APP_TYPE_TAON).reduce(
+  (a, key) => {
+    return {
+      ...a,
+      [key]: `${dotTaonFolder}/${libsAppPortsFolder}/E2E_PORT_${key}`,
+    };
+  },
+  {},
+) as {
+  [key in keyof typeof APP_TYPE_TAON]: string;
+};
 
 export const HOST_BACKEND_PORT = 'HOST_BACKEND_PORT';
 export const tmp_HOST_BACKEND_PORT = `${dotTaonFolder}/${libsAppPortsFolder}/${HOST_BACKEND_PORT}`;

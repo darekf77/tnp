@@ -34,6 +34,8 @@ import {
   tmp_HOST_BACKEND_PORT,
   USE_IN_HOST_CONFIG_FULL_CONTEXT_PATH,
   USE_MIGRATIONS_DATA_IN_HOST_CONFIG,
+  APP_TYPE_TAON,
+  tmp_E2E_PORTS_KEYS_REL_PATH,
 } from '../../../../../constants';
 import { Models } from '../../../../../models';
 import {
@@ -684,6 +686,16 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       //#endregion
     }
 
+    for (const taone2eType of Object.keys(APP_TYPE_TAON)) {
+      const e2eport = await this.APP_E2E_ARTIFACT_PORT_UNIQ_KEY(
+        taone2eType as any,
+      );
+      this.project.writeFile(
+        `${tmp_E2E_PORTS_KEYS_REL_PATH[taone2eType]}`,
+        '' + e2eport,
+      );
+    }
+
     this.project.writeFile(
       TaonGeneratedFiles.BUILD_INFO_MD,
       `# CURRENT BUILD INFO
@@ -728,9 +740,22 @@ ${contexts.join('\n')}
     return await this.project.registerAndAssignPort(key, {
       startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
     });
+
     //#endregion
   }
   //#endregion
+
+  async APP_E2E_ARTIFACT_PORT_UNIQ_KEY(
+    forType: keyof typeof APP_TYPE_TAON,
+  ): Promise<number> {
+    //#region @backendFunc
+
+    const key = `e2e ${forType}`;
+    return await this.project.registerAndAssignPort(key, {
+      startFrom: DEFAULT_PORT.APP_BUILD_LOCALHOST,
+    });
+    //#endregion
+  }
 
   //#region public methods / get node backend unique key
   async NODE_BACKEND_PORT_UNIQ_KEY(

@@ -361,6 +361,7 @@ export class Vscode extends BaseVscodeHelpers<Project> {
 
     const templateForVite = () => {
       return [
+        //#region browser-client
         {
           name: `${DEBUG_WORD} Vitest Browser (all *.spec.ts files)`,
           type: 'node',
@@ -405,7 +406,9 @@ export class Vscode extends BaseVscodeHelpers<Project> {
           sourceMapPathOverrides,
           smartStep: true,
         },
+        //#endregion
 
+        //#region node-server
         {
           name: `${DEBUG_WORD} Vitest Backend (all *.test.ts files)`,
           type: 'node',
@@ -450,6 +453,64 @@ export class Vscode extends BaseVscodeHelpers<Project> {
           sourceMapPathOverrides,
           smartStep: true,
         },
+        //#endregion
+
+        //#region e2e
+
+        // {
+        //   name: 'E2E: Normal',
+        //   type: 'node',
+        //   request: 'launch',
+        //   program: '${workspaceFolder}/node_modules/@playwright/test/cli.js',
+        //   args: ['test', '--project=normal', '--debug'],
+        //   env: {
+        //     TAON_E2E_MODE: 'normal',
+        //   },
+        //   console: 'integratedTerminal',
+        //   skipFiles: ['<node_internals>/**'],
+        //   smartStep: true,
+        // },
+        // {
+        //   name: 'E2E: Cloudflare',
+        //   type: 'node',
+        //   request: 'launch',
+        //   program: '${workspaceFolder}/node_modules/@playwright/test/cli.js',
+        //   args: ['test', '--project=cloudflare', '--debug'],
+        //   env: {
+        //     TAON_E2E_MODE: 'cloudflare',
+        //   },
+        //   console: 'integratedTerminal',
+        //   skipFiles: ['<node_internals>/**'],
+        //   smartStep: true,
+        // },
+        // {
+        //   name: 'E2E: WebSQL',
+        //   type: 'node',
+        //   request: 'launch',
+        //   program: '${workspaceFolder}/node_modules/@playwright/test/cli.js',
+        //   args: ['test', '--project=websql', '--debug'],
+        //   env: {
+        //     TAON_E2E_MODE: 'websql',
+        //   },
+        //   console: 'integratedTerminal',
+        //   skipFiles: ['<node_internals>/**'],
+        //   smartStep: true,
+        // },
+        // {
+        //   name: 'E2E: Electron',
+        //   type: 'node',
+        //   request: 'launch',
+        //   program: '${workspaceFolder}/node_modules/@playwright/test/cli.js',
+        //   args: ['test', '--project=electron', '--debug'],
+        //   env: {
+        //     TAON_E2E_MODE: 'electron',
+        //   },
+        //   console: 'integratedTerminal',
+        //   skipFiles: ['<node_internals>/**'],
+        //   smartStep: true,
+        // },
+
+        //#endregion
       ];
     };
     //#endregion
