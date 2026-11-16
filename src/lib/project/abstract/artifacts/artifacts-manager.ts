@@ -486,6 +486,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
     this.project.framework.recreateVarsScss(initOptions);
     await this.project.framework.fixMissingCjsVersions();
     await this.project.framework.fixMissingEsmVersions();
+    await this.project.quickFixes.installPlaywriteChromium();
     this.recreateCliBasicStructure({
       skipRecreatingTsFiles: true,
     });

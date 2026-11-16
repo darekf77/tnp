@@ -59,19 +59,26 @@ export class IgnoreHide extends BaseIgnoreHideHelpers<Project> {
     return ['AGENTS.md', '.github/copilot-instructions.md', '.ai'];
   }
 
+  get viteIndexFiels(): string[] {
+    return [
+      'index.js',
+      'index.js.map',
+      'index.d.ts',
+      'vitest.config-browser.ts',
+      'vitest.config-backend.ts',
+      'vitest.setup-browser.ts',
+      'vitest-angular-resources.plugin.ts',
+      'run.js',
+      'update-vscode-package-json.js',
+    ];
+  }
+
   get notIgnoredFilesAndFolderInStandaloneCoreProject(): string[] {
     if (!this.project.framework.isStandaloneProject) {
       return [];
     }
     const files = [
-      'run.js',
-      'index.js',
-      'index.js.map',
-      'index.d.ts',
-      vitestConfigJsonBrowser,
-      vitestConfigJsonBackend,
-      vitestConfigAngularSetup,
-      vitestConfigResouecePlugin,
+      ...this.viteIndexFiels,
       'eslint-rules',
       '.gitignore',
       '.npmignore',
@@ -80,7 +87,6 @@ export class IgnoreHide extends BaseIgnoreHideHelpers<Project> {
       '.prettierignore',
       'taon-config.schema.json',
       'docs-config.schema.json',
-      'update-vscode-package-json.js',
       '.editorconfig',
       'package.json',
       ...this.aiFiles,
@@ -246,6 +252,7 @@ export class IgnoreHide extends BaseIgnoreHideHelpers<Project> {
       'package.json',
       'websql',
       'browser',
+      '.ai/examples',
       'sub-projects/**/tsconfig.json',
       ...super.getPatternsAlwaysIgnoredHidden(),
     ];
@@ -268,6 +275,7 @@ export class IgnoreHide extends BaseIgnoreHideHelpers<Project> {
           'eslint.config.ts',
           'taon-config.schema.json',
           ...this.aiFiles,
+          ...this.viteIndexFiels,
         ],
       );
     }

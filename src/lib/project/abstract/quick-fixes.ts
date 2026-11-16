@@ -1,6 +1,11 @@
 //#region imports
 import { TaonTempDatabasesFolder, TaonTempRoutesFolder } from 'taon/src';
-import { config, LibTypeEnum, UtilsFilesFoldersSync } from 'tnp-core/src';
+import {
+  config,
+  LibTypeEnum,
+  UtilsFilesFoldersSync,
+  UtilsTerminal,
+} from 'tnp-core/src';
 import { glob, fse, chalk } from 'tnp-core/src';
 import { path, _, crossPlatformPath } from 'tnp-core/src';
 import { HelpersTaon, UtilsTypescript, UtilsZip } from 'tnp-helpers/src';
@@ -417,6 +422,37 @@ ${THIS_IS_GENERATED_STRING}`,
     //#endregion
   }
   //#endregion
+
+  async installPlaywriteChromium(): Promise<void> {
+    while (true) {
+      try {
+        const sharePackageName = 'playwright';
+        // @taon-ignore
+        const playwright = require(
+          sharePackageName,
+        ) as typeof import('playwright');
+
+        if (
+          playwright?.chromium?.executablePath() &&
+          Helpers.exists(playwright?.chromium?.executablePath())
+        ) {
+          Helpers.info(`Chromium installed for e2e`);
+          break;
+        }
+
+        this.project
+          .run(`./node_modules/.bin/playwright install chromium`)
+          .sync();
+        break;
+      } catch (error) {
+        if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
+          break;
+        } else {
+          continue;
+        }
+      }
+    }
+  }
 
   //#region bad types in node modules
   removeBadTypesInNodeModules(): void {
