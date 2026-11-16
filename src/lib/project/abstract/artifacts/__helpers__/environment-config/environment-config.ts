@@ -131,12 +131,6 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
 
     await this.makeSureEnvironmentExists();
 
-    if (options.saveEnvToLibEnv) {
-      if (!options.fromWatcher) {
-        this.project.remove(`src/lib/env`);
-      }
-    }
-
     const configResult = await this.envOptionsResolve(
       envConfigFromParams,
       options.fromWatcher,
@@ -159,10 +153,6 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
 
         this.saveEnvironmentConfig(configResultForTarget);
       }
-
-      this.project.removeFolderByRelativePath(
-        `${srcMainProject}/${libFromSrc}/${TaonGeneratedFolders.ENV_FOLDER}/index.ts`,
-      );
     }
 
     Helpers.taskDone(

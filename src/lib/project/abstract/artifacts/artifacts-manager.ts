@@ -54,6 +54,7 @@ import {
   startJsFromBin,
   startTsFromLib,
   TaonGeneratedFiles,
+  TaonGeneratedFolders,
   taonJsonMainProject,
   TempalteSubprojectType,
 } from '../../../constants';
@@ -140,6 +141,7 @@ export class ArtifactManager {
 
     this.project.removeFile([TaonGeneratedFiles.BUILD_INFO_MD]);
     this.project.removeFile([TaonGeneratedFiles.BUILD_STATUS_MD]);
+    this.project.remove(`src/lib/env`);
 
     if (!this.project.framework.isCoreProject) {
       this.project.removeFolderByRelativePath(dotAI);
@@ -530,6 +532,10 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
       this.project.removeFile('.eslintrc.json');
       this.project.removeFile('eslint.config.js');
       this.project.removeFile('tslint.json');
+      this.project.removeFile(
+        `${srcMainProject}/${libFromSrc}/${TaonGeneratedFolders.ENV_FOLDER}/index.ts`,
+      );
+
       this.project.removeFile(`${srcMainProject}/${appCloudflareTsFromSrc}`);
       this.project.removeFile(
         `${dotVscodeMainProject}/${TaonGeneratedFiles.LAUNCH_BACKUP_JSON}`,
