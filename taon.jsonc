@@ -132,6 +132,12 @@
       "packageName": "favicons",
     },
     {
+      "description": "E2E framework",
+      "includeInBundleNodeModules": [],
+      "isExternalFor": "*",
+      "packageName": "playwright",
+    },
+    {
       "description": "Image manipulations",
       "includeInBundleNodeModules": [],
       "isExternalFor": "*",
