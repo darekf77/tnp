@@ -589,7 +589,7 @@ export class Framework extends BaseFeatureForProject<Project> {
       `../${taonContainers}/${containerPrefix}${this.project.framework.frameworkVersion}`,
     );
     Helpers.log({ tnpCoreContainerPath });
-    return this.project.ins.From(tnpCoreContainerPath);
+    return this.ins.From(tnpCoreContainerPath);
     //#endregion
   }
   //#endregion

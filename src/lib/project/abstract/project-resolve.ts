@@ -257,50 +257,85 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
   }
   //#endregion
 
-  //#region methods / tnp
-  /**
-   * Project resovle from npm global link
-   */
-  get Tnp(): Project {
+  private detected = new Map<string, string>();
+
+  private resolveFor(frameworkName: string, skipError = false): Project {
     //#region @backendFunc
 
     let projFromNodeModules: Project;
     let resovedTnpPath: string;
     let resovedRealTnpPath: string;
-    let rootForTnp: string;
-    if (!projFromNodeModules) {
-      //#region resove from global link
-      try {
-        resovedTnpPath = UtilsOs.whichOrWherePackageLocated('tnp');
-        resovedRealTnpPath = crossPlatformPath(
-          fse.realpathSync(resovedTnpPath),
-        );
-        rootForTnp = path.dirname(path.dirname(resovedRealTnpPath));
+    let rootForTnp: string = this.detected.get(frameworkName);
 
-        const realPorj = this.From(crossPlatformPath(rootForTnp));
-        if (realPorj) {
-          projFromNodeModules = realPorj;
+    //#region resove from global link
+    if (!rootForTnp) {
+      try {
+        resovedTnpPath = UtilsOs.whichOrWherePackageLocated(frameworkName);
+        if (process.platform === 'win32') {
+          resovedRealTnpPath = crossPlatformPath(
+            fse.realpathSync(
+              crossPlatformPath([
+                path.dirname(resovedTnpPath),
+                'node_modules',
+                frameworkName,
+              ]),
+            ),
+          );
+        } else {
+          resovedRealTnpPath = crossPlatformPath(
+            fse.realpathSync(resovedTnpPath),
+          );
         }
-      } catch (error) {}
-      //#endregion
+        rootForTnp = path.dirname(path.dirname(resovedRealTnpPath));
+      } catch (error) {
+        // console.error(error);
+      }
     }
 
-    if (!projFromNodeModules && !global.globalSystemToolMode) {
-      Helpers.error(
-        `
+    const realPorj = this.From(crossPlatformPath(rootForTnp));
+    if (realPorj) {
+      projFromNodeModules = realPorj;
+    }
 
-        Something wrong with tnp npm global link, please run in tnp project command: taon link:global
+    //#endregion
+
+    if (projFromNodeModules?.location) {
+      this.detected.set(frameworkName, projFromNodeModules?.location);
+    }
+    // console.log(`
+    //    resovedTnpPath:${resovedTnpPath}
+    //     resovedRealTnpPath:${resovedRealTnpPath}
+    //     rootForTnp:${rootForTnp}
+    //     projFromNodeModules:${projFromNodeModules}
+    // `);
+
+    if (!skipError) {
+      if (!projFromNodeModules && !global.globalSystemToolMode) {
+        Helpers.error(
+          `
+
+        Something wrong with ${frameworkName} npm global link, please run in tnp project command: taon link:global
 
         resovedTnpPath:${resovedTnpPath}
         resovedRealTnpPath:${resovedRealTnpPath}
         rootForTnp:${rootForTnp}
       `,
-        false,
-        true,
-      );
+          false,
+          true,
+        );
+      }
     }
+
     return projFromNodeModules;
     //#endregion
+  }
+
+  //#region methods / tnp
+  /**
+   * Project resovle from npm global link
+   */
+  get Tnp(): Project {
+    return this.resolveFor('tnp', config.frameworkName !== 'tnp');
   }
   //#endregion
 
@@ -309,45 +344,7 @@ export class TaonProjectResolve extends BaseProjectResolver<Project> {
    * Project resovle from npm global link
    */
   get Taon(): Project {
-    //#region @backendFunc
-
-    let projFromNodeModules: Project;
-    let resovedTnpPath: string;
-    let resovedRealTnpPath: string;
-    let rootForTnp: string;
-    if (!projFromNodeModules) {
-      //#region resove from global link
-      try {
-        resovedTnpPath = UtilsOs.whichOrWherePackageLocated('taon');
-        resovedRealTnpPath = crossPlatformPath(
-          fse.realpathSync(resovedTnpPath),
-        );
-        rootForTnp = path.dirname(path.dirname(resovedRealTnpPath));
-
-        const realPorj = this.From(crossPlatformPath(rootForTnp));
-        if (realPorj) {
-          projFromNodeModules = realPorj;
-        }
-      } catch (error) {}
-      //#endregion
-    }
-
-    if (!projFromNodeModules && !global.globalSystemToolMode) {
-      Helpers.error(
-        `
-
-        Something wrong with taon npm global link, please run in tnp project command: taon link:global
-
-        resovedTnpPath:${resovedTnpPath}
-        resovedRealTnpPath:${resovedRealTnpPath}
-        rootForTnp:${rootForTnp}
-      `,
-        false,
-        true,
-      );
-    }
-    return projFromNodeModules;
-    //#endregion
+    return this.resolveFor('taon', true);
   }
   //#endregion
 
