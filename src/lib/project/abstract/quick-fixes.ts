@@ -1,6 +1,8 @@
 //#region imports
+
 import { TaonTempDatabasesFolder, TaonTempRoutesFolder } from 'taon/src';
 import {
+  child_process,
   config,
   LibTypeEnum,
   UtilsFilesFoldersSync,
@@ -423,36 +425,59 @@ ${THIS_IS_GENERATED_STRING}`,
   }
   //#endregion
 
+  //#region install chromium for e2e
+  private skipped = false;
+
   async installPlaywriteChromium(): Promise<void> {
+    //#region @backendFunc
+    if (this.skipped) {
+      return;
+    }
     while (true) {
       try {
         const sharePackageName = 'playwright';
+
         // @taon-ignore
         const playwright = require(
           sharePackageName,
         ) as typeof import('playwright');
 
-        if (
-          playwright?.chromium?.executablePath() &&
-          Helpers.exists(playwright?.chromium?.executablePath())
-        ) {
+        const chromiumPath = playwright.chromium.executablePath();
+
+        if (chromiumPath && (await fse.pathExists(chromiumPath))) {
           Helpers.info(`Chromium installed for e2e`);
           break;
         }
 
-        this.project
-          .run(`./node_modules/.bin/playwright install chromium`)
-          .sync();
+        const playwrightPackageJsonPath =
+          require.resolve('playwright/package.json');
+
+        const playwrightCliPath = path.join(
+          path.dirname(playwrightPackageJsonPath),
+          'cli.js',
+        );
+
+        child_process.execFileSync(
+          process.execPath,
+          [playwrightCliPath, 'install', 'chromium'],
+          {
+            cwd: this.project.location,
+            stdio: 'inherit',
+          },
+        );
+
+        Helpers.info(`Chromium installed for e2e`);
         break;
       } catch (error) {
         if (!(await UtilsTerminal.pressAnyKeyToTryAgainErrorOccurred(error))) {
+          this.skipped = true;
           break;
-        } else {
-          continue;
         }
       }
     }
+    //#endregion
   }
+  //#endregion
 
   //#region bad types in node modules
   removeBadTypesInNodeModules(): void {
