@@ -333,6 +333,19 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
   //#region methods / get project from package
   protected getProjectFromPackage(packageName: string): Project {
     //#region @backendFunc
+    const parentTaonDev =
+      this.project.ins.Tnp?.parent?.name === 'taon-dev'
+        ? this.project.ins.Tnp?.parent
+        : void 0;
+    if (parentTaonDev) {
+      const proj = parentTaonDev?.children?.find(
+        c => c.nameForNpmPackage === packageName,
+      );
+      if (proj) {
+        return proj;
+      }
+    }
+
     const pathToSourceLInk =
       this.project.framework.coreContainer.nodeModules.pathFor([
         packageName,
