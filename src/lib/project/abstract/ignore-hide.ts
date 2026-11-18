@@ -289,6 +289,11 @@ export class IgnoreHide extends BaseIgnoreHideHelpers<Project> {
     const patterns = super.alwaysUseRecursivePattern();
 
     patterns.push('*.i18n.data.ts');
+    patterns.push('tmp-*');
+    patterns.push('tmp*');
+    patterns.push('dist*');
+    patterns.push('dist-*');
+    patterns.push('tsconfig*');
 
     return patterns;
   }
