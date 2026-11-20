@@ -1,208 +1,544 @@
-## Create new taon project
-```bash
-# create single standalone project
-tnp new my-standalone-project
+# Taon CLI — Developer Guide
 
-# create container with standalone child project
-tnp new my-projects-container/my-project
+Taon CLI provides a unified development workflow for creating, building, running, and releasing full-stack applications and libraries.
 
-# create folder/container "my-container-org" and mark it as organization
-tnp new @my-container-org/my-project
+A Taon project can be both an **application and a library**, with shared TypeScript code across frontend and backend environments.
 
-```
+## 1. Creating Projects
 
-## Build & Release artifacts
+Use `taon new` to create standalone projects, containers, and organization-level project structures.
 
-Supported artifacts by tnp cli:
+### Standalone Project
 
-- npm lib (entrypoint **./src/lib/index.ts**)
-- cli tool (entrypoint **./src/cli.ts**)
-- fe/be angular/node app  (entrypoint **./src/app.ts**)
-- electron app  (entrypoint **./src/app.electron.ts**)
-- vscode plugin (entrypoint **./src/app.vscode.ts**)
-- mobile app (entrypoint **./src/app.mobile.ts**)
-- docs (mkdocs, storybook, compodoc) **\*\*/\*.md, \*\*/\*.story.ts**
-
-
-### Build process
-
-Single easy to remember build command
-
-```bash 
-tnp build:lib # Angular "ng build" form npm library code and whole /src.
-tnp bl        # This command is going to merge files in 
-              # desitnation node_modules bundle code.
-
-tnp clear:build:lib # Noraml build with clear tmp*, dist* at the beginning.
-tnp cbl             # This command is going to remove and replace files
-                    # desitnation node_modules bundle code.
-
-tnp build:lib:prod # Relase/production build (takes long time).
-tnp blp            # Production build does clear at the beginning.
-
-tnp build:watch:lib # "ng build --watch"  form npm lib and whole /src
-tnp bwl
-
-# REMEMBER: lib build command but be executed before each app/electron build
-tnp app # terminal menu
-
-tnp app:normal # "ng serve" for website apps
-tnp an
-
-tnp app:cloudflare # "ng serve" for cloudflare local dev backend
-tnp ac
-
-tnp app:websql # "ng serve" for website apps in websql mode
-tnp aw
-
-tnp app:electronm # "ng serve" for electron apps
-tnp ae
-
-```
-#### Scenario 1: developing website/npm library
-first terminal
-```bash
-taon build:watch:lib # or taon bwl
-```
-second terminal (wait for this command until lib build finish)
-```bash
-taon app:normal # or taon bwa
-```
-
-#### Scenario 2: developing electron app/npm library
-first terminal
-```bash
-taon build:watch:lib # or taon bwl
-```
-second terminal (wait for this command until lib build finish)
-```bash
-taon app:electron # or taon bwe
-```
-
-#### Scenario 3: developing vscode extension/npm library
-first terminal
-```bash
-taon build:watch:lib # or taon bwl
-```
-Each start of VSCode debugger recreates menu options 
-
-
-### Release process
-
-Single easy to remember release command
+Create a standalone project with a basic CRUD application:
 
 ```bash
-# show release menu
-tnp release
-tnp r
-
-# release all stuff from taon.jsonc autoReleaseConfigAllowedItems
-tnp auto:release
-tnp ar <task name>
-
-# by default there is npm task for autorelease
-tnp ar npm # work for standalone and container organization
-
+taon new my-standalone-project
 ```
 
+### Standalone Project with Admin Backoffice
 
-## Link project or bundle
-Similar command to npm link for tnp projects
-```bash
-# - link local lib/cli development build as global cli tool
-# - link local repo cli as global cli tools
-tnp link
-
-tnp link:local # link locally created in current repo cli
-tnp link:global # global npm link for current project in dev mode
-tnp link:release # link released to different/release branch cli
-```
-
-## Migrations (for databases)
+Create a standalone project using the Taon baseline, which includes the full Taon Admin backoffice:
 
 ```bash
-tnp migration # migration menu
-tnp m
-
-# create migration file (with classes for all detected contexts)
-tnp migration:create 
-tnp mc
-
- # run all migrations (for all contexts)
-tnp migration:run   # similar to 'tnp run', but won't start express
-tnp mr              # server and it will stop after contexts
-                    # initialize() functions...
-
- # revert migration to timestamp
-tnp migration:revert timestamp  # similar to 'tnp run', but won't start express
-tnp mr timestamp                # server and it will stop after contexts
-                                # initialize() functions...
+taon new my-standalone-project --baseline
 ```
 
-## Testing
+### Documentation Project
+
+Create a documentation application that collects Markdown files distributed across projects:
 
 ```bash
-# Vite unit tests (single run - use vscode task for watch mode)
-tnp test
-tnp t
- 
-# E2e testing (playwright)
-tnp e2e
-tnp e2e:watch
+taon new my-standalone-project --docs
 ```
 
-## Branding
+### Container with a Child Project
 
-Recreate favicons, pwa assets from logo.png
+Create a container and a standalone child project inside it:
 
 ```bash
-tnp branding
-
+taon new my-projects-container/my-project
 ```
 
+Resulting structure:
 
-## Refactor
+```text
+my-projects-container/
+└── my-project/
+```
 
-For every file:
-- fix prettier
-- fix eslint
-- wrap imports in region
+### Organization Container
+
+Create a container named `my-container-org`, mark it as an organization, and create a child project:
 
 ```bash
-tnp refactor
-
+taon new @my-container-org/my-project
 ```
 
-## Subproject
+Resulting structure:
 
-Add subproject (stripe + cloudflare work )
+```text
+my-container-org/
+└── my-project/
+```
 
+Organization containers allow related Taon projects to be managed together.
+
+---
+
+## 2. Supported Build Artifacts
+
+Taon can produce multiple artifact types from a shared project architecture.
+
+| Artifact | Entry point |
+|---|---|
+| NPM library | `./src/lib/index.ts` |
+| CLI tool | `./src/cli.ts` |
+| Angular / Node.js application | `./src/app.ts` |
+| Electron desktop application | `./src/app.electron.ts` |
+| VS Code extension | `./src/app.vscode.ts` |
+| Mobile application (planned) | `./src/app.mobile.ts` |
+| Documentation (MkDocs, Storybook, Compodoc) | Markdown and Storybook files |
+
+Documentation sources include files matching `**/*.md` and `**/*.story.ts`.
+
+A single Taon project may contain multiple entry points, allowing it to serve as both a reusable library and an application.
+
+---
+
+## 3. Building Projects
+
+Taon provides a consistent set of commands for development, production, and watch builds.
+
+### Development Build
 
 ```bash
-tnp sub add
+taon build
 ```
 
-Test worker with example data (only in development mode)
+Alias:
 
 ```bash
-tnp sub test
+taon b
 ```
 
-Set worker production/development mode
+Builds the NPM library and application source code, including Angular-compatible code.
+
+The build process updates the corresponding bundled output used by dependent projects.
+
+### Clean Development Build
 
 ```bash
-tnp sub mode
+taon clear:build
 ```
 
-
-Deploy worker
+Alias:
 
 ```bash
-tnp sub deploy
+taon cb
 ```
 
-Local development mode (use: tnp ac # for ng serve )
+Removes temporary and distribution build output before rebuilding the project.
+
+Useful when generated files or cached build artifacts become inconsistent.
+
+### Production Build
 
 ```bash
-tnp sub dev # < optional worker name >
+taon build:prod
 ```
+
+Alias:
+
+```bash
+taon bp
+```
+
+Performs a clean production-oriented build.
+
+This may take longer than a development build because production optimizations and additional processing are applied.
+
+### Watch Build
+
+```bash
+taon build:watch
+```
+
+Alias:
+
+```bash
+taon bw
+```
+
+Watches project source files and rebuilds the library when changes are detected.
+
+This is useful when developing an application and its reusable library functionality simultaneously.
+
+### Library-Only Watch Build
+
+```bash
+taon build:watch:lib
+```
+
+Alias:
+
+```bash
+taon bwl
+```
+
+### Docs extract
+
+Extract docs of projects from `genTsDocsInclude:[ ]` property inside `taon.jsonc`.
+Taon will automatically find project if it is linked inside package (source is a symlink to real project location after `taon build`)
+
+```bash
+node_modules/my-porject/source 
+```
+To Generate documentation Angular components (inside `src/lib/generated-docs-from-md-files`)
+
+```bash
+taon docs
+```
+
+Alias:
+
+```bash
+taon d
+```
+
+Watches and rebuilds library code without running the complete application build workflow.
+
+This is particularly useful for Electron and VS Code extension development.
+
+---
+
+## 4. Running Applications
+
+Taon provides commands for running applications in different development environments.
+
+The interactive application menu is available through:
+
+```bash
+taon app
+```
+
+### Application Commands
+
+| Command | Alias | Purpose |
+|---|---|---|
+| `taon app:normal` | `taon an` | Run Angular development server with Node.js backend |
+| `taon app:cloudflare` | `taon ac` | Run application with local Cloudflare backend development |
+| `taon app:websql` | `taon aw` | Run application in browser-based WebSQL mode |
+| `taon app:electron` | `taon ae` | Run Electron desktop application |
+
+### Normal Web Application
+
+```bash
+taon an
+```
+
+Starts the application development environment using Angular and the Node.js backend.
+
+### Cloudflare Development
+
+```bash
+taon ac
+```
+
+Starts the Angular development environment configured for local Cloudflare backend development.
+
+### WebSQL Development
+
+```bash
+taon aw
+```
+
+Starts the Angular application in WebSQL mode.
+
+In this mode, compatible backend and database functionality runs directly in the browser without requiring a separately running Node.js backend.
+
+### Electron Development
+
+```bash
+taon ae
+```
+
+Starts the Electron application development workflow.
+
+---
+
+## 5. Recommended Development Workflows
+
+For workflows involving both an application and a reusable library, build the library before starting the application.
+
+### Scenario 1: Web Application and NPM Library
+
+Use two terminals.
+
+**Terminal 1 — Start the library watch build**
+
+```bash
+taon bw
+```
+
+Wait for the initial library build to complete.
+
+**Terminal 2 — Start the web application**
+
+```bash
+taon an
+```
+
+This allows you to develop library functionality and the web application together.
+
+### Scenario 2: Electron Application and NPM Library
+
+Use two terminals.
+
+**Terminal 1 — Start the library-only watch build**
+
+```bash
+taon bwl
+```
+
+Wait for the initial library build to complete.
+
+**Terminal 2 — Start Electron**
+
+```bash
+taon ae
+```
+
+This workflow allows library changes to be rebuilt while developing the Electron application.
+
+### Scenario 3: VS Code Extension and NPM Library
+
+**Terminal 1 — Start the library-only watch build**
+
+```bash
+taon bwl
+```
+
+Wait for the initial library build to complete.
+
+Then start the VS Code debugger using the project's launch configuration.
+
+Each debugger start recreates the extension's menu options.
+
+---
+
+## 6. Releasing Projects
+
+Taon provides both interactive and automated release workflows.
+
+### Interactive Release Menu
+
+```bash
+taon release
+```
+
+Alias:
+
+```bash
+taon r
+```
+
+Opens the terminal interface for selecting a release operation.
+
+### Automated Releases
+
+```bash
+taon auto:release
+```
+
+Runs the configured automatic release workflow.
+
+Release tasks are defined in `taon.jsonc` using `autoReleaseConfigAllowedItems`.
+
+To execute a specific task:
+
+```bash
+taon ar task-name-from-taon-jsonc
+```
+
+### NPM Release
+
+The default automated release configuration includes an NPM release task.
+
+```bash
+taon ar npm
+```
+
+This works with standalone projects and container organizations.
+
+### Cloudflare Production Release
+
+For projects configured for Cloudflare deployment:
+
+```bash
+taon ar cloudflare:prod
+```
+
+Taon executes the corresponding configured release task.
+
+---
+
+## 7. Linking Projects and CLI Tools
+
+Taon provides linking commands similar to `npm link`, allowing locally developed CLI tools and libraries to be used without publishing them first.
+
+### Interactive Linking
+
+```bash
+taon link
+```
+
+Opens the linking workflow.
+
+### Local Linking
+
+```bash
+taon link:local
+```
+
+Links the CLI created in the current repository.
+
+### Global Development Linking
+
+```bash
+taon link:global
+```
+
+Creates a global NPM link for the current project in development mode.
+
+Useful when testing changes to a CLI tool directly from its source repository.
+
+### Release Branch Linking
+
+```bash
+taon link:release
+```
+
+Links the CLI built from a separate release branch.
+
+This can be useful when testing a released version without replacing the active development version.
+
+---
+
+## 8. Branding and PWA Assets
+
+Taon can generate branding assets from a project's `logo.png`.
+
+```bash
+taon branding
+```
+
+This recreates assets such as favicons and Progressive Web App icons.
+
+It helps keep branding consistent across supported application targets.
+
+---
+
+## 9. Automated Code Refactoring
+
+Taon provides a project-wide refactoring command.
+
+```bash
+taon refactor
+```
+
+The command processes project files to:
+
+- Apply Prettier formatting.
+- Apply ESLint fixes.
+- Organize imports into regions.
+
+This helps maintain consistent code formatting across projects and reduces repetitive maintenance work.
+
+---
+
+## 10. Cloudflare Subprojects
+
+Taon supports managing Cloudflare Worker subprojects.
+
+These can be used to extend a Taon application with additional Cloudflare-specific functionality.
+
+### Add a Subproject
+
+```bash
+taon sub add
+```
+
+Creates a subproject inside the project's `sub-projects` directory.
+
+### Example Structure
+
+```text
+my-taon-project/
+│
+├── src/
+│
+├── sub-projects/
+│   └── custom-workers/
+│       └── my-worker/
+│
+└── taon.jsonc
+```
+
+### Remove a Subproject
+
+To remove a subproject, delete its directory.
+
+For example:
+
+```bash
+rimraf ./sub-projects/custom-workers/my-worker
+```
+
+### Deploy Subprojects Manually
+
+```bash
+taon sub deploy
+```
+
+Deploys the configured Cloudflare subproject.
+
+Manual deployment is usually unnecessary because the main Taon release workflow can handle deployment.
+
+### Local Cloudflare Worker Development
+
+```bash
+taon sub dev
+```
+
+Starts the local development environment for Cloudflare subprojects.
+
+When developing an Angular application connected to a local Cloudflare Worker, start the Worker development environment first.
+
+Then start the Angular application in a separate terminal:
+
+```bash
+taon ac
+```
+
+This allows the Angular application to communicate with the locally running Cloudflare backend.
+
+---
+
+## 11. Quick Command Reference
+
+| Category | Command | Alias |
+|---|---|---|
+| New project | `taon new` | — |
+| Development build | `taon build` | `taon b` |
+| Clean build | `taon clear:build` | `taon cb` |
+| Production build | `taon build:prod` | `taon bp` |
+| Watch build | `taon build:watch` | `taon bw` |
+| Library watch | `taon build:watch:lib` | `taon bwl` |
+| Application menu | `taon app` | — |
+| Web application | `taon app:normal` | `taon an` |
+| Cloudflare application | `taon app:cloudflare` | `taon ac` |
+| WebSQL application | `taon app:websql` | `taon aw` |
+| Electron application | `taon app:electron` | `taon ae` |
+| Release menu | `taon release` | `taon r` |
+| Automated release | `taon auto:release` | `taon ar` |
+| Project linking | `taon link` | — |
+| Global development link | `taon link:global` | — |
+| Branding | `taon branding` | — |
+| Code refactoring | `taon refactor` | — |
+| Add Cloudflare subproject | `taon sub add` | — |
+| Deploy Cloudflare subproject | `taon sub deploy` | — |
+| Local Cloudflare Worker | `taon sub dev` | — |
+
+---
+
+## Summary
+
+Taon CLI provides a consistent workflow for managing the entire development lifecycle:
+
+**Create → Build → Develop → Test → Release**
+
+Its app-library architecture allows projects to combine reusable libraries, backend functionality, frontend applications, and multiple deployment targets.
+
+Developers can work with a single project or coordinate entire containers of interconnected applications without manually maintaining separate build and release systems for each project.
+

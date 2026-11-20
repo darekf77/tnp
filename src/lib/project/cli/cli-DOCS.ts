@@ -13,17 +13,18 @@ class $Docs extends BaseCli {
   //#region _
   public async _(): Promise<void> {
     //#region @backendFunc
-    await this.project.build(
-      this.params.clone({
-        build: {
-          watch: false,
-        },
-        release: {
-          targetArtifact: ReleaseArtifactTaon.DOCS_DOCS_WEBAPP,
-        },
-        finishCallback: () => this._exit(),
-      }),
-    );
+    await this.generate();
+    // await this.project.build(
+    //   this.params.clone({
+    //     build: {
+    //       watch: false,
+    //     },
+    //     release: {
+    //       targetArtifact: ReleaseArtifactTaon.DOCS_DOCS_WEBAPP,
+    //     },
+    //     finishCallback: () => this._exit(),
+    //   }),
+    // );
     this._exit(0);
     //#endregion
   }
@@ -32,6 +33,8 @@ class $Docs extends BaseCli {
   //#region watch
   async watch() {
     //#region @backendFunc
+    this._exit();
+
     await this.project.build(
       this.params.clone({
         build: {
@@ -49,6 +52,8 @@ class $Docs extends BaseCli {
 
   async serve() {
     //#region @backendFunc
+    this._exit();
+
     const port = await this.project.registerAndAssignPort(
       'serving static docs',
       {
@@ -75,6 +80,8 @@ class $Docs extends BaseCli {
 
   async envCheck(options: EnvOptions): Promise<void> {
     //#region @backendFunc
+
+    this._exit();
     const envOK =
       await this.project.artifactsManager.artifact.docsWebapp.mkddocs.validateEnvironemntForMkdocsBuild();
     console.log(

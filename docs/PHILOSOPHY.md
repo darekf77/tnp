@@ -1,69 +1,230 @@
+# Let AI Agents Build Your Full-Stack Applications
 
-## 1. One language for Frontend/Backend/Database - **TypeScript**
+### One language. One architecture. Unlimited possibilities.
 
-...best programming language on the market 🚀
+Modern AI coding agents can generate enormous amounts of code.
 
-## 2 Rock solid frameworks as foundation
+But generating code is only part of software development.
 
-TypeScript, Angular, NodeJs, RxJS, NgRx, TypeOrm, ExpressJs ..⭐
+Agents still need to understand project structures, configure build tools, manage dependencies, synchronize frontend and backend interfaces, run tests, and prepare deployments.
 
-## 3. **Never** ever **repeat** single line of **code**
+**Taon is designed to reduce that complexity.**
 
-.. only possible with isomorphic code ✅
+Instead of making AI agents repeatedly solve infrastructure problems, Taon provides a consistent, strongly typed, isomorphic development environment.
 
-## 4. Strongly Typed Frontend/Backend/Database
+You define the architecture. AI agents implement functionality. Taon handles much of the repetitive development infrastructure.
 
-...imagine changing an entity property, and as a result,<br>
-Angular template variables are automatically refactored! <br>
-This is the ultimate way to practice "Don't Repeat Yourself" (DRY) in coding! ✍️
+## 1. One Language for Frontend, Backend, and Database
 
-## 5. Everything automatically generated
+**TypeScript everywhere.** 🚀
 
-...forget problems with setup => Taon recreates <br>
-every time every crucial framework file/config! ✏️
+Use one language across Angular applications, Node.js services, database entities, shared models, and business logic.
 
-## 6. Fast/developer-friendly coding in <b>Visual Studio Code</b>
+Developers and AI agents can work across the entire stack without constantly switching programming languages or translating models between incompatible systems.
 
-... if you love VSCode => you are going to love it more! 👨‍💻
+## 2. Rock-Solid Frameworks as the Foundation
 
-## 7. Stable and shared npm node_modules packages container
+**Built on proven technologies.** ⭐
 
-=> one big/stable npm packages container as as 
-(located in: ~/.taon/taon/projects/container-*) ⚖️ <br>
-=> many projects takes megabytes instead gigabytes 🐳<br>
-=> instant *node_modules* installation (just link) 🕙<br>
-=> no more npm installation problems 🚫<br>
-=> no more security issues with old npm packages 🛡 ️<br>
+Taon combines TypeScript, Angular, Node.js, RxJS, NgRx, TypeORM, and Express.js into a unified development experience.
 
+Rather than inventing replacements for established technologies, Taon brings them together under a consistent architecture.
 
-## 8. Cloud based npm projects releases (standalone and organization)
+AI agents can use their existing knowledge of these widely adopted frameworks.
 
-...start complex release processes with one simple command ⚡
+## 3. Never Repeat Code Unnecessarily
 
-## 9. Develop libraries and apps at the same time
+**Write once. Reuse across environments.** ✅
 
-...only possible with isomorphic code (shared files between backend/frontend/libraries) 🌟
+Taon's isomorphic architecture allows compatible functionality to be shared between frontend, backend, and libraries.
 
-## 10. NodeJs packages are mixed with proper Angular ivy packages
+Shared models, validation rules, and business logic don't need to be independently recreated for each runtime.
 
-...ship powerful packages with Frontend and Backend 🤝
+The goal is to eliminate unnecessary duplication while keeping environment-specific implementations where they belong.
 
-## 11. Shared assets inside npm package! (only from **/src/assets/shared**)
+## 4. Strongly Typed Frontend, Backend, and Database
 
-...because why not! 💾
+**Refactor across the stack with confidence.** ✍️
 
-## 12. Websql development mode for developing SQL backend/db inside browser
+Imagine changing a property in a database entity and having TypeScript immediately identify the affected controllers, services, Angular components, and templates.
 
-...If browsers are so powerful, why not to write Backend inside them? 🌐 <br>
- TypeORM/Sql.js lets you use browser IndexedDB as proper DB!  🗄️
+With shared types and proper tooling, a single refactoring can propagate through the entire application.
 
-## 13. Out-of-the-box CI/CD solution, free of charge!
+For AI coding agents, this is especially valuable: the compiler becomes an additional feedback mechanism for detecting incomplete changes.
 
-...start with free websql app demo in github pages publishing/deployment service <br>
-=> .. and if peoples love idea <br>
-=>  deploy to FAST TAON CLOUD just by choosing
-different release type in cli!  ⚡
+## 5. Automatically Generated Configuration
 
-## 14. The Most Thought-Out Development Process
-...you are not going to need any DEV_OPS - cli & configs <br>
-are build for humans 🧠
+**Less setup. More development.** ✏️
+
+Taon manages and regenerates essential framework configuration files.
+
+Developers and agents can focus on application functionality instead of repeatedly configuring build systems, development servers, and tooling.
+
+## 6. Developer-Friendly Visual Studio Code Workflow
+
+**Your editor becomes your development command center.** 👨‍💻
+
+Taon is designed for a productive Visual Studio Code workflow, including debugging, building, testing, and running applications.
+
+AI coding agents can operate within the same project structure and development tools used by human developers.
+
+## 7. Stable, Shared NPM Dependencies
+
+**One dependency foundation. Many projects.** 🐳
+
+Taon uses shared core containers located under:
+
+```text
+~/.taon/taon/projects/container-*
+```
+
+Instead of maintaining a complete independent `node_modules` installation for every project, Taon can link projects to centrally managed dependencies.
+
+This can reduce disk usage, accelerate project setup, and simplify dependency maintenance.
+
+Centralized dependencies also make updates and security patch management easier, although dependency vulnerabilities still require monitoring and updates.
+
+## 8. Simplified Project Releases
+
+**Complex release workflows. Simple commands.** ⚡
+
+Taon supports standalone projects, organizational containers, and multiple release strategies.
+
+For example:
+
+```bash
+taon ar cloudflare:prod
+```
+
+A single command can execute a configured production release workflow.
+
+Future Taon Cloud integration will extend this approach with centralized orchestration.
+
+## 9. Develop Applications and Libraries Together
+
+**Every project can be an app-library.** 🌟
+
+A Taon project doesn't have to be exclusively an application or a library.
+
+It can provide reusable functionality while also containing an application for developing, testing, and demonstrating that functionality.
+
+This is especially useful for AI agents working on independent features or shared components.
+
+## 10. Backend and Angular Libraries Together
+
+**Full-stack packages without artificial separation.** 🤝
+
+Taon supports project structures combining Node.js functionality with Angular-compatible libraries.
+
+Backend controllers, shared models, and Angular components can coexist within the same project architecture.
+
+A project might be 90% backend, 90% frontend, or anything in between.
+
+**Separate projects by responsibility, not automatically by runtime.**
+
+## 11. Shared Assets Inside Packages
+
+**Reuse more than TypeScript code.** 💾
+
+Taon supports shared package assets through:
+
+```text
+src/assets/shared/
+```
+
+Images and other shared resources can be distributed alongside reusable functionality.
+
+## 12. WebSQL — Run Backend Functionality in the Browser
+
+**Why require a separate backend server when the browser can run the application?** 🌐
+
+Taon's WebSQL development mode allows compatible backend and database functionality to execute inside the browser.
+
+Using technologies such as TypeORM and SQL.js, applications can work with SQL databases in a browser environment, with persistence through browser storage.
+
+This creates interesting opportunities for:
+
+- Serverless application demonstrations.
+- Local development without a separate backend process.
+- Browser-based integration and end-to-end testing.
+- Portable, self-contained development environments.
+
+For AI agents, this can significantly simplify the environment needed to run and test full-stack application behavior.
+
+## 13. CI/CD Without Unnecessary Infrastructure
+
+**Start locally. Automate progressively.** ⚡
+
+Taon already provides commands for coordinating repositories, building projects, and executing releases.
+
+```bash
+taon pull:deep
+taon bp
+taon ar cloudflare:prod
+```
+
+You can begin with a static WebSQL application hosted on GitHub Pages or a similar platform.
+
+When your requirements grow, you can move to a full-stack deployment strategy such as Cloudflare.
+
+Taon Cloud is planned to provide centralized CI/CD orchestration, but you don't need to wait for it to start building and releasing applications.
+
+## 14. A Development Process Designed for Humans and AI Agents
+
+**Infrastructure should support developers, not dominate their work.** 🧠
+
+Taon aims to minimize repetitive DevOps configuration through consistent project structures, generated configuration, shared dependencies, and CLI automation.
+
+Human developers remain responsible for architecture, security, quality, and release decisions.
+
+AI agents can focus on implementation, testing, refactoring, and maintenance within those boundaries.
+
+---
+
+## 15. Let AI Agents Build — Let Taon Keep Everything Together
+
+The real opportunity isn't simply generating more code.
+
+It's enabling multiple AI agents to contribute to a coherent software architecture.
+
+```text
+                  SOFTWARE ARCHITECT
+                         │
+                  TAON CONTAINER
+                         │
+       ┌─────────────────┼─────────────────┐
+       │                 │                 │
+    AI AGENT A        AI AGENT B        AI AGENT C
+       │                 │                 │
+   Backend-heavy     Frontend-heavy    Shared Library
+     App-Lib           App-Lib           App-Lib
+       │                 │                 │
+       └─────────────────┼─────────────────┘
+                         │
+                  SHARED TYPES
+                  SHARED SOURCE
+                         │
+                  TAON BUILD
+                         │
+                  TEST & VALIDATE
+                         │
+                  TAON RELEASE
+                         │
+                  PRODUCTION
+```
+
+Each agent can work on a different project or feature.
+
+Taon's containers provide a common workspace, source-first builds allow projects to be integrated without intermediate NPM releases, and TypeScript helps detect incompatible changes.
+
+The developer controls the architecture and reviews the results.
+
+**AI agents write the code. Taon provides the structure to build, integrate, test, and release it.**
+
+### The Philosophy
+
+Don't make developers and AI agents spend their time rebuilding the same infrastructure.
+
+Give them a predictable architecture, powerful existing frameworks, shared source code, and simple commands.
+
+**Build the architecture once. Let humans and AI agents develop it together. Deploy wherever your application needs to run.**
