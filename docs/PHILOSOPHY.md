@@ -160,6 +160,7 @@ Taon already provides commands for coordinating repositories, building projects,
 ```bash
 taon pull:deep
 taon bp
+cd entrypoint-project
 taon ar cloudflare:prod
 ```
 
