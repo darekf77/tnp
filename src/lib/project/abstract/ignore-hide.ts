@@ -194,11 +194,13 @@ export class IgnoreHide extends BaseIgnoreHideHelpers<Project> {
       patternsFilesFolders.push(`local_release`);
     }
 
-    patternsFilesFolders.push(
-      ...this.project.linkedProjects.linkedProjects
-        .map(f => f.relativeClonePath)
-        .map(c => `${crossPlatformPath(c)}`),
-    );
+    if (!this.project.taonJson.isMonorepo) {
+      patternsFilesFolders.push(
+        ...this.project.linkedProjects.linkedProjects
+          .map(f => f.relativeClonePath)
+          .map(c => `${crossPlatformPath(c)}`),
+      );
+    }
 
     patternsFilesFolders.push(
       ...this.ignoredAlwaysForStandaloneFilesButVisibleToUSer,
