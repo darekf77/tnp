@@ -7,6 +7,7 @@ import {
   LibTypeEnum,
   taonActionFromParent,
   tnpPackageName,
+  Utils,
   UtilsCli,
   UtilsFilesFoldersSync,
   UtilsTime,
@@ -118,6 +119,7 @@ import { CypressTestRunner } from './tools/test-runner/cypress-test-runner';
 import { JestTestRunner } from './tools/test-runner/jest-test-runner';
 import { MochaTestRunner } from './tools/test-runner/mocha-test-runner';
 import { VitestTestRunner } from './tools/test-runner/vitest-test-runner';
+import { CloudFlareSubProject } from '../../cloud-flare-projects/cloud-flare-project';
 //#endregion
 
 export class ArtifactNpmLibAndCliTool extends BaseArtifact<
@@ -1841,7 +1843,7 @@ ${
     ? 'export namespace TAON_CLOUDFLARE_WORKERS_URLS {'
     : ''
 }
-${subProjects
+${Utils.uniqArray<CloudFlareSubProject>(subProjects, 'name')
   .map(c => {
     return (
       `\texport const ${_.upperFirst(_.camelCase(c.name))} ` +

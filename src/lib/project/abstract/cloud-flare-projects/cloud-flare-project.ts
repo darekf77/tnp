@@ -529,6 +529,15 @@ export class CloudFlareSubProject {
       `Migrations file from ALL CONTEXTS: ${migrationsFromAllContextFileAbsPath}`,
     );
 
+    const workerCheckTasks = Helpers.actionStarted(
+      `Checking if worker deployed.. `,
+    );
+    const isWorkerDeployed = await CloudFlarePorjectsUtils.isWorkerDeployed(
+      this.cwdWorker,
+    );
+    workerCheckTasks.done();
+    Helpers.info(`Worker deployed = ${isWorkerDeployed}`);
+
     for (let index = 0; index < contextsNames.length; index++) {
       const contextName = contextsNames[index];
       const absFileForSpecyficContextMigrations = crossPlatformPath([
@@ -548,10 +557,6 @@ export class CloudFlareSubProject {
 
       const task = Helpers.actionStarted(
         `Applying migration for context: ${contextName}`,
-      );
-
-      const isWorkerDeployed = await CloudFlarePorjectsUtils.isWorkerDeployed(
-        this.cwdWorker,
       );
 
       const plan = await prepareRemoteDeploymentSql({
