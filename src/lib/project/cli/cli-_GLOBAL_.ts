@@ -2490,42 +2490,45 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
     const folderWithLinks = this.project.pathFor(
       `tmp-apps-for-dist/${this.project.name}/projects/external-libs/src/lib`,
     );
-    // const links: string = [];
-    const folders = UtilsFilesFoldersSync.getFoldersFrom(folderWithLinks, {
+
+    const folderOptions = {
       recursive: false,
       followSymlinks: false,
-    })
-      .filter(c => !path.basename(c).startsWith('@'))
-      .map(c => {
-        const org = crossPlatformPath([c, 'lib']);
-        if (!Helpers.exists(c) || Helpers.isUnexistedLink(org)) {
-          return {
-            project: path.basename(path.dirname(c)).startsWith('@')
-              ? path.basename(path.dirname(c))
-              : path.basename(c),
-            notExists: true,
-          };
-        }
-        let source: string;
+    };
 
-        try {
-          source = crossPlatformPath(fse.realpathSync(org));
-        } catch (error) {
-          return {
-            project: path.basename(path.dirname(c)).startsWith('@')
-              ? path.basename(path.dirname(c))
-              : path.basename(c),
-            cantCheckLink: true,
-          };
-        }
+    const packageFolders = UtilsFilesFoldersSync.getFoldersFrom(
+      folderWithLinks,
+      folderOptions,
+    ).flatMap(folder => {
+      const name = path.basename(folder);
 
-        return {
-          project: path.basename(path.dirname(c)).startsWith('@')
-            ? path.basename(path.dirname(c))
-            : path.basename(c),
-          source,
-        };
-      });
+      if (!name.startsWith('@')) {
+        return [{ project: name, folder }];
+      }
+
+      return UtilsFilesFoldersSync.getFoldersFrom(folder, folderOptions).map(
+        packageFolder => ({
+          project: `${name}/${path.basename(packageFolder)}`,
+          folder: packageFolder,
+        }),
+      );
+    });
+
+    const folders = packageFolders.map(({ project, folder }) => {
+      const libPath = crossPlatformPath([folder, 'lib']);
+
+      if (!Helpers.exists(folder) || Helpers.isUnexistedLink(libPath)) {
+        return { project, notExists: true };
+      }
+
+      try {
+        const source = crossPlatformPath(fse.realpathSync(libPath));
+        return { project, source };
+      } catch {
+        return { project, cantCheckLink: true };
+      }
+    });
+
     console.log(folders);
     this._exit(0);
     //#endregion

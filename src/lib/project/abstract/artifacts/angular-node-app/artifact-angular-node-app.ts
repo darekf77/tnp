@@ -56,6 +56,7 @@ import {
   distVscodeProj,
   dockerTemplatesFolder,
   DockerTemplatesFolders,
+  dotAngular,
   dotEnvFile,
   ENV_INJECT_COMMENT,
   globalSpinner,
@@ -433,7 +434,7 @@ export class ArtifactAngularNodeApp extends BaseArtifact<
     // remove angular cache to prevent weird issues
     if (removeAngularCacheBeforeCompilation) {
       // removing angular cache prevents weird issue BUT slows down ng serve a lot
-      this.project.remove([tmpAppForDistRelativePath, '.angular']);
+      this.project.remove([tmpAppForDistRelativePath, dotAngular]);
     }
 
     // quick fix for tsconfig pathing in ng proxy project

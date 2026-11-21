@@ -497,7 +497,7 @@ export class BrowserCodeCut {
               tsFromPo,
             )
           ) {
-            Helpers.info(
+            Helpers.log(
               `Done rewriting ${path.basename(pathToTsData)} from .po file`,
             );
           }

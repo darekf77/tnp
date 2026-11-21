@@ -996,7 +996,7 @@ export const webpackConfigJsMainProject = 'webpack.config.js';
 export const esLintCustomRulesMainProject = 'eslint-rules';
 export const esLintConfigJsonMainProject = 'eslint.config.ts';
 export const vitestConfigJsonBrowser = 'vitest.config-browser.ts';
-
+export const dotAngular = '.angular';
 export const vitestConfigAngularSetup = 'vitest.setup-browser.ts';
 export const vitestConfigJsonBackend = 'vitest.config-backend.ts';
 

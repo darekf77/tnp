@@ -50,6 +50,7 @@ import {
   CoreNgTemplateFiles,
   defaultConfiguration,
   distMainProject,
+  dotAngular,
   dotFileTemplateExt,
   dotGitIgnoreMainProject,
   dotNpmIgnoreMainProject,
@@ -550,8 +551,8 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 
       if (removeAngularCacheBeforeCompilation) {
         // removing angular cache prevents weird issue BUT slows down ng serve a lot
-        this.project.remove([tmpLibForDistNormalRelativePath, '.angular']);
-        this.project.remove([tmpLibForDistWebsqlRelativePath, '.angular']);
+        this.project.remove([tmpLibForDistNormalRelativePath, dotAngular]);
+        this.project.remove([tmpLibForDistWebsqlRelativePath, dotAngular]);
       }
       //#endregion
 
