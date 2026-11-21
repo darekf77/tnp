@@ -427,6 +427,7 @@ export async function run(
       ae: 'app:electron',
       ac: 'app:cloudflare',
       b: 'build:lib',
+      bl: 'build:lib',
       bp: 'build:lib:prod',
       bvscode: 'build:vscode',
       kill: 'cloud:killCurrentProjectBuild',
