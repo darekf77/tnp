@@ -10,6 +10,7 @@ import { UtilsTypescript } from 'tnp-helpers/src';
 import { BaseCompilerForProject } from 'tnp-helpers/src';
 import { BaseFeatureForProject } from 'tnp-helpers/src';
 
+import { isTestFile } from '../../../../../app-utils';
 import {
   environmentsFolder,
   envTs,
@@ -72,12 +73,17 @@ export class IndexAutogenProvider extends BaseCompilerForProject<{}, Project> {
         return;
       }
 
+      if (isTestFile(relativePath)) {
+        return;
+      }
+
       // TODO this is not watching files!
       // console.log(`Processing file for index autogen: ${relativePath}`);
 
       const isBrowserSpecific = frontendFiles.some(ext =>
         relativePath.endsWith(ext),
       );
+
       const exportString =
         `export * from ` +
         `'./${relativePath.replace(path.extname(relativePath), '')}'; ` +
