@@ -1,4 +1,5 @@
 //#region imports
+import anymatch from 'anymatch';
 import {
   IncrementalWatcherOptions,
   incrementalWatcher,
@@ -81,9 +82,9 @@ import {
 } from '../../constants';
 import { Models } from '../../models';
 import { EnvOptions, ReleaseArtifactTaon, ReleaseType } from '../../options';
+import { CloudFlarePorjectsUtils } from '../abstract/cloud-flare-projects/cloud-flare-projects.utils';
 import { Project } from '../abstract/project';
 import type { TaonProjectResolve } from '../abstract/project-resolve';
-import { CloudFlarePorjectsUtils } from '../abstract/cloud-flare-projects/cloud-flare-projects.utils';
 //#endregion
 
 export class $Global extends BaseGlobalCommandLine<
@@ -2311,23 +2312,53 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
     for (let index = 0; index < children.length; index++) {
       const child = children[index];
       // const changes = ch
-      const changes = Utils.uniqArray([
+      const isCoreStandalone =
+        this.project.framework.isCoreProject &&
+        this.project.framework.isStandaloneProject;
+
+      const changes = Utils.uniqArray<string>([
         ...child.git.listOfCurrentGitChanges.created,
         ...child.git.listOfCurrentGitChanges.modified,
         ...child.git.listOfCurrentGitChanges.deleted,
-      ]).filter(
-        f =>
-          ![
-            '.gitignore',
-            'package.json',
-            '.vscode/settings.json',
-            '.vscode/launch-backup.jsonc',
-            'src/lib/build-info._auto-generated_.ts',
-            'src/app.auto-gen-ver.js',
-            'src/app.auto-gen-ver.md',
-            ...oldFiles(),
-          ].includes(f),
-      );
+      ]).filter(f => {
+        let isNotIgnored = ![
+          '.gitignore',
+          'package.json',
+          '.vscode/settings.json',
+          '.vscode/launch-backup.jsonc',
+          'src/lib/build-info._auto-generated_.ts',
+          'src/app.auto-gen-ver.js',
+          'src/app.auto-gen-ver.md',
+          ...oldFiles(),
+          ...this.project.ignoreHide
+            .ignoredAlwaysForStandaloneFilesButVisibleToUSer,
+          ...(isCoreStandalone
+            ? []
+            : this.project.ignoreHide
+                .notIgnoredFilesAndFolderInStandaloneCoreProject),
+        ].includes(f);
+
+        if (isNotIgnored && !isCoreStandalone && f.endsWith('.filetemplate')) {
+          return false;
+        }
+
+        // if (isNotIgnored && !isCoreStandalone) {
+        //   const includedInNotVisible = anymatch(
+        //     this.project.ignoreHide
+        //       .ignoredAlwaysForStandalonePatternsButVisibleToUSer,
+        //     f,
+        //   );
+        //   if (includedInNotVisible) {
+        //     // console.log(`matched ${f} `);
+        //     return true;
+        //   } else {
+        //     // console.log(`not matched ${f} `);
+        //     return false;
+        //   }
+        // }
+        return isNotIgnored;
+      });
+
       for (const change of changes) {
         Helpers.log(`- ${change}`);
       }

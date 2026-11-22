@@ -27,10 +27,13 @@ export namespace Models {
   //#endregion
 
   //#region site option
+  export type NewSiteType = 'default' | 'docs' | 'baseline';
+
   export type NewSiteOptions = {
     name?: string;
     cwd?: string;
-    force?: boolean
+    force?: boolean;
+    type?: NewSiteType;
   };
   //#endregion
 

@@ -1,5 +1,11 @@
 //#region imports
-import { config, LibTypeEnum, UtilsTerminal } from 'tnp-core/src';
+import {
+  config,
+  LibTypeEnum,
+  UtilsFilesFoldersSync,
+  UtilsTempFolder,
+  UtilsTerminal,
+} from 'tnp-core/src';
 import { notAllowedProjectNames } from 'tnp-core/src';
 import {
   CoreModels,
@@ -33,6 +39,7 @@ import { Project } from '../abstract/project';
 import { TaonJson } from '../abstract/taonJson';
 
 import { BaseCli } from './base-cli';
+import { RenameRule } from 'magic-renamer/src';
 //#endregion
 
 export class $New extends BaseCli {
@@ -41,11 +48,19 @@ export class $New extends BaseCli {
       name: this.firstArg,
       cwd: this.cwd,
       force: !!this.params['force'],
+      type: this.params['template']
+        ? this.params['template']
+        : this.params['docs']
+          ? 'docs'
+          : this.params['baseline']
+            ? 'baseline'
+            : 'default',
     });
 
     this._exit();
   }
 
+  //#region open
   async open() {
     const appName = await this._createContainersOrStandalone({
       name: this.firstArg,
@@ -55,12 +70,14 @@ export class $New extends BaseCli {
     UtilsVSCode.openFolder(crossPlatformPath([this.cwd, appName]));
     this._exit();
   }
+  //#endregion
 
   //#region init containers
   private async _initContainersAndApps(
     cwd: string,
     nameFromArgs: string,
-    force = false,
+    force: boolean,
+    projType?: Models.NewSiteType,
   ): Promise<{
     containers: Project[];
     firstContainer: Project;
@@ -358,6 +375,11 @@ export class $New extends BaseCli {
 
     Project.ins.unload(appLocation);
     appProj = Project.ins.From(appLocation) as Project;
+
+    if (projType) {
+      await this._cloneRepoAndApplyTo(projType as any, appProj);
+    }
+
     if (!hasAtLeastOneContainersFromArgs) {
       lastContainer = appProj.parent;
     }
@@ -406,7 +428,10 @@ export class $New extends BaseCli {
       } catch (error) {}
     }
 
-    appProj.artifactsManager.globalHelper.addSrcFolderFromCoreProject();
+    if (!projType) {
+      appProj.artifactsManager.globalHelper.addSrcFolderFromCoreProject();
+    }
+
     //#endregion
 
     // console.log({
@@ -466,6 +491,91 @@ export class $New extends BaseCli {
   }
   //#endregion
 
+  //#region clone repo and apply to src
+  private async _cloneRepoAndApplyTo(
+    repoBasename: 'baseline' | 'baseline-docs',
+    project: Project,
+  ) {
+    //#region @backendFunc
+    const repoRoot = UtilsTempFolder.getPathForNodeOnly({
+      prefix: 'taon-cloned-for-new-templates',
+      deleteAfterDays: 1,
+    });
+    const repoUrl = `https://github.com/taon-dev/${repoBasename}.git`;
+
+    await HelpersTaon.git.clone({
+      cwd: repoRoot,
+      url: repoUrl,
+      override: true,
+      destinationFolderName: repoBasename,
+    });
+
+    const clonedBaselineProj = project.ins.From([repoRoot, repoBasename]);
+
+    project.removeFolderByRelativePath('src');
+
+    UtilsFilesFoldersSync.copy(
+      clonedBaselineProj.pathFor('src'),
+      project.pathFor('src'),
+      {
+        recursive: true,
+        overwrite: true,
+        copySymlinksAsFiles: false,
+      },
+    );
+    Helpers.info(`
+
+      CLONED ${crossPlatformPath([repoRoot, repoBasename])}
+
+      `);
+    // Helpers.remove([repoRoot, repoBasename]);
+
+    if (repoBasename === 'baseline-docs') {
+      project.removeFolderByRelativePath(
+        'src/lib/generated-docs-from-md-files',
+      );
+      project.taonJson.setShouldGenerateDocsComponents(true);
+    }
+    if (repoBasename === 'baseline') {
+      UtilsFilesFoldersSync.copyFile(
+        clonedBaselineProj.pathFor('env.ts'),
+        project.pathFor('env.ts'),
+      );
+    }
+
+    [
+      ...UtilsFilesFoldersSync.getFilesFrom(project.pathFor('src'), {
+        recursive: true,
+        followSymlinks: false,
+      }),
+      ...(repoBasename === 'baseline' ? [project.pathFor('env.ts')] : []),
+    ].forEach(f => {
+      let content = UtilsFilesFoldersSync.readFile(f);
+      const realtivePath = f.replace(project.location + '/', '');
+      console.log(`Renaming content ${realtivePath}`);
+      const rules = RenameRule.from(
+        `${clonedBaselineProj.name} => ${project.name}`,
+      );
+      if (!!content && repoBasename === 'baseline') {
+        content = content.replace(
+          new RegExp(`@taon-dev/${repoBasename}/src`, 'g'),
+          `${repoBasename}/src`,
+        );
+      }
+
+      for (const rule of rules) {
+        content = rule.replaceInString(content);
+      }
+      // content = content.replace(/from 'tnp-core\/src/g, `from '${config.npmScope}/core/source`);
+      // content = content.replace(/from "tnp-core\/src/g, `from "${config.npmScope}/core/source`);
+      UtilsFilesFoldersSync.writeFile(f, content);
+    });
+
+    // TODO @LAST
+    //#endregion
+  }
+  //#endregion
+
   //#region add remote to sta1ndalone
   private _addRemoteToStandalone(appProj: Project): void {
     if (appProj.framework.isStandaloneProject) {
@@ -497,7 +607,7 @@ export class $New extends BaseCli {
   ): Promise<string> {
     let { name: nameFromArgs, cwd, force } = options;
     const { appProj, containers, lastContainer, lastIsBrandNew, initGit } =
-      await this._initContainersAndApps(cwd, nameFromArgs, force);
+      await this._initContainersAndApps(cwd, nameFromArgs, force, options.type);
 
     Helpers.writeFile(
       [appProj.location, readmeMdMainProject],

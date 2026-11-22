@@ -230,6 +230,12 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
         },
       );
       await this.creteBuildInfoFile(initOptions);
+      if (this.project.taonJson.shouldGenerateDocsComponents) {
+        await this.project.artifactsManager.artifact.docsWebapp.docsGen.start(
+          initOptions,
+        );
+      }
+
       if (this.project.taonJson.shouldGenerateTranslationFiles) {
         await this.project.framework.generateTranslations();
       }
@@ -245,11 +251,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
           // watch: initOptions.build.watch, // TODO watching sucks here
         });
       }
-      if (this.project.taonJson.shouldGenerateDocsComponents) {
-        await this.project.artifactsManager.artifact.docsWebapp.docsGen.start(
-          initOptions,
-        );
-      }
+
       //  else {
       //   await this.project.artifactsManager.artifact.docsWebapp.docsGen.removeTempFolders();
       // }

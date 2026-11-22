@@ -887,8 +887,8 @@ const t = ${'Trans' + 'lation'}.for(Taon.${'__FI' + 'LE_RELAT' + 'IVE_PATH'}, Ta
 })
 ${'exp' + 'ort'} class ${cmpName} extends TaonDocsPageComponent {
   t = t.for(this);
-  @Input() ${baseHrefDocsGen}: string = '/';
-   @Input() context: any = {
+  public ${baseHrefDocsGen}: string = '/';
+  public context: any = {
 ${codeblocks
   .flatMap(({ name, codeContent, highlightedHtml }) => {
     const entries = [

@@ -411,6 +411,7 @@ export function oldFiles(): string[] {
     'webpack.backend-bundle-build.js',
     '.eslintrc.json',
     'eslint.config.js',
+    'vitest.config.ts',
     'tslint.json',
     'run-org.js',
     'src/tests/mocha-tests-info.md',
