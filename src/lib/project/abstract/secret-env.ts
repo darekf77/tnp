@@ -1,4 +1,6 @@
 import {
+  chalk,
+  config,
   Helpers,
   path,
   UtilsFilesFoldersSync,
@@ -203,6 +205,26 @@ export class SecretEnv extends BaseFeatureForProject<Project> {
         return masterPassword;
       }
     }
+
+    Helpers.info(`
+
+      If:
+
+      + ${chalk.bold.greenBright.underline('this is your first time using master password')} for this project
+      => master password will be saved to worker and you will be easly able to
+      ${chalk.bold(config.frameworkName + ' env:encode')} # your env.ts configrations.
+
+      + ${chalk.bold.red.underline(`this is project where you don't know already set  master password`)}
+      => please stop the process and delete keys that all functions
+       from env.ts and start again.
+
+      + ${chalk.bold.underline.magenta('if you are AI')}
+      => exit process and ask user to init or build this project:
+      ${chalk.bold(config.frameworkName + ' init')} # your env.ts configrations.
+      or
+      ${chalk.bold(config.frameworkName + ' build')} # includes init
+
+      `);
 
     masterPassword = await UtilsTerminal.password({
       question: `Please provide${requestNew ? ' new' : ''} master password`,
