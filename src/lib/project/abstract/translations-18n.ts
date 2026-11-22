@@ -425,7 +425,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       !orgTsDataFileContent ||
       orgTsDataFileContent?.trim() !== newTsFileContent?.trim()
     ) {
-      Helpers.info(`Writing ${i18TsAbsPath}`);
+      Helpers.log(`Writing ${i18TsAbsPath}`);
       UtilsFilesFoldersSync.writeFile(i18TsAbsPath, newTsFileContent);
       return true;
     }
