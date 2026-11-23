@@ -721,8 +721,8 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
         Please use commands:
 
         # building /src code in watch mode  (tsc, ng build)
-        ${config.frameworkName} build:watch:lib
-        ${config.frameworkName} bwl # short version
+        ${config.frameworkName} build:watch
+        ${config.frameworkName} bw # short version
 
         # building 'ng serve'
         ${config.frameworkName} app
