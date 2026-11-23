@@ -134,7 +134,7 @@ Alias:
 taon bp
 ```
 
-Performs a clean production-oriented build.
+Performs a clean production-oriented build (same as in release).
 
 This may take longer than a development build because production optimizations and additional processing are applied.
 
@@ -154,17 +154,6 @@ Watches project source files and rebuilds the library when changes are detected.
 
 This is useful when developing an application and its reusable library functionality simultaneously.
 
-### Library-Only Watch Build
-
-```bash
-taon build:watch:lib
-```
-
-Alias:
-
-```bash
-taon bwl
-```
 
 ### Docs extract
 
