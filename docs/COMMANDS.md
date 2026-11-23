@@ -267,7 +267,7 @@ Use two terminals.
 **Terminal 1 — Start the library-only watch build**
 
 ```bash
-taon bwl
+taon bw
 ```
 
 Wait for the initial library build to complete.
@@ -285,7 +285,7 @@ This workflow allows library changes to be rebuilt while developing the Electron
 **Terminal 1 — Start the library-only watch build**
 
 ```bash
-taon bwl
+taon bw
 ```
 
 Wait for the initial library build to complete.
@@ -358,39 +358,18 @@ Taon provides linking commands similar to `npm link`, allowing locally developed
 
 ### Interactive Linking
 
+Linking menu
+
 ```bash
 taon link
 ```
-
-Opens the linking workflow.
-
-### Local Linking
-
-```bash
-taon link:local
-```
-
 Links the CLI created in the current repository.
 
 ### Global Development Linking
 
 ```bash
 taon link:global
-```
-
-Creates a global NPM link for the current project in development mode.
-
-Useful when testing changes to a CLI tool directly from its source repository.
-
-### Release Branch Linking
-
-```bash
-taon link:release
-```
-
-Links the CLI built from a separate release branch.
-
-This can be useful when testing a released version without replacing the active development version.
+``` 
 
 ---
 
@@ -503,7 +482,6 @@ This allows the Angular application to communicate with the locally running Clou
 | Clean build | `taon clear:build` | `taon cb` |
 | Production build | `taon build:prod` | `taon bp` |
 | Watch build | `taon build:watch` | `taon bw` |
-| Library watch | `taon build:watch:lib` | `taon bwl` |
 | Application menu | `taon app` | — |
 | Web application | `taon app:normal` | `taon an` |
 | Cloudflare application | `taon app:cloudflare` | `taon ac` |
@@ -511,7 +489,6 @@ This allows the Angular application to communicate with the locally running Clou
 | Electron application | `taon app:electron` | `taon ae` |
 | Release menu | `taon release` | `taon r` |
 | Automated release | `taon auto:release` | `taon ar` |
-| Project linking | `taon link` | — |
 | Global development link | `taon link:global` | — |
 | Branding | `taon branding` | — |
 | Code refactoring | `taon refactor` | — |

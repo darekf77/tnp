@@ -13,7 +13,7 @@ The Taon ecosystem is split across multiple repositories. However, everything is
 
 ### 1. Install Taon
 
-Follow the installation instructions in the [Taon repository](https://github.com/darekf77/taon).
+Follow the installation instructions in the [Taon repository](taon/README.md).
 
 ### 2. Clone the `taon-dev` Repository
 
@@ -50,7 +50,7 @@ You can now use the `tnp` command wherever you would normally use the `taon` com
 As a first test, try building `tnp` using its own CLI in watch mode:
 
 ```bash
-tnp bwl
+tnp bw
 ```
 
 ## How to Modify the Taon Framework, CLI, and Cloud
@@ -68,7 +68,7 @@ Use this repository to:
 
 ```bash
 cd taon-dev/tnp
-tnp bwl
+tnp bw
 ```
 You will see changes immediately in you `tnp` tool.
 
@@ -81,7 +81,7 @@ Use this repository to:
 
 ```bash
 cd taon-dev/taon
-tnp bwl
+tnp bw
 ```
 
 ### Core Helpers and Utilities (`tnp-core`)
@@ -92,7 +92,7 @@ Use this repository to:
 
 ```bash
 cd taon-dev/tnp-core
-tnp bwl
+tnp bw
 ```
 
 ### HTTP Fetch Wrapper (`ng2-rest`)
@@ -104,7 +104,7 @@ Use this repository to:
 
 ```bash
 cd taon-dev/ng2-rest
-tnp bwl
+tnp bw
 ```
 
 ### Advanced Helpers, Utilities, and Types (`tnp-helpers`)
@@ -115,7 +115,7 @@ Use this repository to:
 
 ```bash
 cd taon-dev/tnp-helpers
-tnp bwl
+tnp bw
 ```
 
 ### TypeORM Fork (`taon-typeorm`)
@@ -127,7 +127,7 @@ Use this repository to:
 
 ```bash
 cd taon-dev/taon-typeorm
-tnp bwl
+tnp bw
 ```
 
 ### Taon UI (`ui`)
@@ -141,7 +141,7 @@ Use this repository to:
 
 ```bash
 cd taon-dev/ui
-tnp bwl
+tnp bw
 ```
 
 ### Taon Admin Modules (`session`, `cms`, `e-commerce`, `analytic`, `seo`)
@@ -158,7 +158,7 @@ For example, to work on the Session module:
 
 ```bash
 cd taon-dev/session
-tnp bwl
+tnp bw
 ```
 
 The same development workflow applies to the CMS, E-Commerce, Analytics, and SEO modules.
