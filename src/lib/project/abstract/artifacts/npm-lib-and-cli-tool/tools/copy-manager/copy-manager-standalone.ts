@@ -54,6 +54,8 @@ import {
   tmpLibsForDist,
   tmpLocalCopytoProjDist,
   tmpSourceDist,
+  tmpSrcAppDist,
+  tmpSrcAppDistWebsql,
   tmpSrcDist,
   tmpSrcDistWebsql,
   TO_REMOVE_TAG,
@@ -1697,11 +1699,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     (() => {
       const filerDotCopyAssetsBrowser = HelpersTaon.filterDontCopy(
         [assetsFromSrc, TaonGeneratedFolders.ENV_FOLDER],
-        this.project.pathFor([tmpSrcDist, libFromSrc]),
+        this.project.pathFor([tmpSrcAppDist, libFromSrc]),
       );
 
       UtilsFilesFoldersSync.copy(
-        this.project.pathFor([tmpSrcDist, libFromSrc]),
+        this.project.pathFor([tmpSrcAppDist, libFromSrc]),
         crossPlatformPath([localTempProj, tsSourceNodeModules, browserCode]),
         {
           recursive: true,
@@ -1716,11 +1718,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     (() => {
       const filerDotCopyAssetsBrowser = HelpersTaon.filterDontCopy(
         [assetsFromSrc, TaonGeneratedFolders.ENV_FOLDER],
-        this.project.pathFor([tmpSrcDist + prodSuffix, libFromSrc]),
+        this.project.pathFor([tmpSrcAppDist + prodSuffix, libFromSrc]),
       );
 
       UtilsFilesFoldersSync.copy(
-        this.project.pathFor([tmpSrcDist + prodSuffix, libFromSrc]),
+        this.project.pathFor([tmpSrcAppDist + prodSuffix, libFromSrc]),
         crossPlatformPath([
           localTempProj,
           tsSourceNodeModules,
@@ -1739,11 +1741,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     (() => {
       const filerDotCopyAssetsWebsql = HelpersTaon.filterDontCopy(
         [assetsFromSrc, TaonGeneratedFolders.ENV_FOLDER],
-        this.project.pathFor([tmpSrcDistWebsql, libFromSrc]),
+        this.project.pathFor([tmpSrcAppDistWebsql, libFromSrc]),
       );
 
       UtilsFilesFoldersSync.copy(
-        this.project.pathFor([tmpSrcDistWebsql, libFromSrc]),
+        this.project.pathFor([tmpSrcAppDistWebsql, libFromSrc]),
         crossPlatformPath([localTempProj, tsSourceNodeModules, websqlCode]),
         {
           recursive: true,
@@ -1758,11 +1760,11 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
     (() => {
       const filerDotCopyAssetsWebsql = HelpersTaon.filterDontCopy(
         [assetsFromSrc, TaonGeneratedFolders.ENV_FOLDER],
-        this.project.pathFor([tmpSrcDistWebsql + prodSuffix, libFromSrc]),
+        this.project.pathFor([tmpSrcAppDistWebsql + prodSuffix, libFromSrc]),
       );
 
       UtilsFilesFoldersSync.copy(
-        this.project.pathFor([tmpSrcDistWebsql + prodSuffix, libFromSrc]),
+        this.project.pathFor([tmpSrcAppDistWebsql + prodSuffix, libFromSrc]),
         crossPlatformPath([
           localTempProj,
           tsSourceNodeModules,
@@ -1810,11 +1812,12 @@ ${THIS_IS_GENERATED_INFO_COMMENT}
       this.rootPackageName,
       tsSourceNodeModules,
     ]);
-    if (!Helpers.exists(browserTsSources)) {
-      debugger;
-    }
+    // if (!Helpers.exists(browserTsSources)) {
+    //   debugger;
+    // }
 
     UtilsFilesFoldersSync.copy(browserTsSources, dest);
+
     //#endregion
   }
 
