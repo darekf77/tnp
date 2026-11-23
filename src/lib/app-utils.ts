@@ -412,6 +412,7 @@ export function oldFiles(): string[] {
     '.eslintrc.json',
     'eslint.config.js',
     'vitest.config.ts',
+    'docs-config.jsonc',
     'tslint.json',
     'run-org.js',
     'src/tests/mocha-tests-info.md',

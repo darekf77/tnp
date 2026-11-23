@@ -529,6 +529,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
       this.project.removeFile('vitest.content.config.ts');
       this.project.removeFile('tsconfig.isomorphic-flat-bundle.json');
       this.project.removeFile('webpack.backend-bundle-build.js');
+      this.project.removeFile('docs-config.jsonc');
       this.project.removeFile('.eslintrc.json');
       this.project.removeFile('eslint.config.js');
       this.project.removeFile('tslint.json');
