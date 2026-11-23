@@ -6,6 +6,7 @@ import {
   LibTypeEnum,
   tnpPackageName,
   Utils,
+  UtilsFilesFoldersSync,
   UtilsProjects,
 } from 'tnp-core/src';
 import { chalk, fse, os, requiredForDev } from 'tnp-core/src';
@@ -849,7 +850,7 @@ ${gitChildren}
     ]);
     let usingExternalLocation = false;
     if (Helpers.exists(absExternalPathToChildren)) {
-      const externalLocation = Helpers.readFile(absExternalPathToChildren);
+      const externalLocation = UtilsFilesFoldersSync.readFile(absExternalPathToChildren);
       if (externalLocation && Helpers.exists(externalLocation)) {
         location = externalLocation;
         usingExternalLocation = true;
@@ -864,7 +865,6 @@ ${gitChildren}
           !path.basename(f).startsWith(distMainProject) &&
           !path.basename(f).startsWith(srcMainProject) &&
           !path.basename(f).startsWith(binMainProject) &&
-          !path.basename(f).startsWith(docsMainProject) &&
           !path.basename(f).startsWith('tmp') &&
           ![nodeModulesMainProject].includes(path.basename(f)),
       );
