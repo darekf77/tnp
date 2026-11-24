@@ -385,7 +385,15 @@ export class $New extends BaseCli {
     appProj = Project.ins.From(appLocation) as Project;
 
     if (projType) {
-      await this._cloneRepoAndApplyTo(projType as any, appProj);
+      if (projType === 'docs') {
+        projType = 'baseline-docs' as any;
+      }
+
+      if (projType !== 'baseline' && projType !== 'baseline-docs') {
+        projType = void 0;
+      } else {
+        await this._cloneRepoAndApplyTo(projType as any, appProj);
+      }
     }
 
     if (!hasAtLeastOneContainersFromArgs) {
@@ -505,11 +513,6 @@ export class $New extends BaseCli {
     project: Project,
   ) {
     //#region @backendFunc
-
-    // @ts-ignore
-    if (repoBasename === 'docs') {
-      repoBasename = 'baseline-docs';
-    }
 
     const repoRoot = UtilsTempFolder.getPathForNodeOnly({
       prefix: 'taon-cloned-for-new-templates',

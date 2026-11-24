@@ -27,7 +27,7 @@ export namespace Models {
   //#endregion
 
   //#region site option
-  export type NewSiteType = 'default' | 'docs' | 'baseline';
+  export type NewSiteType = 'default' | 'docs' | 'baseline' | 'baseline-docs';
 
   export type NewSiteOptions = {
     name?: string;
