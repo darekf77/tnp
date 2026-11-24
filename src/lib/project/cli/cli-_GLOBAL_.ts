@@ -784,7 +784,9 @@ export class $Global extends BaseGlobalCommandLine<
 
     for (let index = 0; index < projectsFoldersAbsPaths.length; index++) {
       const project = this.ins.From(projectsFoldersAbsPaths[index]) as Project;
-      await project.nodeModules.reinstall();
+      await project.nodeModules.reinstall({
+        onnxruntimeNodeInstallCudaSkip: true,
+      });
     }
     Helpers.info(`Done reinstalling core containers`);
     this._exit();
@@ -974,18 +976,21 @@ export class $Global extends BaseGlobalCommandLine<
 
   async SYNC() {
     //#region @backendFunc
-    const isInsideTnpAndTaonDev =
-      this.project?.name === 'tnp' &&
-      this.project?.parent.name === 'taon-dev' &&
-      Helpers.exists(this.absPathToLocalTaonContainers);
-
-    if (isInsideTnpAndTaonDev) {
-      Helpers.info(`
-
-        You are inside taon-dev/tnp project.
-
-        `);
+    if (config.frameworkName === tnpPackageName) {
+      Helpers.error(`This method is only for taon cli.`, false, true);
     }
+    // const isInsideTnpAndTaonDev =
+    //   this.project?.name === 'tnp' &&
+    //   this.project?.parent.name === 'taon-dev' &&
+    //   Helpers.exists(this.absPathToLocalTaonContainers);
+
+    // if (isInsideTnpAndTaonDev) {
+    //   Helpers.info(`
+
+    //     You are inside taon-dev/tnp project.
+
+    //     `);
+    // }
 
     // const updateTnpAndLocalTona =
     //   isInsideTnpAndTaonDev &&
