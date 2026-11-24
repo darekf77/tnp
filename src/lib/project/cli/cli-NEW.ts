@@ -39,7 +39,7 @@ import { Project } from '../abstract/project';
 import { TaonJson } from '../abstract/taonJson';
 
 import { BaseCli } from './base-cli';
-import { RenameRule } from 'magic-renamer/src';
+import { MagicRenamer, RenameRule } from 'magic-renamer/src';
 //#endregion
 
 export class $New extends BaseCli {
@@ -66,6 +66,13 @@ export class $New extends BaseCli {
       name: this.firstArg,
       cwd: this.cwd,
       force: !!this.params['force'],
+      type: this.params['template']
+        ? this.params['template']
+        : this.params['docs']
+          ? 'docs'
+          : this.params['baseline']
+            ? 'baseline'
+            : 'default',
     });
     UtilsVSCode.openFolder(crossPlatformPath([this.cwd, appName]));
     this._exit();
@@ -179,10 +186,11 @@ export class $New extends BaseCli {
 
            Name ${chalk.bold(lastProjectFromArgName)} is already taken.
 
-           ${'- ' + coreContainer.nodeModules.pathFor(lastProjectFromArgName)}
+           ${'- ' + coreContainer?.nodeModules?.pathFor(lastProjectFromArgName)}
            ${
-             this.project.taonJson.isUsingOwnNodeModulesInsteadCoreContainer
-               ? '- ' + this.project.nodeModules.pathFor(lastProjectFromArgName)
+             this.project?.taonJson?.isUsingOwnNodeModulesInsteadCoreContainer
+               ? '- ' +
+                 this.project?.nodeModules?.pathFor(lastProjectFromArgName)
                : ''
            }
 
@@ -497,6 +505,12 @@ export class $New extends BaseCli {
     project: Project,
   ) {
     //#region @backendFunc
+
+    // @ts-ignore
+    if (repoBasename === 'docs') {
+      repoBasename = 'baseline-docs';
+    }
+
     const repoRoot = UtilsTempFolder.getPathForNodeOnly({
       prefix: 'taon-cloned-for-new-templates',
       deleteAfterDays: 1,
@@ -543,33 +557,131 @@ export class $New extends BaseCli {
       );
     }
 
-    [
-      ...UtilsFilesFoldersSync.getFilesFrom(project.pathFor('src'), {
-        recursive: true,
-        followSymlinks: false,
-      }),
-      ...(repoBasename === 'baseline' ? [project.pathFor('env.ts')] : []),
-    ].forEach(f => {
+    //#region folders to rename
+    const folderToRename =
+      repoBasename === 'baseline'
+        ? [
+            project.pathFor('src/lib/taon-baseline'),
+            project.pathFor('src/lib/taon-baseline-backoffice'),
+          ]
+        : [project.pathFor('src/lib/docs-page')];
+    for (let index = 0; index < folderToRename.length; index++) {
+      const folder = folderToRename[index];
+      const ins = MagicRenamer.Instance(folder);
+      const ruleFrom =
+        repoBasename === 'baseline' ? `taon-baseline` : 'docs-page';
+
+      await ins.start(`${ruleFrom} => ${project.name}`);
+
+      const revertNames =
+        repoBasename === 'baseline'
+          ? ['BackofficeOutletName']
+          : ['PageComponent'];
+
+      for (let revertName of revertNames) {
+        const files = [
+          ...UtilsFilesFoldersSync.getFilesFrom(
+            project.pathFor(`src/lib/${project.name}`),
+          ),
+          ...UtilsFilesFoldersSync.getFilesFrom(
+            project.pathFor(`src/lib/${project.name}-backoffice`),
+          ),
+        ];
+        files.forEach(f => {
+          let content = UtilsFilesFoldersSync.readFile(f);
+
+          const toReplace =
+            `${repoBasename === 'baseline-docs' ? 'Taon' : ''}` +
+            `${_.upperFirst(_.camelCase(ruleFrom))}${revertName}`;
+
+          if (repoBasename === 'baseline-docs') {
+            revertName = revertName.replace('Page', '');
+          }
+
+          const fromReplace =
+            `${repoBasename === 'baseline-docs' ? 'Taon' : ''}` +
+            `${_.upperFirst(_.camelCase(project.name))}${revertName}`;
+
+          content = content.replaceAll(fromReplace, toReplace);
+
+          if (repoBasename === 'baseline-docs') {
+            content = content.replace(
+              new RegExp(`${repoBasename}`, 'g'),
+              `${project.name}`,
+            );
+            content = content.replace(
+              new RegExp(_.upperFirst(_.camelCase(`${repoBasename}`)), 'g'),
+              _.upperFirst(_.camelCase(`${project.name}`)),
+            );
+          }
+          UtilsFilesFoldersSync.writeFile(f, content);
+        });
+      }
+
+      Helpers.remove(folder, true);
+    }
+    //#endregion
+
+    //#region files to rename
+    [project.pathFor('src/app.ts'), project.pathFor('env.ts')].forEach(f => {
       let content = UtilsFilesFoldersSync.readFile(f);
       const realtivePath = f.replace(project.location + '/', '');
       console.log(`Renaming content ${realtivePath}`);
-      const rules = RenameRule.from(
-        `${clonedBaselineProj.name} => ${project.name}`,
+      // const rules = RenameRule.from(
+      //   `taon-${clonedBaselineProj.name} => ${project.name}`,
+      // );
+      if (!content) {
+        return;
+      }
+      content = content.replace(
+        new RegExp(`@taon-dev/${repoBasename}/src`, 'g'),
+        `${project.name}/src`,
       );
-      if (!!content && repoBasename === 'baseline') {
+
+      content = content.replace(
+        new RegExp(`${repoBasename}`, 'g'),
+        `${project.name}`,
+      );
+
+      if (repoBasename === 'baseline-docs') {
         content = content.replace(
-          new RegExp(`@taon-dev/${repoBasename}/src`, 'g'),
-          `${repoBasename}/src`,
+          new RegExp(`DocsPageRoutes`, 'g'),
+          `${_.upperFirst(_.camelCase(project.name))}Routes`,
         );
       }
 
-      for (const rule of rules) {
-        content = rule.replaceInString(content);
-      }
+      const fromName = _.upperFirst(_.camelCase(repoBasename));
+      const toName = _.upperFirst(_.camelCase(project.name));
+
+      [
+        'AppConfig',
+        'App',
+        'ServerRoutes',
+        'ClientRoutes',
+        'ServerConfig',
+        'Config',
+        'Context',
+        'StartFunction',
+        ['Taon', 'BackofficeRoutes'],
+        ['Taon', 'AbstractContext'],
+      ].forEach(entry => {
+        const [prefix, suffix] =
+          typeof entry === 'string' ? ['', entry] : entry;
+
+        const fromReplace = `${prefix}${fromName}${suffix}`;
+        const toReplace = `${toName}${suffix}`;
+
+        content = content.replaceAll(fromReplace, toReplace);
+      });
+
+      // for (const rule of rules) {
+      //   content = rule.replaceInString(content);
+      // }
       // content = content.replace(/from 'tnp-core\/src/g, `from '${config.npmScope}/core/source`);
       // content = content.replace(/from "tnp-core\/src/g, `from "${config.npmScope}/core/source`);
       UtilsFilesFoldersSync.writeFile(f, content);
     });
+    //#endregion
 
     // TODO @LAST
     //#endregion

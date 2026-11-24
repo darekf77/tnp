@@ -224,6 +224,8 @@ export class SecretEnv extends BaseFeatureForProject<Project> {
       or
       ${chalk.bold(config.frameworkName + ' build')} # includes init
 
+      ${chalk.red('DEFAULT MASTER PASSWORD IS:')} ${chalk.bold('taon')}
+
       `);
 
     masterPassword = await UtilsTerminal.password({
