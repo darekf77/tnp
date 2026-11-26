@@ -70,6 +70,7 @@ import { DevMode } from './taon-worker/dev-mode/dev-mode.models';
 import { DevModeUtils } from './taon-worker/dev-mode/dev-mode.utils';
 import { TaonJson } from './taonJson';
 import { Vscode } from './vscode-helper';
+import { DocsLibraryGenrator } from './artifacts/docs-webapp/docs-library-generator';
 //#endregion
 
 // @ts-ignore TODO weird inheritance problem
@@ -143,6 +144,7 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
   public readonly environmentConfig: EnvironmentConfig;
 
   public readonly refactor: Refactor;
+  public readonly docsGen: DocsLibraryGenrator;
 
   //#endregion
 
@@ -209,6 +211,9 @@ export class Project extends BaseProject<Project, CoreModels.LibType> {
         .EnvironmentConfig as typeof EnvironmentConfig)(this);
 
     this.refactor = new Refactor(this);
+
+    this.docsGen = new DocsLibraryGenrator(this);
+
     Project.ins.add(this);
   }
   //#endregion

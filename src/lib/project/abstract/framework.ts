@@ -1288,9 +1288,7 @@ export default AppTs${_.camelCase(this.project.nameForNpmPackage)};`,
   ): Promise<void> {
     //#region @backendFunc
     this.project.taonJson.setShouldGenerateDocsComponents(true);
-    await this.project.artifactsManager.artifact.docsWebapp.docsGen.start(
-      envOptions,
-    );
+    await this.project.docsGen.start(envOptions);
     Helpers.info(`Ts Docs regenerated`);
     //#endregion
   }

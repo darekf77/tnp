@@ -145,13 +145,13 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
 > {
   //#region fields
 
-  public readonly testsMocha: MochaTestRunner;
+  // public readonly testsMocha: MochaTestRunner;
 
-  public readonly testsJest: JestTestRunner;
+  // public readonly testsJest: JestTestRunner;
 
   public readonly testsVite: VitestTestRunner;
 
-  public readonly testsCypress: CypressTestRunner;
+  // public readonly testsCypress: CypressTestRunner;
 
   public readonly copyNpmDistLibManager: CopyManagerStandalone;
 
@@ -175,10 +175,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
   constructor(project: Project) {
     super(project, ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL);
 
-    this.testsMocha = new MochaTestRunner(project);
-    this.testsJest = new JestTestRunner(project);
     this.testsVite = new VitestTestRunner(project);
-    this.testsCypress = new CypressTestRunner(project);
 
     this.copyNpmDistLibManager = new CopyManagerStandalone(project);
     this.indexAutogenProvider = new IndexAutogenProvider(project);
@@ -231,9 +228,7 @@ export class ArtifactNpmLibAndCliTool extends BaseArtifact<
       );
       await this.creteBuildInfoFile(initOptions);
       if (this.project.taonJson.shouldGenerateDocsComponents) {
-        await this.project.artifactsManager.artifact.docsWebapp.docsGen.start(
-          initOptions,
-        );
+        await this.project.docsGen.start(initOptions);
       }
 
       if (this.project.taonJson.shouldGenerateTranslationFiles) {

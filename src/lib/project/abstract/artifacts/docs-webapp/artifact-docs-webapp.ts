@@ -31,8 +31,9 @@ export class ArtifactDocsWebapp extends BaseArtifact<
 
   constructor(protected readonly project: Project) {
     super(project, ReleaseArtifactTaon.DOCS_DOCS_WEBAPP);
+    return;
     this.mkddocs = new MkDocs(this.project);
-    this.docsGen = new DocsLibraryGenrator(this.project);
+
   }
 
   //#region clear partial
@@ -48,6 +49,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
 
   //#region init partial
   async initPartial(initOptions: EnvOptions): Promise<EnvOptions> {
+    return;
     if (!initOptions.release.targetArtifact) {
       initOptions.release.targetArtifact = ReleaseArtifactTaon.DOCS_DOCS_WEBAPP;
     }
@@ -63,6 +65,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     combinedDocsHttpServerUrl: Url;
   }> {
     //#region @backendFunc
+    return;
     buildOptions = await this.project.artifactsManager.init(
       EnvOptions.from(buildOptions),
     );
@@ -103,6 +106,7 @@ export class ArtifactDocsWebapp extends BaseArtifact<
     releaseOptions: EnvOptions,
   ): Promise<ReleasePartialOutput> {
     //#region @backendFunc
+    return;
     let releaseProjPath: string;
     const releaseType: ReleaseType = releaseOptions.release.releaseType;
     const projectsReposToPushAndTag: string[] = [this.project.location];

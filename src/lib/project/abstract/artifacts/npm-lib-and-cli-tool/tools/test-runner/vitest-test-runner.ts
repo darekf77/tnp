@@ -1,50 +1,50 @@
+import { spawn } from 'node:child_process'; // @backend
+import { resolve } from 'node:path'; // @backend
+
+import { BaseFeatureForProject } from 'tnp-helpers/src';
+
 import { tmpSourceDist, UNIT_TEST_TIMEOUT } from '../../../../../../constants';
+import { Project } from '../../../../../../project/abstract/project';
 
 import { BaseTestRunner } from './base-test-runner';
 
-export class VitestTestRunner extends BaseTestRunner {
-  // CLI should only filter, NOT define extensions
-  fileCommand(files: string[] = []): string {
-    if (!files?.length) return '';
-    return files.map(f => `"${f}"`).join(' ');
-  }
+type VitestTarget = 'backend' | 'browser';
 
-  private buildCommand(
-    files: string[],
-    watch: boolean,
-    debug: boolean,
-  ): string {
-    const vitestEntry = './node_modules/vitest/vitest.mjs';
-
-    const filter = this.fileCommand(files);
-
-    const mode = watch ? '' : 'run';
-
-    const base =
-      `${vitestEntry} ${mode} ${filter} ` +
-      `--environment node ` +
-      `--testTimeout ${UNIT_TEST_TIMEOUT}`;
-
-    return debug ? `node --inspect-brk ${base}` : `node ${base}`;
-  }
-
-  async start(files: string[], debug: boolean) {
+// @ts-ignore TODO weird inheritance problem
+export class VitestTestRunner extends BaseFeatureForProject<Project> {
+  runVitest(target: VitestTarget): Promise<number> {
     //#region @backendFunc
+    const cwd = this.project.location;
+    const vitestPath = resolve(cwd, 'node_modules', 'vitest', 'vitest.mjs');
 
-    const command = this.buildCommand(files, false, debug);
+    return new Promise((resolveExitCode, reject) => {
+      const child = spawn(
+        process.execPath,
+        [
+          vitestPath,
+          'run',
+          '--environment',
+          'node',
+          '--testTimeout',
+          '60000',
+          '--config',
+          `vitest.config-${target}.ts`,
+        ],
+        { cwd, stdio: 'inherit' },
+      );
 
-    await this.run(tmpSourceDist, command);
+      child.once('error', reject);
+      child.once('close', (code, signal) => {
+        if (code === null) {
+          reject(
+            new Error(`Vitest terminated by ${signal ?? 'an unknown signal'}.`),
+          );
+          return;
+        }
 
-    //#endregion
-  }
-
-  async startAndWatch(files: string[], debug: boolean) {
-    //#region @backendFunc
-
-    const command = this.buildCommand(files, true, debug);
-
-    await this.run(tmpSourceDist, command);
-
+        resolveExitCode(code);
+      });
+    });
     //#endregion
   }
 }

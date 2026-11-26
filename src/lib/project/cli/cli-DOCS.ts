@@ -52,42 +52,43 @@ class $Docs extends BaseCli {
 
   async serve() {
     //#region @backendFunc
-    this._exit();
+    // Helpers.error(`Not impemented. `, false, true);
+    // this._exit();
 
-    const port = await this.project.registerAndAssignPort(
-      'serving static docs',
-      {
-        startFrom: 8000,
-      },
-    );
-    const buildedDocsFolder =
-      this.project.artifactsManager.artifact.docsWebapp.mkddocs
-        .outDocsDistFolderAbs;
+    // const port = await this.project.registerAndAssignPort(
+    //   'serving static docs',
+    //   {
+    //     startFrom: 8000,
+    //   },
+    // );
+    // const buildedDocsFolder =
+    //   this.project.artifactsManager.artifact.docsWebapp.mkddocs
+    //     .outDocsDistFolderAbs;
 
-    await UtilsHttpServer.start(buildedDocsFolder, port, {
-      startMessage: `
+    // await UtilsHttpServer.start(buildedDocsFolder, port, {
+    //   startMessage: `
 
-        Serving static docs pages on http://localhost:${port}
-        From folder:
-        ${buildedDocsFolder}
+    //     Serving static docs pages on http://localhost:${port}
+    //     From folder:
+    //     ${buildedDocsFolder}
 
-        Press Ctrl+C to stop the server.
+    //     Press Ctrl+C to stop the server.
 
-        `,
-    });
+    //     `,
+    // });
     //#endregion
   }
 
   async envCheck(options: EnvOptions): Promise<void> {
     //#region @backendFunc
 
-    this._exit();
-    const envOK =
-      await this.project.artifactsManager.artifact.docsWebapp.mkddocs.validateEnvironemntForMkdocsBuild();
-    console.log(
-      `Environment for DOCS build is ${envOK ? chalk.green('OK') : chalk.red('NOT OK')}`,
-    );
-    this._exit();
+    // this._exit();
+    // const envOK =
+    //   await this.project.artifactsManager.artifact.docsWebapp.mkddocs.validateEnvironemntForMkdocsBuild();
+    // console.log(
+    //   `Environment for DOCS build is ${envOK ? chalk.green('OK') : chalk.red('NOT OK')}`,
+    // );
+    // this._exit();
     //#endregion
   }
 

@@ -362,6 +362,9 @@ export async function run(
           a.startsWith('refactor') ||
           a === 'dumpPackagesVersions' ||
           a === 'melt' ||
+          a === 'test' ||
+          a === 'spec' ||
+          a === 'e2e' ||
           a === 'git' ||
           a === 'soft' ||
           a === 'local:sync' ||
@@ -370,6 +373,8 @@ export async function run(
           a === 'cloud' ||
           a === 'link' ||
           a === 'up' ||
+          a === 'upforce' ||
+          a === 'upallforce' ||
           a === 'apiup' ||
           a === 'apiupforce',
       ),

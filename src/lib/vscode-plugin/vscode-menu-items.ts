@@ -146,14 +146,14 @@ export const vscodeMenuItems = ({
       ? [
           //#region items with actions / build lib
           new ProjectItem(
-            `$ ${FRAMEWORK_NAME} build:lib`,
+            `$ ${FRAMEWORK_NAME} build`,
             vscode.TreeItemCollapsibleState.None,
             {
               iconPath: null,
               project: CURRENT_PROJECT,
               triggerActionOnClick: project => {
                 runInTerminal(
-                  `${FRAMEWORK_NAME} build:lib` +
+                  `${FRAMEWORK_NAME} build` +
                     ` ${taonNonInteractiveModePrefix} ${taonSkipEmitTerminalProgressPrefix}`,
                 );
                 if (project?.location) {
@@ -166,13 +166,13 @@ export const vscodeMenuItems = ({
 
           //#region items with actions / build lib watch
           new ProjectItem(
-            `$ ${FRAMEWORK_NAME} build:watch:lib`,
+            `$ ${FRAMEWORK_NAME} build:watch`,
             vscode.TreeItemCollapsibleState.None,
             {
               iconPath: null,
               project: CURRENT_PROJECT,
               triggerActionOnClick: project => {
-                runInTerminal(`${FRAMEWORK_NAME} build:watch:lib`);
+                runInTerminal(`${FRAMEWORK_NAME} build:watch`);
                 if (project?.location) {
                   focustFirstElement();
                 }
@@ -181,14 +181,14 @@ export const vscodeMenuItems = ({
           ),
 
           new ProjectItem(
-            `$ ${FRAMEWORK_NAME} build:lib:prod`,
+            `$ ${FRAMEWORK_NAME} build:prod`,
             vscode.TreeItemCollapsibleState.None,
             {
               iconPath: null,
               project: CURRENT_PROJECT,
               triggerActionOnClick: project => {
                 runInTerminal(
-                  `${FRAMEWORK_NAME} build:lib:prod ` +
+                  `${FRAMEWORK_NAME} build:prod ` +
                     ` ${taonNonInteractiveModePrefix}  ${taonSkipEmitTerminalProgressPrefix}`,
                 );
                 if (project?.location) {

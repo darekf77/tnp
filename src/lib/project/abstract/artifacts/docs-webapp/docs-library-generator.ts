@@ -290,8 +290,7 @@ export class DocsLibraryGenrator extends BaseFeatureForProject<Project> {
     if (!project) {
       return alreadyAnalyzed;
     }
-    const allMdFiles =
-      project.artifactsManager.artifact.docsWebapp.docsGen.allMdFilesAbsPaths;
+    const allMdFiles = project.docsGen.allMdFilesAbsPaths;
     const newPackages = [] as string[];
 
     if (!alreadyAnalyzed.includes(packageName)) {
@@ -626,8 +625,7 @@ ${'exp' + 'ort'} class ${cmpName}Component {
       }
       const toSkipPaths = this.project.taonJson.genTsDocsExcludePaths;
 
-      const allMdFiles =
-        proj.artifactsManager.artifact.docsWebapp.docsGen.allMdFilesAbsPaths;
+      const allMdFiles = proj.docsGen.allMdFilesAbsPaths;
 
       for (const mdFileAbsPath of allMdFiles) {
         const relativePath = mdFileAbsPath.replace(proj.location + '/', '');

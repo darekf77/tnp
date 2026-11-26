@@ -26,7 +26,7 @@ import { tnpPackageName } from 'tnp-core/src';
 import { taonActionFromParent } from 'tnp-core/src';
 import { Helpers, HelpersTaon, UtilsTypescript } from 'tnp-helpers/src';
 
-import { filterChildren } from '../../../app-utils';
+import { filterChildren, oldFiles } from '../../../app-utils';
 import { CURRENT_PACKAGE_VERSION } from '../../../build-info._auto-generated_';
 import {
   appCloudflareTsFromSrc,
@@ -156,7 +156,7 @@ export class ArtifactManager {
     await this.artifact.angularNodeApp.clearPartial(options);
     await this.artifact.electronApp.clearPartial(options);
     await this.artifact.mobileApp.clearPartial(options);
-    await this.artifact.docsWebapp.clearPartial(options);
+    // await this.artifact.docsWebapp.clearPartial(options);
     await this.artifact.vscodePlugin.clearPartial(options);
 
     if (this.project.framework.isContainer) {
@@ -526,13 +526,10 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
           )
           .sync();
       } catch (error) {}
-      this.project.removeFile('vitest.content.config.ts');
-      this.project.removeFile('tsconfig.isomorphic-flat-bundle.json');
-      this.project.removeFile('webpack.backend-bundle-build.js');
-      this.project.removeFile('docs-config.jsonc');
-      this.project.removeFile('.eslintrc.json');
-      this.project.removeFile('eslint.config.js');
-      this.project.removeFile('tslint.json');
+      const oldFilesToRemove = oldFiles();
+      for (const relativePath of oldFilesToRemove) {
+        this.project.removeFile(relativePath);
+      }
       this.project.removeFile(
         `${srcMainProject}/${libFromSrc}/${TaonGeneratedFolders.ENV_FOLDER}/index.ts`,
       );
@@ -541,9 +538,7 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
       this.project.removeFile(
         `${dotVscodeMainProject}/${TaonGeneratedFiles.LAUNCH_BACKUP_JSON}`,
       );
-      this.project.removeFile('run-org.js');
-      this.project.removeFile('vitest.config.ts');
-      this.project.removeFile('src/tests/mocha-tests-info.md');
+
       if (this.project.typeIs(LibTypeEnum.CONTAINER)) {
         this.project.removeFile(
           `${srcMainProject}/${TaonGeneratedFiles.VARS_SCSS}`,
@@ -627,12 +622,12 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
     const targetArtifact = initOptions.release.targetArtifact;
 
     if (this.project.framework.isStandaloneProject) {
-      if (
-        !targetArtifact ||
-        targetArtifact === ReleaseArtifactTaon.DOCS_DOCS_WEBAPP
-      ) {
-        initOptions = await this.artifact.docsWebapp.initPartial(initOptions);
-      }
+      // if (
+      //   !targetArtifact ||
+      //   targetArtifact === ReleaseArtifactTaon.DOCS_DOCS_WEBAPP
+      // ) {
+      //   initOptions = await this.artifact.docsWebapp.initPartial(initOptions);
+      // }
       if (
         !targetArtifact ||
         targetArtifact === ReleaseArtifactTaon.NPM_LIB_PKG_AND_CLI_TOOL
@@ -865,13 +860,13 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
         this.project.warnAboutNotVerifiedWhenProdBuild(buildOptions);
       }
 
-      if (
-        !buildOptions.release.targetArtifact ||
-        buildOptions.release.targetArtifact ===
-          ReleaseArtifactTaon.DOCS_DOCS_WEBAPP
-      ) {
-        await this.artifact.docsWebapp.buildPartial(buildOptions.clone());
-      }
+      // if (
+      //   !buildOptions.release.targetArtifact ||
+      //   buildOptions.release.targetArtifact ===
+      //     ReleaseArtifactTaon.DOCS_DOCS_WEBAPP
+      // ) {
+      //   await this.artifact.docsWebapp.buildPartial(buildOptions.clone());
+      // }
       if (
         !buildOptions.release.targetArtifact ||
         buildOptions.release.targetArtifact ===
@@ -1062,14 +1057,14 @@ ${missingDependencies.map(d => `- ${chalk.bold(d)}`).join('\n')}`,
     //#endregion
 
     //#region docs app
-    if (
-      !releaseOptions.release.targetArtifact ||
-      releaseOptions.release.targetArtifact ===
-        ReleaseArtifactTaon.DOCS_DOCS_WEBAPP
-    ) {
-      releaseOutput =
-        await this.artifact.docsWebapp.releasePartial(releaseOptions);
-    }
+    // if (
+    //   !releaseOptions.release.targetArtifact ||
+    //   releaseOptions.release.targetArtifact ===
+    //     ReleaseArtifactTaon.DOCS_DOCS_WEBAPP
+    // ) {
+    //   releaseOutput =
+    //     await this.artifact.docsWebapp.releasePartial(releaseOptions);
+    // }
     //#endregion
 
     //#region npm lib and cli tool

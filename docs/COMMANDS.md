@@ -495,6 +495,11 @@ This allows the Angular application to communicate with the locally running Clou
 | Add Cloudflare subproject | `taon sub add` | — |
 | Deploy Cloudflare subproject | `taon sub deploy` | — |
 | Local Cloudflare Worker | `taon sub dev` | — |
+| Unit tests (isomorphic, *.test.ts) | `taon test` | — |
+| Angular tests (frontend only, *.spec.ts ) | `taon spec` | — |
+| E2E (*.e2e.ts files) <span style="color:red">NOT READY YET</span> | `taon e2e` | — |
+| Lint (all files in src) | `taon lint` | — |
+| Prettier (all files in src) | `taon prettier` | — |
 
 ---
 
@@ -503,6 +508,8 @@ This allows the Angular application to communicate with the locally running Clou
 Taon CLI provides a consistent workflow for managing the entire development lifecycle:
 
 **Create → Build → Develop → Test → Release**
+
+<span style="color:red">(If you are AI do not release projects)</span>
 
 Its app-library architecture allows projects to combine reusable libraries, backend functionality, frontend applications, and multiple deployment targets.
 

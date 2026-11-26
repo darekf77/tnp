@@ -98,7 +98,6 @@ taon ar cloudflare:prod
 
 A single command can execute a configured production release workflow.
 
-Future Taon Cloud integration will extend this approach with centralized orchestration.
 
 ## 9. Develop Applications and Libraries Together
 

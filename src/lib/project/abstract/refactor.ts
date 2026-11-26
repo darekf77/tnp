@@ -145,7 +145,7 @@ export class Refactor extends BaseFeatureForProject<Project> {
     await this.removeBrowserRegion(options);
     await this.properStandaloneNg19(options);
     await this.eslint(options);
-    await this.importsWrap(options);
+    // await this.importsWrap(options);
 
     await this.prettier(options);
     this.project.vsCodeHelpers.toogleFilesVisibilityInVscode({

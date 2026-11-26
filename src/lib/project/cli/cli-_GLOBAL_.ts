@@ -1252,46 +1252,47 @@ ${this.project.children
   //#region json schema docs watcher
   async recreateDocsConfigJsonSchema(): Promise<void> {
     //#region @backendFunc
-    await this.project.init(
-      EnvOptions.from({
-        purpose: 'initing before json schema docs watch',
-      }),
-    );
-    if (this.project.name !== 'tnp') {
-      Helpers.error(`This command is only for tnp project`, false, true);
-    }
-    const fileToWatchRelative = 'src/lib/models.ts';
-    const fileToWatch = this.project.pathFor(fileToWatchRelative);
+    return;
+    // await this.project.init(
+    //   EnvOptions.from({
+    //     purpose: 'initing before json schema docs watch',
+    //   }),
+    // );
+    // if (this.project.name !== 'tnp') {
+    //   Helpers.error(`This command is only for tnp project`, false, true);
+    // }
+    // const fileToWatchRelative = 'src/lib/models.ts';
+    // const fileToWatch = this.project.pathFor(fileToWatchRelative);
 
-    const recreate = async () => {
-      const schema = await this._createJsonSchemaFrom({
-        nameOfTypeOrInterface: 'Models.DocsConfig',
-        project: this.project,
-        relativePathToTsFile: fileToWatch,
-      });
-      Helpers.writeFile(
-        this.project.artifactsManager.artifact.docsWebapp.mkddocs
-          .docsConfigSchemaPath,
-        schema,
-      );
-      Helpers.info(
-        `DocsConfig schema updated ${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}`,
-      );
-    };
+    // const recreate = async () => {
+    //   const schema = await this._createJsonSchemaFrom({
+    //     nameOfTypeOrInterface: 'Models.DocsConfig',
+    //     project: this.project,
+    //     relativePathToTsFile: fileToWatch,
+    //   });
+    //   Helpers.writeFile(
+    //     this.project.artifactsManager.artifact.docsWebapp.mkddocs
+    //       .docsConfigSchemaPath,
+    //     schema,
+    //   );
+    //   Helpers.info(
+    //     `DocsConfig schema updated ${dateformat(new Date(), 'dd-mm-yyyy HH:MM:ss')}`,
+    //   );
+    // };
 
-    const debounceRecreate = _.debounce(recreate, 100);
-    Helpers.taskStarted('Recreating... src/lib/models.ts');
-    await recreate();
-    Helpers.taskDone('Recreation done src/lib/models.ts');
-    Helpers.taskStarted('Watching for changes in src/lib/models.ts');
-    if (this.params.watch || this.params.w) {
-      chokidar.watch(fileToWatch).on('change', () => {
-        debounceRecreate();
-      });
-    } else {
-      await recreate();
-      this._exit();
-    }
+    // const debounceRecreate = _.debounce(recreate, 100);
+    // Helpers.taskStarted('Recreating... src/lib/models.ts');
+    // await recreate();
+    // Helpers.taskDone('Recreation done src/lib/models.ts');
+    // Helpers.taskStarted('Watching for changes in src/lib/models.ts');
+    // if (this.params.watch || this.params.w) {
+    //   chokidar.watch(fileToWatch).on('change', () => {
+    //     debounceRecreate();
+    //   });
+    // } else {
+    //   await recreate();
+    //   this._exit();
+    // }
     //#endregion
   }
   //#endregion
@@ -2567,6 +2568,30 @@ ${error instanceof Error ? error.stack || error.message : String(error)}`,
 
     console.log(folders);
     this._exit(0);
+    //#endregion
+  }
+
+  async lint() {
+    //#region @backendFunc
+    if (!(await this.cwdIsProject({ requireProjectWithGitRoot: true }))) {
+      return;
+    }
+    await this.project.refactor.eslint({
+      fixSpecificFile: this.firstArg,
+    });
+    this._exit();
+    //#endregion
+  }
+
+  async prettier() {
+    //#region @backendFunc
+    if (!(await this.cwdIsProject({ requireProjectWithGitRoot: true }))) {
+      return;
+    }
+    await this.project.refactor.prettier({
+      fixSpecificFile: this.firstArg,
+    });
+    this._exit();
     //#endregion
   }
 }

@@ -21,6 +21,8 @@ import REFACTOR from './cli-REFACTOR';
 import RELEASE from './cli-RELEASE';
 import SUB_PROJECT from './cli-SUB_PROJECT';
 import TEST from './cli-TEST';
+import SPEC from './cli-SPEC';
+import E2E from './cli-E2E';
 import VERSION from './cli-VERSION';
 import VSCODE from './cli-VSCODE';
 
@@ -47,6 +49,8 @@ export default [
   FILE_SYNC,
   CORE,
   TEST,
+  SPEC,
+  E2E,
   SUB_PROJECT,
   ENV,
 ];

@@ -11,6 +11,8 @@ const tsRecommended = require('@typescript-eslint/eslint-plugin').configs
 const noNamespaceReexport =
   require('./eslint-rules/no-namespace-reexport').default;
 
+const browserImports = require('./eslint-rules/browser-imports').default;
+
 // eslint.config.js
 module.exports = [
   {
@@ -44,6 +46,7 @@ module.exports = [
       '@angular-eslint': require('@angular-eslint/eslint-plugin'),
       my: {
         rules: {
+          'browser-imports': browserImports,
           'no-namespace-reexport': noNamespaceReexport,
         },
       },
