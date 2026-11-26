@@ -507,7 +507,7 @@ ${notVerfiedDeps.map(c => `- ${c}`).join('\n')}
             }
 
             try {
-              await child.environmentConfig.recreateTmpEnv();
+              await child.environmentConfig.recreateTmpEnv(releaseOptions);
             } catch (error) {
               config.frameworkName === tnpPackageName && console.log(error);
               await UtilsTerminal.pressAnyKeyToContinueAsync({

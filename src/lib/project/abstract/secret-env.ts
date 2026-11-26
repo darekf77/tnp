@@ -1,3 +1,4 @@
+//#region imports
 import {
   chalk,
   config,
@@ -15,6 +16,7 @@ import { environmentsFolder, envTs, tmpEnvFolder } from '../../constants';
 
 import type { Project } from './project';
 import { SecretsKeychainController } from './taon-worker/secrets-keychain/secrets-keychain.controller';
+//#endregion
 
 interface CallbackTravelFnParam {
   fileAbsPath: string;
@@ -24,98 +26,13 @@ interface CallbackTravelFnParam {
 
 // @ts-ignore TODO weird inheritance problem
 export class SecretEnv extends BaseFeatureForProject<Project> {
-  //#region travel and modify orignal fiels
-  /**
-   * @deprecated
-   */
-  private async travelAndModifyOrignalFiles(
-    callback: (opt: CallbackTravelFnParam) => string | Promise<string>,
-  ): Promise<void> {
-    //#region @backendFunc
-    const allFiles = [
-      this.project.pathFor(envTs),
-
-      ...UtilsFilesFoldersSync.getFilesFrom(
-        this.project.pathFor(environmentsFolder),
-        {
-          followSymlinks: false,
-          recursive: true,
-        },
-      ).filter(
-        f =>
-          path.basename(f).startsWith('env.') &&
-          path.basename(f).endsWith('.ts'),
-      ),
-    ];
-    await this.travelAndModify(allFiles, callback);
-    //#endregion
-  }
-  //#endregion
-
+  //#region API / has tmp env created
   public get hasTmpEnvCreated(): boolean {
     return Helpers.exists(this.project.pathFor([tmpEnvFolder, envTs]));
   }
-
-  //#region travel and modify temp env files
-  private async travelAndModifyTempEnvFiles(
-    callback: (opt: CallbackTravelFnParam) => string | Promise<string>,
-  ): Promise<void> {
-    //#region @backendFunc
-    const allFiles = [
-      this.project.pathFor([tmpEnvFolder, envTs]),
-
-      ...UtilsFilesFoldersSync.getFilesFrom(
-        this.project.pathFor([tmpEnvFolder, environmentsFolder]),
-        {
-          followSymlinks: false,
-          recursive: true,
-        },
-      ).filter(
-        f =>
-          path.basename(f).startsWith('env.') &&
-          path.basename(f).endsWith('.ts'),
-      ),
-    ];
-    await this.travelAndModify(allFiles, callback);
-    //#endregion
-  }
   //#endregion
 
-  //#region travel and modify
-  private async travelAndModify(
-    allFiles: string[],
-    callback: (opt: CallbackTravelFnParam) => string | Promise<string>,
-  ): Promise<void> {
-    //#region @backendFunc
-
-    let stop = false;
-    for (const fileAbsPath of allFiles) {
-      if (stop) {
-        return;
-      }
-      const content = UtilsFilesFoldersSync.readFile(fileAbsPath)!;
-
-      const newContent = await callback({
-        content,
-        fileAbsPath,
-        stop: () => {
-          stop = true;
-        },
-      });
-
-      if (stop) {
-        return;
-      }
-
-      if (newContent !== content) {
-        UtilsFilesFoldersSync.writeFile(fileAbsPath, newContent);
-      }
-    }
-    //#endregion
-  }
-  //#endregion
-
-  //#region can changes be pushed
+  //#region API / can changes be pushed
   /**
    * Returns false if any EnvOptions function property
    * contains a plaintext secret.
@@ -143,7 +60,7 @@ export class SecretEnv extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region can project be init/build locally
+  //#region API / can project be init/build locally
   async everyTempVariableDecoded(): Promise<boolean> {
     //#region @backendFunc
     let canbuildProjectLocally = true;
@@ -171,22 +88,7 @@ export class SecretEnv extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region get controller
-  private async getCtrl(): Promise<SecretsKeychainController> {
-    const ctrl =
-      await this.project.ins.taonProjectsWorker.secretsKeychainPackagesWorker.getRemoteControllerFor(
-        {
-          methodOptions: {
-            calledFrom: 'secret-env get master password',
-          },
-          controllerClass: SecretsKeychainController,
-        },
-      );
-    return ctrl;
-  }
-  //#endregion
-
-  //#region get master password
+  //#region API / get master password
   async getMasterPassword(requestNew = false): Promise<string> {
     //#region @backendFunc
 
@@ -238,7 +140,167 @@ export class SecretEnv extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region encode modify fn
+  //#region API / encode original
+  async encodeOriginal(masterPassword?: string): Promise<void> {
+    //#region @backendFunc
+    masterPassword = masterPassword
+      ? masterPassword
+      : await this.getMasterPassword();
+
+    await this.travelAndModifyOrignalFiles(async ({ content }) => {
+      return UtilsTypescript.travelAndModifyFunctionsPropsString({
+        envFileContent: content,
+
+        modify: async ({ contentPropFunction }) => {
+          return await this.encodeModifyFn(contentPropFunction, masterPassword);
+        },
+      });
+    });
+    //#endregion
+  }
+  //#endregion
+
+  //#region API / decode original
+  async decodeOriginal(masterPassword?: string): Promise<void> {
+    //#region @backendFunc
+    await this.decode(this.travelAndModifyOrignalFiles, masterPassword);
+    //#endregion
+  }
+  //#endregion
+
+  //#region API / decode temp env
+  async decodeTempEnv(masterPassword?: string): Promise<void> {
+    //#region @backendFunc
+    await this.decode(this.travelAndModifyTempEnvFiles, masterPassword);
+    //#endregion
+  }
+  //#endregion
+
+  //#region API / encode temp env
+  async encodeTempEnv(masterPassword?: string): Promise<void> {
+    //#region @backendFunc
+    masterPassword = masterPassword
+      ? masterPassword
+      : await this.getMasterPassword();
+
+    await this.travelAndModifyTempEnvFiles(async ({ content }) => {
+      return UtilsTypescript.travelAndModifyFunctionsPropsString({
+        envFileContent: content,
+
+        modify: async ({ contentPropFunction }) => {
+          return await this.encodeModifyFn(contentPropFunction, masterPassword);
+        },
+      });
+    });
+    //#endregion
+  }
+  //#endregion
+
+  //#region private methods
+
+  //#region private methods / travel and modify orignal fiels
+  /**
+   * @deprecated
+   */
+  private async travelAndModifyOrignalFiles(
+    callback: (opt: CallbackTravelFnParam) => string | Promise<string>,
+  ): Promise<void> {
+    //#region @backendFunc
+    const allFiles = [
+      this.project.pathFor(envTs),
+
+      ...UtilsFilesFoldersSync.getFilesFrom(
+        this.project.pathFor(environmentsFolder),
+        {
+          followSymlinks: false,
+          recursive: true,
+        },
+      ).filter(
+        f =>
+          path.basename(f).startsWith('env.') &&
+          path.basename(f).endsWith('.ts'),
+      ),
+    ];
+    await this.travelAndModify(allFiles, callback);
+    //#endregion
+  }
+  //#endregion
+
+  //#region private methods / travel and modify temp env files
+  private async travelAndModifyTempEnvFiles(
+    callback: (opt: CallbackTravelFnParam) => string | Promise<string>,
+  ): Promise<void> {
+    //#region @backendFunc
+    const allFiles = [
+      this.project.pathFor([tmpEnvFolder, envTs]),
+
+      ...UtilsFilesFoldersSync.getFilesFrom(
+        this.project.pathFor([tmpEnvFolder, environmentsFolder]),
+        {
+          followSymlinks: false,
+          recursive: true,
+        },
+      ).filter(
+        f =>
+          path.basename(f).startsWith('env.') &&
+          path.basename(f).endsWith('.ts'),
+      ),
+    ];
+    await this.travelAndModify(allFiles, callback);
+    //#endregion
+  }
+  //#endregion
+
+  //#region private methods / avel and modify
+  private async travelAndModify(
+    allFiles: string[],
+    callback: (opt: CallbackTravelFnParam) => string | Promise<string>,
+  ): Promise<void> {
+    //#region @backendFunc
+
+    let stop = false;
+    for (const fileAbsPath of allFiles) {
+      if (stop) {
+        return;
+      }
+      const content = UtilsFilesFoldersSync.readFile(fileAbsPath)!;
+
+      const newContent = await callback({
+        content,
+        fileAbsPath,
+        stop: () => {
+          stop = true;
+        },
+      });
+
+      if (stop) {
+        return;
+      }
+
+      if (newContent !== content) {
+        UtilsFilesFoldersSync.writeFile(fileAbsPath, newContent);
+      }
+    }
+    //#endregion
+  }
+  //#endregion
+
+  //#region privvte methods / get controller
+  private async getCtrl(): Promise<SecretsKeychainController> {
+    const ctrl =
+      await this.project.ins.taonProjectsWorker.secretsKeychainPackagesWorker.getRemoteControllerFor(
+        {
+          methodOptions: {
+            calledFrom: 'secret-env get master password',
+          },
+          controllerClass: SecretsKeychainController,
+        },
+      );
+    return ctrl;
+  }
+  //#endregion
+
+  //#region private methods / encode modify fn
   private async encodeModifyFn(
     contentPropFunction: string,
     masterPassword: string,
@@ -264,7 +326,7 @@ export class SecretEnv extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region decode modify fn
+  //#region private methods / decode modify fn
   private async decodeModifyFn(
     contentPropFunction: string,
     masterPassword: string,
@@ -304,47 +366,7 @@ export class SecretEnv extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region encode original
-  async encodeOriginal(masterPassword?: string): Promise<void> {
-    //#region @backendFunc
-    masterPassword = masterPassword
-      ? masterPassword
-      : await this.getMasterPassword();
-
-    await this.travelAndModifyOrignalFiles(async ({ content }) => {
-      return UtilsTypescript.travelAndModifyFunctionsPropsString({
-        envFileContent: content,
-
-        modify: async ({ contentPropFunction }) => {
-          return await this.encodeModifyFn(contentPropFunction, masterPassword);
-        },
-      });
-    });
-    //#endregion
-  }
-  //#endregion
-
-  //#region encode temp env
-  async encodeTempEnv(masterPassword?: string): Promise<void> {
-    //#region @backendFunc
-    masterPassword = masterPassword
-      ? masterPassword
-      : await this.getMasterPassword();
-
-    await this.travelAndModifyTempEnvFiles(async ({ content }) => {
-      return UtilsTypescript.travelAndModifyFunctionsPropsString({
-        envFileContent: content,
-
-        modify: async ({ contentPropFunction }) => {
-          return await this.encodeModifyFn(contentPropFunction, masterPassword);
-        },
-      });
-    });
-    //#endregion
-  }
-  //#endregion
-
-  //#region try to save good master password for 1 day
+  //#region private methods / try to save good master password for 1 day
   private async tryToSaveGoodMasterPassword(
     masterPassword: string,
   ): Promise<void> {
@@ -386,7 +408,7 @@ export class SecretEnv extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region decode
+  //#region private method /  decode
   private async decode(
     fn:
       | typeof this.travelAndModifyOrignalFiles
@@ -446,18 +468,5 @@ export class SecretEnv extends BaseFeatureForProject<Project> {
   }
   //#endregion
 
-  //#region decode original
-  async decodeOriginal(masterPassword?: string): Promise<void> {
-    //#region @backendFunc
-    await this.decode(this.travelAndModifyOrignalFiles, masterPassword);
-    //#endregion
-  }
   //#endregion
-
-  //#region decode temp env
-  async decodeTempEnv(masterPassword?: string): Promise<void> {
-    //#region @backendFunc
-    await this.decode(this.travelAndModifyTempEnvFiles, masterPassword);
-    //#endregion
-  }
 }

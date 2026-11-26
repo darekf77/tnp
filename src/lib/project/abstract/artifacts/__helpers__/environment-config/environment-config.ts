@@ -129,7 +129,7 @@ export class EnvironmentConfig // @ts-ignore TODO weird inheritance problem
     );
     envConfigFromParams = EnvOptions.from(envConfigFromParams);
 
-    await this.makeSureEnvironmentExists();
+    await this.makeSureEnvironmentExists(envConfigFromParams);
 
     const configResult = await this.envOptionsResolve(
       envConfigFromParams,
@@ -432,7 +432,7 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
   //#endregion
 
   //#region private methods / make sure environment exists
-  async makeSureEnvironmentExists(): Promise<void> {
+  async makeSureEnvironmentExists(envOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
     if (!this.project.hasFolder(environmentsFolder)) {
       const coreEnv = this.project.ins
@@ -489,14 +489,14 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
       }
     }
 
-    await this.recreateTmpEnv();
+    await this.recreateTmpEnv(envOptions);
 
     //#endregion
   }
   //#endregion
 
   //#region API / recreate temporary environment
-  public async recreateTmpEnv(): Promise<void> {
+  public async recreateTmpEnv(envOptions: EnvOptions): Promise<void> {
     //#region @backendFunc
     Helpers.remove(this.project.pathFor(tmpEnvFolder));
     Helpers.mkdirp(this.project.pathFor(tmpEnvFolder));
@@ -521,18 +521,20 @@ ${THIS_IS_GENERATED_INFO_COMMENT}`,
         break;
       }
 
-      await this.project.secretEnv.decodeTempEnv();
+      if (envOptions.release.releaseType) {
+        await this.project.secretEnv.decodeTempEnv();
 
-      const everythingDecoded =
-        await this.project.secretEnv.everyTempVariableDecoded();
+        const everythingDecoded =
+          await this.project.secretEnv.everyTempVariableDecoded();
 
-      if (!everythingDecoded) {
-        const tryAgain = UtilsTerminal.confirm({
-          message: `Something went wrong with encoding... try again ? (or skip) `,
-          defaultValue: false,
-        });
-        if (tryAgain) {
-          continue;
+        if (!everythingDecoded) {
+          const tryAgain = await UtilsTerminal.confirm({
+            message: `Something went wrong with encoding... try again ? (or skip) `,
+            defaultValue: false,
+          });
+          if (tryAgain) {
+            continue;
+          }
         }
       }
       break;
