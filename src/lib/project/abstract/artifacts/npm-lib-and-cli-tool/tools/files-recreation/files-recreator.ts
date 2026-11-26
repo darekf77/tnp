@@ -39,6 +39,7 @@ import {
   taonConfigSchema,
   vitestConfigAngularSetup,
   vitestConfigResouecePlugin,
+  esLintRuleBrowserImport,
 } from '../../../../../../constants';
 import { EnvOptions } from '../../../../../../options';
 import type { Project } from '../../../../project';
@@ -92,6 +93,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
       vitestConfigAngularSetup,
       vitestConfigResouecePlugin,
       esLintRuleNoNamespaceReExport,
+      esLintRuleBrowserImport,
       ...this.filesTemplates(),
     ]);
 
@@ -107,6 +109,7 @@ export class FilesRecreator // @ts-ignore TODO weird inheritance problem
       taonConfigSchema,
       esLintConfigJsonMainProject,
       esLintRuleNoNamespaceReExport,
+      esLintRuleBrowserImport,
       AgentsMdMainProject,
       dotGithubCopilotInstructions,
       dotAI,

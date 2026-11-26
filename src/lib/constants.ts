@@ -1004,6 +1004,8 @@ export const vitestConfigResouecePlugin = 'vitest-angular-resources.plugin.ts';
 export const esLintRuleNoNamespaceReExport =
   'eslint-rules/no-namespace-reexport.ts';
 
+export const esLintRuleBrowserImport = 'eslint-rules/browser-imports.ts';
+
 export const runJsMainProject = 'run.js';
 
 export const AgentsMdMainProject = 'AGENTS.md';
